@@ -1,5 +1,7 @@
 import enum
 
+from pydantic import model_validator
+
 from snappy_pipeline.models import SnappyModel
 
 
@@ -40,3 +42,9 @@ class Vep(SnappyModel):
     """To use this option in VEP, you should download the plugin repository from the link https://github.com/Ensembl/VEP_plugins"""
     plugins_dir: str = ""
     output_options: list[str] = ["everything"]
+
+    @model_validator(mode="after")
+    def ensure_plugins_dir_exists(self):
+        if self.plugins and not self.plugins_dir:
+            raise ValueError("Missing VEP plugin directory")
+        return self

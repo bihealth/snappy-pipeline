@@ -1,86 +1,97 @@
 import os
 
 from snakemake import shell
+from snakemake.io import Namedlist
 
-__author__ = "Pham Gia Cuong"
-__email__ = "pham.gia-cuong@bih-charite.de"
+__author__ = "Eric Blanc"
+__email__ = "eric.blanc@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
-
-algorithms = snakemake.params.args["algorithms"]
-epitope_length = snakemake.params.args["epitope_length"]
-normal_smaple = snakemake.params.args["normal_sample"]
-BINDING_THRESHOLD = f"-b {snakemake.params.args["BINDING_THRESHOLD"]} "
-percentile_threshold = (
-    f"--percentile-threshold {snakemake.params.args["percentile_threshold"]} "
-    if snakemake.params.args["percentile_threshold"] is not None
-    else ""
-)
-
-
-allele_specific_binding_thresholds = (
-    "--allele-specific-binding-thresholds "
-    if snakemake.params.args["allele_specific_binding_thresholds"]
-    else ""
-)
-
-aggregate_inclusion_binding_threshold = (
-    f"--aggregate-inclusion-binding-threshold {snakemake.params.args["aggregate_inclusion_binding_threshold"]} ",
-)
-
-netmhc_stab = "--netmhc-stab " if snakemake.params.args["netmhc_stab"] else ""
-
-NET_CHOP_THRESHOLD = (f"--net-chop-threshold {snakemake.params.args["NET_CHOP_THRESHOLD"]} ",)
-
-PROBLEMATIC_AMINO_ACIDS = (
-    f"--problematic-amino-acids {snakemake.params.args["PROBLEMATIC_AMINO_ACIDS"]} ",
-)
-
-# if {snakemake.params.args["run_reference_proteome_similarity"]}:
-#     run_reference_proteome_similarity= f"--run-reference-proteome-similarity",
-
-FAST_SIZE = (f"-s {snakemake.params.args["FAST_SIZE"]} ",)
-
-exclude_NAs = "--exclude-NAs " if snakemake.params.args["exclude_NAs"] else ""
-
-NORMAL_COV = (f"--normal-cov {snakemake.params.args["NORMAL_COV"]} ",)
-TDNA_COV = (f"--tdna-cov {snakemake.params.args["TDNA_COV"] }",)
-TRNA_COV = (f"--trna-cov {snakemake.params.args["TRNA_COV"]} ",)
-NORMAL_VAF = (f"--normal-vaf {snakemake.params.args["NORMAL_VAF"]} ",)
-
-maximum_transcript_support_level = (
-    f"--maximum-transcript-support-level {snakemake.params.args["maximum_transcript_support_level"]} ",
-)
-
-pass_only = "--pass-only " if snakemake.params.args["pass_only"] else ""
-
-tumor_purity = (
-    f"--tumor-purity {snakemake.params.args["tumor_purity"]} "
-    if snakemake.params.args["tumor_purity"] is not None
-    else ""
-)
-
-op_dir = "/".join(snakemake.output.all_epitopes.split("/")[:-2])
-
-files_to_bind = {
-    "combine_vcf": snakemake.input.combine_vcf,
-    "op_dir": op_dir,
-}
+args = getattr(snakemake.params, "args", {})
 
 # TODO: Put the following in a function (decide where...)
-# Replace with full absolute paths
-files_to_bind = {k: os.path.realpath(v) for k, v in files_to_bind.items()}
-# Directories that mut be bound
-dirs_to_bind = {k: os.path.dirname(v) for k, v in files_to_bind.items()}
-# List of unique directories to bind: on cluster: <directory> -> from container: /bindings/d<i>)
-bound_dirs = {e[1]: e[0] for e in enumerate(list(set(dirs_to_bind.values())))}
-# Binding command
-bindings = " ".join(["-B {}:/bindings/d{}".format(k, v) for k, v in bound_dirs.items()])
-bound_files = {
-    k: "/bindings/d{}/{}".format(bound_dirs[dirs_to_bind[k]], os.path.basename(v))
-    for k, v in files_to_bind.items()
-}
+def bindings_for_container(files_to_bind: Namedlist, base_container_path: str = "inputs", access: str = "ro") -> tuple[str, dict[str, str]]:
+    fns = {}
+    for key, path in files_to_bind:
+        assert not isinstance(path, list), f"Input files cannot be lists (offender is '{key}')"
+        assert key not in fns, f"Duplicate input '{key}'"
+        fns[key] = os.path.realpath(path)
+
+    ds = {}
+    for key, path in fns.items():
+        ds[key] = os.path.dirname(path)
+
+    bindings = {e[1]: e[0] for e in enumerate(list(set(ds.values())))}
+
+    container_fns = {}
+    for key, path in fns.items():
+        container_fns[key] = f"/{base_container_path}/d{bindings[ds[key]]}/{os.path.basename(path)}"
+
+    binding_cmd = " ".join([f"--bind {d}:/{base_container_path}/d{i}:{access}" for d, i in bindings.items()])
+
+    return (binding_cmd, container_fns)
+
+(input_bindings, input_fns) = bindings_for_container(snakemake.input)
+(output_bindings, output_fns) = bindings_for_container(snakemake.output, base_container_path="outputs", access="rw")
+
+if isinstance(args["algorithms"], list):
+    algorithms = ",".join(args["algorithms"])
+else:
+    algorithms = args["algorithms"]
+alleles = ",".join(args["alleles"])
+
+pVACseq_args = [f"--netmhciipan-version {args['netmhciipan_version']}"]
+
+if args["class_i_epitope_length"]:
+    pVACseq_args.append("--class-i-epitope-length" + ",".join(map(str, args["class_i_epitope_length"])))
+if args["class_ii_epitope_length"]:
+    pVACseq_args.append("--class-ii-epitope-length" + ",".join(map(str, args["class_ii_epitope_length"])))
+
+if args["percentile_threshold"] is not None:
+    pVACseq_args.append(f"--percentile-threshold {args['percentage_threshold']} --percentile-threshold-strategy {args['percentile_threshold_strategy']}")
+else:
+    pVACseq_args.append(f"--binding-threshold {args['binding_threshold']}")
+if args["allele_specific_binding_thresholds"]:
+    pVACseq_args.append("--allele-specific-binding-thresholds")
+
+pVACseq_args.append(f"--top-score-metric {args['top_score_metric']}")
+pVACseq_args.append(f"--top-score-metric2 {args['top_score_metric2']}")
+
+for key in ("normal_cov", "tdna_cov", "trna_cov", "normal_vaf", "tdna_vaf", "trna_vaf", "minimum_fold_change", "expn_val"):
+    pVACseq_key = key.replace("_", "-")
+    pVACseq_args.append(f"--{pVACseq_key} {args[key]}")
+
+pVACseq_args.append(f"--transcript-prioritization-strategy {args['transcript_prioritization_strategy']}")
+if args["maximum_transcript_support_level"] is not None:
+    pVACseq_args.append(f"--maximum-transcript-support-level {args['maximum_transcript_support_level']}")
+if args["biotypes"]:
+    pVACseq_args.append("--biotypes " + ",".join(args["biotypes"]))
+if args["allow_incomplete_transcript"]:
+    pVACseq_args.append("--allow-incomplete-transcript")
+
+if args["net_chop_method"] is not None:
+    pVACseq_args.append(f"--net-chop-method {args['net_chop_method']}")
+if args["netmhc_stab"]:
+    pVACseq_args.append("--netmhc-stab")
+if args["allele_specific_anchors"]:
+    pVACseq_args.append(f"--allele_specific_anchors --anchor-contribution-threshold {args['anchor_contribution_threshold']}")
+
+if args["problematic_amino_acids"]:
+    pVACseq_args.append("--problematic-amino-acids" + ",".join(args["problematic_amino_acids"]))
+
+if args["exclude_NAs"]:
+    pVACseq_args.append("--exclude-NAs")
+
+for key in ("downstream_sequence_length", "aggregate_inclusion_binding_threshold", "aggregate_inclusion_count_limit"):
+    pVACseq_key = key.replace("_", "-")
+    pVACseq_args.append(f"--{pVACseq_key} {args[key]}")
+
+if args["run_reference_proteome_similarity"]:
+    pVACseq_args.append(f"--run-reference-proteome-similarity --peptide-fasta {input_fns['peptides']}")
+
+if args["genes_of_interest_file"]:
+    pVACseq_args.append(f"--genes-of-interest-file {input_fns['genes']}")
+
+pVACseq_args = " \\\n    ".join(pVACseq_args)
 
 shell.executable("/bin/bash")
 
@@ -126,34 +137,25 @@ set -x
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-hla_types=$(cat {snakemake.input.hla_normal_dna} {snakemake.input.hla_tumor_dna} {snakemake.input.hla_tumor_rna} | sed 's/^/HLA-/' | sort | uniq | tr '\n' ',' | sed 's/,$//')
-cmd="pvacseq run --normal-sample-name {normal_smaple} \
-    -e1 {epitope_length} \
-    --iedb-install-directory /opt/iedb \
-    -t {snakemake.threads} \
-    {bound_files[combine_vcf]} \
-    {snakemake.wildcards.tumor_library} \
-    $hla_types \
-    {algorithms} \
-    {bound_files[op_dir]} \
-    {BINDING_THRESHOLD}\
-    {percentile_threshold}\
-    {allele_specific_binding_thresholds}\
-    {aggregate_inclusion_binding_threshold}\
-    {NET_CHOP_THRESHOLD}\
-    {PROBLEMATIC_AMINO_ACIDS}\
-    {FAST_SIZE}\
-    {NORMAL_COV}\
-    {TDNA_COV}\
-    {TRNA_COV}\
-    {NORMAL_VAF}\
-    {exclude_NAs}\
-    {maximum_transcript_support_level}"
-echo 'TMPDIR=/bindings/d2' > $TMPDIR/{snakemake.wildcards.tumor_library}.sh
-echo $cmd >> $TMPDIR/{snakemake.wildcards.tumor_library}.sh
-apptainer exec --home $PWD -B $TMPDIR:/bindings/d2 {bindings} {config[path_container]} bash /bindings/d2/{snakemake.wildcards.tumor_library}.sh
+# Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
+# Create home on TMPDIR? But then the calling script is gone...
+home=$(dirname {snakemake.output})/../home
+home=$(realpath $home)
+rm -rf $home
+mkdir -p $home
 
-md5 {snakemake.output.all_epitopes} > {snakemake.output.all_epitopes_md5}
-md5 {snakemake.output.filtered_epitopes} > {snakemake.output.filtered_epitopes_md5}
+cat << __EOF > $home/run_pVACseq.sh
+pvacseq run --n-threads {snakemake.threads} \\
+    --normal-sample-name {args[normal_sample]} \\
+    --iedb-install-directory /opt/iedb \\
+    {pVACseq_args} \\
+    {input_fns[vcf]} {args[tumor_sample]} {alleles} \\
+    $(dirname {output_fns[done]})
+__EOF
+chmod +x $home/run_pVACseq.sh
+
+apptainer exec \
+    --home $home --bind $TMPDIR:$TMPDIR:rw \
+    {input_bindings} {output_bindings} {snakemake.input[container]} bash run_pVACseq.sh
 """
 )

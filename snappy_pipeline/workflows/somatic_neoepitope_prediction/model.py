@@ -1,41 +1,24 @@
 import enum
-from typing import Annotated
 
-from pydantic import Field
+from pydantic import model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-
-
-class Format(enum.StrEnum):
-    stringtie = "stringtie"
-    snappy_custom = "snappy_custom"
-    cufflinks = "cufflinks"
-    kallisto = "kallisto"
-    custom = "custom"
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
-class Preparation(SnappyModel):
-    format: Annotated[Format, EnumField(Format)] = Format.snappy_custom
-    "The file format of the expression file to process. (stringtie, kallisto, cufflinks, snappy_custom, custom)"
-    "Use `custom` to process file formats not explicitly supported."
-    "The `custom` option requires the use of the --id-column and --expression-column arguments."
-    path_features: str = ""
-    """Gencode file path, required for star and snappy format"""
-    mode: Annotated[str, Field(examples=["gene", "transcript"])] = "gene"
-    """Determine whether the expression file contains gene or transcript TPM values."""
-    full_vep_annotation: bool = True
-    """The somatic_variant_annotation has been done in fully annotation mode"""
-    id_column: str = ""
-    """Gene/Transcript id column name. Need when using the `custom` format."""
-    expression_column: str = ""
-    """Expression column name. Need when using the `custom` format."""
-    ignore_ensembl_id_version: bool = True
-    """Ignore the ensemble id version"""
-    max_depth: int = 4000
-    "max_depth option of bcftools mpileup"
+class SupportedPredictionTool(enum.StrEnum):
+    PVACSEQ = "pVACseq"
 
 
-class Algorithms(enum.StrEnum):
+class SupportedPileupTool(enum.StrEnum):
+    STAR = "star"
+
+
+class SupportedExpressionTool(enum.StrEnum):
+    SALMON = "salmon"
+    OTHER = "other"
+
+
+class Algorithm(enum.StrEnum):
     BigMHC_EL = "BigMHC_EL"
     BigMHC_IM = "BigMHC_IM"
     DeepImmuno = "DeepImmuno"
@@ -54,69 +37,192 @@ class Algorithms(enum.StrEnum):
     SMM = "SMM"
     SMMPMBEC = "SMMPMBEC"
     SMMalign = "SMMalign"
-    all_class_i = "all_class_i"
 
 
-class Prediction(SnappyModel):
-    CLASS_I_EPITOPE_LENGTH: list[int] = [8, 9, 10, 11]
-    "Length of MHC Class I subpeptides (neoepitopes) to predict."
-    "Multiple epitope lengths can be specified using a comma-separated list."
-    "Typical epitope lengths vary between 8-15."
-    algorithms: Annotated[list[Algorithms], EnumField(Algorithms, [])]
-    "The epitope prediction algorithms to use."
-    "For running with all prediction assign to ['all_class_i']"
-    # Following parameter please follow the documentation of pvactools to know its function
-    BINDING_THRESHOLD: int = 500
-    percentile_threshold: float | None = Field(default=None)
+class AllAlgorithms(enum.StrEnum):
+    AllClassI = "all_class_i"
+    AllClassII = "all_class_ii"
+    All = "all"
+
+
+class PercentageThresholdStrategy(enum.StrEnum):
+    CONSERVATIVE = "conservative"
+    EXPLORATORY = "exploratory"
+
+
+class TopScoreMetric(enum.StrEnum):
+    MEDIAN = "median"
+    LOWEST = "lowest"
+
+
+class TopScoreMetric2(enum.StrEnum):
+    PERCENTILE = "percentile"
+    IC50 = "ic50"
+
+
+class TranscriptPrioritizationStrategy(enum.StrEnum):
+    MANE_SELECT = "mane_select"
+    CANONICAL = "canonical"
+    TSL = "tsl"
+
+
+class NetChopMethod(enum.StrEnum):
+    CTERM = "cterm"
+    TWENTY_S = "20s"
+
+
+class NetMHCIIpanVersion(enum.StrEnum):
+    FourZero = "4.0"
+    FourOne = "4.1"
+    FourTwo = "4.2"
+    FourThree = "4.3"
+
+
+class PVACseq(SnappyModel):
+    path_container: str | None = None
+    num_threads: int = 1
+
+    algorithms: list[Algorithm] | AllAlgorithms = AllAlgorithms.AllClassI
+    netmhciipan_version: NetMHCIIpanVersion = NetMHCIIpanVersion.FourOne
+
+    class_i_epitope_length: list[int] = [8, 9, 10, 11]
+    class_ii_epitope_length: list[int] = []
+
+    binding_threshold: int = 500
+    percentile_threshold: float | None = 1.0
+    percentile_threshold_strategy: PercentageThresholdStrategy = (
+        PercentageThresholdStrategy.CONSERVATIVE
+    )
     allele_specific_binding_thresholds: bool = False
-    aggregate_inclusion_binding_threshold: int = 5000
-    netmhc_stab: bool = False
-    NET_CHOP_THRESHOLD: float = 0.5
-    PROBLEMATIC_AMINO_ACIDS: list[str] | None = Field(default=None)
-    # top-score-metric
-    # net-chop-method
-    # net-chop-threshold
 
-    # E.g amino_acid:position - G:2 would check for a Glycine at
-    # the second position of the epitope
-    # run_reference_proteome_similarity: bool = False
-    # blastp_path
-    # blastp-db
-    # peptide-fasta
-    FAST_SIZE: int = 200
+    top_score_metric: TopScoreMetric = TopScoreMetric.MEDIAN
+    top_score_metric2: TopScoreMetric2 = TopScoreMetric2.PERCENTILE
+
+    normal_cov: int = 25
+    tdna_cov: int = 25
+    trna_cov: int = 2
+    normal_vaf: float = 0.02
+    tdna_vaf: float = 0.1
+    trna_vaf: float = 0.25
+    minimum_fold_change: float = 0.0
+    expn_val: float = 1.0
+
+    transcript_prioritization_strategy: TranscriptPrioritizationStrategy = (
+        TranscriptPrioritizationStrategy.MANE_SELECT
+    )
+    maximum_transcript_support_level: int | None = None
+    biotypes: list[str] = []
+    allow_incomplete_transcript: bool = False
+
+    net_chop_method: NetChopMethod | None = NetChopMethod.CTERM
+    netmhc_stab: bool = True
+    allele_specific_anchors: bool = False
+    anchor_contribution_threshold: float = 0.8
+
+    problematic_amino_acids: list[str] = []
+
+    run_reference_proteome_similarity: bool = False
+    peptide_fasta: str | None = None
+
+    genes_of_interest_file: str | None = None
+
     exclude_NAs: bool = False
-    NORMAL_COV: int = 5
-    TDNA_COV: int = 10
-    TRNA_COV: int = 10
-    NORMAL_VAF: float = 0.02
-    maximum_transcript_support_level: int = Field(gt=0, lt=6, default=1)
-    # allele-specific-anchors
-    # anchor_contribution_threshold: float=0.8
-    pass_only: bool = False
-    tumor_purity: float | None = Field(default=None)
+
+    downstream_sequence_length: int = 1000
+    aggregate_inclusion_binding_threshold: int = 5000
+    aggregate_inclusion_count_limit: int = 25
+
+    @model_validator(mode="after")
+    def ensure_peptide_fasta_exists(self):
+        if self.run_reference_proteome_similarity and not self.peptide_fasta:
+            raise ValueError(
+                "Missing peptide fasta file required when enabling 'run_reference_proteome_similarity'"
+            )
+        return self
+
+
+class BAQ(enum.StrEnum):
+    NO = "no"
+    FULL = "full"
+    REDO = "redo"
+
+
+class FORMATTAGS(enum.StrEnum):
+    AD = "FORMAT/AD"
+    ADF = "FORMAT/ADF"
+    ADR = "FORMAT/ADR"
+    DP = "FORMAT/DP"
+    NMBZ = "FORMAT/NMBZ"
+    QS = "FORMAT/QS"
+    SP = "FORMAT/SP"
+    SCR = "FORMAT/SCR"
+
+
+class INFOTAGS(enum.StrEnum):
+    AD = "INFO/AD"
+    ADF = "INFO/ADF"
+    ADR = "INFO/ADR"
+    BQBZ = "INFO/BQBZ"
+    FS = "INFO/FS"
+    IDV = "INFO/IDV"
+    IMF = "INFO/IMF"
+    MIN_PL_SUM = "INFO/MIN_PL_SUM"
+    MQ0F = "INFO/MQ0F"
+    MQBZ = "INFO/MQBZ"
+    MQSBZ = "INFO/MQSBZ"
+    NM = "INFO/NM"
+    NMBZ = "INFO/NMBZ"
+    RPBZ = "INFO/RPBZ"
+    SCBZ = "INFO/SCBZ"
+    SCR = "INFO/SCR"
+    SGB = "INFO/SGB"
+    VDB = "INFO/VDB"
+
+
+class RnaMapping(SnappyModel):
+    enabled: bool = False
+
+    path_ngs_mapping: str = "../ngs_mapping"
+    tool_rna_mapping: SupportedPileupTool = SupportedPileupTool.STAR
+
+    baq: BAQ | None = None
+    max_depth: int = 250
+    min_MQ: int = 0
+    adjust_MQ: int = 0
+    min_BQ: int = 1
+    max_BQ: int = 60
+    delta_BQ: int = 30
+    annotate: list[INFOTAGS | FORMATTAGS] = []
+    snp_indel_genotype: list[str] = []
+
+
+class RnaQuantification(SnappyModel):
+    enabled: bool = False
+
+    path_gene_expression_quantification: str = "../gene_expression_quantification"
+    tool_gene_expression_quantification: SupportedExpressionTool = SupportedExpressionTool.SALMON
+
+    ensembl_id: bool = True
+    use_ensembl_version: bool = False
+
+    annotation: str = "CSQ"
+    annotation_description_regex: str = (
+        r"^Consequence annotations from Ensembl VEP. Format: (?P<titles>.+)$"
+    )
+    annotation_separator: str = r"\|"
+    annotation_gene_id: str | int = "Gene"
+    annotation_transcript_id: str | int = "Feature"
 
 
 class SomaticNeoepitopePrediction(SnappyStepModel):
-    path_somatic_variant_annotation: Annotated[
-        str, Field(examples=["../somatic_variant_annotation"])
-    ]
-    path_container: Annotated[
-        str, Field(examples=["../somatic_neoepitope_prediction/work/containers/out/pvactools.simg"])
-    ]
-    """
-    Running somatic neoepitope prediction with pvactools
-    is required,with the container
-    """
-    path_hla_typing: Annotated[str, Field(examples=["../hla_typing"])]
-    path_rna_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
-    tools_somatic_variant_annotation: list[str] = ["vep"]
-    tools_ngs_mapping: list[str] = []
-    tools_somatic_variant_calling: list[str] = []
-    tools_rna_mapping: list[str] = []
-    """Deafult to those configured for ngs_mapping"""
-    tools_ngs_mapping: list[str] = []
-    """Deafult to those configured for ngs_mapping"""
-    tools_somatic_variant_calling: list[str] = []
-    """Deafult to those configured for somatic_variant_calling"""
-    preparation: Preparation | None = None
-    prediction: Prediction | None = None
+    tools: list[SupportedPredictionTool] = [SupportedPredictionTool.PVACSEQ]
+
+    path_somatic_variant_annotation: str = "../somatic_variant_annotation"
+    is_filtered: bool = True
+
+    path_hla_typing: str = "../hla_typing"
+
+    pileup: RnaMapping = RnaMapping()
+    quantification: RnaQuantification = RnaQuantification()
+
+    pVACseq: PVACseq = PVACseq()

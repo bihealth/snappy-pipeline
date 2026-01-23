@@ -8,7 +8,7 @@ from snappy_pipeline.workflows.somatic_neoepitope_prediction import (
     SomaticNeoepitopePredictionWorkflow,
 )
 
-__author__ = "Pham Gia Cuong"
+__author__ = "Eric Blanc"
 
 
 # Configuration ===============================================================
@@ -22,7 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 wf = SomaticNeoepitopePredictionWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-
+cfg = wf.w_config["step_config"]["somatic_neoepitope_prediction"]
 
 localrules:
     # Linking files from work/ to output/ should be done locally
@@ -46,54 +46,81 @@ rule somatic_neoepitope_preparation_link_out_run:
         shell(wf.get_shell_cmd("link_out", "run", wildcards))
 
 
-rule somatic_neoepitope_prediction_pvactools_install:
-    output:
-        **wf.get_output_files("pvacseq", "install"),
-    params:
-        container="docker://griffithlab/pvactools",
-    resources:
-        time=wf.get_resource("pvacseq", "install", "time"),
-        memory=wf.get_resource("pvacseq", "install", "memory"),
-        partition=wf.get_resource("pvacseq", "install", "partition"),
-    log:
-        **wf.get_log_file("pvacseq", "install"),
-    wrapper:
-        wf.wrapper_path("singularity")
+if "pVACseq" in cfg["tools"] and not cfg["pVACseq"]["path_container"]:
+
+    rule somatic_neoepitope_prediction_pvactools_install:
+        output:
+            **wf.get_output_files("pvacseq", "install"),
+        params:
+            container="docker://griffithlab/pvactools",
+        resources:
+            time=wf.get_resource("pvacseq", "install", "time"),
+            memory=wf.get_resource("pvacseq", "install", "memory"),
+            partition=wf.get_resource("pvacseq", "install", "partition"),
+        log:
+            **wf.get_log_file("pvacseq", "install"),
+        wrapper:
+            wf.wrapper_path("singularity")
 
 
-rule somatic_neoepitope_preparation:
-    input:
-        unpack(wf.get_input_files("pvacseq", "prepare")),
-    output:
-        **wf.get_output_files("pvacseq", "prepare"),
-    log:
-        **wf.get_log_file("pvacseq", "prepare"),
-    threads: wf.get_resource("pvacseq", "prepare", "threads")
-    resources:
-        time=wf.get_resource("pvacseq", "prepare", "time"),
-        memory=wf.get_resource("pvacseq", "prepare", "memory"),
-        partition=wf.get_resource("pvacseq", "prepare", "partition"),
-        tmpdir=wf.get_resource("pvacseq", "prepare", "tmpdir"),
-    params:
-        **{"args": wf.get_params("pvacseq", "prepare")},
-    wrapper:
-        wf.wrapper_path("pvactools/combining")
+if cfg["pileup"]["enabled"]:
+
+    rule somatic_neoepitope_pvactools_pileup:
+        input:
+            unpack(wf.get_input_files("pvacseq", "pileup")),
+        output:
+            **wf.get_output_files("pvacseq", "pileup"),
+        log:
+            **wf.get_log_file("pvacseq", "pileup"),
+        threads: wf.get_resource("pvacseq", "pileup", "threads")
+        resources:
+            time=wf.get_resource("pvacseq", "pileup", "time"),
+            memory=wf.get_resource("pvacseq", "pileup", "memory"),
+            partition=wf.get_resource("pvacseq", "pileup", "partition"),
+            tmpdir=wf.get_resource("pvacseq", "pileup", "tmpdir"),
+        params:
+            **{"args": wf.get_params("pvacseq", "pileup")},
+        wrapper:
+            wf.wrapper_path("pvactools/pileup")
 
 
-rule somatic_neoepitope_prediction:
-    input:
-        unpack(wf.get_input_files("pvacseq", "predict")),
-    output:
-        **wf.get_output_files("pvacseq", "predict"),
-    log:
-        **wf.get_log_file("pvacseq", "predict"),
-    threads: wf.get_resource("pvacseq", "predict", "threads")
-    resources:
-        time=wf.get_resource("pvacseq", "predict", "time"),
-        memory=wf.get_resource("pvacseq", "predict", "memory"),
-        partition=wf.get_resource("pvacseq", "predict", "partition"),
-        tmpdir=wf.get_resource("pvacseq", "predict", "tmpdir"),
-    params:
-        **{"args": wf.get_params("pvacseq", "predict")},
-    wrapper:
-        wf.wrapper_path("pvactools/pvacseq")
+if cfg["expression"]["enabled"]:
+
+    rule somatic_neoepitope_pvactools_combine:
+        input:
+            unpack(wf.get_input_files("pvacseq", "combine")),
+        output:
+            **wf.get_output_files("pvacseq", "combine"),
+        log:
+            **wf.get_log_file("pvacseq", "combine"),
+        threads: wf.get_resource("pvacseq", "combine", "threads")
+        resources:
+            time=wf.get_resource("pvacseq", "combine", "time"),
+            memory=wf.get_resource("pvacseq", "combine", "memory"),
+            partition=wf.get_resource("pvacseq", "combine", "partition"),
+            tmpdir=wf.get_resource("pvacseq", "combine", "tmpdir"),
+        params:
+            **{"args": wf.get_params("pvacseq", "combine")},
+        wrapper:
+            wf.wrapper_path("pvactools/combine")
+
+
+if "pVACseq" in cfg["tools"]:
+
+    rule somatic_neoepitope_pvactools_prediction:
+        input:
+            unpack(wf.get_input_files("pvacseq", "predict")),
+        output:
+            **wf.get_output_files("pvacseq", "predict"),
+        log:
+            **wf.get_log_file("pvacseq", "predict"),
+        threads: wf.get_resource("pvacseq", "predict", "threads")
+        resources:
+            time=wf.get_resource("pvacseq", "predict", "time"),
+            memory=wf.get_resource("pvacseq", "predict", "memory"),
+            partition=wf.get_resource("pvacseq", "predict", "partition"),
+            tmpdir=wf.get_resource("pvacseq", "predict", "tmpdir"),
+        params:
+            **{"args": wf.get_params("pvacseq", "predict")},
+        wrapper:
+            wf.wrapper_path("pvactools/pvacseq")

@@ -62,13 +62,6 @@ if [[ "{reads_right}" != "" ]]; then
     right_files_prefixed=" -2 ${{right_files}}"
 fi
 
-t2g="{args[path_transcript_to_gene]}"
-t2g_cmd=""
-if [[ "$t2g" != "" ]] && [[ "$t2g" != "REQUIRED" ]] && [[ -r "$t2g" ]]
-then
-    t2g_cmd=" -g $t2g"
-fi
-
 libraryType="A"
 if [[ {args[strand]} -ge 0 ]]
 then
@@ -88,10 +81,10 @@ then
 fi
 
 salmon quant \
-    -i {args[path_index]} \
+    -i $(dirname {input.indices}) \
     -l $libraryType \
     {read_flag} ${{left_files_prefixed}} ${{right_files_prefixed}} \
-    ${{t2g_cmd}} \
+    -g {input.features} \
     -o $TMPDIR \
     -p {args[num_threads]} \
     --auxDir aux \

@@ -928,6 +928,25 @@ def aligner_indices_fake_fs(fake_fs):
     return fake_fs
 
 
+@pytest.fixture
+def hla_typing_result_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file purity.txt"""
+    # Create work directory
+    fake_fs.fs.makedirs("/HLA_TYPING/output", exist_ok=True)
+    # Create autobin result for the samples
+    tpl = "/{typing_tool}.{library_name}/out/{typing_tool}.{library_name}.txt"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
+        if isTumor == "Y":
+            library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+            fake_fs.fs.create_file(
+                tpl.format(mapper="bwa", typing_tool="optitype", library_name=library_name),
+                contents="HLA-A*02:01\nHLA-A*11:01\nHLA-B*15:32\nHLA-C*04:03",
+                create_missing_dirs=True,
+            )
+    return fake_fs
+
+
 def patch_module_fs(module_name: str, fake_fs, mocker):
     """Helper function to mock out the file-system related things in the module with the given
     name using the given fake_fs and pytest-mock mocker

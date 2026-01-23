@@ -156,7 +156,9 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
                 "canonical",
                 "rank",
                 "length",
-            ]
+            ],
+            "plugins": [],
+            "plugins_dir": "",
         },
     }
     actual = somatic_variant_annotation_workflow.get_args("vep", "run")
