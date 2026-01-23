@@ -24,6 +24,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticNeoepitopePredictionWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 cfg = wf.w_config["step_config"]["somatic_neoepitope_prediction"]
 
+
 localrules:
     # Linking files from work/ to output/ should be done locally
     somatic_neoepitope_preparation_link_out_run,

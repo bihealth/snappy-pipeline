@@ -67,6 +67,7 @@ rule hla_typing_link_out_run:
 
 # OptiType --------------------------------------------------------------------
 
+
 rule hla_typing_optitype_run:
     input:
         **wf.get_input_files("optitype", "run"),

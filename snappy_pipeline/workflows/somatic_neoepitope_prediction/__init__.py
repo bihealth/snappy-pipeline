@@ -31,17 +31,15 @@ The default configuration is as follows.
 
 """
 
-import sys
-
 import pandas as pd
 
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand, Wildcards, InputFiles, OutputFiles
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
+from snakemake.io import expand, Wildcards, InputFiles
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.models.common import ExtractionType, LibraryType
+from snappy_pipeline.models.common import ExtractionType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.common.samplesheet import sample_sheets, tumor_to_normal_mapping
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
@@ -52,8 +50,6 @@ from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantA
 from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow
 from .model import SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel
 from .model import PVACseq as PVACseqModel
-from .model import RnaMapping as RnaMappingConfigModel
-from .model import RnaQuantification as RnaQuantificationConfigModel
 
 
 __author__ = "Eric Blanc"
