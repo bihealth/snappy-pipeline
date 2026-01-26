@@ -284,8 +284,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     def _get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
-        return pair["normal_sample"].name if pair else None
+        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
+        return pair["normal_sample"].name if pair["normal_sample"] else None
 
     def _get_tumor_bio_sample(self, wildcards):
         """Return bio sample to tumor dna ngs library"""
@@ -294,8 +294,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     def _get_normal_bio_sample(self, wildcards):
         """Return normal bio sample to tumor dna ngs library"""
-        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
-        return pair["normal_sample"].test_sample.bio_sample.name if pair else None
+        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
+        return pair["normal_sample"].test_sample.bio_sample.name if pair["normal_sample"] else None
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
