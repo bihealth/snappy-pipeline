@@ -3,8 +3,8 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - star ==2.7.3a
-  - samtools ==1.9
-  - samblaster ==0.1.24
-  - seqtk ==1.3
+  - star ==2.7.11b
+  - samtools >=1.21
+  - samblaster ==0.1.26
+  - seqtk ==1.5
   - trimadap ==r11
