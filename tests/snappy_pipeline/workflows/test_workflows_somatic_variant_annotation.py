@@ -46,6 +46,7 @@ def minimal_config():
             tools: ["vep"]
             vep:
               cache_dir: /path/to/dir/cache
+              plugins: ["plugin"]
 
         data_sets:
           first_batch:
@@ -104,6 +105,7 @@ def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
         "reference": "/path/to/ref.fa",
+        "plugins": "work/vep_plugins/out/.done"
     }
     actual = somatic_variant_annotation_workflow.get_input_files("vep", "run")
     assert actual == expected
@@ -156,7 +158,9 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
                 "canonical",
                 "rank",
                 "length",
-            ]
+            ],
+            "plugins": ["plugin"],
+            "plugins_dir": "work/vep_plugins/out",
         },
     }
     actual = somatic_variant_annotation_workflow.get_args("vep", "run")

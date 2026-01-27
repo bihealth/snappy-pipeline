@@ -1,0 +1,14 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python>=3.12
+  # - pip==21.3.1
+  # - pip:
+  #     - pvactools==3.1.3
+  #     - mhcflurry==2.0.1
+  #     - mhcnuggets==2.3.3
+  #     - git+https://github.com/griffithlab/bigmhc.git#egg=bigmhc
+  #     - git+https://github.com/griffithlab/deepimmuno.git#egg=deepimmuno
+  #     - tensorflow==1.5.0

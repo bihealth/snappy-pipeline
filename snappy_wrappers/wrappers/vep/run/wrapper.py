@@ -12,6 +12,15 @@ vep_config = args["config"]
 # Get shortcuts to step configuration
 pick_order = ",".join(vep_config["pick_order"])
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
+if vep_config["plugins"]:
+    plugins = " ".join(["--plugin " + x for x in vep_config["plugins"]])
+    if not vep_config["plugins_dir"]:
+        raise Exception("Please provide plugins directory if you want to use plugins")
+    else:
+        plugins_dir = "--dir_plugins " + vep_config["plugins_dir"]
+else:
+    plugins = ""
+    plugins_dir = ""
 
 full = snakemake.output.full if "full" in snakemake.output.keys() else ""
 
@@ -44,6 +53,8 @@ then
             echo --dir_cache {vep_config[cache_dir]}
         fi) \
         {script_output_options} \
+        {plugins} \
+        {plugins_dir} \
         --{vep_config[tx_flag]} \
         --fasta {snakemake.input.reference} \
         --input_file {snakemake.input.vcf} --format vcf \
@@ -64,6 +75,8 @@ vep --verbose --force_overwrite --offline --cache \
         echo --dir_cache {vep_config[cache_dir]}
     fi) \
     {script_output_options} \
+    {plugins} \
+    {plugins_dir} \
     --pick --pick_order {pick_order} \
     --{vep_config[tx_flag]} \
     --fasta {snakemake.input.reference} \

@@ -91,27 +91,28 @@ rule hla_typing_optitype_run:
 
 
 # NB: reference is updated in the installed package
-rule hla_typing_arcashla_prepare_reference:
-    output:
-        touch("work/arcashla.prepare_reference/out/.done"),
-    log:
-        "work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
-    wrapper:
-        wf.wrapper_path("arcashla/prepare_reference")
+if "arcashla" in wf.w_config.step_config["hla_typing"].tools:
 
+    rule hla_typing_arcashla_prepare_reference:
+        output:
+            touch("work/arcashla.prepare_reference/out/.done"),
+        log:
+            "work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
+        wrapper:
+            wf.wrapper_path("arcashla/prepare_reference")
 
-rule hla_typing_arcashla_run:
-    input:
-        unpack(wf.get_input_files("arcashla", "run")),
-    output:
-        **wf.get_output_files("arcashla", "run"),
-    threads: wf.get_resource("arcashla", "run", "threads")
-    resources:
-        time=wf.get_resource("arcashla", "run", "time"),
-        memory=wf.get_resource("arcashla", "run", "memory"),
-        partition=wf.get_resource("arcashla", "run", "partition"),
-        tmpdir=wf.get_resource("arcashla", "run", "tmpdir"),
-    log:
-        wf.get_log_file("arcashla", "run"),
-    wrapper:
-        wf.wrapper_path("arcashla/run")
+    rule hla_typing_arcashla_run:
+        input:
+            unpack(wf.get_input_files("arcashla", "run")),
+        output:
+            **wf.get_output_files("arcashla", "run"),
+        threads: wf.get_resource("arcashla", "run", "threads")
+        resources:
+            time=wf.get_resource("arcashla", "run", "time"),
+            memory=wf.get_resource("arcashla", "run", "memory"),
+            partition=wf.get_resource("arcashla", "run", "partition"),
+            tmpdir=wf.get_resource("arcashla", "run", "tmpdir"),
+        log:
+            wf.get_log_file("arcashla", "run"),
+        wrapper:
+            wf.wrapper_path("arcashla/run")
