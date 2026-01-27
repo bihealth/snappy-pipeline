@@ -88,7 +88,6 @@ if "vep" in tools:
                     touch {output}
                 """
 
-
     rule somatic_variant_annotation_vep_run:
         input:
             **wf.get_input_files("vep", "run"),
