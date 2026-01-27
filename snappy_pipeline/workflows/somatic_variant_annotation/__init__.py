@@ -84,6 +84,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
 )
 
 from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
+from snappy_pipeline.models.annotation import Vep as VepConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -166,7 +167,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     @dictify
-    def _get_log_file(self, action):
+    def get_log_file(self, action):
         """Return mapping of log files."""
         # Validate action
         self._validate_action(action)
@@ -180,6 +181,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
 
 class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
@@ -192,7 +194,7 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     annotator = "vep"
 
     #: Class available actions
-    actions = ("run",)
+    actions = ("plugins", "run")
 
     #: Also creates vcf with all annotations
     has_full = True
@@ -216,11 +218,29 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         for k, v in input_files.items():
             yield k, v
         yield "reference", self.w_config.static_data_config.reference.path
+        cfg: VepConfigModel = self.config.get("vep")
+        if cfg.plugins and not cfg.plugins_dir:
+            yield "plugins", "work/vep_plugins/out/.done"
+
+    def get_output_files(self, action: str):
+        self._validate_action(action)
+        if action == "plugins":
+            return "work/vep_plugins/out/.done"
+        return super().get_output_files(action)
+
+    def get_log_file(self, action: str):
+        self._validate_action(action)
+        if action == "plugins":
+            return "work/vep_plugins/log/download.log"
+        return super().get_log_file(action)
 
     def get_args(self, action):
         """Return arguments to pass down."""
         self._validate_action(action)
-        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+        vep_config = dict(self.config.get(self.name).model_dump(by_alias=True))
+        if not vep_config["plugins_dir"]:
+            vep_config["plugins_dir"] = "work/vep_plugins/out"
+        return {"config": vep_config}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

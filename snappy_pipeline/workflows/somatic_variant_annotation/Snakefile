@@ -23,6 +23,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = SomaticVariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+tools = wf.config["tools"]
 
 # Rules =======================================================================
 
@@ -55,21 +56,53 @@ rule somatic_variant_annotation_link_out_run:
 
 # Run VEP ---------------------------------------------------------------------
 
+if "vep" in tools:
 
-rule somatic_variant_annotation_vep:
-    input:
-        **wf.get_input_files("vep", "run"),
-    output:
-        **wf.get_output_files("vep", "run"),
-    threads: wf.get_resource("vep", "run", "threads")
-    resources:
-        time=wf.get_resource("vep", "run", "time"),
-        memory=wf.get_resource("vep", "run", "memory"),
-        partition=wf.get_resource("vep", "run", "partition"),
-        tmpdir=wf.get_resource("vep", "run", "tmpdir"),
-    params:
-        args=wf.get_args("vep", "run"),
-    log:
-        **wf.get_log_file("vep", "run"),
-    wrapper:
-        wf.wrapper_path("vep/run")
+    if not wf.config["vep"]["plugins_dir"]:
+
+        rule somatic_variant_annotation_vep_plugins:
+            output:
+                wf.get_output_files("vep", "plugins"),
+            threads: wf.get_resource("vep", "plugins", "threads")
+            resources:
+                time=wf.get_resource("vep", "plugins", "time"),
+                memory=wf.get_resource("vep", "plugins", "memory"),
+                partition=wf.get_resource("vep", "plugins", "partition"),
+                tmpdir=wf.get_resource("vep", "plugins", "tmpdir"),
+            params:
+                args=[
+                    "https://github.com/griffithlab/pVACtools/raw/refs/heads/master/pvactools/tools/pvacseq/VEP_plugins/Frameshift.pm",
+                    "https://github.com/griffithlab/pVACtools/raw/refs/heads/master/pvactools/tools/pvacseq/VEP_plugins/Wildtype.pm",
+                ],
+            log:
+                wf.get_log_file("vep", "plugins"),
+            shell:
+                r"""
+                    rm -f {log}
+                    for url in {params.args}
+                    do
+                        plugin=$(basename $url)
+                        fn=$(dirname {output})/$plugin
+                        wget --append-output={log} --output-document=$fn $url
+                    done
+                    touch {output}
+                """
+
+
+    rule somatic_variant_annotation_vep_run:
+        input:
+            **wf.get_input_files("vep", "run"),
+        output:
+            **wf.get_output_files("vep", "run"),
+        threads: wf.get_resource("vep", "run", "threads")
+        resources:
+            time=wf.get_resource("vep", "run", "time"),
+            memory=wf.get_resource("vep", "run", "memory"),
+            partition=wf.get_resource("vep", "run", "partition"),
+            tmpdir=wf.get_resource("vep", "run", "tmpdir"),
+        params:
+            args=wf.get_args("vep", "run"),
+        log:
+            **wf.get_log_file("vep", "run"),
+        wrapper:
+            wf.wrapper_path("vep/run")
