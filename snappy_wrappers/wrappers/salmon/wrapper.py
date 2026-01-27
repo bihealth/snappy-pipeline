@@ -81,10 +81,10 @@ then
 fi
 
 salmon quant \
-    -i $(dirname {input.indices}) \
+    -i $(dirname {snakemake.input.indices}) \
     -l $libraryType \
     {read_flag} ${{left_files_prefixed}} ${{right_files_prefixed}} \
-    -g {input.features} \
+    -g {snakemake.input.features} \
     -o $TMPDIR \
     -p {args[num_threads]} \
     --auxDir aux \
@@ -93,11 +93,8 @@ salmon quant \
 # Copy over the output files
 cp $TMPDIR/quant.sf {snakemake.output.transcript_sf}
 md5sum {snakemake.output.transcript_sf} > {snakemake.output.transcript_sf_md5}
-if [[ "${{t2g_cmd}}" != "" ]]
-then
-    cp $TMPDIR/quant.genes.sf {snakemake.output.gene_sf}
-    md5sum {snakemake.output.gene_sf} > {snakemake.output.gene_sf_md5}
-fi
+cp $TMPDIR/quant.genes.sf {snakemake.output.gene_sf}
+md5sum {snakemake.output.gene_sf} > {snakemake.output.gene_sf_md5}
 
 # Copy log files
 log=$(dirname {snakemake.log.log})
