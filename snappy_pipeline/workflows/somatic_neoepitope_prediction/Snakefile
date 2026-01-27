@@ -22,7 +22,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 wf = SomaticNeoepitopePredictionWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-cfg = wf.w_config["step_config"]["somatic_neoepitope_prediction"]
 
 
 localrules:
@@ -47,11 +46,11 @@ rule somatic_neoepitope_preparation_link_out_run:
         shell(wf.get_shell_cmd("link_out", "run", wildcards))
 
 
-if "pVACseq" in cfg["tools"] and not cfg["pVACseq"]["path_container"]:
+if "pVACseq" in wf.config["tools"] and not wf.config["pVACseq"]["path_container"]:
 
     rule somatic_neoepitope_prediction_pvactools_install:
         output:
-            **wf.get_output_files("pvacseq", "install"),
+            wf.get_output_files("pvacseq", "install"),
         params:
             container="docker://griffithlab/pvactools",
         resources:
@@ -59,12 +58,14 @@ if "pVACseq" in cfg["tools"] and not cfg["pVACseq"]["path_container"]:
             memory=wf.get_resource("pvacseq", "install", "memory"),
             partition=wf.get_resource("pvacseq", "install", "partition"),
         log:
-            **wf.get_log_file("pvacseq", "install"),
-        wrapper:
-            wf.wrapper_path("singularity")
+            wf.get_log_file("pvacseq", "install"),
+        shell:
+            r"""
+                apptainer pull --name {output} {params.container}
+            """
 
 
-if cfg["pileup"]["enabled"]:
+if wf.config["pileup"]["enabled"]:
 
     rule somatic_neoepitope_pvactools_pileup:
         input:
@@ -80,12 +81,12 @@ if cfg["pileup"]["enabled"]:
             partition=wf.get_resource("pvacseq", "pileup", "partition"),
             tmpdir=wf.get_resource("pvacseq", "pileup", "tmpdir"),
         params:
-            **{"args": wf.get_params("pvacseq", "pileup")},
+            args=wf.get_args("pvacseq", "pileup"),
         wrapper:
             wf.wrapper_path("pvactools/pileup")
 
 
-if cfg["expression"]["enabled"]:
+if wf.config["quantification"]["enabled"]:
 
     rule somatic_neoepitope_pvactools_combine:
         input:
@@ -101,12 +102,12 @@ if cfg["expression"]["enabled"]:
             partition=wf.get_resource("pvacseq", "combine", "partition"),
             tmpdir=wf.get_resource("pvacseq", "combine", "tmpdir"),
         params:
-            **{"args": wf.get_params("pvacseq", "combine")},
+            args=wf.get_args("pvacseq", "combine"),
         wrapper:
             wf.wrapper_path("pvactools/combine")
 
 
-if "pVACseq" in cfg["tools"]:
+if "pVACseq" in wf.config["tools"]:
 
     rule somatic_neoepitope_pvactools_prediction:
         input:
@@ -122,6 +123,6 @@ if "pVACseq" in cfg["tools"]:
             partition=wf.get_resource("pvacseq", "predict", "partition"),
             tmpdir=wf.get_resource("pvacseq", "predict", "tmpdir"),
         params:
-            **{"args": wf.get_params("pvacseq", "predict")},
+            args=wf.get_args("pvacseq", "predict"),
         wrapper:
             wf.wrapper_path("pvactools/pvacseq")

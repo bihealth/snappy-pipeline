@@ -3,6 +3,7 @@ import enum
 from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.hla_typing.model import Tool as HlaTypingTool
 
 
 class SupportedPredictionTool(enum.StrEnum):
@@ -80,7 +81,7 @@ class NetMHCIIpanVersion(enum.StrEnum):
 
 class PVACseq(SnappyModel):
     path_container: str | None = None
-    num_threads: int = 1
+    n_threads: int = 1
 
     algorithms: list[Algorithm] | AllAlgorithms = AllAlgorithms.AllClassI
     netmhciipan_version: NetMHCIIpanVersion = NetMHCIIpanVersion.FourOne
@@ -221,6 +222,7 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
     is_filtered: bool = True
 
     path_hla_typing: str = "../hla_typing"
+    tool_hla_typing: HlaTypingTool = HlaTypingTool.optitype
 
     pileup: RnaMapping = RnaMapping()
     quantification: RnaQuantification = RnaQuantification()

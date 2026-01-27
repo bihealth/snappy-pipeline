@@ -40,14 +40,14 @@ conda info > {snakemake.log.conda_info}
 
 bcftools mpileup \
     --fasta-ref {snakemake.input.reference} --regions-file {snakemake.input.loci} \
-    {args[extra_args]}
-    {input.bam} \
+    {args[extra_args]} \
+    {snakemake.input.bam} \
 | bcftools reheader --samples <(echo "{args[tumor_sample]}") \
 | bcftools norm --multiallelics -both --remove-duplicates \
 | bcftools view -AA --output-type z --output {snakemake.output.vcf} --write-index=tbi
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
+md5sum $(basename {snakemake.output.vcf}).tbi >$(basename {snakemake.output.vcf}).tbi.md5
 """
 )

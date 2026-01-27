@@ -12,11 +12,24 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
+combine_script = os.path.join(os.path.dirname(__file__), "combine.py")
+
+# Renaming libraries to samples, and ensure normal before tumor
+# (bcftools view ensures order of libraries, bcftools reheader renames)
 samples = args["tumor_sample"]
 libraries = args["tumor_library"]
 if "normal_sample" in args and "normal_library" in args:
     samples = args["normal_sample"] + " " + samples
     libraries = args["normal_library"] + "," + libraries
+
+expression = []
+if pileup := getattr(snakemake.input, "pileup", None):
+    expression.append(f"--pileup {pileup}")
+if gene_tpms := getattr(snakemake.input, "gene_tpms", None):
+    expression.append(f"--gene-tpms {gene_tpms}")
+if transcript_tpms := getattr(snakemake.input, "transcript_tpms", None):
+    expression.append(f"--transcript-tpms {transcript_tpms}")
+expression = " ".join(expression)
 
 shell(
     r"""
@@ -45,8 +58,8 @@ conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
 bcftools norm \
-    --remove-duplicates --do-not-normalize --multiallelics -any \
-    {snakemake.input.vcf} \
+    --rm-dup exact --do-not-normalize --multiallelics -any \
+    {snakemake.input.annotated} \
 | bcftools view \
     --no-update \
     --samples "{libraries}" \
@@ -54,12 +67,13 @@ bcftools norm \
     --samples <(echo "{samples}" | tr ' ' '\n') \
 | python {combine_script} \
     --sample {args[tumor_sample]} \
+    {expression} \
     {args[extra_args]} \
-    --combine {snakemake.output.vcf}
+    --output {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
+md5sum $(basename {snakemake.output.vcf}).tbi >$(basename {snakemake.output.vcf}).tbi.md5
 """
 )

@@ -69,6 +69,7 @@ def minimal_config():
 
           somatic_neoepitope_prediction:
             tools: [pVACseq]
+            is_filtered: false
             pileup:
               enabled: true
             quantification:
@@ -124,7 +125,7 @@ def somatic_neoepitope_prediction_workflow(
     )
 
 
-def test_somatic_neoepitope_pileup_step_part_get_input_files(
+def test_somatic_neoepitope_prediction_pileup_step_part_get_input_files(
     somatic_neoepitope_prediction_workflow,
 ):
     wildcards = Wildcards(
@@ -136,8 +137,8 @@ def test_somatic_neoepitope_pileup_step_part_get_input_files(
         }
     )
     # Define expected
-    annotated_tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
-    mapping_tpl = "{mapper}.P001-T1-RNA1-mRNA_seq1"
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    mapping_tpl = "star.P001-T1-RNA1-mRNA_seq1"
     expected = {
         "bam": f"NGS_MAPPING/output/{mapping_tpl}/out/{mapping_tpl}.bam",
         "loci": f"SOMATIC_VARIANT_ANNOTATION/output/{annotated_tpl}/out/{annotated_tpl}.vcf.gz",
@@ -149,7 +150,7 @@ def test_somatic_neoepitope_pileup_step_part_get_input_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_combine_step_part_get_input_files(
+def test_somatic_neoepitope_prediction_combine_step_part_get_input_files(
     somatic_neoepitope_prediction_workflow,
 ):
     wildcards = Wildcards(
@@ -161,8 +162,8 @@ def test_somatic_neoepitope_combine_step_part_get_input_files(
         }
     )
     # Define expected
-    annotated_tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
-    expr_tpl = "{mapper}.P001-T1-RNA1-mRNA_seq1"
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    expr_tpl = "salmon.P001-T1-RNA1-mRNA_seq1"
     expected = {
         "pileup": f"work/{annotated_tpl}/out/{annotated_tpl}.pileup.vcf.gz",
         "annotated": f"SOMATIC_VARIANT_ANNOTATION/output/{annotated_tpl}/out/{annotated_tpl}.vcf.gz",
@@ -175,7 +176,7 @@ def test_somatic_neoepitope_combine_step_part_get_input_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_step_part_get_input_files(
+def test_somatic_neoepitope_prediction_predict_step_part_get_input_files(
     somatic_neoepitope_prediction_workflow,
 ):
     # Define expected
@@ -187,8 +188,8 @@ def test_somatic_neoepitope_prediction_step_part_get_input_files(
             "tumor_dna": "P001-T1-DNA1-WGS1",
         }
     )
-    annotated_tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
-    hla_tpl = "HLA_TYPING/output/{{typer}}.{library}/out/{{typer}}.{library}.txt"
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    hla_tpl = "HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
     expected = {
         "container": "work/containers/out/pvactools.sif",
         "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
@@ -202,7 +203,7 @@ def test_somatic_neoepitope_prediction_step_part_get_input_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_install_step_part_get_output_files(
+def test_somatic_neoepitope_prediction_install_step_part_get_output_files(
     somatic_neoepitope_prediction_workflow,
 ):
     expected = {"container": "work/containers/out/pvactools.sif"}
@@ -210,34 +211,34 @@ def test_somatic_neoepitope_install_step_part_get_output_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_pileup_step_part_get_output_files(
+def test_somatic_neoepitope_prediction_pileup_step_part_get_output_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     expected = {"vcf": f"work/{tpl}/out/{tpl}.pileup.vcf.gz"}
     actual = somatic_neoepitope_prediction_workflow.get_output_files("pvacseq", "pileup")
     assert actual == expected
 
 
-def test_somatic_neoepitope_combine_step_part_get_output_files(
+def test_somatic_neoepitope_prediction_combine_step_part_get_output_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     expected = {"vcf": f"work/{tpl}/out/{tpl}.combined.vcf.gz"}
     actual = somatic_neoepitope_prediction_workflow.get_output_files("pvacseq", "combine")
     assert actual == expected
 
 
-def test_somatic_neoepitope_predict_step_part_get_output_files(
+def test_somatic_neoepitope_prediction_predict_step_part_get_output_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     expected = {"done": f"work/{tpl}/neoepitopes/.done"}
     actual = somatic_neoepitope_prediction_workflow.get_output_files("pvacseq", "predict")
     assert actual == expected
 
 
-def test_somatic_neoepitope_preparation_step_part_get_resource(
+def test_somatic_neoepitope_prediction_step_part_get_resource(
     somatic_neoepitope_prediction_workflow,
 ):
     # Define expected
@@ -245,7 +246,7 @@ def test_somatic_neoepitope_preparation_step_part_get_resource(
         "install": {"threads": 1, "time": "03:59:59", "memory": "6G"},
         "pileup": {"threads": 1, "time": "03:59:59", "memory": "6G"},
         "combine": {"threads": 1, "time": "03:59:59", "memory": "6G"},
-        "predict": {"threads": 4, "time": "23:59:59", "memory": "64G"},
+        "predict": {"threads": 16, "time": "23:59:59", "memory": "64G"},
     }
     # Evaluate
     for action, resources in expected_dict.items():
@@ -255,43 +256,44 @@ def test_somatic_neoepitope_preparation_step_part_get_resource(
             assert actual == expected, msg_error
 
 
-def test_somatic_neoepitope_install_step_part_get_log_files(
+def test_somatic_neoepitope_prediction_install_step_part_get_log_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    base_out = "work/containers/log/pvactools"
-    expected = get_expected_log_files_dict(base_out=base_out)
+    expected = "work/containers/log/pvactools.log"
     actual = somatic_neoepitope_prediction_workflow.get_log_file("pvacseq", "install")
     assert actual == expected
 
 
-def test_somatic_neoepitope_pileup_step_part_get_log_files(
+def test_somatic_neoepitope_prediction_pileup_step_part_get_log_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/pileup")
     actual = somatic_neoepitope_prediction_workflow.get_log_file("pvacseq", "pileup")
     assert actual == expected
 
 
-def test_somatic_neoepitope_combine_step_part_get_log_files(
+def test_somatic_neoepitope_prediction_combine_step_part_get_log_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/combine")
     actual = somatic_neoepitope_prediction_workflow.get_log_file("pvacseq", "combine")
     assert actual == expected
 
 
-def test_somatic_neoepitope_predict_step_part_get_log_files(
+def test_somatic_neoepitope_prediction_predict_step_part_get_log_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.filtered.{tumor_dna}"
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/predict")
     actual = somatic_neoepitope_prediction_workflow.get_log_file("pvacseq", "predict")
     assert actual == expected
 
 
-def test_somatic_neoepitope_pileup_step_part_get_args(somatic_neoepitope_prediction_workflow):
+def test_somatic_neoepitope_prediction_pileup_step_part_get_args(
+    somatic_neoepitope_prediction_workflow
+):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -308,7 +310,9 @@ def test_somatic_neoepitope_pileup_step_part_get_args(somatic_neoepitope_predict
     assert actual == expected
 
 
-def test_somatic_neoepitope_combine_step_part_get_args(somatic_neoepitope_prediction_workflow):
+def test_somatic_neoepitope_prediction_combine_step_part_get_args(
+    somatic_neoepitope_prediction_workflow
+):
     wildcards = Wildcards(
         fromdict={
             "mapper": "bwa",
@@ -333,7 +337,9 @@ def test_somatic_neoepitope_combine_step_part_get_args(somatic_neoepitope_predic
     assert actual == expected
 
 
-# def test_somatic_neoepitope_predict_step_part_get_args(somatic_neoepitope_prediction_workflow):
+# def test_somatic_neoepitope_prediction_predict_step_part_get_args(
+#     somatic_neoepitope_prediction_workflow
+# ):
 #     wildcards = Wildcards(
 #         fromdict={
 #             "mapper": "bwa",
@@ -343,15 +349,16 @@ def test_somatic_neoepitope_combine_step_part_get_args(somatic_neoepitope_predic
 #         }
 #     )
 #     expected = {
-#         "num_threads": 1,
+#         "n_threads": 1,
 #         "tumor_sample": "P001-T1",
 #         "normal_sample": "P001-N1",
-#         "hla_type_I": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+#         "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+#         "algorithms": "all_class_i",
 #         "extra_args": (
 #             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
-#             "--algorithms 'all_class_i' --class_i-epitope-length '8,9,10,11' "
+#             "--class_i-epitope-length '8,9,10,11' "
 #             "--downstream-sequence-length 1000 --expn-val 1.0 --minimum-fold-change 0.0 "
-#             "--netmhciipan-version '4.1' --netmhc_stab --net-chop-method 'cterm' "
+#             "--netmhciipan-version '4.1' --netmhc-stab --net-chop-method 'cterm' "
 #             "--normal-cov 25 --normal-vaf 0.02 --precentile-threshold 1.0 "
 #             "--percentage-threshold-strategy 'conservative' --tdna-cov 25 --tdna-vaf 0.1 "
 #             "--top-score-metric 'median' --top-score-metric2 'percentile' "
@@ -370,13 +377,13 @@ def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_wo
     assert actual == expected
 
     # Check result file construction
-    tpl = "output/{mapper}.{caller}.{annotator}.filtered.P00{i}-T{t}-DNA1-WGS1/log/predict.log"
+    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/log/predict.log"
     expected = [
         tpl.format(mapper="bwa", caller="mutect2", annotator="vep", i=i, t=t)
         for (i, t) in ((1, 1), (2,1), (2, 2))
     ]
 
-    tpl = "output/{mapper}.{caller}.{annotator}.filtered.P00{i}-T{t}-DNA1-WGS1/neoepitopes/.done"
+    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/neoepitopes/.done"
     expected += [
         tpl.format(mapper="bwa", caller="mutect2", annotator="vep", i=i, t=t)
         for (i, t) in ((1, 1), (2, 1), (2, 2))

@@ -96,7 +96,7 @@ class PvacSeqStepPart(BaseStepPart):
             memory="6G",
         ),
         "predict": ResourceUsage(
-            threads=4,
+            threads=16,
             time="23:59:59",
             memory="64G",
         ),
@@ -126,8 +126,9 @@ class PvacSeqStepPart(BaseStepPart):
     def _get_input_files_pileup(self, wildcards: Wildcards) -> dict[str, str]:
         input_files = {}
 
-        tpl = "output/{{mapper}}.{library}/out/{{mapper}}.{library}.bam".format(
-            library=self.parent.tumor_rna[wildcards.tumor_dna]
+        tpl = "output/{mapper}.{library}/out/{mapper}.{library}.bam".format(
+            mapper=self.config.pileup.tool_rna_mapping,
+            library=self.parent.tumor_rna[wildcards.tumor_dna],
         )
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         input_files["bam"] = ngs_mapping(tpl)
@@ -154,11 +155,12 @@ class PvacSeqStepPart(BaseStepPart):
         if self.config.quantification.enabled and (
             library := self.parent.tumor_rna.get(wildcards.tumor_dna, None)
         ):
-            tpl = f"output/{{mapper}}.{library}/out/{{mapper}}.{library}.gene.sf"
+            name = f"{self.config.quantification.tool_gene_expression_quantification}.{library}"
+            tpl = f"output/{name}/out/{name}.gene.sf"
             quantification = self.parent.sub_workflows["gene_expression_quantification"]
             input_files["gene_tpms"] = quantification(tpl)
 
-            tpl = f"output/{{mapper}}.{library}/out/{{mapper}}.{library}.transcript.sf"
+            tpl = f"output/{name}/out/{name}.transcript.sf"
             input_files["transcript_tpms"] = quantification(tpl)
 
         return input_files
@@ -174,13 +176,13 @@ class PvacSeqStepPart(BaseStepPart):
 
         hla_typing = self.parent.sub_workflows["hla_typing"]
         library = wildcards.tumor_dna
-        tpl = f"{{typer}}.{library}"
+        tpl = f"{self.config.tool_hla_typing}.{library}"
         yield "hla_tumor_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
         if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
-            tpl = f"{{typer}}.{library}"
+            tpl = f"{self.config.tool_hla_typing}.{library}"
             yield "hla_normal_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
         if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
-            tpl = f"{{typer}}.{library}"
+            tpl = f"{self.config.tool_hla_typing}.{library}"
             yield "hla_tumor_rna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
 
         if self.cfg.genes_of_interest_file:
@@ -209,12 +211,11 @@ class PvacSeqStepPart(BaseStepPart):
             case _:
                 self._validate_action(action)
 
-    @dictify
     def get_log_file(self, action):
         """Return mapping of log files."""
         self._validate_action(action)
         if action == "install":
-            tpl = "work/containers/log/pvactools"
+            return "work/containers/log/pvactools.log"
         else:
             tpl = "work/{tpl}/log/{action}".format(tpl=self.annotated_template, action=action)
         key_ext = (
@@ -222,9 +223,11 @@ class PvacSeqStepPart(BaseStepPart):
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
+        log_files = {}
         for key, ext in key_ext:
-            yield key, tpl + ext
-            yield key + "_md5", tpl + ext + ".md5"
+            log_files[key] = tpl + ext
+            log_files[key + "_md5"] = log_files[key] + ".md5"
+        return log_files
 
     def get_args(self, action):
         match action:
@@ -316,9 +319,11 @@ class PvacSeqStepPart(BaseStepPart):
         del args["path_container"]
         del args["peptide_fasta"]
         del args["genes_of_interest_file"]
+        n_threads = args.pop("n_threads")
 
-        if isinstance(args["algorithms"], list):
-            args["algorithms"] = ",".join(args["algorithms"])
+        algorithms = args.pop("algorithms")
+        if isinstance(algorithms, list):
+            algorithms = " ".join(algorithms)
 
         if args["percentile_threshold"] is None:
             del args["percentile_threshold"]
@@ -339,7 +344,7 @@ class PvacSeqStepPart(BaseStepPart):
             if fn := getattr(input, i, None):
                 with open(fn, "rt") as f:
                     for line in f:
-                        hla_types += "HLA-" + line.strip()
+                        hla_types |= {"HLA-" + line.strip()}
 
         samples = self._get_sample_names(wildcards)
 
@@ -347,6 +352,8 @@ class PvacSeqStepPart(BaseStepPart):
             "normal_sample": samples["normal_sample"],
             "tumor_sample": samples["tumor_sample"],
             "alleles": sorted(hla_types),
+            "algorithms": algorithms,
+            "n_threads": n_threads,
             "extra_args": extra_args.strip(),
         }
 

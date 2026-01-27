@@ -5,3 +5,4 @@ channels:
 dependencies:
     - python>=3.12
     - vcfpy>=0.14
+    - bcftools>=1.21
