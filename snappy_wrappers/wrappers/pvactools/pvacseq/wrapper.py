@@ -8,7 +8,7 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
-# TODO: Put the following in a function (decide where...)
+# TODO: Extend to lists, check for directories in directories [outputs/rw precedence on inputs/ro] & put in a function (decide where...)
 def bindings_for_container(files_to_bind: Namedlist, base_container_path: str, access: str = "ro") -> tuple[str, dict[str, str]]:
     fns = {}
     for key, path in files_to_bind.items():
@@ -36,11 +36,9 @@ def bindings_for_container(files_to_bind: Namedlist, base_container_path: str, a
 alleles = ",".join(args["alleles"])
 
 if peptides := getattr(snakemake.input, "peptides", ""):
-    peptides = f"--peptide-fasta {peptides}"
+    peptides = f"--peptide-fasta {input_fns['peptides']}"
 if genes := getattr(snakemake.input, "genes", ""):
-    genes = f"--genes-of-interest-file {genes}"
-
-n_threads = min(args["n_threads"], snakemake.threads)
+    genes = f"--genes-of-interest-file {input_fns['genes']}"
 
 shell.executable("/bin/bash")
 
@@ -99,7 +97,7 @@ rm -rf $(dirname {snakemake.output})
 mkdir -p $(dirname {snakemake.output})
 
 cat << __EOF > $home/run_pVACseq.sh
-pvacseq run --n-threads {n_threads} \\
+pvacseq run --n-threads {snakemake.threads} \\
     --normal-sample-name {args[normal_sample]} \\
     --iedb-install-directory /opt/iedb \\
     {args[extra_args]} \\
@@ -113,5 +111,7 @@ chmod +x $home/run_pVACseq.sh
 apptainer exec \
     --home $home --bind $TMPDIR:$TMPDIR:rw \
     {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACseq.sh
+
+touch {snakemake.output.done}
 """
 )

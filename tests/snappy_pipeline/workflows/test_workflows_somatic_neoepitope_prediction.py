@@ -246,7 +246,7 @@ def test_somatic_neoepitope_prediction_step_part_get_resource(
         "install": {"threads": 1, "time": "03:59:59", "memory": "6G"},
         "pileup": {"threads": 1, "time": "03:59:59", "memory": "6G"},
         "combine": {"threads": 1, "time": "03:59:59", "memory": "6G"},
-        "predict": {"threads": 16, "time": "23:59:59", "memory": "64G"},
+        "predict": {"threads": 1, "time": "23:59:59", "memory": "64G"},
     }
     # Evaluate
     for action, resources in expected_dict.items():

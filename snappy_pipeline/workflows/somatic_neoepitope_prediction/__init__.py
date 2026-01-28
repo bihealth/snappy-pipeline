@@ -79,7 +79,7 @@ class PvacSeqStepPart(BaseStepPart):
     actions = ("install", "pileup", "combine", "predict")
 
     #: Resources
-    resource_usage = {
+    default_resource_usage = {
         "install": ResourceUsage(
             threads=1,
             time="03:59:59",
@@ -356,6 +356,16 @@ class PvacSeqStepPart(BaseStepPart):
             "n_threads": n_threads,
             "extra_args": extra_args.strip(),
         }
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        self._validate_action(action)
+        if action == "predict":
+            return ResourceUsage(
+                threads=min(self.default_resource_usage["predict"].threads, self.cfg.n_threads),
+                time=self.default_resource_usage["predict"].time,
+                memory=self.default_resource_usage["predict"].memory,
+            )
+        return self.default_resource_usage[action]
 
 
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
