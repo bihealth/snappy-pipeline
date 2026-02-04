@@ -98,7 +98,7 @@ cat << __EOF > {snakemake.output.decision}
     "bed_path": "{config[path_exon_bed]}",
     "bed_file_md5": "$md5",
     "bam_path": "{snakemake.input.bam}",
-    "strand_from_user": "{config[strand]},
+    "strand_from_user": "{config[strand]}",
     "strand_from_infer": "$decision",
     "decision_threshold": {config[threshold]},
     "endedness": "$endedness",
