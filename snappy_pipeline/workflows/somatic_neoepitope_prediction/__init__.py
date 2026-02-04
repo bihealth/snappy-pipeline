@@ -31,6 +31,7 @@ The default configuration is as follows.
 
 """
 
+import json
 import pandas as pd
 
 from typing import Any
@@ -50,6 +51,9 @@ from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantA
 from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow
 from .model import SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel
 from .model import PVACseq as PVACseqModel
+from .model import PVACfuse as PVACfuseModel
+from .model import PVACsplice as PVACspliceModel
+from .model import NetChopMethod
 
 
 __author__ = "Eric Blanc"
@@ -67,157 +71,54 @@ PREDICT_EXT_VALUES = (
 DEFAULT_CONFIG = SomaticNeoepitopePredictionConfigModel.default_config_yaml_string()
 
 
-class PvacSeqStepPart(BaseStepPart):
-    """
-    Preparation VCF file for pvactool
-    """
+class UnsupportedProtocolStrand(Exception):
+    pass
+
+
+class PvacToolsStepPart(BaseStepPart):
+    """Generic stuff for pVACtools modules"""
 
     #: Step name
-    name = "pvacseq"
+    name = "pvactools"
 
-    #: Actions
-    actions = ("install", "pileup", "combine", "predict")
-
-    #: Resources
-    default_resource_usage = {
-        "install": ResourceUsage(
-            threads=1,
-            time="03:59:59",
-            memory="6G",
-        ),
-        "pileup": ResourceUsage(
-            threads=1,
-            time="03:59:59",
-            memory="6G",
-        ),
-        "combine": ResourceUsage(
-            threads=1,
-            time="03:59:59",
-            memory="6G",
-        ),
-        "predict": ResourceUsage(
-            threads=16,
-            time="23:59:59",
-            memory="64G",
-        ),
-    }
+    actions = ("install",)
+    require_rna: bool = False
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.cfg: PVACseqModel = self.config.pVACseq
         self.annotated_template = "{mapper}.{caller}.{annotator}"
         if self.config.is_filtered:
             self.annotated_template += ".filtered"
         self.annotated_template += ".{tumor_dna}"
 
     def get_input_files(self, action):
-        match action:
-            case "install":
-                return lambda x: {}
-            case "pileup":
-                return self._get_input_files_pileup
-            case "combine":
-                return self._get_input_file_combine
-            case "predict":
-                return self._get_input_files_predict
-            case _:
-                self._validate_action(action)
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
-    def _get_input_files_pileup(self, wildcards: Wildcards) -> dict[str, str]:
-        input_files = {}
-
-        tpl = "output/{mapper}.{library}/out/{mapper}.{library}.bam".format(
-            mapper=self.config.pileup.tool_rna_mapping,
-            library=self.parent.tumor_rna[wildcards.tumor_dna],
-        )
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        input_files["bam"] = ngs_mapping(tpl)
-
-        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.annotated_template)
-        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
-        input_files["loci"] = annotation(tpl)
-
-        input_files["reference"] = self.w_config.static_data_config.reference.path
-
-        return input_files
-
-    def _get_input_file_combine(self, wildcards: Wildcards) -> dict[str, str]:
-        input_files = {}
-
-        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.annotated_template)
-        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
-        input_files["annotated"] = annotation(tpl)
-
-        if self.config.pileup.enabled and wildcards.tumor_dna in self.parent.tumor_rna:
-            tpl = "work/{tpl}/out/{tpl}.pileup.vcf.gz".format(tpl=self.annotated_template)
-            input_files["pileup"] = tpl
-
-        if self.config.quantification.enabled and (
-            library := self.parent.tumor_rna.get(wildcards.tumor_dna, None)
-        ):
-            name = f"{self.config.quantification.tool_gene_expression_quantification}.{library}"
-            tpl = f"output/{name}/out/{name}.gene.sf"
-            quantification = self.parent.sub_workflows["gene_expression_quantification"]
-            input_files["gene_tpms"] = quantification(tpl)
-
-            tpl = f"output/{name}/out/{name}.transcript.sf"
-            input_files["transcript_tpms"] = quantification(tpl)
-
-        return input_files
-
-    @dictify
-    def _get_input_files_predict(self, wildcards: Wildcards):
-        if self.cfg.path_container:
-            yield "container", self.cfg.path_container
-        else:
-            yield "container", "work/containers/out/pvactools.sif"
-
-        yield "vcf", "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.annotated_template)
-
-        hla_typing = self.parent.sub_workflows["hla_typing"]
-        library = wildcards.tumor_dna
-        tpl = f"{self.config.tool_hla_typing}.{library}"
-        yield "hla_tumor_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            yield "hla_normal_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            yield "hla_tumor_rna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-
-        if self.cfg.genes_of_interest_file:
-            yield "genes", self.cfg.genes_of_interest_file
-        if self.cfg.run_reference_proteome_similarity and self.cfg.peptide_fasta:
-            yield "peptides", self.cfg.peptide_fasta
-
-    @dictify
     def get_output_files(self, action):
-        """Return output files"""
-        match action:
-            case "install":
-                return {"container": "work/containers/out/pvactools.sif"}
-            case "pileup":
-                return {
-                    "vcf": "work/{tpl}/out/{tpl}.pileup.vcf.gz".format(tpl=self.annotated_template)
-                }
-            case "combine":
-                return {
-                    "vcf": "work/{tpl}/out/{tpl}.combined.vcf.gz".format(
-                        tpl=self.annotated_template
-                    )
-                }
-            case "predict":
-                return {"done": "work/{tpl}/neoepitopes/.done".format(tpl=self.annotated_template)}
-            case _:
-                self._validate_action(action)
+        if action == "install":
+            return {"container": "work/containers/out/pvactools.sif"}
+        self._validate_action(action)
+        return getattr(self, f"_get_output_files_{action}")()
+
+    def _get_output_files_run(self):
+        return {
+            "done": "work/{tpl}/out/{name}.done".format(
+                tpl=self.annotated_template, name=self.name
+            ),
+            "path": "work/{tpl}/{name}/.done".format(tpl=self.annotated_template, name=self.name),
+        }
+
+    def get_args(self, action):
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
 
     def get_log_file(self, action):
         """Return mapping of log files."""
-        self._validate_action(action)
         if action == "install":
-            return "work/containers/log/pvactools.log"
-        else:
-            tpl = "work/{tpl}/log/{action}".format(tpl=self.annotated_template, action=action)
+            return f"work/containers/log/{self.name}.log"
+        self._validate_action(action)
+        tpl = "work/{tpl}/log/{action}".format(tpl=self.annotated_template, action=action)
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -229,16 +130,32 @@ class PvacSeqStepPart(BaseStepPart):
             log_files[key + "_md5"] = log_files[key] + ".md5"
         return log_files
 
-    def get_args(self, action):
-        match action:
-            case "pileup":
-                return self._get_args_pileup
-            case "combine":
-                return self._get_args_combine
-            case "predict":
-                return self._get_args_predict
-            case _:
-                self._validate_action(action)
+    @listify
+    def get_result_files(self):
+        mappers = self.w_config.step_config["ngs_mapping"]["tools"]["dna"]
+        callers = self.w_config.step_config["somatic_variant_calling"]["tools"]
+        annotators = self.w_config.step_config["somatic_variant_annotation"]["tools"]
+        tpl = "{mapper}.{caller}.{annotator}"
+        if self.config.is_filtered:
+            tpl += ".filtered"
+        tpl += ".{tumor_dna}"
+        for tumor_dna in self.parent.tumor_dna.keys():
+            if self.require_rna and self.parent.tumor_rna.get(tumor_dna, None) is None:
+                continue
+            yield from expand(
+                "output/" + tpl + f"/out/{self.name}.done",
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                tumor_dna=[tumor_dna],
+            )
+            yield from expand(
+                "output/" + tpl + f"/log/{self.name}.log",
+                mapper=mappers,
+                caller=callers,
+                annotator=annotators,
+                tumor_dna=[tumor_dna],
+            )
 
     def _get_sample_names(self, wildcards: Wildcards) -> dict[str, str]:
         args = {}
@@ -281,6 +198,153 @@ class PvacSeqStepPart(BaseStepPart):
                 v = "'" + v + "'"
             yield f"--{k} {v}"
 
+    @staticmethod
+    def _read_hla_values(input: InputFiles) -> set[str]:
+        hla_types = set([])
+        for i in ("hla_tumor_dna", "hla_normal_dna", "hla_tumor_rna"):
+            if fn := getattr(input, i, None):
+                with open(fn, "rt") as f:
+                    for line in f:
+                        hla_types |= {"HLA-" + line.strip()}
+        return hla_types
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        if action == "install":
+            return ResourceUsage(threads=1, time="03:59:59", memory="6G")
+        self._validate_action(action)
+        if action in ("pvacseq", "pvacfuse", "pvacsplice"):
+            return ResourceUsage(
+                threads=min(self.default_resource_usage[action].threads, self.cfg.n_threads),
+                time=self.default_resource_usage[action].time,
+                memory=self.default_resource_usage[action].memory,
+            )
+        return self.default_resource_usage[action]
+
+
+class PvacSeqStepPart(PvacToolsStepPart):
+    """
+    Specifics for pVACseq:
+
+    - pileups of expression data at somatic variant loci
+    - gene- & transcript-based TPM for gene overlapping variant
+    """
+
+    #: Step name
+    name = "pvacseq"
+
+    #: Actions
+    actions = ("pileup", "rename", "combine", "pvacseq")
+
+    #: Resources
+    default_resource_usage = {
+        "pileup": ResourceUsage(
+            threads=1,
+            time="03:59:59",
+            memory="6G",
+        ),
+        "rename": ResourceUsage(
+            threads=1,
+            time="00:59:59",
+            memory="2G",
+        ),
+        "combine": ResourceUsage(
+            threads=1,
+            time="03:59:59",
+            memory="6G",
+        ),
+        "pvacseq": ResourceUsage(
+            threads=16,
+            time="23:59:59",
+            memory="64G",
+        ),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.cfg: PVACseqModel = self.config.pvacseq
+
+    def _get_input_files_pileup(self, wildcards: Wildcards) -> dict[str, str]:
+        input_files = {}
+
+        tpl = "output/{mapper}.{library}/out/{mapper}.{library}.bam".format(
+            mapper=self.config.pileup.tool_rna_mapping,
+            library=self.parent.tumor_rna[wildcards.tumor_dna],
+        )
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        input_files["bam"] = ngs_mapping(tpl)
+
+        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.annotated_template)
+        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
+        input_files["loci"] = annotation(tpl)
+
+        input_files["reference"] = self.w_config.static_data_config.reference.path
+
+        return input_files
+
+    def _get_input_files_rename(self, wildcards: Wildcards) -> dict[str, str]:
+        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.annotated_template)
+        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
+        return {"annotated": annotation(tpl)}
+
+    def _get_input_files_combine(self, wildcards: Wildcards) -> dict[str, str]:
+        input_files = {
+            "annotated": "work/{tpl}/out/{tpl}.renamed.vcf.gz".format(tpl=self.annotated_template)
+        }
+
+        if self.config.pileup.enabled and wildcards.tumor_dna in self.parent.tumor_rna:
+            tpl = "work/{tpl}/out/{tpl}.pileup.vcf.gz".format(tpl=self.annotated_template)
+            input_files["pileup"] = tpl
+
+        if self.config.quantification.enabled and (
+            library := self.parent.tumor_rna.get(wildcards.tumor_dna, None)
+        ):
+            name = f"{self.config.quantification.tool_gene_expression_quantification}.{library}"
+            tpl = f"output/{name}/out/{name}.gene.sf"
+            quantification = self.parent.sub_workflows["gene_expression_quantification"]
+            input_files["gene_tpms"] = quantification(tpl)
+
+            tpl = f"output/{name}/out/{name}.transcript.sf"
+            input_files["transcript_tpms"] = quantification(tpl)
+
+        return input_files
+
+    @dictify
+    def _get_input_files_pvacseq(self, wildcards: Wildcards):
+        if self.cfg.path_container:
+            yield "container", self.cfg.path_container
+        else:
+            yield "container", "work/containers/out/pvactools.sif"
+
+        yield "vcf", "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.annotated_template)
+
+        hla_typing = self.parent.sub_workflows["hla_typing"]
+        library = wildcards.tumor_dna
+        tpl = f"{self.config.tool_hla_typing}.{library}"
+        yield "hla_tumor_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
+            tpl = f"{self.config.tool_hla_typing}.{library}"
+            yield "hla_normal_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
+            tpl = f"{self.config.tool_hla_typing}.{library}"
+            yield "hla_tumor_rna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+
+        if self.cfg.genes_of_interest_file:
+            yield "genes", self.cfg.genes_of_interest_file
+        if self.cfg.run_reference_proteome_similarity and self.cfg.peptide_fasta:
+            yield "peptides", self.cfg.peptide_fasta
+
+    def _get_output_files_pileup(self):
+        return {"vcf": "work/{tpl}/out/{tpl}.pileup.vcf.gz".format(tpl=self.annotated_template)}
+
+    def _get_output_files_rename(self):
+        return {"vcf": "work/{tpl}/out/{tpl}.renamed.vcf.gz".format(tpl=self.annotated_template)}
+
+    def _get_output_files_combine(self):
+        return {"vcf": "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.annotated_template)}
+
+    def _get_output_files_pvacseq(self):
+        return self._get_output_files_run()
+
     def _get_args_pileup(self, wildcards: Wildcards) -> dict[str, str]:
         args = dict(self.config.pileup.model_dump(by_alias=True))
 
@@ -300,6 +364,9 @@ class PvacSeqStepPart(BaseStepPart):
             "extra_args": extra_args.strip(),
         }
 
+    def _get_args_rename(self, wildcards: Wildcards) -> dict[str, str]:
+        return self._get_sample_names(wildcards)
+
     def _get_args_combine(self, wildcards: Wildcards) -> dict[str, str]:
         args = dict(self.config.quantification.model_dump(by_alias=True))
 
@@ -311,14 +378,23 @@ class PvacSeqStepPart(BaseStepPart):
         extra_args = " ".join(sorted(list(PvacSeqStepPart._extra_args_flags(args))))
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
-        return {"extra_args": extra_args.strip()} | self._get_sample_names(wildcards)
 
-    def _get_args_predict(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        sample_names = self._get_sample_names(wildcards)
+        return {
+            "extra_args": extra_args.strip(),
+            "tumor_sample": sample_names["tumor_sample"],
+            "normal_sample": sample_names["normal_sample"],
+        }
+
+    def _get_args_pvacseq(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         args = dict(self.cfg.model_dump(by_alias=True))
 
         del args["path_container"]
         del args["peptide_fasta"]
         del args["genes_of_interest_file"]
+        if args["net_chop_method"] == NetChopMethod.DISABLED:
+            del args["net_chop_method"]
+            del args["net_chop_threshold"]
         n_threads = args.pop("n_threads")
 
         algorithms = args.pop("algorithms")
@@ -339,12 +415,7 @@ class PvacSeqStepPart(BaseStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        hla_types = set([])
-        for i in ("hla_tumor_dna", "hla_normal_dna", "hla_tumor_rna"):
-            if fn := getattr(input, i, None):
-                with open(fn, "rt") as f:
-                    for line in f:
-                        hla_types |= {"HLA-" + line.strip()}
+        hla_types = self._read_hla_values(input)
 
         samples = self._get_sample_names(wildcards)
 
@@ -357,15 +428,267 @@ class PvacSeqStepPart(BaseStepPart):
             "extra_args": extra_args.strip(),
         }
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        if action == "predict":
-            return ResourceUsage(
-                threads=min(self.default_resource_usage["predict"].threads, self.cfg.n_threads),
-                time=self.default_resource_usage["predict"].time,
-                memory=self.default_resource_usage["predict"].memory,
-            )
-        return self.default_resource_usage[action]
+
+class PvacFuseStepPart(PvacToolsStepPart):
+    """Specifics for pVACfuse"""
+
+    #: Step name
+    name = "pvacfuse"
+
+    #: Actions
+    actions = ("pvacfuse",)
+
+    require_rna: bool = True
+
+    #: Resources
+    default_resource_usage = {
+        "pvacfuse": ResourceUsage(
+            threads=16,
+            time="23:59:59",
+            memory="64G",
+        ),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.cfg: PVACfuseModel = self.config.pvacfuse
+
+    def _get_input_files_pvacfuse(self, wildcards: Wildcards):
+        input_files = {}
+        if self.cfg.path_container:
+            input_files["container"] = self.cfg.path_container
+        else:
+            input_files["container"] = "work/containers/out/pvactools.sif"
+
+        library = self.parent.tumor_rna.get(wildcards.tumor_dna)
+        somatic_gene_fusion_calling = self.parent.sub_workflows["somatic_gene_fusion_calling"]
+        tpl = f"{self.cfg.tool_somatic_gene_fusion_calling}.{library}"
+        input_files["fusions"] = somatic_gene_fusion_calling(
+            "output/" + tpl + "/out/" + tpl + ".fusions.tsv"
+        )
+
+        hla_typing = self.parent.sub_workflows["hla_typing"]
+        library = wildcards.tumor_dna
+        tpl = f"{self.config.tool_hla_typing}.{library}"
+        input_files["hla_tumor_dna"] = hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
+            tpl = f"{self.config.tool_hla_typing}.{library}"
+            input_files["hla_normal_dna"] = hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
+            tpl = f"{self.config.tool_hla_typing}.{library}"
+            input_files["hla_tumor_rna"] = hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+
+        if self.cfg.genes_of_interest_file:
+            input_files["genes"] = self.cfg.genes_of_interest_file
+        if self.cfg.run_reference_proteome_similarity and self.cfg.peptide_fasta:
+            input_files["peptides"] = self.cfg.peptide_fasta
+
+        return input_files
+
+    def _get_output_files_pvacfuse(self):
+        return self._get_output_files_run()
+
+    def _get_args_pvacfuse(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(self.cfg.model_dump(by_alias=True))
+
+        del args["path_container"]
+        del args["path_somatic_gene_fusion_calling"]
+        del args["tool_somatic_gene_fusion_calling"]
+        del args["peptide_fasta"]
+        del args["genes_of_interest_file"]
+        if args["net_chop_method"] == NetChopMethod.DISABLED:
+            del args["net_chop_method"]
+            del args["net_chop_threshold"]
+        n_threads = args.pop("n_threads")
+
+        algorithms = args.pop("algorithms")
+        if isinstance(algorithms, list):
+            algorithms = " ".join(algorithms)
+
+        if args["percentile_threshold"] is None:
+            del args["percentile_threshold"]
+            del args["percentile_threshold_strategy"]
+        else:
+            del args["binding_threshold"]
+
+        args = PvacSeqStepPart._extra_args_lists(args)
+        extra_args = " ".join(sorted(list(PvacSeqStepPart._extra_args_flags(args))))
+
+        extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
+
+        hla_types = self._read_hla_values(input)
+
+        samples = self._get_sample_names(wildcards)
+
+        return {
+            "tumor_sample": samples["tumor_sample"],
+            "alleles": sorted(hla_types),
+            "algorithms": algorithms,
+            "n_threads": n_threads,
+            "extra_args": extra_args.strip(),
+        }
+
+
+class PvacSpliceStepPart(PvacToolsStepPart):
+    """
+    Specifics for pVACseq:
+
+    - pileups of expression data at somatic variant loci
+    - gene- & transcript-based TPM for gene overlapping variant
+    """
+
+    #: Step name
+    name = "pvacsplice"
+
+    #: Actions
+    actions = ("junction", "pvacsplice")
+
+    require_rna: bool = True
+
+    #: Resources
+    default_resource_usage = {
+        "junction": ResourceUsage(
+            threads=1,
+            time="03:59:59",
+            memory="6G",
+        ),
+        "pvacsplice": ResourceUsage(
+            threads=16,
+            time="23:59:59",
+            memory="64G",
+        ),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.cfg: PVACspliceModel = self.config.pvacsplice
+
+    def _get_input_files_junction(self, wildcards: Wildcards) -> dict[str, str]:
+        input_files = {}
+
+        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.annotated_template)
+        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
+        input_files["annotated"] = annotation(tpl)
+
+        tpl = "output/{mapper}.{library}/out/{mapper}.{library}.bam".format(
+            mapper=self.config.pileup.tool_rna_mapping,
+            library=self.parent.tumor_rna[wildcards.tumor_dna],
+        )
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        input_files["bam"] = ngs_mapping(tpl)
+
+        tpl = "output/{mapper}.{library}/strandedness/{mapper}.{library}.decision.json".format(
+            mapper=self.config.pileup.tool_rna_mapping,
+            library=self.parent.tumor_rna[wildcards.tumor_dna],
+        )
+        input_files["strandedness"] = ngs_mapping(tpl)
+
+        input_files["reference"] = self.w_config.static_data_config.reference.path
+        input_files["features"] = self.w_config.static_data_config.features.path
+
+        return input_files
+
+    @dictify
+    def _get_input_files_pvacsplice(self, wildcards: Wildcards):
+        if self.cfg.path_container:
+            yield "container", self.cfg.path_container
+        else:
+            yield "container", "work/containers/out/pvactools.sif"
+
+        yield "reference", self.w_config.static_data_config.reference.path
+        yield "features", self.w_config.static_data_config.features.path
+
+        yield (
+            "annotated",
+            "work/{tpl}/out/{tpl}.renamed.vcf.gz".format(tpl=self.annotated_template),
+        )
+
+        yield (
+            "junctions",
+            "work/{tpl}/out/{tpl}.junctions.tsv".format(tpl=self.annotated_template),
+        )
+
+        hla_typing = self.parent.sub_workflows["hla_typing"]
+        library = wildcards.tumor_dna
+        tpl = f"{self.config.tool_hla_typing}.{library}"
+        yield "hla_tumor_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
+            tpl = f"{self.config.tool_hla_typing}.{library}"
+            yield "hla_normal_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
+            tpl = f"{self.config.tool_hla_typing}.{library}"
+            yield "hla_tumor_rna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+
+        if self.cfg.genes_of_interest_file:
+            yield "genes", self.cfg.genes_of_interest_file
+        if self.cfg.run_reference_proteome_similarity and self.cfg.peptide_fasta:
+            yield "peptides", self.cfg.peptide_fasta
+
+    def _get_output_files_junction(self):
+        return {
+            "junctions": "work/{tpl}/out/{tpl}.junctions.tsv".format(tpl=self.annotated_template)
+        }
+
+    def _get_output_files_pvacsplice(self):
+        return self._get_output_files_run()
+
+    def _get_args_junction(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        decision = "no file"
+        with open(input.strandedness, "rt") as f:
+            decision = json.load(f).get("decision", "not found")
+        match decision:
+            case "1":
+                decision = "FR"
+            case "2":
+                decision = "RF"
+            case _:
+                rna_sample = self.parent.tumor_rna.get(wildcards.tumor_dna, wildcards.tumor_dna)
+                raise UnsupportedProtocolStrand(
+                    f"Illegal strandedness {decision} for sample {rna_sample}"
+                )
+        return {"strandedness": decision}
+
+    def _get_args_pvacsplice(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+        args = dict(self.cfg.model_dump(by_alias=True))
+
+        del args["path_container"]
+        del args["peptide_fasta"]
+        del args["genes_of_interest_file"]
+        if args["net_chop_method"] == NetChopMethod.DISABLED:
+            del args["net_chop_method"]
+            del args["net_chop_threshold"]
+        n_threads = args.pop("n_threads")
+
+        algorithms = args.pop("algorithms")
+        if isinstance(algorithms, list):
+            algorithms = " ".join(algorithms)
+
+        if args["percentile_threshold"] is None:
+            del args["percentile_threshold"]
+            del args["percentile_threshold_strategy"]
+        else:
+            del args["binding_threshold"]
+
+        if args["maximum_transcript_support_level"] is None:
+            del args["maximum_transcript_support_level"]
+
+        args = PvacSeqStepPart._extra_args_lists(args)
+        extra_args = " ".join(sorted(list(PvacSeqStepPart._extra_args_flags(args))))
+
+        extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
+
+        hla_types = self._read_hla_values(input)
+
+        samples = self._get_sample_names(wildcards)
+
+        return {
+            "normal_sample": samples["normal_sample"],
+            "tumor_sample": samples["tumor_sample"],
+            "alleles": sorted(hla_types),
+            "algorithms": algorithms,
+            "n_threads": n_threads,
+            "extra_args": extra_args.strip(),
+        }
 
 
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
@@ -399,7 +722,30 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             previous_steps=previous_steps,
         )
 
-        self.register_sub_step_classes((PvacSeqStepPart, LinkOutStepPart))
+        self.register_sub_step_classes(
+            (
+                PvacToolsStepPart,
+                PvacSeqStepPart,
+                PvacFuseStepPart,
+                PvacSpliceStepPart,
+                LinkOutStepPart,
+            )
+        )
+
+        self.sample_table: pd.DataFrame = sample_sheets(self.sheets)
+        assert "extractionType" in self.sample_table.columns, (
+            "'extractionType' missing from sample sheet"
+        )
+        self.tumor_dna = tumor_to_normal_mapping(
+            self.sample_table[self.sample_table["extractionType"] == ExtractionType.DNA]
+        )
+        self.tumor_rna = self._dna_to_rna_mapping(self.sample_table)
+        if (self.config.pileup.enabled or self.config.quantification.enabled) or (
+            "pvacfuse" in self.config.tools or "pvacsplice" in self.config.tools
+        ):
+            assert any(map(lambda lib: lib in self.tumor_rna.keys(), self.tumor_dna.keys())), (
+                "No tumor sample with somatic variant has expression data"
+            )
 
         self.register_sub_workflow(
             "somatic_variant_annotation",
@@ -419,19 +765,17 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 "gene_expression_quantification",
                 self.config.quantification.path_gene_expression_quantification,
             )
-
-        self.sample_table: pd.DataFrame = sample_sheets(self.sheets)
-        assert "extractionType" in self.sample_table.columns, (
-            "'extractionType' missing from sample sheet"
-        )
-        self.tumor_dna = tumor_to_normal_mapping(
-            self.sample_table[self.sample_table["extractionType"] == ExtractionType.DNA]
-        )
-        self.tumor_rna = self._dna_to_rna_mapping(self.sample_table)
-        if self.config.pileup.enabled or self.config.quantification.enabled:
-            assert any(map(lambda lib: lib in self.tumor_rna.keys(), self.tumor_dna.keys())), (
-                "No tumor sample with somatic variant has expression data"
+        if "pvacfuse" in self.config.tools:
+            self.register_sub_workflow(
+                "somatic_gene_fusion_calling",
+                self.config.pvacfuse.path_somatic_gene_fusion_calling,
             )
+
+    def get_result_files(self):
+        all_tools = []
+        for tool in self.config.tools:
+            all_tools += self.sub_steps[tool].get_result_files()
+        return all_tools
 
     def _dna_to_rna_mapping(self, sample_table: pd.DataFrame) -> dict[str, str]:
         dna = sample_table[sample_table["extractionType"] == ExtractionType.DNA]
@@ -442,28 +786,3 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         return pd.Series(
             dna_rna_map.ngs_library_y.values, index=dna_rna_map.ngs_library_x.values
         ).to_dict()
-
-    @listify
-    def get_result_files(self):
-        mappers = self.w_config.step_config["ngs_mapping"]["tools"]["dna"]
-        callers = self.w_config.step_config["somatic_variant_calling"]["tools"]
-        annotators = self.w_config.step_config["somatic_variant_annotation"]["tools"]
-        tpl = "{mapper}.{caller}.{annotator}"
-        if self.config.is_filtered:
-            tpl += ".filtered"
-        tpl += ".{tumor_dna}"
-        for tumor_dna in self.tumor_dna.keys():
-            yield from expand(
-                "output/" + tpl + "/neoepitopes/.done",
-                mapper=mappers,
-                caller=callers,
-                annotator=annotators,
-                tumor_dna=[tumor_dna],
-            )
-            yield from expand(
-                "output/" + tpl + "/log/predict.log",
-                mapper=mappers,
-                caller=callers,
-                annotator=annotators,
-                tumor_dna=[tumor_dna],
-            )

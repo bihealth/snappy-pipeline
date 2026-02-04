@@ -580,8 +580,18 @@ def _get_expression_format(args: argparse.Namespace, feature_type: FeatureType) 
         sep = args.column_separator
         has_column_name = args.header_line
 
-    if not args.ensembl_id and args.use_ensembl_version:
+    if not args.ensembl_id and args.use_ensembl_version != "none":
         raise argparse.ArgumentError("--ensemb-id must be enabled to use --use-ensembl-version")
+
+    ignore_version = True
+    if args.ensembl_id:
+        if feature_type == FeatureType.Gene and args.use_ensembl_version in ("gene", "both"):
+            ignore_version = False
+        if feature_type == FeatureType.Transcript and args.use_ensembl_version in (
+            "transcript",
+            "both",
+        ):
+            ignore_version = False
 
     return TPMFileFormat(
         feature_column=feature_column,
@@ -589,7 +599,7 @@ def _get_expression_format(args: argparse.Namespace, feature_type: FeatureType) 
         sep=re.compile(sep),
         has_column_names=has_column_name,
         ensembl_feature=args.ensembl_id,
-        ignore_version=not args.use_ensembl_version,
+        ignore_version=ignore_version,
     )
 
 
@@ -658,7 +668,8 @@ def main() -> int:
     parser.add_argument("--ensembl-id", action="store_true", help="Feature IDs are ENSEMBL IDs")
     parser.add_argument(
         "--use-ensembl-version",
-        action="store_true",
+        choices=("none", "gene", "transcript", "both"),
+        default="none",
         help="Use ENSEMBL feature version when mapping features between expression & vcf annotations",
     )
 

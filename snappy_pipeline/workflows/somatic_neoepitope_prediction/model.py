@@ -7,7 +7,9 @@ from snappy_pipeline.workflows.hla_typing.model import Tool as HlaTypingTool
 
 
 class SupportedPredictionTool(enum.StrEnum):
-    PVACSEQ = "pVACseq"
+    PVACSEQ = "pvacseq"
+    PVACFUSE = "pvacfuse"
+    PVACSPLICE = "pvacsplice"
 
 
 class SupportedPileupTool(enum.StrEnum):
@@ -17,6 +19,10 @@ class SupportedPileupTool(enum.StrEnum):
 class SupportedExpressionTool(enum.StrEnum):
     SALMON = "salmon"
     OTHER = "other"
+
+
+class SupportedGeneFusionTool(enum.StrEnum):
+    ARRIBA = "arriba"
 
 
 class Algorithm(enum.StrEnum):
@@ -70,6 +76,7 @@ class TranscriptPrioritizationStrategy(enum.StrEnum):
 class NetChopMethod(enum.StrEnum):
     CTERM = "cterm"
     TWENTY_S = "20s"
+    DISABLED = "disabled"
 
 
 class NetMHCIIpanVersion(enum.StrEnum):
@@ -79,7 +86,13 @@ class NetMHCIIpanVersion(enum.StrEnum):
     FourThree = "4.3"
 
 
-class PVACseq(SnappyModel):
+class AnchorType(enum.StrEnum):
+    A = "A"
+    D = "D"
+    NDA = "NDA"
+
+
+class PVACtools(SnappyModel):
     path_container: str | None = None
     n_threads: int = 1
 
@@ -99,26 +112,11 @@ class PVACseq(SnappyModel):
     top_score_metric: TopScoreMetric = TopScoreMetric.MEDIAN
     top_score_metric2: TopScoreMetric2 = TopScoreMetric2.PERCENTILE
 
-    normal_cov: int = 25
-    tdna_cov: int = 25
-    trna_cov: int = 2
-    normal_vaf: float = 0.02
-    tdna_vaf: float = 0.1
-    trna_vaf: float = 0.25
-    minimum_fold_change: float = 0.0
+    net_chop_method: NetChopMethod = NetChopMethod.DISABLED
+    netmhc_stab: bool = False
+    net_chop_threshold: float = 0.5
+
     expn_val: float = 1.0
-
-    transcript_prioritization_strategy: TranscriptPrioritizationStrategy = (
-        TranscriptPrioritizationStrategy.MANE_SELECT
-    )
-    maximum_transcript_support_level: int | None = None
-    biotypes: list[str] = []
-    allow_incomplete_transcript: bool = False
-
-    net_chop_method: NetChopMethod | None = NetChopMethod.CTERM
-    netmhc_stab: bool = True
-    allele_specific_anchors: bool = False
-    anchor_contribution_threshold: float = 0.8
 
     problematic_amino_acids: list[str] = []
 
@@ -127,9 +125,10 @@ class PVACseq(SnappyModel):
 
     genes_of_interest_file: str | None = None
 
+    fasta_size: int = 200
+
     exclude_NAs: bool = False
 
-    downstream_sequence_length: int = 1000
     aggregate_inclusion_binding_threshold: int = 5000
     aggregate_inclusion_count_limit: int = 25
 
@@ -140,6 +139,57 @@ class PVACseq(SnappyModel):
                 "Missing peptide fasta file required when enabling 'run_reference_proteome_similarity'"
             )
         return self
+
+
+class PVACseq(PVACtools):
+    normal_cov: int = 25
+    tdna_cov: int = 25
+    trna_cov: int = 2
+    normal_vaf: float = 0.02
+    tdna_vaf: float = 0.1
+    trna_vaf: float = 0.25
+    minimum_fold_change: float = 0.0
+
+    transcript_prioritization_strategy: TranscriptPrioritizationStrategy = (
+        TranscriptPrioritizationStrategy.MANE_SELECT
+    )
+    maximum_transcript_support_level: int | None = None
+    biotypes: list[str] = []
+    allow_incomplete_transcript: bool = False
+
+    allele_specific_anchors: bool = False
+    anchor_contribution_threshold: float = 0.8
+
+    downstream_sequence_length: int = 1000
+
+
+class PVACfuse(PVACtools):
+    path_somatic_gene_fusion_calling: str = "../somatic_gene_fusion_calling"
+    tool_somatic_gene_fusion_calling: SupportedGeneFusionTool = SupportedGeneFusionTool.ARRIBA
+
+    downstream_sequence_length: int = 1000
+
+    read_support: int = 5
+
+
+class PVACsplice(PVACtools):
+    normal_cov: int = 25
+    tdna_cov: int = 25
+    trna_cov: int = 2
+    normal_vaf: float = 0.02
+    tdna_vaf: float = 0.1
+    trna_vaf: float = 0.25
+
+    transcript_prioritization_strategy: TranscriptPrioritizationStrategy = (
+        TranscriptPrioritizationStrategy.MANE_SELECT
+    )
+    maximum_transcript_support_level: int | None = None
+    biotypes: list[str] = []
+    allow_incomplete_transcript: bool = False
+
+    junction_score: int = 10
+    variant_distance: int = 100
+    anchor_types: list[AnchorType] = [AnchorType.A, AnchorType.D, AnchorType.NDA]
 
 
 class BAQ(enum.StrEnum):
@@ -180,6 +230,13 @@ class INFOTAGS(enum.StrEnum):
     VDB = "INFO/VDB"
 
 
+class EnsemblVersion(enum.StrEnum):
+    NONE = "none"
+    GENE = "gene"
+    TRANSCRIPT = "transcript"
+    BOTH = "both"
+
+
 class RnaMapping(SnappyModel):
     enabled: bool = False
 
@@ -204,7 +261,7 @@ class RnaQuantification(SnappyModel):
     tool_gene_expression_quantification: SupportedExpressionTool = SupportedExpressionTool.SALMON
 
     ensembl_id: bool = True
-    use_ensembl_version: bool = False
+    use_ensembl_version: EnsemblVersion = EnsemblVersion.NONE
 
     annotation: str = "CSQ"
     annotation_description_regex: str = (
@@ -213,6 +270,12 @@ class RnaQuantification(SnappyModel):
     annotation_separator: str = r"\|"
     annotation_gene_id: str | int = "Gene"
     annotation_transcript_id: str | int = "Feature"
+
+    @model_validator(mode="after")
+    def ensure_ensemb_id_enabled_for_version(self):
+        if self.use_ensembl_version != EnsemblVersion.NONE and not self.ensembl_id:
+            raise ValueError("'use_ensembl_version' not allowed unless 'ensembl_id' is enabled")
+        return self
 
 
 class SomaticNeoepitopePrediction(SnappyStepModel):
@@ -227,4 +290,6 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
     pileup: RnaMapping = RnaMapping()
     quantification: RnaQuantification = RnaQuantification()
 
-    pVACseq: PVACseq = PVACseq()
+    pvacseq: PVACseq = PVACseq()
+    pvacfuse: PVACfuse = PVACfuse()
+    pvacsplice: PVACsplice = PVACsplice()

@@ -3,8 +3,6 @@
 Wrapper to combine a somatic variant vcf with RNA expression values & pileup of RNA data at variant loci.
 """
 
-import os
-
 from snakemake.shell import shell
 
 __author__ = "Eric Blanc"
@@ -12,16 +10,13 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
-combine_script = os.path.join(os.path.dirname(__file__), "combine.py")
-
-expression = []
-if pileup := getattr(snakemake.input, "pileup", None):
-    expression.append(f"--pileup {pileup}")
-if gene_tpms := getattr(snakemake.input, "gene_tpms", None):
-    expression.append(f"--gene-tpms {gene_tpms}")
-if transcript_tpms := getattr(snakemake.input, "transcript_tpms", None):
-    expression.append(f"--transcript-tpms {transcript_tpms}")
-expression = " ".join(expression)
+# Renaming libraries to samples, and ensure normal before tumor
+# (bcftools view ensures order of libraries, bcftools reheader renames)
+samples = args["tumor_sample"]
+libraries = args["tumor_library"]
+if "normal_sample" in args and "normal_library" in args:
+    samples = args["normal_sample"] + "\t" + samples
+    libraries = args["normal_library"] + "\t" + libraries
 
 shell(
     r"""
@@ -49,15 +44,14 @@ set -x
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-bcftools norm \
-    --rm-dup exact --do-not-normalize --multiallelics -any \
+bcftools view \
+    --no-update \
+    --samples-file <(echo "{libraries}" | tr '\t' '\n') \
     {snakemake.input.annotated} \
-| python {combine_script} \
-    --sample {args[tumor_sample]} \
-    {expression} \
-    {args[extra_args]} \
-    --output {snakemake.output.vcf}
-tabix {snakemake.output.vcf}
+| bcftools reheader \
+    --samples <(echo "{samples}" | tr '\t' '\n') \
+| bcftools view \
+    --output-type z --output {snakemake.output.vcf} --write-index=tbi
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5

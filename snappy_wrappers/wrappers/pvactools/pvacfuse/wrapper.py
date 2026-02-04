@@ -88,7 +88,7 @@ export TMPDIR=$(realpath $TMPDIR)
 
 # Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
 # Create home on TMPDIR? But then the calling script is gone...
-home=$(dirname {snakemake.output.path})/../home/pvacseq
+home=$(dirname {snakemake.output.path})/../home/pvacfuse
 home=$(realpath $home)
 rm -rf $home
 mkdir -p $home
@@ -96,21 +96,20 @@ mkdir -p $home
 rm -rf $(dirname {snakemake.output.path})
 mkdir -p $(dirname {snakemake.output.path})
 
-cat << __EOF > $home/run_pVACseq.sh
-pvacseq run --n-threads {snakemake.threads} \\
-    --normal-sample-name {args[normal_sample]} \\
+cat << __EOF > $home/run_pVACfuse.sh
+pvacfuse run --n-threads {snakemake.threads} \\
     --iedb-install-directory /opt/iedb \\
     {args[extra_args]} \\
     {peptides} {genes} \\
-    {input_fns[vcf]} \\
+    {input_fns[fusions]} \\
     {args[tumor_sample]} {alleles} {args[algorithms]} \\
     $(dirname {output_fns[path]})
 __EOF
-chmod +x $home/run_pVACseq.sh
+chmod +x $home/run_pVACfuse.sh
 
 apptainer exec \
     --home $home --bind $TMPDIR:$TMPDIR:rw \
-    {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACseq.sh
+    {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACfuse.sh
 
 touch {snakemake.output.path}
 touch {snakemake.output.done}

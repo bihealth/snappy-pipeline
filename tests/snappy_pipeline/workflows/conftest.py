@@ -930,18 +930,51 @@ def aligner_indices_fake_fs(fake_fs):
 
 @pytest.fixture
 def hla_typing_result_fake_fs(fake_fs, cancer_sheet_tsv):
-    """Return fake file purity.txt"""
+    """Return fake file optitype.library.txt"""
     # Create work directory
     fake_fs.fs.makedirs("/HLA_TYPING/output", exist_ok=True)
-    # Create autobin result for the samples
-    tpl = "/{typing_tool}.{library_name}/out/{typing_tool}.{library_name}.txt"
+    # Create HLA types for all samples
+    tpl = "/HLA_TYPING/output/{typing_tool}.{library_name}/out/{typing_tool}.{library_name}.txt"
     for line in cancer_sheet_tsv.splitlines()[8:]:
         (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
-        if isTumor == "Y":
+        library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+        fake_fs.fs.create_file(
+            tpl.format(typing_tool="optitype", library_name=library_name),
+            contents="A*02:01\nA*11:01\nB*15:32\nC*04:03",
+            create_missing_dirs=True,
+        )
+    return fake_fs
+
+
+@pytest.fixture
+def strandedness_result_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file star.library.decision.json"""
+    # Create work directory
+    fake_fs.fs.makedirs("NGS_MAPPING/output", exist_ok=True)
+    # Create HLA types for all samples
+    tpl = "NGS_MAPPING/output/{mapping_tool}.{library_name}/strandedness/{mapping_tool}.{library_name}.decision.json"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
+        if isTumor == "Y" and extract =="RNA":
             library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+            contents=r"""
+{
+    "library_name": "{library_name}",
+    "bed_path": "/path/to/bed",
+    "bed_file_md5": "00000000000000000000000000000000",
+    "bam_path": "/path/to/bam",
+    "strand_from_user": "-1",
+    "strand_from_infer": "2",
+    "decision_threshold": 0.85,
+    "endedness": "Pair",
+    "fraction_forward": 0.0011,
+    "fraction_reverse": 0.9989,
+    "fraction_failed": 0.0000,
+    "decision": "2"
+}"""  # .format(library_name=library_name) triggers an error
             fake_fs.fs.create_file(
-                tpl.format(mapper="bwa", typing_tool="optitype", library_name=library_name),
-                contents="HLA-A*02:01\nHLA-A*11:01\nHLA-B*15:32\nHLA-C*04:03",
+                tpl.format(mapping_tool="star", library_name=library_name),
+                contents=contents,
                 create_missing_dirs=True,
             )
     return fake_fs

@@ -5,7 +5,7 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
+from snakemake.io import InputFiles, Wildcards
 
 from snappy_pipeline.workflows.somatic_neoepitope_prediction import (
     SomaticNeoepitopePredictionWorkflow,
@@ -31,7 +31,7 @@ def minimal_config():
           dbsnp:
             path: /path/to/dbsnp.vcf.gz
           features:
-            path: /path/to/genecode.gtf
+            path: /path/to/gencode.gtf
 
         step_config:
           ngs_mapping:
@@ -68,14 +68,21 @@ def minimal_config():
                 cache_dir: /path/to/dir/cache
 
           somatic_neoepitope_prediction:
-            tools: [pVACseq]
+            tools: [pvacseq, pvacfuse, pvacsplice]
             is_filtered: false
             pileup:
               enabled: true
             quantification:
               enabled: true
-            pVACseq:
+            pvacseq:
                 algorithms: ['MHCflurry','MHCnuggetsI']
+            pvacfuse:
+                algorithms: all_class_i
+            pvacsplice:
+                algorithms: all
+                genes_of_interest_file: /path/to/genes.txt
+                run_reference_proteome_similarity: true
+                peptide_fasta: /path/to/peptides.fa
                 
         data_sets:
           first_batch:
@@ -100,20 +107,23 @@ def somatic_neoepitope_prediction_workflow(
     cancer_sheet_fake_fs,
     aligner_indices_fake_fs,
     hla_typing_result_fake_fs,
+    strandedness_result_fake_fs,
     mocker,
 ):
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping.model", aligner_indices_fake_fs, mocker)
-    patch_module_fs("snappy_pipeline.workflows.hla_typing.model", aligner_indices_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.somatic_neoepitope_prediction", hla_typing_result_fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.workflows.somatic_neoepitope_prediction", strandedness_result_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
 
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
         "somatic_variant_annotation": lambda x: "SOMATIC_VARIANT_ANNOTATION/" + x,
-        "hla_typing": lambda x: "HLA_TYPING/" + x,
-        "gene_expression_quantification": lambda x: "GENE_EXPRESSION_QUANTIFICATION/" + x
+        "hla_typing": lambda x: "/HLA_TYPING/" + x,
+        "gene_expression_quantification": lambda x: "GENE_EXPRESSION_QUANTIFICATION/" + x,
+        "somatic_gene_fusion_calling": lambda x: "SOMATIC_GENE_FUSION_CALLING/" + x,
     }
     # Construct the workflow object
     return SomaticNeoepitopePredictionWorkflow(
@@ -124,8 +134,49 @@ def somatic_neoepitope_prediction_workflow(
         work_dir,
     )
 
+# ---- pVACtools (container installation & pvacseq/pvacfuse/pvacsplice output & log)
 
-def test_somatic_neoepitope_prediction_pileup_step_part_get_input_files(
+def test_somatic_neoepitope_prediction_pvactools_install_step_part_get_output_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    expected = {"container": "work/containers/out/pvactools.sif"}
+    actual = somatic_neoepitope_prediction_workflow.get_output_files("pvactools", "install")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvactools_install_step_part_get_log_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    expected = "work/containers/log/pvactools.log"
+    actual = somatic_neoepitope_prediction_workflow.get_log_file("pvactools", "install")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_step_part_get_output_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    for tool in ("pvacseq", "pvacfuse", "pvacsplice"):
+        expected = {
+            "done": f"work/{tpl}/out/{tool}.done",
+            "path": f"work/{tpl}/{tool}/.done",
+        }
+        actual = somatic_neoepitope_prediction_workflow.get_output_files(tool, tool)
+        assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_step_part_get_log_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    for tool in ("pvacseq", "pvacfuse", "pvacsplice"):
+        expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/{tool}")
+        actual = somatic_neoepitope_prediction_workflow.get_log_file(tool, tool)
+        assert actual == expected
+
+# ---- pVACseq
+
+def test_somatic_neoepitope_prediction_pvacseq_pileup_step_part_get_input_files(
     somatic_neoepitope_prediction_workflow,
 ):
     wildcards = Wildcards(
@@ -150,7 +201,29 @@ def test_somatic_neoepitope_prediction_pileup_step_part_get_input_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_combine_step_part_get_input_files(
+def test_somatic_neoepitope_prediction_pvacseq_rename_step_part_get_input_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    # Define expected
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    expected = {
+        "annotated": f"SOMATIC_VARIANT_ANNOTATION/output/{annotated_tpl}/out/{annotated_tpl}.vcf.gz"
+    }
+
+    # Get actual
+    actual = somatic_neoepitope_prediction_workflow.get_input_files("pvacseq", "rename")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacseq_combine_step_part_get_input_files(
     somatic_neoepitope_prediction_workflow,
 ):
     wildcards = Wildcards(
@@ -166,7 +239,7 @@ def test_somatic_neoepitope_prediction_combine_step_part_get_input_files(
     expr_tpl = "salmon.P001-T1-RNA1-mRNA_seq1"
     expected = {
         "pileup": f"work/{annotated_tpl}/out/{annotated_tpl}.pileup.vcf.gz",
-        "annotated": f"SOMATIC_VARIANT_ANNOTATION/output/{annotated_tpl}/out/{annotated_tpl}.vcf.gz",
+        "annotated": f"work/{annotated_tpl}/out/{annotated_tpl}.renamed.vcf.gz",
         "gene_tpms": f"GENE_EXPRESSION_QUANTIFICATION/output/{expr_tpl}/out/{expr_tpl}.gene.sf",
         "transcript_tpms": f"GENE_EXPRESSION_QUANTIFICATION/output/{expr_tpl}/out/{expr_tpl}.transcript.sf",
     }
@@ -176,7 +249,7 @@ def test_somatic_neoepitope_prediction_combine_step_part_get_input_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_predict_step_part_get_input_files(
+def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_input_files(
     somatic_neoepitope_prediction_workflow,
 ):
     # Define expected
@@ -189,7 +262,7 @@ def test_somatic_neoepitope_prediction_predict_step_part_get_input_files(
         }
     )
     annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    hla_tpl = "HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
     expected = {
         "container": "work/containers/out/pvactools.sif",
         "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
@@ -199,19 +272,11 @@ def test_somatic_neoepitope_prediction_predict_step_part_get_input_files(
     }
 
     # Get actual
-    actual = somatic_neoepitope_prediction_workflow.get_input_files("pvacseq", "predict")(wildcards)
+    actual = somatic_neoepitope_prediction_workflow.get_input_files("pvacseq", "pvacseq")(wildcards)
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_install_step_part_get_output_files(
-    somatic_neoepitope_prediction_workflow,
-):
-    expected = {"container": "work/containers/out/pvactools.sif"}
-    actual = somatic_neoepitope_prediction_workflow.get_output_files("pvacseq", "install")
-    assert actual == expected
-
-
-def test_somatic_neoepitope_prediction_pileup_step_part_get_output_files(
+def test_somatic_neoepitope_prediction_pvacseq_pileup_step_part_get_output_files(
     somatic_neoepitope_prediction_workflow,
 ):
     tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
@@ -220,7 +285,16 @@ def test_somatic_neoepitope_prediction_pileup_step_part_get_output_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_combine_step_part_get_output_files(
+def test_somatic_neoepitope_prediction_pvacseq_rename_step_part_get_output_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    expected = {"vcf": f"work/{tpl}/out/{tpl}.renamed.vcf.gz"}
+    actual = somatic_neoepitope_prediction_workflow.get_output_files("pvacseq", "rename")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacseq_combine_step_part_get_output_files(
     somatic_neoepitope_prediction_workflow,
 ):
     tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
@@ -229,24 +303,15 @@ def test_somatic_neoepitope_prediction_combine_step_part_get_output_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_predict_step_part_get_output_files(
-    somatic_neoepitope_prediction_workflow,
-):
-    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    expected = {"done": f"work/{tpl}/neoepitopes/.done"}
-    actual = somatic_neoepitope_prediction_workflow.get_output_files("pvacseq", "predict")
-    assert actual == expected
-
-
-def test_somatic_neoepitope_prediction_step_part_get_resource(
+def test_somatic_neoepitope_prediction_pvacseq_step_part_get_resource(
     somatic_neoepitope_prediction_workflow,
 ):
     # Define expected
     expected_dict = {
-        "install": {"threads": 1, "time": "03:59:59", "memory": "6G"},
         "pileup": {"threads": 1, "time": "03:59:59", "memory": "6G"},
+        "rename": {"threads": 1, "time": "00:59:59", "memory": "2G"},
         "combine": {"threads": 1, "time": "03:59:59", "memory": "6G"},
-        "predict": {"threads": 1, "time": "23:59:59", "memory": "64G"},
+        "pvacseq": {"threads": 1, "time": "23:59:59", "memory": "64G"},
     }
     # Evaluate
     for action, resources in expected_dict.items():
@@ -256,15 +321,7 @@ def test_somatic_neoepitope_prediction_step_part_get_resource(
             assert actual == expected, msg_error
 
 
-def test_somatic_neoepitope_prediction_install_step_part_get_log_files(
-    somatic_neoepitope_prediction_workflow,
-):
-    expected = "work/containers/log/pvactools.log"
-    actual = somatic_neoepitope_prediction_workflow.get_log_file("pvacseq", "install")
-    assert actual == expected
-
-
-def test_somatic_neoepitope_prediction_pileup_step_part_get_log_files(
+def test_somatic_neoepitope_prediction_pvacseq_pileup_step_part_get_log_files(
     somatic_neoepitope_prediction_workflow,
 ):
     tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
@@ -273,7 +330,16 @@ def test_somatic_neoepitope_prediction_pileup_step_part_get_log_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_combine_step_part_get_log_files(
+def test_somatic_neoepitope_prediction_pvacseq_rename_step_part_get_log_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/rename")
+    actual = somatic_neoepitope_prediction_workflow.get_log_file("pvacseq", "rename")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacseq_combine_step_part_get_log_files(
     somatic_neoepitope_prediction_workflow,
 ):
     tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
@@ -282,16 +348,7 @@ def test_somatic_neoepitope_prediction_combine_step_part_get_log_files(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_predict_step_part_get_log_files(
-    somatic_neoepitope_prediction_workflow,
-):
-    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/predict")
-    actual = somatic_neoepitope_prediction_workflow.get_log_file("pvacseq", "predict")
-    assert actual == expected
-
-
-def test_somatic_neoepitope_prediction_pileup_step_part_get_args(
+def test_somatic_neoepitope_prediction_pvacseq_pileup_step_part_get_args(
     somatic_neoepitope_prediction_workflow
 ):
     wildcards = Wildcards(
@@ -310,7 +367,7 @@ def test_somatic_neoepitope_prediction_pileup_step_part_get_args(
     assert actual == expected
 
 
-def test_somatic_neoepitope_prediction_combine_step_part_get_args(
+def test_somatic_neoepitope_prediction_pvacseq_rename_step_part_get_args(
     somatic_neoepitope_prediction_workflow
 ):
     wildcards = Wildcards(
@@ -326,68 +383,342 @@ def test_somatic_neoepitope_prediction_combine_step_part_get_args(
         "normal_sample": "P001-N1",
         "tumor_library": "P001-T1-DNA1-WGS1",
         "normal_library": "P001-N1-DNA1-WGS1",
+    }
+    actual = somatic_neoepitope_prediction_workflow.get_args("pvacseq", "rename")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacseq_combine_step_part_get_args(
+    somatic_neoepitope_prediction_workflow
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    expected = {
+        "tumor_sample": "P001-T1",
+        "normal_sample": "P001-N1",
         "extra_args": (
             r"--ensembl-id --annotation 'CSQ' --annotation-description-regex "
             r"'^Consequence annotations from Ensembl VEP. Format: (?P<titles>.+)$' "
             r"--annotation-gene-id 'Gene' --annotation-separator '\|' "
-            r"--annotation-transcript-id 'Feature' --format 'salmon'"
+            r"--annotation-transcript-id 'Feature' --format 'salmon' "
+            "--use-ensembl-version 'none'"
         ),
     }
     actual = somatic_neoepitope_prediction_workflow.get_args("pvacseq", "combine")(wildcards)
     assert actual == expected
 
 
-# def test_somatic_neoepitope_prediction_predict_step_part_get_args(
-#     somatic_neoepitope_prediction_workflow
-# ):
-#     wildcards = Wildcards(
-#         fromdict={
-#             "mapper": "bwa",
-#             "caller": "mutect2",
-#             "annotator": "vep",
-#             "tumor_dna": "P001-T1-DNA1-WGS1",
-#         }
-#     )
-#     expected = {
-#         "n_threads": 1,
-#         "tumor_sample": "P001-T1",
-#         "normal_sample": "P001-N1",
-#         "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
-#         "algorithms": "all_class_i",
-#         "extra_args": (
-#             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
-#             "--class_i-epitope-length '8,9,10,11' "
-#             "--downstream-sequence-length 1000 --expn-val 1.0 --minimum-fold-change 0.0 "
-#             "--netmhciipan-version '4.1' --netmhc-stab --net-chop-method 'cterm' "
-#             "--normal-cov 25 --normal-vaf 0.02 --precentile-threshold 1.0 "
-#             "--percentage-threshold-strategy 'conservative' --tdna-cov 25 --tdna-vaf 0.1 "
-#             "--top-score-metric 'median' --top-score-metric2 'percentile' "
-#             "--transcript-prioritization-strategy 'mane_select' --trna-cov 2 --trna-vaf 0.25"
-#         )
-#     }
-#     actual = somatic_neoepitope_prediction_workflow.get_args("pvacseq", "predict")(wildcards)
-#     assert actual == expected
+def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_args(
+    somatic_neoepitope_prediction_workflow
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    input = InputFiles(
+        fromdict={
+        "container": "work/containers/out/pvactools.sif",
+        "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
+        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
+        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
+        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        }
+    )
+    expected = {
+        "n_threads": 1,
+        "tumor_sample": "P001-T1",
+        "normal_sample": "P001-N1",
+        "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+        "algorithms": "MHCflurry MHCnuggetsI",
+        "extra_args": (
+            "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
+            "--anchor-contribution-threshold 0.8 --class-i-epitope-length '8,9,10,11' "
+            "--downstream-sequence-length 1000 --expn-val 1.0 --fasta-size 200 "
+            "--minimum-fold-change 0.0 --netmhciipan-version '4.1' --normal-cov 25 --normal-vaf 0.02 "
+            "--percentile-threshold 1.0 --percentile-threshold-strategy 'conservative' "
+            "--tdna-cov 25 --tdna-vaf 0.1 --top-score-metric 'median' --top-score-metric2 'percentile' "
+            "--transcript-prioritization-strategy 'mane_select' --trna-cov 2 --trna-vaf 0.25"
+        )
+    }
+    actual = somatic_neoepitope_prediction_workflow.get_args("pvacseq", "pvacseq")(wildcards, input)
+    assert actual == expected
+
+# ---- pVACfuse
+
+def test_somatic_neoepitope_prediction_pvacfuse_pvacfuse_step_part_get_input_files(
+    somatic_neoepitope_prediction_workflow
+):
+    # Define expected
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    expected = {
+        "container": "work/containers/out/pvactools.sif",
+        "fusions": f"SOMATIC_GENE_FUSION_CALLING/output/arriba.P001-T1-RNA1-mRNA_seq1/out/arriba.P001-T1-RNA1-mRNA_seq1.fusions.tsv",
+        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
+        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
+        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+    }
+
+    # Get actual
+    actual = somatic_neoepitope_prediction_workflow.get_input_files("pvacfuse", "pvacfuse")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacfuse_pvacfuse_step_part_get_args(
+    somatic_neoepitope_prediction_workflow
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    input = InputFiles(
+        fromdict={
+            "container": "work/containers/out/pvactools.sif",
+            "fusions": f"SOMATIC_GENE_FUSION_CALLING/output/arriba.P001-T1-RNA1-mRNA_seq1/out/arriba.P001-T1-RNA1-mRNA_seq1.fusions.tsv",
+            "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
+            "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
+            "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        }
+    )
+    expected = {
+        "n_threads": 1,
+        "tumor_sample": "P001-T1",
+        "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+        "algorithms": "all_class_i",
+        "extra_args": (
+            "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
+            "--class-i-epitope-length '8,9,10,11' --downstream-sequence-length 1000 --expn-val 1.0 "
+            "--fasta-size 200 --netmhciipan-version '4.1' --percentile-threshold 1.0 "
+            "--percentile-threshold-strategy 'conservative' --read-support 5 "
+            "--top-score-metric 'median' --top-score-metric2 'percentile'"
+       )
+    }
+    actual = somatic_neoepitope_prediction_workflow.get_args("pvacfuse", "pvacfuse")(wildcards, input)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacfuse_step_part_get_resource(
+    somatic_neoepitope_prediction_workflow,
+):
+    # Define expected
+    expected_dict = {"pvacfuse": {"threads": 1, "time": "23:59:59", "memory": "64G"}}
+    # Evaluate
+    for action, resources in expected_dict.items():
+        for resource, expected in resources.items():
+            msg_error = f"Unexpected value '{expected} of '{resource}' in '{action}' sub-step"
+            actual = somatic_neoepitope_prediction_workflow.get_resource("pvacfuse", action, resource)()
+            assert actual == expected, msg_error
+
+# ---- pVACsplice
+
+def test_somatic_neoepitope_prediction_pvacsplice_junction_step_part_get_input_files(
+    somatic_neoepitope_prediction_workflow
+):
+    # Define expected
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    rna_tpl = "star.P001-T1-RNA1-mRNA_seq1"
+    expected = {
+        "annotated": f"SOMATIC_VARIANT_ANNOTATION/output/{annotated_tpl}/out/{annotated_tpl}.vcf.gz",
+        "bam": f"NGS_MAPPING/output/{rna_tpl}/out/{rna_tpl}.bam",
+        "strandedness": f"NGS_MAPPING/output/{rna_tpl}/strandedness/{rna_tpl}.decision.json",
+        "reference": "/path/to/ref.fa",
+        "features": "/path/to/gencode.gtf",
+    }
+    actual = somatic_neoepitope_prediction_workflow.get_input_files("pvacsplice", "junction")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacsplice_pvacsplice_step_part_get_input_files(
+    somatic_neoepitope_prediction_workflow
+):
+    # Define expected
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    expected = {
+        "container": "work/containers/out/pvactools.sif",
+        "junctions": f"work/{annotated_tpl}/out/{annotated_tpl}.junctions.tsv",
+        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
+        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
+        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        "annotated": f"work/{annotated_tpl}/out/{annotated_tpl}.renamed.vcf.gz",
+        "genes": "/path/to/genes.txt",
+        "peptides": "/path/to/peptides.fa",
+        "reference": "/path/to/ref.fa",
+        "features": "/path/to/gencode.gtf",
+    }
+
+    # Get actual
+    actual = somatic_neoepitope_prediction_workflow.get_input_files("pvacsplice", "pvacsplice")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacsplice_junction_step_part_get_output_files(
+    somatic_neoepitope_prediction_workflow
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    expected = {"junctions": f"work/{tpl}/out/{tpl}.junctions.tsv"}
+    actual = somatic_neoepitope_prediction_workflow.get_output_files("pvacsplice", "junction")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacsplice_junction_step_part_get_args(
+    somatic_neoepitope_prediction_workflow
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    rna_tpl = "star.P001-T1-RNA1-mRNA_seq1"
+    input = InputFiles(
+        fromdict={
+            "annotated": f"SOMATIC_VARIANT_ANNOTATION/output/{annotated_tpl}/out/{annotated_tpl}.vcf.gz",
+            "bam": f"NGS_MAPPING/output/{rna_tpl}/out/{rna_tpl}.bam",
+            "strandedness": f"NGS_MAPPING/output/{rna_tpl}/strandedness/{rna_tpl}.decision.json",
+            "reference": "/path/to/ref.fa",
+            "features": "/path/to/gencode.gtf",
+        }
+    )
+    expected = {"strandedness": "RF"}
+    actual = somatic_neoepitope_prediction_workflow.get_args("pvacsplice", "junction")(wildcards, input)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacsplice_pvacsplice_step_part_get_args(
+    somatic_neoepitope_prediction_workflow
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    input = InputFiles(
+        fromdict={
+        "container": "work/containers/out/pvactools.sif",
+        "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
+        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
+        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
+        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        }
+    )
+    expected = {
+        "n_threads": 1,
+        "tumor_sample": "P001-T1",
+        "normal_sample": "P001-N1",
+        "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+        "algorithms": "all",
+        "extra_args": (
+            "--run-reference-proteome-similarity "
+            "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
+            "--anchor-types 'A,D,NDA' --class-i-epitope-length '8,9,10,11' "
+            "--expn-val 1.0 --fasta-size 200 --junction-score 10 --netmhciipan-version '4.1' "
+            "--normal-cov 25 --normal-vaf 0.02 --percentile-threshold 1.0 "
+            "--percentile-threshold-strategy 'conservative' --tdna-cov 25 --tdna-vaf 0.1 "
+            "--top-score-metric 'median' --top-score-metric2 'percentile' "
+            "--transcript-prioritization-strategy 'mane_select' --trna-cov 2 --trna-vaf 0.25 "
+            "--variant-distance 100"
+        )
+    }
+    actual = somatic_neoepitope_prediction_workflow.get_args("pvacsplice", "pvacsplice")(wildcards, input)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_pvacsplice_step_part_get_resource(
+    somatic_neoepitope_prediction_workflow,
+):
+    # Define expected
+    expected_dict = {
+        "junction": {"threads": 1, "time": "03:59:59", "memory": "6G"},
+        "pvacsplice": {"threads": 1, "time": "23:59:59", "memory": "64G"},
+    }
+    # Evaluate
+    for action, resources in expected_dict.items():
+        for resource, expected in resources.items():
+            msg_error = f"Unexpected value '{expected}' of '{resource}' in '{action}' sub-step"
+            actual = somatic_neoepitope_prediction_workflow.get_resource("pvacsplice", action, resource)()
+            assert actual == expected, msg_error
+
 
 
 def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["link_out", "pvacseq"]
+    expected = ["link_out", "pvacfuse", "pvacseq", "pvacsplice", "pvactools"]
     actual = list(sorted(somatic_neoepitope_prediction_workflow.sub_steps.keys()))
     assert actual == expected
 
     # Check result file construction
-    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/log/predict.log"
+    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/log/{tool}.log"
     expected = [
-        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", i=i, t=t)
-        for (i, t) in ((1, 1), (2,1), (2, 2))
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool=tool, i=i, t=t)
+        for tool in ("pvacfuse", "pvacseq", "pvacsplice")
+        for (i, t) in ((1, 1), (2, 2))
     ]
 
-    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/neoepitopes/.done"
     expected += [
-        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", i=i, t=t)
-        for (i, t) in ((1, 1), (2, 1), (2, 2))
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool="pvacseq", i=2, t=1)
     ]
+
+    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/out/{tool}.done"
+    expected += [
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool=tool, i=i, t=t)
+        for tool in ("pvacfuse", "pvacseq", "pvacsplice")
+        for (i, t) in ((1, 1), (2, 2))
+    ]
+
+    expected += [
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool="pvacseq", i=2, t=1)
+    ]
+
     expected = list(sorted(expected))
     actual = list(sorted(somatic_neoepitope_prediction_workflow.get_result_files()))
     assert expected == actual
