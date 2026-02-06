@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for actually running ASCAT"""
+"""Wrapper for actually running HLA-LA"""
+
+import csv
+import json
 
 from snakemake import shell
 
@@ -8,20 +11,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
-
-single = "--single" if args.get("single", False) else ""
-
-extra_args = (
-    f"--population {args['population']} --min_count {args['min_count']} --tolerance {args['tolerance']} "
-    f"--max_iterations {args['max_iterations']} --drop_iterations {args['drop_iterations']} "
-    f"--drop_threshold {args['drop_threshold']} --zygocity_threshold {args['zygocity_threshold']}"
-)
-
-if args.get("single", False):
-    single = "--single"
-    extra_args += f" --avg {args['avg']} --std {args['std']}"
-else:
-    single = ""
 
 shell(
     r"""
@@ -46,30 +35,37 @@ if [[ -n "{snakemake.log.log}" ]]; then
     fi
 fi
 
-mkdir $TMPDIR/tmp
-arcasHLA extract --verbose --threads {snakemake.threads} {single} \
-    --temp $TMPDIR/tmp \
-    --outdir $TMPDIR/extracted \
-    {snakemake.input.bam}
+HLA-LA.pl --maxThreads {snakemake.threads} --sampleID {args[sample_id]} \
+    --workingDir $TMPDIR \
+    --customGraphDir $(dirname {snakemake.input.path_graph}) \
+    --BAM {snakemake.input.bam}
 
-rm -rf $TMPDIR/tmp
+cp $TMPDIR/{args[sample_id]}/hla/R1_bestguess_G.txt {snakemake.output.txt}
 
-mkdir $TMPDIR/tmp
-arcasHLA genotype --verbose --threads {snakemake.threads} \
-    --outdir $TMPDIR/genotyped \
-    --temp $TMPDIR/tmp \
-    {extra_args} \
-    $TMPDIR/extracted/*.fq.gz
-
-cp $TMPDIR/genotyped/star.genotype.json {snakemake.output.json}
 pushd $(dirname {snakemake.output.json})
 md5sum $(basename {snakemake.output.json}) >$(basename {snakemake.output.json}).md5
+md5sum $(basename {snakemake.output.txt}) >$(basename {snakemake.output.txt}).md5
 popd
 
 # To make the pipeline happy.
 # TODO: move all the step output to json.
 md5sum {snakemake.log.log} > {snakemake.log.log}.md5
-touch {snakemake.output.txt}
-touch {snakemake.output.txt}.md5
+touch {snakemake.output.json}.md5
 """
 )
+
+alleles = {}
+with open(snakemake.output.txt, "rt") as f:
+    reader = csv.DictReader(f, delimiter="\t")
+    for row in reader:
+        if int(row["perfectG"]) == 0 or float(row["Q1"]) < args["min_score"]:
+            continue
+        if row["Locus"] not in alleles:
+            alleles[row["Locus"]] = set()
+        alleles[row["Locus"]] |= set([row["Allele"]])
+
+for k, v in alleles.items():
+    alleles[k] = list(v)
+
+with open(snakemake.output.json, "wt") as f:
+    json.dump(alleles, f, indent=4)

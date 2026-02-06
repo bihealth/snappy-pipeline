@@ -56,7 +56,9 @@ def minimal_config():
 
           hla_typing:
             path_link_in: ''  # OPTIONAL Override data set configuration search paths for FASTQ files
-            tools: [optitype]   # REQUIRED - available: 'optitype' and 'arcashla'
+            tools:
+              dna: [optitype]   # REQUIRED - available: 'optitype' and 'arcashla'
+              rna: [optitype, arcashla]
             optitype:
                 max_reads: 5000
                 num_mapping_threads: 4
@@ -74,6 +76,12 @@ def minimal_config():
               enabled: true
             quantification:
               enabled: true
+            tools_hla_typing:
+              dna:
+                class_i: optitype
+              rna:
+                class_i: optitype
+                class_ii: arcashla
             pvacseq:
                 algorithms: ['MHCflurry','MHCnuggetsI']
             pvacfuse:
@@ -262,13 +270,17 @@ def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_input_files
         }
     )
     annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    optitype_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.json"
+    arcashla_tpl = "/HLA_TYPING/output/star.arcashla.{library}/out/star.arcashla.{library}.json"
     expected = {
         "container": "work/containers/out/pvactools.sif",
         "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
-        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
-        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
-        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        "alleles": [
+            optitype_tpl.format(library="P001-T1-DNA1-WGS1"),
+            optitype_tpl.format(library="P001-N1-DNA1-WGS1"),
+            optitype_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+            arcashla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        ],
     }
 
     # Get actual
@@ -425,23 +437,15 @@ def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_args(
             "tumor_dna": "P001-T1-DNA1-WGS1",
         }
     )
-    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
-    input = InputFiles(
-        fromdict={
-        "container": "work/containers/out/pvactools.sif",
-        "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
-        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
-        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
-        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
-        }
-    )
+    input = somatic_neoepitope_prediction_workflow.get_input_files("pvacseq", "pvacseq")(wildcards)
     expected = {
         "n_threads": 1,
         "tumor_sample": "P001-T1",
         "normal_sample": "P001-N1",
-        "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+        "class_i": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03", "HLA-C*04:04"],
+        "class_ii": ["DPB1*14:01:01"],
         "algorithms": "MHCflurry MHCnuggetsI",
+        "exclude_bind": ["container", "alleles"],
         "extra_args": (
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
             "--anchor-contribution-threshold 0.8 --class-i-epitope-length '8,9,10,11' "
@@ -469,13 +473,17 @@ def test_somatic_neoepitope_prediction_pvacfuse_pvacfuse_step_part_get_input_fil
             "tumor_dna": "P001-T1-DNA1-WGS1",
         }
     )
-    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    optitype_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.json"
+    arcashla_tpl = "/HLA_TYPING/output/star.arcashla.{library}/out/star.arcashla.{library}.json"
     expected = {
         "container": "work/containers/out/pvactools.sif",
         "fusions": f"SOMATIC_GENE_FUSION_CALLING/output/arriba.P001-T1-RNA1-mRNA_seq1/out/arriba.P001-T1-RNA1-mRNA_seq1.fusions.tsv",
-        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
-        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
-        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        "alleles": [
+            optitype_tpl.format(library="P001-T1-DNA1-WGS1"),
+            optitype_tpl.format(library="P001-N1-DNA1-WGS1"),
+            optitype_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+            arcashla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        ],
     }
 
     # Get actual
@@ -494,21 +502,14 @@ def test_somatic_neoepitope_prediction_pvacfuse_pvacfuse_step_part_get_args(
             "tumor_dna": "P001-T1-DNA1-WGS1",
         }
     )
-    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
-    input = InputFiles(
-        fromdict={
-            "container": "work/containers/out/pvactools.sif",
-            "fusions": f"SOMATIC_GENE_FUSION_CALLING/output/arriba.P001-T1-RNA1-mRNA_seq1/out/arriba.P001-T1-RNA1-mRNA_seq1.fusions.tsv",
-            "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
-            "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
-            "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
-        }
-    )
+    input = somatic_neoepitope_prediction_workflow.get_input_files("pvacfuse", "pvacfuse")(wildcards)
     expected = {
         "n_threads": 1,
         "tumor_sample": "P001-T1",
-        "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+        "class_i": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03", "HLA-C*04:04"],
+        "class_ii": ["DPB1*14:01:01"],
         "algorithms": "all_class_i",
+        "exclude_bind": ["container", "alleles"],
         "extra_args": (
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
             "--class-i-epitope-length '8,9,10,11' --downstream-sequence-length 1000 --expn-val 1.0 "
@@ -573,13 +574,17 @@ def test_somatic_neoepitope_prediction_pvacsplice_pvacsplice_step_part_get_input
         }
     )
     annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
+    optitype_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.json"
+    arcashla_tpl = "/HLA_TYPING/output/star.arcashla.{library}/out/star.arcashla.{library}.json"
     expected = {
         "container": "work/containers/out/pvactools.sif",
         "junctions": f"work/{annotated_tpl}/out/{annotated_tpl}.junctions.tsv",
-        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
-        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
-        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        "alleles": [
+            optitype_tpl.format(library="P001-T1-DNA1-WGS1"),
+            optitype_tpl.format(library="P001-N1-DNA1-WGS1"),
+            optitype_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+            arcashla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
+        ],
         "annotated": f"work/{annotated_tpl}/out/{annotated_tpl}.renamed.vcf.gz",
         "genes": "/path/to/genes.txt",
         "peptides": "/path/to/peptides.fa",
@@ -612,17 +617,7 @@ def test_somatic_neoepitope_prediction_pvacsplice_junction_step_part_get_args(
             "tumor_dna": "P001-T1-DNA1-WGS1",
         }
     )
-    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    rna_tpl = "star.P001-T1-RNA1-mRNA_seq1"
-    input = InputFiles(
-        fromdict={
-            "annotated": f"SOMATIC_VARIANT_ANNOTATION/output/{annotated_tpl}/out/{annotated_tpl}.vcf.gz",
-            "bam": f"NGS_MAPPING/output/{rna_tpl}/out/{rna_tpl}.bam",
-            "strandedness": f"NGS_MAPPING/output/{rna_tpl}/strandedness/{rna_tpl}.decision.json",
-            "reference": "/path/to/ref.fa",
-            "features": "/path/to/gencode.gtf",
-        }
-    )
+    input = somatic_neoepitope_prediction_workflow.get_input_files("pvacsplice", "junction")(wildcards)
     expected = {"strandedness": "RF"}
     actual = somatic_neoepitope_prediction_workflow.get_args("pvacsplice", "junction")(wildcards, input)
     assert actual == expected
@@ -639,23 +634,15 @@ def test_somatic_neoepitope_prediction_pvacsplice_pvacsplice_step_part_get_args(
             "tumor_dna": "P001-T1-DNA1-WGS1",
         }
     )
-    annotated_tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
-    hla_tpl = "/HLA_TYPING/output/optitype.{library}/out/optitype.{library}.txt"
-    input = InputFiles(
-        fromdict={
-        "container": "work/containers/out/pvactools.sif",
-        "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
-        "hla_tumor_dna": hla_tpl.format(library="P001-T1-DNA1-WGS1"),
-        "hla_normal_dna": hla_tpl.format(library="P001-N1-DNA1-WGS1"),
-        "hla_tumor_rna": hla_tpl.format(library="P001-T1-RNA1-mRNA_seq1"),
-        }
-    )
+    input = somatic_neoepitope_prediction_workflow.get_input_files("pvacsplice", "pvacsplice")(wildcards)
     expected = {
         "n_threads": 1,
         "tumor_sample": "P001-T1",
         "normal_sample": "P001-N1",
-        "alleles": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03"],
+        "class_i": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03", "HLA-C*04:04"],
+        "class_ii": ["DPB1*14:01:01"],
         "algorithms": "all",
+        "exclude_bind": ["container", "alleles"],
         "extra_args": (
             "--run-reference-proteome-similarity "
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "

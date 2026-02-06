@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for actually running ASCAT"""
+"""Wrapper to create graphs of MHC alleles for HLA-LA"""
 
 from snakemake import shell
 
@@ -25,7 +25,20 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
-arcasHLA reference --version {snakemake.params.reference_version} --verbose
+mkdir $TMPDIR
+
+wget -O $TMPDIR/graphs.tar.gz {snakemake.params.url}
+actual_md5=$(md5sum $TMPDIR/graphs.tar.gz | sed -e "s/ .*//")
+if [[ $actual_md5 != {snakemake.params.expected_md5} ]]
+then
+    echo "Wrong checksum of {snakemake.params.url}. Expected {snakemake.params.expected_md5}, found $actual_md5"
+    exit 1
+fi
+
+tar -zxvf $TMPDIR/graphs.tar.gz -C $(dirname {snakemake.output.done})
+
+HLA-LA.pl --prepareGraph=1 \
+    --customGraphDir $(dirname {snakemake.output.done})
 
 touch {snakemake.output.done}
 """

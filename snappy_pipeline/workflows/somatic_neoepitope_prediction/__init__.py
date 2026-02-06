@@ -39,6 +39,7 @@ from typing import Any
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand, Wildcards, InputFiles
 
+from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.models.common import ExtractionType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
@@ -70,6 +71,26 @@ PREDICT_EXT_VALUES = (
 #: Default configuration for the somatic_gene_fusion_calling step
 DEFAULT_CONFIG = SomaticNeoepitopePredictionConfigModel.default_config_yaml_string()
 
+#: MHC class I & II genes & pseudo-genes
+CLASS_I = ("A", "B", "C", "E", "F", "G", "H", "J", "K", "L", "N", "S", "T", "U", "V", "W", "Y")
+CLASS_II = (
+    "DPB1",
+    "DQB1",
+    "DRB1",
+    "DPA1",
+    "DPA2",
+    "DPB2",
+    "DQA1",
+    "DRB2",
+    "DRB3",
+    "DRB4",
+    "DRB5",
+    "DRB7",
+)
+
+EXTRACTION_TYPES = ("dna", "rna")
+MHC_CLASSES = ("class_i", "class_ii")
+
 
 class UnsupportedProtocolStrand(Exception):
     pass
@@ -90,6 +111,23 @@ class PvacToolsStepPart(BaseStepPart):
         if self.config.is_filtered:
             self.annotated_template += ".filtered"
         self.annotated_template += ".{tumor_dna}"
+
+        self.hla_tools = {}
+        for extraction_type in EXTRACTION_TYPES:
+            for mhc_class in MHC_CLASSES:
+                if tool := self.config.tools_hla_typing.get(extraction_type, {}).get(
+                    mhc_class, None
+                ):
+                    if extraction_type not in self.hla_tools:
+                        self.hla_tools[extraction_type] = {}
+                    if (
+                        mapper := self.w_config.step_config.get("hla_typing")
+                        .get(tool)
+                        .get("mapper", None)
+                    ):
+                        self.hla_tools[extraction_type][mhc_class] = f"{mapper}.{tool}"
+                    else:
+                        self.hla_tools[extraction_type][mhc_class] = tool
 
     def get_input_files(self, action):
         self._validate_action(action)
@@ -170,6 +208,29 @@ class PvacToolsStepPart(BaseStepPart):
             args["normal_library"] = normal_dna
         return args
 
+    @listify
+    def _get_hla_files(self, wildcards: Wildcards):
+        hla_typing = self.parent.sub_workflows["hla_typing"]
+        tumor_dna = wildcards.tumor_dna
+        normal_dna = self.parent.tumor_dna.get(tumor_dna, None)
+        tumor_rna = self.parent.tumor_rna.get(tumor_dna, None)
+
+        input_files = []
+        for mhc_class in MHC_CLASSES:
+            if tool := self.hla_tools.get("dna", {}).get(mhc_class, None):
+                tpl = "output/{tool}.{library_name}/out/{tool}.{library_name}.json"
+                input_files.append(tpl.format(tool=tool, library_name=tumor_dna))
+                if normal_dna:
+                    input_files.append(tpl.format(tool=tool, library_name=normal_dna))
+        if tumor_rna:
+            for mhc_class in MHC_CLASSES:
+                if tool := self.hla_tools.get("rna", {}).get(mhc_class, None):
+                    tpl = "output/{tool}.{library_name}/out/{tool}.{library_name}.json"
+                    input_files.append(tpl.format(tool=tool, library_name=tumor_rna))
+
+        for f in input_files:
+            yield hla_typing(f)
+
     @staticmethod
     def _extra_args_flags(args: dict[str, Any]):
         for k in list(args.keys()):
@@ -199,13 +260,16 @@ class PvacToolsStepPart(BaseStepPart):
             yield f"--{k} {v}"
 
     @staticmethod
-    def _read_hla_values(input: InputFiles) -> set[str]:
-        hla_types = set([])
-        for i in ("hla_tumor_dna", "hla_normal_dna", "hla_tumor_rna"):
-            if fn := getattr(input, i, None):
-                with open(fn, "rt") as f:
-                    for line in f:
-                        hla_types |= {"HLA-" + line.strip()}
+    def _read_hla_values(
+        hla_typing_files: list[str], alleles: tuple[str], prefix: str = "HLA-"
+    ) -> set[str]:
+        hla_types = set()
+        for fn in hla_typing_files:
+            with open(fn, "rt") as f:
+                calls = json.load(f)
+            for allele in alleles:
+                if allele in calls:
+                    hla_types |= set(map(lambda x: prefix + x, calls[allele]))
         return hla_types
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -317,16 +381,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
 
         yield "vcf", "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.annotated_template)
 
-        hla_typing = self.parent.sub_workflows["hla_typing"]
-        library = wildcards.tumor_dna
-        tpl = f"{self.config.tool_hla_typing}.{library}"
-        yield "hla_tumor_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            yield "hla_normal_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            yield "hla_tumor_rna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        yield "alleles", self._get_hla_files(wildcards)
 
         if self.cfg.genes_of_interest_file:
             yield "genes", self.cfg.genes_of_interest_file
@@ -415,16 +470,19 @@ class PvacSeqStepPart(PvacToolsStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        hla_types = self._read_hla_values(input)
+        class_i = self._read_hla_values(input["alleles"], CLASS_I, prefix="HLA-")
+        class_ii = self._read_hla_values(input["alleles"], CLASS_II, prefix="")
 
         samples = self._get_sample_names(wildcards)
 
         return {
             "normal_sample": samples["normal_sample"],
             "tumor_sample": samples["tumor_sample"],
-            "alleles": sorted(hla_types),
+            "class_i": sorted(class_i),
+            "class_ii": sorted(class_ii),
             "algorithms": algorithms,
             "n_threads": n_threads,
+            "exclude_bind": ["container", "alleles"],
             "extra_args": extra_args.strip(),
         }
 
@@ -467,16 +525,7 @@ class PvacFuseStepPart(PvacToolsStepPart):
             "output/" + tpl + "/out/" + tpl + ".fusions.tsv"
         )
 
-        hla_typing = self.parent.sub_workflows["hla_typing"]
-        library = wildcards.tumor_dna
-        tpl = f"{self.config.tool_hla_typing}.{library}"
-        input_files["hla_tumor_dna"] = hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            input_files["hla_normal_dna"] = hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            input_files["hla_tumor_rna"] = hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        input_files["alleles"] = self._get_hla_files(wildcards)
 
         if self.cfg.genes_of_interest_file:
             input_files["genes"] = self.cfg.genes_of_interest_file
@@ -516,15 +565,18 @@ class PvacFuseStepPart(PvacToolsStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        hla_types = self._read_hla_values(input)
+        class_i = self._read_hla_values(input["alleles"], CLASS_I, prefix="HLA-")
+        class_ii = self._read_hla_values(input["alleles"], CLASS_II, prefix="")
 
         samples = self._get_sample_names(wildcards)
 
         return {
             "tumor_sample": samples["tumor_sample"],
-            "alleles": sorted(hla_types),
+            "class_i": sorted(class_i),
+            "class_ii": sorted(class_ii),
             "algorithms": algorithms,
             "n_threads": n_threads,
+            "exclude_bind": ["container", "alleles"],
             "extra_args": extra_args.strip(),
         }
 
@@ -608,16 +660,7 @@ class PvacSpliceStepPart(PvacToolsStepPart):
             "work/{tpl}/out/{tpl}.junctions.tsv".format(tpl=self.annotated_template),
         )
 
-        hla_typing = self.parent.sub_workflows["hla_typing"]
-        library = wildcards.tumor_dna
-        tpl = f"{self.config.tool_hla_typing}.{library}"
-        yield "hla_tumor_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            yield "hla_normal_dna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
-        if library := self.parent.tumor_rna.get(wildcards.tumor_dna, None):
-            tpl = f"{self.config.tool_hla_typing}.{library}"
-            yield "hla_tumor_rna", hla_typing("output/" + tpl + "/out/" + tpl + ".txt")
+        yield "alleles", self._get_hla_files(wildcards)
 
         if self.cfg.genes_of_interest_file:
             yield "genes", self.cfg.genes_of_interest_file
@@ -634,7 +677,7 @@ class PvacSpliceStepPart(PvacToolsStepPart):
 
     def _get_args_junction(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         decision = "no file"
-        with open(input.strandedness, "rt") as f:
+        with open(input["strandedness"], "rt") as f:
             decision = json.load(f).get("decision", "not found")
         match decision:
             case "1":
@@ -677,16 +720,19 @@ class PvacSpliceStepPart(PvacToolsStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        hla_types = self._read_hla_values(input)
+        class_i = self._read_hla_values(input["alleles"], CLASS_I, prefix="HLA-")
+        class_ii = self._read_hla_values(input["alleles"], CLASS_II, prefix="")
 
         samples = self._get_sample_names(wildcards)
 
         return {
             "normal_sample": samples["normal_sample"],
             "tumor_sample": samples["tumor_sample"],
-            "alleles": sorted(hla_types),
+            "class_i": sorted(class_i),
+            "class_ii": sorted(class_ii),
             "algorithms": algorithms,
             "n_threads": n_threads,
+            "exclude_bind": ["container", "alleles"],
             "extra_args": extra_args.strip(),
         }
 
@@ -776,6 +822,14 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         for tool in self.config.tools:
             all_tools += self.sub_steps[tool].get_result_files()
         return all_tools
+
+    def check_config(self):
+        hla_typing_config = self.w_config.step_config.get("hla_typing", None)
+        for extraction_type in EXTRACTION_TYPES:
+            for mhc_class in MHC_CLASSES:
+                tool = self.config.tools_hla_typing.get(extraction_type, {}).get(mhc_class, None)
+                if tool and tool not in hla_typing_config.tools.get(extraction_type, []):
+                    raise MissingConfiguration(f"hla_typing tool {tool} not configured")
 
     def _dna_to_rna_mapping(self, sample_table: pd.DataFrame) -> dict[str, str]:
         dna = sample_table[sample_table["extractionType"] == ExtractionType.DNA]

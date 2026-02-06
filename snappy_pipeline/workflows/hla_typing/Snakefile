@@ -21,6 +21,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = HlaTypingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+tools = wf.w_config.step_config["hla_typing"].tools
 
 # Rules =======================================================================
 
@@ -68,34 +69,38 @@ rule hla_typing_link_out_run:
 # OptiType --------------------------------------------------------------------
 
 
-rule hla_typing_optitype_run:
-    input:
-        **wf.get_input_files("optitype", "run"),
-    output:
-        **wf.get_output_files("optitype", "run"),
-    threads: wf.get_resource("optitype", "run", "threads")
-    resources:
-        time=wf.get_resource("optitype", "run", "time"),
-        memory=wf.get_resource("optitype", "run", "memory"),
-        partition=wf.get_resource("optitype", "run", "partition"),
-        tmpdir=wf.get_resource("optitype", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("optitype", "run"),
-    params:
-        args=wf.get_args("optitype", "run"),
-    wrapper:
-        wf.wrapper_path("optitype")
+if "optitype" in tools["dna"] or "optitype" in tools["rna"]:
+
+    rule hla_typing_optitype_run:
+        input:
+            **wf.get_input_files("optitype", "run"),
+        output:
+            **wf.get_output_files("optitype", "run"),
+        threads: wf.get_resource("optitype", "run", "threads")
+        resources:
+            time=wf.get_resource("optitype", "run", "time"),
+            memory=wf.get_resource("optitype", "run", "memory"),
+            partition=wf.get_resource("optitype", "run", "partition"),
+            tmpdir=wf.get_resource("optitype", "run", "tmpdir"),
+        log:
+            **wf.get_log_file("optitype", "run"),
+        params:
+            args=wf.get_args("optitype", "run"),
+        wrapper:
+            wf.wrapper_path("optitype")
 
 
 # arcasHLA --------------------------------------------------------------------
 
 
 # NB: reference is updated in the installed package
-if "arcashla" in wf.w_config.step_config["hla_typing"].tools:
+if "arcashla" in tools["rna"]:
 
     rule hla_typing_arcashla_prepare_reference:
         output:
-            touch("work/arcashla.prepare_reference/out/.done"),
+            done="work/arcashla.prepare_reference/out/.done",
+        params:
+            reference_version="3.46.0",  # See https://github.com/RabadanLab/arcasHLA/pull/132
         log:
             "work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
         wrapper:
@@ -106,6 +111,8 @@ if "arcashla" in wf.w_config.step_config["hla_typing"].tools:
             unpack(wf.get_input_files("arcashla", "run")),
         output:
             **wf.get_output_files("arcashla", "run"),
+        params:
+            args=wf.get_args("arcashla", "run"),
         threads: wf.get_resource("arcashla", "run", "threads")
         resources:
             time=wf.get_resource("arcashla", "run", "time"),
@@ -113,6 +120,72 @@ if "arcashla" in wf.w_config.step_config["hla_typing"].tools:
             partition=wf.get_resource("arcashla", "run", "partition"),
             tmpdir=wf.get_resource("arcashla", "run", "tmpdir"),
         log:
-            wf.get_log_file("arcashla", "run"),
+            **wf.get_log_file("arcashla", "run"),
         wrapper:
             wf.wrapper_path("arcashla/run")
+
+
+# HLA*LA ----------------------------------------------------------------------
+
+
+# NB: reference is updated in the installed package
+if "hla_la" in tools["dna"] or "hla_la" in tools["rna"]:
+
+    rule hla_typing_hla_la_prepare_graph:
+        output:
+            **wf.get_output_files("hla_la", "prepare_graph"),
+        params:
+            url="http://www.well.ox.ac.uk/downloads/PRG_MHC_GRCh38_withIMGT.tar.gz",
+            expected_md5="525a8aa0c7f357bf29fe2c75ef1d477d",
+        log:
+            "work/hla_la.prepareGraph/log/hla_la.prepareGraph.log",
+        resources:
+            time=wf.get_resource("hla_la", "prepare_graph", "time"),
+            memory=wf.get_resource("hla_la", "prepare_graph", "memory"),
+            partition=wf.get_resource("hla_la", "prepare_graph", "partition"),
+            tmpdir=wf.get_resource("hla_la", "prepare_graph", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("hla_la/prepareGraph")
+
+    rule hla_typing_hla_la_prepare_reference:
+        input:
+            unpack(wf.get_input_files("hla_la", "prepare_reference")),
+        output:
+            **wf.get_output_files("hla_la", "prepare_reference"),
+        params:
+            args=wf.get_args("hla_la", "prepare_reference"),
+        log:
+            "work/hla_la.prepare_reference/log/hla_la.prepare_reference.log",
+        shell:
+            r"""
+                cut -f 1,2 {input.reference} \
+                | awk -F '\t' '
+                BEGIN {{printf "contigID\tcontigLength\tExtractCompleteContig\tPartialExtraction_Start\tPartialExtraction_Stop\n"}}
+                {{
+                    if ($0 ~ /^(chr)?6\t/) {{
+                        printf "%s\t0\t{params.args[start]}\t{params.args[end]}\n", $0
+                    }} else {{
+                        printf "%s\t0\t\t\n", $0
+                    }}
+                }}
+                END {{printf "*\t0\t1\t\t\n"}}' \
+                > {output.reference}
+            """
+
+    rule hla_typing_hla_la_run:
+        input:
+            unpack(wf.get_input_files("hla_la", "run")),
+        output:
+            **wf.get_output_files("hla_la", "run"),
+        params:
+            args=wf.get_args("hla_la", "run"),
+        threads: wf.get_resource("hla_la", "run", "threads")
+        resources:
+            time=wf.get_resource("hla_la", "run", "time"),
+            memory=wf.get_resource("hla_la", "run", "memory"),
+            partition=wf.get_resource("hla_la", "run", "partition"),
+            tmpdir=wf.get_resource("hla_la", "run", "tmpdir"),
+        log:
+            **wf.get_log_file("hla_la", "run"),
+        wrapper:
+            wf.wrapper_path("hla_la/run")

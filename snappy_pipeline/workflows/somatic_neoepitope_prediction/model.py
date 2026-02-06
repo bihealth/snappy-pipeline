@@ -3,7 +3,12 @@ import enum
 from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.hla_typing.model import Tool as HlaTypingTool
+from snappy_pipeline.workflows.hla_typing.model import (
+    MHCIClassDnaTool,
+    MHCIClassRnaTool,
+    MHCIIClassDnaTool,
+    MHCIIClassRnaTool,
+)
 
 
 class SupportedPredictionTool(enum.StrEnum):
@@ -23,6 +28,21 @@ class SupportedExpressionTool(enum.StrEnum):
 
 class SupportedGeneFusionTool(enum.StrEnum):
     ARRIBA = "arriba"
+
+
+class HlaTypingDnaTools(SnappyModel):
+    class_i: MHCIClassDnaTool | None = None
+    class_ii: MHCIIClassDnaTool | None = None
+
+
+class HlaTypingRnaTools(SnappyModel):
+    class_i: MHCIClassRnaTool | None = None
+    class_ii: MHCIIClassRnaTool | None = None
+
+
+class HlaTypingTools(SnappyModel):
+    dna: HlaTypingDnaTools = HlaTypingDnaTools()
+    rna: HlaTypingRnaTools = HlaTypingRnaTools()
 
 
 class Algorithm(enum.StrEnum):
@@ -285,7 +305,7 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
     is_filtered: bool = True
 
     path_hla_typing: str = "../hla_typing"
-    tool_hla_typing: HlaTypingTool = HlaTypingTool.optitype
+    tools_hla_typing: HlaTypingTools = HlaTypingTools()
 
     pileup: RnaMapping = RnaMapping()
     quantification: RnaQuantification = RnaQuantification()
@@ -293,3 +313,9 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
     pvacseq: PVACseq = PVACseq()
     pvacfuse: PVACfuse = PVACfuse()
     pvacsplice: PVACsplice = PVACsplice()
+
+    @model_validator(mode="after")
+    def ensure_at_least_one_tool_configured(self):
+        if self.tools_hla_typing.dna.class_i is None and self.tools_hla_typing.dna.class_ii is None:
+            raise ValueError("No HLA typing tools has been defined for DNA data")
+        return self

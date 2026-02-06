@@ -934,15 +934,34 @@ def hla_typing_result_fake_fs(fake_fs, cancer_sheet_tsv):
     # Create work directory
     fake_fs.fs.makedirs("/HLA_TYPING/output", exist_ok=True)
     # Create HLA types for all samples
-    tpl = "/HLA_TYPING/output/{typing_tool}.{library_name}/out/{typing_tool}.{library_name}.txt"
+    tpl = "/HLA_TYPING/output/{typing_tool}.{library_name}/out/{typing_tool}.{library_name}.json"
     for line in cancer_sheet_tsv.splitlines()[8:]:
         (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
         library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+        contents = r"""
+{
+    "A": ["A*02:01", "A*11:01"],
+    "B": ["B*15:32"],
+    "C": ["C*04:03"]
+}"""
         fake_fs.fs.create_file(
             tpl.format(typing_tool="optitype", library_name=library_name),
-            contents="A*02:01\nA*11:01\nB*15:32\nC*04:03",
+            contents=contents,
             create_missing_dirs=True,
         )
+        if isTumor == "Y" and extract =="RNA":
+            contents = r"""
+{
+    "A": ["A*02:01", "A*11:01"],
+    "B": ["B*15:32"],
+    "C": ["C*04:04"],
+    "DPB1": ["DPB1*14:01:01"]
+}"""
+            fake_fs.fs.create_file(
+                tpl.format(typing_tool="star.arcashla", library_name=library_name),
+                contents=contents,
+                create_missing_dirs=True,
+            )
     return fake_fs
 
 
@@ -957,7 +976,7 @@ def strandedness_result_fake_fs(fake_fs, cancer_sheet_tsv):
         (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
         if isTumor == "Y" and extract =="RNA":
             library_name = f"{donor}-{sample}-{extract}1-{assay}1"
-            contents=r"""
+            contents = r"""
 {
     "library_name": "{library_name}",
     "bed_path": "/path/to/bed",

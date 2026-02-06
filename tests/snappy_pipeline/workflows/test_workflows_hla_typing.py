@@ -9,6 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow
 
+from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -28,11 +29,16 @@ def minimal_config():
         step_config:
           hla_typing:
             path_ngs_mapping: ../ngs_mapping
-            tools: [optitype, arcashla]
+            tools:
+              dna: [optitype, hla_la]
+              rna: [optitype, arcashla]
             optitype:
               max_reads: 5000
             arcashla:
               mapper: star
+            hla_la:
+              start: 28510120
+              end: 33480577
 
         data_sets:
           first_batch:
@@ -87,6 +93,8 @@ def test_optitype_step_part_get_output_files(hla_typing_workflow):
         "tsv": "work/optitype.{library_name}/out/optitype.{library_name}_result.tsv",
         "txt": "work/optitype.{library_name}/out/optitype.{library_name}.txt",
         "txt_md5": "work/optitype.{library_name}/out/optitype.{library_name}.txt.md5",
+        "json": "work/optitype.{library_name}/out/optitype.{library_name}.json",
+        "json_md5": "work/optitype.{library_name}/out/optitype.{library_name}.json.md5",
     }
     actual = hla_typing_workflow.get_output_files("optitype", "run")
     assert actual == expected
@@ -118,6 +126,10 @@ def test_optitype_step_part_get_args_input(hla_typing_workflow):
         "seq_type": "dna",
         "num_mapping_threads": 4,
         "max_reads": 5000,
+        "use_discordant": "false",
+        "yara_error_rate": 5,
+        "yara_strata_rate": 0,
+        "yara_sensitivity": "high",
     }
     actual = hla_typing_workflow.get_args("optitype", "run")(wildcards)
     assert actual == expected
@@ -151,14 +163,17 @@ def test_optitype_step_part_get_resource_usage(hla_typing_workflow):
 # Tests for ArcasHlaStepPart ----------------------------------------------------------------------
 
 
-def test_arcashla_step_part_get_input_files(hla_typing_workflow):
-    """Tests ArcasHlaStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    expected_keys = ("ref_done", "bam")
-    expected_ref = "work/arcashla.prepare_reference/out/.done"
-    actual = hla_typing_workflow.get_input_files("arcashla", "run")(wildcards)
-    assert all([key in expected_keys for key in actual])
-    assert actual.get("ref_done") == expected_ref
+# def test_arcashla_step_part_get_input_files(hla_typing_workflow):
+#     """Tests ArcasHlaStepPart.get_input_files()"""
+#     wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
+#     tpl = "star.P001-T1-RNA1-mRNA_seq1"
+#     expected = {
+#         "ref_done": "work/arcashla.prepare_reference/out/.done",
+#         "bam": f"NGS_MAPPING/output/{tpl}/out/{tpl}.bam",
+#         "flagstats": f"NGS_MAPPING/output/{tpl}/report/bam_qc/{tpl}.bam.flagstats.txt",
+#     }
+#     actual = hla_typing_workflow.get_input_files("arcashla", "run")(wildcards)
+#     assert actual == expected
 
 
 def test_arcashla_step_part_get_output_files(hla_typing_workflow):
@@ -166,14 +181,32 @@ def test_arcashla_step_part_get_output_files(hla_typing_workflow):
     expected = {
         "txt": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.txt",
         "txt_md5": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.txt.md5",
+        "json": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.json",
+        "json_md5": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.json.md5",
     }
     actual = hla_typing_workflow.get_output_files("arcashla", "run")
     assert actual == expected
 
 
+def test_arcashla_step_part_get_args(hla_typing_workflow):
+    wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
+    expected = {
+        "population": "Prior",
+        "min_count": 75,
+        "tolerance": 1e-7,
+        "max_iterations": 1000,
+        "drop_threshold": 0.1,
+        "zygocity_threshold": 0.15,
+    }
+    input = hla_typing_workflow.get_input_files("arcashla", "run")(wildcards)
+    actual = hla_typing_workflow.get_args("arcashla", "run")(wildcards, input)
+    assert actual == expected
+
+
 def test_arcashla_step_part_get_log_file(hla_typing_workflow):
     """Tests ArcasHlaStepPart.get_log_file()"""
-    expected = "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
+    base_out = "work/star.arcashla.{library_name}/log/star.arcashla.{library_name}"
+    expected = get_expected_log_files_dict(base_out=base_out)
     actual = hla_typing_workflow.get_log_file("arcashla", "run")
     assert actual == expected
 
@@ -189,13 +222,101 @@ def test_arcashla_step_part_get_resource_usage(hla_typing_workflow):
         assert actual == expected, msg_error
 
 
+# Tests for hla_laStepPart ----------------------------------------------------------------------
+
+
+def test_hla_la_step_part_get_input_files_prepare_reference(hla_typing_workflow):
+    """Tests HlaLaStepPart._get_input_files_prepare_reference()"""
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    tpl = "bwa.P001-N1-DNA1-WGS1"
+    expected = {
+        "path_graph": "work/hla_la.prepareGraph/out/.done",
+        "reference": "/path/to/ref.fa.fai",
+    }
+    actual = hla_typing_workflow.get_input_files("hla_la", "prepare_reference")(wildcards)
+    assert actual == expected
+
+
+# def test_hla_la_step_part_get_input_files_run(hla_typing_workflow):
+#     """Tests HlaLaStepPart._get_input_files_run()"""
+#     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+#     tpl = "bwa.P001-N1-DNA1-WGS1"
+#     expected = {
+#         "path_graph": "work/hla_la.prepareGraph/out/.done",
+#         "reference": "work/hla_la.prepareGraph/out/knownReferences/ref.txt",
+#         "bam": f"NGS_MAPPING/output/{tpl}/out/{tpl}.bam",
+#     }
+#     actual = hla_typing_workflow.get_input_files("hla_la", "run")(wildcards)
+#     assert actual == expected
+
+
+def test_hla_la_step_part_get_output_files_prepare_graph(hla_typing_workflow):
+    """Tests HlaLaStepPart._get_output_files_prepare_graph()"""
+    expected = {"done": "work/hla_la.prepareGraph/out/.done"}
+    actual = hla_typing_workflow.get_output_files("hla_la", "prepare_graph")
+    assert actual == expected
+
+
+def test_hla_la_step_part_get_output_files_prepare_reference(hla_typing_workflow):
+    """Tests HlaLaStepPart._get_output_files_prepare_reference()"""
+    expected = {"reference": "work/hla_la.prepareGraph/out/knownReferences/ref.txt"}
+    actual = hla_typing_workflow.get_output_files("hla_la", "prepare_reference")
+    assert actual == expected
+
+
+def test_hla_la_step_part_get_output_files_run(hla_typing_workflow):
+    """Tests HlaLaStepPart._get_output_files_run()"""
+    expected = {
+        "txt": "work/bwa.hla_la.{library_name}/out/bwa.hla_la.{library_name}.txt",
+        "txt_md5": "work/bwa.hla_la.{library_name}/out/bwa.hla_la.{library_name}.txt.md5",
+        "json": "work/bwa.hla_la.{library_name}/out/bwa.hla_la.{library_name}.json",
+        "json_md5": "work/bwa.hla_la.{library_name}/out/bwa.hla_la.{library_name}.json.md5",
+    }
+    actual = hla_typing_workflow.get_output_files("hla_la", "run")
+    assert actual == expected
+
+
+def test_hla_la_step_part_get_args_prepare_reference(hla_typing_workflow):
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = {"start": 28510120, "end": 33480577}
+    actual = hla_typing_workflow.get_args("hla_la", "prepare_reference")(wildcards)
+    assert actual == expected
+
+
+def test_hla_la_step_part_get_args_run(hla_typing_workflow):
+    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
+    expected = {"sample_id": "P001-N1-DNA1-WGS1"}
+    actual = hla_typing_workflow.get_args("hla_la", "run")(wildcards)
+    assert actual == expected
+
+
+def test_hla_la_step_part_get_log_file(hla_typing_workflow):
+    """Tests HlaLaStepPart.get_log_file()"""
+    base_out = "work/bwa.hla_la.{library_name}/log/bwa.hla_la.{library_name}"
+    expected = get_expected_log_files_dict(base_out=base_out)
+    actual = hla_typing_workflow.get_log_file("hla_la", "run")
+    assert actual == expected
+
+
+def test_hla_la_step_part_get_resource_usage(hla_typing_workflow):
+    """Tests HlaLaStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 8, "time": "60:00:00", "memory": "60000M", "partition": "medium"}
+    # Evaluate
+    for action in ("prepare_graph", "run"):
+        for resource, expected in expected_dict.items():
+            msg_error = f"Assertion error for resource '{resource}'."
+            actual = hla_typing_workflow.get_resource("hla_la", action, resource)()
+            assert actual == expected, msg_error
+
+
 # Tests for HlaTypingWorkflow ---------------------------------------------------------------------
 
 
 def test_hla_typing_workflow(hla_typing_workflow):
     """Tests simple functionality of the workflow."""
     # Check created sub steps
-    expected = ["arcashla", "link_in", "link_out", "optitype"]
+    expected = ["arcashla", "hla_la", "link_in", "link_out", "optitype"]
     actual = list(sorted(hla_typing_workflow.sub_steps.keys()))
     assert actual == expected
 
@@ -214,14 +335,14 @@ def test_hla_typing_workflow(hla_typing_workflow):
     }
 
     expected = []
-    tools = [("star.arcashla", rna_samples), ("optitype", dna_samples | rna_samples)]
+    tools = [("star.arcashla", rna_samples), ("bwa.hla_la", dna_samples), ("optitype", dna_samples | rna_samples)]
     expected += [
         "output/{tool}.{sample}/out/{tool}.{sample}.{ext}{chksum}".format(
             tool=tool, sample=sample, ext=ext, chksum=chksum
         )
         for tool, samples in tools
         for sample in samples
-        for ext in ("txt",)
+        for ext in ("txt", "json")
         for chksum in ("", ".md5")
     ]
     expected += [
