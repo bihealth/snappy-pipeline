@@ -1,9 +1,12 @@
+from typing import Any
+from collections.abc import Iterable
+
 import pandas as pd
 
 from biomedsheets.models import NGSLibrary, Sheet
 
 
-def sample_sheets(sheets: list[Sheet]) -> pd.DataFrame:
+def sample_sheets(sheets: list[Sheet], filter_background: bool = True) -> pd.DataFrame:
     """Creates a pandas data frame from snappy's list of samples sheets
 
     :param sheets: list of sheets provided by the abstract BaseStep class.
@@ -19,6 +22,8 @@ def sample_sheets(sheets: list[Sheet]) -> pd.DataFrame:
     table: pd.DataFrame = None
 
     for sheet in sheets:
+        if filter_background and sheet.extra_infos.get("is_background", False):
+            continue
         for bio_entity in sheet.bio_entities.values():
             if bio_entity.disabled:
                 continue
@@ -60,6 +65,21 @@ def _ngs_library_to_df(ngs_library: NGSLibrary) -> pd.DataFrame:
             d[k] = v
 
     return pd.DataFrame.from_dict({k: [v] for k, v in d.items()})
+
+
+def filter_table(table: pd.DataFrame, filters: dict[str, Any]) -> pd.DataFrame:
+    for expected_column, filter_value in filters.items():
+        assert expected_column in table.columns, f"Missing mandatory column '{expected_column}'"
+        if isinstance(filter_value, Iterable):
+            table = table.loc[table[expected_column] in filter_value]
+        else:
+            table = table.loc[table[expected_column] == filter_value]
+    return table
+
+
+def filter_table_by_modality(table: pd.DataFrame, modality: str = "dna") -> pd.DataFrame:
+    assert "extractionType" in table.columns, "Missing mandatory column 'extractionType'"
+    return table.loc[table["extractionType"].apply(lambda x: x.lower() == modality)]
 
 
 def tumor_to_normal_mapping(table: pd.DataFrame) -> dict[str, str]:
