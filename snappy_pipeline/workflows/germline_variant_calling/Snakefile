@@ -1,0 +1,84 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline variant_calling step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = VariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+tools = wf.config.tools
+
+# Rules =======================================================================
+
+
+localrules:
+    # Writing pedigrees should be done locally as well
+    variant_calling_write_pedigree_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Variant Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Run GATK 4 HaplotypeCaller gVCF (going via per-sample gVCF files) -----------
+
+
+if "gatk4_hc" in tools:
+
+    # Discover variants with GATK HaplotypeCaller, create per-sample gVCF file
+    rule variant_calling_gatk4_hc_discover:
+        input:
+            unpack(wf.get_input_files("gatk4_hc", "discover")),
+        output:
+            **wf.get_output_files("gatk4_hc", "discover"),
+        threads: wf.get_resource("gatk4_hc", "discover", "threads")
+        resources:
+            time=wf.get_resource("gatk4_hc", "discover", "time"),
+            memory=wf.get_resource("gatk4_hc", "discover", "memory"),
+            partition=wf.get_resource("gatk4_hc", "discover", "partition"),
+            tmpdir=wf.get_resource("gatk4_hc", "discover", "tmpdir"),
+        params:
+            args=wf.get_args("gatk4_hc", "combines"),
+        log:
+            **wf.get_log_file("gatk4_hc", "discover"),
+        wrapper:
+            wf.wrapper_path("gatk4_hc/discover")
+
+    # Perform GenotypeGVCFs genotyping of all samples in each pedigree
+    rule variant_calling_gatk4_hc_genotype:
+        input:
+            unpack(wf.get_input_files("gatk4_hc", "genotype")),
+        output:
+            **wf.get_output_files("gatk4_hc", "genotype"),
+        threads: wf.get_resource("gatk4_hc", "genotype", "threads")
+        resources:
+            time=wf.get_resource("gatk4_hc", "genotype", "time"),
+            memory=wf.get_resource("gatk4_hc", "genotype", "memory"),
+            partition=wf.get_resource("gatk4_hc", "genotype", "partition"),
+            tmpdir=wf.get_resource("gatk4_hc", "genotype", "tmpdir"),
+        params:
+            args=wf.get_args("gatk4_hc", "combines"),
+        log:
+            **wf.get_log_file("gatk4_hc", "genotype"),
+        wrapper:
+            wf.wrapper_path("gatk4_hc/genotype")
