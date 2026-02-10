@@ -99,19 +99,19 @@ Currently, no reports are generated.
 """
 
 import os
-import sys
-from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand, Wildcards
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
-    BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.common.samplesheet import tumor_to_normal_mapping
+
+from snappy_pipeline.workflows.any_variant_calling import AnyVariantCallingWorkflow
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
@@ -185,12 +185,6 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/"
             "{{mapper}}.{var_caller}.{{tumor_library}}{ext}"
         )
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
 
     def get_input_files(self, action: str):
         """Return generic input function.
@@ -239,13 +233,15 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
-        return pair.normal_sample.dna_ngs_library.name if pair else None
+        return self.parent.tumor_to_normal_mapping.get(wildcards.tumor_library, None)
 
     def get_tumor_lib_name(self, wildcards):
         """Return name of tumor library"""
-        pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
-        return pair.tumor_sample.dna_ngs_library.name if pair else wildcards.tumor_library
+        return (
+            wildcards.tumor_library
+            if wildcards.tumor_library in self.parent.tumor_to_normal_mapping
+            else None
+        )
 
     def get_output_files(self, action):
         """Return output files that all somatic variant calling sub steps must
@@ -699,7 +695,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return self.resource_usage_dict.get(action)
 
 
-class SomaticVariantCallingWorkflow(BaseStep):
+class SomaticVariantCallingWorkflow(AnyVariantCallingWorkflow):
     """Perform somatic variant calling"""
 
     #: Workflow name
@@ -734,60 +730,27 @@ class SomaticVariantCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
-        if "mutect2" in self.config.tools:
+        self.tumor_to_normal_mapping = tumor_to_normal_mapping(self.table)
+
+        if "mutect2" in self.tools:
             if self.config.mutect2.contamination.enabled:
                 self.sub_steps["mutect2"].actions.extend(
                     ["contamination", "pileup_normal", "pileup_tumor"]
                 )
 
-    @listify
     def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
+        result_files = self._get_result_only_files() + self._get_log_only_files()
+        for tool in self.tools:
+            if tool in ("mutect2",):
+                result_files += self._get_full_only_files()
+        return result_files
 
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        name_pattern = "{mapper}.{caller}.{tumor_library.name}"
-        for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-                caller=caller,
-                ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-                caller=caller,
-                ext=(
-                    ".log",
-                    ".log.md5",
-                    ".conda_info.txt",
-                    ".conda_info.txt.md5",
-                    ".conda_list.txt",
-                    ".conda_list.txt.md5",
-                ),
-            )
-
-    def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for bio_entity in sheet.sheet.bio_entities.values():
-                for bio_sample in bio_entity.bio_samples.values():
-                    if not bio_sample.extra_infos.get("isTumor", False):
-                        continue
-                    for test_sample in bio_sample.test_samples.values():
-                        extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
-                        if extraction_type.lower() != "dna":
-                            if extraction_type == "unknown":
-                                msg = "INFO: sample {} has missing extraction type, ignored"
-                                print(msg.format(test_sample.name), file=sys.stderr)
-                            continue
-                        for ngs_library in test_sample.ngs_libraries.values():
-                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
+    def _get_full_only_files(self):
+        name_pattern = "{mapper}.{caller}.{library}"
+        yield from self._yield_result_files(
+            os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
+            mapper=self.mapping_tools,
+            caller=self.tools,
+            ext=EXT_VALUES,
+        )

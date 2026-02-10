@@ -50,6 +50,7 @@ def minimal_config():
               cache_dir: /path/to/dir/cache
 
           somatic_variant_filtration:
+            path_somatic_variant: ../somatic_variant_annotation
             filter_list:
             - dkfz: {}
 
