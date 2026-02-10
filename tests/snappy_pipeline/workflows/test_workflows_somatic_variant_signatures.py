@@ -45,6 +45,7 @@ def minimal_config():
 
           somatic_variant_filtration:
             tools_somatic_variant_calling: ['mutect2']
+            path_somatic_variant: ../somatic_variant_annotation
             filter_list:
               - dkfz: {}
 

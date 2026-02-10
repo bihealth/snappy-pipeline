@@ -907,6 +907,24 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
 
 
 @pytest.fixture
+def generic_sheet_fake_fs(fake_fs, generic_mix_extraction_sheet_tsv):
+    """Return fake file system setup with files for the cancer_sheet_tsv"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create FASTQ read files for the samples
+    tpl = "/path/{folder}/FCXXXXXX/L001/{folder}_R{i}.fastq.gz"
+    for line in generic_mix_extraction_sheet_tsv.splitlines()[8:]:
+        folder = line.split("\t")[6]
+        fake_fs.fs.create_file(tpl.format(folder=folder, i=1), create_missing_dirs=True)
+        fake_fs.fs.create_file(tpl.format(folder=folder, i=2), create_missing_dirs=True)
+    # Create the sample TSV file
+    fake_fs.fs.create_file(
+        "/work/config/sheet.tsv", contents=generic_mix_extraction_sheet_tsv, create_missing_dirs=True
+    )
+    return fake_fs
+
+
+@pytest.fixture
 def aligner_indices_fake_fs(fake_fs):
     """Return fake file system setup with files for aligner indices"""
     d = {
