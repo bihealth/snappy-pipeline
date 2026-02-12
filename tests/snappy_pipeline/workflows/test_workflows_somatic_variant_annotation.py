@@ -47,7 +47,9 @@ def minimal_config():
             is_filtered: true
             vep:
               cache_dir: /path/to/dir/cache
-              plugins: ["plugin"]
+              plugins:
+                - {'name': 'local_plugin', 'path': '/path/to/local_plugin.pm'}
+                - {'name': 'remote_plugin', 'url': 'https://to.com/remote_plugin.pm'}
 
         data_sets:
           first_batch:
@@ -106,7 +108,10 @@ def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
         "reference": "/path/to/ref.fa",
-        "plugins": "work/vep_plugins/out/.done"
+        "plugins": [
+            "work/vep_plugins/out/local_plugin.pm",
+            "work/vep_plugins/out/remote_plugin.pm",
+        ]
     }
     actual = somatic_variant_annotation_workflow.get_input_files("vep", "run")
     assert actual == expected
@@ -138,7 +143,6 @@ def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
 
 def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {
         "config": {
             "cache_dir": "/path/to/dir/cache",
@@ -160,7 +164,7 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
                 "rank",
                 "length",
             ],
-            "plugins": ["plugin"],
+            "plugins": ["local_plugin", "remote_plugin"],
             "plugins_dir": "work/vep_plugins/out",
         },
     }

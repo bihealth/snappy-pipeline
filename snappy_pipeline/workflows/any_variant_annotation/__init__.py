@@ -1,32 +1,58 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_variant_annotation`` step
+"""Generic variant annotation step
 
-The ``somatic_variant_annotation`` step takes as the input the results of the
-``somatic_variant_calling`` step (bgzip-ed and indexed VCF files) and performs annotation of the
-somatic variants.  The result are annotated versions of the somatic variant VCF files (again
-bgzip-ed and indexed VCF files).
+The assumption is that variant annotation is similar for all kind of variants,
+germline or somatic.
+
+This implementation attepmts to provide annotation for a set of variants stored in vcf
+format, using a generic sample sheet (_i.e._ without restriction on tumor/normal pairs
+or the availability of pedigree).
+
+Unfortunately, I haven't found a way to design a completely generic implementation.
+This is because during the step initialisation, the pipeline validates the configuration
+of previous steps, and there is no common configuration of the germline & somatic variant
+calling steps. So there is no configration possible of a generic variant calling step.
+Therefore, which variant calling step has been run must be known at the time of the
+initialisation of the variant annotation step. So a workaround has been implemented,
+and the user must set a ``variant_origin`` parameter in order to define which type of
+variant calling step has been run. It is a poor solution, because it prevents the
+annotation of both somatic & germline variants in the same pipelie run, until the
+configuration of steps is replaced by a list. However, it is possible to annotate a
+combined vcf with both germline & somatic variants, which is needed by the neo-epitope
+step, for example. But of course, the file naming is another problem, which is dealt
+with by the ``combined_phasing`` step for example.
 
 ==========
 Step Input
 ==========
 
-The somatic variant annotation step uses Snakemake sub workflows for using the result of the
-``somatic_variant_calling`` step. It can now also use the output from the ``somatic_variant_filtration``
-step.
+For each library, a vcf following the naming pattern ``{mapper}.{caller}.{library}.vcf.gz``
+in the folder ``{path_variant}/output/{mapper}.{caller}.{library}/out``, where
+``path_variant`` is defined by the user in the configuration.
 
-The main assumption is that each VCF file contains the two matched normal and tumor samples.
+Typically, ``{caller}`` is ``mutect2`` for somatic variants, ``gatk_hc`` for germline
+ones, and ``combined`` after the ``combined_phasing`` step.
+
+If the vcf has been filtered before annotation, the naming pattern becomes
+``{mapper}.{caller}.filtered.{library}`` for the folder and the file name.
 
 ===========
 Step Output
 ===========
 
-Users can annotate all genes & transcripts overlapping with the variant locus, or
-they can select one representative gene and transcript for annotation.
-In the latter case, the output vcf file will only contain one annotation per variant, while
-in the former case, there might be over 100 annotations for each variant.
+Annotations depend on the choice of transcript overlapping with the variant.
+Annotators can either select a single transcript for their annotation, or annotate
+all transcripts overlapping with the variant.
+When a tool can do both, two output vcf files are produced, the single annotation
+named ``<mapper>.<caller>.<annotator>.vcf.gz`` and the full annotation named
+``<mapper>.<caller>.<annotator>.full.vcf.gz``.
+Some tools put the single annotation feature selection under user control.
 
-The ordering of features driving the representative annotation choice is under user control.
-The default order is:
+---
+VEP
+---
+
+The default order for single annotation feature selection is:
 
 1. ``biotype``: protein coding genes come first, it is unclear what is the order for other types of genes
 2. ``mane``: the `MANE transcript <https://www.ncbi.nlm.nih.gov/refseq/MANE/>`_ is selected before other transcripts
@@ -40,17 +66,11 @@ The default order is:
 This order is (hopefully) suitable for cBioPortal export, as well defined transcripts from protein-coding genes are selected when possible.
 However, it is recommended to check the full annotation for variants in or nearby disease-relevant genes.
 
-All annotators generate a vcf with one annotation per transcript, and some annotators
-(only ENSEMBL's Variant Effect Predictor in the current implementation) can also produce another
-output containing all annotations.
-The single annotation vcf is named ``<mapper>.<caller>.<annotator>.vcf.gz`` and
-the full annotation output is named ``<mapper>.<caller>.<annotator>.full.vcf.gz``
-
-====================
-Global Configuration
-====================
-
-TODO
+VEP plugins can be used, the user can either specify the path to the plugin (when already stored),
+or a URL to download it. In the latter case, the downloaded plugin will be in
+``work/vep_plugins/out{plugin.name}.pm``, in the former case, a symlink will be created in that
+directory (vep requires that all plugins are stored in the same directory).
+The legacy argument ``plugins_dir`` is ignored.
 
 =====================
 Default Configuration
@@ -79,6 +99,7 @@ from snappy_pipeline.workflows.common.samplesheet import filter_table_by_modalit
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.any_variant_calling import AnyVariantCallingWorkflow
+from snappy_pipeline.workflows.germline_variant_calling import GermlineVariantCallingWorkflow
 from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 
 from snappy_pipeline.workflows.any_variant_calling.model import VariantOrigin
@@ -209,27 +230,27 @@ class VepAnnotateVcfStepPart(AnnotateVcfStepPart):
             yield k, v
         yield "reference", self.w_config.static_data_config.reference.path
         cfg: VepConfigModel = self.config.get("vep")
-        if cfg.plugins and not cfg.plugins_dir:
-            yield "plugins", "work/vep_plugins/out/.done"
+        yield "plugins", [f"work/vep_plugins/out/{plugin.name}.pm" for plugin in cfg.plugins]
 
     def get_output_files(self, action: str):
         self._validate_action(action)
         if action == "plugins":
-            return "work/vep_plugins/out/.done"
+            cfg: VepConfigModel = self.config.get("vep")
+            return [f"work/vep_plugins/out/{plugin.name}.pm" for plugin in cfg.plugins]
         return super().get_output_files(action)
 
     def get_log_file(self, action: str):
         self._validate_action(action)
-        if action == "plugins":
-            return "work/vep_plugins/log/download.log"
         return super().get_log_file(action)
 
     def get_args(self, action):
         """Return arguments to pass down."""
         self._validate_action(action)
+        if action == "plugins":
+            return self.config.get(self.name).get("plugins", [])
         vep_config = dict(self.config.get(self.name).model_dump(by_alias=True))
-        if not vep_config["plugins_dir"]:
-            vep_config["plugins_dir"] = "work/vep_plugins/out"
+        vep_config["plugins"] = [plugin["name"] for plugin in vep_config["plugins"]]
+        vep_config["plugins_dir"] = "work/vep_plugins/out"
         return {"config": vep_config}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -274,7 +295,7 @@ class AnyVariantAnnotationWorkflow(BaseStep):
         if config["step_config"][self.name].get("variant_origin", VariantOrigin.SOMATIC):
             calling_step = SomaticVariantCallingWorkflow
         elif config["step_config"][self.name].get("variant_origin", VariantOrigin.GERMLINE):
-            calling_step = None
+            calling_step = GermlineVariantCallingWorkflow
         else:
             calling_step = AnyVariantCallingWorkflow
         previous_steps = [calling_step, NgsMappingWorkflow]
@@ -296,30 +317,44 @@ class AnyVariantAnnotationWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepAnnotateVcfStepPart, LinkOutStepPart))
-        # Register sub workflows
-        if self.config.is_filtered:
-            self.register_sub_workflow("variant_filtration", self.config.path_variant, "variant")
-        else:
-            self.register_sub_workflow("variant_calling", self.config.path_variant, "variant")
-        # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
-        assert self.config.tools_ngs_mapping, "No configured mapping tool"
 
-        if not self.config.tools_variant_calling:
-            if self.config.variant_origin == VariantOrigin.SOMATIC:
+        # Register sub-workflows and copy tools by variant origin
+        if self.config.variant_origin == VariantOrigin.SOMATIC:
+            if self.config.is_filtered:
+                self.register_sub_workflow(
+                    "somatic_variant_filtration", self.config.path_variant, "variant"
+                )
+            else:
+                self.register_sub_workflow(
+                    "somatic_variant_calling", self.config.path_variant, "variant"
+                )
+            if not self.config.tools_variant_calling:
                 self.config.tools_variant_calling = self.w_config.step_config[
                     "somatic_variant_calling"
                 ].tools
-            elif self.config.variant_origin == VariantOrigin.GERMLINE:
+        elif self.config.variant_origin == VariantOrigin.GERMLINE:
+            if self.config.is_filtered:
+                self.register_sub_workflow(
+                    "germline_variant_filtration", self.config.path_variant, "variant"
+                )
+            else:
+                self.register_sub_workflow(
+                    "germline_variant_calling", self.config.path_variant, "variant"
+                )
+            if not self.config.tools_variant_calling:
                 self.config.tools_variant_calling = self.w_config.step_config[
                     "germline_variant_calling"
                 ].tools
-            else:
-                raise MissingConfiguration(
-                    "Variant calling tools must be specified for 'any' variants"
+        else:
+            if self.config.is_filtered:
+                self.register_sub_workflow(
+                    "any_variant_filtration", self.config.path_variant, "variant"
                 )
-        assert self.config.tools, "No tool configured for variant calling"
+            else:
+                self.register_sub_workflow(
+                    "any_variant_calling", self.config.path_variant, "variant"
+                )
+        assert self.config.tools_variant_calling, "No tool configured for variant calling"
 
         self.table = filter_table_by_modality(sample_sheets(self.sheets), modality="dna")
         assert self.table.shape[1] > 0, "No valid samples"
