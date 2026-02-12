@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline germline_variant_annotation step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.germline_variant_annotation import (
+    GermlineVariantAnnotationWorkflow,
+)
+
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = GermlineVariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+tools = wf.config["tools"]
+
+
+include: "../any_variant_annotation/Snakefile"
