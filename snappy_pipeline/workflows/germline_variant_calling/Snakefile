@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline variant_calling step Snakefile"""
+"""CUBI Pipeline germline_variant_calling step Snakefile"""
 
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
+from snappy_pipeline.workflows.germline_variant_calling import GermlineVariantCallingWorkflow
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -20,7 +20,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = VariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = GermlineVariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 tools = wf.config.tools
 
 # Rules =======================================================================
@@ -58,7 +58,7 @@ if "gatk4_hc" in tools:
             partition=wf.get_resource("gatk4_hc", "discover", "partition"),
             tmpdir=wf.get_resource("gatk4_hc", "discover", "tmpdir"),
         params:
-            args=wf.get_args("gatk4_hc", "combines"),
+            args=wf.get_args("gatk4_hc", "discover"),
         log:
             **wf.get_log_file("gatk4_hc", "discover"),
         wrapper:
@@ -77,7 +77,7 @@ if "gatk4_hc" in tools:
             partition=wf.get_resource("gatk4_hc", "genotype", "partition"),
             tmpdir=wf.get_resource("gatk4_hc", "genotype", "tmpdir"),
         params:
-            args=wf.get_args("gatk4_hc", "combines"),
+            args=wf.get_args("gatk4_hc", "genotype"),
         log:
             **wf.get_log_file("gatk4_hc", "genotype"),
         wrapper:

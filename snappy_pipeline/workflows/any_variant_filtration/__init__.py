@@ -1,41 +1,57 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_variant_filtration`` step
+"""Generic variant filtration step
 
-The current implementation supports two filtration schema:
+The assumption is that variant filtration is similar for all kind of variants,
+germline or somatic.
 
-- the *legacy* schema, now deprecated, always runs the `DKFZBiasFilter <https://github.com/DKFZ-ODCF/DKFZBiasFilter>`_ &
-  `EBFilter <https://doi.org/10.1093/nar/gkt126>`_, and produces files for all combinations of available filters.
-- the *new* schema focuses on flexibility, allows any combination of filters, and returns a single fitlered file for each sample.
+This implementation attempts to filter a set of variants stored in vcf format,
+using a generic sample sheet (_i.e._ without restriction on tumor/normal pairs
+or the availability of pedigree).
 
-The *new* schema is used when the configuration option ``filter_list`` is not empty.
-The following document describes only this *new* schema.
+Unfortunately, I haven't found a way to design a completely generic implementation.
+This is because during the step initialisation, the pipeline validates the configuration
+of previous steps, and there is no common configuration of the germline & somatic variant
+calling steps. So there is no configration possible of a generic variant calling step.
+Therefore, which variant calling step has been run must be known at the time of the
+initialisation of the variant filtration step. So a workaround has been implemented,
+and the user must set a ``variant_origin`` parameter in order to define which type of
+variant calling step has been run. It is a poor solution, because it prevents the
+filtration of both somatic & germline variants in the same pipelie run, until the
+configuration of steps is replaced by a list. However, it is possible to annotate a
+combined vcf with both germline & somatic variants, which is needed by the neo-epitope
+step, for example. But of course, the file naming is another problem, which is dealt
+with by the ``combined_phasing`` step for example.
 
 ==========
 Step Input
 ==========
 
-The step requires ``vcf`` files from either the ``somatic_variant_calling`` or ``somatic_variant_annotation`` steps.
-In the former case, the configuration option ``has_annotation`` must be set to ``False``.
+For each library, a vcf following the naming pattern ``{mapper}.{caller}.{library}.vcf.gz``
+in the folder ``{path_variant}/output/{mapper}.{caller}.{library}/out``, where
+``path_variant`` is defined by the user in the configuration.
 
-In both cases, it will use the regular output ``vcf`` file, not ``*.full.vcf.gz``.
+Typically, ``{caller}`` is ``mutect2`` for somatic variants, ``gatk_hc`` for germline
+ones, and ``combined`` after the ``combined_phasing`` step.
+
+If the vcf has been annotated before filtration, the naming pattern becomes
+``{mapper}.{caller}.{annotator}.{library}`` for the folder and the file name.
 
 ===========
 Step Output
 ===========
 
 For each tumor DNA NGS library with name ``lib_name`` and each read mapper
-``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
-pipeline step will create a directory ``output/{mapper}.{var_caller}.{annotator}.{lib_name}/out``
+``mapper`` that the library has been aligned with, and the variant caller ``caller``, the
+pipeline step will create a directory ``output/{mapper}.{caller}.filtered.{lib_name}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
 Two ``vcf`` files are produced:
 
-- ``{mapper}.{var_caller}.{annotator}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
-- ``{mapper}.{var_caller}.{annotator}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+- ``{mapper}.{caller}.filtered.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{mapper}.{caller}.filtered.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
 
-When the ``somatic_variant_annotation`` step has been omitted, and the filtration is done directly from the output of the ``somatic_variant_calling`` step,
-then the output files are stored in the ``output/{mapper}.{var_caller}.{lib_name}/out`` directory, under the names ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` &
-``{mapper}.{var_caller}.{lib_name}.full.vcf.gz``
+Of course, when annotation has been done prior to filtration, an ``.{annotator}``
+will be inserted between the caller and ``.filtered``.
 
 For example, it might look as follows for the example from above:
 
@@ -75,6 +91,8 @@ The following filters are implemented:
   Variants with a score lower than ``ebfilter_threshold`` are rejected.
   The scoring algorithm can be parameterised from the coniguration.
   This filter will add ``ebfilter_<n>`` to the FILTER column of rejected variants.
+  The implementation of this filter is old, and was tuned against a specific dataset.
+  In that sense, its use is discouraged (it should be replaced by ``varlociraptor``)
 - ``bcftools``: flexible filter based on `bcftools expressions <https://samtools.github.io/bcftools/bcftools.html#expressions>`_.
   The expression can be designed to ``include`` or ``exclude`` variants.
   This filter will add ``bcftools_<n>`` to the FILTER column of rejected variants.
@@ -95,8 +113,6 @@ use the ``bcftools`` filter to reject differentially potential FFPE artifacts. T
 
   filter_list:
   - dkfz: {}
-  - ebfilter:
-    ebfilter_threshold: 2.4
   - bcftools:
     exclude: "AD[1:0]+AD[1:1]<50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.05"
   - bcftools:
@@ -104,11 +120,9 @@ use the ``bcftools`` filter to reject differentially potential FFPE artifacts. T
   - protected:
     path_bed: hotspots_locii.bed
 
-This list of filters would apply the DKFZBiasFilter, the EBFilter, reject all variants with depth lower than 50, less than 5 reads supporting the alternative allele, or with a variant allele fraction below 5%.
+This list of filters would apply the DKFZBiasFilter, reject all variants with depth lower than 50, less than 5 reads supporting the alternative allele, or with a variant allele fraction below 5%.
 It would also reject all C-to-T and G-to-A variants with a VAF lower than 10%, because they might be FFPE artifacts.
 All variants overlapping with hotspots locii would be protected against filtration.
-
-Note that the parallelisation of ``ebfilter`` has been removed, even though this operation can be slow when there are many variants (from WGS data for example).
 """
 
 import os
@@ -155,11 +169,11 @@ LOG_EXT_VALUES = (
     ".merged.tar.gz.md5",
 )
 
-#: Default configuration for the somatic_variant_calling step
+#: Default configuration for the any_variant_calling step
 DEFAULT_CONFIG = AnyVariantFiltrationConfigModel.default_config_yaml_string()
 
 
-class SomaticVariantFiltrationStepPart(BaseStepPart):
+class AnyVariantFiltrationStepPart(BaseStepPart):
     """Shared code for all tools in somatic_variant_filtration"""
 
     def __init__(self, parent):
@@ -171,7 +185,7 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
         self.name_pattern += ".{tumor_library}"
 
 
-class OneFilterStepPart(SomaticVariantFiltrationStepPart):
+class OneFilterStepPart(AnyVariantFiltrationStepPart):
     """Performs one filtration step using checkpoints rather than rules"""
 
     #: Step name
@@ -302,7 +316,7 @@ class OneFilterProtectedStepPart(OneFilterStepPart):
     filter_name = "protected"
 
 
-class LastFilterStepPart(SomaticVariantFiltrationStepPart):
+class LastFilterStepPart(AnyVariantFiltrationStepPart):
     """Mark last filter as final output"""
 
     #: Step name
@@ -430,46 +444,48 @@ class AnyVariantFiltrationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Register sub workflows
-        self.register_sub_workflow(
-            "variant_annotation" if self.config.has_annotation else "variant_calling",
-            self.config.path_variant,
-            "variant",
-        )
+
+        # Might be used by some filter...
         self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
-        # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
-        assert self.config.tools_ngs_mapping, "No configured mapping tool"
-
-        if not self.config.tools_variant_calling:
-            if self.config.variant_origin == VariantOrigin.SOMATIC:
+        # Register sub-workflows and copy tools by variant origin
+        if self.config.variant_origin == VariantOrigin.SOMATIC:
+            if self.config.has_annotation:
+                self.register_sub_workflow(
+                    "somatic_variant_annotation", self.config.path_variant, "variant"
+                )
+            else:
+                self.register_sub_workflow(
+                    "somatic_variant_calling", self.config.path_variant, "variant"
+                )
+            if not self.config.tools_variant_calling:
                 self.config.tools_variant_calling = self.w_config.step_config[
                     "somatic_variant_calling"
                 ].tools
-            elif self.config.variant_origin == VariantOrigin.GERMLINE:
+        elif self.config.variant_origin == VariantOrigin.GERMLINE:
+            if self.config.has_annotation:
+                self.register_sub_workflow(
+                    "germline_variant_annotation", self.config.path_variant, "variant"
+                )
+            else:
+                self.register_sub_workflow(
+                    "germline_variant_calling", self.config.path_variant, "variant"
+                )
+            if not self.config.tools_variant_calling:
                 self.config.tools_variant_calling = self.w_config.step_config[
                     "germline_variant_calling"
                 ].tools
-            else:
-                raise MissingConfiguration(
-                    "Variant calling tools must be specified for 'any' variants"
+        else:
+            if self.config.has_annotation:
+                self.register_sub_workflow(
+                    "any_variant_annotation", self.config.path_variant, "variant"
                 )
+            else:
+                self.register_sub_workflow(
+                    "any_variant_calling", self.config.path_variant, "variant"
+                )
+        assert self.config.tools_variant_calling, "No tool configured for variant calling"
 
-        if self.config.has_annotation and not self.config.tools_variant_annotation:
-            if self.config.variant_origin == VariantOrigin.SOMATIC:
-                self.config.tools_variant_annotation = self.w_config.step_config[
-                    "somatic_variant_annotation"
-                ].tools
-            elif self.config.variant_origin == VariantOrigin.GERMLINE:
-                self.config.tools_variant_annotation = self.w_config.step_config[
-                    "germline_variant_annotation"
-                ].tools
-            else:
-                raise MissingConfiguration(
-                    "Variant annotation tools must be specified for 'any' variants"
-                )
         if not self.config.has_annotation:
             self.config.tools_variant_annotation = []
 
