@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - r-base>=4.1
+  - r-dplyr
+  - bioconductor-genomeinfodb
+  - bioconductor-s4vectors
+  - bioconductor-biostrings
+  - bioconductor-genomicranges
+  - bioconductor-iranges
+  - bioconductor-variantannotation
+  - bioconductor-summarizedexperiment
+  - bioconductor-genomicfeatures
