@@ -5,7 +5,6 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 
@@ -40,6 +39,13 @@ def minimal_config():
             - mutect2
             mutect2:
               contamination: {}
+
+          somatic_variant_filtration:
+            path_somatic_variant: /path/to/somatic_variant_calling
+            has_annotation: false
+            filter_list:
+              - bcftools:
+                  include: "depth > min"
 
           somatic_variant_annotation:
             path_somatic_variant: /path/to/somatic_variant_filtration
@@ -190,7 +196,7 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
     """Test simple functionality of the workflow"""
     # Check created sub steps
     expected = ["link_out", "vep"]
-    actual = list(sorted(somatic_variant_annotation_workflow.sub_steps.keys()))
+    actual = sorted(somatic_variant_annotation_workflow.sub_steps.keys())
     assert actual == expected
 
     # Check result file construction
@@ -235,6 +241,6 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         for var_caller in ("mutect2",)
         for annotator in ("vep",)
     ]
-    expected = list(sorted(expected))
-    actual = list(sorted(somatic_variant_annotation_workflow.get_result_files()))
+    expected = sorted(expected)
+    actual = sorted(somatic_variant_annotation_workflow.get_result_files())
     assert expected == actual

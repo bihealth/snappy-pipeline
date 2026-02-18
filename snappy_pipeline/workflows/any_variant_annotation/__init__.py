@@ -93,14 +93,14 @@ from snakemake.io import expand
 
 from biomedsheets.shortcuts import GenericSampleSheet
 
-from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.common.samplesheet import filter_table_by_modality, sample_sheets
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
-from snappy_pipeline.workflows.any_variant_calling import AnyVariantCallingWorkflow
-from snappy_pipeline.workflows.germline_variant_calling import GermlineVariantCallingWorkflow
-from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
+)
 
 from snappy_pipeline.workflows.any_variant_calling.model import VariantOrigin
 from .model import AnyVariantAnnotation as AnyVariantAnnotationConfigModel
@@ -274,6 +274,9 @@ class AnyVariantAnnotationWorkflow(BaseStep):
     """Perform variant annotation"""
 
     name = "any_variant_annotation"
+    variant_origin = VariantOrigin.ANY
+    model_class = AnyVariantAnnotationConfigModel
+
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
@@ -292,19 +295,29 @@ class AnyVariantAnnotationWorkflow(BaseStep):
         # This protects against circular import of workflows.
         #
         # This must be done before initialisation of the workflow.
-        if config["step_config"][self.name].get("variant_origin", VariantOrigin.SOMATIC):
-            calling_step = SomaticVariantCallingWorkflow
-        elif config["step_config"][self.name].get("variant_origin", VariantOrigin.GERMLINE):
-            calling_step = GermlineVariantCallingWorkflow
-        else:
-            calling_step = AnyVariantCallingWorkflow
-        previous_steps = [calling_step, NgsMappingWorkflow]
-        if config["step_config"][self.name].get("is_filtered", False):
+        if config["step_config"][self.name]["is_filtered"]:
             from snappy_pipeline.workflows.any_variant_filtration import (
                 AnyVariantFiltrationWorkflow,
             )
 
-            previous_steps.insert(0, AnyVariantFiltrationWorkflow)
+            previous_step = AnyVariantFiltrationWorkflow
+        else:
+            if self.variant_origin == VariantOrigin.SOMATIC:
+                from snappy_pipeline.workflows.somatic_variant_calling import (
+                    SomaticVariantCallingWorkflow,
+                )
+
+                previous_step = SomaticVariantCallingWorkflow
+            elif config["step_config"][self.name].get("variant_origin", VariantOrigin.GERMLINE):
+                from snappy_pipeline.workflows.germline_variant_calling import (
+                    GermlineVariantCallingWorkflow,
+                )
+
+                previous_step = GermlineVariantCallingWorkflow
+            else:
+                from snappy_pipeline.workflows.any_variant_calling import AnyVariantCallingWorkflow
+
+                previous_step = AnyVariantCallingWorkflow
 
         super().__init__(
             workflow,
@@ -312,11 +325,14 @@ class AnyVariantAnnotationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=AnyVariantAnnotationConfigModel,
-            previous_steps=previous_steps,
+            config_model_class=self.model_class,
+            previous_steps=(previous_step,),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepAnnotateVcfStepPart, LinkOutStepPart))
+
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"]["tools"]["dna"]
 
         # Register sub-workflows and copy tools by variant origin
         if self.config.variant_origin == VariantOrigin.SOMATIC:

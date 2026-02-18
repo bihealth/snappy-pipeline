@@ -13,6 +13,8 @@ from snappy_pipeline.workflows.any_variant_filtration import (
     OneFilterWithBamStepPart,
 )
 
+from snappy_pipeline.workflows.any_variant_calling.model import VariantOrigin
+from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigModel
 from .model import Ebfilter as EbfilterConfig
 
 
@@ -88,6 +90,8 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
 
 class SomaticVariantFiltrationWorkflow(AnyVariantFiltrationWorkflow):
     name = "somatic_variant_filtration"
+    variant_origin = VariantOrigin.SOMATIC
+    model_class = SomaticVariantFiltrationConfigModel
 
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {

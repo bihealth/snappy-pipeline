@@ -1,7 +1,10 @@
 from typing import TypedDict
 
+from pydantic import Field
+
 from snappy_pipeline.models import SnappyModel
 
+from snappy_pipeline.workflows.any_variant_calling.model import VariantOrigin
 from snappy_pipeline.workflows.any_variant_filtration.model import AnyVariantFiltration
 from snappy_pipeline.workflows.any_variant_filtration.model import Filter as ParentFilter
 
@@ -21,3 +24,4 @@ class EbfilterOnly(TypedDict, total=False):
 
 class SomaticVariantFiltration(AnyVariantFiltration):
     filter_list: list[ParentFilter | EbfilterOnly] = []
+    variant_origin: VariantOrigin = Field(VariantOrigin.SOMATIC, frozen=True)
