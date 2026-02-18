@@ -31,11 +31,25 @@ def minimal_config():
             bwa:
               path_index: /path/to/bwa/index.fasta
 
+          somatic_variant_calling:
+            path_ngs_mapping: ../ngs_mapping
+            tools: [mutect2]
+            mutect2:
+              contamination:
+                enabled: true
+                common_variants: /path/to/common_variants.vcf
+
+          somatic_variant_annotation:
+            path_somatic_variant: ../path/to/somatic_variant_calling
+            tools: [vep]
+            vep: {}
+
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['vep']
             path_somatic_variant: "/SOMATIC_VARIANT_ANNOTATION"
+            has_annotation: true
             filter_list:
             - dkfz: {}
             - ebfilter:

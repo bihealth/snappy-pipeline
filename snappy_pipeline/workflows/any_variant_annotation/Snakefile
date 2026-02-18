@@ -1,30 +1,3 @@
-# Rules =======================================================================
-
-
-localrules:
-    # Linking files from work/ to output/ should be done locally
-    any_variant_annotation_link_out_run,
-
-
-rule all:
-    input:
-        wf.get_result_files(),
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule any_variant_annotation_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
-
-
 # Variant Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Run VEP ---------------------------------------------------------------------

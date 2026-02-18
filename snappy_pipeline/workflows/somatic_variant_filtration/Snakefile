@@ -25,4 +25,66 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticVariantFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
+# Rules =======================================================================
+
+
+localrules:
+    # Linking files from work/ to output/ should be done locally
+    any_variant_filtration_link_out_run,
+
+
+rule all:
+    input:
+        wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule any_variant_filtration_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+
+
+# Write out "panel of normals" file for eb_filter ------------------------------
+
+
+rule any_variant_filtration_eb_filter_write_panel:
+    output:
+        **wf.get_output_files("one_ebfilter", "write_panel"),
+    threads: wf.get_resource("one_ebfilter", "write_panel", "threads")
+    resources:
+        time=wf.get_resource("one_ebfilter", "write_panel", "time"),
+        memory=wf.get_resource("one_ebfilter", "write_panel", "memory"),
+        partition=wf.get_resource("one_ebfilter", "write_panel", "partition"),
+        tmpdir=wf.get_resource("one_ebfilter", "write_panel", "tmpdir"),
+    run:
+        wf.substep_getattr("one_ebfilter", "write_panel_of_normals_file")(wildcards)
+
+
+rule one_ebfilter:
+    input:
+        unpack(wf.get_input_files("one_ebfilter", "run")),
+    output:
+        **wf.get_output_files("one_ebfilter", "run"),
+    params:
+        args=wf.get_args("one_ebfilter", "run"),
+    threads: wf.get_resource("one_ebfilter", "run", "threads")
+    resources:
+        time=wf.get_resource("one_ebfilter", "run", "time"),
+        memory=wf.get_resource("one_ebfilter", "run", "memory"),
+        partition=wf.get_resource("one_ebfilter", "run", "partition"),
+        tmpdir=wf.get_resource("one_ebfilter", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("one_ebfilter", "run"),
+    wrapper:
+        wf.wrapper_path("eb_filter")
+
+
 include: "../any_variant_filtration/Snakefile"

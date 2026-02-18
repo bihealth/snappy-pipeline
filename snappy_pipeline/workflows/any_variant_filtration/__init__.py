@@ -131,7 +131,6 @@ from typing import Any
 from snakemake.io import expand, Wildcards
 from biomedsheets.shortcuts import GenericSampleSheet
 
-from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.common.samplesheet import filter_table_by_modality, sample_sheets
 from snappy_pipeline.workflows.abstract import (
@@ -141,9 +140,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.any_variant_calling import AnyVariantCallingWorkflow
-from snappy_pipeline.workflows.any_variant_annotation import AnyVariantAnnotationWorkflow
-from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 
 from snappy_pipeline.workflows.any_variant_calling.model import VariantOrigin
 from .model import AnyVariantFiltration as AnyVariantFiltrationConfigModel
@@ -394,6 +390,8 @@ class AnyVariantFiltrationWorkflow(BaseStep):
 
     #: Workflow name
     name = "any_variant_filtration"
+    variant_origin = VariantOrigin.ANY
+    model_class = AnyVariantFiltrationConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
@@ -414,24 +412,37 @@ class AnyVariantFiltrationWorkflow(BaseStep):
         # This protects against circular import of workflows.
         #
         # This must be done before initialisation of the workflow.
-        if config["step_config"][self.name].get("variant_origin", VariantOrigin.SOMATIC):
-            calling_step = SomaticVariantCallingWorkflow
-        elif config["step_config"][self.name].get("variant_origin", VariantOrigin.GERMLINE):
-            calling_step = None
+        if config["step_config"][self.name]["has_annotation"]:
+            from snappy_pipeline.workflows.any_variant_annotation import (
+                AnyVariantAnnotationWorkflow,
+            )
+
+            previous_step = AnyVariantAnnotationWorkflow
         else:
-            calling_step = AnyVariantCallingWorkflow
-        previous_steps = [calling_step, NgsMappingWorkflow]
-        default = AnyVariantFiltrationConfigModel.model_fields["has_annotation"].default
-        if config["step_config"][self.name].get("has_annotation", default):
-            previous_steps.insert(0, AnyVariantAnnotationWorkflow)
+            if self.variant_origin == VariantOrigin.SOMATIC:
+                from snappy_pipeline.workflows.somatic_variant_calling import (
+                    SomaticVariantCallingWorkflow,
+                )
+
+                previous_step = SomaticVariantCallingWorkflow
+            elif self.variant_origin == VariantOrigin.GERMLINE:
+                from snappy_pipeline.workflows.germline_variant_calling import (
+                    GermlineVariantCallingWorkflow,
+                )
+
+                previous_step = GermlineVariantCallingWorkflow
+            else:
+                from snappy_pipeline.workflows.any_variant_calling import AnyVariantCallingWorkflow
+
+                previous_step = AnyVariantCallingWorkflow
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=AnyVariantFiltrationConfigModel,
-            previous_steps=previous_steps,
+            config_model_class=self.model_class,
+            previous_steps=(previous_step, NgsMappingWorkflow),
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -485,6 +496,9 @@ class AnyVariantFiltrationWorkflow(BaseStep):
                     "any_variant_calling", self.config.path_variant, "variant"
                 )
         assert self.config.tools_variant_calling, "No tool configured for variant calling"
+
+        if not self.config.tools_ngs_mapping:
+            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"]["tools"]["dna"]
 
         if not self.config.has_annotation:
             self.config.tools_variant_annotation = []
