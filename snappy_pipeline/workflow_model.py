@@ -5,13 +5,16 @@ from pydantic import ConfigDict
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.adapter_trimming.model import AdapterTrimming
-from snappy_pipeline.workflows.any_variant_annotation.model import AnyVariantAnnotation
 from snappy_pipeline.workflows.cbioportal_export.model import CbioportalExport
+from snappy_pipeline.workflows.combine_variants.model import CombineVariants
+from snappy_pipeline.workflows.create_proteome.model import CreateProteome
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
 )
 from snappy_pipeline.workflows.gene_expression_report.model import GeneExpressionReport
+from snappy_pipeline.workflows.germline_variant_annotation.model import GermlineVariantAnnotation
 from snappy_pipeline.workflows.germline_variant_calling.model import GermlineVariantCalling
+from snappy_pipeline.workflows.germline_variant_filtration.model import GermlineVariantFiltration
 from snappy_pipeline.workflows.helper_gcnv_model_targeted.model import HelperGcnvModelTargeted
 from snappy_pipeline.workflows.helper_gcnv_model_wgs.model import HelperGcnvModelWgs
 from snappy_pipeline.workflows.hla_typing.model import HlaTyping
@@ -33,6 +36,7 @@ from snappy_pipeline.workflows.somatic_purity_ploidy_estimate.model import (
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling.model import (
     SomaticTargetedSeqCnvCalling,
 )
+from snappy_pipeline.workflows.somatic_variant_annotation.model import SomaticVariantAnnotation
 from snappy_pipeline.workflows.somatic_variant_calling.model import SomaticVariantCalling
 from snappy_pipeline.workflows.somatic_variant_filtration.model import SomaticVariantFiltration
 from snappy_pipeline.workflows.somatic_variant_signatures.model import SomaticVariantSignatures
@@ -103,9 +107,13 @@ class DataSet(SnappyModel):
 class StepConfig(TypedDict, total=False):
     adapter_trimming: AdapterTrimming
     cbioportal_export: CbioportalExport
+    combine_variants: CombineVariants
+    create_proteome: CreateProteome
     gene_expression_quantification: GeneExpressionQuantification
     gene_expression_report: GeneExpressionReport
+    germline_variant_annotation: GermlineVariantAnnotation
     germline_variant_calling: GermlineVariantCalling
+    germline_variant_filtration: GermlineVariantFiltration
     helper_gcnv_model_targeted: HelperGcnvModelTargeted
     helper_gcnv_model_wgs: HelperGcnvModelWgs
     hla_typing: HlaTyping
@@ -122,7 +130,7 @@ class StepConfig(TypedDict, total=False):
     somatic_neoepitope_prediction: SomaticNeoepitopePrediction
     somatic_purity_ploidy_estimate: SomaticPurityPloidyEstimate
     somatic_targeted_seq_cnv_calling: SomaticTargetedSeqCnvCalling
-    somatic_variant_annotation: AnyVariantAnnotation
+    somatic_variant_annotation: SomaticVariantAnnotation
     somatic_variant_calling: SomaticVariantCalling
     somatic_variant_filtration: SomaticVariantFiltration
     somatic_variant_signatures: SomaticVariantSignatures
