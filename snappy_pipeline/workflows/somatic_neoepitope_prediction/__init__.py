@@ -32,6 +32,8 @@ The default configuration is as follows.
 """
 
 import json
+import os
+
 import pandas as pd
 
 from typing import Any
@@ -42,12 +44,13 @@ from snakemake.io import expand, Wildcards, InputFiles
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.models.common import ExtractionType
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
-from snappy_pipeline.workflows.common.samplesheet import sample_sheets, tumor_to_normal_mapping
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
-from snappy_pipeline.workflows.gene_expression_quantification import (
-    GeneExpressionQuantificationWorkflow,
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    LinkOutStepPart,
+    ResourceUsage,
 )
+from snappy_pipeline.workflows.common.samplesheet import sample_sheets, tumor_to_normal_mapping
 from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow
 from .model import SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel
@@ -382,6 +385,9 @@ class PvacSeqStepPart(PvacToolsStepPart):
         yield "vcf", "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.annotated_template)
 
         yield "alleles", self._get_hla_files(wildcards)
+
+        if self.config.phasing.enabled:
+            yield "phased", "work/{tpl}/out/{tpl}.phased.vcf.gz".format(tpl=self.annotated_template)
 
         if self.cfg.genes_of_interest_file:
             yield "genes", self.cfg.genes_of_interest_file
@@ -737,6 +743,78 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         }
 
 
+class PhasingStepPart(BaseStepPart):
+    """
+    Phase sometic with germline variants using obsolete GATK, for pVACtools only.
+
+    TODO: A better solution sould be developed using current GATK tools
+    """
+
+    name = "phasing"
+    actions = ("run",)
+
+    #: Resources
+    default_resource_usage = {"run": ResourceUsage(threads=1, time="23:59:59", memory="32G")}
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.annotated_template = "{mapper}.{caller}.{annotator}"
+        if self.config.is_filtered:
+            self.annotated_template += ".filtered"
+        self.annotated_template += ".{tumor_dna}"
+
+    def get_input_files(self, action: str):
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield "reference", self.w_config.static_data_config.reference.path
+
+        combined = self.parent.sub_workflows["combine_variants"]
+        tpl = f"{self.config.phasing.tool_ngs_mapping}.combined.{wildcards.tumor_dna}"
+        yield "vcf", combined(os.path.join("output", tpl, "out", tpl + ".vcf.gz"))
+
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        tpl = f"{self.config.phasing.tool_ngs_mapping}.{wildcards.tumor_dna}"
+        yield "bam", ngs_mapping(os.path.join("output", tpl, "out", tpl + ".bam"))
+
+    def get_output_files(self, action: str) -> dict[str, Any]:
+        match action:
+            case "run":
+                return {
+                    "vcf": "work/{tpl}/out/{tpl}.phased.vcf.gz".format(tpl=self.annotated_template)
+                }
+            case _:
+                raise MissingConfiguration(f"Unknown action {action} during phasing")
+
+    def get_args(self, action):
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}
+
+    def get_log_file(self, action):
+        """Return mapping of log files."""
+        self._validate_action(action)
+        tpl = "work/{tpl}/log/{action}".format(tpl=self.annotated_template, action=self.name)
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        log_files = {}
+        for key, ext in key_ext:
+            log_files[key] = tpl + ext
+            log_files[key + "_md5"] = log_files[key] + ".md5"
+        return log_files
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        self._validate_action(action)
+        return self.default_resource_usage[action]
+
+
 class SomaticNeoepitopePredictionWorkflow(BaseStep):
     """Perform neoepitope prediction workflow"""
 
@@ -753,10 +831,23 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
         previous_steps: list[BaseStep] = [SomaticVariantAnnotationWorkflow, HlaTypingWorkflow]
-        if config["step_config"]["somatic_neoepitope_prediction"]["pileup"]["enabled"]:
+        cfg = config["step_config"]["somatic_neoepitope_prediction"]
+        if cfg.get("pileup", {}).get("enabled", False) or cfg.get("phasing", {}).get(
+            "enabled", False
+        ):
+            from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
             previous_steps.append(NgsMappingWorkflow)
-        if config["step_config"]["somatic_neoepitope_prediction"]["quantification"]["enabled"]:
+        if cfg.get("quantification", {}).get("enabled", False):
+            from snappy_pipeline.workflows.gene_expression_quantification import (
+                GeneExpressionQuantificationWorkflow,
+            )
+
             previous_steps.append(GeneExpressionQuantificationWorkflow)
+        if cfg.get("phasing", {}).get("enabled", False):
+            from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
+
+            previous_steps.append(CombineVariantsWorkflow)
 
         super().__init__(
             workflow,
@@ -774,6 +865,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 PvacSeqStepPart,
                 PvacFuseStepPart,
                 PvacSpliceStepPart,
+                PhasingStepPart,
                 LinkOutStepPart,
             )
         )
@@ -810,6 +902,11 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             self.register_sub_workflow(
                 "gene_expression_quantification",
                 self.config.quantification.path_gene_expression_quantification,
+            )
+        if self.config.phasing.enabled:
+            self.register_sub_workflow(
+                "combine_variants",
+                self.config.phasing.path_combine_variants,
             )
         if "pvacfuse" in self.config.tools:
             self.register_sub_workflow(

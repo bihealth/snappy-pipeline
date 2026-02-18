@@ -5,13 +5,13 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import InputFiles, Wildcards
+from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_neoepitope_prediction import (
     SomaticNeoepitopePredictionWorkflow,
 )
 
-from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
+from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 
@@ -69,6 +69,21 @@ def minimal_config():
             vep:
                 cache_dir: /path/to/dir/cache
 
+          germline_variant_calling:
+            path_ngs_mapping: NGS_MAPPING
+            tools: [gatk4_hc]
+            gatk4_hc:
+              num_threads: 8
+
+          combine_variants:
+            somatic_variant_type: annotation
+            path_somatic_variant: SOMATIC_VARIANT_ANNOTATION
+            tool_somatic_variant_annotation: vep
+            germline_variant_type: filtration
+            path_germline_variant: GERMLINE_VARIANT_FILTRATION
+            is_germline_variant_filtered: true
+            rename_combined: tumor
+
           somatic_neoepitope_prediction:
             tools: [pvacseq, pvacfuse, pvacsplice]
             is_filtered: false
@@ -76,6 +91,9 @@ def minimal_config():
               enabled: true
             quantification:
               enabled: true
+            phasing:
+              enabled: true
+              path_combine_variants: COMBINE_VARIANTS
             tools_hla_typing:
               dna:
                 class_i: optitype
@@ -132,6 +150,7 @@ def somatic_neoepitope_prediction_workflow(
         "hla_typing": lambda x: "/HLA_TYPING/" + x,
         "gene_expression_quantification": lambda x: "GENE_EXPRESSION_QUANTIFICATION/" + x,
         "somatic_gene_fusion_calling": lambda x: "SOMATIC_GENE_FUSION_CALLING/" + x,
+        "combine_variants": lambda x: "COMBINE_VARIANTS/" + x,
     }
     # Construct the workflow object
     return SomaticNeoepitopePredictionWorkflow(
@@ -275,6 +294,7 @@ def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_input_files
     expected = {
         "container": "work/containers/out/pvactools.sif",
         "vcf": f"work/{annotated_tpl}/out/{annotated_tpl}.combined.vcf.gz",
+        "phased": f"work/{annotated_tpl}/out/{annotated_tpl}.phased.vcf.gz",
         "alleles": [
             optitype_tpl.format(library="P001-T1-DNA1-WGS1"),
             optitype_tpl.format(library="P001-N1-DNA1-WGS1"),
@@ -675,11 +695,77 @@ def test_somatic_neoepitope_prediction_pvacsplice_step_part_get_resource(
             assert actual == expected, msg_error
 
 
+def test_somatic_neoepitope_prediction_phasing_step_part_get_input_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    expected = {
+        "bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "vcf": "COMBINE_VARIANTS/output/bwa.combined.P001-T1-DNA1-WGS1/out/bwa.combined.P001-T1-DNA1-WGS1.vcf.gz",
+    }
+    actual = somatic_neoepitope_prediction_workflow.get_input_files("phasing", "run")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_phasing_step_part_get_output_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    expected = {"vcf": f"work/{tpl}/out/{tpl}.phased.vcf.gz"}
+    actual = somatic_neoepitope_prediction_workflow.get_output_files("phasing", "run")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_phasing_step_part_get_log_file(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
+    expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/phasing")
+    actual = somatic_neoepitope_prediction_workflow.get_log_file("phasing", "run")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_phasing_step_part_get_args(
+    somatic_neoepitope_prediction_workflow,
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+        }
+    )
+    expected = {}
+    actual = somatic_neoepitope_prediction_workflow.get_args("phasing", "run")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_phasing_step_part_get_resource(
+    somatic_neoepitope_prediction_workflow,
+):
+    # Define expected
+    expected_dict = {"run": {"threads": 1, "time": "23:59:59", "memory": "32G"}}
+    # Evaluate
+    for action, resources in expected_dict.items():
+        for resource, expected in resources.items():
+            msg_error = f"Unexpected value '{expected}' of '{resource}' in '{action}' sub-step"
+            actual = somatic_neoepitope_prediction_workflow.get_resource("phasing", action, resource)()
+            assert actual == expected, msg_error
+
 
 def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["link_out", "pvacfuse", "pvacseq", "pvacsplice", "pvactools"]
+    expected = ["link_out", "phasing", "pvacfuse", "pvacseq", "pvacsplice", "pvactools"]
     actual = list(sorted(somatic_neoepitope_prediction_workflow.sub_steps.keys()))
     assert actual == expected
 

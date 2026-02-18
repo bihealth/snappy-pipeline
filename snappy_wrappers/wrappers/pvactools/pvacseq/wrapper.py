@@ -35,6 +35,9 @@ def bindings_for_container(files_to_bind: Namedlist, base_container_path: str, a
 
 alleles = ",".join(args["alleles"])
 
+if phased := getattr(snakemake.input, "phased", ""):
+    phased = f"--phased-proximal-variants-vcf {input_fns['phased']}"
+
 if peptides := getattr(snakemake.input, "peptides", ""):
     peptides = f"--peptide-fasta {input_fns['peptides']}"
 if genes := getattr(snakemake.input, "genes", ""):
@@ -101,7 +104,7 @@ pvacseq run --n-threads {snakemake.threads} \\
     --normal-sample-name {args[normal_sample]} \\
     --iedb-install-directory /opt/iedb \\
     {args[extra_args]} \\
-    {peptides} {genes} \\
+    {peptides} {genes} {phased} \\
     {input_fns[vcf]} \\
     {args[tumor_sample]} {alleles} {args[algorithms]} \\
     $(dirname {output_fns[path]})

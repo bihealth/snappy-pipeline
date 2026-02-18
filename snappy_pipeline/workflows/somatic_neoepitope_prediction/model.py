@@ -2,7 +2,7 @@ import enum
 
 from pydantic import model_validator
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.workflows.hla_typing.model import (
     MHCIClassDnaTool,
     MHCIClassRnaTool,
@@ -30,6 +30,14 @@ class SupportedGeneFusionTool(enum.StrEnum):
     ARRIBA = "arriba"
 
 
+class SupportedGermlineVariantCallingTool(enum.StrEnum):
+    GATK4_HC = "gatk4_hc"
+
+
+class SupportedGermlineVariantAnnotationTool(enum.StrEnum):
+    VEP = "vep"
+
+
 class HlaTypingDnaTools(SnappyModel):
     class_i: MHCIClassDnaTool | None = None
     class_ii: MHCIIClassDnaTool | None = None
@@ -43,6 +51,12 @@ class HlaTypingRnaTools(SnappyModel):
 class HlaTypingTools(SnappyModel):
     dna: HlaTypingDnaTools = HlaTypingDnaTools()
     rna: HlaTypingRnaTools = HlaTypingRnaTools()
+
+
+class InputVariantType(enum.StrEnum):
+    CALLING = "calling"
+    ANNOTATION = "annotation"
+    FILTRATION = "filtration"
 
 
 class Algorithm(enum.StrEnum):
@@ -257,9 +271,7 @@ class EnsemblVersion(enum.StrEnum):
     BOTH = "both"
 
 
-class RnaMapping(SnappyModel):
-    enabled: bool = False
-
+class RnaMapping(ToggleModel):
     path_ngs_mapping: str = "../ngs_mapping"
     tool_rna_mapping: SupportedPileupTool = SupportedPileupTool.STAR
 
@@ -274,9 +286,7 @@ class RnaMapping(SnappyModel):
     snp_indel_genotype: list[str] = []
 
 
-class RnaQuantification(SnappyModel):
-    enabled: bool = False
-
+class RnaQuantification(ToggleModel):
     path_gene_expression_quantification: str = "../gene_expression_quantification"
     tool_gene_expression_quantification: SupportedExpressionTool = SupportedExpressionTool.SALMON
 
@@ -298,6 +308,11 @@ class RnaQuantification(SnappyModel):
         return self
 
 
+class Phasing(ToggleModel):
+    tool_ngs_mapping: str = "bwa"
+    path_combine_variants: str = "../combine_variants"
+
+
 class SomaticNeoepitopePrediction(SnappyStepModel):
     tools: list[SupportedPredictionTool] = [SupportedPredictionTool.PVACSEQ]
 
@@ -309,6 +324,7 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
 
     pileup: RnaMapping = RnaMapping()
     quantification: RnaQuantification = RnaQuantification()
+    phasing: Phasing = Phasing()
 
     pvacseq: PVACseq = PVACseq()
     pvacfuse: PVACfuse = PVACfuse()

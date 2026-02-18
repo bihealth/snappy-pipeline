@@ -132,6 +132,27 @@ if wf.config["quantification"]["enabled"]:
             wf.wrapper_path("pvactools/combine")
 
 
+if wf.config["phasing"]["enabled"]:
+
+    rule somatic_neoepitope_phasing:
+        input:
+            unpack(wf.get_input_files("pvacseq", "phasing")),
+        output:
+            **wf.get_output_files("pvacseq", "phasing"),
+        log:
+            **wf.get_log_file("pvacseq", "phasing"),
+        threads: wf.get_resource("pvacseq", "phasing", "threads")
+        resources:
+            time=wf.get_resource("pvacseq", "phasing", "time"),
+            memory=wf.get_resource("pvacseq", "phasing", "memory"),
+            partition=wf.get_resource("pvacseq", "phasing", "partition"),
+            tmpdir=wf.get_resource("pvacseq", "phasing", "tmpdir"),
+        params:
+            args=wf.get_args("pvacseq", "phasing"),
+        wrapper:
+            wf.wrapper_path("pvactools/phasing")
+
+
 if "pvacseq" in wf.config["tools"]:
 
     rule somatic_neoepitope_prediction_pvacseq:
