@@ -3,5 +3,5 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - hla-la==1
-  - openjdk=17
+  - python=3.12
+  - hla-la=1

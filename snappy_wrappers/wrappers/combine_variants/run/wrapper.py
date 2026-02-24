@@ -39,22 +39,30 @@ gatk=$(find $CONDA_PREFIX -name GenomeAnalysisTK.jar)
 
 if [[ -n "{sample_name}" ]]
 then
-    vcf=$tmp/reheaded.vcf.gz
-    bcftools reheader --samples <(echo "{sample_name}") {snakemake.input.germline_vcf} > $vcf
-    tabix $vcf
+    germline=$tmp/germline.vcf.gz
+    bcftools reheader --samples <(echo "{sample_name}") {snakemake.input.germline_vcf} > $germline
+    tabix $germline
 else
-    vcf={snakemake.input.germline_vcf}
+    germline={snakemake.input.germline_vcf}
 fi
 
+somatic=$tmp/somatic.vcf.gz
+bcftools view \
+    --samples-file <(echo "{args[tumor_library]}") \
+    --output-type z --output $somatic --write-index=tbi \
+    {snakemake.input.somatic_vcf}
+
 java -Xmx{mem_mb}m -jar $gatk -T CombineVariants \
+    --assumeIdenticalSamples \
     -R {snakemake.input.reference} \
-    --variants $vcf \
-    --variants {snakemake.input.somatic_vcf} \
-    -o $tmp/combined.vcf
+    --variant $germline \
+    --variant $somatic \
+    -o $tmp/combined.vcf.gz
 
 bcftools sort --max-mem {mem_mb}M \
     --temp-dir $tmp/sort \
-    --output-type z --output {snakemake.output.vcf} --write-index=tbi
+    --output-type z --output {snakemake.output.vcf} --write-index=tbi \
+    $tmp/combined.vcf.gz
 
 pushd $(dirname {snakemake.output.vcf})
 f=$(basename {snakemake.output.vcf})

@@ -54,7 +54,7 @@ class Optitype(SnappyModel):
 
 
 class Population(enum.StrEnum):
-    PRIOR = "Prior"
+    PRIOR = "prior"
     ASIAN_PACIFIC_ISLANDER = "asian_pacific_islander"
     BLACK = "black"
     CAUCASIAN = "caucasian"

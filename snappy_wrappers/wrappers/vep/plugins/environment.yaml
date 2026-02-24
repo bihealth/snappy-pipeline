@@ -4,4 +4,4 @@ channels:
   - nodefaults
 dependencies:
   - python==3.12
-  - requests==2
+  - requests=2

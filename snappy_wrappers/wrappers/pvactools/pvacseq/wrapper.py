@@ -9,9 +9,16 @@ __email__ = "eric.blanc@bih-charite.de"
 args = getattr(snakemake.params, "args", {})
 
 # TODO: Extend to lists, check for directories in directories [outputs/rw precedence on inputs/ro] & put in a function (decide where...)
-def bindings_for_container(files_to_bind: Namedlist, base_container_path: str, access: str = "ro") -> tuple[str, dict[str, str]]:
+def bindings_for_container(
+    files_to_bind: Namedlist,
+    base_container_path: str,
+    access: str = "ro",
+    exclude_bind: list[str] = []
+) -> tuple[str, dict[str, str]]:
     fns = {}
     for key, path in files_to_bind.items():
+        if key in exclude_bind:
+            continue
         assert not isinstance(path, list), f"Input files cannot be lists (offender is '{key}')"
         assert key not in fns, f"Duplicate input '{key}'"
         fns[key] = os.path.realpath(path)
@@ -30,10 +37,14 @@ def bindings_for_container(files_to_bind: Namedlist, base_container_path: str, a
 
     return (binding_cmd, container_fns)
 
-(input_bindings, input_fns) = bindings_for_container(snakemake.input, base_container_path="/inputs")
-(output_bindings, output_fns) = bindings_for_container(snakemake.output, base_container_path="/outputs", access="rw")
+(input_bindings, input_fns) = bindings_for_container(
+    snakemake.input, base_container_path="/inputs", exclude_bind=args["exclude_bind"]
+)
+(output_bindings, output_fns) = bindings_for_container(
+    snakemake.output, base_container_path="/outputs", access="rw", exclude_bind=args["exclude_bind"]
+)
 
-alleles = ",".join(args["alleles"])
+alleles = ",".join(args["class_i"] + args["class_ii"])
 
 if phased := getattr(snakemake.input, "phased", ""):
     phased = f"--phased-proximal-variants-vcf {input_fns['phased']}"

@@ -136,19 +136,19 @@ if wf.config["phasing"]["enabled"]:
 
     rule somatic_neoepitope_phasing:
         input:
-            unpack(wf.get_input_files("pvacseq", "phasing")),
+            unpack(wf.get_input_files("phasing", "run")),
         output:
-            **wf.get_output_files("pvacseq", "phasing"),
+            **wf.get_output_files("phasing", "run"),
         log:
-            **wf.get_log_file("pvacseq", "phasing"),
-        threads: wf.get_resource("pvacseq", "phasing", "threads")
+            **wf.get_log_file("phasing", "run"),
+        threads: wf.get_resource("phasing", "run", "threads")
         resources:
-            time=wf.get_resource("pvacseq", "phasing", "time"),
-            memory=wf.get_resource("pvacseq", "phasing", "memory"),
-            partition=wf.get_resource("pvacseq", "phasing", "partition"),
-            tmpdir=wf.get_resource("pvacseq", "phasing", "tmpdir"),
+            time=wf.get_resource("phasing", "run", "time"),
+            memory=wf.get_resource("phasing", "run", "memory"),
+            partition=wf.get_resource("phasing", "run", "partition"),
+            tmpdir=wf.get_resource("phasing", "run", "tmpdir"),
         params:
-            args=wf.get_args("pvacseq", "phasing"),
+            args=wf.get_args("phasing", "run"),
         wrapper:
             wf.wrapper_path("pvactools/phasing")
 

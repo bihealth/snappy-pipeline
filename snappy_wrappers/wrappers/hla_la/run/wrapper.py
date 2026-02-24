@@ -3,10 +3,11 @@
 
 import csv
 import json
+import subprocess
 
 from snakemake import shell
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
@@ -42,15 +43,12 @@ HLA-LA.pl --maxThreads {snakemake.threads} --sampleID {args[sample_id]} \
 
 cp $TMPDIR/{args[sample_id]}/hla/R1_bestguess_G.txt {snakemake.output.txt}
 
-pushd $(dirname {snakemake.output.json})
-md5sum $(basename {snakemake.output.json}) >$(basename {snakemake.output.json}).md5
+pushd $(dirname {snakemake.output.txt})
 md5sum $(basename {snakemake.output.txt}) >$(basename {snakemake.output.txt}).md5
 popd
 
 # To make the pipeline happy.
-# TODO: move all the step output to json.
 md5sum {snakemake.log.log} > {snakemake.log.log}.md5
-touch {snakemake.output.json}.md5
 """
 )
 
@@ -69,3 +67,6 @@ for k, v in alleles.items():
 
 with open(snakemake.output.json, "wt") as f:
     json.dump(alleles, f, indent=4)
+
+with open(str(snakemake.output.json) + ".md5", "wt") as f:
+    subprocess.run(["md5sum", snakemake.output.json], stdout=f)

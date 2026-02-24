@@ -463,7 +463,7 @@ def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_args(
         "tumor_sample": "P001-T1",
         "normal_sample": "P001-N1",
         "class_i": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03", "HLA-C*04:04"],
-        "class_ii": ["DPB1*14:01:01"],
+        "class_ii": ["DPB1*14:01"],
         "algorithms": "MHCflurry MHCnuggetsI",
         "exclude_bind": ["container", "alleles"],
         "extra_args": (
@@ -527,7 +527,7 @@ def test_somatic_neoepitope_prediction_pvacfuse_pvacfuse_step_part_get_args(
         "n_threads": 1,
         "tumor_sample": "P001-T1",
         "class_i": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03", "HLA-C*04:04"],
-        "class_ii": ["DPB1*14:01:01"],
+        "class_ii": ["DPB1*14:01"],
         "algorithms": "all_class_i",
         "exclude_bind": ["container", "alleles"],
         "extra_args": (
@@ -660,7 +660,7 @@ def test_somatic_neoepitope_prediction_pvacsplice_pvacsplice_step_part_get_args(
         "tumor_sample": "P001-T1",
         "normal_sample": "P001-N1",
         "class_i": ["HLA-A*02:01", "HLA-A*11:01", "HLA-B*15:32", "HLA-C*04:03", "HLA-C*04:04"],
-        "class_ii": ["DPB1*14:01:01"],
+        "class_ii": ["DPB1*14:01"],
         "algorithms": "all",
         "exclude_bind": ["container", "alleles"],
         "extra_args": (

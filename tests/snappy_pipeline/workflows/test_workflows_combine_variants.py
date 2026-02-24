@@ -9,7 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
 
-from .common import get_expected_log_files_dict
+from .common import get_expected_log_files_dict, get_expected_output_vcf_files_dict
 from .conftest import patch_module_fs
 
 
@@ -133,7 +133,7 @@ def test_combine_step_part_get_input_files_run(combine_variants_workflow):
 def test_combine_step_part_get_output_files_run(combine_variants_workflow):
     """Tests CombineVariantsStepPart.get_output_files()"""
     base_out = "bwa.combined.{tumor_library}"
-    expected = {"vcf": f"work/{base_out}/out/{base_out}.vcf.gz"}
+    expected = get_expected_output_vcf_files_dict(base_out=f"work/{base_out}/out/{base_out}")
     actual = combine_variants_workflow.get_output_files("combine", "run")
     assert actual == expected
 
@@ -149,7 +149,7 @@ def test_combine_step_part_get_log_file_run(combine_variants_workflow):
 def test_combine_step_part_get_args_run(combine_variants_workflow):
     """Tests CombineVariantsStepPart.get_args()"""
     wildcards: Wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
-    expected = {"sample_name": "P001-T1-DNA1-WGS1"}
+    expected = {"sample_name": "P001-T1-DNA1-WGS1", "tumor_library": "P001-T1-DNA1-WGS1" }
     actual = combine_variants_workflow.get_args("combine", "run")(wildcards)
     assert actual == expected
 

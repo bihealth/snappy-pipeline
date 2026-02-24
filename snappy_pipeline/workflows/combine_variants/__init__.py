@@ -133,7 +133,15 @@ class CombineVariantsStepPart(BaseStepPart):
     def get_output_files(self, action: str) -> dict[str, Any]:
         match action:
             case "run":
-                return {"vcf": "work/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.base_out)}
+                return {
+                    k: "work/{tpl}/out/{tpl}.vcf.gz{ext}".format(tpl=self.base_out, ext=ext)
+                    for k, ext in (
+                        ("vcf", ""),
+                        ("vcf_tbi", ".tbi"),
+                        ("vcf_md5", ".md5"),
+                        ("vcf_tbi_md5", ".tbi.md5"),
+                    )
+                }
             case _:
                 raise MissingConfiguration(f"Unimplemented action {action}")
 
@@ -149,9 +157,9 @@ class CombineVariantsStepPart(BaseStepPart):
                 sample_name = self.parent.tumor_to_normal_mapping[wildcards.tumor_library]
             else:
                 raise MissingConfiguration(f"Unimplemented sample name type {name_origin}")
-            return {"sample_name": sample_name}
+            return {"tumor_library": wildcards.tumor_library, "sample_name": sample_name}
         else:
-            return {}
+            return {"tumor_library": wildcards.tumor_library}
 
     @dictify
     def get_log_file(self, action: str):

@@ -13,9 +13,11 @@ single = "--single" if args.get("single", False) else ""
 
 extra_args = (
     f"--population {args['population']} --min_count {args['min_count']} --tolerance {args['tolerance']} "
-    f"--max_iterations {args['max_iterations']} --drop_iterations {args['drop_iterations']} "
-    f"--drop_threshold {args['drop_threshold']} --zygocity_threshold {args['zygocity_threshold']}"
+    f"--max_iterations {args['max_iterations']} "
+    f"--drop_threshold {args['drop_threshold']} "  # fails with --zygocity_threshold {args['zygocity_threshold']}" 
 )
+if "drop_iterations" in args:
+    extra_args += f" --drop_iterations {args['drop_iterations']}"
 
 if args.get("single", False):
     single = "--single"
@@ -61,7 +63,7 @@ arcasHLA genotype --verbose --threads {snakemake.threads} \
     {extra_args} \
     $TMPDIR/extracted/*.fq.gz
 
-cp $TMPDIR/genotyped/star.genotype.json {snakemake.output.json}
+cp $TMPDIR/genotyped/{args[mapper]}.genotype.json {snakemake.output.json}
 pushd $(dirname {snakemake.output.json})
 md5sum $(basename {snakemake.output.json}) >$(basename {snakemake.output.json}).md5
 popd

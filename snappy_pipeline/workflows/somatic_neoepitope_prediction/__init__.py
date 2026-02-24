@@ -33,6 +33,7 @@ The default configuration is as follows.
 
 import json
 import os
+import re
 
 import pandas as pd
 
@@ -75,21 +76,9 @@ PREDICT_EXT_VALUES = (
 DEFAULT_CONFIG = SomaticNeoepitopePredictionConfigModel.default_config_yaml_string()
 
 #: MHC class I & II genes & pseudo-genes
-CLASS_I = ("A", "B", "C", "E", "F", "G", "H", "J", "K", "L", "N", "S", "T", "U", "V", "W", "Y")
-CLASS_II = (
-    "DPB1",
-    "DQB1",
-    "DRB1",
-    "DPA1",
-    "DPA2",
-    "DPB2",
-    "DQA1",
-    "DRB2",
-    "DRB3",
-    "DRB4",
-    "DRB5",
-    "DRB7",
-)
+CLASS_I = ("A", "B", "C")  # , "E", "F", "G", "H", "J", "K", "L", "N", "S", "T", "U", "V", "W", "Y")
+CLASS_II = ("DPA1", "DPB1", "DPA2", "DPB2", "DQA1", "DQB1")
+# , "DRB1", "DRB2", "DRB3", "DRB4", "DRB5", "DRB7")
 
 EXTRACTION_TYPES = ("dna", "rna")
 MHC_CLASSES = ("class_i", "class_ii")
@@ -107,6 +96,13 @@ class PvacToolsStepPart(BaseStepPart):
 
     actions = ("install",)
     require_rna: bool = False
+
+    CLASS_I_PATTERN = re.compile(
+        r"^(?P<valid>({})\*[0-9]+:[0-9]+N?)(?P<suppl>.*)$".format("|".join(CLASS_I))
+    )
+    CLASS_II_PATTERN = re.compile(
+        r"^(?P<valid>({})\*[0-9]+:[0-9]+N?)(?P<suppl>.*)$".format("|".join(CLASS_II))
+    )
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -262,18 +258,31 @@ class PvacToolsStepPart(BaseStepPart):
                 v = "'" + v + "'"
             yield f"--{k} {v}"
 
-    @staticmethod
-    def _read_hla_values(
-        hla_typing_files: list[str], alleles: tuple[str], prefix: str = "HLA-"
-    ) -> set[str]:
-        hla_types = set()
+    @classmethod
+    def _read_hla_values(cls, hla_typing_files: list[str], mhc_class: str) -> list[str]:
+        if mhc_class == MHC_CLASSES[0]:
+            loci = CLASS_I
+            pattern = cls.CLASS_I_PATTERN
+            prefix = "HLA-"
+        elif mhc_class == MHC_CLASSES[1]:
+            loci = CLASS_II
+            pattern = cls.CLASS_II_PATTERN
+            prefix = ""
+        else:
+            raise MissingConfiguration(f"Unknown MHC class {mhc_class}")
+
+        hla_types = []
         for fn in hla_typing_files:
             with open(fn, "rt") as f:
-                calls = json.load(f)
-            for allele in alleles:
-                if allele in calls:
-                    hla_types |= set(map(lambda x: prefix + x, calls[allele]))
-        return hla_types
+                calls: dict[str, Any] = json.load(f)
+            for locus, alleles in calls.items():
+                if locus in loci:
+                    for allele in alleles:
+                        m = pattern.match(allele)
+                        if m:
+                            hla_types.append(prefix + m.group("valid"))
+
+        return list(set(hla_types))
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         if action == "install":
@@ -476,8 +485,8 @@ class PvacSeqStepPart(PvacToolsStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        class_i = self._read_hla_values(input["alleles"], CLASS_I, prefix="HLA-")
-        class_ii = self._read_hla_values(input["alleles"], CLASS_II, prefix="")
+        class_i = self._read_hla_values(input["alleles"], MHC_CLASSES[0])
+        class_ii = self._read_hla_values(input["alleles"], MHC_CLASSES[1])
 
         samples = self._get_sample_names(wildcards)
 
@@ -571,8 +580,8 @@ class PvacFuseStepPart(PvacToolsStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        class_i = self._read_hla_values(input["alleles"], CLASS_I, prefix="HLA-")
-        class_ii = self._read_hla_values(input["alleles"], CLASS_II, prefix="")
+        class_i = self._read_hla_values(input["alleles"], MHC_CLASSES[0])
+        class_ii = self._read_hla_values(input["alleles"], MHC_CLASSES[1])
 
         samples = self._get_sample_names(wildcards)
 
@@ -726,8 +735,8 @@ class PvacSpliceStepPart(PvacToolsStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        class_i = self._read_hla_values(input["alleles"], CLASS_I, prefix="HLA-")
-        class_ii = self._read_hla_values(input["alleles"], CLASS_II, prefix="")
+        class_i = self._read_hla_values(input["alleles"], MHC_CLASSES[0])
+        class_ii = self._read_hla_values(input["alleles"], MHC_CLASSES[1])
 
         samples = self._get_sample_names(wildcards)
 

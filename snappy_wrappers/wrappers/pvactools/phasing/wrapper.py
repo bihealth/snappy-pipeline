@@ -1,7 +1,4 @@
-import os
-
 from snakemake import shell
-from snakemake.io import Namedlist
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
@@ -63,7 +60,6 @@ java -jar $jar -T ReadBackedPhasing \
     -L {snakemake.input.vcf} \
     --variant {snakemake.input.vcf} \
     -o {snakemake.output.vcf}
-tabix {snakemake.output.vcf}
 
 md5 {snakemake.input.vcf}
 md5 {snakemake.input.vcf}.tbi

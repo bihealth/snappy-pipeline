@@ -283,6 +283,7 @@ class ArcasHlaStepPart(BaseStepPart):
                     args["single"] = n == 0
                     break
 
+        args["mapper"] = self.mapper
         return args
 
     @dictify
@@ -335,6 +336,7 @@ class HlaLaStepPart(BaseStepPart):
     actions = ("prepare_graph", "prepare_reference", "run")
 
     FASTA_PATTERN: re.Pattern = re.compile(r"\.fa(sta)?(\.gz)?$")
+    NON_WORD: re.Pattern = re.compile(r"\W")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -405,7 +407,10 @@ class HlaLaStepPart(BaseStepPart):
         return {"start": self.config.hla_la.start, "end": self.config.hla_la.end}
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"sample_id": wildcards.library_name}
+        return {
+            "sample_id": self.NON_WORD.sub("_", wildcards.library_name),
+            "min_score": self.config.hla_la.min_score,
+        }
 
     @dictify
     def get_log_file(self, action):

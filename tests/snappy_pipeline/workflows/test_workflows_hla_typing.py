@@ -191,12 +191,13 @@ def test_arcashla_step_part_get_output_files(hla_typing_workflow):
 def test_arcashla_step_part_get_args(hla_typing_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
     expected = {
-        "population": "Prior",
+        "population": "prior",
         "min_count": 75,
         "tolerance": 1e-7,
         "max_iterations": 1000,
         "drop_threshold": 0.1,
         "zygocity_threshold": 0.15,
+        "mapper": "star",
     }
     input = hla_typing_workflow.get_input_files("arcashla", "run")(wildcards)
     actual = hla_typing_workflow.get_args("arcashla", "run")(wildcards, input)
@@ -285,7 +286,7 @@ def test_hla_la_step_part_get_args_prepare_reference(hla_typing_workflow):
 
 def test_hla_la_step_part_get_args_run(hla_typing_workflow):
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    expected = {"sample_id": "P001-N1-DNA1-WGS1"}
+    expected = {"min_score": 0.95, "sample_id": "P001_N1_DNA1_WGS1"}
     actual = hla_typing_workflow.get_args("hla_la", "run")(wildcards)
     assert actual == expected
 
