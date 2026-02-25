@@ -102,12 +102,21 @@ def minimal_config():
                 class_ii: arcashla
             pvacseq:
                 algorithms: ['MHCflurry','MHCnuggetsI']
+                class_ii_epitope_length: [10, 11]
+                class_i_epitope_length: []
+                net_chop:
+                  enabled: true
+                  path_netchop: /path/to/netchop.bin
             pvacfuse:
                 algorithms: all_class_i
             pvacsplice:
                 algorithms: all
+                class_ii_epitope_length: [10, 11]
                 genes_of_interest_file: /path/to/genes.txt
                 run_reference_proteome_similarity: true
+                net_chop:
+                  enabled: true
+                  path_netchop: /path/to/netchop.bin
                 peptide_fasta: /path/to/peptides.fa
                 
         data_sets:
@@ -182,11 +191,12 @@ def test_somatic_neoepitope_prediction_pvactools_install_step_part_get_log_files
 def test_somatic_neoepitope_prediction_step_part_get_output_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     for tool in ("pvacseq", "pvacfuse", "pvacsplice"):
         expected = {
-            "done": f"work/{tpl}/out/{tool}.done",
-            "path": f"work/{tpl}/{tool}/.done",
+            "filtered": (
+                "work/{mapper}.{caller}.{annotator}." + tool + ".{tumor_dna}/"
+                + "{mhc_class_d,MHC_Class_II?|combined}/{sample}.{mhc_class_fn,MHC_II?|Combined}.filtered.tsv"
+            ),
         }
         actual = somatic_neoepitope_prediction_workflow.get_output_files(tool, tool)
         assert actual == expected
@@ -195,9 +205,13 @@ def test_somatic_neoepitope_prediction_step_part_get_output_files(
 def test_somatic_neoepitope_prediction_step_part_get_log_files(
     somatic_neoepitope_prediction_workflow,
 ):
-    tpl = "{mapper}.{caller}.{annotator}.{tumor_dna}"
     for tool in ("pvacseq", "pvacfuse", "pvacsplice"):
-        expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/{tool}")
+        expected = get_expected_log_files_dict(
+            base_out=(
+                "work/{mapper}.{caller}.{annotator}." + tool + ".{tumor_dna}/log/"
+                + "{mhc_class_d,MHC_Class_II?|combined}.{sample}.{mhc_class_fn,MHC_II?|Combined}.filtered"
+            )
+        )
         actual = somatic_neoepitope_prediction_workflow.get_log_file(tool, tool)
         assert actual == expected
 
@@ -468,7 +482,7 @@ def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_args(
         "exclude_bind": ["container", "alleles"],
         "extra_args": (
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
-            "--anchor-contribution-threshold 0.8 --class-i-epitope-length '8,9,10,11' "
+            "--anchor-contribution-threshold 0.8 --class-ii-epitope-length '10,11' "
             "--downstream-sequence-length 1000 --expn-val 1.0 --fasta-size 200 "
             "--minimum-fold-change 0.0 --netmhciipan-version '4.1' --normal-cov 25 --normal-vaf 0.02 "
             "--percentile-threshold 1.0 --percentile-threshold-strategy 'conservative' "
@@ -666,7 +680,7 @@ def test_somatic_neoepitope_prediction_pvacsplice_pvacsplice_step_part_get_args(
         "extra_args": (
             "--run-reference-proteome-similarity "
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
-            "--anchor-types 'A,D,NDA' --class-i-epitope-length '8,9,10,11' "
+            "--anchor-types 'A,D,NDA' --class-i-epitope-length '8,9,10,11' --class-ii-epitope-length '10,11' "
             "--expn-val 1.0 --fasta-size 200 --junction-score 10 --netmhciipan-version '4.1' "
             "--normal-cov 25 --normal-vaf 0.02 --percentile-threshold 1.0 "
             "--percentile-threshold-strategy 'conservative' --tdna-cov 25 --tdna-vaf 0.1 "
@@ -694,6 +708,7 @@ def test_somatic_neoepitope_prediction_pvacsplice_step_part_get_resource(
             actual = somatic_neoepitope_prediction_workflow.get_resource("pvacsplice", action, resource)()
             assert actual == expected, msg_error
 
+# ---- phasing
 
 def test_somatic_neoepitope_prediction_phasing_step_part_get_input_files(
     somatic_neoepitope_prediction_workflow,
@@ -761,35 +776,124 @@ def test_somatic_neoepitope_prediction_phasing_step_part_get_resource(
             actual = somatic_neoepitope_prediction_workflow.get_resource("phasing", action, resource)()
             assert actual == expected, msg_error
 
+# ---- netchop
+
+def test_somatic_neoepitope_prediction_netchop_step_part_get_input_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+            "tool": "pvacseq",
+            "mhc_class_d": "MHC_Class_II",
+            "sample": "P001-T1",
+            "mhc_class_fn": "MHC_II",
+        }
+    )
+    expected = {
+        "vcf": "COMBINE_VARIANTS/output/bwa.combined.P001-T1-DNA1-WGS1/out/bwa.combined.P001-T1-DNA1-WGS1.vcf.gz",
+        "epitopes": "work/bwa.mutect2.vep.pvacseq.P001-T1-DNA1-WGS1/MHC_Class_II/P001-T1.MHC_II.filtered.tsv",
+        "netchop": "/path/to/netchop.bin",
+    }
+    actual = somatic_neoepitope_prediction_workflow.get_input_files("netchop", "run")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_netchop_step_part_get_output_files(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tool,pvacseq|pvacsplice|pvacfuse}.{tumor_dna}"
+    expected = {"epitopes": f"work/{tpl}/{{mhc_class_d}}/{{sample}}.{{mhc_class_fn}}.netchop.tsv"}
+    actual = somatic_neoepitope_prediction_workflow.get_output_files("netchop", "run")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_netchop_step_part_get_log_file(
+    somatic_neoepitope_prediction_workflow,
+):
+    tpl = "{mapper}.{caller}.{annotator}.{tool,pvacseq|pvacsplice|pvacfuse}.{tumor_dna}"
+    expected = get_expected_log_files_dict(base_out=f"work/{tpl}/log/{{mhc_class_d}}.{{sample}}.{{mhc_class_fn}}.netchop")
+    actual = somatic_neoepitope_prediction_workflow.get_log_file("netchop", "run")
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_netchop_step_part_get_args(
+    somatic_neoepitope_prediction_workflow,
+):
+    wildcards = Wildcards(
+        fromdict={
+            "mapper": "bwa",
+            "caller": "mutect2",
+            "annotator": "vep",
+            "tumor_dna": "P001-T1-DNA1-WGS1",
+            "tool": "pvacseq",
+            "mhc_class_d": "MHC_Class_I",
+            "sample": "P001-T1",
+            "mhc_class_fn": "MHC_I",
+        }
+    )
+    expected = {"tool": "pvacseq", "method": "cterm", "threshold": 0.5}
+    actual = somatic_neoepitope_prediction_workflow.get_args("netchop", "run")(wildcards)
+    assert actual == expected
+
+
+def test_somatic_neoepitope_prediction_netchop_step_part_get_resource(
+    somatic_neoepitope_prediction_workflow,
+):
+    # Define expected
+    expected_dict = {"run": {"threads": 1, "time": "23:59:59", "memory": "32G"}}
+    # Evaluate
+    for action, resources in expected_dict.items():
+        for resource, expected in resources.items():
+            msg_error = f"Unexpected value '{expected}' of '{resource}' in '{action}' sub-step"
+            actual = somatic_neoepitope_prediction_workflow.get_resource("netchop", action, resource)()
+            assert actual == expected, msg_error
+
+# ---- Main workflow
 
 def test_somatic_neoepitope_prediction_workflow(somatic_neoepitope_prediction_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["link_out", "phasing", "pvacfuse", "pvacseq", "pvacsplice", "pvactools"]
+    expected = ["link_out", "netchop", "phasing", "pvacfuse", "pvacseq", "pvacsplice", "pvactools"]
     actual = list(sorted(somatic_neoepitope_prediction_workflow.sub_steps.keys()))
     assert actual == expected
 
+    log_exts = ("log", "log.md5", "conda_list.txt", "conda_list.txt.md5", "conda_info.txt", "conda_info.txt.md5")
+
     # Check result file construction
-    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/log/{tool}.log"
+    tpl = "output/{mapper}.{caller}.{annotator}.{tool}.P00{i}-T{t}-DNA1-WGS1/log/{dirname}.P00{i}-T{t}.{filename}.{ext}.{log_ext}"
     expected = [
-        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool=tool, i=i, t=t)
-        for tool in ("pvacfuse", "pvacseq", "pvacsplice")
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool=tool, dirname=dirname, filename=filename, i=i, t=t, ext=ext, log_ext=log_ext)
+        for (tool, dirname, filename, ext) in (
+            ("pvacfuse", "MHC_Class_I", "MHC_I", "filtered"),
+            ("pvacseq", "MHC_Class_II", "MHC_II", "netchop"),
+            ("pvacsplice", "combined", "Combined", "netchop"),
+        )
+        for (i, t) in ((1, 1), (2, 2))
+        for log_ext in log_exts
+    ]
+
+    expected += [
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool="pvacseq", dirname="MHC_Class_II", filename="MHC_II", ext="netchop", i=2, t=1, log_ext=log_ext)
+        for log_ext in log_exts
+    ]
+
+    tpl = "output/{mapper}.{caller}.{annotator}.{tool}.P00{i}-T{t}-DNA1-WGS1/{dirname}/P00{i}-T{t}.{filename}.{ext}.tsv"
+    expected += [
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool=tool, dirname=dirname, filename=filename, ext=ext, i=i, t=t)
+        for (tool, dirname, filename, ext) in (
+            ("pvacfuse", "MHC_Class_I", "MHC_I", "filtered"),
+            ("pvacseq", "MHC_Class_II", "MHC_II", "netchop"),
+            ("pvacsplice", "combined", "Combined", "netchop"),
+        )
         for (i, t) in ((1, 1), (2, 2))
     ]
 
     expected += [
-        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool="pvacseq", i=2, t=1)
-    ]
-
-    tpl = "output/{mapper}.{caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/out/{tool}.done"
-    expected += [
-        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool=tool, i=i, t=t)
-        for tool in ("pvacfuse", "pvacseq", "pvacsplice")
-        for (i, t) in ((1, 1), (2, 2))
-    ]
-
-    expected += [
-        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool="pvacseq", i=2, t=1)
+        tpl.format(mapper="bwa", caller="mutect2", annotator="vep", tool="pvacseq", dirname="MHC_Class_II", filename="MHC_II", ext="netchop", i=2, t=1)
     ]
 
     expected = list(sorted(expected))

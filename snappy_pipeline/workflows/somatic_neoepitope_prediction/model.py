@@ -110,7 +110,6 @@ class TranscriptPrioritizationStrategy(enum.StrEnum):
 class NetChopMethod(enum.StrEnum):
     CTERM = "cterm"
     TWENTY_S = "20s"
-    DISABLED = "disabled"
 
 
 class NetMHCIIpanVersion(enum.StrEnum):
@@ -124,6 +123,60 @@ class AnchorType(enum.StrEnum):
     A = "A"
     D = "D"
     NDA = "NDA"
+
+
+class ProteomeSimilarityByFile(SnappyModel):
+    path: str
+
+
+class ProteomeSimilarityByBlast(SnappyModel):
+    todo: str
+
+
+class ProteomeSimilarityByCreateProteome(SnappyModel):
+    path: str = "../create_proteome"
+
+
+class ProteomeSimilarity(ToggleModel):
+    file: ProteomeSimilarityByFile | None = None
+    blast: ProteomeSimilarityByBlast | None = None
+    create_proteome: ProteomeSimilarityByCreateProteome | None = None
+
+    @model_validator(mode="after")
+    def ensureOneAndOnlyOneModeDefined(self):
+        if self.enabled:
+            if (
+                (self.file and (self.blast or self.create_proteome))
+                or (self.blast and (self.create_proteome or self.file))
+                or (self.create_proteome and (self.file or self.blast))
+            ):
+                raise ValueError("Only one proteome similarity mode can be defined")
+            if not (self.file or self.blast or self.create_proteome):
+                raise ValueError("One proteome similarity mode must be defined")
+        return self
+
+
+class NetChop(ToggleModel):
+    path_netchop: str | None = None
+    threshold: float = 0.5
+    method: NetChopMethod = NetChopMethod.CTERM
+
+    @model_validator(mode="after")
+    def ensurePathIsDefined(self):
+        if self.enabled and not self.path_netchop:
+            raise ValueError("Path to netchop binary must be defined")
+        return self
+
+
+class NetMHCStab(ToggleModel):
+    path_netmhc_stab: str | None = None
+    path_netmhc_pan: str | None = None
+
+    @model_validator(mode="after")
+    def ensurePathIsDefined(self):
+        if self.enabled and not (self.path_netmhc_stab and self.path_netmhc_pan):
+            raise ValueError("Path to netMHCstanpan & netMHCpan binaries must be defined")
+        return self
 
 
 class PVACtools(SnappyModel):
@@ -146,9 +199,8 @@ class PVACtools(SnappyModel):
     top_score_metric: TopScoreMetric = TopScoreMetric.MEDIAN
     top_score_metric2: TopScoreMetric2 = TopScoreMetric2.PERCENTILE
 
-    net_chop_method: NetChopMethod = NetChopMethod.DISABLED
-    netmhc_stab: bool = False
-    net_chop_threshold: float = 0.5
+    net_chop: NetChop = NetChop()
+    netmhc_stab: NetMHCStab = NetMHCStab()
 
     expn_val: float = 1.0
 
@@ -165,6 +217,12 @@ class PVACtools(SnappyModel):
 
     aggregate_inclusion_binding_threshold: int = 5000
     aggregate_inclusion_count_limit: int = 25
+
+    @model_validator(mode="after")
+    def ensure_one_class_length_defined(self):
+        if not (self.class_i_epitope_length or self.class_ii_epitope_length):
+            raise ValueError("Epitope lengths must be defined for at least one MHC class")
+        return self
 
     @model_validator(mode="after")
     def ensure_peptide_fasta_exists(self):

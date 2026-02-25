@@ -4,5 +4,4 @@ channels:
   - nodefaults
 dependencies:
   - python>=3.12
-  - gatk=3.6
-  - htslib=1.21
+  - bcftools=1.21

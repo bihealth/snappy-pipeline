@@ -32,6 +32,18 @@ class Variant:
     MUTATION: re.Pattern = re.compile(
         r"^([ACDEFGHIKLMNPQRSTVWY]*[X\*]|[ACDEFGHIKLMNPQRSTVWY]+[X\*]?)$"
     )
+    BCFTOOLS_COLUMNS: list[str] = [
+        "CHROM",
+        "POS",
+        "REF",
+        "ALT",
+        "HGVSp",
+        "Feature",
+        "Protein_position",
+        "Amino_acids",
+        "FrameshiftSequence",
+        "WildtypeProtein",
+    ]
 
     def __init__(
         self,
@@ -108,7 +120,9 @@ class Variant:
             if line == "":
                 continue
             tokens = line.strip().split("\t")
-            assert len(tokens) >= 10, f"Not enough fields in {line.strip()}"
+            assert len(tokens) >= len(Variant.BCFTOOLS_COLUMNS), (
+                f"Not enough fields in {line.strip()}"
+            )
 
             contig = tokens[0]
             pos = int(tokens[1])
@@ -156,19 +170,7 @@ class Variant:
     def parse_annotated_vcf(fn: str | Path, timeout: int = 300) -> list[tuple]:
         """Runs bcftools +split-vep & parses the output."""
         bcftools = shutil.which("bcftools")
-        fmt = [
-            "CHROM",
-            "POS",
-            "REF",
-            "ALT",
-            "HGVSp",
-            "Feature",
-            "Protein_position",
-            "Amino_acids",
-            "FrameshiftSequence",
-            "WildtypeProtein",
-        ]
-        cmd = [bcftools, "+split-vep", fn, "-f", "%{}".format("\t%".join(fmt))]
+        cmd = [bcftools, "+split-vep", fn, "-f", "%{}".format("\t%".join(Variant.BCFTOOLS_COLUMNS))]
         logging.debug(f"VCF parsing command: {' '.join(cmd)}")
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         try:
@@ -269,10 +271,11 @@ def _netchop_workaround(
 
     netchop doesn't run when the NETCHOP environment variable is set to an absolute path.
     (Perhaps because the path is too long?).
-    The workaround create a local temp directory, creates a symlink to the base netchop installation
+    The workaround creates a local temp directory, a symlink to the base netchop installation
     (netchop is in netchop installation/Linux_x86_64/bin), and sets the NETCHOP environment variable
-    to tmpdir/netchop-3.1/Linux_x86_64.
+    to netchop-3.1/Linux_x86_64 (valid from tmpdir).
     It seems that setting the temp directory somewhere within $TMPDIR doesn't work. Don't ask me why.
+    Finally, all efforts trying to make the -tdir argument to work failed miserably.
     """
     netchop = os.path.realpath(netchop)
     netchop_dir = os.path.dirname(os.path.dirname(netchop))
