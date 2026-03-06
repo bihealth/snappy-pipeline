@@ -747,17 +747,17 @@ class BaseStep:
         self._check_config()
 
         config_string = self.config.model_dump_yaml(by_alias=True)
-        self.logger.info(f"Configuration for step {self.name}\n{config_string}")
+        self.logger.debug(f"Configuration for step {self.name}\n{config_string}")
 
         config_string = self.w_config.model_dump_yaml(by_alias=True)
-        self.logger.info(f"Configuration for workflow\n{config_string}")
+        self.logger.debug(f"Configuration for workflow\n{config_string}")
 
         # Update snakemake.config (which `config` is a reference to)
         # with the validated configuration.
         # All fields with default values are explicitly defined.
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
-        self.logger.info(f"Snakemake config\n{config}")
+        self.logger.debug(f"Snakemake config\n{config}")
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
