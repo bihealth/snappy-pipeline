@@ -62,7 +62,7 @@ import sys
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import expand, Wildcards
+from snakemake.io import Wildcards, expand
 
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
@@ -116,7 +116,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        self.ngs_mapping = self.parent.modules["ngs_mapping"]
 
     def get_input_files(self, action):
         # Validate action
@@ -211,7 +211,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
             tpl = os.path.join("work", name_pattern, "out", name_pattern + ".tumor.vcf.gz")
             filenames["tumor"] = tpl.format(**wildcards)
             filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
-            cnv_calling = self.parent.sub_workflows["cnv_calling"]
+            cnv_calling = self.parent.modules["cnv_calling"]
             base_path = "output/{mapper}.{caller}.{library_name}/out/{mapper}.{caller}.{library_name}".format(
                 **wildcards
             )
@@ -342,8 +342,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
                         self.config.cnv_assay_type
                     )
                 )
-            self.register_sub_workflow(cnv_calling, self.config.path_cnv_calling, "cnv_calling")
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+            self.register_module(cnv_calling, self.config.path_cnv_calling, "cnv_calling")
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

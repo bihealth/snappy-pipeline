@@ -80,12 +80,7 @@ def varfish_export_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
     # Patch out files for aligner indices
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
-    # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
-    # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
-    dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "variant_calling": lambda x: "VAR_CALLING/" + x,
-    }
+
     # Construct the workflow object
     return VarfishExportWorkflow(
         dummy_workflow,
@@ -109,9 +104,7 @@ def test_mehari_step_part_get_input_files_annotate(varfish_export_workflow):
         }
     )
     # Define expected
-    base_name = (
-        "VAR_CALLING/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
-    )
+    base_name = "../variant_calling/output/bwa.gatk3_hc.P001-N1-DNA1-WGS1/out/bwa.gatk3_hc.P001-N1-DNA1-WGS1"
     expected = {
         "ped": "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped",
         "vcf": [base_name + ".vcf.gz"],
@@ -133,9 +126,9 @@ def test_mehari_step_part_get_input_files_bam_qc(varfish_export_workflow):
     # Define expected
     donor_indices = (1, 2, 3)
     base_name_bam = (
-        "NGS_MAPPING/output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}"
+        "../ngs_mapping/output/bwa.P00{i}-N1-DNA1-WGS1/report/bam_qc/bwa.P00{i}-N1-DNA1-WGS1.{ext}"
     )
-    base_name_cov = "NGS_MAPPING/output/bwa.P00{i}-N1-DNA1-WGS1/report/alfred_qc/bwa.P00{i}-N1-DNA1-WGS1.alfred.json.gz"
+    base_name_cov = "../ngs_mapping/output/bwa.P00{i}-N1-DNA1-WGS1/report/alfred_qc/bwa.P00{i}-N1-DNA1-WGS1.alfred.json.gz"
     expected = {
         "bamstats": [base_name_bam.format(i=i, ext="bam.bamstats.txt") for i in donor_indices],
         "flagstats": [base_name_bam.format(i=i, ext="bam.flagstats.txt") for i in donor_indices],

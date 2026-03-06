@@ -10,6 +10,7 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
+
 def unescape_dots_dashes(s: str) -> str:
     """Unescape dots and dashes from double-underscore constructs."""
     return s.replace("__hyphen__", "-").replace("__dot__", ".").replace("__under__", "_")

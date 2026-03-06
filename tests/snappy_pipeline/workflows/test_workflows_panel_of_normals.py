@@ -88,9 +88,11 @@ def panel_of_normals_workflow(
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     scattergather = AttrDict()
-    scattergather.mutect2 = lambda x: [x.format(scatteritem="{i}-of-24".format(i=i)) for i in range(1, 25)]
+    scattergather.mutect2 = lambda x: [
+        x.format(scatteritem="{i}-of-24".format(i=i)) for i in range(1, 25)
+    ]
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
         "gather": scattergather,
         "scatter": scattergather,
     }
@@ -117,15 +119,11 @@ def test_mutect2_step_part_get_input_files_scatter(panel_of_normals_workflow):
 def test_mutect2_step_part_get_input_files_prepare_panel(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_input_files_prepare_panel()"""
     wildcards = Wildcards(
-        fromdict={
-            "mapper": "bwa",
-            "normal_library": "P001-N1-DNA1-WGS1",
-            "scatteritem": "1-of-24"
-        }
+        fromdict={"mapper": "bwa", "normal_library": "P001-N1-DNA1-WGS1", "scatteritem": "1-of-24"}
     )
     expected = {
-        "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "normal_bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "normal_bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "normal_bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "region": "work/bwa.mutect2.P001-N1-DNA1-WGS1/par/scatter/1-of-24.region.bed",
         "reference": "/path/to/ref.fa",
     }
@@ -213,7 +211,9 @@ def test_mutect2_step_part_get_output_files_create_panel(panel_of_normals_workfl
 
 def test_mutect2_step_part_get_log_file_scatter(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_log_files_scatter()"""
-    base_name_out = "work/{mapper}.mutect2.{normal_library}/log/{mapper}.mutect2.{normal_library}.scatter"
+    base_name_out = (
+        "work/{mapper}.mutect2.{normal_library}/log/{mapper}.mutect2.{normal_library}.scatter"
+    )
     expected = get_expected_log_files_dict(base_out=base_name_out)
     actual = panel_of_normals_workflow.get_log_file("mutect2", "scatter")
     assert actual == expected
@@ -221,7 +221,9 @@ def test_mutect2_step_part_get_log_file_scatter(panel_of_normals_workflow):
 
 def test_mutect2_step_part_get_log_file_prepare_panel(panel_of_normals_workflow):
     """Tests Mutect2StepPart._get_log_files_prepare_panel()"""
-    base_name_out = "work/{mapper}.mutect2.{normal_library}/log/{mapper}.mutect2.{normal_library}.{scatteritem}"
+    base_name_out = (
+        "work/{mapper}.mutect2.{normal_library}/log/{mapper}.mutect2.{normal_library}.{scatteritem}"
+    )
     expected = get_expected_log_files_dict(base_out=base_name_out)
     actual = panel_of_normals_workflow.get_log_file("mutect2", "prepare_panel")
     assert actual == expected
@@ -311,7 +313,7 @@ def test_cnvkit_step_part_get_input_files_target(panel_of_normals_workflow):
         }
     )
     actual = panel_of_normals_workflow.get_input_files("cnvkit", "target")(wildcards)
-    assert actual == {'target': '/path/to/regions.bed'}
+    assert actual == {"target": "/path/to/regions.bed"}
 
 
 def test_cnvkit_step_part_get_input_files_antitarget(panel_of_normals_workflow):
@@ -337,8 +339,8 @@ def test_cnvkit_step_part_get_input_files_coverage(panel_of_normals_workflow):
         }
     )
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
         "target": "work/bwa.cnvkit/out/bwa.cnvkit.target.bed",
         "antitarget": "work/bwa.cnvkit/out/bwa.cnvkit.antitarget.bed",
         "reference": "/path/to/ref.fa",
@@ -658,7 +660,7 @@ def test_purecn_step_part_get_input_files_coverage(panel_of_normals_workflow):
     expected = {
         "container": "work/containers/out/purecn.simg",
         "intervals": "work/purecn/out/unknown_unknown.list",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     actual = panel_of_normals_workflow.get_input_files("purecn", "coverage")(wildcards)
     assert actual == expected

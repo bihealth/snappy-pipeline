@@ -16,11 +16,7 @@ shell.executable("/bin/bash")
 # snakemake.input is a .done file touched after linking files in.
 args = getattr(snakemake.params, "args", {})
 reads_left = args["input"]["reads_left"]
-reads_right = (
-    args["input"]["reads_right"]
-    if args["input"]["reads_right"]
-    else ""
-)
+reads_right = args["input"]["reads_right"] if args["input"]["reads_right"] else ""
 
 trim_adapters = args["trim_adapters"]
 num_threads_trimming = args["num_threads_trimming"]

@@ -34,9 +34,10 @@ localrules:
     wgs_cnv_export_external_write_pedigree_run,
 
 
-rule all:
+rule wgs_cnv_export_external_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,7 +58,7 @@ rule wgs_cnv_export_external_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

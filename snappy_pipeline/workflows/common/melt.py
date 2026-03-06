@@ -4,7 +4,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import is_not_background
-from snakemake.io import touch, Wildcards
+from snakemake.io import Wildcards, touch
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
@@ -90,7 +90,7 @@ class MeltStepPart(
 
     @dictify
     def _get_input_files_preprocess(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = f"{wildcards.mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
         yield "bai", ngs_mapping(f"output/{infix}/out/{infix}.bam.bai")

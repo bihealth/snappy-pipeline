@@ -149,6 +149,8 @@ Panel of normals generation for tools
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 
+from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
+from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -159,8 +161,6 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
-from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
-from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -257,7 +257,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         if self.name not in self.config.tools:
             return {}
         self._validate_action(action)
-        self.ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        self.ngs_mapping = self.parent.modules["ngs_mapping"]
         if action == "prepare":
             return {
                 "container": "work/containers/out/purecn.simg",
@@ -403,7 +403,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
         # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         scatteritem_base_path = (
@@ -625,7 +625,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             if self.config.cnvkit.path_annotation:
                 input_files["annotate"] = self.config.cnvkit.path_annotation
             return input_files
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bams = [
             ngs_mapping(tpl.format(mapper=wildcards["mapper"], normal_library=x))
@@ -656,7 +656,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         """Helper wrapper function for computing coverage"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         return {
@@ -853,7 +853,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             previous_steps=(NgsMappingWorkflow,),
         )
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

@@ -411,7 +411,7 @@ def test_star_step_part_get_args(ngs_mapping_workflow):
         "align_intron_max": 1000000,
         "align_intron_min": 20,
         "align_mates_gap_max": 1000000,
-        "align_sjdb_overhang_min":  1,
+        "align_sjdb_overhang_min": 1,
         "align_sj_overhang_min": 8,
         "out_filter_mismatch_n_max": 999,
         "out_filter_mismatch_n_over_l_max": 0.04,
@@ -782,7 +782,9 @@ def test_ngs_mapping_workflow_files(ngs_mapping_workflow):
     ]
     for infix in ("bam_collect_doc", "mapping", "target_cov_report", "ngs_chew_fingerprint"):
         expected += [
-            "output/mbcs.P00{i}-N1-DNA1-WGS1/log/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(i=i, ext=ext)
+            "output/mbcs.P00{i}-N1-DNA1-WGS1/log/mbcs.P00{i}-N1-DNA1-WGS1.{ext}".format(
+                i=i, ext=ext
+            )
             for i in range(1, 7)
             for ext in (
                 f"{infix}.log",

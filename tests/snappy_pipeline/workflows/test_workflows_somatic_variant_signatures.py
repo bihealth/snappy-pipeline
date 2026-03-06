@@ -39,7 +39,7 @@ def minimal_config():
           somatic_variant_annotation:
             tools: [vep]
             tools_somatic_variant_calling: ['mutect2']
-            path_somatic_variant: ../SOMATIC_VARIANT_CALLING
+            path_somatic_variant: ../somatic_variant_calling
             vep:
               cache_dir: /path/to/vep/cache
 
@@ -49,7 +49,7 @@ def minimal_config():
               - dkfz: {}
 
           somatic_variant_signatures:
-            path_somatic_variant: ../SOMATIC_VARIANT_FILTRATION
+            path_somatic_variant: ../somatic_variant_filtration
             somatic_variant_step: somatic_variant_filtration
             tools_somatic_variant_calling: ['mutect2']
             has_annotation: True
@@ -84,8 +84,8 @@ def somatic_variant_signatures_workflow(
     patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs, mocker)
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
-        "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
+        "ngs_mapping": lambda x: "../ngs_mapping/" + x,
+        "somatic_variant": lambda x: "../somatic_variant_filtration/" + x,
     }
     # Construct the workflow object
     return SomaticVariantSignaturesWorkflow(
@@ -103,7 +103,7 @@ def somatic_variant_signatures_workflow(
 def test_tabulate_vcf_step_part_get_input_files(somatic_variant_signatures_workflow):
     """Tests TabulateVariantsStepPart.get_input_files()"""
     base_name = (
-        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
+        "../somatic_variant_filtration/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
         "{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}"
     )
     expected = {

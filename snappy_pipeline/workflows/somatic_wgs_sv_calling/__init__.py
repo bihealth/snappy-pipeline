@@ -137,7 +137,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards):
         """Helper wrapper function"""
         # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
         normal_base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
@@ -262,7 +262,7 @@ class Delly2StepPart(BaseStepPart):
     @dictify
     def _get_input_files_call(self, wildcards):
         """Return input files for "call" action: bams for matched T/N pair"""
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         normal_tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}{ext}"
         norm_lib = self.get_normal_lib_name(wildcards)
         for name, ext in {"normal_bam": ".bam", "normal_bai": ".bam.bai"}.items():
@@ -309,7 +309,7 @@ class Delly2StepPart(BaseStepPart):
         infix = self.dir_infixes["merge_calls"]
         yield "bcf", os.path.join("work", infix, "out", infix + ".bcf").format(**wildcards)
         # BAM files : we want to individually process each tumor and each normal bam
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
         for name, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield name, ngs_mapping(tpl.format(ext=ext, **wildcards))
@@ -433,7 +433,7 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Delly2StepPart, MantaStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):

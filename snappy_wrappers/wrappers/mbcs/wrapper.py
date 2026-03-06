@@ -2,7 +2,6 @@
 """CUBI+Snakemake wrapper code for MTB-aware exome data"""
 
 import os
-import shutil
 import sys
 import tempfile
 
@@ -14,13 +13,14 @@ from snakemake import shell
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.wrapper_parallel import run_snakemake
+from snappy_wrappers.wrapper_parallel import run_snakemake  # noqa: E402
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
+
 
 # Helper functions ------------------------------------------------------------
 def pair_fastq_files(input_left, input_right):

@@ -33,9 +33,10 @@ localrules:
     somatic_gene_fusion_calling_link_out_run,
 
 
-rule all:
+rule somatic_msi_calling_all:
     input:
         wf.get_result_files(),
+    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,7 +62,7 @@ rule somatic_gene_fusion_calling_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Somatic Gene Fusion Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

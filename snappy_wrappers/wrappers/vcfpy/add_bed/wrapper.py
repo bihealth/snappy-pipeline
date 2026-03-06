@@ -4,9 +4,9 @@ import re
 import shutil
 import tempfile
 
-from snakemake.shell import shell
 import tabix
 import vcfpy
+from snakemake.shell import shell
 
 args = getattr(snakemake.params, "args", {})
 
@@ -162,7 +162,7 @@ with open(snakemake.log.log, "+at") as log:
                             cn = None
                             break
 
-        except tabix.TabixError as e:
+        except tabix.TabixError:
             log.write(
                 "Variant {}:{}{}>{} not covered by segmentation of sample {}\n".format(
                     variant.CHROM, variant.POS, variant.REF, variant.ALT[0].value, sample

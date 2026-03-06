@@ -1,7 +1,5 @@
 """CUBI+Snakemake wrapper code for sequenza GC reference file"""
 
-import os
-
 from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
