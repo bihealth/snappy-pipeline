@@ -79,7 +79,7 @@ rule somatic_targeted_seq_cnv_calling_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Somatic Targeted Sequencing CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

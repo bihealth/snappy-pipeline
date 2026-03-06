@@ -58,7 +58,7 @@ rule wgs_cnv_export_external_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

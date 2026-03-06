@@ -229,6 +229,13 @@ class BaseStepPart:
             "Override this method before calling it!"
         )  # pragma: no cover
 
+
+    def run_locally(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
+        """Runs a function locally for the given action of the sub step and the given wildcards"""
+        raise ImplementationUnavailableError(
+            "Override this method before calling it!"
+        )  # pragma: no cover
+
     def run(self, action: str, wildcards: Wildcards):  # NOSONAR
         """Run the sub steps action action's code with the given wildcards"""
         raise ImplementationUnavailableError(
@@ -423,6 +430,14 @@ class LinkOutStepPart(BaseStepPart):
         in_ = self.base_path_in.replace("{", "{wildcards.")
         out = self.base_path_out.replace("{", "{wildcards.")
         return tpl.format(in_=in_, out=out)
+
+    def run_locally(self, action, wildcards):
+        assert action == "run", "Unsupported action"
+        path_out = f"output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        path_in = f"work/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        if not os.path.islink(path_out):
+            target = os.path.relpath(path_in, start=os.path.dirname(path_out))
+            os.symlink(target, path_out)
 
 
 @lru_cache()
@@ -960,6 +975,13 @@ class BaseStep:
         Delegates to the sub step object's get_shell_cmd function
         """
         return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
+
+    def run_locally(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
+        """Runs a function locally for the pipeline sub step
+
+        Delegates to the sub step object's run_locally function
+        """
+        return self.substep_dispatch(sub_step, "run_locally", action, wildcards)
 
     def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Run command for the given action of the given sub step with the given wildcards
