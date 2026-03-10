@@ -6,11 +6,9 @@ more convenient to wrap the call to snakemake itself.
 """
 
 import argparse
-import datetime
 import logging
 import os
 import sys
-from shutil import which
 
 import ruamel.yaml as ruamel_yaml
 from snakemake.cli import main as snakemake_main
@@ -151,10 +149,12 @@ def run(wrapper_args, snakemake_args):  # noqa: C901
     for sdm in ("--software-deployment-method", "--deployment-method", "--deployment", "--sdm"):
         try:
             i = snakemake_args.index(sdm)
-            if snakemake_args[i+1] != "conda":
-                logging.error("Software deployment method {} not implemented".format(snakemake_args[i+1]))
+            if snakemake_args[i + 1] != "conda":
+                logging.error(
+                    "Software deployment method {} not implemented".format(snakemake_args[i + 1])
+                )
                 return 1
-            snakemake_args.pop(i+1)
+            snakemake_args.pop(i + 1)
             snakemake_args.pop(i)
         except ValueError:
             pass
@@ -164,7 +164,7 @@ def run(wrapper_args, snakemake_args):  # noqa: C901
 
     # Increase verbosity levels
     if wrapper_args.verbose:
-        snakemake_args += ["--verbose"]
+        snakemake_argv += ["--verbose"]
 
     # Configure profile if snappy pipeline profile is requested
     if wrapper_args.profile_snappy_pipeline:
@@ -173,6 +173,10 @@ def run(wrapper_args, snakemake_args):  # noqa: C901
             return 1
         profile_path = os.path.join(os.path.dirname(__file__), "tpls", "profile")
         snakemake_argv += ["--profile", profile_path]
+
+    # Add cores when missing
+    if "--cores" not in snakemake_args:
+        snakemake_argv += ["--cores", "1"]
 
     snakemake_argv += snakemake_args
     logging.info("Executing snakemake %s", " ".join(map(repr, snakemake_argv)))
@@ -204,7 +208,7 @@ def main(argv=None):
         help="The type of the step to run",
     )
 
-    wrapper_args, snakemake_args = parser.parse_known_args()
+    wrapper_args, snakemake_args = parser.parse_known_args(argv)
 
     # Setup logging
     setup_logging(wrapper_args)
@@ -228,4 +232,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv))

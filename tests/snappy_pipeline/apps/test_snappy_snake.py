@@ -35,31 +35,22 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
     m = mocker.MagicMock(return_value=0)
     mocker.patch("snappy_pipeline.apps.snappy_snake.snakemake_main", m)
     # Run the code under test
-    assert 0 == snappy_snake.main(["-S", "--verbose"])
+    assert 0 == snappy_snake.main(["--verbose"])
     # Check assersions
     p = os.path.realpath(snappy_pipeline.workflows.__path__[0] + "/..")
-    import shutil
-
-    mamba_available = shutil.which("mamba") is not None
     m.assert_called_once_with(
         [
             "--directory",
             "/project-dir/ngs_mapping",
             "--snakefile",
             p + "/workflows/ngs_mapping/Snakefile",
-            "--jobscript",
-            p + "/apps/tpls/jobscript.sh",
-            "--rerun-triggers",
-            "mtime",
-            "params",
-            "input",
-            "-S",
-            "--verbose",
-            "--cores",
-            "1",
+            "--use-conda",
             "--software-deployment-method",
             "conda",
             "--conda-frontend",
-            "mamba" if mamba_available else "conda",
+            "conda",
+            "--verbose",
+            "--cores",
+            "1",
         ]
     )
