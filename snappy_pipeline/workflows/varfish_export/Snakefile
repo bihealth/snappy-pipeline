@@ -110,8 +110,8 @@ rule varfish_export_mehari_annotate_seqvars:
         **wf.get_output_files("mehari", "annotate_seqvars"),
     threads: wf.get_resource("mehari", "annotate_seqvars", "threads")
     resources:
-        time=wf.get_resource("mehari", "annotate_seqvars", "time"),
-        memory=wf.get_resource("mehari", "annotate_seqvars", "memory"),
+        runtime=wf.get_resource("mehari", "annotate_seqvars", "runtime"),
+        mem=wf.get_resource("mehari", "annotate_seqvars", "mem"),
         partition=wf.get_resource("mehari", "annotate_seqvars", "partition"),
         tmpdir=wf.get_resource("mehari", "annotate_seqvars", "tmpdir"),
     log:
@@ -132,8 +132,8 @@ rule varfish_export_mehari_annotate_strucvars:
         **wf.get_output_files("mehari", "annotate_strucvars"),
     threads: wf.get_resource("mehari", "annotate_strucvars", "threads")
     resources:
-        time=wf.get_resource("mehari", "annotate_strucvars", "time"),
-        memory=wf.get_resource("mehari", "annotate_strucvars", "memory"),
+        runtime=wf.get_resource("mehari", "annotate_strucvars", "runtime"),
+        mem=wf.get_resource("mehari", "annotate_strucvars", "mem"),
         partition=wf.get_resource("mehari", "annotate_strucvars", "partition"),
         tmpdir=wf.get_resource("mehari", "annotate_strucvars", "tmpdir"),
     log:
@@ -154,8 +154,8 @@ rule varfish_export_mehari_bam_qc:
         **wf.get_output_files("mehari", "bam_qc"),
     threads: wf.get_resource("mehari", "bam_qc", "threads")
     resources:
-        time=wf.get_resource("mehari", "bam_qc", "time"),
-        memory=wf.get_resource("mehari", "bam_qc", "memory"),
+        runtime=wf.get_resource("mehari", "bam_qc", "runtime"),
+        mem=wf.get_resource("mehari", "bam_qc", "mem"),
         partition=wf.get_resource("mehari", "bam_qc", "partition"),
         tmpdir=wf.get_resource("mehari", "bam_qc", "tmpdir"),
     log:

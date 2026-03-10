@@ -83,18 +83,19 @@ def test_link_out_fastq_step_part_get_output_files(adapter_trimming_workflow):
     assert actual == expected
 
 
-def test_link_out_fastq_step_part_get_shell_cmd(adapter_trimming_workflow):
-    """Tests LinkOutFastqStepPart.get_output_files()"""
-    wildcards = Wildcards(fromdict={"trimmer": "bbduk", "library_name": "P001-N1-DNA1-WGS1"})
-    expected = textwrap.dedent(
-        r"""
-        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/log/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/log/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
-        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/report/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/report/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
-        din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/out/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/out/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
-        """
-    ).strip()
-    actual = adapter_trimming_workflow.get_shell_cmd("link_out_fastq", "run", wildcards)
-    assert actual == expected
+# TODO: test run_locally by mocking work & output filesystems
+# def test_link_out_fastq_step_part_get_shell_cmd(adapter_trimming_workflow):
+#     """Tests LinkOutFastqStepPart.get_output_files()"""
+#     wildcards = Wildcards(fromdict={"trimmer": "bbduk", "library_name": "P001-N1-DNA1-WGS1"})
+#     expected = textwrap.dedent(
+#         r"""
+#         din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/log/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/log/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
+#         din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/report/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/report/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
+#         din_=$(dirname work/bbduk.P001-N1-DNA1-WGS1/out/.done) ; dout=$(dirname output/bbduk/P001-N1-DNA1-WGS1/out/.done) ; fns=$(find $din_ -type f -printf '%P\n') ; for fn in $fns ; do     if [[ ! -L $din_/$fn ]] ; then       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn   ; fi ; done
+#         """
+#     ).strip()
+#     actual = adapter_trimming_workflow.get_shell_cmd("link_out_fastq", "run", wildcards)
+#     assert actual == expected
 
 
 # Tests for BbdukStepPart ----------------------------------------------------------------------
@@ -254,7 +255,7 @@ def test_bbduk_step_part_get_log_file(adapter_trimming_workflow):
 def test_bbduk_step_part_get_resource_usage(adapter_trimming_workflow):
     """Tests BbdukStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 8, "time": "12:00:00", "memory": "24000M", "partition": "medium"}
+    expected_dict = {"threads": 8, "runtime": "12h", "mem": "24000MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -375,7 +376,7 @@ def test_fastp_step_part_get_log_file(adapter_trimming_workflow):
 def test_fastp_step_part_get_resource_usage(adapter_trimming_workflow):
     """Tests FastpStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 4, "time": "12:00:00", "memory": "24000M", "partition": "medium"}
+    expected_dict = {"threads": 4, "runtime": "12h", "mem": "24000MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

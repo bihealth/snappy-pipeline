@@ -167,8 +167,8 @@ class FiltersVariantsStepPartBase(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="1-00:00:00",  # 1 day
-            memory=f"{int(3.75 * 1024 * 2)}M",
+            runtime="1d",  # 1 day
+            mem=f"{int(3.75 * 1024 * 2)}MB",
         )
 
     @dictify

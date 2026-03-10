@@ -158,8 +158,8 @@ class ScarHRDStepPart(BaseStepPart):
         if action == "run":
             return ResourceUsage(
                 threads=1,
-                memory="32G",
-                time="24:00:00",
+                mem="32GB",
+                runtime="24h",
             )
         else:
             return super().get_resource_usage(action, **kwargs)

@@ -94,8 +94,8 @@ rule somatic_wgs_cnv_calling_canvas_run:
         args=wf.get_args("canvas", "run"),
     threads: wf.get_resource("canvas", "run", "threads")
     resources:
-        time=wf.get_resource("canvas", "run", "time"),
-        memory=wf.get_resource("canvas", "run", "memory"),
+        runtime=wf.get_resource("canvas", "run", "runtime"),
+        mem=wf.get_resource("canvas", "run", "mem"),
         partition=wf.get_resource("canvas", "run", "partition"),
         tmpdir=wf.get_resource("canvas", "run", "tmpdir"),
     log:
@@ -119,8 +119,8 @@ rule somatic_wgs_cnv_calling_cnvetti_coverage:
         args=wf.get_args("cnvetti", "coverage"),
     threads: wf.get_resource("cnvetti", "coverage", "threads")
     resources:
-        time=wf.get_resource("cnvetti", "coverage", "time"),
-        memory=wf.get_resource("cnvetti", "coverage", "memory"),
+        runtime=wf.get_resource("cnvetti", "coverage", "runtime"),
+        mem=wf.get_resource("cnvetti", "coverage", "mem"),
         partition=wf.get_resource("cnvetti", "coverage", "partition"),
         tmpdir=wf.get_resource("cnvetti", "coverage", "tmpdir"),
     log:
@@ -137,8 +137,8 @@ rule somatic_wgs_cnv_calling_cnvetti_tumor_normal_ratio:
         **wf.get_output_files("cnvetti", "tumor_normal_ratio"),
     threads: wf.get_resource("cnvetti", "tumor_normal_ratio", "threads")
     resources:
-        time=wf.get_resource("cnvetti", "tumor_normal_ratio", "time"),
-        memory=wf.get_resource("cnvetti", "tumor_normal_ratio", "memory"),
+        runtime=wf.get_resource("cnvetti", "tumor_normal_ratio", "runtime"),
+        mem=wf.get_resource("cnvetti", "tumor_normal_ratio", "mem"),
         partition=wf.get_resource("cnvetti", "tumor_normal_ratio", "partition"),
         tmpdir=wf.get_resource("cnvetti", "tumor_normal_ratio", "tmpdir"),
     log:
@@ -158,8 +158,8 @@ rule somatic_wgs_cnv_calling_cnvetti_segment:
         args=wf.get_args("cnvetti", "segment"),
     threads: wf.get_resource("cnvetti", "segment", "threads")
     resources:
-        time=wf.get_resource("cnvetti", "segment", "time"),
-        memory=wf.get_resource("cnvetti", "segment", "memory"),
+        runtime=wf.get_resource("cnvetti", "segment", "runtime"),
+        mem=wf.get_resource("cnvetti", "segment", "mem"),
         partition=wf.get_resource("cnvetti", "segment", "partition"),
         tmpdir=wf.get_resource("cnvetti", "segment", "tmpdir"),
     log:
@@ -180,8 +180,8 @@ rule somatic_wgs_cnv_calling_control_freec_run:
         args=wf.get_args("control_freec", "run"),
     threads: wf.get_resource("control_freec", "run", "threads")
     resources:
-        time=wf.get_resource("control_freec", "run", "time"),
-        memory=wf.get_resource("control_freec", "run", "memory"),
+        runtime=wf.get_resource("control_freec", "run", "runtime"),
+        mem=wf.get_resource("control_freec", "run", "mem"),
         partition=wf.get_resource("control_freec", "run", "partition"),
         tmpdir=wf.get_resource("control_freec", "run", "tmpdir"),
     log:
@@ -202,8 +202,8 @@ rule somatic_wgs_cnv_calling_control_freec_transform_output:
         args=wf.get_args("control_freec", "transform"),
     threads: wf.get_resource("control_freec", "transform", "threads")
     resources:
-        time=wf.get_resource("control_freec", "transform", "time"),
-        memory=wf.get_resource("control_freec", "transform", "memory"),
+        runtime=wf.get_resource("control_freec", "transform", "runtime"),
+        mem=wf.get_resource("control_freec", "transform", "mem"),
         partition=wf.get_resource("control_freec", "transform", "partition"),
         tmpdir=wf.get_resource("control_freec", "transform", "tmpdir"),
     log:
@@ -222,8 +222,8 @@ rule somatic_wgs_cnv_calling_control_freec_plot:
         **wf.get_output_files("control_freec", "plot"),
     threads: wf.get_resource("control_freec", "plot", "threads")
     resources:
-        time=wf.get_resource("control_freec", "plot", "time"),
-        memory=wf.get_resource("control_freec", "plot", "memory"),
+        runtime=wf.get_resource("control_freec", "plot", "runtime"),
+        mem=wf.get_resource("control_freec", "plot", "mem"),
         partition=wf.get_resource("control_freec", "plot", "partition"),
         tmpdir=wf.get_resource("control_freec", "plot", "tmpdir"),
     log:

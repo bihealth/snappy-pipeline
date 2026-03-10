@@ -198,8 +198,8 @@ class MantaStepPart(SomaticWgsSvCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
-            time="1-16:00:00",  # 1 day and 16 hours
-            memory=f"{int(3.75 * 1024 * 16)}M",
+            runtime="40h",  # 1 day and 16 hours
+            mem=f"{int(3.75 * 1024 * 16)}MB",
         )
 
     def _get_input_files_run(self, wildcards):
@@ -397,8 +397,8 @@ class Delly2StepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="6-06:00:00",  # 6 days and 6 hours
-            memory=f"{int(3.75 * 1024 * 4)}M",
+            runtime="6d",  # 6 days
+            mem=f"{int(3.75 * 1024 * 4)}MB",
         )
 
 

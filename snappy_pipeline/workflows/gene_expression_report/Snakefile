@@ -79,8 +79,8 @@ rule gene_expression_report_aggregate_counts:
         **wf.get_output_files("aggregate_counts", "run"),
     threads: wf.get_resource("aggregate_counts", "run", "threads")
     resources:
-        time=wf.get_resource("aggregate_counts", "run", "time"),
-        memory=wf.get_resource("aggregate_counts", "run", "memory"),
+        runtime=wf.get_resource("aggregate_counts", "run", "runtime"),
+        mem=wf.get_resource("aggregate_counts", "run", "mem"),
         partition=wf.get_resource("aggregate_counts", "run", "partition"),
         tmpdir=wf.get_resource("aggregate_counts", "run", "tmpdir"),
     wrapper:
@@ -95,8 +95,8 @@ rule gene_expression_report_compute_ranks:
         **wf.get_output_files("compute_ranks", "run"),
     threads: wf.get_resource("compute_ranks", "run", "threads")
     resources:
-        time=wf.get_resource("compute_ranks", "run", "time"),
-        memory=wf.get_resource("compute_ranks", "run", "memory"),
+        runtime=wf.get_resource("compute_ranks", "run", "runtime"),
+        mem=wf.get_resource("compute_ranks", "run", "mem"),
         partition=wf.get_resource("compute_ranks", "run", "partition"),
         tmpdir=wf.get_resource("compute_ranks", "run", "tmpdir"),
     wrapper:
@@ -111,8 +111,8 @@ rule gene_expression_report_compute_signatures:
         **wf.get_output_files("compute_signatures", "run"),
     threads: wf.get_resource("compute_signatures", "run", "threads")
     resources:
-        time=wf.get_resource("compute_signatures", "run", "time"),
-        memory=wf.get_resource("compute_signatures", "run", "memory"),
+        runtime=wf.get_resource("compute_signatures", "run", "runtime"),
+        mem=wf.get_resource("compute_signatures", "run", "mem"),
         partition=wf.get_resource("compute_signatures", "run", "partition"),
         tmpdir=wf.get_resource("compute_signatures", "run", "tmpdir"),
     wrapper:
@@ -127,8 +127,8 @@ rule gene_expression_report_plot_expression_distribution:
         **wf.get_output_files("plot_expression_distribution", "run"),
     threads: wf.get_resource("plot_expression_distribution", "run", "threads")
     resources:
-        time=wf.get_resource("plot_expression_distribution", "run", "time"),
-        memory=wf.get_resource("plot_expression_distribution", "run", "memory"),
+        runtime=wf.get_resource("plot_expression_distribution", "run", "runtime"),
+        mem=wf.get_resource("plot_expression_distribution", "run", "mem"),
         partition=wf.get_resource("plot_expression_distribution", "run", "partition"),
         tmpdir=wf.get_resource("plot_expression_distribution", "run", "tmpdir"),
     wrapper:

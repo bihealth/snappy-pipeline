@@ -146,7 +146,7 @@ def test_filter_de_novo_from_variant_calling_step_part_get_resource(
 ):
     """Tests FilterDeNovosStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "1d", "mem": "14336MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -214,7 +214,7 @@ def test_filter_de_novo_from_variant_annotationhard_step_part_get_resource(
 ):
     """Tests FilterDeNovosHardStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "1-00:00:00", "memory": "14336M", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "1d", "mem": "14336MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

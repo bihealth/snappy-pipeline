@@ -274,14 +274,14 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #     # Define expected
 #     high_res_expected_dict = {
 #         "threads": 16,
-#         "time": "2-00:00:00",
-#         "memory": "46080M",
+#         "runtime": "2d",
+#         "mem": "46080MB",
 #         "partition": "medium",
 #     }
 #     default_expected_dict = {
 #         "threads": 1,
-#         "time": "04:00:00",
-#         "memory": "7680M",
+#         "runtime": "4h",
+#         "mem": "7680MB",
 #         "partition": "medium",
 #     }
 #     # Evaluate - high resource actions
@@ -790,7 +790,7 @@ def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
 #     """Tests MeltStepPart.get_resource_usage()"""
 #     all_actions = sv_calling_wgs_workflow.substep_getattr("melt", "actions")
 #     # Define expected
-#     expected_dict = {"threads": 6, "time": "5-07:00:00", "memory": "23040M", "partition": "medium"}
+#     expected_dict = {"threads": 6, "runtime": "127h", "mem": "23040MB", "partition": "medium"}
 #     # Evaluate
 #     for action in all_actions:
 #         for resource, expected in expected_dict.items():

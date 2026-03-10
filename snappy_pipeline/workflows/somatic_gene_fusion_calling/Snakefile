@@ -50,7 +50,7 @@ rule somatic_gene_fusion_calling_link_in_run:
     output:
         wf.get_output_files("link_in", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+        wf.run_locally("link_in", "run", wildcards)
 
 
 # Generic linking out ---------------------------------------------------------
@@ -77,8 +77,8 @@ rule somatic_gene_fusion_calling_fusioncatcher_run:
         **wf.get_output_files("fusioncatcher", "run"),
     threads: wf.get_resource("fusioncatcher", "run", "threads")
     resources:
-        time=wf.get_resource("fusioncatcher", "run", "time"),
-        memory=wf.get_resource("fusioncatcher", "run", "memory"),
+        runtime=wf.get_resource("fusioncatcher", "run", "runtime"),
+        mem=wf.get_resource("fusioncatcher", "run", "mem"),
         partition=wf.get_resource("fusioncatcher", "run", "partition"),
         tmpdir=wf.get_resource("fusioncatcher", "run", "tmpdir"),
     params:
@@ -99,8 +99,8 @@ rule somatic_gene_fusion_calling_jaffa_run:
         **wf.get_output_files("jaffa", "run"),
     threads: wf.get_resource("jaffa", "run", "threads")
     resources:
-        time=wf.get_resource("jaffa", "run", "time"),
-        memory=wf.get_resource("jaffa", "run", "memory"),
+        runtime=wf.get_resource("jaffa", "run", "runtime"),
+        mem=wf.get_resource("jaffa", "run", "mem"),
         partition=wf.get_resource("jaffa", "run", "partition"),
         tmpdir=wf.get_resource("jaffa", "run", "tmpdir"),
     params:
@@ -121,8 +121,8 @@ rule somatic_gene_fusion_calling_pizzly_run:
         **wf.get_output_files("pizzly", "run"),
     threads: wf.get_resource("pizzly", "run", "threads")
     resources:
-        time=wf.get_resource("pizzly", "run", "time"),
-        memory=wf.get_resource("pizzly", "run", "memory"),
+        runtime=wf.get_resource("pizzly", "run", "runtime"),
+        mem=wf.get_resource("pizzly", "run", "mem"),
         partition=wf.get_resource("pizzly", "run", "partition"),
         tmpdir=wf.get_resource("pizzly", "run", "tmpdir"),
     params:
@@ -143,8 +143,8 @@ rule somatic_gene_fusion_calling_hera_run:
         **wf.get_output_files("hera", "run"),
     threads: wf.get_resource("hera", "run", "threads")
     resources:
-        time=wf.get_resource("hera", "run", "time"),
-        memory=wf.get_resource("hera", "run", "memory"),
+        runtime=wf.get_resource("hera", "run", "runtime"),
+        mem=wf.get_resource("hera", "run", "mem"),
         partition=wf.get_resource("hera", "run", "partition"),
         tmpdir=wf.get_resource("hera", "run", "tmpdir"),
     params:
@@ -165,8 +165,8 @@ rule somatic_gene_fusion_calling_star_fusion_run:
         **wf.get_output_files("star_fusion", "run"),
     threads: wf.get_resource("star_fusion", "run", "threads")
     resources:
-        time=wf.get_resource("star_fusion", "run", "time"),
-        memory=wf.get_resource("star_fusion", "run", "memory"),
+        runtime=wf.get_resource("star_fusion", "run", "runtime"),
+        mem=wf.get_resource("star_fusion", "run", "mem"),
         partition=wf.get_resource("star_fusion", "run", "partition"),
         tmpdir=wf.get_resource("star_fusion", "run", "tmpdir"),
     params:
@@ -187,8 +187,8 @@ rule somatic_gene_fusion_calling_defuse_run:
         **wf.get_output_files("defuse", "run"),
     threads: wf.get_resource("defuse", "run", "threads")
     resources:
-        time=wf.get_resource("defuse", "run", "time"),
-        memory=wf.get_resource("defuse", "run", "memory"),
+        runtime=wf.get_resource("defuse", "run", "runtime"),
+        mem=wf.get_resource("defuse", "run", "mem"),
         partition=wf.get_resource("defuse", "run", "partition"),
         tmpdir=wf.get_resource("defuse", "run", "tmpdir"),
     params:
@@ -209,8 +209,8 @@ rule somatic_gene_fusion_calling_arriba_run:
         **wf.get_output_files("arriba", "run"),
     threads: wf.get_resource("arriba", "run", "threads")
     resources:
-        time=wf.get_resource("arriba", "run", "time"),
-        memory=wf.get_resource("arriba", "run", "memory"),
+        runtime=wf.get_resource("arriba", "run", "runtime"),
+        mem=wf.get_resource("arriba", "run", "mem"),
         partition=wf.get_resource("arriba", "run", "partition"),
         tmpdir=wf.get_resource("arriba", "run", "tmpdir"),
     params:

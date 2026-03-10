@@ -18,8 +18,8 @@ class GatkReadBackedPhasing(SnappyModel):
     use_profile: bool = True
     """use Snakemake profile for parallel processing"""
 
-    restart_times: int = 0
-    """number of times to re-launch jobs in case of failure"""
+    restart_runtimes: int = 0
+    """number of runtimes to re-launch jobs in case of failure"""
 
     max_jobs_per_second: int = 10
     """throttling of job creation"""
@@ -36,14 +36,14 @@ class GatkReadBackedPhasing(SnappyModel):
     job_mult_memory: float = 1
     """memory multiplier"""
 
-    job_mult_time: float = 1
-    """running time multiplier"""
+    job_mult_runtime: float = 1
+    """running runtime multiplier"""
 
     merge_mult_memory: float = 1
     """memory multiplier for merging"""
 
-    merge_mult_time: float = 1
-    """running time multiplier for merging"""
+    merge_mult_runtime: float = 1
+    """running runtime multiplier for merging"""
 
 
 class GatkPhaseByTransmission(SnappyModel):

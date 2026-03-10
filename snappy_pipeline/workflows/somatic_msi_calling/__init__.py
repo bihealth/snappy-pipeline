@@ -183,8 +183,8 @@ class Mantis2StepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,  # Because of https://github.com/OSU-SRLab/MANTIS/issues/57
-            time="24:00:00",  # 24 hours
-            memory=f"{30 * 1024 * 3}M",
+            runtime="24h",  # 24 hours
+            mem=f"{30 * 1024 * 3}MB",
         )
 
 

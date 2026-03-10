@@ -286,7 +286,7 @@ def test_varfish_annotator_step_part_get_args_merge_vcf(wgs_sv_export_external_w
 
 def test_varfish_annotator_step_part_get_resource_usage_merge_vcf(wgs_sv_export_external_workflow):
     """Tests VarfishAnnotatorExternalStepPart.get_resource_usage() - action 'merge_vcf'"""
-    expected_dict = {"threads": 1, "time": "02:00:00", "memory": "14336M", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "2h", "mem": "14336MB", "partition": "medium"}
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'merge_vcf'."
         actual = wgs_sv_export_external_workflow.get_resource(
@@ -378,7 +378,7 @@ def test_varfish_annotator_step_part_get_args_annotate(wgs_sv_export_external_wo
 
 def test_varfish_annotator_step_part_get_resource_usage_annotate(wgs_sv_export_external_workflow):
     """Tests VarfishAnnotatorExternalStepPart.get_resource_usage() - action 'annotate'"""
-    expected_dict = {"threads": 2, "time": "4-04:00:00", "memory": "14336M", "partition": "medium"}
+    expected_dict = {"threads": 2, "runtime": "4d", "mem": "14336MB", "partition": "medium"}
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}' for action 'annotate'."
         actual = wgs_sv_export_external_workflow.get_resource(

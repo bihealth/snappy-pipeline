@@ -133,8 +133,8 @@ rule variant_denovo_filtration_filter_denovo_run:
         args=wg.get_args("filter_denovo", "run"),
     threads: wf.get_resource("filter_denovo", "run", "threads")
     resources:
-        time=wf.get_resource("filter_denovo", "run", "time"),
-        memory=wf.get_resource("filter_denovo", "run", "memory"),
+        runtime=wf.get_resource("filter_denovo", "run", "runtime"),
+        mem=wf.get_resource("filter_denovo", "run", "mem"),
         partition=wf.get_resource("filter_denovo", "run", "partition"),
         tmpdir=wf.get_resource("filter_denovo", "run", "tmpdir"),
     log:
@@ -153,8 +153,8 @@ rule variant_denovo_filtration_filter_denovo_hard_run:
         **wf.get_output_files("filter_denovo_hard", "run"),
     threads: wf.get_resource("filter_denovo_hard", "run", "threads")
     resources:
-        time=wf.get_resource("filter_denovo_hard", "run", "time"),
-        memory=wf.get_resource("filter_denovo_hard", "run", "memory"),
+        runtime=wf.get_resource("filter_denovo_hard", "run", "runtime"),
+        mem=wf.get_resource("filter_denovo_hard", "run", "mem"),
         partition=wf.get_resource("filter_denovo_hard", "run", "partition"),
         tmpdir=wf.get_resource("filter_denovo_hard", "run", "tmpdir"),
     params:
@@ -175,8 +175,8 @@ rule variant_denovo_filtration_summarize_counts_run:
         **wf.get_output_files("summarize_counts", "run"),
     threads: wf.get_resource("summarize_counts", "run", "threads")
     resources:
-        time=wf.get_resource("summarize_counts", "run", "time"),
-        memory=wf.get_resource("summarize_counts", "run", "memory"),
+        runtime=wf.get_resource("summarize_counts", "run", "runtime"),
+        mem=wf.get_resource("summarize_counts", "run", "mem"),
         partition=wf.get_resource("summarize_counts", "run", "partition"),
         tmpdir=wf.get_resource("summarize_counts", "run", "tmpdir"),
     log:
@@ -195,8 +195,8 @@ rule variant_denovo_filtration_collect_msdn_run:
         **wf.get_output_files("collect_msdn", "run"),
     threads: wf.get_resource("collect_msdn", "run", "threads")
     resources:
-        time=wf.get_resource("collect_msdn", "run", "time"),
-        memory=wf.get_resource("collect_msdn", "run", "memory"),
+        runtime=wf.get_resource("collect_msdn", "run", "runtime"),
+        mem=wf.get_resource("collect_msdn", "run", "mem"),
         partition=wf.get_resource("collect_msdn", "run", "partition"),
         tmpdir=wf.get_resource("collect_msdn", "run", "tmpdir"),
     log:

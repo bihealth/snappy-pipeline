@@ -187,13 +187,13 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     resource_usage = {
         "coverage": ResourceUsage(
             threads=1,
-            time="24:00:00",  # 1 day
-            memory="24G",
+            runtime="24h",  # 1 day
+            mem="24GB",
         ),
         "run": ResourceUsage(
             threads=4,
-            time="24:00:00",  # 1 day
-            memory="64G",
+            runtime="24h",  # 1 day
+            mem="64GB",
         ),
     }
 
@@ -340,13 +340,13 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     resource_usage = {
         "coverage": ResourceUsage(
             threads=1,
-            time="04:00:00",  # 4 hours
-            memory="24G",
+            runtime="4h",  # 4 hours
+            mem="24GB",
         ),
         "run": ResourceUsage(
             threads=4,
-            time="24:00:00",  # 4 hours
-            memory="96G",
+            runtime="24h",  # 4 hours
+            mem="96GB",
         ),
     }
 
@@ -453,19 +453,19 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     )
 
     # Overwrite defaults
-    default_resource_usage = ResourceUsage(threads=1, time="03:59:59", memory="7680M")  # 4h
+    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="7680MB")  # 4h
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
         "plot": ResourceUsage(
             threads=1,
-            time="08:00:00",  # 1 day
-            memory=f"{30 * 1024}M",
+            runtime="8h",  # 8 hours
+            mem=f"{30 * 1024}MB",
         ),
         "coverage": ResourceUsage(
             threads=8,
-            time="08:00:00",  # 8 hours
-            memory=f"{16 * 1024}M",
+            runtime="8h",  # 8 hours
+            mem=f"{16 * 1024}MB",
         ),
     }
 

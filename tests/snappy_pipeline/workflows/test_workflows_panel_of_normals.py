@@ -278,14 +278,14 @@ def test_mutect2_step_part_get_resource_usage(panel_of_normals_workflow):
     # Define expected: default defined workflow.abstract
     create_panel_expected_dict = {
         "threads": 2,
-        "time": "48:00:00",
-        "memory": "30G",
+        "runtime": "48h",
+        "mem": "30GB",
         "partition": "medium",
     }
     prepare_panel_expected_dict = {
         "threads": 2,
-        "time": "3-00:00:00",
-        "memory": "8G",
+        "runtime": "3d",
+        "mem": "8GB",
         "partition": "medium",
     }
 
@@ -501,32 +501,32 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
     # Define expected: default defined workflow.abstract
     target_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "8G",
+        "runtime": "2h",
+        "mem": "8GB",
         "partition": "medium",
     }
     antitarget_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "8G",
+        "runtime": "2h",
+        "mem": "8GB",
         "partition": "medium",
     }
     coverage_expected_dict = {
         "threads": 8,
-        "time": "02:00:00",
-        "memory": "16G",
+        "runtime": "2h",
+        "mem": "16GB",
         "partition": "medium",
     }
     reference_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "16G",
+        "runtime": "2h",
+        "mem": "16GB",
         "partition": "medium",
     }
     report_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "16G",
+        "runtime": "2h",
+        "mem": "16GB",
         "partition": "medium",
     }
 
@@ -591,8 +591,8 @@ def test_access_step_part_get_resource_usage(panel_of_normals_workflow):
     # Define expected: default defined workflow.abstract
     expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "8G",
+        "runtime": "2h",
+        "mem": "8GB",
         "partition": "medium",
     }
     for resource, expected in expected_dict.items():
@@ -725,9 +725,9 @@ def test_purecn_step_part_get_log_file_create_panel(panel_of_normals_workflow):
 def test_purecn_step_part_get_resource_usage(panel_of_normals_workflow):
     """Tests PureCnStepPart.get_resource_usage() for all actions"""
     expected = {
-        "coverage": {"threads": 1, "memory": "24G", "time": "04:00:00"},
-        "prepare": {"threads": 1, "memory": "24G", "time": "04:00:00"},
-        "create_panel": {"threads": 1, "memory": "32G", "time": "12:00:00"},
+        "coverage": {"threads": 1, "mem": "24GB", "runtime": "4h"},
+        "prepare": {"threads": 1, "mem": "24GB", "runtime": "4h"},
+        "create_panel": {"threads": 1, "mem": "32GB", "runtime": "12h"},
     }
     for action, resources in expected.items():
         for resource, value in resources.items():

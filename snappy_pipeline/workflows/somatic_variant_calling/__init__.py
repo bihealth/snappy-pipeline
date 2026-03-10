@@ -71,7 +71,7 @@ The following somatic variant callers are currently available
 Efficient usage of mutect2
 ==========================
 
-The recommended caller ``mutect2`` is implemented using a parallelisation mechanism to reduce execution time.
+The recommended caller ``mutect2`` is implemented using a parallelisation mechanism to reduce execution runtime.
 During parallelisation, the genome is split into small chunks, and parallel jobs perform the somatic variant calling in their region only.
 All results are then assembled to generate the final output files.
 
@@ -297,38 +297,38 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
     resource_usage_dict = {
         "scatter": ResourceUsage(
             threads=1,
-            time="00:02:00",
-            memory="1000M",
+            runtime="2m",
+            mem="1000MB",
         ),
         "run": ResourceUsage(
             threads=1,
-            time="5-00:00:00",
-            memory="8000M",
+            runtime="5d",
+            mem="8000MB",
         ),
         "gather": ResourceUsage(
             threads=1,
-            time="03:59:00",
-            memory="32768M",
+            runtime="4h",
+            mem="32768MB",
         ),
         "filter": ResourceUsage(
             threads=2,
-            time="03:59:00",
-            memory="15872M",
+            runtime="4h",
+            mem="15872MB",
         ),
         "contamination": ResourceUsage(
             threads=2,
-            time="03:59:00",
-            memory="7680M",
+            runtime="4h",
+            mem="7680MB",
         ),
         "pileup_normal": ResourceUsage(
             threads=2,
-            time="03:59:00",
-            memory="8000M",
+            runtime="4h",
+            mem="8000MB",
         ),
         "pileup_tumor": ResourceUsage(
             threads=2,
-            time="03:59:00",
-            memory="8000M",
+            runtime="4h",
+            mem="8000MB",
         ),
     }
 
@@ -337,8 +337,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         run_resource_usage = self.resource_usage_dict["run"]
         self.resource_usage_dict["run"] = ResourceUsage(
             threads=self.config.mutect2.num_cores or run_resource_usage.threads,
-            time=run_resource_usage.time,
-            memory=run_resource_usage.memory,
+            runtime=run_resource_usage.runtime,
+            mem=run_resource_usage.mem,
         )
 
     def check_config(self):

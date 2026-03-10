@@ -71,8 +71,8 @@ rule repeat_expansion_run_expansionhunter:
         **wf.get_output_files("expansionhunter", "run"),
     threads: wf.get_resource("expansionhunter", "run", "threads")
     resources:
-        time=wf.get_resource("expansionhunter", "run", "time"),
-        memory=wf.get_resource("expansionhunter", "run", "memory"),
+        runtime=wf.get_resource("expansionhunter", "run", "runtime"),
+        mem=wf.get_resource("expansionhunter", "run", "mem"),
         partition=wf.get_resource("expansionhunter", "run", "partition"),
         tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
     params:
@@ -90,8 +90,8 @@ rule repeat_expansion_annotate_expansionhunter:
         **wf.get_output_files("expansionhunter", "annotate"),
     threads: wf.get_resource("expansionhunter", "run", "threads")
     resources:
-        time=wf.get_resource("expansionhunter", "run", "time"),
-        memory=wf.get_resource("expansionhunter", "run", "memory"),
+        runtime=wf.get_resource("expansionhunter", "run", "runtime"),
+        mem=wf.get_resource("expansionhunter", "run", "mem"),
         partition=wf.get_resource("expansionhunter", "run", "partition"),
         tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
     run:

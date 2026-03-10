@@ -140,7 +140,7 @@ def test_tumor_mutational_step_part_get_log_files(tumor_mutational_burden_workfl
 def test_tumor_mutational_step_part_get_resource_usage(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "1:00:00", "memory": "4096M"}
+    expected_dict = {"threads": 2, "runtime": "1h", "mem": "4096MB"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

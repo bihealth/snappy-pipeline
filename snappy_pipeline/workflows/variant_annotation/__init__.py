@@ -78,7 +78,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
-# TODO: the number of restart times is high because tabix in HTSJDK/Jannovar is flaky...
+# TODO: the number of restart runtimes is high because tabix in HTSJDK/Jannovar is flaky...
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = VariantAnnotationConfigModel.default_config_yaml_string()
@@ -152,8 +152,8 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         num_threads = self.config[self.name].num_threads
         return ResourceUsage(
             threads=num_threads,
-            time="1-00",
-            memory=f"{2 * num_threads}G",
+            runtime="1d",
+            mem=f"{2 * num_threads}GB",
         )
 
 

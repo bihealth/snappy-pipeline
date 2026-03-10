@@ -289,7 +289,7 @@ def test_mehari_step_part_get_resource_usage(varfish_export_workflow):
     """Tests MehariAnnotateStepPart.get_resource_usage()"""
     all_actions = varfish_export_workflow.substep_getattr("mehari", "actions")
     # Define expected
-    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "14G", "partition": "medium"}
+    expected_dict = {"threads": 2, "runtime": "1d", "mem": "14GB", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():

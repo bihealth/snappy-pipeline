@@ -107,8 +107,8 @@ rule somatic_variant_filtration_eb_filter_write_panel:
         **wf.get_output_files("one_ebfilter", "write_panel"),
     threads: wf.get_resource("one_ebfilter", "write_panel", "threads")
     resources:
-        time=wf.get_resource("one_ebfilter", "write_panel", "time"),
-        memory=wf.get_resource("one_ebfilter", "write_panel", "memory"),
+        runtime=wf.get_resource("one_ebfilter", "write_panel", "runtime"),
+        mem=wf.get_resource("one_ebfilter", "write_panel", "mem"),
         partition=wf.get_resource("one_ebfilter", "write_panel", "partition"),
         tmpdir=wf.get_resource("one_ebfilter", "write_panel", "tmpdir"),
     run:
@@ -127,8 +127,8 @@ rule one_dkfz:
         args=wf.get_args("one_dkfz", "run"),
     threads: wf.get_resource("one_dkfz", "run", "threads")
     resources:
-        time=wf.get_resource("one_dkfz", "run", "time"),
-        memory=wf.get_resource("one_dkfz", "run", "memory"),
+        runtime=wf.get_resource("one_dkfz", "run", "runtime"),
+        mem=wf.get_resource("one_dkfz", "run", "mem"),
         partition=wf.get_resource("one_dkfz", "run", "partition"),
         tmpdir=wf.get_resource("one_dkfz", "run", "tmpdir"),
     log:
@@ -146,8 +146,8 @@ rule one_ebfilter:
         args=wf.get_args("one_ebfilter", "run"),
     threads: wf.get_resource("one_ebfilter", "run", "threads")
     resources:
-        time=wf.get_resource("one_ebfilter", "run", "time"),
-        memory=wf.get_resource("one_ebfilter", "run", "memory"),
+        runtime=wf.get_resource("one_ebfilter", "run", "runtime"),
+        mem=wf.get_resource("one_ebfilter", "run", "mem"),
         partition=wf.get_resource("one_ebfilter", "run", "partition"),
         tmpdir=wf.get_resource("one_ebfilter", "run", "tmpdir"),
     log:
@@ -165,8 +165,8 @@ rule one_bcftools:
         args=wf.get_args("one_bcftools", "run"),
     threads: wf.get_resource("one_bcftools", "run", "threads")
     resources:
-        time=wf.get_resource("one_bcftools", "run", "time"),
-        memory=wf.get_resource("one_bcftools", "run", "memory"),
+        runtime=wf.get_resource("one_bcftools", "run", "runtime"),
+        mem=wf.get_resource("one_bcftools", "run", "mem"),
         partition=wf.get_resource("one_bcftools", "run", "partition"),
         tmpdir=wf.get_resource("one_bcftools", "run", "tmpdir"),
     log:
@@ -184,8 +184,8 @@ rule one_regions:
         args=wf.get_args("one_regions", "run"),
     threads: wf.get_resource("one_regions", "run", "threads")
     resources:
-        time=wf.get_resource("one_regions", "run", "time"),
-        memory=wf.get_resource("one_regions", "run", "memory"),
+        runtime=wf.get_resource("one_regions", "run", "runtime"),
+        mem=wf.get_resource("one_regions", "run", "mem"),
         partition=wf.get_resource("one_regions", "run", "partition"),
         tmpdir=wf.get_resource("one_regions", "run", "tmpdir"),
     log:
@@ -203,8 +203,8 @@ rule one_protected:
         args=wf.get_args("one_protected", "run"),
     threads: wf.get_resource("one_protected", "run", "threads")
     resources:
-        time=wf.get_resource("one_protected", "run", "time"),
-        memory=wf.get_resource("one_protected", "run", "memory"),
+        runtime=wf.get_resource("one_protected", "run", "runtime"),
+        mem=wf.get_resource("one_protected", "run", "mem"),
         partition=wf.get_resource("one_protected", "run", "partition"),
         tmpdir=wf.get_resource("one_protected", "run", "tmpdir"),
     log:
@@ -220,8 +220,8 @@ rule last_filter:
         **wf.get_output_files("last_filter", "run"),
     threads: wf.get_resource("last_filter", "run", "threads")
     resources:
-        time=wf.get_resource("last_filter", "run", "time"),
-        memory=wf.get_resource("last_filter", "run", "memory"),
+        runtime=wf.get_resource("last_filter", "run", "runtime"),
+        mem=wf.get_resource("last_filter", "run", "mem"),
         partition=wf.get_resource("last_filter", "run", "partition"),
         tmpdir=wf.get_resource("last_filter", "run", "tmpdir"),
     log:

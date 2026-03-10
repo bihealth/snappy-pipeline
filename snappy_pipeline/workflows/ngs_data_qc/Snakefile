@@ -64,7 +64,7 @@ rule ngs_data_qc_link_in_run:
     output:
         wf.get_output_files("link_in", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+        wf.run_locally("link_in", "run", wildcards)
 
 
 # Generic linking out ---------------------------------------------------------
@@ -91,8 +91,8 @@ rule ngs_data_qc_fastqc_run:
         **wf.get_output_files("fastqc", "run"),
     threads: wf.get_resource("fastqc", "run", "threads")
     resources:
-        time=wf.get_resource("fastqc", "run", "time"),
-        memory=wf.get_resource("fastqc", "run", "memory"),
+        runtime=wf.get_resource("fastqc", "run", "runtime"),
+        mem=wf.get_resource("fastqc", "run", "mem"),
         partition=wf.get_resource("fastqc", "run", "partition"),
         tmpdir=wf.get_resource("fastqc", "run", "tmpdir"),
     params:
@@ -115,8 +115,8 @@ rule ngs_data_qc_picard_prepare:
         args=wf.get_args("picard", "prepare"),
     threads: wf.get_resource("picard", "prepare", "threads")
     resources:
-        time=wf.get_resource("picard", "prepare", "time"),
-        memory=wf.get_resource("picard", "prepare", "memory"),
+        runtime=wf.get_resource("picard", "prepare", "runtime"),
+        mem=wf.get_resource("picard", "prepare", "mem"),
         partition=wf.get_resource("picard", "prepare", "partition"),
         tmpdir=wf.get_resource("picard", "prepare", "tmpdir"),
     log:
@@ -134,8 +134,8 @@ rule ngs_data_qc_picard_metrics:
         args=wf.get_args("picard", "metrics"),
     threads: wf.get_resource("picard", "metrics", "threads")
     resources:
-        time=wf.get_resource("picard", "metrics", "time"),
-        memory=wf.get_resource("picard", "metrics", "memory"),
+        runtime=wf.get_resource("picard", "metrics", "runtime"),
+        mem=wf.get_resource("picard", "metrics", "mem"),
         partition=wf.get_resource("picard", "metrics", "partition"),
         tmpdir=wf.get_resource("picard", "metrics", "tmpdir"),
     log:

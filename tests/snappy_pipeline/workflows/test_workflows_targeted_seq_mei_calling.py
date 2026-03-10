@@ -165,7 +165,7 @@ def test_scramble_analysis_step_part_get_args(mei_workflow):
 
 def test_scramble_analysis_step_part_get_resource_usage(mei_workflow):
     """Tests ScrambleStepPart.get_resource_usage()"""
-    expected_dict = {"threads": 1, "time": "06:00:00", "memory": "8192M", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "6h", "mem": "8192MB", "partition": "medium"}
     for action in ("analysis", "cluster"):
         for resource, expected in expected_dict.items():
             msg_error = (

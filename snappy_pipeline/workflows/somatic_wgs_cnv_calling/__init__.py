@@ -222,8 +222,8 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
-            time="1-16:00:00",  # 1 day and 16 hours
-            memory=f"{int(3.75 * 1024 * 16)}M",
+            runtime="40h",  # 1 day and 16 hours
+            mem=f"{int(3.75 * 1024 * 16)}MB",
         )
 
     def get_args(self, action):
@@ -393,8 +393,8 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="04:00:00",  # 4 hours
-            memory=f"{int(3.75 * 1024 * 4)}M",
+            runtime="4h",  # 4 hours
+            mem=f"{int(3.75 * 1024 * 4)}MB",
         )
 
 
@@ -420,18 +420,18 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     resource_usage_dict = {
         "plot": ResourceUsage(
             threads=1,
-            time="1-00:00:00",  # 1 day
-            memory=f"{30 * 1024}M",
+            runtime="1d",  # 1 day
+            mem=f"{30 * 1024}MB",
         ),
         "coverage": ResourceUsage(
             threads=8,
-            time="1-00:00:00",  # 1 day
-            memory=f"{16 * 1024}M",
+            runtime="1d",  # 1 day
+            mem=f"{16 * 1024}MB",
         ),
         "default": ResourceUsage(
             threads=1,
-            time="1-00:00:00",  # 1 day
-            memory=f"{int(7.5 * 1024)}M",
+            runtime="1d",  # 1 day
+            mem=f"{int(7.5 * 1024)}MB",
         ),
     }
 
@@ -673,18 +673,18 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     resource_usage_dict = {
         "plot": ResourceUsage(
             threads=1,
-            time="1-16:00:00",  # 1 day and 16 hours
-            memory=f"{2 * 30 * 1024}M",
+            runtime="40h",  # 1 day and 16 hours
+            mem=f"{2 * 30 * 1024}MB",
         ),
         "transform": ResourceUsage(
             threads=1,
-            time="1-16:00:00",  # 1 day and 16 hours
-            memory=f"{2 * 8 * 1024}M",
+            runtime="40h",  # 1 day and 16 hours
+            mem=f"{2 * 8 * 1024}MB",
         ),
         "run": ResourceUsage(
             threads=8,
-            time="1-16:00:00",  # 1 day and 16 hours
-            memory=f"{int(2 * 3.75 * 1024 * 8)}M",
+            runtime="40h",  # 1 day and 16 hours
+            mem=f"{int(2 * 3.75 * 1024 * 8)}MB",
         ),
     }
 

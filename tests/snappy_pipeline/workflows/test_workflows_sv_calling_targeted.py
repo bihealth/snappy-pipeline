@@ -372,14 +372,14 @@ def test_gcnv_step_part_get_resource_usage(sv_calling_targeted_workflow):
     # Define expected
     high_res_expected_dict = {
         "threads": 16,
-        "time": "4-00:00:00",
-        "memory": "46080M",
+        "runtime": "4d",
+        "mem": "46080MB",
         "partition": "medium",
     }
     default_expected_dict = {
         "threads": 1,
-        "time": "1-00:00:00",
-        "memory": "7680M",
+        "runtime": "1d",
+        "mem": "7680MB",
         "partition": "medium",
     }
     # Evaluate - high resource actions

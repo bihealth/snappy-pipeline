@@ -47,8 +47,8 @@ class MantaStepPart(
         num_threads = self.config.manta.num_threads
         return ResourceUsage(
             threads=num_threads,
-            time="7-00:00:00",  # 3 days
-            memory=f"{int(3.5 * 1024 * num_threads)}M",
+            runtime="7d",  # 7 days
+            mem=f"{int(3.5 * 1024 * num_threads)}MB",
         )
 
     def __init__(self, parent):

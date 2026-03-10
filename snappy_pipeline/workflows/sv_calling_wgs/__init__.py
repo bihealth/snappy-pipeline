@@ -82,8 +82,8 @@ class PopDelStepPart(
 
     _resource_usage = ResourceUsage(
         threads=2,
-        time="4-00:00:00",
-        memory="24G",
+        runtime="4d",
+        mem="24GB",
     )
     resource_usage_dict = {
         "profile": _resource_usage,
@@ -236,7 +236,7 @@ class Sniffles2StepPart(BaseStepPart):
     name = "sniffles2"
     actions = ("bam_to_snf", "snf_to_vcf")
 
-    _resource_usage = ResourceUsage(threads=2, time="0-02:00:00", memory="4G")
+    _resource_usage = ResourceUsage(threads=2, runtime="2h", mem="4GB")
     resource_usage_dict = {
         "bam_to_snf": _resource_usage,
         "snf_to_vcf": _resource_usage,

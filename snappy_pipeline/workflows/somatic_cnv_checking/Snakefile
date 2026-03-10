@@ -103,8 +103,8 @@ rule somatic_cnv_checking_pileup_normal:
         args=wf.get_args("pileup", "normal"),
     threads: wf.get_resource("pileup", "normal", "threads")
     resources:
-        time=wf.get_resource("pileup", "normal", "time"),
-        memory=wf.get_resource("pileup", "normal", "memory"),
+        runtime=wf.get_resource("pileup", "normal", "runtime"),
+        mem=wf.get_resource("pileup", "normal", "mem"),
         partition=wf.get_resource("pileup", "normal", "partition"),
         tmpdir=wf.get_resource("pileup", "normal", "tmpdir"),
     log:
@@ -125,8 +125,8 @@ rule somatic_cnv_checking_pileup_tumor:
         args=wf.get_args("pileup", "tumor"),
     threads: wf.get_resource("pileup", "tumor", "threads")
     resources:
-        time=wf.get_resource("pileup", "tumor", "time"),
-        memory=wf.get_resource("pileup", "tumor", "memory"),
+        runtime=wf.get_resource("pileup", "tumor", "runtime"),
+        mem=wf.get_resource("pileup", "tumor", "mem"),
         partition=wf.get_resource("pileup", "tumor", "partition"),
         tmpdir=wf.get_resource("pileup", "tumor", "tmpdir"),
     log:
@@ -148,8 +148,8 @@ if wf.w_config.step_config["somatic_cnv_checking"].path_cnv_calling:
             args=wf.get_args("cnv", "run"),
         threads: wf.get_resource("cnv", "run", "threads")
         resources:
-            time=wf.get_resource("cnv", "run", "time"),
-            memory=wf.get_resource("cnv", "run", "memory"),
+            runtime=wf.get_resource("cnv", "run", "runtime"),
+            mem=wf.get_resource("cnv", "run", "mem"),
             partition=wf.get_resource("cnv", "run", "partition"),
             tmpdir=wf.get_resource("cnv", "run", "tmpdir"),
         log:
@@ -168,8 +168,8 @@ if wf.w_config.step_config["somatic_cnv_checking"].path_cnv_calling:
             args=wf.get_args("report", "run"),
         threads: wf.get_resource("report", "run", "threads")
         resources:
-            time=wf.get_resource("report", "run", "time"),
-            memory=wf.get_resource("report", "run", "memory"),
+            runtime=wf.get_resource("report", "run", "runtime"),
+            mem=wf.get_resource("report", "run", "mem"),
             partition=wf.get_resource("report", "run", "partition"),
             tmpdir=wf.get_resource("report", "run", "tmpdir"),
         log:

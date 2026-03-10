@@ -146,8 +146,8 @@ class PeddyStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="10:00:00",  # 10 hours
-            memory=f"{15 * 1024}M",
+            runtime="10h",  # 10 hours
+            mem=f"{15 * 1024}MB",
         )
 
 

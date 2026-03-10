@@ -91,8 +91,8 @@ rule variant_filtration_filter_quality_run:
         args=wf.get_args("filter_quality", "run"),
     threads: wf.get_resource("filter_quality", "run", "threads")
     resources:
-        time=wf.get_resource("filter_quality", "run", "time"),
-        memory=wf.get_resource("filter_quality", "run", "memory"),
+        runtime=wf.get_resource("filter_quality", "run", "runtime"),
+        mem=wf.get_resource("filter_quality", "run", "mem"),
         partition=wf.get_resource("filter_quality", "run", "partition"),
         tmpdir=wf.get_resource("filter_quality", "run", "tmpdir"),
     log:
@@ -113,8 +113,8 @@ rule variant_filtration_filter_inheritance_run:
         args=wf.get_args("filter_inheritance", "run"),
     threads: wf.get_resource("filter_inheritance", "run", "threads")
     resources:
-        time=wf.get_resource("filter_inheritance", "run", "time"),
-        memory=wf.get_resource("filter_inheritance", "run", "memory"),
+        runtime=wf.get_resource("filter_inheritance", "run", "runtime"),
+        mem=wf.get_resource("filter_inheritance", "run", "mem"),
         partition=wf.get_resource("filter_inheritance", "run", "partition"),
         tmpdir=wf.get_resource("filter_inheritance", "run", "tmpdir"),
     log:
@@ -135,8 +135,8 @@ rule variant_filtration_filter_frequency:
         args=wf.get_args("filter_frequency", "run"),
     threads: wf.get_resource("filter_frequency", "run", "threads")
     resources:
-        time=wf.get_resource("filter_frequency", "run", "time"),
-        memory=wf.get_resource("filter_frequency", "run", "memory"),
+        runtime=wf.get_resource("filter_frequency", "run", "runtime"),
+        mem=wf.get_resource("filter_frequency", "run", "mem"),
         partition=wf.get_resource("filter_frequency", "run", "partition"),
         tmpdir=wf.get_resource("filter_frequency", "run", "tmpdir"),
     log:
@@ -157,8 +157,8 @@ rule variant_filtration_filter_regions:
         args=wf.get_args("filter_regions", "run"),
     threads: wf.get_resource("filter_regions", "run", "threads")
     resources:
-        time=wf.get_resource("filter_regions", "run", "time"),
-        memory=wf.get_resource("filter_regions", "run", "memory"),
+        runtime=wf.get_resource("filter_regions", "run", "runtime"),
+        mem=wf.get_resource("filter_regions", "run", "mem"),
         partition=wf.get_resource("filter_regions", "run", "partition"),
         tmpdir=wf.get_resource("filter_regions", "run", "tmpdir"),
     log:
@@ -179,8 +179,8 @@ rule variant_filtration_filter_scores:
         args=wf.get_args("filter_scores", "run"),
     threads: wf.get_resource("filter_scores", "run", "threads")
     resources:
-        time=wf.get_resource("filter_scores", "run", "time"),
-        memory=wf.get_resource("filter_scores", "run", "memory"),
+        runtime=wf.get_resource("filter_scores", "run", "runtime"),
+        mem=wf.get_resource("filter_scores", "run", "mem"),
         partition=wf.get_resource("filter_scores", "run", "partition"),
         tmpdir=wf.get_resource("filter_scores", "run", "tmpdir"),
     log:
@@ -201,8 +201,8 @@ rule variant_filtration_filter_het_comp:
         args=wf.get_args("filter_het_comp", "run"),
     threads: wf.get_resource("filter_het_comp", "run", "threads")
     resources:
-        time=wf.get_resource("filter_het_comp", "run", "time"),
-        memory=wf.get_resource("filter_het_comp", "run", "memory"),
+        runtime=wf.get_resource("filter_het_comp", "run", "runtime"),
+        mem=wf.get_resource("filter_het_comp", "run", "mem"),
         partition=wf.get_resource("filter_het_comp", "run", "partition"),
         tmpdir=wf.get_resource("filter_het_comp", "run", "tmpdir"),
     log:

@@ -93,8 +93,8 @@ rule somatic_variant_annotation_vep:
         **wf.get_output_files("vep", "run"),
     threads: wf.get_resource("vep", "run", "threads")
     resources:
-        time=wf.get_resource("vep", "run", "time"),
-        memory=wf.get_resource("vep", "run", "memory"),
+        runtime=wf.get_resource("vep", "run", "runtime"),
+        mem=wf.get_resource("vep", "run", "mem"),
         partition=wf.get_resource("vep", "run", "partition"),
         tmpdir=wf.get_resource("vep", "run", "tmpdir"),
     params:

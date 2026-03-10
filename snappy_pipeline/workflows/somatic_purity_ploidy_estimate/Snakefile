@@ -109,8 +109,8 @@ rule somatic_purity_ploidy_estimate_ascat_baf_tumor:
         args=wf.get_args("ascat", "baf_tumor"),
     threads: wf.get_resource("ascat", "baf_tumor", "threads")
     resources:
-        time=wf.get_resource("ascat", "baf_tumor", "time"),
-        memory=wf.get_resource("ascat", "baf_tumor", "memory"),
+        runtime=wf.get_resource("ascat", "baf_tumor", "runtime"),
+        mem=wf.get_resource("ascat", "baf_tumor", "mem"),
         partition=wf.get_resource("ascat", "baf_tumor", "partition"),
         tmpdir=wf.get_resource("ascat", "baf_tumor", "tmpdir"),
     log:
@@ -128,8 +128,8 @@ rule somatic_purity_ploidy_estimate_ascat_baf_normal:
         args=wf.get_args("ascat", "baf_normal"),
     threads: wf.get_resource("ascat", "baf_normal", "threads")
     resources:
-        time=wf.get_resource("ascat", "baf_normal", "time"),
-        memory=wf.get_resource("ascat", "baf_normal", "memory"),
+        runtime=wf.get_resource("ascat", "baf_normal", "runtime"),
+        mem=wf.get_resource("ascat", "baf_normal", "mem"),
         partition=wf.get_resource("ascat", "baf_normal", "partition"),
         tmpdir=wf.get_resource("ascat", "baf_normal", "tmpdir"),
     log:
@@ -150,8 +150,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor:
         args=wf.get_args("ascat", "cnv_tumor"),
     threads: wf.get_resource("ascat", "cnv_tumor", "threads")
     resources:
-        time=wf.get_resource("ascat", "cnv_tumor", "time"),
-        memory=wf.get_resource("ascat", "cnv_tumor", "memory"),
+        runtime=wf.get_resource("ascat", "cnv_tumor", "runtime"),
+        mem=wf.get_resource("ascat", "cnv_tumor", "mem"),
         partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
         tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
     log:
@@ -169,8 +169,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_normal:
         args=wf.get_args("ascat", "cnv_normal"),
     threads: wf.get_resource("ascat", "cnv_normal", "threads")
     resources:
-        time=wf.get_resource("ascat", "cnv_normal", "time"),
-        memory=wf.get_resource("ascat", "cnv_normal", "memory"),
+        runtime=wf.get_resource("ascat", "cnv_normal", "runtime"),
+        mem=wf.get_resource("ascat", "cnv_normal", "mem"),
         partition=wf.get_resource("ascat", "cnv_normal", "partition"),
         tmpdir=wf.get_resource("ascat", "cnv_normal", "tmpdir"),
     log:
@@ -191,8 +191,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes:
         args=wf.get_args("ascat", "cnv_tumor"),
     threads: wf.get_resource("ascat", "cnv_tumor", "threads")
     resources:
-        time=wf.get_resource("ascat", "cnv_tumor", "time"),
-        memory=wf.get_resource("ascat", "cnv_tumor", "memory"),
+        runtime=wf.get_resource("ascat", "cnv_tumor", "runtime"),
+        mem=wf.get_resource("ascat", "cnv_tumor", "mem"),
         partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
         tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
     log:
@@ -210,8 +210,8 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_normal_wes:
         args=wf.get_args("ascat", "cnv_normal"),
     threads: wf.get_resource("ascat", "cnv_normal", "threads")
     resources:
-        time=wf.get_resource("ascat", "cnv_normal", "time"),
-        memory=wf.get_resource("ascat", "cnv_normal", "memory"),
+        runtime=wf.get_resource("ascat", "cnv_normal", "runtime"),
+        mem=wf.get_resource("ascat", "cnv_normal", "mem"),
         partition=wf.get_resource("ascat", "cnv_normal", "partition"),
         tmpdir=wf.get_resource("ascat", "cnv_normal", "tmpdir"),
     log:
@@ -232,8 +232,8 @@ rule somatic_purity_ploidy_estimate_ascat_run_ascat:
         args=wf.get_args("ascat", "run_ascat"),
     threads: wf.get_resource("ascat", "run_ascat", "threads")
     resources:
-        time=wf.get_resource("ascat", "run_ascat", "time"),
-        memory=wf.get_resource("ascat", "run_ascat", "memory"),
+        runtime=wf.get_resource("ascat", "run_ascat", "runtime"),
+        mem=wf.get_resource("ascat", "run_ascat", "mem"),
         partition=wf.get_resource("ascat", "run_ascat", "partition"),
         tmpdir=wf.get_resource("ascat", "run_ascat", "tmpdir"),
     log:

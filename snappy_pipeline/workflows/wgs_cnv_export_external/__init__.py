@@ -234,14 +234,14 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         if action == "annotate":
             return ResourceUsage(
                 threads=2,
-                time="4-04:00:00",  # 4 days and 4 hours
-                memory=f"{7 * 1024 * 2}M",
+                runtime="4d",  # 4 days
+                mem=f"{7 * 1024 * 2}MB",
             )
         else:
             return ResourceUsage(
                 threads=1,
-                time="02:00:00",  # 2 hours
-                memory=f"{7 * 1024 * 2}M",
+                runtime="2h",  # 2 hours
+                mem=f"{7 * 1024 * 2}MB",
             )
 
     def get_args(self, action):

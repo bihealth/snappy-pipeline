@@ -90,7 +90,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")
 
-# TODO: the number of restart times is high because tabix in HTSJDK/Jannovar is flaky...
+# TODO: the number of restart runtimes is high because tabix in HTSJDK/Jannovar is flaky...
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = VarfishExportConfigModel.default_config_yaml_string()
@@ -143,8 +143,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="1-00:00:00",
-            memory="14G",
+            runtime="1d",
+            mem="14GB",
         )
 
     @listify
@@ -308,7 +308,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 for sv_caller in sv_callers
             }
         else:
-            raise RuntimeError("Neither targeted nor WGS SV calling configured")
+            raise RunruntimeError("Neither targeted nor WGS SV calling configured")
 
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         library_names = [

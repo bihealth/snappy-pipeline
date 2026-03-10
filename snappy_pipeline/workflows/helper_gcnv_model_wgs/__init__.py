@@ -205,12 +205,12 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
 
         def get_memory(wildcards, input=None, threads=None, attempt=1):
             _, _, _ = wildcards, input, threads  # unused but cannot be renamed
-            return f"{attempt * 4 * 1024 + 16 * 1024}M"
+            return f"{attempt * 4 * 1024 + 16 * 1024}MB"
 
         if action == "filter_intervals":
             result = attr.evolve(
                 result,
-                memory=get_memory,
+                mem=get_memory,
             )
 
         return result

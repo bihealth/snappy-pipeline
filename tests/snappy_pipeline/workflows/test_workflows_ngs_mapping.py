@@ -361,14 +361,14 @@ def test_bwa_step_part_get_resource(ngs_mapping_workflow):
     """Tests BaseStepPart.get_resource()"""
     # Define expected
     expected_dict = {
-        "bwa": {"threads": 16, "time": "3-00:00:00", "memory": "73728M", "partition": "medium"},
+        "bwa": {"threads": 16, "runtime": "3d", "mem": "73728MB", "partition": "medium"},
         "bwa_mem2": {
             "threads": 16,
-            "time": "3-00:00:00",
-            "memory": "73728M",
+            "runtime": "3d",
+            "mem": "73728MB",
             "partition": "medium",
         },
-        "mbcs": {"threads": 1, "time": "72:00:00", "memory": "4G", "partition": "medium"},
+        "mbcs": {"threads": 1, "runtime": "72h", "mem": "4GB", "partition": "medium"},
     }
     # Evaluate
     for tool, v in expected_dict.items():
@@ -479,7 +479,7 @@ def test_star_step_part_get_log_file(ngs_mapping_workflow):
 def test_star_step_part_get_resource(ngs_mapping_workflow):
     """Tests StarStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "56G", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "2d", "mem": "56GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -555,7 +555,7 @@ def test_minimap2_step_part_get_log_file(ngs_mapping_workflow):
 def test_minimap2_step_part_get_resource(ngs_mapping_workflow):
     """Tests Minimap2StepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "2-00:00:00", "memory": "56G", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "2d", "mem": "56GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -602,7 +602,7 @@ def test_external_step_part_get_output_files(ngs_mapping_workflow):
 def test_external_step_part_get_resource(ngs_mapping_workflow):
     """Tests ExternalStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "00:10:00", "memory": "1G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "10m", "mem": "1GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -739,7 +739,7 @@ def test_generate_doc_files_step_part_run_get_log_file(ngs_mapping_workflow):
 
 def test_generate_doc_files_step_part_get_resource(ngs_mapping_workflow):
     """Tests BamCollectDocStepPart.get_resource()"""
-    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "24h", "mem": "2GB", "partition": "medium"}
     for resource, expected in expected_dict.items():
         actual = ngs_mapping_workflow.get_resource("bam_collect_doc", "run", resource)()
         assert actual == expected

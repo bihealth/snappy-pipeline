@@ -137,7 +137,7 @@ def test_optitype_step_part_get_log_file(hla_typing_workflow):
 def test_optitype_step_part_get_resource_usage(hla_typing_workflow):
     """Tests OptiTypeStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 6, "time": "40:00:00", "memory": "45000M", "partition": "medium"}
+    expected_dict = {"threads": 6, "runtime": "40h", "mem": "45000MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -178,7 +178,7 @@ def test_arcashla_step_part_get_log_file(hla_typing_workflow):
 def test_arcashla_step_part_get_resource_usage(hla_typing_workflow):
     """Tests ArcasHlaStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 4, "time": "60:00:00", "memory": "15000M", "partition": "medium"}
+    expected_dict = {"threads": 4, "runtime": "60h", "mem": "15000MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

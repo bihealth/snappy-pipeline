@@ -233,23 +233,23 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     resource_usage = {
         "install": ResourceUsage(
             threads=1,
-            time="01:00:00",
-            memory="24G",
+            runtime="1h",
+            mem="24GB",
         ),
         "prepare": ResourceUsage(
             threads=1,
-            time="04:00:00",  # 4 hours
-            memory="24G",
+            runtime="4h",  # 4 hours
+            mem="24GB",
         ),
         "coverage": ResourceUsage(
             threads=1,
-            time="04:00:00",  # 4 hours
-            memory="24G",
+            runtime="4h",  # 4 hours
+            mem="24GB",
         ),
         "create_panel": ResourceUsage(
             threads=1,
-            time="12:00:00",  # 12 hours
-            memory="32G",
+            runtime="12h",  # 12 hours
+            mem="32GB",
         ),
     }
 
@@ -371,23 +371,23 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     resource_usage = {
         "scatter": ResourceUsage(
             threads=1,
-            time="00:02:00",
-            memory="1000M",
+            runtime="2m",
+            mem="1000MB",
         ),
         "prepare_panel": ResourceUsage(
             threads=2,
-            time="3-00:00:00",  # 3 days
-            memory="8G",
+            runtime="3d",  # 3 days
+            mem="8GB",
         ),
         "gather": ResourceUsage(
             threads=1,
-            time="03:59:00",
-            memory="8192M",
+            runtime="4h",
+            mem="8192MB",
         ),
         "create_panel": ResourceUsage(
             threads=2,
-            time="48:00:00",  # 48 hours
-            memory="30G",
+            runtime="48h",  # 48 hours
+            mem="30GB",
         ),
     }
 
@@ -540,28 +540,28 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     resource_usage = {
         "target": ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8G",
+            runtime="2h",  # 2 hours
+            mem="8GB",
         ),
         "antitarget": ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8G",
+            runtime="2h",  # 2 hours
+            mem="8GB",
         ),
         "coverage": ResourceUsage(
             threads=8,
-            time="02:00:00",  # 2 hours
-            memory="16G",
+            runtime="2h",  # 2 hours
+            mem="16GB",
         ),
         "create_panel": ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="16G",
+            runtime="2h",  # 2 hours
+            mem="16GB",
         ),
         "report": ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="16G",
+            runtime="2h",  # 2 hours
+            mem="16GB",
         ),
     }
 
@@ -802,8 +802,8 @@ class AccessStepPart(PanelOfNormalsStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8G",
+            runtime="2h",  # 2 hours
+            mem="8GB",
         )
 
     def get_input_files(self, action):

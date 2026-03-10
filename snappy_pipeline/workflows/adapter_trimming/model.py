@@ -145,7 +145,7 @@ class Fastp(SnappyModel):
 
     dont_eval_duplication: bool = True
     """
-    don't evaluate duplication rate to save time and use less memory.
+    don't evaluate duplication rate to save runtime and use less memory.
     """
 
     trim_poly_g: bool = True
@@ -384,7 +384,7 @@ class Bbduk(SnappyModel):
     copyundefined: bool = False
     """
     (cu) Process non-AGCT IUPAC reference bases by making all possible unambiguous copies.
-    Intended for short motifs or adapter barcodes, as time/memory use is exponential.
+    Intended for short motifs or adapter barcodes, as runtime/memory use is exponential.
     """
 
     nzo: bool = True

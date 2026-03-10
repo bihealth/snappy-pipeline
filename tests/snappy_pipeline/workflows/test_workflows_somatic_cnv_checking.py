@@ -118,7 +118,7 @@ def test_pileup_normal_step_part_get_log_file(somatic_cnv_checking_workflow):
 
 def test_pileup_normal_step_part_get_resource(somatic_cnv_checking_workflow):
     """Tests CnvCheckingPileupStepPart.get_resource() - action normal"""
-    expected_dict = {"threads": 2, "time": "12:00:00", "memory": "7577M", "partition": "medium"}
+    expected_dict = {"threads": 2, "runtime": "12h", "mem": "7577MB", "partition": "medium"}
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_cnv_checking_workflow.get_resource("pileup", "normal", resource)()
@@ -156,7 +156,7 @@ def test_pileup_tumor_step_part_get_log_file(somatic_cnv_checking_workflow):
 
 def test_pileup_tumor_step_part_get_resource(somatic_cnv_checking_workflow):
     """Tests CnvCheckingPileupStepPart.get_resource() - action tumor"""
-    expected_dict = {"threads": 2, "time": "01:00:00", "memory": "7577M", "partition": "medium"}
+    expected_dict = {"threads": 2, "runtime": "1h", "mem": "7577MB", "partition": "medium"}
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
         actual = somatic_cnv_checking_workflow.get_resource("pileup", "tumor", resource)()

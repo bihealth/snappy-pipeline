@@ -128,7 +128,7 @@ def test_scarHRD_step_part_get_log_file_run(homologous_recombination_deficiency_
 def test_scarHRD_step_part_get_resource_usage_run(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_resource() - run"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "32G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "24h", "mem": "32GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -158,7 +158,7 @@ def test_scarHRD_step_part_get_log_file_install(homologous_recombination_deficie
 def test_scarHRD_step_part_get_resource_usage_install(homologous_recombination_deficiency_workflow):
     """Tests ScarHRDStepPart.get_resource() - install"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "1h", "mem": "2GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

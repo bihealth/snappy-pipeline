@@ -143,8 +143,8 @@ rule cbioportal_export_generate_mafs:
         **wf.get_output_files("cbioportal_vcf2maf", "run"),
     threads: wf.get_resource("cbioportal_vcf2maf", "run", "threads")
     resources:
-        time=wf.get_resource("cbioportal_vcf2maf", "run", "time"),
-        memory=wf.get_resource("cbioportal_vcf2maf", "run", "memory"),
+        runtime=wf.get_resource("cbioportal_vcf2maf", "run", "runtime"),
+        mem=wf.get_resource("cbioportal_vcf2maf", "run", "mem"),
         partition=wf.get_resource("cbioportal_vcf2maf", "run", "partition"),
         tmpdir=wf.get_resource("cbioportal_vcf2maf", "run", "tmpdir"),
     params:
@@ -186,8 +186,8 @@ if step_config["copy_number_alteration"]["enabled"]:
             **wf.get_output_files("cbioportal_cns2cna", "run"),
         threads: wf.get_resource("cbioportal_cns2cna", "run", "threads")
         resources:
-            time=wf.get_resource("cbioportal_cns2cna", "run", "time"),
-            memory=wf.get_resource("cbioportal_cns2cna", "run", "memory"),
+            runtime=wf.get_resource("cbioportal_cns2cna", "run", "runtime"),
+            mem=wf.get_resource("cbioportal_cns2cna", "run", "mem"),
             partition=wf.get_resource("cbioportal_cns2cna", "run", "partition"),
             tmpdir=wf.get_resource("cbioportal_cns2cna", "run", "tmpdir"),
         params:
@@ -208,8 +208,8 @@ if step_config["copy_number_alteration"]["enabled"]:
             args=wf.get_args("cbioportal_cna", "log2"),
         threads: wf.get_resource("cbioportal_cna", "log2", "threads")
         resources:
-            time=wf.get_resource("cbioportal_cna", "log2", "time"),
-            memory=wf.get_resource("cbioportal_cna", "log2", "memory"),
+            runtime=wf.get_resource("cbioportal_cna", "log2", "runtime"),
+            mem=wf.get_resource("cbioportal_cna", "log2", "mem"),
             partition=wf.get_resource("cbioportal_cna", "log2", "partition"),
             tmpdir=wf.get_resource("cbioportal_cna", "log2", "tmpdir"),
         log:
@@ -226,8 +226,8 @@ if step_config["copy_number_alteration"]["enabled"]:
             args=wf.get_args("cbioportal_cna", "gistic"),
         threads: wf.get_resource("cbioportal_cna", "gistic", "threads")
         resources:
-            time=wf.get_resource("cbioportal_cna", "gistic", "time"),
-            memory=wf.get_resource("cbioportal_cna", "gistic", "memory"),
+            runtime=wf.get_resource("cbioportal_cna", "gistic", "runtime"),
+            mem=wf.get_resource("cbioportal_cna", "gistic", "mem"),
             partition=wf.get_resource("cbioportal_cna", "gistic", "partition"),
             tmpdir=wf.get_resource("cbioportal_cna", "gistic", "tmpdir"),
         log:
@@ -246,8 +246,8 @@ if step_config["copy_number_alteration"]["enabled"]:
             action_type="segment",
         threads: wf.get_resource("cbioportal_segment", "run", "threads")
         resources:
-            time=wf.get_resource("cbioportal_segment", "run", "time"),
-            memory=wf.get_resource("cbioportal_segment", "run", "memory"),
+            runtime=wf.get_resource("cbioportal_segment", "run", "runtime"),
+            mem=wf.get_resource("cbioportal_segment", "run", "mem"),
             partition=wf.get_resource("cbioportal_segment", "run", "partition"),
             tmpdir=wf.get_resource("cbioportal_segment", "run", "tmpdir"),
         log:
@@ -269,8 +269,8 @@ if step_config["expression"]["enabled"]:
             args=wf.get_args("cbioportal_expression", "run"),
         threads: wf.get_resource("cbioportal_expression", "run", "threads")
         resources:
-            time=wf.get_resource("cbioportal_expression", "run", "time"),
-            memory=wf.get_resource("cbioportal_expression", "run", "memory"),
+            runtime=wf.get_resource("cbioportal_expression", "run", "runtime"),
+            mem=wf.get_resource("cbioportal_expression", "run", "mem"),
             partition=wf.get_resource("cbioportal_expression", "run", "partition"),
             tmpdir=wf.get_resource("cbioportal_expression", "run", "tmpdir"),
         log:

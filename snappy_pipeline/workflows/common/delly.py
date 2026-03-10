@@ -31,10 +31,10 @@ class Delly2StepPart(
 
     _cheap_resource_usage = ResourceUsage(
         threads=1,
-        time="1-00:00:00",
-        memory="4G",
+        runtime="1d",
+        mem="4GB",
     )
-    _normal_resource_usage = ResourceUsage(threads=1, time="2-00:00:00", memory="16G")
+    _normal_resource_usage = ResourceUsage(threads=1, runtime="2d", mem="16GB")
     resource_usage_dict = {
         "call": _normal_resource_usage,
         "merge_calls": _cheap_resource_usage,

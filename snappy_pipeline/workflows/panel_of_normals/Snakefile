@@ -94,8 +94,8 @@ if "mutect2" in tools:
         params:
             args=wf.get_args("mutect2", "scatter"),
         resources:
-            time=wf.get_resource("mutect2", "scatter", "time"),
-            memory=wf.get_resource("mutect2", "scatter", "memory"),
+            runtime=wf.get_resource("mutect2", "scatter", "runtime"),
+            mem=wf.get_resource("mutect2", "scatter", "mem"),
             partition=wf.get_resource("mutect2", "scatter", "partition"),
             tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
         threads: 1
@@ -113,8 +113,8 @@ if "mutect2" in tools:
             args=wf.get_args("mutect2", "prepare_panel"),
         threads: wf.get_resource("mutect2", "prepare_panel", "threads")
         resources:
-            time=wf.get_resource("mutect2", "prepare_panel", "time"),
-            memory=wf.get_resource("mutect2", "prepare_panel", "memory"),
+            runtime=wf.get_resource("mutect2", "prepare_panel", "runtime"),
+            mem=wf.get_resource("mutect2", "prepare_panel", "mem"),
             partition=wf.get_resource("mutect2", "prepare_panel", "partition"),
             tmpdir=wf.get_resource("mutect2", "prepare_panel", "tmpdir"),
         log:
@@ -128,8 +128,8 @@ if "mutect2" in tools:
         output:
             **wf.get_output_files("mutect2", "gather"),
         resources:
-            time=wf.get_resource("mutect2", "gather", "time"),
-            memory=wf.get_resource("mutect2", "gather", "memory"),
+            runtime=wf.get_resource("mutect2", "gather", "runtime"),
+            mem=wf.get_resource("mutect2", "gather", "mem"),
             partition=wf.get_resource("mutect2", "gather", "partition"),
             tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
         threads: 1
@@ -147,8 +147,8 @@ if "mutect2" in tools:
             args=wf.get_args("mutect2", "create_panel"),
         threads: wf.get_resource("mutect2", "create_panel", "threads")
         resources:
-            time=wf.get_resource("mutect2", "create_panel", "time"),
-            memory=wf.get_resource("mutect2", "create_panel", "memory"),
+            runtime=wf.get_resource("mutect2", "create_panel", "runtime"),
+            mem=wf.get_resource("mutect2", "create_panel", "mem"),
             partition=wf.get_resource("mutect2", "create_panel", "partition"),
             tmpdir=wf.get_resource("mutect2", "create_panel", "tmpdir"),
         log:
@@ -165,8 +165,8 @@ if "cnvkit" in tools:
         output:
             **wf.get_output_files("access", "run"),
         resources:
-            time=wf.get_resource("access", "run", "time"),
-            memory=wf.get_resource("access", "run", "memory"),
+            runtime=wf.get_resource("access", "run", "runtime"),
+            mem=wf.get_resource("access", "run", "mem"),
             partition=wf.get_resource("access", "run", "partition"),
         log:
             **wf.get_log_file("access", "run"),
@@ -180,8 +180,8 @@ if "cnvkit" in tools:
             **wf.get_output_files("cnvkit", "target"),
         threads: wf.get_resource("cnvkit", "target", "threads")
         resources:
-            time=wf.get_resource("cnvkit", "target", "time"),
-            memory=wf.get_resource("cnvkit", "target", "memory"),
+            runtime=wf.get_resource("cnvkit", "target", "runtime"),
+            mem=wf.get_resource("cnvkit", "target", "mem"),
             partition=wf.get_resource("cnvkit", "target", "partition"),
         log:
             **wf.get_log_file("cnvkit", "target"),
@@ -197,8 +197,8 @@ if "cnvkit" in tools:
             **wf.get_output_files("cnvkit", "antitarget"),
         threads: wf.get_resource("cnvkit", "antitarget", "threads")
         resources:
-            time=wf.get_resource("cnvkit", "antitarget", "time"),
-            memory=wf.get_resource("cnvkit", "antitarget", "memory"),
+            runtime=wf.get_resource("cnvkit", "antitarget", "runtime"),
+            mem=wf.get_resource("cnvkit", "antitarget", "mem"),
             partition=wf.get_resource("cnvkit", "antitarget", "partition"),
         log:
             **wf.get_log_file("cnvkit", "antitarget"),
@@ -214,8 +214,8 @@ if "cnvkit" in tools:
             **wf.get_output_files("cnvkit", "coverage"),
         threads: wf.get_resource("cnvkit", "coverage", "threads")
         resources:
-            time=wf.get_resource("cnvkit", "coverage", "time"),
-            memory=wf.get_resource("cnvkit", "coverage", "memory"),
+            runtime=wf.get_resource("cnvkit", "coverage", "runtime"),
+            mem=wf.get_resource("cnvkit", "coverage", "mem"),
             partition=wf.get_resource("cnvkit", "coverage", "partition"),
         log:
             **wf.get_log_file("cnvkit", "coverage"),
@@ -231,8 +231,8 @@ if "cnvkit" in tools:
             **wf.get_output_files("cnvkit", "create_panel"),
         threads: wf.get_resource("cnvkit", "create_panel", "threads")
         resources:
-            time=wf.get_resource("cnvkit", "create_panel", "time"),
-            memory=wf.get_resource("cnvkit", "create_panel", "memory"),
+            runtime=wf.get_resource("cnvkit", "create_panel", "runtime"),
+            mem=wf.get_resource("cnvkit", "create_panel", "mem"),
             partition=wf.get_resource("cnvkit", "create_panel", "partition"),
         log:
             **wf.get_log_file("cnvkit", "create_panel"),
@@ -248,8 +248,8 @@ if "cnvkit" in tools:
             **wf.get_output_files("cnvkit", "report"),
         threads: wf.get_resource("cnvkit", "report", "threads")
         resources:
-            time=wf.get_resource("cnvkit", "report", "time"),
-            memory=wf.get_resource("cnvkit", "report", "memory"),
+            runtime=wf.get_resource("cnvkit", "report", "runtime"),
+            mem=wf.get_resource("cnvkit", "report", "mem"),
             partition=wf.get_resource("cnvkit", "report", "partition"),
         log:
             **wf.get_log_file("cnvkit", "report"),
@@ -271,8 +271,8 @@ if "purecn" in tools:
         params:
             container="docker://markusriester/purecn",
         resources:
-            time=wf.get_resource("purecn", "install", "time"),
-            memory=wf.get_resource("purecn", "install", "memory"),
+            runtime=wf.get_resource("purecn", "install", "runtime"),
+            mem=wf.get_resource("purecn", "install", "mem"),
             partition=wf.get_resource("purecn", "install", "partition"),
         log:
             **wf.get_log_file("purecn", "install"),
@@ -285,8 +285,8 @@ if "purecn" in tools:
         output:
             **wf.get_output_files("purecn", "prepare"),
         resources:
-            time=wf.get_resource("purecn", "prepare", "time"),
-            memory=wf.get_resource("purecn", "prepare", "memory"),
+            runtime=wf.get_resource("purecn", "prepare", "runtime"),
+            mem=wf.get_resource("purecn", "prepare", "mem"),
             partition=wf.get_resource("purecn", "prepare", "partition"),
         log:
             **wf.get_log_file("purecn", "prepare"),
@@ -301,8 +301,8 @@ if "purecn" in tools:
         params:
             args=wf.get_args("purecn", "coverage"),
         resources:
-            time=wf.get_resource("purecn", "coverage", "time"),
-            memory=wf.get_resource("purecn", "coverage", "memory"),
+            runtime=wf.get_resource("purecn", "coverage", "runtime"),
+            mem=wf.get_resource("purecn", "coverage", "mem"),
             partition=wf.get_resource("purecn", "coverage", "partition"),
         log:
             **wf.get_log_file("purecn", "coverage"),
@@ -315,8 +315,8 @@ if "purecn" in tools:
         output:
             **wf.get_output_files("purecn", "create_panel"),
         resources:
-            time=wf.get_resource("purecn", "create_panel", "time"),
-            memory=wf.get_resource("purecn", "create_panel", "memory"),
+            runtime=wf.get_resource("purecn", "create_panel", "runtime"),
+            mem=wf.get_resource("purecn", "create_panel", "mem"),
             partition=wf.get_resource("purecn", "create_panel", "partition"),
         log:
             **wf.get_log_file("purecn", "create_panel"),

@@ -48,7 +48,7 @@ rule ngs_mapping_link_in_run:  # localrule
     output:
         wf.get_output_files("link_in", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+        wf.run_locally("link_in", "run", wildcards)
 
 
 # Alignment ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,8 +63,8 @@ rule ngs_mapping_external_run:
         **wf.get_output_files("external", "run"),
     threads: wf.get_resource("external", "run", "threads")
     resources:
-        time=wf.get_resource("external", "run", "time"),
-        memory=wf.get_resource("external", "run", "memory"),
+        runtime=wf.get_resource("external", "run", "runtime"),
+        mem=wf.get_resource("external", "run", "mem"),
         partition=wf.get_resource("external", "run", "partition"),
         tmpdir=wf.get_resource("external", "run", "tmpdir"),
     params:
@@ -85,8 +85,8 @@ rule ngs_mapping_bwa_run:
         **wf.get_output_files("bwa", "run"),
     threads: wf.get_resource("bwa", "run", "threads")
     resources:
-        time=wf.get_resource("bwa", "run", "time"),
-        memory=wf.get_resource("bwa", "run", "memory"),
+        runtime=wf.get_resource("bwa", "run", "runtime"),
+        mem=wf.get_resource("bwa", "run", "mem"),
         partition=wf.get_resource("bwa", "run", "partition"),
         tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
     params:
@@ -107,8 +107,8 @@ rule ngs_mapping_bwa_mem2_run:
         **wf.get_output_files("bwa_mem2", "run"),
     threads: wf.get_resource("bwa_mem2", "run", "threads")
     resources:
-        time=wf.get_resource("bwa_mem2", "run", "time"),
-        memory=wf.get_resource("bwa_mem2", "run", "memory"),
+        runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
+        mem=wf.get_resource("bwa_mem2", "run", "mem"),
         partition=wf.get_resource("bwa_mem2", "run", "partition"),
         tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
     params:
@@ -129,8 +129,8 @@ rule ngs_mapping_mbcs_run:
         **wf.get_output_files("mbcs", "run"),
     threads: wf.get_resource("mbcs", "run", "threads")
     resources:
-        time=wf.get_resource("mbcs", "run", "time"),
-        memory=wf.get_resource("mbcs", "run", "memory"),
+        runtime=wf.get_resource("mbcs", "run", "runtime"),
+        mem=wf.get_resource("mbcs", "run", "mem"),
         partition=wf.get_resource("mbcs", "run", "partition"),
         tmpdir=wf.get_resource("mbcs", "run", "tmpdir"),
     params:
@@ -151,8 +151,8 @@ rule ngs_mapping_star_run:
         **wf.get_output_files("star", "run"),
     threads: wf.get_resource("star", "run", "threads")
     resources:
-        time=wf.get_resource("star", "run", "time"),
-        memory=wf.get_resource("star", "run", "memory"),
+        runtime=wf.get_resource("star", "run", "runtime"),
+        mem=wf.get_resource("star", "run", "mem"),
         partition=wf.get_resource("star", "run", "partition"),
         tmpdir=wf.get_resource("star", "run", "tmpdir"),
     params:
@@ -175,8 +175,8 @@ rule ngs_mapping_minimap2_run:
         args=wf.get_args("minimap2", "run"),
     threads: wf.get_resource("minimap2", "run", "threads")
     resources:
-        time=wf.get_resource("minimap2", "run", "time"),
-        memory=wf.get_resource("minimap2", "run", "memory"),
+        runtime=wf.get_resource("minimap2", "run", "runtime"),
+        mem=wf.get_resource("minimap2", "run", "mem"),
         partition=wf.get_resource("minimap2", "run", "partition"),
         tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
     log:
@@ -197,8 +197,8 @@ rule ngs_mapping_target_coverage_report_run:
         **wf.get_output_files("target_coverage_report", "run"),
     threads: wf.get_resource("target_coverage_report", "run", "threads")
     resources:
-        time=wf.get_resource("target_coverage_report", "run", "time"),
-        memory=wf.get_resource("target_coverage_report", "run", "memory"),
+        runtime=wf.get_resource("target_coverage_report", "run", "runtime"),
+        mem=wf.get_resource("target_coverage_report", "run", "mem"),
         partition=wf.get_resource("target_coverage_report", "run", "partition"),
         tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
     log:
@@ -219,8 +219,8 @@ rule ngs_mapping_bam_collect_doc_run:
         args=wf.get_args("bam_collect_doc", "run"),
     threads: wf.get_resource("bam_collect_doc", "run", "threads")
     resources:
-        time=wf.get_resource("bam_collect_doc", "run", "time"),
-        memory=wf.get_resource("bam_collect_doc", "run", "memory"),
+        runtime=wf.get_resource("bam_collect_doc", "run", "runtime"),
+        mem=wf.get_resource("bam_collect_doc", "run", "mem"),
         partition=wf.get_resource("bam_collect_doc", "run", "partition"),
         tmpdir=wf.get_resource("bam_collect_doc", "run", "tmpdir"),
     log:
@@ -241,8 +241,8 @@ rule ngs_mapping_ngs_chew_fingerprint:
         args=wf.get_args("ngs_chew", "fingerprint"),
     threads: wf.get_resource("ngs_chew", "fingerprint", "threads")
     resources:
-        time=wf.get_resource("ngs_chew", "fingerprint", "time"),
-        memory=wf.get_resource("ngs_chew", "fingerprint", "memory"),
+        runtime=wf.get_resource("ngs_chew", "fingerprint", "runtime"),
+        mem=wf.get_resource("ngs_chew", "fingerprint", "mem"),
         partition=wf.get_resource("ngs_chew", "fingerprint", "partition"),
         tmpdir=wf.get_resource("ngs_chew", "fingerprint", "tmpdir"),
     log:
@@ -263,8 +263,8 @@ rule ngs_mapping_infer_strandedness:
         args=wf.get_args("strandedness", "infer"),
     threads: wf.get_resource("strandedness", "infer", "threads")
     resources:
-        time=wf.get_resource("strandedness", "infer", "time"),
-        memory=wf.get_resource("strandedness", "infer", "memory"),
+        runtime=wf.get_resource("strandedness", "infer", "runtime"),
+        mem=wf.get_resource("strandedness", "infer", "mem"),
         partition=wf.get_resource("strandedness", "infer", "partition"),
         tmpdir=wf.get_resource("strandedness", "infer", "tmpdir"),
     log:

@@ -75,7 +75,7 @@ class FastQcReportStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    default_resource_usage = ResourceUsage(threads=1, memory="4G", time="03:59:59")
+    default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -256,7 +256,7 @@ class PicardStepPart(BaseStepPart):
         if action == "prepare":
             return super().get_resource_usage(action, **kwargs)
         elif action == "metrics":
-            return ResourceUsage(threads=1, time="24:00:00", memory="64G")
+            return ResourceUsage(threads=1, runtime="24h", mem="64GB")
         else:
             actions_str = ", ".join(self.actions)
             raise UnsupportedActionException(

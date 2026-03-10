@@ -313,8 +313,8 @@ class AscatStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=8,
-            time="2-00:00:00",  # 2 days
-            memory=f"{10 * 1024 * 8}M",
+            runtime="2d",  # 2 days
+            mem=f"{10 * 1024 * 8}MB",
         )
 
 

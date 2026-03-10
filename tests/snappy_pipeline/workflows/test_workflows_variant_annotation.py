@@ -171,7 +171,7 @@ def test_vep_run_step_part_get_log_file(variant_annotation_workflow):
 def test_vep_run_step_part_get_resource_usage(variant_annotation_workflow):
     """Tests VepStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-00", "memory": "32G", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "1d", "mem": "32GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

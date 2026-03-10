@@ -78,7 +78,7 @@ DEFAULT_CONFIG = CbioportalExportConfigModel.default_config_yaml_string()
 
 # ================================================================================================
 #
-# Abstract classes: one generic, and the other for substeps dealing with a single sample at a time
+# Abstract classes: one generic, and the other for substeps dealing with a single sample at a runtime
 #
 # ================================================================================================
 
@@ -275,8 +275,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="5120M",
+            runtime="2h",  # 2 hours
+            mem="5120MB",
         )
 
 
@@ -379,8 +379,8 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 
@@ -442,8 +442,8 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 
@@ -488,8 +488,8 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 
@@ -543,8 +543,8 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 

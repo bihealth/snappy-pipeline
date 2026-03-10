@@ -88,7 +88,7 @@ The following filters are implemented:
 
 In the above description, ``<n>`` is here the sequence number of the filter in the filter list.
 
-The filters can be used or not, and can be used multiple times. For example, it is possible to
+The filters can be used or not, and can be used multiple runtimes. For example, it is possible to
 use the ``bcftools`` filter to reject differentially potential FFPE artifacts. The filter list would then be:
 
 .. code-block:: yaml
@@ -195,7 +195,7 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
     actions = ("run",)
 
     #: Default filtration resource usage (should be light)
-    resource_usage = {"run": ResourceUsage(threads=1, time="02:00:00", memory=f"{8 * 1024}M")}
+    resource_usage = {"run": ResourceUsage(threads=1, runtime="2h", mem=f"{8 * 1024}MB")}
 
     def get_input_files(self, action):
         """Return path to input or previous filter vcf file"""
@@ -304,7 +304,7 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
 class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
     name = "one_dkfz"
     filter_name = "dkfz"
-    resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
+    resource_usage = {"run": ResourceUsage(threads=1, runtime="12h", mem=f"{3 * 1024}MB")}
 
 
 class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
@@ -315,8 +315,8 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     actions = ("run", "write_panel")
 
     resource_usage = {
-        "run": ResourceUsage(threads=1, time="24:00:00", memory=f"{2 * 1024}M"),
-        "write_panel": ResourceUsage(threads=1, time="01:00:00", memory=f"{2 * 1024}M"),
+        "run": ResourceUsage(threads=1, runtime="24h", mem=f"{2 * 1024}MB"),
+        "write_panel": ResourceUsage(threads=1, runtime="1h", mem=f"{2 * 1024}MB"),
     }
 
     @dictify

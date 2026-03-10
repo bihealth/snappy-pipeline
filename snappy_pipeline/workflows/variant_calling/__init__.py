@@ -474,8 +474,8 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
-            time="2-00:00:00",
-            memory=f"{int(3.75 * 1024 * 16)}M",
+            runtime="2d",
+            mem=f"{int(3.75 * 1024 * 16)}MB",
         )
 
     @dictify
@@ -529,8 +529,8 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
         mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(
             threads=num_threads,
-            time="2-00:00:00",
-            memory=f"{mem_total}G",
+            runtime="2d",
+            mem=f"{mem_total}GB",
         )
 
 
@@ -782,8 +782,8 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="02:00:00",
-            memory="1024M",
+            runtime="2h",
+            mem="1024MB",
         )
 
 
@@ -860,8 +860,8 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="01:00:00",
-            memory="4G",
+            runtime="1h",
+            mem="4GB",
         )
 
 
@@ -928,8 +928,8 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="04:00:00",
-            memory=f"{int(3.75 * 1024 * 2)}M",
+            runtime="4h",
+            mem=f"{int(3.75 * 1024 * 2)}MB",
         )
 
 
@@ -987,8 +987,8 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="02:00:00",
-            memory="1024M",
+            runtime="2h",
+            mem="1024MB",
         )
 
 

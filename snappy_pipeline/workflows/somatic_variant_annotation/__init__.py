@@ -232,8 +232,8 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=self.config.vep.num_threads,
-            time="24:00:00",  # 24 hours
-            memory=f"{16 * 1024 * 1}M",
+            runtime="24h",  # 24 hours
+            mem=f"{16 * 1024 * 1}MB",
         )
 
 

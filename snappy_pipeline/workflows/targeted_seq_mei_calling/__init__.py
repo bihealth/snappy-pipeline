@@ -280,8 +280,8 @@ class ScrambleStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="06:00:00",  # 6 hours
-            memory=f"{8 * 1024}M",
+            runtime="6h",  # 6 hours
+            mem=f"{8 * 1024}MB",
         )
 
 

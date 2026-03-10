@@ -115,31 +115,31 @@ def test_gcnv_get_resource(helper_gcnv_model_workflow):
     )
     expected_low = {
         "threads": 1,
-        "time": "1-00:00:00",
-        "memory": "7680M",
+        "runtime": "1d",
+        "mem": "7680MB",
     }
     expected_high = {
         "threads": 16,
-        "time": "4-00:00:00",
-        "memory": "46080M",
+        "runtime": "4d",
+        "mem": "46080MB",
     }
     for action in actions:
         for resource in expected_low.keys():
-            if action == "filter_intervals" and resource == "memory":
+            if action == "filter_intervals" and resource == "mem":
                 actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(None)
-                assert actual == "20480M"
+                assert actual == "20480MB"
                 actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=1
                 )
-                assert actual == "20480M"
+                assert actual == "20480MB"
                 actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=2
                 )
-                assert actual == "24576M"
+                assert actual == "24576MB"
                 actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)(
                     None, attempt=3
                 )
-                assert actual == "28672M"
+                assert actual == "28672MB"
             else:
                 if action in high_resource_action_list:
                     actual = helper_gcnv_model_workflow.get_resource("gcnv", action, resource)()

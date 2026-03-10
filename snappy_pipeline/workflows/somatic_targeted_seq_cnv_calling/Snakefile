@@ -108,8 +108,8 @@ if "sequenza" in tools:
             ],
         threads: wf.get_resource("sequenza", "install", "threads")
         resources:
-            time=wf.get_resource("sequenza", "install", "time"),
-            memory=wf.get_resource("sequenza", "install", "memory"),
+            runtime=wf.get_resource("sequenza", "install", "runtime"),
+            mem=wf.get_resource("sequenza", "install", "mem"),
             partition=wf.get_resource("sequenza", "install", "partition"),
             tmpdir=wf.get_resource("sequenza", "install", "tmpdir"),
         log:
@@ -124,8 +124,8 @@ if "sequenza" in tools:
             args=wf.get_args("sequenza", "gcreference"),
         threads: wf.get_resource("sequenza", "gcreference", "threads")
         resources:
-            time=wf.get_resource("sequenza", "gcreference", "time"),
-            memory=wf.get_resource("sequenza", "gcreference", "memory"),
+            runtime=wf.get_resource("sequenza", "gcreference", "runtime"),
+            mem=wf.get_resource("sequenza", "gcreference", "mem"),
             partition=wf.get_resource("sequenza", "gcreference", "partition"),
             tmpdir=wf.get_resource("sequenza", "gcreference", "tmpdir"),
         log:
@@ -142,8 +142,8 @@ if "sequenza" in tools:
             args=wf.get_args("sequenza", "coverage"),
         threads: wf.get_resource("sequenza", "coverage", "threads")
         resources:
-            time=wf.get_resource("sequenza", "coverage", "time"),
-            memory=wf.get_resource("sequenza", "coverage", "memory"),
+            runtime=wf.get_resource("sequenza", "coverage", "runtime"),
+            mem=wf.get_resource("sequenza", "coverage", "mem"),
             partition=wf.get_resource("sequenza", "coverage", "partition"),
             tmpdir=wf.get_resource("sequenza", "coverage", "tmpdir"),
         log:
@@ -160,8 +160,8 @@ if "sequenza" in tools:
             args=wf.get_args("sequenza", "run"),
         threads: wf.get_resource("sequenza", "run", "threads")
         resources:
-            time=wf.get_resource("sequenza", "run", "time"),
-            memory=wf.get_resource("sequenza", "run", "memory"),
+            runtime=wf.get_resource("sequenza", "run", "runtime"),
+            mem=wf.get_resource("sequenza", "run", "mem"),
             partition=wf.get_resource("sequenza", "run", "partition"),
             tmpdir=wf.get_resource("sequenza", "run", "tmpdir"),
         log:
@@ -184,8 +184,8 @@ if "purecn" in tools:
             args=wf.get_args("purecn", "coverage"),
         threads: wf.get_resource("purecn", "coverage", "threads")
         resources:
-            time=wf.get_resource("purecn", "coverage", "time"),
-            memory=wf.get_resource("purecn", "coverage", "memory"),
+            runtime=wf.get_resource("purecn", "coverage", "runtime"),
+            mem=wf.get_resource("purecn", "coverage", "mem"),
             partition=wf.get_resource("purecn", "coverage", "partition"),
             tmpdir=wf.get_resource("purecn", "coverage", "tmpdir"),
         log:
@@ -202,8 +202,8 @@ if "purecn" in tools:
             args=wf.get_args("purecn", "run"),
         threads: wf.get_resource("purecn", "run", "threads")
         resources:
-            time=wf.get_resource("purecn", "run", "time"),
-            memory=wf.get_resource("purecn", "run", "memory"),
+            runtime=wf.get_resource("purecn", "run", "runtime"),
+            mem=wf.get_resource("purecn", "run", "mem"),
             partition=wf.get_resource("purecn", "run", "partition"),
             tmpdir=wf.get_resource("purecn", "run", "tmpdir"),
         log:

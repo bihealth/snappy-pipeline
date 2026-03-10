@@ -79,8 +79,8 @@ rule tumor_mutational_burden_calculation:
         **wf.get_output_files("tmb_gathering", "run"),
     threads: wf.get_resource("tmb_gathering", "run", "threads")
     resources:
-        time=wf.get_resource("tmb_gathering", "run", "time"),
-        memory=wf.get_resource("tmb_gathering", "run", "memory"),
+        runtime=wf.get_resource("tmb_gathering", "run", "runtime"),
+        mem=wf.get_resource("tmb_gathering", "run", "mem"),
         partition=wf.get_resource("tmb_gathering", "run", "partition"),
         tmpdir=wf.get_resource("tmb_gathering", "run", "tmpdir"),
     params:

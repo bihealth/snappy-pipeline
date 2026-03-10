@@ -245,8 +245,8 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="1-00:00:00",  # 1 day
-            memory=f"{14 * 1024}M",
+            runtime="1d",  # 1 day
+            mem=f"{14 * 1024}MB",
         )
 
 
@@ -300,8 +300,8 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         mem_mb = 8 * 1024
         return ResourceUsage(
             threads=1,
-            time="1-00:00:00",  # 1 day
-            memory=f"{mem_mb}M",
+            runtime="1d",  # 1 day
+            mem=f"{mem_mb}MB",
         )
 
 

@@ -82,8 +82,8 @@ if "bcftools_call" in tools:
             args=wf.get_args("bcftools_call", "run"),
         threads: wf.get_resource("bcftools_call", "run", "threads")
         resources:
-            time=wf.get_resource("bcftools_call", "run", "time"),
-            memory=wf.get_resource("bcftools_call", "run", "memory"),
+            runtime=wf.get_resource("bcftools_call", "run", "runtime"),
+            mem=wf.get_resource("bcftools_call", "run", "mem"),
             partition=wf.get_resource("bcftools_call", "run", "partition"),
             tmpdir=wf.get_resource("bcftools_call", "run", "tmpdir"),
         log:
@@ -106,8 +106,8 @@ if "gatk3_hc" in tools:
             args=wf.get_args("gatk3_hc", "run"),
         threads: wf.get_resource("gatk3_hc", "run", "threads")
         resources:
-            time=wf.get_resource("gatk3_hc", "run", "time"),
-            memory=wf.get_resource("gatk3_hc", "run", "memory"),
+            runtime=wf.get_resource("gatk3_hc", "run", "runtime"),
+            mem=wf.get_resource("gatk3_hc", "run", "mem"),
             partition=wf.get_resource("gatk3_hc", "run", "partition"),
             tmpdir=wf.get_resource("gatk3_hc", "run", "tmpdir"),
         log:
@@ -130,8 +130,8 @@ if "gatk3_ug" in tools:
             args=wf.get_args("gatk3_ug", "run"),
         threads: wf.get_resource("gatk3_ug", "run", "threads")
         resources:
-            time=wf.get_resource("gatk3_ug", "run", "time"),
-            memory=wf.get_resource("gatk3_ug", "run", "memory"),
+            runtime=wf.get_resource("gatk3_ug", "run", "runtime"),
+            mem=wf.get_resource("gatk3_ug", "run", "mem"),
             partition=wf.get_resource("gatk3_ug", "run", "partition"),
             tmpdir=wf.get_resource("gatk3_ug", "run", "tmpdir"),
         log:
@@ -152,8 +152,8 @@ if "gatk4_hc_joint" in tools:
             **wf.get_output_files("gatk4_hc_joint", "run"),
         threads: wf.get_resource("gatk4_hc_joint", "run", "threads")
         resources:
-            time=wf.get_resource("gatk4_hc_joint", "run", "time"),
-            memory=wf.get_resource("gatk4_hc_joint", "run", "memory"),
+            runtime=wf.get_resource("gatk4_hc_joint", "run", "runtime"),
+            mem=wf.get_resource("gatk4_hc_joint", "run", "mem"),
             partition=wf.get_resource("gatk4_hc_joint", "run", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_joint", "run", "tmpdir"),
         log:
@@ -175,8 +175,8 @@ if "gatk4_hc_gvcf" in tools:
             **wf.get_output_files("gatk4_hc_gvcf", "discover"),
         threads: wf.get_resource("gatk4_hc_gvcf", "discover", "threads")
         resources:
-            time=wf.get_resource("gatk4_hc_gvcf", "discover", "time"),
-            memory=wf.get_resource("gatk4_hc_gvcf", "discover", "memory"),
+            runtime=wf.get_resource("gatk4_hc_gvcf", "discover", "runtime"),
+            mem=wf.get_resource("gatk4_hc_gvcf", "discover", "mem"),
             partition=wf.get_resource("gatk4_hc_gvcf", "discover", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "discover", "tmpdir"),
         params:
@@ -194,8 +194,8 @@ if "gatk4_hc_gvcf" in tools:
             **wf.get_output_files("gatk4_hc_gvcf", "combine_gvcfs"),
         threads: wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "threads")
         resources:
-            time=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "time"),
-            memory=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "memory"),
+            runtime=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "runtime"),
+            mem=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "mem"),
             partition=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "tmpdir"),
         params:
@@ -213,8 +213,8 @@ if "gatk4_hc_gvcf" in tools:
             **wf.get_output_files("gatk4_hc_gvcf", "genotype"),
         threads: wf.get_resource("gatk4_hc_gvcf", "genotype", "threads")
         resources:
-            time=wf.get_resource("gatk4_hc_gvcf", "genotype", "time"),
-            memory=wf.get_resource("gatk4_hc_gvcf", "genotype", "memory"),
+            runtime=wf.get_resource("gatk4_hc_gvcf", "genotype", "runtime"),
+            mem=wf.get_resource("gatk4_hc_gvcf", "genotype", "mem"),
             partition=wf.get_resource("gatk4_hc_gvcf", "genotype", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "genotype", "tmpdir"),
         params:
@@ -239,8 +239,8 @@ rule variant_calling_bcftools_stats_report:
         args=wf.get_args("bcftools_stats", "run"),
     threads: wf.get_resource("bcftools_stats", "run", "threads")
     resources:
-        time=wf.get_resource("bcftools_stats", "run", "time"),
-        memory=wf.get_resource("bcftools_stats", "run", "memory"),
+        runtime=wf.get_resource("bcftools_stats", "run", "runtime"),
+        mem=wf.get_resource("bcftools_stats", "run", "mem"),
         partition=wf.get_resource("bcftools_stats", "run", "partition"),
         tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
     log:
@@ -261,8 +261,8 @@ rule variant_calling_jannovar_stats_report:
         args=wf.get_args("jannovar_stats", "run"),
     threads: wf.get_resource("jannovar_stats", "run", "threads")
     resources:
-        time=wf.get_resource("jannovar_stats", "run", "time"),
-        memory=wf.get_resource("jannovar_stats", "run", "memory"),
+        runtime=wf.get_resource("jannovar_stats", "run", "runtime"),
+        mem=wf.get_resource("jannovar_stats", "run", "mem"),
         partition=wf.get_resource("jannovar_stats", "run", "partition"),
         tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
     log:
@@ -283,8 +283,8 @@ rule variant_calling_baf_file_generation:
         args=wf.get_args("baf_file_generation", "run"),
     threads: wf.get_resource("baf_file_generation", "run", "threads")
     resources:
-        time=wf.get_resource("baf_file_generation", "run", "time"),
-        memory=wf.get_resource("baf_file_generation", "run", "memory"),
+        runtime=wf.get_resource("baf_file_generation", "run", "runtime"),
+        mem=wf.get_resource("baf_file_generation", "run", "mem"),
         partition=wf.get_resource("baf_file_generation", "run", "partition"),
         tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
     log:
@@ -305,8 +305,8 @@ rule variant_calling_bcftools_roh:
         args=wf.get_args("bcftools_roh", "run"),
     threads: wf.get_resource("bcftools_roh", "run", "threads")
     resources:
-        time=wf.get_resource("bcftools_roh", "run", "time"),
-        memory=wf.get_resource("bcftools_roh", "run", "memory"),
+        runtime=wf.get_resource("bcftools_roh", "run", "runtime"),
+        mem=wf.get_resource("bcftools_roh", "run", "mem"),
         partition=wf.get_resource("bcftools_roh", "run", "partition"),
         tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
     log:

@@ -116,8 +116,8 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         mem_mb = 4 * 1024  # 4GB
         return ResourceUsage(
             threads=2,
-            time="1:00:00",  # 1 hour
-            memory=f"{mem_mb}M",
+            runtime="1h",  # 1 hour
+            mem=f"{mem_mb}MB",
         )
 
     def get_args(self, action):

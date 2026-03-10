@@ -205,8 +205,8 @@ class OptiTypeStepPart(BaseStepPart):
             raise UnsupportedActionException(error_message)
         return ResourceUsage(
             threads=6,
-            time="40:00:00",  # 40 hours
-            memory="45000M",
+            runtime="40h",  # 40 hours
+            mem="45000MB",
         )
 
 
@@ -277,8 +277,8 @@ class ArcasHlaStepPart(BaseStepPart):
             raise UnsupportedActionException(error_message)
         return ResourceUsage(
             threads=4,
-            time="60:00:00",  # 60 hours
-            memory="15000M",
+            runtime="60h",  # 60 hours
+            mem="15000MB",
         )
 
 

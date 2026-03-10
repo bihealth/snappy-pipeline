@@ -85,8 +85,8 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.contamination.enab
             **wf.get_output_files("mutect2", "pileup_normal"),
         threads: wf.get_resource("mutect2", "pileup_normal", "threads")
         resources:
-            time=wf.get_resource("mutect2", "pileup_normal", "time"),
-            memory=wf.get_resource("mutect2", "pileup_normal", "memory"),
+            runtime=wf.get_resource("mutect2", "pileup_normal", "runtime"),
+            mem=wf.get_resource("mutect2", "pileup_normal", "mem"),
             partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
             tmpdir=wf.get_resource("mutect2", "pileup_normal", "tmpdir"),
         log:
@@ -103,8 +103,8 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.contamination.enab
             **wf.get_output_files("mutect2", "pileup_tumor"),
         threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
         resources:
-            time=wf.get_resource("mutect2", "pileup_tumor", "time"),
-            memory=wf.get_resource("mutect2", "pileup_tumor", "memory"),
+            runtime=wf.get_resource("mutect2", "pileup_tumor", "runtime"),
+            mem=wf.get_resource("mutect2", "pileup_tumor", "mem"),
             partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
             tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
         log:
@@ -121,8 +121,8 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.contamination.enab
             **wf.get_output_files("mutect2", "contamination"),
         threads: wf.get_resource("mutect2", "contamination", "threads")
         resources:
-            time=wf.get_resource("mutect2", "contamination", "time"),
-            memory=wf.get_resource("mutect2", "contamination", "memory"),
+            runtime=wf.get_resource("mutect2", "contamination", "runtime"),
+            mem=wf.get_resource("mutect2", "contamination", "mem"),
             partition=wf.get_resource("mutect2", "contamination", "partition"),
             tmpdir=wf.get_resource("mutect2", "contamination", "tmpdir"),
         log:
@@ -144,8 +144,8 @@ rule somatic_variant_calling_mutect2_scatter:
     params:
         args=wf.get_args("mutect2", "scatter"),
     resources:
-        time=wf.get_resource("mutect2", "scatter", "time"),
-        memory=wf.get_resource("mutect2", "scatter", "memory"),
+        runtime=wf.get_resource("mutect2", "scatter", "runtime"),
+        mem=wf.get_resource("mutect2", "scatter", "mem"),
         partition=wf.get_resource("mutect2", "scatter", "partition"),
         tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
     threads: 1
@@ -161,8 +161,8 @@ rule somatic_variant_calling_mutect2_run:
     output:
         **wf.get_output_files("mutect2", "run"),
     resources:
-        time=wf.get_resource("mutect2", "run", "time"),
-        memory=wf.get_resource("mutect2", "run", "memory"),
+        runtime=wf.get_resource("mutect2", "run", "runtime"),
+        mem=wf.get_resource("mutect2", "run", "mem"),
         partition=wf.get_resource("mutect2", "run", "partition"),
         tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
     threads: wf.get_resource("mutect2", "run", "threads")
@@ -180,8 +180,8 @@ rule somatic_variant_calling_mutect2_gather:
     output:
         **wf.get_output_files("mutect2", "gather"),
     resources:
-        time=wf.get_resource("mutect2", "gather", "time"),
-        memory=wf.get_resource("mutect2", "gather", "memory"),
+        runtime=wf.get_resource("mutect2", "gather", "runtime"),
+        mem=wf.get_resource("mutect2", "gather", "mem"),
         partition=wf.get_resource("mutect2", "gather", "partition"),
         tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
     threads: 1
@@ -198,8 +198,8 @@ rule somatic_variant_calling_mutect2_filter:
         **wf.get_output_files("mutect2", "filter"),
     threads: wf.get_resource("mutect2", "filter", "threads")
     resources:
-        time=wf.get_resource("mutect2", "filter", "time"),
-        memory=wf.get_resource("mutect2", "filter", "memory"),
+        runtime=wf.get_resource("mutect2", "filter", "runtime"),
+        mem=wf.get_resource("mutect2", "filter", "mem"),
         partition=wf.get_resource("mutect2", "filter", "partition"),
         tmpdir=wf.get_resource("mutect2", "filter", "tmpdir"),
     log:

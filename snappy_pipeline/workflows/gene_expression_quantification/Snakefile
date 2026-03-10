@@ -65,7 +65,7 @@ rule gene_expression_quantification_link_in_run:
     output:
         wf.get_output_files("link_in", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+        wf.run_locally("link_in", "run", wildcards)
 
 
 # Generic linking out ---------------------------------------------------------
@@ -94,8 +94,8 @@ rule gene_expression_quantification_strandedness_run:
         args=wf.get_args("strandedness", "run"),
     threads: wf.get_resource("strandedness", "run", "threads")
     resources:
-        time=wf.get_resource("strandedness", "run", "time"),
-        memory=wf.get_resource("strandedness", "run", "memory"),
+        runtime=wf.get_resource("strandedness", "run", "runtime"),
+        mem=wf.get_resource("strandedness", "run", "mem"),
         partition=wf.get_resource("strandedness", "run", "partition"),
         tmpdir=wf.get_resource("strandedness", "run", "tmpdir"),
     log:
@@ -117,8 +117,8 @@ rule gene_expression_quantification_duplication_run:
         args=wf.get_args("duplication", "run"),
     threads: wf.get_resource("duplication", "run", "threads")
     resources:
-        time=wf.get_resource("duplication", "run", "time"),
-        memory=wf.get_resource("duplication", "run", "memory"),
+        runtime=wf.get_resource("duplication", "run", "runtime"),
+        mem=wf.get_resource("duplication", "run", "mem"),
         partition=wf.get_resource("duplication", "run", "partition"),
         tmpdir=wf.get_resource("duplication", "run", "tmpdir"),
     log:
@@ -137,8 +137,8 @@ rule gene_expression_quantification_dupradar_run:
         args=wf.get_args("dupradar", "run"),
     threads: wf.get_resource("dupradar", "run", "threads")
     resources:
-        time=wf.get_resource("dupradar", "run", "time"),
-        memory=wf.get_resource("dupradar", "run", "memory"),
+        runtime=wf.get_resource("dupradar", "run", "runtime"),
+        mem=wf.get_resource("dupradar", "run", "mem"),
         partition=wf.get_resource("dupradar", "run", "partition"),
         tmpdir=wf.get_resource("dupradar", "run", "tmpdir"),
     log:
@@ -157,8 +157,8 @@ rule gene_expression_quantification_rnaseqc_run:
         args=wf.get_args("rnaseqc", "run"),
     threads: wf.get_resource("rnaseqc", "run", "threads")
     resources:
-        time=wf.get_resource("rnaseqc", "run", "time"),
-        memory=wf.get_resource("rnaseqc", "run", "memory"),
+        runtime=wf.get_resource("rnaseqc", "run", "runtime"),
+        mem=wf.get_resource("rnaseqc", "run", "mem"),
         partition=wf.get_resource("rnaseqc", "run", "partition"),
         tmpdir=wf.get_resource("rnaseqc", "run", "tmpdir"),
     log:
@@ -177,8 +177,8 @@ rule gene_expression_quantification_stats_run:
         args=wf.get_args("stats", "run"),
     threads: wf.get_resource("stats", "run", "threads")
     resources:
-        time=wf.get_resource("stats", "run", "time"),
-        memory=wf.get_resource("stats", "run", "memory"),
+        runtime=wf.get_resource("stats", "run", "runtime"),
+        mem=wf.get_resource("stats", "run", "mem"),
         partition=wf.get_resource("stats", "run", "partition"),
         tmpdir=wf.get_resource("stats", "run", "tmpdir"),
     log:
@@ -200,8 +200,8 @@ rule gene_expression_quantification_featurecounts_run:
         **wf.get_output_files("featurecounts", "run"),
     threads: wf.get_resource("featurecounts", "run", "threads")
     resources:
-        time=wf.get_resource("featurecounts", "run", "time"),
-        memory=wf.get_resource("featurecounts", "run", "memory"),
+        runtime=wf.get_resource("featurecounts", "run", "runtime"),
+        mem=wf.get_resource("featurecounts", "run", "mem"),
         partition=wf.get_resource("featurecounts", "run", "partition"),
         tmpdir=wf.get_resource("featurecounts", "run", "tmpdir"),
     log:
@@ -222,8 +222,8 @@ rule gene_expression_quantification_salmon_run:
         **wf.get_output_files("salmon", "run"),
     threads: wf.get_resource("salmon", "run", "threads")
     resources:
-        time=wf.get_resource("salmon", "run", "time"),
-        memory=wf.get_resource("salmon", "run", "memory"),
+        runtime=wf.get_resource("salmon", "run", "runtime"),
+        mem=wf.get_resource("salmon", "run", "mem"),
         partition=wf.get_resource("salmon", "run", "partition"),
         tmpdir=wf.get_resource("salmon", "run", "tmpdir"),
     log:

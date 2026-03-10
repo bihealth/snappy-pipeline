@@ -185,8 +185,8 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="01:00:00" if action == "tumor" else "12:00:00",  # 1 hour
-            memory=f"{int(3.7 * 1024 * 2)}M",
+            runtime="1h" if action == "tumor" else "12h",  # 1 hour
+            mem=f"{int(3.7 * 1024 * 2)}MB",
         )
 
 

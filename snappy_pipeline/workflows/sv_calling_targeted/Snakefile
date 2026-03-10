@@ -75,8 +75,8 @@ rule sv_calling_targeted_gcnv_preprocess_intervals:
         args=wf.get_args("gcnv", "preprocess_intervals"),
     threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
     resources:
-        time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
-        memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
+        runtime=wf.get_resource("gcnv", "preprocess_intervals", "runtime"),
+        mem=wf.get_resource("gcnv", "preprocess_intervals", "mem"),
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
         tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
     params:
@@ -96,8 +96,8 @@ rule sv_calling_targeted_gcnv_coverage:
         args=wf.get_args("gcnv", "coverage"),
     threads: wf.get_resource("gcnv", "coverage", "threads")
     resources:
-        time=wf.get_resource("gcnv", "coverage", "time"),
-        memory=wf.get_resource("gcnv", "coverage", "memory"),
+        runtime=wf.get_resource("gcnv", "coverage", "runtime"),
+        mem=wf.get_resource("gcnv", "coverage", "mem"),
         partition=wf.get_resource("gcnv", "coverage", "partition"),
         tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
     log:
@@ -113,8 +113,8 @@ rule sv_calling_targeted_gcnv_contig_ploidy:
         **wf.get_output_files("gcnv", "contig_ploidy"),
     threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
     resources:
-        time=wf.get_resource("gcnv", "contig_ploidy", "time"),
-        memory=wf.get_resource("gcnv", "contig_ploidy", "memory"),
+        runtime=wf.get_resource("gcnv", "contig_ploidy", "runtime"),
+        mem=wf.get_resource("gcnv", "contig_ploidy", "mem"),
         partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
         tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
     log:
@@ -133,8 +133,8 @@ rule sv_calling_targeted_gcnv_call_cnvs:
         **wf.get_output_files("gcnv", "call_cnvs"),
     threads: wf.get_resource("gcnv", "call_cnvs", "threads")
     resources:
-        time=wf.get_resource("gcnv", "call_cnvs", "time"),
-        memory=wf.get_resource("gcnv", "call_cnvs", "memory"),
+        runtime=wf.get_resource("gcnv", "call_cnvs", "runtime"),
+        mem=wf.get_resource("gcnv", "call_cnvs", "mem"),
         partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
         tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
     log:
@@ -152,8 +152,8 @@ rule sv_calling_targeted_gcnv_post_germline_calls:
         **wf.get_output_files("gcnv", "post_germline_calls"),
     threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
     resources:
-        time=wf.get_resource("gcnv", "post_germline_calls", "time"),
-        memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
+        runtime=wf.get_resource("gcnv", "post_germline_calls", "runtime"),
+        mem=wf.get_resource("gcnv", "post_germline_calls", "mem"),
         partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
         tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
     log:
@@ -173,8 +173,8 @@ rule sv_calling_targeted_gcnv_joint_germline_cnv_segmentation:
         args=wf.get_args("gcnv", "coverage"),
     threads: wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "threads")
     resources:
-        time=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "time"),
-        memory=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "memory"),
+        runtime=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "runtime"),
+        mem=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "mem"),
         partition=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "partition"),
         tmpdir=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "tmpdir"),
     log:
@@ -190,8 +190,8 @@ rule sv_calling_targeted_gcnv_merge_multikit_families:
         **wf.get_output_files("gcnv", "merge_multikit_families"),
     threads: wf.get_resource("gcnv", "merge_multikit_families", "threads")
     resources:
-        time=wf.get_resource("gcnv", "merge_multikit_families", "time"),
-        memory=wf.get_resource("gcnv", "merge_multikit_families", "memory"),
+        runtime=wf.get_resource("gcnv", "merge_multikit_families", "runtime"),
+        mem=wf.get_resource("gcnv", "merge_multikit_families", "mem"),
         partition=wf.get_resource("gcnv", "merge_multikit_families", "partition"),
         tmpdir=wf.get_resource("gcnv", "merge_multikit_families", "tmpdir"),
     log:
@@ -210,8 +210,8 @@ rule sv_calling_targeted_manta_run:
         **wf.get_output_files("manta", "run"),
     threads: wf.get_resource("manta", "run", "threads")
     resources:
-        time=wf.get_resource("manta", "run", "time"),
-        memory=wf.get_resource("manta", "run", "memory"),
+        runtime=wf.get_resource("manta", "run", "runtime"),
+        mem=wf.get_resource("manta", "run", "mem"),
         partition=wf.get_resource("manta", "run", "partition"),
         tmpdir=wf.get_resource("manta", "run", "tmpdir"),
     log:
@@ -230,8 +230,8 @@ rule sv_calling_targeted_delly2_call:
         **wf.get_output_files("delly2", "call"),
     threads: wf.get_resource("delly2", "call", "threads")
     resources:
-        time=wf.get_resource("delly2", "call", "time"),
-        memory=wf.get_resource("delly2", "call", "memory"),
+        runtime=wf.get_resource("delly2", "call", "runtime"),
+        mem=wf.get_resource("delly2", "call", "mem"),
         partition=wf.get_resource("delly2", "call", "partition"),
         tmpdir=wf.get_resource("delly2", "call", "tmpdir"),
     params:
@@ -249,8 +249,8 @@ rule sv_calling_targeted_delly2_merge_calls:
         **wf.get_output_files("delly2", "merge_calls"),
     threads: wf.get_resource("delly2", "merge_calls", "threads")
     resources:
-        time=wf.get_resource("delly2", "merge_calls", "time"),
-        memory=wf.get_resource("delly2", "merge_calls", "memory"),
+        runtime=wf.get_resource("delly2", "merge_calls", "runtime"),
+        mem=wf.get_resource("delly2", "merge_calls", "mem"),
         partition=wf.get_resource("delly2", "merge_calls", "partition"),
         tmpdir=wf.get_resource("delly2", "merge_calls", "tmpdir"),
     params:
@@ -268,8 +268,8 @@ rule sv_calling_targeted_delly2_genotype:
         **wf.get_output_files("delly2", "genotype"),
     threads: wf.get_resource("delly2", "genotype", "threads")
     resources:
-        time=wf.get_resource("delly2", "genotype", "time"),
-        memory=wf.get_resource("delly2", "genotype", "memory"),
+        runtime=wf.get_resource("delly2", "genotype", "runtime"),
+        mem=wf.get_resource("delly2", "genotype", "mem"),
         partition=wf.get_resource("delly2", "genotype", "partition"),
         tmpdir=wf.get_resource("delly2", "genotype", "tmpdir"),
     params:
@@ -287,8 +287,8 @@ rule sv_calling_targeted_delly2_merge_genotypes:
         **wf.get_output_files("delly2", "merge_genotypes"),
     threads: wf.get_resource("delly2", "merge_genotypes", "threads")
     resources:
-        time=wf.get_resource("delly2", "merge_genotypes", "time"),
-        memory=wf.get_resource("delly2", "merge_genotypes", "memory"),
+        runtime=wf.get_resource("delly2", "merge_genotypes", "runtime"),
+        mem=wf.get_resource("delly2", "merge_genotypes", "mem"),
         partition=wf.get_resource("delly2", "merge_genotypes", "partition"),
         tmpdir=wf.get_resource("delly2", "merge_genotypes", "tmpdir"),
     params:
@@ -317,8 +317,8 @@ rule sv_calling_targeted_melt_preprocess:
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "preprocess", "threads")
     resources:
-        time=wf.get_resource("melt", "preprocess", "time"),
-        memory=wf.get_resource("melt", "preprocess", "memory"),
+        runtime=wf.get_resource("melt", "preprocess", "runtime"),
+        mem=wf.get_resource("melt", "preprocess", "mem"),
         partition=wf.get_resource("melt", "preprocess", "partition"),
     log:
         **wf.get_log_file("melt", "preprocess"),
@@ -339,8 +339,8 @@ rule sv_calling_targeted_melt_indiv_analysis:
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "indiv_analysis", "threads")
     resources:
-        time=wf.get_resource("melt", "indiv_analysis", "time"),
-        memory=wf.get_resource("melt", "indiv_analysis", "memory"),
+        runtime=wf.get_resource("melt", "indiv_analysis", "runtime"),
+        mem=wf.get_resource("melt", "indiv_analysis", "mem"),
         partition=wf.get_resource("melt", "indiv_analysis", "partition"),
     log:
         **wf.get_log_file("melt", "indiv_analysis"),
@@ -361,8 +361,8 @@ rule sv_calling_targeted_melt_group_analysis:
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "group_analysis", "threads")
     resources:
-        time=wf.get_resource("melt", "group_analysis", "time"),
-        memory=wf.get_resource("melt", "group_analysis", "memory"),
+        runtime=wf.get_resource("melt", "group_analysis", "runtime"),
+        mem=wf.get_resource("melt", "group_analysis", "mem"),
         partition=wf.get_resource("melt", "group_analysis", "partition"),
     log:
         **wf.get_log_file("melt", "group_analysis"),
@@ -383,8 +383,8 @@ rule sv_calling_targeted_melt_genotype:
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "genotype", "threads")
     resources:
-        time=wf.get_resource("melt", "genotype", "time"),
-        memory=wf.get_resource("melt", "genotype", "memory"),
+        runtime=wf.get_resource("melt", "genotype", "runtime"),
+        mem=wf.get_resource("melt", "genotype", "mem"),
         partition=wf.get_resource("melt", "genotype", "partition"),
     log:
         **wf.get_log_file("melt", "genotype"),
@@ -404,8 +404,8 @@ rule sv_calling_targeted_melt_make_vcf:
         index_library_name=RE_NO_DOT,
     threads: wf.get_resource("melt", "make_vcf", "threads")
     resources:
-        time=wf.get_resource("melt", "make_vcf", "time"),
-        memory=wf.get_resource("melt", "make_vcf", "memory"),
+        runtime=wf.get_resource("melt", "make_vcf", "runtime"),
+        mem=wf.get_resource("melt", "make_vcf", "mem"),
         partition=wf.get_resource("melt", "make_vcf", "partition"),
     log:
         **wf.get_log_file("melt", "make_vcf"),
@@ -425,8 +425,8 @@ rule sv_calling_targeted_melt_merge_vcf:
         library_name=RE_NO_DOT,
     threads: wf.get_resource("melt", "merge_vcf", "threads")
     resources:
-        time=wf.get_resource("melt", "merge_vcf", "time"),
-        memory=wf.get_resource("melt", "merge_vcf", "memory"),
+        runtime=wf.get_resource("melt", "merge_vcf", "runtime"),
+        mem=wf.get_resource("melt", "merge_vcf", "mem"),
         partition=wf.get_resource("melt", "merge_vcf", "partition"),
     log:
         **wf.get_log_file("melt", "merge_vcf"),

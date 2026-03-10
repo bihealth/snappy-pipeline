@@ -90,7 +90,7 @@ def test_all_steps_get_resource_usage(gene_expression_report_workflow):
         "plot_expression_distribution",
     )
     # Define expected: default defined in workflow.abstract
-    expected_dict = {"threads": 1, "time": "01:00:00", "memory": "2G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "1h", "mem": "2GB", "partition": "medium"}
     # Evaluate
     for step in steps:
         for resource, expected in expected_dict.items():

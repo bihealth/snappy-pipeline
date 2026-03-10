@@ -119,13 +119,13 @@ class GcnvCommonStepPart(
     resource_usage_dict = {
         "high_resource": ResourceUsage(
             threads=16,
-            time="4-00:00:00",
-            memory="46080M",
+            runtime="4d",
+            mem="46080MB",
         ),
         "default": ResourceUsage(
             threads=1,
-            time="1-00:00:00",
-            memory="7680M",
+            runtime="1d",
+            mem="7680MB",
         ),
     }
 

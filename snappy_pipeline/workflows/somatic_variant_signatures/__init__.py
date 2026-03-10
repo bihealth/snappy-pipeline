@@ -80,8 +80,8 @@ class SignaturesStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="01:00:00",  # 1 hour
-            memory=f"{7 * 1024 * 2}M",
+            runtime="1h",  # 1 hour
+            mem=f"{7 * 1024 * 2}MB",
         )
 
 

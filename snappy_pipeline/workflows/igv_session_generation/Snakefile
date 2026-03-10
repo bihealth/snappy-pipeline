@@ -118,8 +118,8 @@ rule igv_session_generation_write_igv_session_file:
         **wf.get_output_files("write_igv_session_file", "run"),
     threads: wf.get_resource("write_igv_session_file", "run", "threads")
     resources:
-        time=wf.get_resource("write_igv_session_file", "run", "time"),
-        memory=wf.get_resource("write_igv_session_file", "run", "memory"),
+        runtime=wf.get_resource("write_igv_session_file", "run", "runtime"),
+        mem=wf.get_resource("write_igv_session_file", "run", "mem"),
         partition=wf.get_resource("write_igv_session_file", "run", "partition"),
         tmpdir=wf.get_resource("write_igv_session_file", "run", "tmpdir"),
     run:

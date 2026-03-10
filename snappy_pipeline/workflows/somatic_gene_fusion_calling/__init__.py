@@ -174,8 +174,8 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{7500 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{7500 * 4}MB",
         )
 
 
@@ -212,8 +212,8 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{40 * 1024 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{40 * 1024 * 4}MB",
         )
 
 
@@ -257,8 +257,8 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{20 * 1024 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{20 * 1024 * 4}MB",
         )
 
 
@@ -299,8 +299,8 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{30 * 1024 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{30 * 1024 * 4}MB",
         )
 
 
@@ -341,8 +341,8 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=8,
-            time="5-00:00:00",  # 5 days
-            memory=f"{10 * 1024 * 8}M",
+            runtime="5d",  # 5 days
+            mem=f"{10 * 1024 * 8}MB",
         )
 
 
@@ -384,8 +384,8 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=8,
-            time="5-00:00:00",  # 5 days
-            memory=f"{20 * 1024 * 8}M",
+            runtime="5d",  # 5 days
+            mem=f"{20 * 1024 * 8}MB",
         )
 
 
@@ -470,7 +470,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config.arriba.num_threads, time="24:00:00", memory=f"{96 * 1024}M"
+            threads=self.config.arriba.num_threads, runtime="24h", mem=f"{96 * 1024}MB"
         )  # 1 day
 
 

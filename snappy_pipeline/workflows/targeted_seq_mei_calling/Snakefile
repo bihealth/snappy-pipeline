@@ -71,8 +71,8 @@ rule mobile_element_insertion_scramble_cluster:
         **wf.get_output_files("scramble", "cluster"),
     threads: wf.get_resource("scramble", "cluster", "threads")
     resources:
-        time=wf.get_resource("scramble", "cluster", "time"),
-        memory=wf.get_resource("scramble", "cluster", "memory"),
+        runtime=wf.get_resource("scramble", "cluster", "runtime"),
+        mem=wf.get_resource("scramble", "cluster", "mem"),
         partition=wf.get_resource("scramble", "cluster", "partition"),
         tmpdir=wf.get_resource("scramble", "cluster", "tmpdir"),
     log:
@@ -88,8 +88,8 @@ rule mobile_element_insertion_scramble_analysis:
         **wf.get_output_files("scramble", "analysis"),
     threads: wf.get_resource("scramble", "analysis", "threads")
     resources:
-        time=wf.get_resource("scramble", "analysis", "time"),
-        memory=wf.get_resource("scramble", "analysis", "memory"),
+        runtime=wf.get_resource("scramble", "analysis", "runtime"),
+        mem=wf.get_resource("scramble", "analysis", "mem"),
         partition=wf.get_resource("scramble", "analysis", "partition"),
         tmpdir=wf.get_resource("scramble", "analysis", "tmpdir"),
     params:

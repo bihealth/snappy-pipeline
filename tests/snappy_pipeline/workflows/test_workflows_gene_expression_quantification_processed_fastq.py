@@ -139,7 +139,7 @@ def test_featurecounts_step_part_get_log_file(gene_expression_quantification_wor
 def test_featurecounts_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests FeatureCountsStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 2, "time": "1-00:00:00", "memory": "6700M", "partition": "medium"}
+    expected_dict = {"threads": 2, "runtime": "1d", "mem": "6700MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -155,7 +155,7 @@ def test_featurecounts_step_part_get_resource(gene_expression_quantification_wor
 def test_salmon_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests SalmonStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "04:00:00", "memory": "2500M", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "4h", "mem": "2500MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -169,7 +169,7 @@ def test_salmon_step_part_get_resource(gene_expression_quantification_workflow):
 def test_duplication_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests QCStepPartDuplication.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "3-00:00:00", "memory": "127G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "3d", "mem": "127GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -185,7 +185,7 @@ def test_duplication_step_part_get_resource(gene_expression_quantification_workf
 def test_dupradar_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests QCStepPartDupradar.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 8, "time": "4-00:00:00", "memory": "6700M", "partition": "medium"}
+    expected_dict = {"threads": 8, "runtime": "4d", "mem": "6700MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -199,7 +199,7 @@ def test_dupradar_step_part_get_resource(gene_expression_quantification_workflow
 def test_rnaseqc_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests QCStepPartRnaseqc.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "03:59:00", "memory": "16G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "4h", "mem": "16GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
@@ -213,7 +213,7 @@ def test_rnaseqc_step_part_get_resource(gene_expression_quantification_workflow)
 def test_stats_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests QCStepPartStats.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "03:59:00", "memory": "4G", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "4h", "mem": "4GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

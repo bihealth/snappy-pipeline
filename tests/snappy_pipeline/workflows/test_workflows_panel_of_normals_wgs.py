@@ -287,32 +287,32 @@ def test_cnvkit_step_part_get_resource_usage(panel_of_normals_workflow):
     # Define expected: default defined workflow.abstract
     target_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "8G",
+        "runtime": "2h",
+        "mem": "8GB",
         "partition": "medium",
     }
     antitarget_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "8G",
+        "runtime": "2h",
+        "mem": "8GB",
         "partition": "medium",
     }
     coverage_expected_dict = {
         "threads": 8,
-        "time": "02:00:00",
-        "memory": "16G",
+        "runtime": "2h",
+        "mem": "16GB",
         "partition": "medium",
     }
     reference_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "16G",
+        "runtime": "2h",
+        "mem": "16GB",
         "partition": "medium",
     }
     report_expected_dict = {
         "threads": 2,
-        "time": "02:00:00",
-        "memory": "16G",
+        "runtime": "2h",
+        "mem": "16GB",
         "partition": "medium",
     }
 

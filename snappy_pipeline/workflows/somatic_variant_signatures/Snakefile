@@ -84,8 +84,8 @@ rule somatic_variant_signatures_tabulate_vcf:
         args=wf.get_args("tabulate_vcf", "run"),
     threads: wf.get_resource("tabulate_vcf", "run", "threads")
     resources:
-        time=wf.get_resource("tabulate_vcf", "run", "time"),
-        memory=wf.get_resource("tabulate_vcf", "run", "memory"),
+        runtime=wf.get_resource("tabulate_vcf", "run", "runtime"),
+        mem=wf.get_resource("tabulate_vcf", "run", "mem"),
         partition=wf.get_resource("tabulate_vcf", "run", "partition"),
         tmpdir=wf.get_resource("tabulate_vcf", "run", "tmpdir"),
     log:
@@ -104,8 +104,8 @@ rule somatic_variant_signatures_deconstructsigs:
         **wf.get_output_files("deconstruct_sigs", "run"),
     threads: wf.get_resource("deconstruct_sigs", "run", "threads")
     resources:
-        time=wf.get_resource("deconstruct_sigs", "run", "time"),
-        memory=wf.get_resource("deconstruct_sigs", "run", "memory"),
+        runtime=wf.get_resource("deconstruct_sigs", "run", "runtime"),
+        mem=wf.get_resource("deconstruct_sigs", "run", "mem"),
         partition=wf.get_resource("deconstruct_sigs", "run", "partition"),
         tmpdir=wf.get_resource("deconstruct_sigs", "run", "tmpdir"),
     log:

@@ -726,8 +726,8 @@ class BwaStepPart(ReadMappingStepPart):
         mem_mb = int(4.5 * 1024 * self.config.bwa.num_threads_align)
         return ResourceUsage(
             threads=self.config.bwa.num_threads_align,
-            time="3-00:00:00",  # 3 days
-            memory=f"{mem_mb}M",
+            runtime="3d",  # 3 days
+            mem=f"{mem_mb}MB",
         )
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -756,8 +756,8 @@ class BwaMem2StepPart(ReadMappingStepPart):
         mem_mb = int(4.5 * 1024 * self.config.bwa_mem2.num_threads_align)
         return ResourceUsage(
             threads=self.config.bwa_mem2.num_threads_align,
-            time="3-00:00:00",  # 3 days
-            memory=f"{mem_mb}M",
+            runtime="3d",  # 3 days
+            mem=f"{mem_mb}MB",
         )
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -785,8 +785,8 @@ class MBCsStepPart(ReadMappingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="72:00:00",
-            memory="4G",
+            runtime="72h",
+            mem="4GB",
             partition="medium",
         )
 
@@ -899,8 +899,8 @@ class StarStepPart(ReadMappingStepPart):
         mem_gb = int(3.5 * self.config.star.num_threads_align)
         return ResourceUsage(
             threads=self.config.star.num_threads_align,
-            time="2-00:00:00",  # 2 days
-            memory=f"{mem_gb}G",
+            runtime="2d",  # 2 days
+            mem=f"{mem_gb}GB",
         )
 
 
@@ -1048,8 +1048,8 @@ class Minimap2StepPart(ReadMappingStepPart):
         mem_gb = int(3.5 * self.config.minimap2.mapping_threads)
         return ResourceUsage(
             threads=self.config.minimap2.mapping_threads,
-            time="2-00:00:00",  # 2 days
-            memory=f"{mem_gb}G",
+            runtime="2d",  # 2 days
+            mem=f"{mem_gb}GB",
         )
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -1110,8 +1110,8 @@ class ExternalStepPart(ReadMappingStepPart):
             raise UnsupportedActionException(error_message)
         return ResourceUsage(
             threads=1,
-            time="00:10:00",  # 10 minutes
-            memory="1G",
+            runtime="10m",  # 10 minutes
+            mem="1GB",
         )
 
 
@@ -1242,8 +1242,8 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="04:00:00",  # 4 hours
-            memory="20G",
+            runtime="4h",  # 4 hours
+            mem="20GB",
         )
 
 
@@ -1360,8 +1360,8 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         self._check_action(action)
         return ResourceUsage(
             threads=1,
-            time="24:00:00",
-            memory="2G",
+            runtime="24h",
+            mem="2GB",
         )
 
 
@@ -1454,8 +1454,8 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         self._check_action(action)
         return ResourceUsage(
             threads=1,
-            time="04:00:00",
-            memory="2G",
+            runtime="4h",
+            mem="2GB",
         )
 
 

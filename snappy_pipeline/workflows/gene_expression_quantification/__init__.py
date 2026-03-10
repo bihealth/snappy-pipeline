@@ -220,8 +220,8 @@ class SalmonStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
-            time="04:00:00",  # 4 hours
-            memory="2500M",
+            runtime="4h",  # 4 hours
+            mem="2500MB",
         )
 
 
@@ -313,8 +313,8 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
             raise UnsupportedActionException(error_message)
         return ResourceUsage(
             threads=2,
-            time="1-00:00:00",  # 1 day
-            memory="6700M",
+            runtime="1d",  # 1 day
+            mem="6700MB",
         )
 
 
@@ -343,8 +343,8 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
             raise UnsupportedActionException(error_message)
         return ResourceUsage(
             threads=2,
-            time="12:00:00",  # 12 hours
-            memory="6700M",
+            runtime="12h",  # 12 hours
+            mem="6700MB",
         )
 
     def get_strandedness_file(self, action):
@@ -382,8 +382,8 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="3-00:00:00",  # 3 days
-            memory="127G",
+            runtime="3d",  # 3 days
+            mem="127GB",
         )
 
 
@@ -415,8 +415,8 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=8,
-            time="4-00:00:00",  # 4 days
-            memory="6700M",
+            runtime="4d",  # 4 days
+            mem="6700MB",
         )
 
 
@@ -444,8 +444,8 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="03:59:00",  # 3 hours and 59 minutes
-            memory="16G",
+            runtime="4h",  # 4 hours
+            mem="16GB",
         )
 
 
@@ -468,8 +468,8 @@ class QCStepPartStats(GeneExpressionQuantificationStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="03:59:00",  # 3 hours and 59 minutes
-            memory="4G",
+            runtime="4h",  # 4 hours
+            mem="4GB",
         )
 
 

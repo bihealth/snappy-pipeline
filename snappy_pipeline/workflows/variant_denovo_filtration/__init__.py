@@ -154,8 +154,8 @@ class FilterDeNovosBaseStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="02:00:00",  # 2 hours
-            memory=f"{2 * 1024}M",
+            runtime="2h",  # 2 hours
+            mem=f"{2 * 1024}MB",
         )
 
 
@@ -246,8 +246,8 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="1-00:00:00",  # 1 day
-            memory=f"{14 * 1024}M",
+            runtime="1d",  # 1 day
+            mem=f"{14 * 1024}MB",
         )
 
 

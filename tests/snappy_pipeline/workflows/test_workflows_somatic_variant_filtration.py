@@ -204,7 +204,7 @@ def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list)
 def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow_list):
     """Tests OneFilterStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2048M", "partition": "medium"}
+    expected_dict = {"threads": 1, "runtime": "24h", "mem": "2048MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
