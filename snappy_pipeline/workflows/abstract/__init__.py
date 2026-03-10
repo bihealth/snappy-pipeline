@@ -2,6 +2,7 @@
 """Base classes for the actual pipeline steps"""
 
 import contextlib
+import datetime
 import logging
 import os
 import os.path
@@ -950,7 +951,7 @@ class BaseStep:
         """
         tmpdir = getattr(self.w_config, "global_config", {}).get("tmpdir", None)
         if tmpdir:
-            with modified_environ(TODAY=dateruntime.date.today().strftime("%Y%m%d")):
+            with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
                 tmpdir = os.path.expandvars(tmpdir)
         if not tmpdir:
             tmpdir = os.getenv("TMPDIR")
