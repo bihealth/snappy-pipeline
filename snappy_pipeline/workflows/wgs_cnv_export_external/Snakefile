@@ -49,7 +49,7 @@ rule wgs_cnv_export_external_link_in_run:
     output:
         wf.get_output_files("link_in_vcf_external", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in_vcf_external", "run", wildcards))
+        wf.run_locally("link_in_vcf_external", "run", wildcards)
 
 
 rule wgs_cnv_export_external_link_out_run:
@@ -83,8 +83,8 @@ rule wgs_cnv_export_external_varfish_annotator_external_merge_vcf:
         **wf.get_output_files("varfish_annotator_external", "merge_vcf"),
     threads: wf.get_resource("varfish_annotator_external", "merge_vcf", "threads")
     resources:
-        time=wf.get_resource("varfish_annotator_external", "merge_vcf", "time"),
-        memory=wf.get_resource("varfish_annotator_external", "merge_vcf", "memory"),
+        runtime=wf.get_resource("varfish_annotator_external", "merge_vcf", "runtime"),
+        mem=wf.get_resource("varfish_annotator_external", "merge_vcf", "mem"),
         partition=wf.get_resource("varfish_annotator_external", "merge_vcf", "partition"),
         tmpdir=wf.get_resource("varfish_annotator_external", "merge_vcf", "tmpdir"),
     log:
@@ -105,8 +105,8 @@ rule wgs_cnv_export_external_varfish_annotator_external_annotate_svs:
         **wf.get_output_files("varfish_annotator_external", "annotate"),
     threads: wf.get_resource("varfish_annotator_external", "annotate", "threads")
     resources:
-        time=wf.get_resource("varfish_annotator_external", "annotate", "time"),
-        memory=wf.get_resource("varfish_annotator_external", "annotate", "memory"),
+        runtime=wf.get_resource("varfish_annotator_external", "annotate", "runtime"),
+        mem=wf.get_resource("varfish_annotator_external", "annotate", "mem"),
         partition=wf.get_resource("varfish_annotator_external", "annotate", "partition"),
         tmpdir=wf.get_resource("varfish_annotator_external", "annotate", "tmpdir"),
     log:

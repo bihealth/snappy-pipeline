@@ -2,7 +2,6 @@
 """Base classes for the actual pipeline steps"""
 
 import contextlib
-import datetime
 import logging
 import os
 import os.path
@@ -115,8 +114,8 @@ class BaseStepPart:
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
         threads=1,
-        time="01:00:00",
-        memory="2G",  # 1h
+        runtime="1h",
+        mem="2GB",  # 1h
     )
 
     #: Configure resource usage here that should not use the default resource usage from
@@ -163,7 +162,7 @@ class BaseStepPart:
         :param action: The action to return the resource requirement for.
         :param resource_name: The name to return the resource for.
         """
-        if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
+        if resource_name not in ("threads", "runtime", "mem", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
 
         def _get_resource(
@@ -228,7 +227,6 @@ class BaseStepPart:
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
         )  # pragma: no cover
-
 
     def run_locally(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
         """Runs a function locally for the given action of the sub step and the given wildcards"""
@@ -952,7 +950,7 @@ class BaseStep:
         """
         tmpdir = getattr(self.w_config, "global_config", {}).get("tmpdir", None)
         if tmpdir:
-            with modified_environ(TODAY=datetime.date.today().strftime("%Y%m%d")):
+            with modified_environ(TODAY=dateruntime.date.today().strftime("%Y%m%d")):
                 tmpdir = os.path.expandvars(tmpdir)
         if not tmpdir:
             tmpdir = os.getenv("TMPDIR")
@@ -1318,6 +1316,52 @@ class LinkInStepPart(BaseStepPart):
             raise Exception(msg)
         return "\n".join(lines)
 
+    def run_locally(self, action, wildcards):
+        """Links fastq files
+
+        The files are linked, keeping their relative paths to the item matching the "folderName"
+        intact.
+        """
+        assert action == "run", "Unsupported action"
+        # Get base out path
+        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Get folder name of first library candidate
+        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
+        if self.config.path_link_in:
+            folder_name = wildcards.library_name
+        filenames = self._create_all_symlinks(self.path_gen, folder_name, out_path)
+        if not filenames:
+            msg = "Found no files to link in for {}".format(dict(**wildcards))
+            print(msg, file=sys.stderr)
+            raise Exception(msg)
+
+    @staticmethod
+    def _create_all_symlinks(
+        path_generator,
+        folder_name,
+        out_path,
+        pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam"),
+    ):
+        filenames = {}  # generated so far
+        for src_path, path_infix, filename in path_generator.run(folder_name, pattern_set_keys):
+            new_path = os.path.join(out_path, path_infix, filename)
+            if new_path in filenames:
+                if filenames[new_path] == src_path:
+                    continue  # ignore TODO: better correct this
+                msg = "WARNING: Detected double output path {}"
+                print(msg.format(filename), file=sys.stderr)
+            filenames[new_path] = src_path
+            # Create the symlink
+            d = os.path.realpath(os.path.join(out_path, path_infix))
+            link = os.path.join(d, filename)
+            os.makedirs(d, exist_ok=True)
+            if not os.path.islink(link):
+                target = os.path.relpath(
+                    os.path.join(os.path.realpath(src_path), filename), start=d
+                )
+                os.symlink(target, link)
+        return filenames
+
     def run(self, action, wildcards):
         raise ImplementationUnavailableError(
             "run() not implemented for linking in reads"
@@ -1385,6 +1429,32 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
             print(msg, file=sys.stderr)
             raise Exception(msg)
         return "\n".join(lines)
+
+    def run_locally(self, action, wildcards):
+        """Links fastq files
+
+        The files are linked, keeping their relative paths to the item matching the "folderName"
+        intact.
+        """
+        self._validate_action(action)
+        # Define path generator
+        path_gen = LinkInPathGenerator(
+            self.parent.work_dir,
+            self.parent.data_search_infos,
+            self.parent.config_lookup_paths,
+        )
+        # Get base out path
+        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        filenames = self._create_all_symlinks(
+            path_generator=path_gen,
+            folder_name=wildcards.library_name,
+            out_path=out_path,
+            pattern_set_keys=self.pattern_set_keys,
+        )
+        if not filenames:
+            msg = "Found no files to link in for {}".format(dict(**wildcards))
+            print(msg, file=sys.stderr)
+            raise Exception(msg)
 
 
 class LinkInBamExternalStepPart(LinkInVcfExternalStepPart):

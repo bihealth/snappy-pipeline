@@ -279,8 +279,8 @@ class BbdukStepPart(AdapterTrimmingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=self.config.bbduk.num_threads,
-            time="12:00:00",  # 40 hours
-            memory="24000M",
+            runtime="12h",  # 40 hours
+            mem="24000MB",
         )
 
 
@@ -302,8 +302,8 @@ class FastpStepPart(AdapterTrimmingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=self.config.fastp.num_threads,
-            time="12:00:00",  # 60 hours
-            memory="24000M",
+            runtime="12h",  # 60 hours
+            mem="24000MB",
         )
 
 
@@ -332,25 +332,25 @@ class LinkOutFastqStepPart(BaseStepPart):
         self._validate_action(action)
         return expand(self.base_path_out, sub_dir=self.sub_dirs)
 
-    def get_shell_cmd(self, action, wildcards):
-        """Return call for linking out postprocessed (or not) files"""
+    def run_locally(self, action, wildcards):
+        """Link out postprocessed (or not) files"""
         # Validate action
         self._validate_action(action)
-        ins = expand(self.base_path_in.format(wildcards=wildcards), sub_dir=self.sub_dirs)
-        outs = [s.format(**wildcards) for s in expand(self.base_path_out, sub_dir=self.sub_dirs)]
-        assert len(ins) == len(outs)
-
-        cmd = "din_=$(dirname {in_}) ; dout=$(dirname {out})"
-        cmd = cmd + " ; fns=$(find $din_ -type f -printf '%P\\n')"
-        cmd = (
-            cmd
-            + " ; for fn in $fns ; do"
-            + "     if [[ ! -L $din_/$fn ]] ; then"
-            + "       mkdir -p $(dirname $dout/$fn) ; ln -sr $din_/$fn $dout/$fn"
-            + "   ; fi"
-            + " ; done"
-        )
-        return "\n".join((cmd.format(in_=in_, out=out) for in_, out in zip(ins, outs)))
+        for sub_dir in self.sub_dirs:
+            in_ = os.path.dirname(
+                self.base_path_in.format(wildcards=wildcards).format(sub_dir=sub_dir)
+            )
+            out = os.path.dirname(self.base_path_out.format(sub_dir=sub_dir).format(**wildcards))
+            os.makedirs(out, exist_ok=True)
+            for root, d_names, f_names in os.walk(in_):
+                rel_path = os.path.relpath(root, start=in_)
+                for d_name in d_names:
+                    os.makedirs(os.path.join(out, d_name), exist_ok=True)
+                for f_name in f_names:
+                    f = os.path.join(root, f_name)
+                    if not os.path.islink(f):
+                        target = os.path.relpath(f, start=os.path.join(out, rel_path))
+                        os.symlink(target, os.path.join(out, rel_path, f_name))
 
     def _validate_action(self, action):
         assert action == "run"
