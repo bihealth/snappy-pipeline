@@ -676,11 +676,11 @@ class ParallelBaseWrapper:
                 all_output=repr(self.get_all_output()),
                 chunk_resources_threads=repr(self.job_resources.threads),
                 chunk_resources_time=repr(self.job_resources.time),
-                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_memory=repr(self.job_resources.mem),
                 chunk_resources_partition=repr(self.job_resources.partition),
                 merge_resources_threads=repr(self.merge_resources.threads),
                 merge_resources_time=repr(self.merge_resources.time),
-                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_memory=repr(self.merge_resources.mem),
                 merge_resources_partition=repr(self.merge_resources.partition),
             )
         )
@@ -1225,11 +1225,11 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 all_output=self.get_all_output(),
                 chunk_resources_threads=repr(self.job_resources.threads),
                 chunk_resources_time=repr(self.job_resources.time),
-                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_memory=repr(self.job_resources.mem),
                 chunk_resources_partition=repr(self.job_resources.partition),
                 merge_resources_threads=repr(self.merge_resources.threads),
                 merge_resources_time=repr(self.merge_resources.time),
-                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_memory=repr(self.merge_resources.mem),
                 merge_resources_partition=repr(self.merge_resources.partition),
             )
         )

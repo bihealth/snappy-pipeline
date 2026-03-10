@@ -13,7 +13,7 @@ class ResourceUsage:
     """
 
     threads: int
-    time: str
-    memory: str
+    runtime: str
+    mem: str
     partition: typing.Optional[str] = None
     tmpdir: typing.Optional[str] = None
