@@ -9,8 +9,12 @@ files.
 
 import os
 import sys
-from collections import OrderedDict
+from collections import namedtuple
+from typing import Iterator
 
+from snakemake.io import Wildcards
+
+from biomedsheets.models import BioEntity, BioSample, TestSample, NGSLibrary, SheetEntry
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
@@ -72,6 +76,7 @@ CASE_LIST_FILES = {
     },
 }
 
+LibraryPair = namedtuple("LibraryPair", ("normal", "tumor"))
 
 DEFAULT_CONFIG = CbioportalExportConfigModel.default_config_yaml_string()
 
@@ -189,46 +194,48 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
             self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
         else:
             self.name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library}"
+
         # Build shortcut from cancer bio sample name to matched cancer sample
         donors = {}
-        for sheet in filter(is_not_background, self.parent.sheets):
-            for bio_entity in sheet.bio_entities.values():
-                if bio_entity.disabled:
-                    continue
-                for bio_sample in bio_entity.bio_samples.values():
-                    if bio_sample.disabled:
-                        continue
-                    for test_sample in bio_sample.test_samples.values():
-                        if test_sample.disabled:
-                            continue
-                        if test_sample.extra_infos.get("extractionType", "").upper() != "DNA":
-                            continue
-                        if bio_entity not in donors:
-                            donors[bio_entity] = {"tumors": [], "normal": None}
-                        for ngs_library in test_sample.ngs_libraries.values():
-                            if ngs_library.disabled:
-                                continue
-                            if bio_sample.extra_infos.get("isTumor", True):
-                                assert ngs_library not in donors[bio_entity]["tumors"], (
-                                    f"Duplicated library {ngs_library.name}"
-                                )
-                                donors[bio_entity]["tumors"].append(ngs_library)
-                            else:
-                                assert donors[bio_entity]["normal"] is None, (
-                                    f"Multiple normals for donor {bio_entity.name}"
-                                )
-                                donors[bio_entity]["normal"] = ngs_library
+        for lib in self.get_valid_libraries():
+            ts: TestSample = lib.test_sample
+            bs: BioSample = ts.bio_sample
+            be: BioEntity = bs.bio_entity
 
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for pairs in donors.values():
-            for tumor in pairs["tumors"]:
-                assert tumor.name not in self.tumor_ngs_library_to_sample_pair, (
-                    f"Duplicated library {tumor.name}"
+            entry = donors.setdefault(be, {"tumors": [], "normal": None})
+
+            if bs.extra_infos.get("isTumor", True):
+                assert lib not in entry["tumors"], f"Duplicated library {lib.name}"
+                entry["tumors"].append(lib)
+            else:
+                assert entry["normal"] is None, f"Multiple normals for donor {be.name}"
+                entry["normal"] = lib
+
+        self.tumor_ngs_library_to_sample_pair: dict[str, LibraryPair] = {}
+        for normal_tumors in donors.values():
+            normal = normal_tumors["normal"]
+            for tumor in normal_tumors["tumors"]:
+                self.tumor_ngs_library_to_sample_pair[tumor.name] = LibraryPair(
+                    normal=normal, tumor=tumor
                 )
-                self.tumor_ngs_library_to_sample_pair[tumor.name] = {
-                    "normal_sample": pairs["normal"],
-                    "tumor_sample": tumor,
-                }
+
+    def get_valid_libraries(self) -> Iterator[NGSLibrary]:
+        for sheet in filter(is_not_background, self.parent.sheets):
+            for be in self._enabled(sheet.bio_entities):
+                for bs in self._enabled(be.bio_samples):
+                    for ts in self._enabled(bs.test_samples):
+                        if ts.extra_infos.get("extractionType", "").upper() == "DNA":
+                            for lib in self._enabled(ts.ngs_libraries):
+                                yield lib
+
+    @staticmethod
+    def _enabled(items) -> Iterator[SheetEntry]:
+        for i in items.values():
+            if not i.disabled:
+                yield i
+
+    def _get_pair(self, wildcards: Wildcards) -> LibraryPair:
+        return self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
 
     @dictify
     def get_output_files(self, action):
@@ -284,18 +291,15 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     def _get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair["normal_sample"].name if pair["normal_sample"] else None
+        return (n := self._get_pair(wildcards).normal) and n.name
 
     def _get_tumor_bio_sample(self, wildcards):
         """Return bio sample to tumor dna ngs library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair["tumor_sample"].test_sample.bio_sample.name
+        return self._get_pair(wildcards).tumor.test_sample.bio_sample.name
 
     def _get_normal_bio_sample(self, wildcards):
         """Return normal bio sample to tumor dna ngs library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair["normal_sample"].test_sample.bio_sample.name if pair["normal_sample"] else None
+        return (n := self._get_pair(wildcards).normal) and n.test_sample.bio_sample.name
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
