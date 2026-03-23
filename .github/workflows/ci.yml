@@ -37,6 +37,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
+          cache-number: 2
 
       - name: Install dependencies
         run: |
@@ -78,6 +79,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           environment-file: environment.yml
+          cache-number: 2
 
       - run: which pip
       - name: Install some more dependencies via pip
