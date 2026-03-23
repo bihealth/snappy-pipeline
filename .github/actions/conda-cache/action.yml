@@ -24,6 +24,7 @@ runs:
       with:
         activate-environment: ci_test_conda
         python-version: ${{ inputs.python-version }}
+        conda-remove-defaults: "true"
 
     - name: Cache conda
       uses: actions/cache@v3
