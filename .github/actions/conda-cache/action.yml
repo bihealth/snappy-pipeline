@@ -24,7 +24,12 @@ runs:
       with:
         activate-environment: ci_test_conda
         python-version: ${{ inputs.python-version }}
+        # FIXME: pin to 25 for now, may fix a regression in 26
+        conda-version: "25.11.0"
+        miniforge-variant: Miniforge3
+        use-mamba: true
         conda-remove-defaults: "true"
+        channels: conda-forge,bioconda
 
     - name: Cache conda
       uses: actions/cache@v3
