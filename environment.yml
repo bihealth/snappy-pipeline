@@ -14,7 +14,11 @@ dependencies:
 
   # for compiling packages from pip
   - gcc_linux-64 ~=13.2.0
+  - gcc_impl_linux-64 ~=13.2.0
   - gxx_linux-64 ~=13.2.0
+  - gxx_impl_linux-64 ~=13.2.0
+  - sysroot_linux-64 ~=2.17
+  - binutils_linux-64
 
   # basics some snappy wrappers rely on
   - coreutils ~=9.5
