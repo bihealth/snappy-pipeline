@@ -7,6 +7,10 @@ from snakemake.shell import shell
 
 args = getattr(snakemake.params, "args", {})
 
+samples = f"--vcf-tumor-id {args['tumor_sample']} --tumor-id {args['tumor_id']}"
+if args["normal_sample"] and args["normal_id"]:
+    samples += f" --vcf-normal-id {args['normal_sample']} --normal-id {args['normal_id']}"
+
 vcf_to_table = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vcf_to_table.py")
 if args["somatic_variant_annotation_tool"] == "vep":
     vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vep.yaml")
@@ -42,8 +46,7 @@ python {vcf_to_table} \
     --config {vcf_to_table_config} \
     --debug --unique --title \
     --NCBI_Build {args[ncbi_build]} --Center "{args[Center]}" \
-    --vcf-tumor-id {args[tumor_sample]} --tumor-id {args[tumor_id]} \
-    --vcf-normal-id {args[normal_sample]} --normal-id {args[normal_id]} \
+    {samples} \
     {snakemake.input.vcf} {snakemake.output.maf}
 
 pushd $(dirname {snakemake.output.maf})
