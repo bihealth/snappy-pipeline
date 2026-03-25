@@ -26,11 +26,6 @@ tools = wf.config.tools
 # Rules =======================================================================
 
 
-localrules:
-    # Writing pedigrees should be done locally as well
-    variant_calling_write_pedigree_run,
-
-
 rule all:
     input:
         wf.get_result_files(),
