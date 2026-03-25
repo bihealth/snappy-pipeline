@@ -13,7 +13,7 @@ args = getattr(snakemake.params, "args", {})
 time_pattern = re.compile(r"^((?P<day>[0-9]+)-)?(?P<hour>[0-9]{2}):(?P<min>[0-9]{2}):(?P<sec>[0-9]{2})$")
 m = time_pattern.match(snakemake.resources.get("time", "03:59:59"))
 if m:
-    timeout = int(m.group("sec")) + 60*(int(m.group("min")) + 60*(int(m.group("hour")) + 24*int(m.group("day"))))
+    timeout = int(m.group("sec")) + 60*(int(m.group("min")) + 60*(int(m.group("hour")) + 24*int(m.group("day") or "0")))
 else:
     timeout = 14399
 
@@ -67,8 +67,8 @@ rm -rf $tmpdir
 mkdir $tmpdir
 
 python {script} --workers {snakemake.threads} \
-    --tmpdir $tmpdir \
-    --method {args.method} --threshold {args.threshold} --timeout {timeout} \
+    --tmpdir $tmpdir --force \
+    --method {args[method]} --threshold {args[threshold]} --timeout {timeout} \
     --netchop {snakemake.input.netchop} \
     --output {snakemake.output.epitopes} \
     {snakemake.input.vcf} \

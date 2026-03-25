@@ -30,7 +30,7 @@ class Variant:
     NUCLEOTIDE: re.Pattern = re.compile(r"^[ACGT-]+")
     PROTEIN_POSITION: re.Pattern = re.compile(r"^([0-9]+)(-([0-9]+))?$")
     MUTATION: re.Pattern = re.compile(
-        r"^([ACDEFGHIKLMNPQRSTVWY]*[X\*]|[ACDEFGHIKLMNPQRSTVWY]+[X\*]?)$"
+        r"^([ACDEFGHIKLMNPQRSTVWY]*[X\*]|[ACDEFGHIKLMNPQRSTVWY]+[X\*]?|-+)$"
     )
     BCFTOOLS_COLUMNS: list[str] = [
         "CHROM",
@@ -83,16 +83,20 @@ class Variant:
         assert self.NUCLEOTIDE.match(self.ref), f"Illegal reference allele {self.ref}"
         assert self.NUCLEOTIDE.match(self.alt), f"Illegal alt allele {self.alt}"
         assert self.AMINO_ACID.match(self.sequence), f"Illegal protein sequence {self.sequence}"
-        assert self.start > 0 and self.end >= self.start and self.end <= len(self.sequence) + 1, (
-            f"Mutation position {self.start}-{self.end} illegal or outside protein bounds (length {len(self.sequence)})"
-        )
         assert self.MUTATION.match(self.wt_seq), f"Illegal wild-type sequence {self.wt_seq}"
         assert self.MUTATION.match(self.mt_seq), f"Illegal mutation sequence {self.mt_seq}"
 
-        if self.end == len(self.sequence) + 1:
-            assert self.wt_seq.endswith("*"), (
+        if "fs" not in self.identifier:
+            assert (
+                self.start > 0 and self.end >= self.start and self.end <= len(self.sequence) + 1
+            ), (
                 f"Mutation position {self.start}-{self.end} illegal or outside protein bounds (length {len(self.sequence)})"
             )
+
+            if self.end == len(self.sequence) + 1:
+                assert self.wt_seq.endswith("*"), (
+                    f"Mutation position {self.start}-{self.end} illegal or outside protein bounds (length {len(self.sequence)})"
+                )
 
     @staticmethod
     def _parse_table(out: str) -> list[Self]:
@@ -177,7 +181,7 @@ class Variant:
             out, err = p.communicate(timeout=timeout)
         except TimeoutError:
             p.kill()
-            raise (f"The command {' '.join(cmd)} has timed out")
+            raise TimeoutError(f"The command {' '.join(cmd)} has timed out")
         if p.returncode != 0:
             raise ChildProcessError(
                 f"Command {' '.join(cmd)} failed with return code {p.returncode}"
@@ -556,6 +560,10 @@ def main() -> int:
     )
 
     epitopes = read_epitopes_table(args.epitopes)
+    if len(epitopes) == 0:
+        logging.info("No predicted neo-epitopes")
+        Path.touch(args.output, mode=0o750)
+        return 0
     logging.info(
         f"{len(epitopes)} neo-epitope predictions have been read from file {args.epitopes}"
     )
