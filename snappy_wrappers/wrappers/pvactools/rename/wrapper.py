@@ -50,7 +50,8 @@ bcftools view \
     {snakemake.input.annotated} \
 | bcftools reheader \
     --samples <(echo "{samples}" | tr '\t' '\n') \
-| bcftools view \
+| bcftools norm \
+    --multiallelics -both \
     --output-type z --output {snakemake.output.vcf} --write-index=tbi
 
 pushd $(dirname {snakemake.output.vcf})
