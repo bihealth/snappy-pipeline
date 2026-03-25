@@ -5,3 +5,4 @@ channels:
 dependencies:
   - python>=3.12
   - regtools>=1
+  - bcftools>=1.21

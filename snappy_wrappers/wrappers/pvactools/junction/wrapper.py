@@ -53,10 +53,16 @@ conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
 export TMPDIR=$(realpath $TMPDIR)
+vcf=$TMPDIR/normalized.vcf.gz
+
+bcftools norm \
+    --multiallelics -both \
+    --output $vcf --output-type z --write-index=tbi \
+    {snakemake.input.annotated}
 
 regtools cis-splice-effects identify -s {args[strandedness]} \
     -o {snakemake.output.junctions} \
-    {snakemake.input.annotated} \
+    $vcf \
     {snakemake.input.bam} \
     {snakemake.input.reference} \
     {snakemake.input.features}
