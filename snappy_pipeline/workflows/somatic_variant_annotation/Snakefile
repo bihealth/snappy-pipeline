@@ -8,7 +8,7 @@ from snappy_pipeline.workflows.somatic_variant_annotation import (
     SomaticVariantAnnotationWorkflow,
 )
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
 # Configuration ===============================================================
@@ -23,13 +23,15 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = SomaticVariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+tools = wf.config["tools"]
+
 
 # Rules =======================================================================
 
 
 localrules:
     # Linking files from work/ to output/ should be done locally
-    somatic_variant_annotation_link_out_run,
+    any_variant_annotation_link_out_run,
 
 
 rule all:
@@ -42,7 +44,7 @@ rule all:
 # Generic linking out ---------------------------------------------------------
 
 
-rule somatic_variant_annotation_link_out_run:
+rule any_variant_annotation_link_out_run:
     input:
         wf.get_input_files("link_out", "run"),
     output:
@@ -51,25 +53,4 @@ rule somatic_variant_annotation_link_out_run:
         shell(wf.get_shell_cmd("link_out", "run", wildcards))
 
 
-# Somatic Variant Annotation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Run VEP ---------------------------------------------------------------------
-
-
-rule somatic_variant_annotation_vep:
-    input:
-        **wf.get_input_files("vep", "run"),
-    output:
-        **wf.get_output_files("vep", "run"),
-    threads: wf.get_resource("vep", "run", "threads")
-    resources:
-        time=wf.get_resource("vep", "run", "time"),
-        memory=wf.get_resource("vep", "run", "memory"),
-        partition=wf.get_resource("vep", "run", "partition"),
-        tmpdir=wf.get_resource("vep", "run", "tmpdir"),
-    params:
-        args=wf.get_args("vep", "run"),
-    log:
-        **wf.get_log_file("vep", "run"),
-    wrapper:
-        wf.wrapper_path("vep/run")
+include: "../any_variant_annotation/Snakefile"

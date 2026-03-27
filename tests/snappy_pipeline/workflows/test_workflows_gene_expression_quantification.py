@@ -12,6 +12,7 @@ from snappy_pipeline.workflows.gene_expression_quantification import (
 )
 
 from .conftest import patch_module_fs
+from .common import get_expected_log_files_dict
 
 __author__ = "Clemens Messerschmidt"
 
@@ -49,7 +50,6 @@ def minimal_config():
             duplication: {}
             stats: {}
             salmon:
-              path_transcript_to_gene: /path/to/salmon/transcript_to_gene
               path_index: /path/to/salmon/index
 
         data_sets:
@@ -150,6 +150,44 @@ def test_featurecounts_step_part_get_resource(gene_expression_quantification_wor
 
 
 # Tests for SalmonStepPart    ----------------------------------------------------------------------
+
+
+def test_salmon_step_part_get_input_files(gene_expression_quantification_workflow):
+    """Tests SalmonStepPart.get_input_files()"""
+    # Define expected
+    expected = {
+        "done": "work/input_links/{library_name}/.done",
+        "features": "/path/to/features.gtf",
+        "indices": "/path/to/salmon/index",
+    }
+    # Get actual
+    actual = gene_expression_quantification_workflow.get_input_files("salmon", "run")
+    assert actual == expected
+
+
+def test_salmon_step_part_get_output_files(gene_expression_quantification_workflow):
+    """Tests SalmonCountsStepPart.get_output_files()"""
+    # Define expected
+    base_out = "work/salmon.{library_name}/out/salmon.{library_name}"
+    expected = {
+        "gene_sf": base_out + ".gene.sf",
+        "gene_sf_md5": base_out + ".gene.sf.md5",
+        "transcript_sf": base_out + ".transcript.sf",
+        "transcript_sf_md5": base_out + ".transcript.sf.md5",
+    }
+
+    # Get actual
+    actual = gene_expression_quantification_workflow.get_output_files("salmon", "run")
+    assert actual == expected
+
+
+def test_salmon_step_part_get_log_file(gene_expression_quantification_workflow):
+    """Tests SalmonCountsStepPart.get_log_file()"""
+    expected = get_expected_log_files_dict(
+        base_out="work/salmon.{library_name}/log/salmon.{library_name}"
+    )
+    actual = gene_expression_quantification_workflow.get_log_file("salmon", "run")
+    assert actual == expected
 
 
 def test_salmon_step_part_get_resource(gene_expression_quantification_workflow):

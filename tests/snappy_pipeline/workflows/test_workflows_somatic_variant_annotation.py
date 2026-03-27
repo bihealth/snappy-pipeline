@@ -5,7 +5,6 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 
@@ -41,11 +40,22 @@ def minimal_config():
             mutect2:
               contamination: {}
 
-          somatic_variant_annotation:
+          somatic_variant_filtration:
             path_somatic_variant: /path/to/somatic_variant_calling
+            has_annotation: false
+            filter_list:
+              - bcftools:
+                  include: "depth > min"
+
+          somatic_variant_annotation:
+            path_somatic_variant: /path/to/somatic_variant_filtration
             tools: ["vep"]
+            is_filtered: true
             vep:
               cache_dir: /path/to/dir/cache
+              plugins:
+                - {'name': 'local_plugin', 'path': '/path/to/local_plugin.pm'}
+                - {'name': 'remote_plugin', 'url': 'https://to.com/remote_plugin.pm'}
 
         data_sets:
           first_batch:
@@ -79,7 +89,7 @@ def somatic_variant_annotation_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+        "variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
     }
     # Construct the workflow object
     return SomaticVariantAnnotationWorkflow(
@@ -97,13 +107,17 @@ def somatic_variant_annotation_workflow(
 def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
-        "{mapper}.{var_caller}.{tumor_library}"
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.filtered.{tumor_library}"
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
         "reference": "/path/to/ref.fa",
+        "plugins": [
+            "work/vep_plugins/out/local_plugin.pm",
+            "work/vep_plugins/out/remote_plugin.pm",
+        ]
     }
     actual = somatic_variant_annotation_workflow.get_input_files("vep", "run")
     assert actual == expected
@@ -112,8 +126,8 @@ def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
 def test_vep_step_part_get_output_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.vep.{tumor_library}/out/"
-        "{mapper}.{var_caller}.vep.{tumor_library}"
+        "work/{mapper}.{var_caller}.vep.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.vep.filtered.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     full = {k.replace("vcf", "full"): v.replace(".vcf", ".full.vcf") for k, v in expected.items()}
@@ -125,8 +139,8 @@ def test_vep_step_part_get_output_files(somatic_variant_annotation_workflow):
 def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.vep.{tumor_library}/log/"
-        "{mapper}.{var_caller}.vep.{tumor_library}"
+        "work/{mapper}.{var_caller}.vep.filtered.{tumor_library}/log/"
+        "{mapper}.{var_caller}.vep.filtered.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_annotation_workflow.get_log_file("vep", "run")
@@ -135,7 +149,6 @@ def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
 
 def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
-    wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     expected = {
         "config": {
             "cache_dir": "/path/to/dir/cache",
@@ -156,7 +169,9 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
                 "canonical",
                 "rank",
                 "length",
-            ]
+            ],
+            "plugins": ["local_plugin", "remote_plugin"],
+            "plugins_dir": "work/vep_plugins/out",
         },
     }
     actual = somatic_variant_annotation_workflow.get_args("vep", "run")
@@ -181,13 +196,13 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
     """Test simple functionality of the workflow"""
     # Check created sub steps
     expected = ["link_out", "vep"]
-    actual = list(sorted(somatic_variant_annotation_workflow.sub_steps.keys()))
+    actual = sorted(somatic_variant_annotation_workflow.sub_steps.keys())
     assert actual == expected
 
     # Check result file construction
     tpl = (
-        "output/{mapper}.{var_caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/{dir_}/"
-        "{mapper}.{var_caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        "output/{mapper}.{var_caller}.{annotator}.filtered.P00{i}-T{t}-DNA1-WGS1/{dir_}/"
+        "{mapper}.{var_caller}.{annotator}.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected = [
         tpl.format(
@@ -226,6 +241,6 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         for var_caller in ("mutect2",)
         for annotator in ("vep",)
     ]
-    expected = list(sorted(expected))
-    actual = list(sorted(somatic_variant_annotation_workflow.get_result_files()))
+    expected = sorted(expected)
+    actual = sorted(somatic_variant_annotation_workflow.get_result_files())
     assert expected == actual

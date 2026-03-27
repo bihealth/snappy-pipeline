@@ -67,6 +67,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
+from .model import Salmon as SalmonConfigModel
 
 # Extensions
 EXTENSIONS = {
@@ -112,7 +113,12 @@ EXTENSIONS = {
         "rnaseqc_gaplen_high_md5": ".gapLengthHist_high.txt.md5",
     },
     "stats": {"stats": ".read_alignment_report.tsv", "stats_md5": ".read_alignment_report.tsv.md5"},
-    "salmon": {"transcript_sf": ".transcript.sf", "transcript_sf_md5": ".transcript.sf.md5"},
+    "salmon": {
+        "gene_sf": ".gene.sf",
+        "gene_sf_md5": ".gene.sf.md5",
+        "transcript_sf": ".transcript.sf",
+        "transcript_sf_md5": ".transcript.sf.md5",
+    },
 }
 
 DEFAULT_CONFIG = GeneExpressionQuantificationConfigModel.default_config_yaml_string()
@@ -129,15 +135,10 @@ class SalmonStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.cfg: SalmonConfigModel = self.config.salmon
         self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/salmon.{{library_name}}/out/salmon.{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
-        if (
-            self.config.salmon.path_transcript_to_gene is not None
-            and self.config.salmon.path_transcript_to_gene != ""
-        ):
-            self.extensions["gene_sf"] = ".gene.sf"
-            self.extensions["gene_sf_md5"] = ".gene.sf.md5"
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_set_infos,
@@ -145,12 +146,13 @@ class SalmonStepPart(BaseStepPart):
             preprocessed_path=self.config.path_link_in,
         )
 
-    @classmethod
     @dictify
-    def get_input_files(cls, action):
+    def get_input_files(self, action):
         """Return input files"""
         assert action == "run"
         yield "done", "work/input_links/{library_name}/.done"
+        yield "features", self.w_config.static_data_config.features.path
+        yield "indices", self.cfg.path_index
 
     @dictify
     def get_output_files(self, action):
@@ -160,7 +162,7 @@ class SalmonStepPart(BaseStepPart):
             yield k, self.base_path_out.format(ext=v)
 
     @dictify
-    def _get_log_file(self, action):
+    def get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
         prefix = "work/salmon.{library_name}/log/salmon.{library_name}"
@@ -529,11 +531,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # Salmon special case
         salmon_name_pattern = "salmon.{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
-        if self.w_config.step_config[
-            "gene_expression_quantification"
-        ].salmon.path_transcript_to_gene:
-            salmon_exts["gene_sf"] = ".gene.sf"
-            salmon_exts["gene_sf_md5"] = ".gene.sf.md5"
 
         # TODO: too many ifs, use shortcut?
         # if fixed, please do the same for somatic_gene_fusion_calling

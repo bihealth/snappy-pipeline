@@ -907,6 +907,24 @@ def cancer_sheet_fake_fs_path_link_in(fake_fs, cancer_sheet_tsv):
 
 
 @pytest.fixture
+def generic_sheet_fake_fs(fake_fs, generic_mix_extraction_sheet_tsv):
+    """Return fake file system setup with files for the cancer_sheet_tsv"""
+    # Create work directory
+    fake_fs.fs.makedirs("/work", exist_ok=True)
+    # Create FASTQ read files for the samples
+    tpl = "/path/{folder}/FCXXXXXX/L001/{folder}_R{i}.fastq.gz"
+    for line in generic_mix_extraction_sheet_tsv.splitlines()[8:]:
+        folder = line.split("\t")[6]
+        fake_fs.fs.create_file(tpl.format(folder=folder, i=1), create_missing_dirs=True)
+        fake_fs.fs.create_file(tpl.format(folder=folder, i=2), create_missing_dirs=True)
+    # Create the sample TSV file
+    fake_fs.fs.create_file(
+        "/work/config/sheet.tsv", contents=generic_mix_extraction_sheet_tsv, create_missing_dirs=True
+    )
+    return fake_fs
+
+
+@pytest.fixture
 def aligner_indices_fake_fs(fake_fs):
     """Return fake file system setup with files for aligner indices"""
     d = {
@@ -925,6 +943,77 @@ def aligner_indices_fake_fs(fake_fs):
     for aligner, suffixes in d.items():
         for suffix in suffixes:
             fake_fs.fs.create_file("/path/to/{}/index{}".format(aligner, suffix))
+    return fake_fs
+
+
+@pytest.fixture
+def hla_typing_result_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file optitype.library.txt"""
+    # Create work directory
+    fake_fs.fs.makedirs("/HLA_TYPING/output", exist_ok=True)
+    # Create HLA types for all samples
+    tpl = "/HLA_TYPING/output/{typing_tool}.{library_name}/out/{typing_tool}.{library_name}.json"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
+        library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+        contents = r"""
+{
+    "A": ["A*02:01", "A*11:01"],
+    "B": ["B*15:32"],
+    "C": ["C*04:03"]
+}"""
+        fake_fs.fs.create_file(
+            tpl.format(typing_tool="optitype", library_name=library_name),
+            contents=contents,
+            create_missing_dirs=True,
+        )
+        if isTumor == "Y" and extract =="RNA":
+            contents = r"""
+{
+    "A": ["A*02:01", "A*11:01"],
+    "B": ["B*15:32"],
+    "C": ["C*04:04"],
+    "DPB1": ["DPB1*14:01:01"]
+}"""
+            fake_fs.fs.create_file(
+                tpl.format(typing_tool="star.arcashla", library_name=library_name),
+                contents=contents,
+                create_missing_dirs=True,
+            )
+    return fake_fs
+
+
+@pytest.fixture
+def strandedness_result_fake_fs(fake_fs, cancer_sheet_tsv):
+    """Return fake file star.library.decision.json"""
+    # Create work directory
+    fake_fs.fs.makedirs("NGS_MAPPING/output", exist_ok=True)
+    # Create HLA types for all samples
+    tpl = "NGS_MAPPING/output/{mapping_tool}.{library_name}/strandedness/{mapping_tool}.{library_name}.decision.json"
+    for line in cancer_sheet_tsv.splitlines()[8:]:
+        (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
+        if isTumor == "Y" and extract =="RNA":
+            library_name = f"{donor}-{sample}-{extract}1-{assay}1"
+            contents = r"""
+{
+    "library_name": "{library_name}",
+    "bed_path": "/path/to/bed",
+    "bed_file_md5": "00000000000000000000000000000000",
+    "bam_path": "/path/to/bam",
+    "strand_from_user": "-1",
+    "strand_from_infer": "2",
+    "decision_threshold": 0.85,
+    "endedness": "Pair",
+    "fraction_forward": 0.0011,
+    "fraction_reverse": 0.9989,
+    "fraction_failed": 0.0000,
+    "decision": "2"
+}"""  # .format(library_name=library_name) triggers an error
+            fake_fs.fs.create_file(
+                tpl.format(mapping_tool="star", library_name=library_name),
+                contents=contents,
+                create_missing_dirs=True,
+            )
     return fake_fs
 
 

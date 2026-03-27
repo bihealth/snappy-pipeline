@@ -14,7 +14,7 @@ from .conftest import patch_module_fs
 
 
 @pytest.fixture(scope="module")  # otherwise: performance issues
-def minimal_config_list():
+def minimal_config():
     """Return YAML parsing result for configuration"""
     yaml = ruamel_yaml.YAML()
     return yaml.load(
@@ -31,11 +31,25 @@ def minimal_config_list():
             bwa:
               path_index: /path/to/bwa/index.fasta
 
+          somatic_variant_calling:
+            path_ngs_mapping: ../ngs_mapping
+            tools: [mutect2]
+            mutect2:
+              contamination:
+                enabled: true
+                common_variants: /path/to/common_variants.vcf
+
+          somatic_variant_annotation:
+            path_somatic_variant: ../path/to/somatic_variant_calling
+            tools: [vep]
+            vep: {}
+
           somatic_variant_filtration:
             tools_ngs_mapping: ['bwa']
             tools_somatic_variant_calling: ['mutect2']
             tools_somatic_variant_annotation: ['vep']
             path_somatic_variant: "/SOMATIC_VARIANT_ANNOTATION"
+            has_annotation: true
             filter_list:
             - dkfz: {}
             - ebfilter:
@@ -62,9 +76,9 @@ def minimal_config_list():
 
 @pytest.fixture
 # @pytest.mark.filterwarnings("ignore:.*Could not find .*")
-def somatic_variant_filtration_workflow_list(
+def somatic_variant_filtration_workflow(
     dummy_workflow,
-    minimal_config_list,
+    minimal_config,
     config_lookup_paths,
     work_dir,
     config_paths,
@@ -78,12 +92,12 @@ def somatic_variant_filtration_workflow_list(
     patch_module_fs("snappy_pipeline.workflows.ngs_mapping", aligner_indices_fake_fs, mocker)
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "/NGS_MAPPING/" + x,
-        "somatic_variant": lambda x: "/SOMATIC_VARIANT_ANNOTATION/" + x,
+        "variant": lambda x: "/SOMATIC_VARIANT_ANNOTATION/" + x,
     }
     # Construct the workflow object
     return SomaticVariantFiltrationWorkflow(
         dummy_workflow,
-        minimal_config_list,
+        minimal_config,
         config_lookup_paths,
         config_paths,
         work_dir,
@@ -93,7 +107,7 @@ def somatic_variant_filtration_workflow_list(
 # Tests for one_filter --------------------------------------------------------
 
 
-def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
+def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflow):
     """Tests OneFilterStepPart.get_input_files()"""
     wildcards = Wildcards(
         fromdict={
@@ -107,10 +121,9 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
     expected = {
         "vcf": "/SOMATIC_VARIANT_ANNOTATION/output/bwa.mutect2.vep.P001-T1-DNA1-WGS1/out/bwa.mutect2.vep.P001-T1-DNA1-WGS1.vcf.gz",
         "bam": "/NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
     }
-    actual = somatic_variant_filtration_workflow_list.get_input_files("one_dkfz", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow.get_input_files("one_dkfz", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(
@@ -125,41 +138,40 @@ def test_one_filter_step_part_get_input_files(somatic_variant_filtration_workflo
     expected = {
         "vcf": "work/bwa.mutect2.vep.P001-T1-DNA1-WGS1/out/bwa.mutect2.vep.P001-T1-DNA1-WGS1.dkfz_1.vcf.gz",
         "bam": "/NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
-        "normal": "/NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "reference": "/path/to/ref.fa",
         "txt": "work/bwa.eb_filter.panel_of_normals/out/bwa.eb_filter.panel_of_normals.txt",
     }
-    actual = somatic_variant_filtration_workflow_list.get_input_files("one_ebfilter", "run")(
+    actual = somatic_variant_filtration_workflow.get_input_files("one_ebfilter", "run")(
         wildcards
     )
     assert actual == expected
 
 
-def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
+def test_one_filter_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests OneFilterStepPart.get_output_files()"""
     base_out = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.dkfz_{filter_nb}"
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
-    actual = somatic_variant_filtration_workflow_list.get_output_files("one_dkfz", "run")
+    actual = somatic_variant_filtration_workflow.get_output_files("one_dkfz", "run")
     assert actual == expected
 
     expected = {"txt": "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter.panel_of_normals.txt"}
-    actual = somatic_variant_filtration_workflow_list.get_output_files("one_ebfilter", "write_panel")
+    actual = somatic_variant_filtration_workflow.get_output_files("one_ebfilter", "write_panel")
     assert actual == expected
 
 
-def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow_list):
+def test_one_filter_step_part_get_log_file(somatic_variant_filtration_workflow):
     """Tests OneFilterStepPart.get_log_file()"""
     base_out = "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/log/{mapper}.{var_caller}.{annotator}.{tumor_library}.ebfilter_{filter_nb}"
     expected = get_expected_log_files_dict(base_out=base_out)
-    actual = somatic_variant_filtration_workflow_list.get_log_file("one_ebfilter", "run")
+    actual = somatic_variant_filtration_workflow.get_log_file("one_ebfilter", "run")
     assert actual == expected
 
 
-def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list):
+def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow):
     """Tests OneFilterStepPart.get_args()"""
     wildcards = Wildcards(fromdict={"filter_nb": 1})
     expected = {"filter_name": "dkfz_1"}
-    actual = somatic_variant_filtration_workflow_list.get_args("one_dkfz", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow.get_args("one_dkfz", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 2})
@@ -173,33 +185,33 @@ def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list)
         "min_baseq": 15,
         "path_panel_of_normals_sample_list": "",
     }
-    actual = somatic_variant_filtration_workflow_list.get_args("one_ebfilter", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow.get_args("one_ebfilter", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 3})
     expected = {"filter_name": "bcftools_3", "include": "include_statment", "exclude": ""}
-    actual = somatic_variant_filtration_workflow_list.get_args("one_bcftools", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow.get_args("one_bcftools", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 4})
     expected = {"filter_name": "regions_4", "exclude": "/path/to/regions.bed", "include": "", "path_bed": ""}
-    actual = somatic_variant_filtration_workflow_list.get_args("one_regions", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow.get_args("one_regions", "run")(wildcards)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 5})
     expected = {"filter_name": "protected_5", "path_bed": "/path/to/protected.bed"}
-    actual = somatic_variant_filtration_workflow_list.get_args("one_protected", "run")(wildcards)
+    actual = somatic_variant_filtration_workflow.get_args("one_protected", "run")(wildcards)
     assert actual == expected
 
 
-def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow_list):
+def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_workflow):
     """Tests OneFilterStepPart.get_resource()"""
     # Define expected
     expected_dict = {"threads": 1, "time": "24:00:00", "memory": "2048M", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_filtration_workflow_list.get_resource(
+        actual = somatic_variant_filtration_workflow.get_resource(
             "one_ebfilter", "run", resource
         )()
         assert actual == expected, msg_error
@@ -208,7 +220,7 @@ def test_one_filter_step_part_get_resource_usage(somatic_variant_filtration_work
 # Tests for last_filter -------------------------------------------------------
 
 
-def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workflow_list):
+def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workflow):
     """Tests LastFilterStepPart.get_input_files()"""
     base_tpl = "{{mapper}}.{{var_caller}}.{{annotator}}.{{tumor_library}}"
     log_tpl = "work/" + base_tpl + "/log/" + base_tpl + ".{filt}.{ext}{chksum}"
@@ -221,11 +233,11 @@ def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workfl
         ],
         "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.protected_5.vcf.gz",
     }
-    actual = somatic_variant_filtration_workflow_list.get_input_files("last_filter", "run")
+    actual = somatic_variant_filtration_workflow.get_input_files("last_filter", "run")
     assert actual == expected
 
 
-def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workflow_list):
+def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workflow):
     """Tests LastFilterStepPart.get_output_files()"""
     base_name = "{mapper}.{var_caller}.{annotator}.filtered.{tumor_library}"
     base_out = "work/" + base_name + "/out/" + base_name
@@ -237,14 +249,14 @@ def test_last_filter_step_part_get_output_files(somatic_variant_filtration_workf
     base_out = "work/" + base_name + "/log/" + base_name
     expected["log"] = base_out + ".merged.tar.gz"
     expected["log_md5"] = expected["log"] + ".md5"
-    actual = somatic_variant_filtration_workflow_list.get_output_files("last_filter", "run")
+    actual = somatic_variant_filtration_workflow.get_output_files("last_filter", "run")
     assert actual == expected
 
 
-# Tests for SomaticVariantFiltrationWorkflow (filter_list) ---------------------
+# Tests for SomaticVariantFiltrationWorkflow --------------------------------
 
 
-def test_somatic_variant_filtration_workflow_list(somatic_variant_filtration_workflow_list):
+def test_somatic_variant_filtration_workflow(somatic_variant_filtration_workflow):
     """Test simple functionality of the workflow"""
     # Check result file construction
     tpl = "output/bwa.mutect2.vep.filtered.P00{i}-T{t}-DNA1-WGS1/out/bwa.mutect2.vep.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}{chksum}"
@@ -262,5 +274,5 @@ def test_somatic_variant_filtration_workflow_list(somatic_variant_filtration_wor
         for chksum in ("", ".md5")
     ]
     expected = list(sorted(expected))
-    actual = list(sorted(somatic_variant_filtration_workflow_list.get_result_files()))
+    actual = list(sorted(somatic_variant_filtration_workflow.get_result_files()))
     assert expected == actual

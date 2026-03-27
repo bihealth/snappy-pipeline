@@ -1,0 +1,437 @@
+# -*- coding: utf-8 -*-
+"""Implementation of the ``variant_calling`` step
+
+The ``variant_calling` step takes the output of the ``ngs_mapping`` step and performs small
+variant calling on the read alignments.  The output are variant calls in VCF (and optionally gVCF)
+files and quality control statistics on these data.
+
+==========
+Properties
+==========
+
+overall stability
+
+    **stable**
+
+applicable to
+
+    germline variant calling
+
+generally applicable to
+
+    short read variant calling
+
+==========
+Step Input
+==========
+
+BAM files from the ``ngs_mapping`` step.
+
+===========
+Step Output
+===========
+
+Creates one output directory for each read mapper (from ``ngs_mapping``), each variant caller, and
+each pedigree from the germline sample sheet.
+
+**Primary Output**
+
+- ``output/{mapper}.{caller}.{index_library}/out/{mapper}.{caller}.{index_library}.vcf.gz``
+
+**Additional Output**
+
+The callers implementing a gVCF workflow (currently only ``gatk4_hc_gvcf``) also create one output
+gVCF file for the pedigree.
+
+- ``output/{mapper}.{caller}.{index_library}/out/{mapper}.{caller}.{index_library}.g.vcf.gz``
+
+Further, each VCF and gVCF file gets an appropriate TBI index file ``{vcf_file}.tbi`` and each output
+is gets an appropriate MD5 checksum file ``{file}.md5``.
+
+====================
+Global Configuration
+====================
+
+- If GATK HaplotypeCaller or GATK UnifiedGenotyper are activated then
+  ``static_data_config/dbsnp/path`` must be properly configured
+- ``static_data_config/reference/path`` must be set appropriately
+
+=====================
+Default Configuration
+=====================
+
+The default configuration is as follows.
+
+.. include:: DEFAULT_CONFIG_variant_calling.rst
+
+===============
+Variant Callers
+===============
+
+The following germline variant callers are currently available.
+
+``gatk4_hc_gvcf``
+
+    Variant calling with GATK v4 HaplotypeCaller using the gVCF workflow consisting of
+    variant discovery with ``HaplotypeCaller``, merging of the gVCF files withing each
+    pedigree with ``CombineGVCFs`` and genotyping with ``GenotypeGVCFs``.
+
+    This is the mainly used variant caller and the only one enabled by default.
+
+    The reason is this being the main advertised run mode by the GATK team and this workflow
+    enables physical phasing information in the output VCF files.
+
+``gatk4_hc_joint``
+
+    Variant calling with the GATK v4 HaplotypeCaller using joint calling with direct VCF
+    generation.
+
+    This variant caller is provided as a fallback to explore problems with *de novo* variant
+    calls that may have been introduced by the gVCF workflow.
+
+    Disabled by default.
+
+``gatk3_hc``
+
+    Joint calling with GATK v3 HaplotypeCaller.
+
+    This caller is provided for historical reasons as earlier versions of SNAPPY pipeline
+    were based on this workflow.
+
+    Disabled by default.
+
+``gatk3_ug``
+
+    Joint calling with GATK v3 UnifiedGenotyper.
+
+    This caller is provided for historical reasons and to provide a vote in creating consensus
+    sets of variant calls.
+
+``bcftools_call``
+
+    Variant calling with ``bcftools mpileup | bcftools call``.
+
+    This caller is provided for establishing baseline variant calls in benchmark situations.
+    BCFtools allows for fast and efficient variant calling at the cost of some sensitivity
+    and specificity.
+
+    Disabled by default.
+
+=======
+Reports
+=======
+
+``jannovar_stats``
+
+    Create statistics on variants using ``jannovar statsistics`` for each pedigree.
+
+    ::
+
+        report/jannovar_stats/{mapper}.{caller}.{index_library}.{donor_library}.txt
+
+``bcftools_stats``
+
+    Create statistics on variants using ``bcftools stats`` for each donor in each pedigree
+    for each mapper and caller.
+
+    ::
+
+        report/bcftools_stats/{mapper}.{caller}.{index_library}.{donor_library}.txt
+
+``baf_file_generation``
+
+    Create one UCSC BigWig file for each individual in each pedigree for each mapper and caller
+    with B-allele fraction.  These files can be used for to visually confirm structural variants
+    or runs of homozygosity.
+
+    ::
+
+        report/baf/{mapper}.{caller}.{index_library}.{donor_library}.bw
+
+``roh_calling``
+
+    Perform run-of-homozygosity calling with ``bcftools roh``.
+
+=========
+Log Files
+=========
+
+For each variant caller and report generator, the following log files are created into the
+``log`` directory.
+
+``{file}.conda_info.txt``
+
+    Output of ``conda info`` of the executing conda environment.
+
+``{file}.conda_list.txt``
+
+    Output of ``conda list`` of the executing conda environment with list of the full package
+    list and exact versions.
+
+``{file}.log``
+
+    Log output of the execution.
+
+``{file}.wrapper.py``
+
+    The actual Snakemake wrapper file with all input / output / parameter values.
+
+====================
+Implementation Notes
+====================
+
+- All variant callers are parallelized using GNU parallel on genome-wide windows generated by
+  GATK v4 ``PreprocessIntervals``.
+- Each output file has an accompanying MD5 sum.
+
+==============
+Example Output
+==============
+
+Given a pedigree with index ``index`` and two more donors ``mother`` and ``father``, the following
+files would be created into ``output/`` (each VCF file has a ``.tbi`` file and overall each file has
+a ``.md5`` file).  In this case, the read mapper is ``bwa`` and the variant caller is ``gatk4_hc_gvcf``.
+
+
+```
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.conda_info.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.conda_list.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.environment.yaml
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.log
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.wrapper.py
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/out/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.g.vcf.gz
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/out/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.vcf.gz
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf.bw
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf.bw
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf.bw
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.txt
+bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/jannovar_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.txt
+```
+"""
+
+import re
+from itertools import chain
+from typing import Any
+
+from biomedsheets.shortcuts import GenericSampleSheet
+from snakemake.io import expand
+
+from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.common.samplesheet import sample_sheets, filter_table_by_modality
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    ResourceUsage,
+)
+from snappy_pipeline.workflows.abstract.common import (
+    SnakemakeDict,
+    SnakemakeDictItemsGenerator,
+    SnakemakeListItemsGenerator,
+)
+from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+
+from .model import GermlineVariantCalling as GermlineVariantCallingConfigModel
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+#: Extensions of files to create as main payload
+EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
+
+#: Names of the files to create for the extension
+EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
+
+#: Available germline variant callers
+VARIANT_CALLERS = ("gatk4_hc",)
+
+#: Default configuration for the variant_calling step
+DEFAULT_CONFIG = GermlineVariantCallingConfigModel.default_config_yaml_string()
+
+
+class Gatk4HaplotypeCallerGvcfStepPart(BaseStepPart):
+    """Germline variant calling with GATK 4 HaplotypeCaller and gVCF workflow"""
+
+    name = "gatk4_hc"
+
+    actions = ("discover", "genotype")
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        tpl = f"{{mapper}}.{self.name}.{{library_name}}"
+        self.base_path_out = f"work/{tpl}/out/{tpl}"
+        self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
+
+    def get_input_files(self, action) -> SnakemakeDict:
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
+
+    def get_output_files(self, action) -> SnakemakeDict:
+        self._validate_action(action)
+        return getattr(self, f"_get_output_files_{action}")()
+
+    @dictify
+    def _get_input_files_discover(self, wildcards):
+        yield "reference", self.w_config.static_data_config.reference.path
+        yield "dbsnp", self.w_config.static_data_config.dbsnp.path
+        tpl = f"{wildcards.mapper}.{wildcards.library_name}"
+        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        yield "bam", ngs_mapping(f"output/{tpl}/out/{tpl}.bam")
+
+    @dictify
+    def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
+        yield "reference", self.w_config.static_data_config.reference.path
+        tpl = f"{wildcards.mapper}.{self.name}.{wildcards.library_name}"
+        gvcf = f"work/{tpl}/out/{tpl}.discover.g.vcf.gz"
+        yield "gvcf", gvcf
+        yield "gvcf_md5", gvcf + ".md5"
+        yield "gvcf_tbi", gvcf + ".tbi"
+        yield "gvcf_tbi_md5", gvcf + ".tbi.md5"
+
+    @dictify
+    def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
+        tpl = f"{{mapper}}.{self.name}.{{library_name}}"
+        gvcf = f"work/{tpl}/out/{tpl}.discover.g.vcf.gz"
+        yield "gvcf", gvcf
+        yield "gvcf_md5", gvcf + ".md5"
+        yield "gvcf_tbi", gvcf + ".tbi"
+        yield "gvcf_tbi_md5", gvcf + ".tbi.md5"
+        yield "output_links", []
+
+    @dictify
+    def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
+        tpl = f"{{mapper}}.{self.name}.{{library_name}}"
+        gvcf = f"work/{tpl}/out/{tpl}"
+        result = {
+            "gvcf": gvcf + ".g.vcf.gz",
+            "gvcf_md5": gvcf + ".g.vcf.gz.md5",
+            "gvcf_tbi": gvcf + ".g.vcf.gz.tbi",
+            "gvcf_tbi_md5": gvcf + ".g.vcf.gz.tbi.md5",
+            "vcf": gvcf + ".vcf.gz",
+            "vcf_md5": gvcf + ".vcf.gz.md5",
+            "vcf_tbi": gvcf + ".vcf.gz.tbi",
+            "vcf_tbi_md5": gvcf + ".vcf.gz.tbi.md5",
+        }
+        yield from result.items()
+        yield (
+            "output_links",
+            [
+                re.sub(r"^work/", "output/", work_path)
+                for work_path in chain(result.values(), self.get_log_file("genotype").values())
+            ],
+        )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return {
+            "step_key": "variant_calling",
+            "caller_key": "gatk4_hc",
+            "window_length": self.config.gatk4_hc.window_length,
+            "num_threads": self.config.gatk4_hc.num_threads,
+            "allow_seq_dict_incompatibility": self.config.gatk4_hc.allow_seq_dict_incompatibility,
+            "ignore_chroms": self.config.ignore_chroms,
+        }
+
+    @dictify
+    def get_log_file(self, action) -> SnakemakeDictItemsGenerator:
+        """Return dict of log files in the "log" directory."""
+        _ = action
+        token = f"{{mapper}}.{self.name}.{{library_name}}"
+        prefix = f"work/{token}/log/{token}_{action}"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+            ("wrapper", ".wrapper.py"),
+            ("env_yaml", ".environment.yaml"),
+        )
+        for key, ext in key_ext:
+            yield key, f"{prefix}{ext}"
+            yield f"{key}_md5", f"{prefix}{ext}.md5"
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        self._validate_action(action)
+        num_threads = self.config[self.name].num_threads
+        mem_per_thread = 5.5
+        mem_total = int(mem_per_thread * num_threads + 0.5)
+        return ResourceUsage(
+            threads=num_threads,
+            time="2-00:00:00",
+            memory=f"{mem_total}G",
+        )
+
+
+class GermlineVariantCallingWorkflow(BaseStep):
+    """Workflow implementation for germline variant calling"""
+
+    name = "germline_variant_calling"
+    sheet_shortcut_class = GenericSampleSheet
+
+    @classmethod
+    def default_config_yaml(cls) -> str:
+        """Return default config YAML, to be overwritten by project-specific one"""
+        return DEFAULT_CONFIG
+
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+        super().__init__(
+            workflow,
+            config,
+            config_lookup_paths,
+            config_paths,
+            workdir,
+            config_model_class=GermlineVariantCallingConfigModel,
+            previous_steps=(NgsMappingWorkflow,),
+        )
+        # Register sub step classes so the sub steps are available
+        self.register_sub_step_classes((Gatk4HaplotypeCallerGvcfStepPart,))
+        # Register sub workflows
+        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+
+        self.table = filter_table_by_modality(sample_sheets(self.sheets), modality="dna")
+
+    @listify
+    def get_result_files(self) -> SnakemakeListItemsGenerator:
+        for tool in self.sub_steps.values():
+            actions = tool.actions
+            for action in actions:
+                for tpl in tool.get_output_files(action).get("output_links", []):
+                    yield from expand(
+                        tpl,
+                        mapper=self.w_config.step_config["ngs_mapping"]["tools"]["dna"],
+                        library_name=self.table["ngs_library"],
+                    )
