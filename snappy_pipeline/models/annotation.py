@@ -17,7 +17,13 @@ class VepPlugin(SnappyModel):
     name: str
     path: str | None = None
     url: Annotated[
-        str | None, Field(examples=["https://github.com/Ensembl/VEP_plugins/<plugin_name>.pm"])
+        str | None,
+        Field(
+            examples=[
+                "https://raw.githubusercontent.com/Ensembl/VEP_plugins/refs/heads/release/<release number>/<plugin name>.pm",
+                "https://raw.githubusercontent.com/griffithlab/pVACtools/refs/heads/master/pvactools/tools/pvacseq/VEP_plugins/(Frameshift|Wildtype).pm",
+            ]
+        ),
     ] = None
 
     @model_validator(mode="after")

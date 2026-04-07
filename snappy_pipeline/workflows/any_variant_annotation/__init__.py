@@ -247,7 +247,7 @@ class VepAnnotateVcfStepPart(AnnotateVcfStepPart):
         """Return arguments to pass down."""
         self._validate_action(action)
         if action == "plugins":
-            return self.config.get(self.name).get("plugins", [])
+            return list(map(dict, self.config.get(self.name).get("plugins", [])))
         vep_config = dict(self.config.get(self.name).model_dump(by_alias=True))
         vep_config["plugins"] = [plugin["name"] for plugin in vep_config["plugins"]]
         vep_config["plugins_dir"] = "work/vep_plugins/out"
