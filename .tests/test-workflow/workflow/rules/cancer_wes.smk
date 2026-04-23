@@ -63,6 +63,7 @@ rule cancer_wes_execute_pipeline:
         "../envs/snappy.yaml"
     shell:
         """
+        unset CC CXX CPP LD AR AS NM CFLAGS CXXFLAGS LDFLAGS
         unset SNAKEMAKE_PROFILE
         touch {log}
         for step in {params.steps}
