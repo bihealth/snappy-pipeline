@@ -4,3 +4,4 @@ channels:
   - nodefaults
 dependencies:
   - ensembl-vep==109.3
+  - gxx_linux-64
