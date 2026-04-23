@@ -66,9 +66,6 @@ jobs:
         environment-file: environment.yml
         cache-number: 2
 
-    - name: Downgrade base conda explicitly to workaround v26.1 post-link bug
-      run: conda install -n base -c conda-forge -y "conda<26"
-
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
       with:
@@ -98,9 +95,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
         cache-number: 2
-
-    - name: Downgrade base conda explicitly to workaround v26.1 post-link bug
-      run: conda install -n base -c conda-forge -y "conda<26"
 
     - name: Test workflow (local FASTQs)
       uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
