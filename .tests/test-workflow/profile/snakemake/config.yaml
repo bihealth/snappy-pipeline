@@ -1,0 +1,3 @@
+use-conda: true
+conda-frontend: mamba
+cores: all
