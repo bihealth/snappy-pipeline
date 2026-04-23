@@ -4,3 +4,4 @@ channels:
   - nodefaults
 dependencies:
   - ensembl-vep==109.3
+  - openmpi >=5,<6
