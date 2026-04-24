@@ -132,6 +132,25 @@ rule one_bcftools:
         wf.wrapper_path("bcftools/filter")
 
 
+rule one_vembrane:
+    input:
+        unpack(wf.get_input_files("one_vembrane", "run")),
+    output:
+        **wf.get_output_files("one_vembrane", "run"),
+    params:
+        args=wf.get_args("one_vembrane", "run"),
+    threads: wf.get_resource("one_vembrane", "run", "threads")
+    resources:
+        time=wf.get_resource("one_vembrane", "run", "time"),
+        memory=wf.get_resource("one_vembrane", "run", "memory"),
+        partition=wf.get_resource("one_vembrane", "run", "partition"),
+        tmpdir=wf.get_resource("one_vembrane", "run", "tmpdir"),
+    log:
+        **wf.get_log_file("one_vembrane", "run"),
+    wrapper:
+        wf.wrapper_path("vembrane/filter")
+
+
 rule one_regions:
     input:
         unpack(wf.get_input_files("one_regions", "run")),

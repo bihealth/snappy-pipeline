@@ -390,6 +390,11 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
     filter_name = "regions"
 
 
+class OneFilterVembraneStepPart(OneFilterStepPart):
+    name = "one_vembrane"
+    filter_name = "vembrane"
+
+
 class OneFilterProtectedStepPart(OneFilterStepPart):
     name = "one_protected"
     filter_name = "protected"
@@ -521,6 +526,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 OneFilterEbfilterStepPart,
                 OneFilterBcftoolsStepPart,
                 OneFilterRegionsStepPart,
+                OneFilterVembraneStepPart,
                 OneFilterProtectedStepPart,
                 LastFilterStepPart,
                 LinkOutStepPart,

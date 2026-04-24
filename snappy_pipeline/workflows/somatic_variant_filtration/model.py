@@ -69,6 +69,14 @@ class Regions(SnappyModel):
         return {}
 
 
+class Vembrane(SnappyModel):
+    expression: str
+    """The vembrane filter expression to use for filtering"""
+
+    extra_args: str = ""
+    """Extra arguments to pass to vembrane filter."""
+
+
 class Protected(SnappyModel):
     path_bed: str
     """Bed file of regions that should not be filtered out at all."""
@@ -84,6 +92,7 @@ class Filter(TypedDict, total=False):
     dkfz: Dkfz
     ebfilter: Ebfilter
     regions: Regions
+    vembrane: Vembrane
     protected: Protected
 
 
@@ -121,6 +130,9 @@ class SomaticVariantFiltration(SnappyStepModel):
       exclude: ""                                   # Expression to be used in bcftools view --exclude
     regions:
       path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
+    vembrane:
+      expression: REQUIRED                          # The vembrane filter expression to use for filtering
+      extra_args: ""                                # Extra arguments to pass to vembrane filter.
     protected:
       path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
     """
