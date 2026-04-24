@@ -94,7 +94,7 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Names of the annotator tools
-ANNOTATION_TOOLS = ("vep",)
+ANNOTATION_TOOLS = ("vep", "mehari")
 
 #: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = SomaticVariantAnnotationConfigModel.default_config_yaml_string()
@@ -239,6 +239,48 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         )
 
 
+class MehariAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
+    """Annotate VCF file from somatic calling using mehari"""
+
+    #: Step name
+    name = "mehari"
+
+    #: Annotator name to construct output paths
+    annotator = "mehari"
+
+    #: Class available actions
+    actions = ("run",)
+
+    @dictify
+    def get_input_files(self, action: str):
+        input_files = super().get_input_files(action)
+        for k, v in input_files.items():
+            yield k, v
+
+        yield "reference", self.w_config.static_data_config.reference.path
+
+        if self.config.mehari.transcripts:
+            yield "transcripts", self.config.mehari.transcripts
+        if self.config.mehari.frequencies:
+            yield "frequencies", self.config.mehari.frequencies
+        if self.config.mehari.clinvar:
+            yield "clinvar", self.config.mehari.clinvar
+
+    def get_args(self, action):
+        """Return arguments to pass down."""
+        self._validate_action(action)
+        return {"config": self.config.mehari.model_dump()}
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        """Get Resource Usage"""
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=self.config.mehari.threads,
+            time="00:20:00",
+            memory="8G",
+        )
+
+
 class SomaticVariantAnnotationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
@@ -281,7 +323,9 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             previous_steps=previous_steps,
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((VepAnnotateSomaticVcfStepPart, LinkOutStepPart))
+        self.register_sub_step_classes(
+            (VepAnnotateSomaticVcfStepPart, MehariAnnotateSomaticVcfStepPart, LinkOutStepPart)
+        )
         # Register sub workflows
         if self.config.is_filtered:
             self.register_sub_workflow(
