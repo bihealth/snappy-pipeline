@@ -18,7 +18,7 @@ rule render_cancer_wes_config:
     params:
         reference=lambda wildcards, input: os.path.abspath(input.reference),
         bwa_index=lambda wildcards, input: os.path.splitext(os.path.abspath(input.bwa_index))[0],
-        transcript_db=lambda wildcards, input: os.path.abspath(input.mehari_transcript_db),
+        transcript_db=lambda wildcards, input: os.path.abspath(input.transcript_db),
     template_engine:
         "jinja2"
 
