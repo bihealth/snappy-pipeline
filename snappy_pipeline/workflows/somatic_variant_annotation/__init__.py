@@ -269,7 +269,7 @@ class MehariAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     def get_args(self, action):
         """Return arguments to pass down."""
         self._validate_action(action)
-        return {"config": self.config.mehari.model_dump()}
+        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage"""
