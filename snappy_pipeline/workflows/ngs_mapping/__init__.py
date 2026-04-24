@@ -868,8 +868,8 @@ class StarStepPart(ReadMappingStepPart):
                 key,
                 list(
                     filter(
-                        lambda x: not (
-                            x.endswith(".GeneCounts.tab") or x.endswith(".GeneCounts.tab.md5")
+                        lambda x: (
+                            not (x.endswith(".GeneCounts.tab") or x.endswith(".GeneCounts.tab.md5"))
                         ),
                         paths,
                     )
