@@ -5,11 +5,12 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyStepModel, validators
 from snappy_pipeline.workflows.any_variant_calling.model import VariantOrigin
-from snappy_pipeline.models.annotation import Vep
+from snappy_pipeline.models.annotation import Mehari, Vep
 
 
 class Tool(enum.StrEnum):
     vep = "vep"
+    mehari = "mehari"
 
 
 class AnyVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
@@ -31,6 +32,8 @@ class AnyVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
     """default to those configured for somatic_variant_calling"""
 
     vep: Vep | None = None
+
+    mehari: Mehari | None = None
 
     @model_validator(mode="after")
     def ensure_tools_defined_for_any_origin(self):

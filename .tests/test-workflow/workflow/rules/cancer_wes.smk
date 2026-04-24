@@ -10,7 +10,7 @@ rule render_cancer_wes_config:
         template="config/cancer_wes/config.yaml.jinja2",
         reference="resources/refs/subregion.fa",
         bwa_index="resources/refs/subregion.bwt",
-        vep_cache="resources/cache/vep",
+        transcripts="resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst",
     output:
         config["pipeline-configuration"]["cancer_wes"]["config"],
     log:
@@ -18,7 +18,7 @@ rule render_cancer_wes_config:
     params:
         reference=lambda wildcards, input: os.path.abspath(input.reference),
         bwa_index=lambda wildcards, input: os.path.splitext(os.path.abspath(input.bwa_index))[0],
-        vep_cache=lambda wildcards, input: os.path.abspath(input.vep_cache),
+        transcripts=lambda wildcards, input: os.path.abspath(input.transcripts),
     template_engine:
         "jinja2"
 
@@ -44,7 +44,7 @@ rule cancer_wes_execute_pipeline:
             sample=["case001subregion-T1-DNA1-WES1"],
             mapper=["bwa"],
             caller=["mutect2"],
-            annotator=["vep"],
+            annotator=["mehari"],
         ),
     params:
         steps=[

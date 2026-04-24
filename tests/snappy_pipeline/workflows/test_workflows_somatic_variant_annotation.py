@@ -174,7 +174,7 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
             "plugins_dir": "work/vep_plugins/out",
         },
     }
-    actual = somatic_variant_annotation_workflow.get_args("vep", "run")
+    actual = somatic_variant_annotation_workflow.get_args("vep", "run")(wildcards)
     assert actual == expected
 
 
@@ -195,8 +195,8 @@ def test_vep_step_part_get_resource_usage(somatic_variant_annotation_workflow):
 def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["link_out", "vep"]
-    actual = sorted(somatic_variant_annotation_workflow.sub_steps.keys())
+    expected = ["link_out", "mehari", "vep"]
+    actual = list(sorted(somatic_variant_annotation_workflow.sub_steps.keys()))
     assert actual == expected
 
     # Check result file construction

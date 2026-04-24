@@ -21,7 +21,7 @@ rule all:
             sample=["case001subregion-T1-DNA1-WES1"],
             mapper=["bwa"],
             caller=["mutect2"],
-            annotator=["vep"],
+            annotator=["mehari"],
         ),
 
 
