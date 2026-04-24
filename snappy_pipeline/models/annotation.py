@@ -89,23 +89,23 @@ class Mehari(SnappyModel):
     Depending on `--pick-transcript-mode`, if multiple transcripts match the selection, either the first one is kept or all are kept.
     """
 
-    pick_transcript_mode: Literal["first", "all"] = "all"
+    pick_transcript_mode: Literal["first", "all"] | None = None
     """
     Determines how to handle multiple transcripts. Default is to keep all.
     When transcript picking is enabled via `--pick-transcript`, either keep the first one found or keep all that match.
     """
 
-    keep_intergenic: bool = True
+    keep_intergenic: bool | None = None
     """
     Whether to keep intergenic variants
     """
 
-    discard_utr_splice_variants: bool = False
+    discard_utr_splice_variants: bool | None = None
     """
     Whether to report splice variants in UTRs
     """
 
-    in_memory_reference: bool = False
+    in_memory_reference: bool | None = None
     """Read the reference genome into memory"""
 
     report_cdna_sequence: Literal["none", "reference", "alternative", "both"] | None = None
@@ -114,13 +114,13 @@ class Mehari(SnappyModel):
     report_protein_sequence: Literal["none", "reference", "alternative", "both"] | None = None
     """Whether to report protein sequence"""
 
-    enable_compound_variants: bool = False
+    enable_compound_variants: bool | None = None
     """
     Experimental: Enable variant grouping to evaluate the compound effect of multiple variants on the same transcript.
     When disabled, Mehari evaluates each variant independently
     """
 
-    phasing_strategy: Literal["strict", "relaxed", "ignore"] = "strict"
+    phasing_strategy: Literal["strict", "relaxed", "ignore"] | None = None
     """
     Experimental: The strategy used to evaluate grouped variants for compound effects
 
