@@ -159,7 +159,7 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
             ]
         },
     }
-    actual = somatic_variant_annotation_workflow.get_args("vep", "run")
+    actual = somatic_variant_annotation_workflow.get_args("vep", "run")(wildcards)
     assert actual == expected
 
 
