@@ -81,6 +81,7 @@ The following filters are implemented:
 - ``regions``: filter to exclude variants outside of user's defined regions.
   Typically used to reject variants outside of coding regions.
   This filter will add ``regions_<n>`` to the FILTER column of rejected variants.
+- ``vembrane``: filter VCFs with an arbitrary python expression. See `documentation <https://github.com/vembrane/vembrane>`_ for more information.
 - ``protected``: anti-filter to avoid variants in protected regions to be otherwise filtered out.
   This filter "whitelists" variants in specific regions. This is valuable to protect
   known drivers against being filtered out, even if there is little experimental support for them.
@@ -390,6 +391,13 @@ class OneFilterRegionsStepPart(OneFilterStepPart):
     filter_name = "regions"
 
 
+class OneFilterVembraneStepPart(OneFilterStepPart):
+    name = "one_vembrane"
+    filter_name = "vembrane"
+
+    actions = ("tag",)
+
+
 class OneFilterProtectedStepPart(OneFilterStepPart):
     name = "one_protected"
     filter_name = "protected"
@@ -521,6 +529,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 OneFilterEbfilterStepPart,
                 OneFilterBcftoolsStepPart,
                 OneFilterRegionsStepPart,
+                OneFilterVembraneStepPart,
                 OneFilterProtectedStepPart,
                 LastFilterStepPart,
                 LinkOutStepPart,

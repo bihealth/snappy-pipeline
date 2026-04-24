@@ -1,4 +1,4 @@
-from typing import Annotated, Self, TypedDict
+from typing import Annotated, Self, TypedDict, Literal
 
 from pydantic import Field, model_validator
 
@@ -69,6 +69,22 @@ class Regions(SnappyModel):
         return {}
 
 
+class Vembrane(SnappyModel):
+    expressions: dict[str, str]
+    """The `vembrane tag` [tag=expression]s to use."""
+
+    tag_mode: Literal["pass", "fail"] = "pass"
+    """
+    Set, whether to tag records that pass the tag expression(s), or records that fail them.
+    By default, vembrane tags records for which the tag expression(s) pass.
+    This allows for descriptive tag names such as `q_at_least_30`, which would correspond to an expression `QUAL >= 30`.
+    However, the VCF specification (`v4.4`) defines tags to be set when a filter expression is failed, so vembrane also offers the `fail` mode.
+    """
+
+    extra_args: str = ""
+    """Extra arguments to pass to vembrane tag."""
+
+
 class Protected(SnappyModel):
     path_bed: str
     """Bed file of regions that should not be filtered out at all."""
@@ -84,6 +100,7 @@ class Filter(TypedDict, total=False):
     dkfz: Dkfz
     ebfilter: Ebfilter
     regions: Regions
+    vembrane: Vembrane
     protected: Protected
 
 
@@ -121,6 +138,9 @@ class SomaticVariantFiltration(SnappyStepModel):
       exclude: ""                                   # Expression to be used in bcftools view --exclude
     regions:
       path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
+    vembrane:
+      expressions: REQUIRED                         # The vembrane tag [tag=expression]s to use for filtering, e.g. [("q30", "QUAL>=30")]
+      extra_args: ""                                # Extra arguments to pass to vembrane filter.
     protected:
       path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
     """
