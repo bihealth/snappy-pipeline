@@ -10,7 +10,7 @@ rule render_cancer_wes_config:
         template="config/cancer_wes/config.yaml.jinja2",
         reference="resources/refs/subregion.fa",
         bwa_index="resources/refs/subregion.bwt",
-        transcript_db="resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst",
+        transcripts="resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst",
     output:
         config["pipeline-configuration"]["cancer_wes"]["config"],
     log:
@@ -18,7 +18,7 @@ rule render_cancer_wes_config:
     params:
         reference=lambda wildcards, input: os.path.abspath(input.reference),
         bwa_index=lambda wildcards, input: os.path.splitext(os.path.abspath(input.bwa_index))[0],
-        transcript_db=lambda wildcards, input: os.path.abspath(input.transcript_db),
+        transcripts=lambda wildcards, input: os.path.abspath(input.transcripts),
     template_engine:
         "jinja2"
 

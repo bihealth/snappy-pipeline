@@ -36,7 +36,7 @@ step_config:
     path_somatic_variant: ../somatic_variant_calling  # REQUIRED
     tools: ["mehari"]
     mehari:
-      transcript_dbs: [{{ params["transcript_db"] }}]
+      transcripts: [{{ params["transcripts"] }}]
       assembly: GRCh37
 
 
