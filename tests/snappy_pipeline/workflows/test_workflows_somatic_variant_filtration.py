@@ -44,6 +44,10 @@ def minimal_config_list():
                 include: "include_statment"
             - regions:
                 exclude: /path/to/regions.bed
+            - vembrane:
+                expressions:
+                  q30: "QUAL>=30"
+                  q15: "QUAL>=15"
             - protected:
                 path_bed: /path/to/protected.bed
 
@@ -187,7 +191,15 @@ def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 5})
-    expected = {"filter_name": "protected_5", "path_bed": "/path/to/protected.bed"}
+    expected = {"filter_name": "vembrane_5", "expressions": {"q30": "QUAL>=30", "q15": "QUAL>=15"}, "tag_mode": "pass", "extra_args": ""}
+    actual = somatic_variant_filtration_workflow_list.get_args("one_vembrane", "tag")(wildcards)
+    from pprint import pprint
+    pprint(expected)
+    pprint(actual)
+    assert actual == expected
+
+    wildcards = Wildcards(fromdict={"filter_nb": 6})
+    expected = {"filter_name": "protected_6", "path_bed": "/path/to/protected.bed"}
     actual = somatic_variant_filtration_workflow_list.get_args("one_protected", "run")(wildcards)
     assert actual == expected
 
@@ -215,11 +227,11 @@ def test_last_filter_step_part_get_input_files(somatic_variant_filtration_workfl
     expected = {
         "logs": [
             log_tpl.format(filt=filt, ext=ext, chksum=chksum)
-            for filt in ("dkfz_1", "ebfilter_2", "bcftools_3", "regions_4", "protected_5")
+            for filt in ("dkfz_1", "ebfilter_2", "bcftools_3", "regions_4", "vembrane_5", "protected_6")
             for ext in ("log", "conda_list.txt", "conda_info.txt")
             for chksum in ("", ".md5")
         ],
-        "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.protected_5.vcf.gz",
+        "vcf": "work/{mapper}.{var_caller}.{annotator}.{tumor_library}/out/{mapper}.{var_caller}.{annotator}.{tumor_library}.protected_6.vcf.gz",
     }
     actual = somatic_variant_filtration_workflow_list.get_input_files("last_filter", "run")
     assert actual == expected

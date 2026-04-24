@@ -1,4 +1,4 @@
-from typing import Annotated, Self, TypedDict
+from typing import Annotated, Self, TypedDict, Literal
 
 from pydantic import Field, model_validator
 
@@ -70,11 +70,19 @@ class Regions(SnappyModel):
 
 
 class Vembrane(SnappyModel):
-    expression: str
-    """The vembrane filter expression to use for filtering"""
+    expressions: dict[str, str]
+    """The `vembrane tag` [tag=expression]s to use."""
+
+    tag_mode: Literal["pass", "fail"] = "pass"
+    """
+    Set, whether to tag records that pass the tag expression(s), or records that fail them.
+    By default, vembrane tags records for which the tag expression(s) pass.
+    This allows for descriptive tag names such as `q_at_least_30`, which would correspond to an expression `QUAL >= 30`.
+    However, the VCF specification (`v4.4`) defines tags to be set when a filter expression is failed, so vembrane also offers the `fail` mode.
+    """
 
     extra_args: str = ""
-    """Extra arguments to pass to vembrane filter."""
+    """Extra arguments to pass to vembrane tag."""
 
 
 class Protected(SnappyModel):
@@ -131,7 +139,7 @@ class SomaticVariantFiltration(SnappyStepModel):
     regions:
       path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
     vembrane:
-      expression: REQUIRED                          # The vembrane filter expression to use for filtering
+      expressions: REQUIRED                         # The vembrane tag [tag=expression]s to use for filtering, e.g. [("q30", "QUAL>=30")]
       extra_args: ""                                # Extra arguments to pass to vembrane filter.
     protected:
       path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.

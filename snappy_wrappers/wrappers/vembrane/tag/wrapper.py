@@ -10,7 +10,10 @@ if TYPE_CHECKING:
 
 args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"]
-expression = args["expression"]
+expressions = args["expressions"]
+if isinstance(expressions, str):
+    expressions = [expressions]
+expression = " ".join(f"--tag {tag}={expr}" for tag, expr in expressions)
 extra = args["extra_args"]
 
 # Actually run the script.
@@ -28,7 +31,7 @@ trap "rm -rf $TMPDIR" EXIT
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-vembrane filter {extra} {expression} {snakemake.input.vcf} | bgzip -c --threads 4 > {snakemake.output.vcf}
+vembrane tag {extra} {expression} {snakemake.input.vcf} | bgzip -c --threads 4 > {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})
