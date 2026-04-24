@@ -220,7 +220,11 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     def get_args(self, action):
         """Return arguments to pass down."""
         self._validate_action(action)
-        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+        def args_function(wildcards):
+            return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+        return args_function
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -269,7 +273,11 @@ class MehariAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
     def get_args(self, action):
         """Return arguments to pass down."""
         self._validate_action(action)
-        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+        def args_function(wildcards):
+            return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+        return args_function
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage"""
