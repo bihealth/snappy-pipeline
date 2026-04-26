@@ -4,11 +4,12 @@ from typing import Annotated
 from pydantic import Field
 
 from snappy_pipeline.models import EnumField, SnappyStepModel, validators
-from snappy_pipeline.models.annotation import Vep
+from snappy_pipeline.models.annotation import Mehari, Vep
 
 
 class Tool(enum.StrEnum):
     vep = "vep"
+    mehari = "mehari"
 
 
 class SomaticVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
@@ -26,3 +27,5 @@ class SomaticVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
     """default to those configured for somatic_variant_calling"""
 
     vep: Vep | None = None
+
+    mehari: Mehari | None = None

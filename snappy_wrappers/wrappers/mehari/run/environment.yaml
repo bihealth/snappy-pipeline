@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - mehari==0.42.0
+  - samtools ==1.20  # for tabix
