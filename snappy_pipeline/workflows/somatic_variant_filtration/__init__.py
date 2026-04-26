@@ -395,8 +395,6 @@ class OneFilterVembraneStepPart(OneFilterStepPart):
     name = "one_vembrane"
     filter_name = "vembrane"
 
-    actions = ("tag",)
-
 
 class OneFilterProtectedStepPart(OneFilterStepPart):
     name = "one_protected"
