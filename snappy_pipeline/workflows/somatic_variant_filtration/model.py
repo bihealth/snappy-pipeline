@@ -70,7 +70,14 @@ class Regions(SnappyModel):
 
 
 class Vembrane(SnappyModel):
-    expressions: dict[str, str]
+    expressions: dict[str, str] = Field(
+        examples=[
+            {
+                "silent": 'ANN["Consequence"] == ["synonymous_variant"]',
+                "poor_support": '(FORMAT["DP"][SAMPLES[1]] <50) or (FORMAT["AD"][SAMPLES[1]][1] < 5) or (FORMAT["AD"][SAMPLES[1]][1]/(FORMAT["AD"][SAMPLES[1]][0] + FORMAT["AD"][SAMPLES[1]][1]) < 0.05)',
+            }
+        ]
+    )
     """The `vembrane tag` [tag=expression]s to use."""
 
     tag_mode: Literal["exclude", "include"]
