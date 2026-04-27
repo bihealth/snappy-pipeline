@@ -1,4 +1,4 @@
-from typing import Annotated, Self, TypedDict
+from typing import Annotated, Self, TypedDict, Literal
 
 from pydantic import Field, model_validator
 
@@ -59,6 +59,26 @@ class Regions(SnappyModel):
         elif self.path_bed:
             return {"exclude": self.path_bed}  # path_bed is deprecated and replaced by exclude
         return {}
+
+
+class Vembrane(SnappyModel):
+    expressions: dict[str, str] = Field(
+        examples=[
+            {
+                "silent": 'ANN["Consequence"] == ["synonymous_variant"]',
+                "poor_support": '(FORMAT["DP"][SAMPLES[1]] <50) or (FORMAT["AD"][SAMPLES[1]][1] < 5) or (FORMAT["AD"][SAMPLES[1]][1]/(FORMAT["AD"][SAMPLES[1]][0] + FORMAT["AD"][SAMPLES[1]][1]) < 0.05)',
+            }
+        ]
+    )
+    """The `vembrane tag` [tag=expression]s to use."""
+
+    tag_mode: Literal["exclude", "include"]
+    """
+    Determines how the expression is interpreted.
+    """
+
+    extra_args: str = ""
+    """Extra arguments to pass to vembrane tag."""
 
 
 class Protected(SnappyModel):
