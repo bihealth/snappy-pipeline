@@ -73,12 +73,9 @@ class Vembrane(SnappyModel):
     expressions: dict[str, str]
     """The `vembrane tag` [tag=expression]s to use."""
 
-    tag_mode: Literal["pass", "fail"] = "pass"
+    tag_mode: Literal["exclude", "include"]
     """
-    Set, whether to tag records that pass the tag expression(s), or records that fail them.
-    By default, vembrane tags records for which the tag expression(s) pass.
-    This allows for descriptive tag names such as `q_at_least_30`, which would correspond to an expression `QUAL >= 30`.
-    However, the VCF specification (`v4.4`) defines tags to be set when a filter expression is failed, so vembrane also offers the `fail` mode.
+    Determines how the expression is interpreted.
     """
 
     extra_args: str = ""

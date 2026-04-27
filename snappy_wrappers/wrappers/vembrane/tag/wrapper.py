@@ -12,6 +12,7 @@ args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"]
 expressions = args["expressions"]
 expressions_cmd = " ".join(f"--tag {tag}={expr}" for tag, expr in expressions.items())
+tag_mode = "--tag-mode fail" if args["tag_mode"] == "include" else "--tag-mode pass"
 extra = args["extra_args"]
 
 # Actually run the script.
@@ -29,7 +30,7 @@ trap "rm -rf $TMPDIR" EXIT
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-vembrane tag {extra} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads 4 > {snakemake.output.vcf}
+vembrane tag {tag_mode} {extra} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads 4 > {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 
 pushd $(dirname {snakemake.output.vcf})

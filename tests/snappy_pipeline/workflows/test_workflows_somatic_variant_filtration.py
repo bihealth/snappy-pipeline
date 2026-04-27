@@ -191,7 +191,7 @@ def test_one_filter_step_part_get_args(somatic_variant_filtration_workflow_list)
     assert actual == expected
 
     wildcards = Wildcards(fromdict={"filter_nb": 5})
-    expected = {"filter_name": "vembrane_5", "expressions": {"q30": "QUAL>=30", "q15": "QUAL>=15"}, "tag_mode": "pass", "extra_args": ""}
+    expected = {"filter_name": "vembrane_5", "expressions": {"q30": "QUAL<=30", "q15": "QUAL<=15"}, "tag_mode": "exclude", "extra_args": ""}
     actual = somatic_variant_filtration_workflow_list.get_args("one_vembrane", "run")(wildcards)
     assert actual == expected
 
