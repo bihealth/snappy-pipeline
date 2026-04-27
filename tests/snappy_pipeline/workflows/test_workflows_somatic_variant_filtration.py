@@ -45,9 +45,10 @@ def minimal_config_list():
             - regions:
                 exclude: /path/to/regions.bed
             - vembrane:
+                tag_mode: "exclude"
                 expressions:
-                  q30: "QUAL>=30"
-                  q15: "QUAL>=15"
+                  q30: "QUAL<=30"
+                  q15: "QUAL<=15"
             - protected:
                 path_bed: /path/to/protected.bed
 
