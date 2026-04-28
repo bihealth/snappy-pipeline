@@ -155,7 +155,7 @@ def test_featurecounts_step_part_get_resource(gene_expression_quantification_wor
 def test_salmon_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests SalmonStepPart.get_resource()"""
     # Define expected
-    expected_dict = {"threads": 16, "runtime": "4h", "mem": "32000MB", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "4h", "mem": "32GB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

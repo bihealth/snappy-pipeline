@@ -282,8 +282,8 @@ class MehariAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=self.config.mehari.threads,
-            time="00:20:00",
-            memory="8G",
+            runtime="20m",
+            mem="8GB",
         )
 
 
