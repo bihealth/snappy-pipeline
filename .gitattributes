@@ -2,4 +2,5 @@
 *.fastq.gz filter=lfs diff=lfs merge=lfs -text
 *.fasta filter=lfs diff=lfs merge=lfs -text
 *.fasta.* filter=lfs diff=lfs merge=lfs -text
+*.bin.zst filter=lfs diff=lgs merge=lfs -text
 snappy_pipeline/_version.py export-subst

@@ -60,10 +60,12 @@ def quantile(x, probs, na_rm=False, method=7):
     if na_rm:
         x = list(
             filter(
-                lambda y: y is not None
-                and isinstance(y, Number)
-                and not math.isnan(y)
-                and not math.isinf(y),
+                lambda y: (
+                    y is not None
+                    and isinstance(y, Number)
+                    and not math.isnan(y)
+                    and not math.isinf(y)
+                ),
                 x,
             )
         )

@@ -14,7 +14,11 @@ dependencies:
 
   # for compiling packages from pip
   - gcc_linux-64 ~=13.2.0
+  - gcc_impl_linux-64 ~=13.2.0
   - gxx_linux-64 ~=13.2.0
+  - gxx_impl_linux-64 ~=13.2.0
+  - sysroot_linux-64 ~=2.17
+  - binutils_linux-64
 
   # basics some snappy wrappers rely on
   - coreutils ~=9.5
@@ -28,6 +32,7 @@ dependencies:
   # Snakemake is used for providing the actual wrapper calling functionality
   - snakemake >=9.11.7,<10
   - snakemake-executor-plugin-slurm >=1.8.0,<2
+  - conda >=25,<26
 
   # Additional libraries used by snappy
   - ruamel.yaml ==0.18.6    # Nice, round-trip enabled YAML parsing

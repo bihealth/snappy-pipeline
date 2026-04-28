@@ -34,9 +34,10 @@ step_config:
 
   somatic_variant_annotation:
     path_somatic_variant: ../somatic_variant_calling  # REQUIRED
-    tools: ["vep"]
-    vep:
-      cache_dir: {{ params["vep_cache"] }}
+    tools: ["mehari"]
+    mehari:
+      transcripts: [{{ params["transcripts"] }}]
+      reference: {{ params["reference"] }}
       assembly: GRCh37
 
 

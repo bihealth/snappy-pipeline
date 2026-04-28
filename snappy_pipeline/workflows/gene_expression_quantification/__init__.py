@@ -220,8 +220,8 @@ class SalmonStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
-            runtime="4h",  # 4 hours
-            mem="2500MB",
+            time="4h",  # 4 hours
+            memory="32000M",
         )
 
 

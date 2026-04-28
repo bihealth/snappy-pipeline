@@ -1,4 +1,4 @@
-from typing import Annotated, Self, TypedDict
+from typing import Annotated, Self, TypedDict, Literal
 
 from pydantic import Field, model_validator
 
@@ -69,6 +69,26 @@ class Regions(SnappyModel):
         return {}
 
 
+class Vembrane(SnappyModel):
+    expressions: dict[str, str] = Field(
+        examples=[
+            {
+                "silent": 'ANN["Consequence"] == ["synonymous_variant"]',
+                "poor_support": '(FORMAT["DP"][SAMPLES[1]] <50) or (FORMAT["AD"][SAMPLES[1]][1] < 5) or (FORMAT["AD"][SAMPLES[1]][1]/(FORMAT["AD"][SAMPLES[1]][0] + FORMAT["AD"][SAMPLES[1]][1]) < 0.05)',
+            }
+        ]
+    )
+    """The `vembrane tag` [tag=expression]s to use."""
+
+    tag_mode: Literal["exclude", "include"]
+    """
+    Determines how the expression is interpreted.
+    """
+
+    extra_args: str = ""
+    """Extra arguments to pass to vembrane tag."""
+
+
 class Protected(SnappyModel):
     path_bed: str
     """Bed file of regions that should not be filtered out at all."""
@@ -84,6 +104,7 @@ class Filter(TypedDict, total=False):
     dkfz: Dkfz
     ebfilter: Ebfilter
     regions: Regions
+    vembrane: Vembrane
     protected: Protected
 
 
@@ -121,6 +142,9 @@ class SomaticVariantFiltration(SnappyStepModel):
       exclude: ""                                   # Expression to be used in bcftools view --exclude
     regions:
       path_bed: REQUIRED                            # Bed file of regions to be considered (variants outside are filtered out)
+    vembrane:
+      expressions: REQUIRED                         # The vembrane tag [tag=expression]s to use for filtering, e.g. [("q30", "QUAL>=30")]
+      extra_args: ""                                # Extra arguments to pass to vembrane filter.
     protected:
       path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
     """
