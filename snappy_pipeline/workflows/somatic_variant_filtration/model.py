@@ -1,4 +1,4 @@
-from typing import Annotated, Self, TypedDict, Literal
+from typing import Annotated, Literal, Self, TypedDict
 
 from pydantic import Field, model_validator
 
