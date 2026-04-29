@@ -12,7 +12,6 @@ import sys
 
 import ruamel.yaml as ruamel_yaml
 from snakemake.cli import main as snakemake_main
-from snakemake.settings.enums import RerunTrigger
 
 from .. import __version__
 from ..workflows import (
@@ -57,9 +56,6 @@ from ..workflows import (
 )
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-# snakemake v8 now has an explicit enum for rerun triggers
-RERUN_TRIGGERS = RerunTrigger.all()
 
 #: Configuration file names
 CONFIG_FILES = ("config.yaml", "config.json")
@@ -122,19 +118,9 @@ def setup_logging(args):
         logger.setLevel(logging.INFO)
 
 
-def run(wrapper_args, snakemake_args):  # noqa: C901
+def run(wrapper_args, snakemake_args):
     """Launch the CUBI Pipeline wrapper for the given arguments"""
-    # Build arguments for wrapped "snakemake" call and parse arguments
-
-    # Map from step to module
     module = STEP_TO_MODULE[wrapper_args.step]
-
-    # Fail for forbidden arguments (conflicts between snappy & snakemake)
-    # Note that this code is brittle if snakemake allows abbreviations in its parser
-    # (which is does, apparently)
-    if "-s" in snakemake_args or "--snakefile" in snakemake_args:
-        logging.error("User cannot specify snakefile, it is selected by the wrapper")
-        return 1
 
     snakemake_argv = [
         "--directory",
@@ -143,55 +129,39 @@ def run(wrapper_args, snakemake_args):  # noqa: C901
         os.path.join(os.path.dirname(os.path.abspath(module.__file__)), "Snakefile"),
     ]
 
-    # Force conda usage
-    if "--use-conda" not in snakemake_args:
-        snakemake_argv += ["--use-conda"]
-    for sdm in ("--software-deployment-method", "--deployment-method", "--deployment", "--sdm"):
-        try:
-            i = snakemake_args.index(sdm)
-            if snakemake_args[i + 1] != "conda":
-                logging.error(
-                    "Software deployment method {} not implemented".format(snakemake_args[i + 1])
-                )
-                return 1
-            snakemake_args.pop(i + 1)
-            snakemake_args.pop(i)
-        except ValueError:
-            pass
-    snakemake_argv += ["--software-deployment-method", "conda"]
-    if "--conda-frontend" not in snakemake_args:
-        snakemake_argv += ["--conda-frontend", "conda"]
-
-    # Increase verbosity levels
-    if wrapper_args.verbose:
-        snakemake_argv += ["--verbose"]
-
     # Configure profile if snappy pipeline profile is requested
     if wrapper_args.profile_snappy_pipeline:
-        if "--profile" in snakemake_args:
-            logging.error("--profile-snappy-pipeline & --profile are mutually exclusive")
-            return 1
         profile_path = os.path.join(os.path.dirname(__file__), "tpls", "profile")
         snakemake_argv += ["--profile", profile_path]
 
-    # Add cores when missing
-    if "--cores" not in snakemake_args:
-        snakemake_argv += ["--cores", "1"]
-
+    # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
+
     logging.info("Executing snakemake %s", " ".join(map(repr, snakemake_argv)))
     return snakemake_main(snakemake_argv)
 
 
 def main(argv=None):
     """Main program entry point, starts parsing command line arguments"""
+    if argv is None:
+        argv = sys.argv[1:]
+
+    # Split arguments at '--' to cleanly separate snappy and snakemake arguments
+    try:
+        separator_idx = argv.index("--")
+        snappy_args_list = argv[:separator_idx]
+        snakemake_args = argv[separator_idx + 1 :]
+    except ValueError:
+        snappy_args_list = argv
+        snakemake_args = []
+
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [--version] [-v] [-d directory] [--profile-snappy-pipeline] [snakemake arguments]",
+        usage="%(prog)s [--version] [-v] [-d directory] [--profile-snappy-pipeline] --step STEP [--] [snakemake arguments]",
         allow_abbrev=False,
     )
 
     parser.add_argument("--version", action="version", version="%%(prog)s %s" % __version__)
-    parser.add_argument("-v", "--verbose", action="store_true", help="Increase verobsity level")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Increase verbosity level")
     parser.add_argument(
         "-d", "--directory", default=os.getcwd(), help="Path to directory to run in, default is cwd"
     )
@@ -208,7 +178,8 @@ def main(argv=None):
         help="The type of the step to run",
     )
 
-    wrapper_args, snakemake_args = parser.parse_known_args(argv)
+    # Only parse the arguments meant for snappy
+    wrapper_args = parser.parse_args(snappy_args_list)
 
     # Setup logging
     setup_logging(wrapper_args)
@@ -226,10 +197,12 @@ def main(argv=None):
                 break
             except KeyError:
                 logging.info("Could not pick up pipeline step/name from %s", path)
+
     if not wrapper_args.step:
         parser.error("the following arguments are required: --step")
+
     return run(wrapper_args, snakemake_args)
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main())
