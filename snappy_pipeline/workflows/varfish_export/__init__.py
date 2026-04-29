@@ -62,7 +62,7 @@ from pathlib import Path
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from matplotlib.cbook import flatten
-from snakemake.io import Wildcards, expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import SkipLibraryWarning
 from snappy_pipeline.utils import dictify, listify

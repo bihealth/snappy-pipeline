@@ -16,7 +16,8 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import Namedlist, Wildcards, expand, touch
+from snakemake.io import expand, touch
+from snakemake.iocontainers import Namedlist, Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify

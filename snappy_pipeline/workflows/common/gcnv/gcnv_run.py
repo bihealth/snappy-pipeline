@@ -9,7 +9,8 @@ from glob import glob
 from itertools import chain
 from typing import Any
 
-from snakemake.io import Wildcards, expand, touch
+from snakemake.io import expand, touch
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, flatten, listify

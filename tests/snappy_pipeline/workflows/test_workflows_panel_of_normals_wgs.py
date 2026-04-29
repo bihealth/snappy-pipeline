@@ -5,7 +5,7 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.panel_of_normals import PanelOfNormalsWorkflow
 

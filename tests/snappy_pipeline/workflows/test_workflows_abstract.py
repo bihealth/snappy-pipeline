@@ -11,7 +11,7 @@ from typing import TypedDict
 import pytest
 import ruamel.yaml as ruamel_yaml
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
-from snakemake.io import OutputFiles, Wildcards
+from snakemake.iocontainers import OutputFiles, Wildcards
 
 from snappy_pipeline.base import MissingConfiguration, merge_dictlikes
 from snappy_pipeline.workflows.abstract import (

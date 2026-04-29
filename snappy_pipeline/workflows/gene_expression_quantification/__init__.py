@@ -51,7 +51,8 @@ import os
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
-from snakemake.io import Wildcards, expand
+from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify

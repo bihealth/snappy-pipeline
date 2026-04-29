@@ -31,7 +31,8 @@ from biomedsheets.shortcuts import (
     write_pedigrees_to_ped,
 )
 from snakemake.api import Workflow
-from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
+from snakemake.io import touch
+from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
     MissingConfiguration,

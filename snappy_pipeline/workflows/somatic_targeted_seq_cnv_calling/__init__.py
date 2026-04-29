@@ -73,7 +73,8 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import Wildcards, expand
+from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender

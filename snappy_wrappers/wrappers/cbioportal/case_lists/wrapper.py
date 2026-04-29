@@ -7,7 +7,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from snakemake.script import snakemake
+    from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
 

@@ -8,7 +8,7 @@ from pathlib import PosixPath
 import pytest
 import ruamel.yaml as ruamel_yaml
 from pydantic import ValidationError
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.wgs_sv_export_external import WgsSvExportExternalWorkflow
 

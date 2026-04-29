@@ -9,7 +9,7 @@ from copy import deepcopy
 import pytest
 import ruamel.yaml as ruamel_yaml
 from biomedsheets.io_tsv import read_generic_tsv_sheet, read_germline_tsv_sheet
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import InputFiles, Log, OutputFiles, Params, Wildcards
+from snakemake.iocontainers import InputFiles, Log, OutputFiles, Params, Wildcards
 from snakemake.script import Snakemake
 
 from snappy_wrappers.wrappers.gatk_read_backed_phasing_par.parallel_read_backed_phasing import (

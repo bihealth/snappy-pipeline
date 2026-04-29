@@ -9,8 +9,8 @@ import os
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from snakemake.script import snakemake
-    from snakemake.io import Wildcards
+    from snakemake.iocontainers import snakemake
+    from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.cbioportal_export.model import CbioportalExport
 

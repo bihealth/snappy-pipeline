@@ -14,7 +14,7 @@ from typing import Iterator
 
 from biomedsheets.models import BioEntity, BioSample, NGSLibrary, SheetEntry, TestSample
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage

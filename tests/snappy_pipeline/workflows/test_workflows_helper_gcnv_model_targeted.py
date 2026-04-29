@@ -6,7 +6,7 @@ import unittest.mock as mock
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.helper_gcnv_model_targeted import (
     HelperBuildTargetSeqGcnvModelWorkflow,

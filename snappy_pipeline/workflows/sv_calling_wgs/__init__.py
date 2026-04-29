@@ -5,7 +5,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (

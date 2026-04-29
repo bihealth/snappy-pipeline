@@ -6,7 +6,7 @@ from itertools import chain
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 
