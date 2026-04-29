@@ -33,7 +33,7 @@ dependencies = [
     # Helpful for CLIs
     "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality
-    "snakemake >=9.11.7,<10",
+    "snakemake >=9.19.0,<10",
     "snakemake-executor-plugin-slurm >=1.8.0,<2",
     # Required for plotting
     "matplotlib >=3.8.4",
@@ -48,7 +48,7 @@ dependencies = [
     # REST API client for VarFish Server
     "varfish-cli >=0.6.3",
     # Validation for models, mainly used for configuration validation
-    "pydantic >=2.9.0,<2.10.0"
+    "pydantic >=2.9.0,<3"
 ]
 
 [project.urls]

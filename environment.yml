@@ -27,10 +27,10 @@ dependencies:
   - gzip ~=1.13
 
   # pydantic is used to validate configuration files
-  - pydantic =2.7
+  - pydantic >=2.9,<3
 
   # Snakemake is used for providing the actual wrapper calling functionality
-  - snakemake >=9.11.7,<10
+  - snakemake >=9.19.0,<10
   - snakemake-executor-plugin-slurm >=1.8.0,<2
   - conda >=25,<26
 
