@@ -1268,6 +1268,12 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
             ],
         )
 
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._check_action(action)
+        return {
+            "window_length": self.config.bam_collect_doc.window_length,
+        }
+
     @dictify
     def _get_output_files_run_work(self):
         prefix = "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}"
@@ -1366,6 +1372,10 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             "npz_md5",
             "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz.md5",
         )
+
+    def get_log_file(self, action):
+        self._check_action(action)
+        return getattr(self, "_get_log_files_{action}".format(action=action))()
 
     @dictify
     def _get_log_files_fingerprint(self):
