@@ -120,11 +120,6 @@ def setup_logging(args):
 
 def run(wrapper_args, snakemake_args):
     """Launch the CUBI Pipeline wrapper for the given arguments"""
-    # The module lookup is no longer strictly necessary for finding the Snakefile,
-    # but we keep it to validate the step or for other module metadata if needed.
-    if wrapper_args.step:
-        _module = STEP_TO_MODULE[wrapper_args.step]
-
     # Point to the master orchestrator Snakefile
     orchestrator_snakefile = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Snakefile"
@@ -138,8 +133,8 @@ def run(wrapper_args, snakemake_args):
     ]
 
     config_args = ["--config"]
-    if wrapper_args.step:
-        config_args.append(f"step={wrapper_args.step}")
+    if wrapper_args.task:
+        config_args.append(f"task={wrapper_args.task}")
     if wrapper_args.verbose:
         config_args.append("dump_orchestrator=True")
 
@@ -173,7 +168,7 @@ def main(argv=None):
         snakemake_args = []
 
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [--version] [-v] [-d directory] [--profile-snappy-pipeline] --step STEP [--] [snakemake arguments]",
+        usage="%(prog)s [--version] [-v] [-d directory] [--profile-snappy-pipeline] --task TASK [--] [snakemake arguments]",
         allow_abbrev=False,
     )
 
@@ -188,13 +183,11 @@ def main(argv=None):
         help="Uses the profile defined in the snappy pipeline",
     )
     parser.add_argument(
-        "--step",
+        "--task",
         type=str,
-        metavar="STEP",
-        choices=sorted(STEP_TO_MODULE.keys()),
-        nargs="?",
+        metavar="TASK",
         default=None,
-        help="The type of the step to run",
+        help="The specific task name from config.yaml to run",
     )
 
     # Only parse the arguments meant for snappy
@@ -203,22 +196,8 @@ def main(argv=None):
     # Setup logging
     setup_logging(wrapper_args)
 
-    if not wrapper_args.step:
-        for cfg in CONFIG_FILES:
-            path = os.path.join(wrapper_args.directory, cfg)
-            if not os.path.exists(path):
-                continue
-            with open(path, "rt") as f:
-                yaml = ruamel_yaml.YAML()
-                data = yaml.load(f.read())
-            try:
-                wrapper_args.step = data["pipeline_step"]["name"]
-                break
-            except KeyError:
-                logging.info("Could not pick up pipeline step/name from %s", path)
-
-    if not wrapper_args.step:
-        logging.info("No specific --step provided or found in config. Will target all tasks.")
+    if not wrapper_args.task:
+        logging.info("No specific --task provided. Will target all tasks.")
 
     return run(wrapper_args, snakemake_args)
 

@@ -13,28 +13,29 @@ tasks = config.get("tasks", [])
 all_target_files = []
 dsl_lines = []
 
-target_step = config.get("step")
+target_task = config.get("task")
 
 for task in tasks:
     task_name = task["name"]
     step_type = task["step"]
 
-    # Instantiate Python workflow object to extract targets
     wf_instance = WORKFLOW_REGISTRY[step_type](
         workflow, config, config_lookup_paths, config_paths, os.getcwd(), task_name=task_name
     )
 
-    if target_step is None or target_step == step_type:
-        all_target_files.extend(wf_instance.get_result_files())
+    if target_task is None or target_task == task_name:
+        for f in wf_instance.get_result_files():
+            if not f.endswith((".md5", ".tbi", ".txt")):
+                # Prepend the task_name because the module's prefix directive
+                # will namespace all targets
+                all_target_files.append(os.path.join(task_name, f))
 
-    # Generate the module import with the isolated prefix
-    prefix = f"output/{task_name}"
     dsl_lines.append(
         f"""
 module {task_name}:
     snakefile: "workflows/{step_type}/Snakefile"
     config: config
-    prefix: "{prefix}"
+    prefix: "{task_name}"
 
 use rule * from {task_name} as {task_name}_*
 """
