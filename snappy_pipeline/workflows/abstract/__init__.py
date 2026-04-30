@@ -697,55 +697,49 @@ class BaseStep:
         config_paths: tuple[str, ...],
         work_dir: str,
         *,
-        task_name: str,
+        task_name: str | None = None,
         previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
         self.step_name = self.__class__.name
-        self.task_name = config.get("__task_name__", task_name)
-        #: Tuple with absolute paths to configuration files read
         self.config_paths = config_paths
-        #: Absolute path to directory of where to perform work
         self.work_dir = work_dir
-        #: Classes of previously executed steps, used for merging their default configuration as
-        #: well.
         self.previous_steps = tuple(previous_steps or [])
-        #: Snakefile "workflow" object
         self.workflow = workflow
         self.modules = {}
-        #: Setup logger for the step
-        self.logger = logging.getLogger(self.task_name)
-        #: Merge default configuration with true configuration
-        workflow_config = config
 
         try:
-            # 1. Validate complete workflow configuration (the global layout)
             from snappy_pipeline.workflow_model import ConfigModel
 
-            self.w_config: ConfigModel = ConfigModel(**workflow_config)
-
-            # 2. Find this specific task in the tasks list
-            self.task = next((t for t in self.w_config.tasks if t.name == self.task_name), None)
-            if not self.task:
-                raise ValueError(f"Task '{self.task_name}' not found in config tasks list.")
-
-            # 3. Store dependencies for module resolution
-            self.depends_on = self.task.depends_on
-
-            # 4. Validate the step-specific config using its strict Pydantic model
-            self.config = self.config_model_class(**self.task.config)
-
+            self.w_config: ConfigModel = ConfigModel(**config)
         except pydantic.ValidationError as ve:
-            self.logger.error(f"Configuration failed validation for task '{self.task_name}'")
             raise ve
 
-        #: Paths with configuration paths, important for later retrieving sample sheet files
+        # 1. Look up the task name injected by the orchestrator
+        req_task_name = config.get("__task_name__") or task_name or self.step_name
+        self.task = next((t for t in self.w_config.tasks if t.name == req_task_name), None)
+
+        # 2. If the task doesn't match our step type (i.e. we are a submodule being
+        # blindly initialized by a parent's boilerplate Snakefile), ignore it and
+        # grab the actual config for our step type.
+        if not self.task or self.task.step != self.step_name:
+            self.task = next((t for t in self.w_config.tasks if t.step == self.step_name), None)
+
+        if not self.task:
+            raise ValueError(f"No task configuration found for step '{self.step_name}'.")
+
+        self.task_name = self.task.name
+        self.logger = logging.getLogger(self.task_name)
+
+        print(f"\n[DEBUG] Initializing step '{self.step_name}' for task '{self.task_name}'")
+
+        self.depends_on = self.task.depends_on
+        self.config = self.config_model_class(**self.task.config)
+
         self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps: dict[str, BaseStepPart] = {}
         self.data_set_infos = list(self._load_data_set_infos())
-
-        #: Shortcut to the BioMed SampleSheet objects
         self.sheets = [info.sheet for info in self.data_set_infos]
-        #: Shortcut BioMed SampleSheet keyword arguments
+
         sheet_kwargs_list = [
             merge_kwargs(
                 first_kwargs=self.sheet_shortcut_kwargs,
@@ -753,7 +747,7 @@ class BaseStep:
             )
             for info in self.data_set_infos
         ]
-        #: Shortcut sheets
+
         self.shortcut_sheets = []
         klass = self.__class__.sheet_shortcut_class
         for sheet, kwargs in zip(self.sheets, sheet_kwargs_list):
@@ -762,26 +756,15 @@ class BaseStep:
             self.shortcut_sheets.append(
                 klass(sheet, *(self.__class__.sheet_shortcut_args or []), **kwargs)
             )
-        # Setup onstart/onerror/onsuccess hooks
-        self._setup_hooks()
 
-        # Even though we already validated via pydantic, we still call check_config here, as
-        # some of the checks done in substep check_config are not covered by the pydantic models yet
-        # and some of the checks actually influence program logic/flow
+        self._setup_hooks()
         self._check_config()
 
         config_string = self.config.model_dump_yaml(by_alias=True)
-        # self.logger.debug(f"Configuration for step {self.name}\n{config_string}")
+        config_string_w = self.w_config.model_dump_yaml(by_alias=True)
 
-        config_string = self.w_config.model_dump_yaml(by_alias=True)
-        # self.logger.debug(f"Configuration for workflow\n{config_string}")
-
-        # Update snakemake.config (which `config` is a reference to)
-        # with the validated configuration.
-        # All fields with default values are explicitly defined.
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
-        # self.logger.debug(f"Snakemake config\n{config}")
 
     def get_task_config(self, name: str) -> SnappyStepModel:
         """Retrieve the typed configuration model of an upstream task based on dependency resolution."""
@@ -971,6 +954,7 @@ class BaseStep:
             raise ValueError(f"Dependency {logical_name} already registered!")
 
         def resolve_dependency(path):
+            # because replace_prefix only acts on intra-module files.
             if path.startswith("output/") or path.startswith("work/"):
                 return f"{target_task_name}/" + path
             return os.path.join(target_task_name, path).replace("\\", "/")

@@ -2,14 +2,13 @@ import os
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline import expand_ref
 
-
 configfile: "config.yaml"
-
 
 config, config_lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 tasks = config.get("tasks", [])
 all_target_files = []
+
 target_task = config.get("task")
 
 for task in tasks:
@@ -25,25 +24,20 @@ for task in tasks:
             if not f.endswith((".md5", ".tbi", ".txt")):
                 all_target_files.append(os.path.join(task_name, f))
 
-
 for task in tasks:
     t_name = task["name"]
-    alias = f"{t_name}_"
     t_step = task["step"]
-
+    alias = t_name + "_"
+    
     module:
         name: t_name
-        snakefile:
-            f"workflows/{t_step}/Snakefile"
-        config:
-            config | {"__task_name__": t_name}
-        replace_prefix:
-            {"output/": f"{t_name}/output/", "work/": f"{t_name}/work/"}
+        snakefile: f"workflows/{t_step}/Snakefile"
+        config: config | {"__task_name__": t_name}
+        replace_prefix:{"output/": f"{t_name}/output/", "work/": f"{t_name}/work/"}
 
     use rule * from t_name as alias*
 
-
 rule all:
     input:
-        all_target_files,
+        all_target_files
     default_target: True
