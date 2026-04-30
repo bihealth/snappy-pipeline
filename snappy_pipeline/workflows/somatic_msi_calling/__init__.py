@@ -56,13 +56,13 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticMsiCalling as SomaticMsiCallingConfigModel
@@ -188,6 +188,8 @@ class SomaticMsiCallingWorkflow(BaseStep):
 
     #: Step name
     name = "somatic_msi_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"msi"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

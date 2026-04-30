@@ -65,13 +65,13 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
@@ -171,6 +171,11 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     #: Step name
     name = "homologous_recombination_deficiency"
+    consumes = {
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): False,
+    }
+    produces = [DataSignature(DataType.TABULAR, frozenset({"hrd"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

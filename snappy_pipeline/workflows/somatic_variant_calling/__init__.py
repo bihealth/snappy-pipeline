@@ -108,13 +108,13 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
 from .model import TumorNormalMode as TumorNormalMode
@@ -576,7 +576,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         if action == "scatter":
             scatter = self.parent.workflow.globals.get("scatter")
             scatter = getattr(scatter, self.name)
-            template = "work/{{{}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
+            template = "work/{var_caller}.{{{{tumor_library}}}}/out/{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
                 var_caller=self.name
             )
             return {"regions": scatter(template)}
@@ -690,6 +690,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_variant_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

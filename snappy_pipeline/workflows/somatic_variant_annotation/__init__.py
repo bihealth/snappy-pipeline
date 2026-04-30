@@ -75,8 +75,8 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SOMATIC_VARIANT_CALLERS,
@@ -130,7 +130,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
     ) -> str:
         tpl = "{var_caller}"
         if annotator:
-            tpl += f""
+            tpl += ""
         if config.is_filtered:
             tpl += ".filtered.{tumor_library}"
         else:
@@ -292,6 +292,10 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
     name = "somatic_variant_annotation"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True}
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "annotated"}))
+    ]
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)

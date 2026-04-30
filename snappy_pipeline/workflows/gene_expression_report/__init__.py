@@ -8,8 +8,8 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import GeneExpressionReport as GeneExpressionReportConfigModel
@@ -73,7 +73,6 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                         "output/{tool}.{library_name}/out/{tool}.{library_name}.tsv"
                                     ).format(
                                         tool="featurecounts",
-                                        mapper="star",
                                         library_name=rna_library,
                                     )
                                     exp_file = gene_expression(exp_tpl)
@@ -136,6 +135,8 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     #: Workflow name
     name = "gene_expression_report"
+    consumes = {DataSignature(DataType.EXPRESSION, frozenset({"rna"})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"expression_report"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

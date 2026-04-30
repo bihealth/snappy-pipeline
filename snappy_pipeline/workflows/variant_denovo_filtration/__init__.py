@@ -98,7 +98,6 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -106,6 +105,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
@@ -449,6 +449,8 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
 
     #: Workflow name
     name = "variant_denovo_filtration"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "denovo"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet

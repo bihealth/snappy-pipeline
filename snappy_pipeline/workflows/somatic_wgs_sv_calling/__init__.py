@@ -81,13 +81,13 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticWgsSvCalling as SomaticWgsSvCallingConfigModel
@@ -403,6 +403,8 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_wgs_sv_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "sv"}))]
 
     #: Default biomedsheet class
     sheet_shortcut_class = CancerCaseSheet

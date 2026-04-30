@@ -21,7 +21,6 @@ from snakemake.iocontainers import Namedlist, Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -31,6 +30,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import NgsDataQc as NgsDataQcConfigModel
 
@@ -270,6 +270,8 @@ class NgsDataQcWorkflow(BaseStep):
     """Perform NGS raw data QC"""
 
     name = "ngs_data_qc"
+    consumes = {DataSignature(DataType.RAW): True, DataSignature(DataType.ALIGNMENTS): False}
+    produces = [DataSignature(DataType.QC)]
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod

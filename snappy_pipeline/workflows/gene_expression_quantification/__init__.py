@@ -56,7 +56,6 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -66,6 +65,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
@@ -476,6 +476,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
     #: Workflow name
     name = "gene_expression_quantification"
+    consumes = {DataSignature(DataType.RAW, frozenset({"rna"})): True}
+    produces = [DataSignature(DataType.EXPRESSION, frozenset({"rna"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet

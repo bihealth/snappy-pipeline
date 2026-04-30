@@ -62,7 +62,6 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -72,6 +71,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import HlaTyping as HlaTypingConfigModel
 
@@ -286,6 +286,8 @@ class HlaTypingWorkflow(BaseStep):
 
     #: Step name
     name = "hla_typing"
+    consumes = {DataSignature(DataType.RAW): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"hla"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet

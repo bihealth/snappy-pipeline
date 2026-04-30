@@ -123,13 +123,13 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_variant_annotation import ANNOTATION_TOOLS
 from snappy_pipeline.workflows.somatic_variant_calling import (
@@ -475,6 +475,14 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_variant_filtration"
+    consumes = {
+        DataSignature(
+            DataType.VARIANTS, frozenset({"somatic", ("snv", "indel"), "annotated"})
+        ): True
+    }
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "filtered"}))
+    ]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

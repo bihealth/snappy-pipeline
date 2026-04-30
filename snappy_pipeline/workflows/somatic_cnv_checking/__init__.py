@@ -67,13 +67,13 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
@@ -296,6 +296,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_cnv_checking"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True}
+    produces = [DataSignature(DataType.QC, frozenset({"cnv_check"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

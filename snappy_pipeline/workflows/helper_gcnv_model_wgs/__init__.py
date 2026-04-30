@@ -91,8 +91,8 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.resource_usage import ResourceUsage
@@ -136,9 +136,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
-            path_pattern = "gcnv_coverage.{library_name}".format(
-                mapper=wildcards.mapper, library_name=lib
-            )
+            path_pattern = "gcnv_coverage.{library_name}".format(library_name=lib)
             tsvs.append(
                 "work/{name_pattern}/out/{name_pattern}.{ext}".format(
                     name_pattern=path_pattern, ext=ext
@@ -220,6 +218,8 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "helper_gcnv_model_wgs"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet

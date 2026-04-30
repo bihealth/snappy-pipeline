@@ -66,7 +66,6 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import SkipLibraryWarning
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -75,6 +74,7 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.abstract.common import SnakemakeDict, SnakemakeDictItemsGenerator
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import InconsistentLibraryKitsWarning
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -451,6 +451,11 @@ class VarfishExportWorkflow(BaseStep):
     """Perform germline variant export to VarFish"""
 
     name = "varfish_export"
+    consumes = {
+        DataSignature(DataType.VARIANTS, frozenset({"germline", ("snv", "indel")})): True,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})): False,
+    }
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod

@@ -86,8 +86,8 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
     AnnotateExpansionHunter,
@@ -312,6 +312,8 @@ class RepeatExpansionWorkflow(BaseStep):
 
     #: Workflow name
     name = "repeat_expansion"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "repeats"}))]
 
     #: Sample sheet shortcut class
     sheet_shortcut_class = GermlineCaseSheet

@@ -259,7 +259,6 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, flatten, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -271,6 +270,7 @@ from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDictItemsGenerator,
     SnakemakeListItemsGenerator,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
@@ -987,6 +987,8 @@ class VariantCallingWorkflow(BaseStep):
     """Workflow implementation for germline variant calling"""
 
     name = "variant_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"}))]
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod

@@ -82,7 +82,6 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -94,6 +93,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import TargetCovReportStepPart
 
 from .model import VariantExportExternal as VariantExportExternalConfigModel
@@ -297,7 +297,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "cov_qc": []}
         for donor in pedigree.donors:
-            mapper = self.external_tool_prefix[:-1]  # strip trailing dot
+            _mapper = self.external_tool_prefix[:-1]  # strip trailing dot
             library_name = donor.dna_ngs_library.name
             if not donor.dna_ngs_library:
                 continue
@@ -525,6 +525,8 @@ class VariantExportExternalWorkflow(BaseStep):
 
     #: Workflow name
     name = "variant_export_external"
+    consumes = {DataSignature(DataType.VARIANTS): True}
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet

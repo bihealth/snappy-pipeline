@@ -60,9 +60,9 @@ from typing import Any
 from biomedsheets.shortcuts import GermlineCaseSheet
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import GetResultFilesMixin, VariantCallingWorkflow
 
@@ -162,6 +162,10 @@ class VariantAnnotationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
     name = "variant_annotation"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline", ("snv", "indel")})): True}
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "annotated"}))
+    ]
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod

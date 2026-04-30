@@ -20,8 +20,8 @@ from snakemake.io import touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 
 from .model import SomaticPurityPloidyEstimate as SomaticPurityPloidyEstimateConfigModel
@@ -316,6 +316,8 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_purity_ploidy_estimate"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"purity_ploidy"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

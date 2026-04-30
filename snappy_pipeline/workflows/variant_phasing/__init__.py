@@ -69,13 +69,13 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
@@ -371,6 +371,8 @@ class VariantPhasingWorkflow(BaseStep):
     """Perform (small) variant phasing"""
 
     name = "variant_phasing"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))]
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod

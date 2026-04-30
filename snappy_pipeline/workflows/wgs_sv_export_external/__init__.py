@@ -73,7 +73,6 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -83,6 +82,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import WgsSvExportExternal as WgsSvExportExternalConfigModel
 
@@ -300,11 +300,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         mapper = self.config.tool_ngs_mapping
         caller = self.config.tool_sv_calling_wgs
         if mapper and caller:
-            return f""
+            return ""
         elif mapper or caller:
             mapper = mapper or ""
             caller = caller or ""
-            return f""
+            return ""
         else:
             return ""
 
@@ -314,6 +314,8 @@ class WgsSvExportExternalWorkflow(BaseStep):
 
     #: Workflow name
     name = "wgs_sv_export_external"
+    consumes = {DataSignature(DataType.VARIANTS): True}
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet

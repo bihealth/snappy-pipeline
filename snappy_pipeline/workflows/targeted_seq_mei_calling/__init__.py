@@ -86,13 +86,13 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
@@ -291,6 +291,8 @@ class MeiWorkflow(BaseStep):
 
     #: Workflow name
     name = "targeted_seq_mei_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "mei"}))]
 
     #: Sample sheet shortcut class
     sheet_shortcut_class = GermlineCaseSheet

@@ -152,13 +152,13 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
@@ -820,6 +820,8 @@ class PanelOfNormalsWorkflow(BaseStep):
 
     # Workflow name
     name = "panel_of_normals"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.MODELS, frozenset({"pon"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

@@ -91,8 +91,8 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
@@ -174,6 +174,8 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "helper_gcnv_model_targeted"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet

@@ -79,13 +79,13 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import Cnvkit as CnvkitModel
@@ -692,6 +692,8 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_targeted_seq_cnv_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

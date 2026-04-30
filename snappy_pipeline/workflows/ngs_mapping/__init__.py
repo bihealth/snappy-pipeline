@@ -439,7 +439,6 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, flatten, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -449,10 +448,10 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataType
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-from ..abstract.protocol import DataType
 from .model import NgsMapping as NgsMappingConfigModel
 
 # TODO: Need something smarter still for @RG
@@ -654,26 +653,22 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         for ext in self.extensions:
             yield ext[1:].replace(".", "_"), self.base_path_out.format(mapper=self.name, ext=ext)
         for ext in (".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
-            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(
-                mapper=self.name, ext=ext
-            )
+            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_"), path
         for ext in (
             ".bamstats.txt.md5",
             ".flagstats.txt.md5",
             ".idxstats.txt.md5",
         ):
-            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(
-                mapper=self.name, ext=ext
-            )
+            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         _ = action
-        mapper = self.__class__.name
-        prefix = f"work/{{library_name}}/log/{{library_name}}.mapping"
+        _mapper = self.__class__.name
+        prefix = "work/{library_name}/log/{library_name}.mapping"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1459,13 +1454,8 @@ class NgsMappingWorkflow(BaseStep):
     #: Step name
     name = "ngs_mapping"
 
-    consumes = {
-        DataSignature(DataType.RAW): True,
-    }
-
-    produces = [
-        DataSignature(DataType.ALIGNMENTS),
-    ]
+    consumes = {DataSignature(DataType.RAW): True}
+    produces = [DataSignature(DataType.ALIGNMENTS, frozenset({"dna"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet

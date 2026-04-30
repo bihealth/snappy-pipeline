@@ -54,7 +54,6 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -64,6 +63,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel
 
@@ -480,6 +480,8 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_gene_fusion_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

@@ -17,8 +17,8 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import CbioportalExport as CbioportalExportConfigModel
 
@@ -719,6 +719,12 @@ class cbioportalExportWorkflow(BaseStep):
 
     #: Workflow name
     name = "cbioportal_export"
+    consumes = {
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True,
+        DataSignature(DataType.EXPRESSION): False,
+    }
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

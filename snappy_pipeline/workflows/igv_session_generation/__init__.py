@@ -53,8 +53,8 @@ from snakemake import shell
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
@@ -180,6 +180,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
 
     #: Workflow name
     name = "igv_session_generation"
+    consumes = {DataSignature(DataType.ALIGNMENTS): True, DataSignature(DataType.VARIANTS): False}
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"igv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet

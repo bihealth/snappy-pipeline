@@ -143,7 +143,6 @@ from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -152,6 +151,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import AdapterTrimming as AdapterTrimmingConfigModel
 
@@ -362,6 +362,8 @@ class AdapterTrimmingWorkflow(BaseStep):
 
     #: Step name
     name = "adapter_trimming"
+    consumes = {DataSignature(DataType.RAW): True}
+    produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
