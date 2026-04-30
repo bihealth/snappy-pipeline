@@ -122,7 +122,8 @@ def run(wrapper_args, snakemake_args):
     """Launch the CUBI Pipeline wrapper for the given arguments"""
     # The module lookup is no longer strictly necessary for finding the Snakefile,
     # but we keep it to validate the step or for other module metadata if needed.
-    _module = STEP_TO_MODULE[wrapper_args.step]
+    if wrapper_args.step:
+        _module = STEP_TO_MODULE[wrapper_args.step]
 
     # Point to the master orchestrator Snakefile
     orchestrator_snakefile = os.path.join(
@@ -134,9 +135,16 @@ def run(wrapper_args, snakemake_args):
         wrapper_args.directory,
         "--snakefile",
         orchestrator_snakefile,
-        "--config",
-        f"step={wrapper_args.step}",
     ]
+
+    config_args = ["--config"]
+    if wrapper_args.step:
+        config_args.append(f"step={wrapper_args.step}")
+    if wrapper_args.verbose:
+        config_args.append("dump_orchestrator=True")
+
+    if len(config_args) > 1:
+        snakemake_argv.extend(config_args)
 
     # Configure profile if snappy pipeline profile is requested
     if wrapper_args.profile_snappy_pipeline:
@@ -184,6 +192,8 @@ def main(argv=None):
         type=str,
         metavar="STEP",
         choices=sorted(STEP_TO_MODULE.keys()),
+        nargs="?",
+        default=None,
         help="The type of the step to run",
     )
 
@@ -208,7 +218,7 @@ def main(argv=None):
                 logging.info("Could not pick up pipeline step/name from %s", path)
 
     if not wrapper_args.step:
-        parser.error("the following arguments are required: --step")
+        logging.info("No specific --step provided or found in config. Will target all tasks.")
 
     return run(wrapper_args, snakemake_args)
 

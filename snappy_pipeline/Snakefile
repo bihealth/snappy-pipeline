@@ -1,6 +1,13 @@
 import tempfile
 import os
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+from snappy_pipeline import expand_ref
+
+
+configfile: "config.yaml"
+
+
+config, config_lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 tasks = config.get("tasks", [])
 all_target_files = []
@@ -36,6 +43,13 @@ use rule * from {task_name} as {task_name}_*
 # Write and include the dynamic imports
 with tempfile.NamedTemporaryFile(mode="w", suffix=".smk", delete=False) as tmp:
     tmp.write("\n".join(dsl_lines))
+
+if config.get("dump_orchestrator"):
+    print("=" * 80)
+    print("RENDERED ORCHESTRATOR SNAKEFILE:")
+    print("=" * 80)
+    print("\n".join(dsl_lines))
+    print("=" * 80)
 
 
 include: tmp.name
