@@ -232,9 +232,9 @@ class IgvSessionGenerationWorkflow(BaseStep):
         self.register_sub_step_classes((WriteIgvSessionFileStepPart, LinkOutStepPart))
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
+            self.config.tools_variant_calling = self.get_task_config("variant_calling").tools
 
     @listify
     def get_result_files(self):

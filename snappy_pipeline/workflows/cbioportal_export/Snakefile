@@ -22,7 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = cbioportalExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
-step_config = wf.get_task_config(self.task_name)
+step_config = wf.get_task_config("cbioportal_export")
 exclude_flag = step_config["exclude_variant_with_flag"]
 
 

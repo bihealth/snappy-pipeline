@@ -241,7 +241,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
-                                mapper=self.get_task_config(self.task_name).tools.dna,
+                                mapper=self.get_task_config("ngs_mapping").tools.dna,
                                 caller=["sequenza"],
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
@@ -255,4 +255,4 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
         )
-        assert "sequenza" in self.get_task_config(self.task_name).tools
+        assert "sequenza" in self.get_task_config("somatic_targeted_seq_cnv_calling").tools

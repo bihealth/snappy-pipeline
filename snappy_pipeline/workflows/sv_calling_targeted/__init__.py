@@ -96,7 +96,7 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        config = self.get_task_config(self.task_name).gcnv
+        config = self.get_task_config("sv_calling_targeted").gcnv
         if not config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.all_donors():

@@ -754,13 +754,13 @@ class SomaticVariantCallingWorkflow(BaseStep):
         for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 caller=caller,
                 ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 caller=caller,
                 ext=(
                     ".log",

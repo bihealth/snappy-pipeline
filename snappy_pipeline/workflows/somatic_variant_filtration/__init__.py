@@ -566,7 +566,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.tools_somatic_variant_calling:
             self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
@@ -582,7 +582,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         Process all primary DNA libraries and perform pairwise calling for tumor/normal pairs
         """
         mappers = set(self.config.tools_ngs_mapping) & set(
-            self.get_task_config(self.task_name).tools.dna
+            self.get_task_config("ngs_mapping").tools.dna
         )
         callers = set(self.config.tools_somatic_variant_calling) & set(SOMATIC_VARIANT_CALLERS)
         if self.config.has_annotation:

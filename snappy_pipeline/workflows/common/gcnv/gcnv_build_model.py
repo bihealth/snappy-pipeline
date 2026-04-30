@@ -200,6 +200,6 @@ class BuildGcnvModelStepPart(
             for path_tpl in result_path_tpls:
                 yield from expand(
                     path_tpl,
-                    mapper=self.get_task_config(self.task_name).tools.dna,
+                    mapper=self.get_task_config("ngs_mapping").tools.dna,
                     library_name=library_names,
                 )

@@ -181,14 +181,14 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
         )
 
-        tools = set(self.get_task_config(self.task_name).tools.dna)
+        tools = set(self.get_task_config("ngs_mapping").tools.dna)
         if not config.tools_ngs_mapping:
             config.tools_ngs_mapping = tools
         else:
             config.tools_ngs_mapping = set(config.tools_ngs_mapping) & tools
         assert len(config.tools_ngs_mapping) > 0, "No valid ngs mapping tool"
 
-        tools = set(self.get_task_config(self.task_name).tools)
+        tools = set(self.get_task_config("somatic_variant_calling").tools)
         if not config.tools_somatic_variant_calling:
             config.tools_somatic_variant_calling = tools
         else:
@@ -198,7 +198,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         )
 
         if config.has_annotation:
-            tools = set(self.get_task_config(self.task_name).tools)
+            tools = set(self.get_task_config("somatic_variant_annotation").tools)
             if not config.tools_somatic_variant_annotation:
                 config.tools_somatic_variant_annotation = tools
             config.tools_somatic_variant_annotation = (

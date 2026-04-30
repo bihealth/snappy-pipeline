@@ -313,7 +313,7 @@ class WritePedigreeStepPart(BaseStepPart):
                 donor_names = list(sorted(d.name for d in pedigree.donors))
                 print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
                 return
-            mappers = self.get_task_config(self.task_name).tools.dna
+            mappers = self.get_task_config("ngs_mapping").tools.dna
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 library_name = donor.dna_ngs_library.name

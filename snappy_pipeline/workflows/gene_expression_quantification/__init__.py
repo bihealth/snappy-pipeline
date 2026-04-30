@@ -574,7 +574,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                             fns = expand(
                                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                                 ngs_library=ngs_library,
-                                mapper=self.get_task_config(self.task_name).tools.rna,
+                                mapper=self.get_task_config("ngs_mapping").tools.rna,
                                 # tool=set(self.config['tools']),
                                 tool=tool,
                                 ext=EXTENSIONS[tool].values(),

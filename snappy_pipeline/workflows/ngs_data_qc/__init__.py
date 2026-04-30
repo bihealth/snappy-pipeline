@@ -336,7 +336,7 @@ class NgsDataQcWorkflow(BaseStep):
             yield from self._yield_result_files(
                 tpl=tpl,
                 allowed_extraction_types=("DNA",),
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 ext=exts,
             )
 

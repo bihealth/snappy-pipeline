@@ -291,7 +291,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             sv_callers = self.parent.config.tools_sv_calling_targeted
             skip_libraries = {
                 sv_caller: getattr(
-                    self.parent.get_task_config(self.task_name), sv_caller
+                    self.parent.get_task_config("sv_calling_targeted"), sv_caller
                 ).skip_libraries
                 for sv_caller in sv_callers
             }
@@ -300,12 +300,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             sv_callers = self.parent.config.tools_sv_calling_wgs.dna
             skip_libraries = {
                 sv_caller: getattr(
-                    self.parent.get_task_config(self.task_name), sv_caller
+                    self.parent.get_task_config("sv_calling_wgs"), sv_caller
                 ).skip_libraries
                 for sv_caller in sv_callers
             }
         else:
-            raise RunruntimeError("Neither targeted nor WGS SV calling configured")
+            raise RuntimeError("Neither targeted nor WGS SV calling configured")
 
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         library_names = [
@@ -378,7 +378,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
         # Ensure target_coverage_report is enabled
-        assert self.get_task_config(self.task_name)["target_coverage_report"]["enabled"], (
+        assert self.get_task_config("ngs_mapping")["target_coverage_report"]["enabled"], (
             "Target coverage report must be enabled in the configuration of the ngs_mapping step"
         )
         ngs_mapping = self.parent.modules["ngs_mapping"]
@@ -498,15 +498,15 @@ class VarfishExportWorkflow(BaseStep):
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.tools_variant_calling and self.depends_on.get("variant_calling"):
-            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
+            self.config.tools_variant_calling = self.get_task_config("variant_calling").tools
         if not self.config.tools_sv_calling_targeted and self.depends_on.get("sv_calling_targeted"):
             self.config.tools_sv_calling_targeted = self.get_task_config(
                 "sv_calling_targeted"
             ).tools
         if not self.config.tools_sv_calling_wgs and self.depends_on.get("sv_calling_wgs"):
-            self.config.tools_sv_calling_wgs = self.get_task_config(self.task_name).tools
+            self.config.tools_sv_calling_wgs = self.get_task_config("sv_calling_wgs").tools
 
         # Build additional information
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
@@ -514,7 +514,7 @@ class VarfishExportWorkflow(BaseStep):
     @dictify
     def _build_ngs_library_to_kit(self):
         """Build mapping of NGS library to kit based on the ``ngs_mapping`` configuration"""
-        cov_config = self.get_task_config(self.task_name).target_coverage_report
+        cov_config = self.get_task_config("ngs_mapping").target_coverage_report
         regexes = {
             item.pattern: item.name
             for item in cov_config.path_target_interval_list_mapping

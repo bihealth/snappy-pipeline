@@ -17,12 +17,11 @@ configfile: "config.yaml"
 
 # Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
-tools = config["step_config"]["panel_of_normals"]["tools"]
 
 # WorkflowImpl Object Setup ===================================================
 
 wf = PanelOfNormalsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.get_task_config(self.task_name)["tools"]
+tools = wf.get_task_config("panel_of_normals")["tools"]
 
 
 # Modules =====================================================================

@@ -23,7 +23,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = SomaticTargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.get_task_config(self.task_name)["tools"]
+tools = wf.get_task_config("somatic_targeted_seq_cnv_calling")["tools"]
 
 
 # Modules =====================================================================

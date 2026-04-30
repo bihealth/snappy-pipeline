@@ -1519,7 +1519,7 @@ class NgsMappingWorkflow(BaseStep):
         return result
 
     def _build_ngs_library_to_kit(self):
-        cov_config = self.get_task_config(self.task_name).target_coverage_report
+        cov_config = self.get_task_config("ngs_mapping").target_coverage_report
         # Build mapping.
         default_kit_configured = False
         regexes = {}

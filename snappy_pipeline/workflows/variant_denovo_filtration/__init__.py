@@ -509,9 +509,9 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         )
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
+            self.config.tools_variant_calling = self.get_task_config("variant_calling").tools
 
     @listify
     def get_result_files(self):
@@ -533,7 +533,7 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             ext=(".txt", ".txt.md5"),
         )
         # Collect MSDN statistics
-        if self.get_task_config(self.task_name).collect_msdn:
+        if self.get_task_config("variant_denovo_filtration").collect_msdn:
             yield from expand(
                 "output/multisite_de_novo/out/multisite_de_novo{ext}",
                 mapper=self.config.tools_ngs_mapping,

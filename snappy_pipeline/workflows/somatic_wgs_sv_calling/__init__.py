@@ -454,7 +454,7 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         name_pattern = "{cancer_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.get_task_config(self.task_name).tools.dna,
+            mapper=self.get_task_config("ngs_mapping").tools.dna,
             caller=self.config.tools,
             ext=EXT_VALUES,
         )

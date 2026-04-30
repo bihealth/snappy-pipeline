@@ -804,7 +804,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         self.register_module("somatic_variant_calling", self.config.path_somatic_variant_calling)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.somatic_variant_calling_tool:
             self.config.somatic_variant_calling_tool = self.w_config.step_config[
                 "somatic_variant_calling"
@@ -824,20 +824,20 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         bcf_tools = [t for t in self.config.tools if t in ("cnvetti",)]
         yield from self._yield_result_files(
             tpl,
-            mapper=self.get_task_config(self.task_name).tools.dna,
+            mapper=self.get_task_config("ngs_mapping").tools.dna,
             caller=vcf_tools,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files(
             tpl,
-            mapper=self.get_task_config(self.task_name).tools.dna,
+            mapper=self.get_task_config("ngs_mapping").tools.dna,
             caller=bcf_tools,
             ext=BCF_EXT_VALUES,
         )
         if "control_freec" in self.config.tools:
             yield from self._yield_result_files(
                 tpl,
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 caller="control_freec",
                 ext=[
                     ".ratio.txt",
@@ -855,13 +855,13 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             exts = (".cnr", ".cns", ".bed", ".seg", ".vcf.gz", ".vcf.gz.tbi")
             yield from self._yield_result_files(
                 tpl,
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 caller="cnvkit",
                 ext=exts,
             )
             yield from self._yield_result_files(
                 tpl,
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 caller="cnvkit",
                 ext=[ext + ".md5" for ext in exts],
             )
@@ -869,7 +869,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             yield from self._yield_report_files(
                 ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
                 [(report, "txt", False) for report in reports],
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 caller="cnvkit",
             )
             plots = (
@@ -880,7 +880,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             yield from self._yield_report_files(
                 ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
                 plots,
-                mapper=self.get_task_config(self.task_name).tools.dna,
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 caller="cnvkit",
             )
         if "cnvetti" in bcf_tools:
@@ -893,7 +893,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                                 os.path.join(
                                     "output", name_pattern, "out", name_pattern + "_genome" + ext
                                 ),
-                                mapper=self.get_task_config(self.task_name).tools.dna,
+                                mapper=self.get_task_config("ngs_mapping").tools.dna,
                                 donor=[donor.name],
                             )
                             yield from expand(
@@ -903,7 +903,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                                     "out",
                                     name_pattern + "_chr{chrom}" + ext,
                                 ),
-                                mapper=self.get_task_config(self.task_name).tools.dna,
+                                mapper=self.get_task_config("ngs_mapping").tools.dna,
                                 donor=[donor.name],
                                 chrom=map(str, chain(range(1, 23), ("X", "Y"))),
                             )

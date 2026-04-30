@@ -321,7 +321,7 @@ class GetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
                     kwargs = {
-                        "mapper": self.get_task_config(self.task_name).tools.dna,
+                        "mapper": self.get_task_config("ngs_mapping").tools.dna,
                     }
                     if "index_library_name" in path_tpl:
                         kwargs["index_library_name"] = [index_library_name]

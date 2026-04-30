@@ -366,7 +366,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.tools_somatic_variant_calling:
             self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"

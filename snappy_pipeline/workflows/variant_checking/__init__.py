@@ -189,9 +189,9 @@ class VariantCheckingWorkflow(BaseStep):
         self.register_module("variant_calling", self.config.path_variant_calling)
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools
+            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
+            self.config.tools_variant_calling = self.get_task_config("variant_calling").tools
 
     @listify
     def get_result_files(self):

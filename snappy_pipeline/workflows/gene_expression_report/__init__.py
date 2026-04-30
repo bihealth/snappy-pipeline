@@ -203,7 +203,7 @@ class GeneExpressionReportWorkflow(BaseStep):
                         yield from expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
-                            mapper=self.get_task_config(self.task_name).tools.rna,
+                            mapper=self.get_task_config("ngs_mapping").tools.rna,
                             tool="featurecounts",
                             ext=exts,
                         )
