@@ -54,6 +54,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -86,10 +87,8 @@ class PeddyStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/.done"
-        self.log_path = (
-            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/log/snakemake.filter.log"
-        )
+        self.base_path_out = "work/{var_caller}.peddy.{index_ngs_library}/out/.done"
+        self.log_path = "work/{var_caller}.peddy.{index_ngs_library}/log/snakemake.filter.log"
 
     @dictify
     def get_input_files(self, action):
@@ -98,10 +97,7 @@ class PeddyStepPart(BaseStepPart):
         self._validate_action(action)
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        tpl = (
-            "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.{index_ngs_library}"
-        )
+        tpl = "output/{var_caller}.{index_ngs_library}/out/{var_caller}.{index_ngs_library}"
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.modules["variant_calling"]
         for key, ext in key_ext.items():
@@ -113,8 +109,7 @@ class PeddyStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         prefix = (
-            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.peddy.{index_ngs_library}"
+            "work/{var_caller}.peddy.{index_ngs_library}/out/{var_caller}.peddy.{index_ngs_library}"
         )
         key_ext = {
             "background_pca": ".background_pca.json",

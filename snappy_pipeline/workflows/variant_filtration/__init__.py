@@ -102,6 +102,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -213,7 +214,7 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}"
     )
 
@@ -247,8 +248,8 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
             variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (
-                    "output/{mapper}.{caller}.jannovar_annotate_vcf.{index_library}/out/"
-                    "{mapper}.{caller}.jannovar_annotate_vcf.{index_library}"
+                    "output/jannovar_annotate_vcf.{index_library}/out/"
+                    "jannovar_annotate_vcf.{index_library}"
                 ).format(**wildcards)
                 yield key, variant_annotation(output_path) + ext
 
@@ -263,7 +264,7 @@ class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersVariantsStepPart
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
 
@@ -291,7 +292,7 @@ class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBa
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}"
     )
 
@@ -322,7 +323,7 @@ class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}"
     )
 
@@ -353,7 +354,7 @@ class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase)
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}"
     )
@@ -385,7 +386,7 @@ class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}.{het_comp,[^\.]+}"
     )
@@ -458,9 +459,7 @@ class VariantFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        name_pattern = (
-            "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
-        )
+        name_pattern = "jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,

@@ -43,18 +43,20 @@ module somatic_variant_calling:
         wf.config.get("path_somatic_variant", "../somatic_variant_calling")
 
 
+target_upstream = wf.depends_on.get("somatic_variant_annotation", "somatic_variant_annotation")
+upstream_prefix = wf.config.get(f"path_somatic_variant_annotation", f"../{target_upstream}")
+
+
 module somatic_variant_annotation:
     snakefile:
         "../somatic_variant_annotation/Snakefile"
     config:
         wf.w_config
     prefix:
-        wf.config.get("path_somatic_variant", "../somatic_variant_annotation")
+        upstream_prefix
 
 
-if not "ngs_mapping_all" in set(map(lambda r: r.name, workflow.rules)):
-
-    use rule * from ngs_mapping
+use rule * from somatic_variant_annotation as somatic_variant_annotation_*
 
 
 if wf.config["has_annotation"]:

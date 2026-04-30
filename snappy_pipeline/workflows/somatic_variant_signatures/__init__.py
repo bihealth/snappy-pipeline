@@ -16,6 +16,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_annotation import (
@@ -43,7 +44,7 @@ class SignaturesStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.name_prefix = "{mapper}.{var_caller}"
+        self.name_prefix = "{var_caller}"
         self.name_postfix = "{tumor_library}"
         if self.config.has_annotation:
             self.name_prefix += ".{anno_caller}"
@@ -238,7 +239,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for workflow"""
         config = self.config
-        name_pattern = "{mapper}.{caller}"
+        name_pattern = ""
         if config.has_annotation:
             name_pattern += ".{anno_caller}"
         if config.is_filtered:

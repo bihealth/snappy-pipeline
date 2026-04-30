@@ -66,6 +66,7 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import SkipLibraryWarning
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -121,8 +122,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def get_log_file(self, action: str) -> SnakemakeDictItemsGenerator:
         self._validate_action(action)
         prefix = (
-            "work/{mapper}.varfish_export.{index_ngs_library}/log/"
-            f"{{mapper}}.mehari_{action}.{{index_ngs_library}}"
+            f"work/varfish_export.{{index_ngs_library}}/log/mehari_{action}.{{index_ngs_library}}"
         )
         key_ext = (
             ("wrapper", ".wrapper.py"),
@@ -218,10 +218,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
         variant_calling = self.parent.modules["variant_calling"]
 
-        path = (
-            "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.{index_ngs_library}.vcf.gz"
-        )
+        path = "output/{var_caller}.{index_ngs_library}/out/{var_caller}.{index_ngs_library}.vcf.gz"
 
         vcfs = []
         for var_caller in self.parent.config.tools_variant_calling:
@@ -238,8 +235,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_output_files_annotate_seqvars(self):
         # Generate paths in "work/" directory
         prefix = (
-            "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.mehari_annotate_seqvars.{index_ngs_library}"
+            "work/varfish_export.{index_ngs_library}/out/"
+            "mehari_annotate_seqvars.{index_ngs_library}"
         )
         work_paths = {  # annotate_seqvars will write out PED file
             "ped": f"{prefix}.ped",
@@ -315,10 +312,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         ]
 
-        path = (
-            "output/{mapper}.{sv_caller}.{index_ngs_library}/"
-            "out/{mapper}.{sv_caller}.{index_ngs_library}.vcf.gz"
-        )
+        path = "output/{sv_caller}.{index_ngs_library}/out/{sv_caller}.{index_ngs_library}.vcf.gz"
 
         vcfs = []
         for sv_caller in sv_callers:
@@ -358,8 +352,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     @dictify
     def _get_output_files_annotate_strucvars(self):
         prefix = (
-            "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.mehari_annotate_strucvars.{index_ngs_library}"
+            "work/varfish_export.{index_ngs_library}/out/"
+            "mehari_annotate_strucvars.{index_ngs_library}"
         )
         work_paths = {
             "gts": f"{prefix}.gts.tsv.gz",
@@ -410,10 +404,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_bam_qc(self) -> SnakemakeDictItemsGenerator:
-        prefix = (
-            "work/{mapper}.varfish_export.{index_ngs_library}/out/"
-            "{mapper}.mehari_bam_qc.{index_ngs_library}"
-        )
+        prefix = "work/varfish_export.{index_ngs_library}/out/mehari_bam_qc.{index_ngs_library}"
         work_paths = {
             "bam_qc": f"{prefix}.bam-qc.tsv.gz",
             "bam_qc_md5": f"{prefix}.bam-qc.tsv.gz.md5",

@@ -221,9 +221,7 @@ if len(pairs.keys()) > 1:
     )
     rule = generic_rule.format(
         rule="merge",
-        input="bams = [{}]".format(
-            ", ".join(['"mapped/{}.bam"'.format(name) for name in pairs.keys()])
-        ),
+        input="bams = [{}]".format(", ".join([f'"mapped/{name}.bam"' for name in pairs.keys()])),
         output=f'bam = "{out}"',
         cmds=cmd,
         threads="1",

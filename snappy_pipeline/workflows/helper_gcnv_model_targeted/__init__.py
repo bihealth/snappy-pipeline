@@ -91,6 +91,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -142,9 +143,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
+        name_pattern = "gcnv_call_cnvs.{library_kit}".format(library_kit=library_kit, **wildcards)
         yield (
             "calls",
             [
@@ -155,7 +154,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
             ],
         )
         ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+        name_pattern = "gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)

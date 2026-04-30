@@ -6,6 +6,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_annotation import (
@@ -54,7 +55,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def get_input_files(self, action):
         self._validate_action(action)
 
-        base_name = "{mapper}.{var_caller}"
+        base_name = "{var_caller}"
         if self.config.has_annotation:
             base_name += ".{anno_caller}"
         if self.config.is_filtered:
@@ -74,7 +75,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        base_name = "{mapper}.{var_caller}"
+        base_name = "{var_caller}"
         if self.config.has_annotation:
             base_name += ".{anno_caller}"
         if self.config.is_filtered:
@@ -93,7 +94,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def _get_log_file(self, action):
         self._validate_action(action)
 
-        base_name = "{mapper}.{var_caller}"
+        base_name = "{var_caller}"
         if self.config.has_annotation:
             base_name += ".{anno_caller}"
         if self.config.is_filtered:
@@ -202,7 +203,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         config = self.config
-        name_pattern = "{mapper}.{caller}"
+        name_pattern = ""
         if config.has_annotation:
             name_pattern += ".{anno_caller}"
         if config.is_filtered:

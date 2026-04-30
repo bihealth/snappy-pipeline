@@ -21,6 +21,7 @@ from snakemake.iocontainers import Namedlist, Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -176,7 +177,7 @@ class PicardStepPart(BaseStepPart):
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
         elif action == "metrics":
-            base_out = "work/{mapper}.{library_name}/report/picard/{mapper}.{library_name}."
+            base_out = "work/{library_name}/report/picard/{library_name}."
             for pgm in self.config.picard.programs:
                 if pgm in MULTIPLE_METRICS.keys():
                     first = MULTIPLE_METRICS[pgm][0]
@@ -196,7 +197,7 @@ class PicardStepPart(BaseStepPart):
         if action == "prepare":
             prefix = "work/static_data/picard/log/prepare"
         elif action == "metrics":
-            prefix = "work/{mapper}.{library_name}/log/picard/{mapper}.{library_name}"
+            prefix = "work/{library_name}/log/picard/{library_name}"
         else:
             actions_str = ", ".join(self.actions)
             raise UnsupportedActionException(
@@ -309,9 +310,7 @@ class NgsDataQcWorkflow(BaseStep):
                 ),
             )
         if "picard" in self.config.tools:
-            tpl = (
-                "output/{mapper}.{ngs_library.name}/report/picard/{mapper}.{ngs_library.name}.{ext}"
-            )
+            tpl = "output/{ngs_library.name}/report/picard/{ngs_library.name}.{ext}"
             exts = []
             for pgm in self.config.picard.programs:
                 if pgm in MULTIPLE_METRICS.keys():

@@ -8,6 +8,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -116,7 +117,7 @@ class PopDelStepPart(
 
     @dictify
     def _get_output_files_profile(self):
-        infix = "{mapper}.popdel_profile.{library_name}"
+        infix = "popdel_profile.{library_name}"
         yield "profile", f"work/{infix}/out/{infix}.profile"
         yield "profile_md5", f"work/{infix}/out/{infix}.profile.md5"
 
@@ -144,7 +145,7 @@ class PopDelStepPart(
         yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_call(self):
-        return "{mapper}.popdel_call.{chrom}-{begin}-{end}"
+        return "popdel_call.{chrom}-{begin}-{end}"
 
     @dictify
     def _get_input_files_concat_calls(self, wildcards):
@@ -180,7 +181,7 @@ class PopDelStepPart(
         yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_concat_calls(self):
-        return "{mapper}.popdel_concat_calls"
+        return "popdel_concat_calls"
 
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
@@ -189,7 +190,7 @@ class PopDelStepPart(
 
     @dictify
     def _get_output_files_reorder_vcf(self):
-        infix = "{mapper}.popdel.{library_name}"
+        infix = "popdel.{library_name}"
         work_files = {}
         work_files["vcf"] = f"work/{infix}/out/{infix}.vcf.gz"
         work_files["vcf_md5"] = f"work/{infix}/out/{infix}.vcf.gz.md5"
@@ -245,8 +246,7 @@ class Sniffles2StepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{mapper}.sniffles2.{index_ngs_library}/out/"
-            "{mapper}.sniffles2.{index_ngs_library}{ext}"
+            "work/sniffles2.{index_ngs_library}/out/sniffles2.{index_ngs_library}{ext}"
         )
         # Build shortcut from index library name to pedigree
         self.index_ngs_library_to_pedigree = {}
@@ -261,7 +261,7 @@ class Sniffles2StepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_bam_to_snf(self):
-        infix = "{mapper}.sniffles2_bam_to_snf.{library_name}"
+        infix = "sniffles2_bam_to_snf.{library_name}"
         yield "snf", f"work/{infix}/out/{infix}.snf"
 
     @dictify
@@ -276,7 +276,7 @@ class Sniffles2StepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_snf_to_vcf(self):
-        infix = "{mapper}.sniffles2.{index_ngs_library}"
+        infix = "sniffles2.{index_ngs_library}"
         yield "snf", f"work/{infix}/out/{infix}.snf"
 
 

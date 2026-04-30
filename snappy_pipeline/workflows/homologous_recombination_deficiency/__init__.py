@@ -37,9 +37,9 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.seqz.gz``
-    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.json``
+- ``scarHRD.{lib_name}-{lib_pk}/out/``
+    - ``scarHRD.{lib_name}-{lib_pk}.seqz.gz``
+    - ``scarHRD.{lib_name}-{lib_pk}.json``
 
 =====================
 Default Configuration
@@ -65,6 +65,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -115,8 +116,8 @@ class ScarHRDStepPart(BaseStepPart):
             return {"done": "work/R_packages/out/scarHRD.done"}
         elif action == "run":
             return {
-                "scarHRD": "work/{mapper}.{caller}.scarHRD.{library_name}/out/{mapper}.{caller}.scarHRD.{library_name}.json",
-                "scarHRD_md5": "work/{mapper}.{caller}.scarHRD.{library_name}/out/{mapper}.{caller}.scarHRD.{library_name}.json.md5",
+                "scarHRD": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json",
+                "scarHRD_md5": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json.md5",
             }
         else:
             raise UnsupportedActionException(
@@ -137,7 +138,7 @@ class ScarHRDStepPart(BaseStepPart):
         if action == "install":
             prefix = "work/R_packages/log/scarHRD"
         elif action == "run":
-            prefix = "work/{mapper}.{caller}.scarHRD.{library_name}/log/{mapper}.{caller}.scarHRD.{library_name}"
+            prefix = "work/scarHRD.{library_name}/log/scarHRD.{library_name}"
         else:
             raise UnsupportedActionException(
                 "Action '{action}' is not supported. Valid options: {valid}".format(

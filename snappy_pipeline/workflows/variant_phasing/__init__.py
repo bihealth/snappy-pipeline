@@ -30,7 +30,7 @@ Step Output
 ===========
 
 For each input VCF file (i.e., for each mapper and pedigree), a directory
-``output/{mapper}.{caller}.{phaser}.{index_ngs_library}/out`` will be created with the following
+``output/{phaser}.{index_ngs_library}/out`` will be created with the following
 output files.
 
 The ``{phaser}`` placeholder can take the values gatk_phase_by_transmission,
@@ -69,6 +69,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -175,8 +176,8 @@ class VariantPhasingBaseStep(BaseStepPart):
     def _get_log_file(self, action):
         assert action == "run"
         prefix = (
-            "work/{mapper}.{caller}.jannovar_annotate_vcf.%(name)s.{index_library}/log/"
-            "{mapper}.{caller}.jannovar_annotate_vcf.%(name)s.{index_library}"
+            "work/jannovar_annotate_vcf.%(name)s.{index_library}/log/"
+            "jannovar_annotate_vcf.%(name)s.{index_library}"
         )
 
         key_ext = (
@@ -200,7 +201,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        name_pattern = r"{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library,[^\.]+}"
+        name_pattern = r"jannovar_annotate_vcf.gatk_pbt.{index_library,[^\.]+}"
         self.base_path_out = os.path.join(
             "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "")
         )
@@ -219,8 +220,8 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
             variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 input_path = (
-                    "output/{mapper}.{caller}.jannovar_annotate_vcf.{real_index}/out/"
-                    "{mapper}.{caller}.jannovar_annotate_vcf.{real_index}"
+                    "output/jannovar_annotate_vcf.{real_index}/out/"
+                    "jannovar_annotate_vcf.{real_index}"
                 ).format(real_index=real_index.dna_ngs_library.name, **wildcards)
                 yield key, variant_annotation(input_path) + ext
             yield "reference", self.w_config.static_data_config.reference.path
@@ -263,7 +264,7 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
     def _yield_bams(self, wildcards):
         """Helper function used in subclass input_function"""
         donor = self.ngs_library_to_donor[wildcards.index_library]
-        tpl = "output/{mapper}.{index_library}/out/{mapper}.{index_library}{ext}"
+        tpl = "output/{index_library}/out/{index_library}{ext}"
         ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             vals = {"mapper": wildcards.mapper, "ext": ext}
@@ -315,7 +316,7 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_rbp.{index_library}"
+        name_pattern = "jannovar_annotate_vcf.gatk_rbp.{index_library}"
         self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern)
 
     def get_input_files(self, action):
@@ -329,8 +330,8 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
             variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (
-                    "output/{mapper}.{caller}.jannovar_annotate_vcf.{real_index}/out/"
-                    "{mapper}.{caller}.jannovar_annotate_vcf.{real_index}"
+                    "output/jannovar_annotate_vcf.{real_index}/out/"
+                    "jannovar_annotate_vcf.{real_index}"
                 ).format(real_index=real_index.dna_ngs_library.name, **wildcards)
                 yield key, variant_annotation(output_path) + ext
 
@@ -348,7 +349,7 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}"
+        name_pattern = "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.{index_library}"
         self.base_path_out = os.path.join("work", name_pattern, "out", name_pattern)
 
     def get_input_files(self, action):
@@ -357,7 +358,7 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
             # BAM files from ngs_mapping step.
             yield from self._yield_bams(wildcards)
             # Result of PhaseByTransmission step
-            name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.gatk_pbt.{index_library}"
+            name_pattern = "jannovar_annotate_vcf.gatk_pbt.{index_library}"
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 input_path = "work/" + name_pattern + "/out/" + name_pattern
                 yield key, input_path.format(**wildcards) + ext
@@ -410,7 +411,7 @@ class VariantPhasingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        name_pattern = "{mapper}.{caller}.jannovar_annotate_vcf.{phasing}.{index_library.name}"
+        name_pattern = "jannovar_annotate_vcf.{phasing}.{index_library.name}"
         phasings = [
             token for name, token in CONFIG_TO_TOKEN.items() if name in self.config.phasings
         ]

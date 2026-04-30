@@ -25,17 +25,17 @@ Step Output
 
 For each tumor DNA NGS library with name ``lib_name`` and each read mapper
 ``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
-pipeline step will create a directory ``output/{mapper}.{var_caller}.{annotator}.{lib_name}/out``
+pipeline step will create a directory ``output/{var_caller}.{lib_name}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
 Two ``vcf`` files are produced:
 
-- ``{mapper}.{var_caller}.{annotator}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
-- ``{mapper}.{var_caller}.{annotator}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+- ``{var_caller}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{var_caller}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
 
 When the ``somatic_variant_annotation`` step has been omitted, and the filtration is done directly from the output of the ``somatic_variant_calling`` step,
-then the output files are stored in the ``output/{mapper}.{var_caller}.{lib_name}/out`` directory, under the names ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` &
-``{mapper}.{var_caller}.{lib_name}.full.vcf.gz``
+then the output files are stored in the ``output/{var_caller}.{lib_name}/out`` directory, under the names ``{var_caller}.{lib_name}.vcf.gz`` &
+``{var_caller}.{lib_name}.full.vcf.gz``
 
 For example, it might look as follows for the example from above:
 
@@ -123,6 +123,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -156,9 +157,9 @@ class SomaticVariantFiltrationStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.config = parent.config
-        self.name_pattern = "{mapper}.{var_caller}"
+        self.name_pattern = "{var_caller}"
         if self.config.has_annotation:
-            self.name_pattern += ".{annotator}"
+            self.name_pattern += ""
         self.name_pattern += ".{tumor_library}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -292,13 +293,11 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
         yield "reference", self.w_config.static_data_config.reference.path
 
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        name_pattern = "{mapper}.{tumor_library}".format(**wildcards)
+        name_pattern = "{tumor_library}".format(**wildcards)
         base_path = os.path.join("output", name_pattern, "out", name_pattern)
         yield "bam", ngs_mapping(base_path + ".bam")
         if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
-            name_pattern = "{mapper}.{normal_library}".format(
-                normal_library=normal_library, **wildcards
-            )
+            name_pattern = "{normal_library}".format(normal_library=normal_library, **wildcards)
             base_path = os.path.join("output", name_pattern, "out", name_pattern)
             yield "normal", ngs_mapping(base_path + ".bam")
 
@@ -333,9 +332,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         yield "txt", sample_files
 
     def _get_output_files_write_panel(self):
-        return {
-            "txt": "work/{mapper}.eb_filter.panel_of_normals/out/{mapper}.eb_filter.panel_of_normals.txt"
-        }
+        return {"txt": "work/eb_filter.panel_of_normals/out/eb_filter.panel_of_normals.txt"}
 
     def get_output_files(self, action):
         output_files = super(OneFilterEbfilterStepPart, self).get_output_files(action)
@@ -375,7 +372,7 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         lib_count = cfg["panel_of_normals_size"]
         random.shuffle(libraries)
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}"
+        tpl = "output/{normal_library}/out/{normal_library}"
         for library in libraries[:lib_count]:
             yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
 
@@ -435,9 +432,9 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{var_caller}"
+        name_pattern = "{var_caller}"
         if self.config.has_annotation:
-            name_pattern += ".{annotator}"
+            name_pattern += ""
         name_pattern += ".filtered.{tumor_library}"
         vcf = os.path.join("work", name_pattern, "out", name_pattern)
         merged_log = os.path.join("work", name_pattern, "log", name_pattern + ".merged.tar.gz")
@@ -458,9 +455,9 @@ class LastFilterStepPart(SomaticVariantFiltrationStepPart):
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{var_caller}"
+        name_pattern = "{var_caller}"
         if self.config.has_annotation:
-            name_pattern += ".{annotator}"
+            name_pattern += ""
         name_pattern += ".filtered.{tumor_library}"
         tpl = os.path.join("work", name_pattern, "log", name_pattern)
         return {
@@ -575,9 +572,9 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
 
         log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
 
-        name_pattern = "{mapper}.{caller}"
+        name_pattern = ""
         if self.config.has_annotation:
-            name_pattern += ".{annotator}"
+            name_pattern += ""
         name_pattern += ".filtered.{tumor_library}"
 
         yield from self._yield_result_files_matched(

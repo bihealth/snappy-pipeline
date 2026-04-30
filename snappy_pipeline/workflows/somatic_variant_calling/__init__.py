@@ -20,18 +20,18 @@ Step Output
 
 For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
 ``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
-pipeline step will create a directory ``output/{mapper}.{var_caller}.{lib_name}-{lib_pk}/out``
+pipeline step will create a directory ``output/{var_caller}.{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
 Two ``vcf`` files are produced:
 
-- ``{mapper}.{var_caller}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
-- ``{mapper}.{var_caller}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+- ``{var_caller}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{var_caller}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
 
 For example, it might look as follows for the example from above:
 
@@ -108,6 +108,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -183,8 +184,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/"
-            "{{mapper}}.{var_caller}.{{tumor_library}}{ext}"
+            "work/{var_caller}.{{tumor_library}}/out/{var_caller}.{{tumor_library}}{ext}"
         )
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -215,9 +215,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
-            **wildcards
-        )
+        tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
 
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
@@ -226,10 +224,8 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
         normal_library = self.get_normal_lib_name(wildcards)
         if normal_library:
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=normal_library, **wildcards
-                )
+            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+                normal_library=normal_library, **wildcards
             )
             input_files.update(
                 {
@@ -266,10 +262,9 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        prefix = (
-            "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
-            "{{mapper}}.{var_caller}.{{tumor_library}}"
-        ).format(var_caller=self.__class__.name)
+        prefix = ("work/{var_caller}.{{tumor_library}}/log/{var_caller}.{{tumor_library}}").format(
+            var_caller=self.__class__.name
+        )
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -421,11 +416,9 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        tumor_base_path = ("output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}").format(
-            **wildcards
-        )
+        tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
 
-        scatteritem_base_path = "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/scatter/{scatteritem}".format(
+        scatteritem_base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}/mutect2par/scatter/{scatteritem}".format(
             **wildcards
         )
 
@@ -440,10 +433,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         if tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
             normal_library = self.get_normal_lib_name(wildcards)
             if normal_library:
-                normal_base_path = (
-                    "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                        normal_library=normal_library, **wildcards
-                    )
+                normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+                    normal_library=normal_library, **wildcards
                 )
                 input_files.update(
                     {
@@ -469,7 +460,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
     def _get_input_files_gather(self, wildcards):
         gather = self.parent.workflow.globals.get("gather")
         gather = getattr(gather, self.name)
-        scatteritem_base_path = "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}/mutect2par/run/{{scatteritem}}".format(
+        scatteritem_base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}/mutect2par/run/{{scatteritem}}".format(
             **wildcards
         )
         input_files = {
@@ -489,11 +480,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         :return: Returns dictionary with input files for rule 'filter'.
         """
-        base_path = (
-            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}".format(
-                **wildcards
-            )
-        )
+        base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}".format(**wildcards)
         input_files = {
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
@@ -520,7 +507,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+        base_path = "output/{normal_library}/out/{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
         return {
@@ -542,9 +529,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         # Get shortcut to Snakemake module for ngs_mapping
         ngs_mapping = self.parent.modules["ngs_mapping"]
 
-        base_path = "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}".format(
-            **wildcards
-        )
+        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam"),
@@ -562,11 +547,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         :return: Returns dictionary with input files for rule 'contamination', Normal and Tumor
         pileup files.
         """
-        base_path = (
-            "work/{mapper}.mutect2.{tumor_library}/out/{mapper}.mutect2.{tumor_library}".format(
-                **wildcards
-            )
-        )
+        base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}".format(**wildcards)
         return {
             "normal": base_path + ".normal.pileup",
             "tumor": base_path + ".tumor.pileup",
@@ -595,13 +576,13 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         if action == "scatter":
             scatter = self.parent.workflow.globals.get("scatter")
             scatter = getattr(scatter, self.name)
-            template = "work/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{{mapper}}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
+            template = "work/{{{}}}.{var_caller}.{{{{tumor_library}}}}/out/{{{}}}.{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
                 var_caller=self.name
             )
             return {"regions": scatter(template)}
 
         if action == "run":
-            base_path_out = "work/{{mapper}}.{var_caller}.{{tumor_library}}/out/{{mapper}}.{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
+            base_path_out = "work/{var_caller}.{{tumor_library}}/out/{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
             exts = {
                 "vcf": ".raw.vcf.gz",
                 "vcf_md5": ".raw.vcf.gz.md5",
@@ -680,8 +661,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                 postfix = "." + action
 
         prefix = (
-            "work/{{mapper}}.{var_caller}.{{tumor_library}}/log/"
-            "{{mapper}}.{var_caller}.{{tumor_library}}{postfix}"
+            "work/{var_caller}.{{tumor_library}}/log/{var_caller}.{{tumor_library}}{postfix}"
         ).format(var_caller=self.name, postfix=postfix)
 
         # Define output dictionary
@@ -756,7 +736,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "{mapper}.{caller}.{tumor_library.name}"
+        name_pattern = "{tumor_library.name}"
         for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),

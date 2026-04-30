@@ -9,6 +9,7 @@ import re
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart

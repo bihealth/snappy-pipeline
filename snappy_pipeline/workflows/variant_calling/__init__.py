@@ -36,14 +36,14 @@ each pedigree from the germline sample sheet.
 
 **Primary Output**
 
-- ``output/{mapper}.{caller}.{index_library}/out/{mapper}.{caller}.{index_library}.vcf.gz``
+- ``output/{index_library}/out/{index_library}.vcf.gz``
 
 **Additional Output**
 
 The callers implementing a gVCF workflow (currently only ``gatk4_hc_gvcf``) also create one output
 gVCF file for the pedigree.
 
-- ``output/{mapper}.{caller}.{index_library}/out/{mapper}.{caller}.{index_library}.g.vcf.gz``
+- ``output/{index_library}/out/{index_library}.g.vcf.gz``
 
 Further, each VCF and gVCF file gets an appropriate TBI index file ``{vcf_file}.tbi`` and each output
 is gets an appropriate MD5 checksum file ``{file}.md5``.
@@ -127,7 +127,7 @@ Reports
 
     ::
 
-        report/jannovar_stats/{mapper}.{caller}.{index_library}.{donor_library}.txt
+        report/jannovar_stats/{index_library}.{donor_library}.txt
 
 ``bcftools_stats``
 
@@ -136,7 +136,7 @@ Reports
 
     ::
 
-        report/bcftools_stats/{mapper}.{caller}.{index_library}.{donor_library}.txt
+        report/bcftools_stats/{index_library}.{donor_library}.txt
 
 ``baf_file_generation``
 
@@ -146,7 +146,7 @@ Reports
 
     ::
 
-        report/baf/{mapper}.{caller}.{index_library}.{donor_library}.bw
+        report/baf/{index_library}.{donor_library}.bw
 
 ``roh_calling``
 
@@ -259,6 +259,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, flatten, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -379,7 +380,7 @@ class VariantCallingGetLogFileMixin:
     def get_log_file(self, action) -> SnakemakeDictItemsGenerator:
         """Return dict of log files in the "log" directory."""
         _ = action
-        token = f"{{mapper}}.{self.name}.{{library_name}}"
+        token = f"{self.name}.{{library_name}}"
         prefix = f"work/{token}/log/{token}.{self.name}_{action}"
         key_ext = (
             ("log", ".log"),
@@ -406,8 +407,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{index_library_name}}/out/"
-            "{{mapper}}.{var_caller}.{{index_library_name}}{ext}"
+            "work/{var_caller}.{{index_library_name}}/out/{var_caller}.{{index_library_name}}{ext}"
         )
         self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
         # Build shortcut from index library name to pedigree
@@ -448,7 +448,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        token = f"{{mapper}}.{self.name}.{{library_name}}"
+        token = f"{self.name}.{{library_name}}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -635,7 +635,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf_discover.{library_name}"
+        infix = "gatk4_hc_gvcf_discover.{library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
@@ -644,7 +644,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_output_files_combine_gvcfs(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf_combine_gvcfs.{library_name}"
+        infix = "gatk4_hc_gvcf_combine_gvcfs.{library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
@@ -653,7 +653,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf.{library_name}"
+        infix = "gatk4_hc_gvcf.{library_name}"
         result = {
             "gvcf": f"work/{infix}/out/{infix}.g.vcf.gz",
             "gvcf_md5": f"work/{infix}/out/{infix}.g.vcf.gz.md5",
@@ -696,7 +696,7 @@ class ReportGetLogFileMixin:
         """Return dict of log files in the "log" directory."""
         self._validate_action(action)
         assert self.report_per_donor is not None
-        token = "{mapper}.{var_caller}.{index_library_name}"
+        token = "{var_caller}.{index_library_name}"
         prefix = f"work/{token}/log/{token}.{{donor_library_name}}.{self.name}_{action}"
         if not self.report_per_donor:
             prefix = prefix.replace("{donor_library_name}.", "")
@@ -736,10 +736,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            (
-                "work/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            ("work/{var_caller}.{index_library_name}/out/{var_caller}.{index_library_name}.vcf.gz"),
         )
 
     def get_output_files(self, action: str) -> SnakemakeDict:
@@ -751,8 +748,8 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
         base_path = (
-            "work/{mapper}.{var_caller}.{index_library_name}/report/bcftools_stats/"
-            "{mapper}.{var_caller}.{index_library_name}.{donor_library_name}"
+            "work/{var_caller}.{index_library_name}/report/bcftools_stats/"
+            "{var_caller}.{index_library_name}.{donor_library_name}"
         )
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
@@ -805,8 +802,8 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         yield (
             "vcf",
             (
-                "output/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
+                "output/{var_caller}.{index_library_name}/out/"
+                "{var_caller}.{index_library_name}.vcf.gz"
             ),
         )
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
@@ -837,8 +834,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
         base_path = (
-            "work/{mapper}.{var_caller}.{index_library_name}/report/roh/"
-            "{mapper}.{var_caller}.{index_library_name}"
+            "work/{var_caller}.{index_library_name}/report/roh/{var_caller}.{index_library_name}"
         )
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
@@ -882,10 +878,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         self._validate_action(action)
         yield (
             "vcf",
-            (
-                "work/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            ("work/{var_caller}.{index_library_name}/out/{var_caller}.{index_library_name}.vcf.gz"),
         )
         yield "path_ser", self.config.jannovar_stats.path_ser
 
@@ -900,8 +893,8 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         TBI file)
         """
         base_path = (
-            "work/{mapper}.{var_caller}.{index_library_name}/report/jannovar_stats/"
-            "{mapper}.{var_caller}.{index_library_name}"
+            "work/{var_caller}.{index_library_name}/report/jannovar_stats/"
+            "{var_caller}.{index_library_name}"
         )
         ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
@@ -954,10 +947,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         self._validate_action(action)
         yield (
             "vcf",
-            (
-                "work/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            ("work/{var_caller}.{index_library_name}/out/{var_caller}.{index_library_name}.vcf.gz"),
         )
         yield "reference_index", self.w_config.static_data_config.reference.path + ".fai"
 
@@ -965,8 +955,8 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     def get_output_files(self, action: str) -> SnakemakeDictItemsGenerator:
         self._validate_action(action)
         base_path = (
-            "{mapper}.{var_caller}.{index_library_name}/report/baf/"
-            r"{mapper}.{var_caller}.{index_library_name}.{donor_library_name,[^\.]+}.baf"
+            "{var_caller}.{index_library_name}/report/baf/"
+            r"{var_caller}.{index_library_name}.{donor_library_name,[^\.]+}.baf"
         )
         ext_names = {"bw": ".bw", "bw_md5": ".bw.md5"}
         work_files = {}

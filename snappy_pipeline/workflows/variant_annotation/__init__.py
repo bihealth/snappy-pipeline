@@ -60,6 +60,7 @@ from typing import Any
 from biomedsheets.shortcuts import GermlineCaseSheet
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -96,7 +97,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     def get_input_files(self, action):
         """Return path to pedigree input file"""
         self._validate_action(action)
-        token = "{mapper}.{var_caller}.{library_name}"
+        token = "{var_caller}.{library_name}"
         variant_calling = self.parent.modules["variant_calling"]
         return {
             "reference": self.w_config.static_data_config.reference.path,
@@ -108,7 +109,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return output files for the filtration"""
         self._validate_action(action)
-        token = "{mapper}.{var_caller}.vep.{library_name}"
+        token = "{var_caller}.vep.{library_name}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -134,7 +135,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        token = "{mapper}.{var_caller}.vep.{library_name}"
+        token = "{var_caller}.vep.{library_name}"
         prefix = f"work/{token}/log/{token}"
         key_ext = (
             ("log", ".log"),

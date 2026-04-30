@@ -28,17 +28,22 @@ wf = GeneExpressionReportWorkflow(workflow, config, lookup_paths, config_paths, 
 
 if wf.config["path_gene_expression_quantification"]:
 
-    module gene_expression_quantification:
-        snakefile:
-            "../gene_expression_quantification/Snakefile"
-        config:
-            wf.w_config
-        prefix:
-            wf.config.get(
-                "path_gene_expression_quantification", "../gene_expression_quantification"
-            )
+    target_upstream = wf.depends_on.get(
+        "gene_expression_quantification", "gene_expression_quantification"
+    )
+upstream_prefix = wf.config.get(f"path_gene_expression_quantification", f"../{target_upstream}")
 
-    use rule * from gene_expression_quantification
+
+module gene_expression_quantification:
+    snakefile:
+        "../gene_expression_quantification/Snakefile"
+    config:
+        wf.w_config
+    prefix:
+        upstream_prefix
+
+
+use rule * from gene_expression_quantification as gene_expression_quantification_*
 
 
 # Rules =======================================================================

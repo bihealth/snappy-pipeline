@@ -143,6 +143,7 @@ from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,

@@ -28,10 +28,10 @@ be used as an identification token in the output file.
 
 For each read mapper, repeat analysis tool, and sample, the following files will be generated:
 
-- ``{mapper}.{repeat_tool}.{lib_name}.vcf``
-- ``{mapper}.{repeat_tool}.{lib_name}.vcf.md5``
-- ``{mapper}.{repeat_tool}_annotated.{lib_name}.json``
-- ``{mapper}.{repeat_tool}_annotated.{lib_name}.json.md5``
+- ``{repeat_tool}.{lib_name}.vcf``
+- ``{repeat_tool}.{lib_name}.vcf.md5``
+- ``{repeat_tool}_annotated.{lib_name}.json``
+- ``{repeat_tool}_annotated.{lib_name}.json.md5``
 
 For example, it might look as follows for the example from above:
 
@@ -86,6 +86,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
@@ -200,7 +201,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        bam_tpl = ngs_mapping("output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam")
+        bam_tpl = ngs_mapping("output/{library_name}/out/{library_name}.bam")
         bam = bam_tpl.format(**wildcards)
         return {
             "bam": bam,
@@ -217,7 +218,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         :param _wildcards: Snakemake rule wildcards (unused).
         :type _wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "{mapper}.expansionhunter.{library_name}"
+        name_pattern = "expansionhunter.{library_name}"
         yield "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext="json"
         )
@@ -227,7 +228,7 @@ class ExpansionHunterStepPart(BaseStepPart):
     def _get_output_files_run():
         """Yield output files' patterns for rule `run` - ExpansionHunter call."""
         # Initialise variables
-        name_pattern = "{mapper}.expansionhunter.{library_name}"
+        name_pattern = "expansionhunter.{library_name}"
         ext_dict = {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}
         # Yield
         for key, ext in ext_dict.items():
@@ -243,7 +244,7 @@ class ExpansionHunterStepPart(BaseStepPart):
     def _get_output_files_annotate():
         """Yield output files' patterns for rule `annotate`."""
         # Initialise variables
-        name_pattern = "{mapper}.expansionhunter_annotated.{library_name}"
+        name_pattern = "expansionhunter_annotated.{library_name}"
         ext_dict = {"json": "json", "json_md5": "json.md5"}
         # Yield
         for key, ext in ext_dict.items():
@@ -259,7 +260,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         """
         :return: Returns log file pattern for rule `run` - ExpansionHunter call.
         """
-        name_pattern = "{mapper}.expansionhunter.{library_name}"
+        name_pattern = "expansionhunter.{library_name}"
         return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
     def get_args(self, action):
@@ -351,7 +352,7 @@ class RepeatExpansionWorkflow(BaseStep):
         # Initialise variable
         tools = ("expansionhunter",)
         # Yield the JSON annotated results files
-        name_pattern = "{mapper}.{tool}_annotated.{donor.dna_ngs_library.name}"
+        name_pattern = "{tool}_annotated.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
@@ -359,7 +360,7 @@ class RepeatExpansionWorkflow(BaseStep):
             ext=EXT_JSON,
         )
         # Yield the VCF results files
-        name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
+        name_pattern = "{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config.step_config["ngs_mapping"].tools.dna,

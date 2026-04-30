@@ -25,10 +25,10 @@ Step Output
 
 For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
 ``mapper`` that the library has been aligned with, and the tool ``tool``, the
-pipeline step will create a directory ``output/{mapper}.{tool}.{lib_name}-{lib_pk}/out``
+pipeline step will create a directory ``output/{tool}.{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting TSV files.
 
-- ``{mapper}.{tool}.{lib_name}-{lib_pk}.tsv``
+- ``{tool}.{lib_name}-{lib_pk}.tsv``
 
 =====================
 Default Configuration
@@ -56,6 +56,7 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -231,9 +232,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{tool}.{{library_name}}/out/{{mapper}}.{tool}.{{library_name}}{ext}"
-        )
+        self.base_path_out = "work/{tool}.{{library_name}}/out/{tool}.{{library_name}}{ext}"
 
     def get_input_files(self, action):
         assert action == "run", "Unsupported actions"
@@ -245,7 +244,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         ngs_mapping = self.parent.modules["ngs_mapping"]
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
+        base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
@@ -269,10 +268,8 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
-        prefix = (
-            "work/{{mapper}}.{tool}.{{library_name}}/log/{{mapper}}.{tool}.{{library_name}}".format(
-                tool=self.__class__.name
-            )
+        prefix = "work/{tool}.{{library_name}}/log/{tool}.{{library_name}}".format(
+            tool=self.__class__.name
         )
         key_ext = (
             ("log", ".log"),
@@ -525,7 +522,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
+        name_pattern = "{tool}.{ngs_library.name}"
 
         # Salmon special case
         salmon_name_pattern = "salmon.{ngs_library.name}"

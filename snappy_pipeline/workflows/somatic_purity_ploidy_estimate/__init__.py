@@ -20,6 +20,7 @@ from snakemake.io import touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 
@@ -84,9 +85,7 @@ class AscatStepPart(BaseStepPart):
 
         def func(wildcards):
             ngs_mapping = self.parent.modules["ngs_mapping"]
-            base_path = (
-                "output/{mapper}.{tumor_library_name}/out/{mapper}.{tumor_library_name}"
-            ).format(**wildcards)
+            base_path = ("output/{tumor_library_name}/out/{tumor_library_name}").format(**wildcards)
             return {
                 "bam": ngs_mapping(base_path + ".bam"),
                 "bai": ngs_mapping(base_path + ".bam.bai"),
@@ -99,9 +98,9 @@ class AscatStepPart(BaseStepPart):
 
         def func(wildcards):
             ngs_mapping = self.parent.modules["ngs_mapping"]
-            base_path = (
-                "output/{mapper}.{normal_library_name}/out/{mapper}.{normal_library_name}"
-            ).format(**wildcards)
+            base_path = ("output/{normal_library_name}/out/{normal_library_name}").format(
+                **wildcards
+            )
             return {
                 "bam": ngs_mapping(base_path + ".bam"),
                 "bai": ngs_mapping(base_path + ".bam.bai"),
@@ -123,8 +122,7 @@ class AscatStepPart(BaseStepPart):
         def func(wildcards):
             wgs_cnv_calling = self.parent.modules["somatic_targeted_seq_cnv_calling"]
             base_path = (
-                "work/{mapper}.copywriter.{tumor_library_name}/"
-                "out/{mapper}.copywriter.{tumor_library_name}"
+                "work/copywriter.{tumor_library_name}/out/copywriter.{tumor_library_name}"
             ).format(**wildcards)
             return {"bins": wgs_cnv_calling(base_path + "_bins.txt")}
 
@@ -142,8 +140,7 @@ class AscatStepPart(BaseStepPart):
                     tumor_library = k
                     # break
             base_path = (
-                "work/{mapper}.copywriter.{tumor_library_name}/"
-                "out/{mapper}.copywriter.{tumor_library_name}"
+                "work/copywriter.{tumor_library_name}/out/copywriter.{tumor_library_name}"
             ).format(tumor_library_name=tumor_library, **wildcards)
             return {"bins": wgs_cnv_calling(base_path + "_bins.txt")}
 
@@ -156,20 +153,20 @@ class AscatStepPart(BaseStepPart):
         def func(wildcards):
             result = {
                 "baf_tumor": (
-                    "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/out/"
-                    "{mapper}.ascat_baf_tumor.{tumor_library_name}.txt"
+                    "work/ascat_baf_tumor.{tumor_library_name}/out/"
+                    "ascat_baf_tumor.{tumor_library_name}.txt"
                 ),
                 "baf_normal": (
-                    "work/{mapper}.ascat_baf_normal.{normal_library_name}/out/"
-                    "{mapper}.ascat_baf_normal.{normal_library_name}.txt"
+                    "work/ascat_baf_normal.{normal_library_name}/out/"
+                    "ascat_baf_normal.{normal_library_name}.txt"
                 ),
                 "cnv_tumor": (
-                    "work/{mapper}.ascat_cnv_tumor.{tumor_library_name}/out/"
-                    "{mapper}.ascat_cnv_tumor.{tumor_library_name}.txt"
+                    "work/ascat_cnv_tumor.{tumor_library_name}/out/"
+                    "ascat_cnv_tumor.{tumor_library_name}.txt"
                 ),
                 "cnv_normal": (
-                    "work/{mapper}.ascat_cnv_normal.{normal_library_name}/out/"
-                    "{mapper}.ascat_cnv_normal.{normal_library_name}.txt"
+                    "work/ascat_cnv_normal.{normal_library_name}/out/"
+                    "ascat_cnv_normal.{normal_library_name}.txt"
                 ),
             }
             normal_library_name = self.get_normal_lib_name(wildcards)
@@ -189,7 +186,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating BAF file for the tumor."""
         return {
             "txt": (
-                "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/out/{mapper}."
+                "work/ascat_baf_tumor.{tumor_library_name}/out/"
                 "ascat_baf_tumor.{tumor_library_name}.txt"
             )
         }
@@ -199,7 +196,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating BAF file for the normal."""
         return {
             "txt": (
-                "work/{mapper}.ascat_baf_normal.{normal_library_name}/out/{mapper}."
+                "work/ascat_baf_normal.{normal_library_name}/out/"
                 "ascat_baf_normal.{normal_library_name}.txt"
             )
         }
@@ -209,7 +206,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating BAF file for the tumor."""
         return {
             "txt": (
-                "work/{mapper}.ascat_cnv_tumor.{tumor_library_name}/out/{mapper}."
+                "work/ascat_cnv_tumor.{tumor_library_name}/out/"
                 "ascat_cnv_tumor.{tumor_library_name}.txt"
             )
         }
@@ -219,7 +216,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating CNV file for the normal."""
         return {
             "txt": (
-                "work/{mapper}.ascat_cnv_normal.{normal_library_name}/out/{mapper}."
+                "work/ascat_cnv_normal.{normal_library_name}/out/"
                 "ascat_cnv_normal.{normal_library_name}.txt"
             )
         }
@@ -227,12 +224,10 @@ class AscatStepPart(BaseStepPart):
     @dictify
     def _get_output_files_run_ascat(self):
         """Return output files for actually running ASCAT."""
-        yield "done", touch("work/{mapper}.ascat.{tumor_library_name}/out/.done")
+        yield "done", touch("work/ascat.{tumor_library_name}/out/.done")
         infixes = ("goodness_of_fit", "ploidy", "segments", "segments_raw")
         for infix in infixes:
-            path = (
-                "work/{mapper}.ascat.{tumor_library_name}/out/{tumor_library_name}_%s.txt"
-            ) % infix
+            path = ("work/ascat.{tumor_library_name}/out/{tumor_library_name}_%s.txt") % infix
             yield infix, path
 
     def get_args(self, action):
@@ -280,25 +275,22 @@ class AscatStepPart(BaseStepPart):
         self._validate_action(action)
         log_dict = {
             "baf_tumor": (
-                "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/log/"
-                "{mapper}.ascat_baf_tumor.{tumor_library_name}.log"
+                "work/ascat_baf_tumor.{tumor_library_name}/log/"
+                "ascat_baf_tumor.{tumor_library_name}.log"
             ),
             "baf_normal": (
-                "work/{mapper}.ascat_baf_normal.{normal_library_name}/log/"
-                "{mapper}.ascat_baf_normal.{normal_library_name}.log"
+                "work/ascat_baf_normal.{normal_library_name}/log/"
+                "ascat_baf_normal.{normal_library_name}.log"
             ),
             "cnv_tumor": (
-                "work/{mapper}.ascat_cnv_tumor.{tumor_library_name}/log/"
-                "{mapper}.ascat_cnv_tumor.{tumor_library_name}.log"
+                "work/ascat_cnv_tumor.{tumor_library_name}/log/"
+                "ascat_cnv_tumor.{tumor_library_name}.log"
             ),
             "cnv_normal": (
-                "work/{mapper}.ascat_cnv_normal.{normal_library_name}/log/"
-                "{mapper}.ascat_cnv_normal.{normal_library_name}.log"
+                "work/ascat_cnv_normal.{normal_library_name}/log/"
+                "ascat_cnv_normal.{normal_library_name}.log"
             ),
-            "run_ascat": (
-                "work/{mapper}.ascat.{tumor_library_name}/log/"
-                "{mapper}.ascat.{tumor_library_name}.log"
-            ),
+            "run_ascat": ("work/ascat.{tumor_library_name}/log/ascat.{tumor_library_name}.log"),
         }
         return {"log": log_dict[action]}
 
@@ -365,7 +357,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
+        name_pattern = "{tool}.{ngs_library.name}"
         for tool in self.config.tools:
             for sheet in self.shortcut_sheets:
                 for donor in sheet.donors:

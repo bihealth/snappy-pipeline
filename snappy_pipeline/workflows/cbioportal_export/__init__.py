@@ -17,6 +17,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 
 from .model import CbioportalExport as CbioportalExportConfigModel
@@ -190,9 +191,9 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         super().__init__(parent)
         self.name_pattern = None
         if self.config.is_filtered:
-            self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
+            self.name_pattern = "filtered.{tumor_library}"
         else:
-            self.name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library}"
+            self.name_pattern = "{tumor_library}"
 
         # Build shortcut from cancer bio sample name to matched cancer sample
         donors = {}
@@ -334,7 +335,7 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = "{mapper}.{caller}.{annotator}."
+        name_pattern = ""
         if self.config.is_filtered:
             name_pattern += "filtered.{{library_name}}"
         else:
@@ -362,7 +363,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         """Return the library"""
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{tumor_library}"
+        name_pattern = "{tumor_library}"
         yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
@@ -380,7 +381,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         """Return maf output file"""
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{tumor_library}"
+        name_pattern = "{tumor_library}"
         yield "cna", os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
     @dictify
@@ -388,7 +389,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         """Return path to log files for all data files"""
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{tumor_library}"
+        name_pattern = "{tumor_library}"
         tpl = os.path.join("work/cna/", name_pattern, "log", name_pattern)
         key_ext = (
             ("log", ".log"),

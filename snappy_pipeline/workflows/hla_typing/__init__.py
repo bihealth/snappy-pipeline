@@ -62,6 +62,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -225,9 +226,7 @@ class ArcasHlaStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.mapper = self.config.arcashla.mapper
-        self.base_path_out = (
-            "work/{mapper}.arcashla.{{library_name}}/out/{mapper}.arcashla.{{library_name}}{ext}"
-        )
+        self.base_path_out = "work/arcashla.{{library_name}}/out/arcashla.{{library_name}}{ext}"
         self.extensions = EXT_VALUES
 
     def get_input_files(self, action):
@@ -236,7 +235,7 @@ class ArcasHlaStepPart(BaseStepPart):
         @dictify
         def input_function(wildcards):
             yield "ref_done", "work/arcashla.prepare_reference/out/.done"
-            tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
+            tpl = "output/{library_name}/out/{library_name}.bam"
             yield (
                 "bam",
                 self.parent.modules["ngs_mapping"](tpl.format(mapper=self.mapper, **wildcards)),

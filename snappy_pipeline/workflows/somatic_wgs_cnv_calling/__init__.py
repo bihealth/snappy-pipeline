@@ -20,13 +20,13 @@ Step Output
 
 For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
 ``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
-pipeline step will create a directory ``output/{mapper}.{var_caller}.{lib_name}-{lib_pk}/out``
+pipeline step will create a directory ``output/{var_caller}.{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
 For example, it might look as follows for the example from above:
 
@@ -84,6 +84,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -123,8 +124,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{cancer_library}}/out/"
-            "{{mapper}}.{var_caller}.{{cancer_library}}{ext}"
+            "work/{var_caller}.{{cancer_library}}/out/{var_caller}.{{cancer_library}}{ext}"
         )
         # Build shortcut from cancer bio sample name to matched tumor sample
         self.cancer_ngs_library_to_sample_pair = OrderedDict()
@@ -153,14 +153,10 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
             ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
+            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+                normal_library=self.get_normal_lib_name(wildcards), **wildcards
             )
-            cancer_base_path = (
-                "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}"
-            ).format(**wildcards)
+            cancer_base_path = ("output/{cancer_library}/out/{cancer_library}").format(**wildcards)
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
             yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
             yield "tumor_bam", ngs_mapping(cancer_base_path + ".bam")
@@ -189,9 +185,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        name_pattern = "{{mapper}}.{var_caller}.{{cancer_library}}".format(
-            var_caller=self.__class__.name
-        )
+        name_pattern = "{var_caller}.{{cancer_library}}".format(var_caller=self.__class__.name)
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         key_ext = (
             ("log", ".log"),
@@ -272,7 +266,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         """Return input files that "cnvetti coverage" needs"""
         ngs_mapping = self.parent.modules["ngs_mapping"]
         # Yield input BAM and BAI file
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+        bam_tpl = "output/{library_name}/out/{library_name}{ext}"
         for ext in (".bam", ".bam.bai"):
             yield ext.split(".")[-1], ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
@@ -285,7 +279,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         libraries = {"tumor": wildcards.library_name, "normal": self.get_normal_lib_name(wildcards)}
         for kind, library_name in libraries.items():
             key = "{}_bcf".format(kind)
-            name_pattern = "{mapper}.cnvetti_coverage.{library_name}".format(
+            name_pattern = "cnvetti_coverage.{library_name}".format(
                 library_name=library_name, **wildcards
             )
             yield (
@@ -299,7 +293,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_input_files_segment(self, wildcards):
         """Return input files that "cnvetti segment" needs"""
         for key, ext in self.bcf_dict.items():
-            name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)
+            name_pattern = "cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -316,7 +310,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_coverage(self):
         for key, ext in self.bcf_dict.items():
-            name_pattern = "{mapper}.cnvetti_coverage.{library_name}"
+            name_pattern = "cnvetti_coverage.{library_name}"
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -327,7 +321,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_tumor_normal_ratio(self):
         for key, ext in self.bcf_dict.items():
-            name_pattern = "{mapper}.cnvetti_tumor_normal_ratio.{library_name}"
+            name_pattern = "cnvetti_tumor_normal_ratio.{library_name}"
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -338,7 +332,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_segment(self):
         for key, ext in self.bcf_dict.items():
-            name_pattern = "{mapper}.cnvetti_segment.{library_name}"
+            name_pattern = "cnvetti_segment.{library_name}"
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -372,7 +366,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def get_log_file(self, action):
         """Return path to log file"""
-        name_pattern = "{{mapper}}.cnvetti_{action}.{{library_name}}".format(action=action)
+        name_pattern = "cnvetti_{action}.{{library_name}}".format(action=action)
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         key_ext = (
             ("log", ".log"),
@@ -458,7 +452,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
+        base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
         input_files = {
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
@@ -467,7 +461,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @staticmethod
     def _get_input_files_fix(wildcards):
-        tpl_base = "{mapper}.cnvkit.{library_name}"
+        tpl_base = "cnvkit.{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
         input_files = {
             "target": tpl.format(target="target", **wildcards),
@@ -477,37 +471,31 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @staticmethod
     def _get_input_files_segment(wildcards):
-        cnr_pattern = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.cnr"
+        cnr_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.cnr"
         input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
     @staticmethod
     def _get_input_files_call(wildcards):
-        segment_pattern = (
-            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.segment.cns"
-        )
+        segment_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.segment.cns"
         input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
     @staticmethod
     def _get_input_files_postprocess(wildcards):
-        segment_pattern = (
-            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
-        )
+        segment_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.call.cns"
         input_files = {"call": segment_pattern.format(**wildcards)}
         return input_files
 
     @staticmethod
     def _get_input_files_export(wildcards):
-        cns_pattern = (
-            "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.call.cns"
-        )
+        cns_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.call.cns"
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
     @staticmethod
     def _get_input_files_plot(wildcards):
-        tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
+        tpl = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.{ext}"
         input_files = {
             "cnr": tpl.format(ext="cnr", **wildcards),
             "cns": tpl.format(ext="call.cns", **wildcards),
@@ -515,7 +503,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         return input_files
 
     def _get_input_files_report(self, wildcards):
-        tpl = "work/{mapper}.cnvkit.{library_name}/out/{mapper}.cnvkit.{library_name}.{ext}"
+        tpl = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.{ext}"
         input_files = {
             "target": tpl.format(ext="targetcoverage.cnn", **wildcards),
             "antitarget": tpl.format(ext="antitargetcoverage.cnn", **wildcards),
@@ -542,7 +530,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @staticmethod
     def _get_output_files_coverage():
-        name_pattern = "{mapper}.cnvkit.{library_name}"
+        name_pattern = "cnvkit.{library_name}"
         output_files = {}
         for target in ("target", "antitarget"):
             output_files[target] = os.path.join(
@@ -553,25 +541,25 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @staticmethod
     def _get_output_files_fix():
-        name_pattern = "{mapper}.cnvkit.{library_name}"
+        name_pattern = "cnvkit.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnr")
         return {"ratios": tpl, "ratios_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_segment():
-        name_pattern = "{mapper}.cnvkit.{library_name}"
+        name_pattern = "cnvkit.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".segment.cns")
         return {"segments": tpl, "segments_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_call():
-        name_pattern = "{mapper}.cnvkit.{library_name}"
+        name_pattern = "cnvkit.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".call.cns")
         return {"calls": tpl, "calls_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_postprocess():
-        name_pattern = "{mapper}.cnvkit.{library_name}"
+        name_pattern = "cnvkit.{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
         return {"final": tpl, "final_md5": tpl + ".md5"}
 
@@ -582,17 +570,13 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         chroms = list(chain(range(1, 23), ["X", "Y"]))
         output_files = {}
         # Yield file name pairs for global plots
-        tpl = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
-            "{{mapper}}.cnvkit.{{library_name}}.{plot}.{ext}"
-        )
+        tpl = "work/cnvkit.{{library_name}}/report/cnvkit.{{library_name}}.{plot}.{ext}"
         for plot, ext in plots:
             output_files[plot] = tpl.format(plot=plot, ext=ext)
             output_files[plot + "_md5"] = output_files[plot] + ".md5"
         # Yield file name pairs for the chromosome-wise plots
         tpl_chrom = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
-            "{{mapper}}.cnvkit.{{library_name}}.{plot}.chr{chrom}.{ext}"
+            "work/cnvkit.{{library_name}}/report/cnvkit.{{library_name}}.{plot}.chr{chrom}.{ext}"
         )
         for plot, ext in chrom_plots:
             for chrom in chroms:
@@ -605,7 +589,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_export():
         exports = (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi"))
         output_files = {}
-        tpl = "work/{{mapper}}.cnvkit.{{library_name}}/out/{{mapper}}.cnvkit.{{library_name}}.{ext}"
+        tpl = "work/cnvkit.{{library_name}}/out/cnvkit.{{library_name}}.{ext}"
         for export, ext in exports:
             output_files[export] = tpl.format(export=export, ext=ext)
             output_files[export + "_md5"] = output_files[export] + ".md5"
@@ -615,10 +599,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_report(self):
         reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
         output_files = {}
-        tpl = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/report/"
-            "{{mapper}}.cnvkit.{{library_name}}.{report}.txt"
-        )
+        tpl = "work/cnvkit.{{library_name}}/report/cnvkit.{{library_name}}.{report}.txt"
         for report in reports:
             output_files[report] = tpl.format(report=report)
             output_files[report + "_md5"] = output_files[report] + ".md5"
@@ -628,10 +609,9 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         """Return path to log file for the given action"""
         # Validate action
         self._validate_action(action)
-        prefix = (
-            "work/{{mapper}}.cnvkit.{{library_name}}/log/"
-            "{{mapper}}.cnvkit.{action}.{{library_name}}"
-        ).format(action=action)
+        prefix = ("work/cnvkit.{{library_name}}/log/cnvkit.{action}.{{library_name}}").format(
+            action=action
+        )
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -822,7 +802,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "{mapper}.{caller}.{cancer_library.name}"
+        name_pattern = "{cancer_library.name}"
         tpl = os.path.join("output", name_pattern, "out", name_pattern + "{ext}")
         vcf_tools = [
             t for t in self.config.tools if t not in ("cnvetti", "control_freec", "cnvkit")
@@ -873,10 +853,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             )
             reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
             yield from self._yield_report_files(
-                (
-                    "output/{mapper}.{caller}.{cancer_library.name}/report/"
-                    "{mapper}.{caller}.{cancer_library.name}.{ext}"
-                ),
+                ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
                 [(report, "txt", False) for report in reports],
                 mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller="cnvkit",
@@ -887,10 +864,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 ("scatter", "png", True),
             )
             yield from self._yield_report_files(
-                (
-                    "output/{mapper}.{caller}.{cancer_library.name}/report/"
-                    "{mapper}.{caller}.{cancer_library.name}.{ext}"
-                ),
+                ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
                 plots,
                 mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
                 caller="cnvkit",
@@ -899,7 +873,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for donor in sheet.donors:
                     if donor.all_pairs:
-                        name_pattern = "{mapper}.cnvetti_plot.{donor}"
+                        name_pattern = "cnvetti_plot.{donor}"
                         for ext in (".png", ".png.md5"):
                             yield from expand(
                                 os.path.join(

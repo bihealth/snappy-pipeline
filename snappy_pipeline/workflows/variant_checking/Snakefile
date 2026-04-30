@@ -26,16 +26,20 @@ wf = VariantCheckingWorkflow(workflow, config, lookup_paths, config_paths, os.ge
 # Modules =====================================================================
 
 
+target_upstream = wf.depends_on.get("variant_calling", "variant_calling")
+upstream_prefix = wf.config.get(f"path_variant_calling", f"../{target_upstream}")
+
+
 module variant_calling:
     snakefile:
         "../variant_calling/Snakefile"
     config:
         wf.w_config
     prefix:
-        wf.config.get("path_variant_calling", "../variant_calling")
+        upstream_prefix
 
 
-use rule * from variant_calling
+use rule * from variant_calling as variant_calling_*
 
 
 # Rules =======================================================================

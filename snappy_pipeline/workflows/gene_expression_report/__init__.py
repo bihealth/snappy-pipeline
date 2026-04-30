@@ -8,6 +8,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
@@ -30,9 +31,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{{tool}}.{{ngs_library}}/out/{{mapper}}.{{tool}}.{{ngs_library}}{ext}"
-        )
+        self.base_path_out = "work/{{tool}}.{{ngs_library}}/out/{{tool}}.{{ngs_library}}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -43,8 +42,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
     def get_log_file(self, action):
         _ = action
         return (
-            "work/{{mapper}}.{tool}.{{ngs_library}}/log/"
-            "snakemake.gene_expression_quantification.log"
+            "work/{tool}.{{ngs_library}}/log/snakemake.gene_expression_quantification.log"
         ).format(tool=self.__class__.name)
 
 
@@ -72,8 +70,7 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                 if lib.extra_infos["libraryType"] == "mRNA_seq":
                                     rna_library = lib.name
                                     exp_tpl = (
-                                        "output/{mapper}.{tool}.{library_name}/out/"
-                                        "{mapper}.{tool}.{library_name}.tsv"
+                                        "output/{tool}.{library_name}/out/{tool}.{library_name}.tsv"
                                     ).format(
                                         tool="featurecounts",
                                         mapper="star",
@@ -180,7 +177,7 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
+        name_pattern = "{tool}.{ngs_library.name}"
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():

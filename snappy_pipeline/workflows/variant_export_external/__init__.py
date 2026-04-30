@@ -82,6 +82,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -140,23 +141,20 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     @listify
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
-        mapper_lib = "{mapper}.{library_name}"
+        mapper_lib = "{library_name}"
         yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.alfred.json.gz"
 
     @dictify
     def _get_output_files_bam_qc_work(self):
         for report in ("bamstats", "flagstats", "idxstats"):
-            report_path = (
-                f"work/{{mapper}}.{{library_name}}/report/bam_qc/"
-                f"{{mapper}}.{{library_name}}.bam.{report}.txt"
-            )
+            report_path = f"work/{{library_name}}/report/bam_qc/{{library_name}}.bam.{report}.txt"
             yield report, report_path
             yield report + "_md5", report_path + ".md5"
 
     def get_log_file(self, action):
         self._validate_action(action)
         if action == "run":
-            return "work/{mapper}.{library_name}/log/snakemake.target_coverage.log"
+            return "work/{library_name}/log/snakemake.target_coverage.log"
         elif action == "bam_qc":
             return self._get_log_file_bam_qc()
         else:
@@ -172,7 +170,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     @staticmethod
     @dictify
     def _get_log_file_bam_qc():
-        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc"
+        prefix = "work/{library_name}/log/{library_name}.bam_qc"
         key_ext = (
             ("log", ".log"),
             ("log_md5", ".log.md5"),
@@ -303,12 +301,12 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             library_name = donor.dna_ngs_library.name
             if not donor.dna_ngs_library:
                 continue
-            tpl = f"work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.%s.txt"
+            tpl = f"work/{library_name}/report/bam_qc/{library_name}.bam.%s.txt"
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(tpl % key)
             if donor.dna_ngs_library.name not in self.parent.ngs_library_list:
                 continue
-            path = f"work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
+            path = f"work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
             result["cov_qc"].append(path)
 
         return result

@@ -25,16 +25,20 @@ wf = VariantFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.
 # Modules =====================================================================
 
 
+target_upstream = wf.depends_on.get("variant_annotation", "variant_annotation")
+upstream_prefix = wf.config.get(f"path_variant_annotation", f"../{target_upstream}")
+
+
 module variant_annotation:
     snakefile:
         "../variant_annotation/Snakefile"
     config:
         wf.w_config
     prefix:
-        wf.config.get("path_variant_annotation", "../variant_annotation")
+        upstream_prefix
 
 
-use rule * from variant_annotation
+use rule * from variant_annotation as variant_annotation_*
 
 
 # Rules =======================================================================

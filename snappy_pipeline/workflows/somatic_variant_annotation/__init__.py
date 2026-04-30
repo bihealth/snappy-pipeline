@@ -75,6 +75,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_calling import (
@@ -127,9 +128,9 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
     def _name_template(
         config: SomaticVariantAnnotationConfigModel, annotator: str | None = None
     ) -> str:
-        tpl = "{mapper}.{var_caller}"
+        tpl = "{var_caller}"
         if annotator:
-            tpl += f".{annotator}"
+            tpl += f""
         if config.is_filtered:
             tpl += ".filtered.{tumor_library}"
         else:
@@ -362,9 +363,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         """
         annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
         callers = set(self.config.tools_somatic_variant_calling)
-        name_pattern = AnnotateSomaticVcfStepPart._name_template(
-            self.config, annotator="{annotator}"
-        )
+        name_pattern = AnnotateSomaticVcfStepPart._name_template(self.config, annotator="")
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,
@@ -401,9 +400,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             ext=EXT_VALUES,
         )
         # joint calling
-        name_pattern = AnnotateSomaticVcfStepPart._name_template(
-            self.config, annotator="{annotator}"
-        )
+        name_pattern = AnnotateSomaticVcfStepPart._name_template(self.config, annotator="")
 
     def _yield_result_files_matched(self, tpl, **kwargs):
         """Build output paths from path template and extension list.

@@ -53,6 +53,7 @@ from snakemake import shell
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
@@ -95,13 +96,11 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         # TODO: same value: '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        return ngs_mapping(
-            "output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam".format(**wildcards)
-        )
+        return ngs_mapping("output/{index_library}/out/{index_library}.bam".format(**wildcards))
 
     def _get_path_vcf(self, wildcards, real_index):
         prev_step = self.parent.modules[self.previous_step]
-        name_pattern = "{mapper}.{caller}{prev_token}.{real_index_library}"
+        name_pattern = "{prev_token}.{real_index_library}"
         input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
             real_index_library=real_index.dna_ngs_library.name,
@@ -128,7 +127,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{index_library}"
+        name_pattern = "{index_library}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + "%s")
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, tpl % ext
@@ -227,7 +226,7 @@ class IgvSessionGenerationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the workflow."""
         # Hard-filtered results
-        name_pattern = "{mapper}.{caller}%s.{index_library.name}" % (self.prev_token,)
+        name_pattern = "%s.{index_library.name}" % (self.prev_token,)
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.config.tools_ngs_mapping,

@@ -54,6 +54,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,

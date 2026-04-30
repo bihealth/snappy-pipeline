@@ -73,6 +73,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -299,11 +300,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         mapper = self.config.tool_ngs_mapping
         caller = self.config.tool_sv_calling_wgs
         if mapper and caller:
-            return f"{mapper}.{caller}."
+            return f""
         elif mapper or caller:
             mapper = mapper or ""
             caller = caller or ""
-            return f"{mapper}{caller}."
+            return f""
         else:
             return ""
 

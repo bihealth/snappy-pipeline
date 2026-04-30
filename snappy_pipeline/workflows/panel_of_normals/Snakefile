@@ -28,16 +28,20 @@ tools = wf.w_config["step_config"]["panel_of_normals"]["tools"]
 # Modules =====================================================================
 
 
+target_upstream = wf.depends_on.get("ngs_mapping", "ngs_mapping")
+upstream_prefix = wf.config.get(f"path_ngs_mapping", f"../{target_upstream}")
+
+
 module ngs_mapping:
     snakefile:
         "../ngs_mapping/Snakefile"
     config:
         wf.w_config
     prefix:
-        wf.config.get("path_ngs_mapping", "../ngs_mapping")
+        upstream_prefix
 
 
-use rule * from ngs_mapping
+use rule * from ngs_mapping as ngs_mapping_*
 
 
 # Rules =======================================================================

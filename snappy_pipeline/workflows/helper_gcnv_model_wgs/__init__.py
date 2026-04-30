@@ -91,6 +91,7 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
@@ -130,12 +131,12 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         path_pattern = (
             "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
-        name_pattern = "{mapper}.gcnv_scatter_intervals.default"
+        name_pattern = "gcnv_scatter_intervals.default"
         yield "interval_list_shard", path_pattern.format(name_pattern=name_pattern)
         ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
-            path_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
+            path_pattern = "gcnv_coverage.{library_name}".format(
                 mapper=wildcards.mapper, library_name=lib
             )
             tsvs.append(
@@ -145,7 +146,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             )
         yield ext, tsvs
         ext = "ploidy"
-        path_pattern = "{mapper}.gcnv_contig_ploidy.default".format(**wildcards)
+        path_pattern = "gcnv_contig_ploidy.default".format(**wildcards)
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
         key = "intervals"
         path_pattern = "gcnv_annotate_gc.default"
@@ -167,9 +168,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
+        name_pattern = "gcnv_call_cnvs.{library_kit}".format(library_kit=library_kit, **wildcards)
         yield (
             "calls",
             [
@@ -180,7 +179,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             ],
         )
         ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+        name_pattern = "gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)

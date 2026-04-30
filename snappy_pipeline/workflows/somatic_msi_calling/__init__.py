@@ -28,9 +28,9 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}.results.txt``
-    - ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}.results.txt.status``
+- ``mantis_msi2.{lib_name}-{lib_pk}/out/``
+    - ``mantis_msi2.{lib_name}-{lib_pk}.results.txt``
+    - ``mantis_msi2.{lib_name}-{lib_pk}.results.txt.status``
 
 =====================
 Default Configuration
@@ -56,6 +56,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -101,8 +102,7 @@ class Mantis2StepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.{msi_caller}.{{tumor_library}}/out/"
-            "{{mapper}}.{msi_caller}.{{tumor_library}}{ext}"
+            "work/{msi_caller}.{{tumor_library}}/out/{msi_caller}.{{tumor_library}}{ext}"
         )
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -121,14 +121,10 @@ class Mantis2StepPart(BaseStepPart):
             ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
+            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+                normal_library=self.get_normal_lib_name(wildcards), **wildcards
             )
-            tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-            ).format(**wildcards)
+            tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),
                 "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
@@ -158,10 +154,9 @@ class Mantis2StepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        prefix = (
-            "work/{{mapper}}.{msi_caller}.{{tumor_library}}/log/"
-            "{{mapper}}.{msi_caller}.{{tumor_library}}"
-        ).format(msi_caller=self.__class__.name)
+        prefix = ("work/{msi_caller}.{{tumor_library}}/log/{msi_caller}.{{tumor_library}}").format(
+            msi_caller=self.__class__.name
+        )
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -224,7 +219,7 @@ class SomaticMsiCallingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the MSI calling workflow"""
-        name_pattern = "{mapper}.{msi_caller}.{tumor_library.name}"
+        name_pattern = "{msi_caller}.{tumor_library.name}"
         for msi_caller in set(self.config.tools) & set(MSI_CALLERS_MATCHED):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),

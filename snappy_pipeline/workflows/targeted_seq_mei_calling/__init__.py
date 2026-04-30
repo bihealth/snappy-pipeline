@@ -28,8 +28,8 @@ NGS library will be used as an identification token in the output file.
 
 For each read mapper, MEI tool, and sample the following files will be generated:
 
-- ``{mapper}.{mei_tool}.{lib_name}.vcf.gz``
-- ``{mapper}.{mei_tool}.{lib_name}.vcf.gz.md5``
+- ``{mei_tool}.{lib_name}.vcf.gz``
+- ``{mei_tool}.{lib_name}.vcf.gz.md5``
 
 For example, it might look as follows for the example from above:
 
@@ -86,6 +86,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -155,9 +156,9 @@ class ScrambleStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action=action)
         # Set log
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "scramble.{library_name}"
         if action == "annotate":
-            name_pattern_annotated = "{mapper}.scramble_annotated.{library_name}"
+            name_pattern_annotated = "scramble_annotated.{library_name}"
             return "work/{name_pattern}/log/{name_pattern}.log".format(
                 name_pattern=name_pattern_annotated
             )
@@ -184,7 +185,7 @@ class ScrambleStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
+        bam_tpl = "output/{library_name}/out/{library_name}.bam"
         yield ngs_mapping(bam_tpl.format(**wildcards))
 
     @staticmethod
@@ -195,7 +196,7 @@ class ScrambleStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "scramble.{library_name}"
         base_name_out = "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
             name_pattern=name_pattern, ext="txt"
         )
@@ -205,7 +206,7 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_cluster():
         """Yield output files' patterns for scramble cluster call."""
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "scramble.{library_name}"
         ext = "txt"
         yield (
             ext,
@@ -218,7 +219,7 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_analysis():
         """Yield output files' patterns for scramble call."""
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "scramble.{library_name}"
         ext_dict = {
             "txt": "_MEIs.txt",
             "txt_md5": "_MEIs.txt.md5",
@@ -333,7 +334,7 @@ class MeiWorkflow(BaseStep):
         """
         # Initialise variable
         tools = ("scramble",)
-        name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
+        name_pattern = "{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
