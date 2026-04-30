@@ -41,21 +41,21 @@ use rule * from {task_name} as {task_name}_*
     )
 
 # Write and include the dynamic imports
-with tempfile.NamedTemporaryFile(mode="w", suffix=".smk", delete=False) as tmp:
+with tempfile.NamedTemporaryFile(
+    mode="w", suffix=".smk", delete=False, delete_on_close=False
+) as tmp:
     tmp.write("\n".join(dsl_lines))
 
-if config.get("dump_orchestrator"):
-    print("=" * 80)
-    print("RENDERED ORCHESTRATOR SNAKEFILE:")
-    print("=" * 80)
-    print("\n".join(dsl_lines))
-    print("=" * 80)
+    if config.get("dump_orchestrator"):
+        print("=" * 80)
+        print("RENDERED ORCHESTRATOR SNAKEFILE:")
+        print("=" * 80)
+        print("\n".join(dsl_lines))
+        print("=" * 80)
 
+    include: tmp.name
 
-include: tmp.name
-
-
-rule all:
-    input:
-        all_target_files,
-    default_target: True
+    rule all:
+        input:
+            all_target_files,
+        default_target: True
