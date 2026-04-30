@@ -721,7 +721,9 @@ class BaseStep:
             self.w_config: ConfigModel = ConfigModel(**workflow_config)
 
             # 2. Find this specific task in the tasks list
-            self.task = next((t for t in self.w_config.tasks if t.name == self.task_name), None)
+            self.task = next(
+                (t for t in self.w_config.tasks if t.name == self.task_name), None
+            ) or next((t for t in self.w_config.tasks if t.step == self.task_name), None)
             if not self.task:
                 raise ValueError(f"Task '{self.task_name}' not found in config tasks list.")
 
