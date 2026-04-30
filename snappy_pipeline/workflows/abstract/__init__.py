@@ -697,7 +697,7 @@ class BaseStep:
         previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
         self.step_name = self.__class__.name
-        self.task_name = task_name
+        self.task_name = config.get("__task_name__", task_name)
         #: Tuple with absolute paths to configuration files read
         self.config_paths = config_paths
         #: Absolute path to directory of where to perform work
