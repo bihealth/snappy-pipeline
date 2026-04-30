@@ -45,6 +45,7 @@ from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
+from snappy_pipeline.workflows.abstract.protocol import DataSignature
 from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
@@ -640,6 +641,12 @@ class BaseStep:
     #: Override with step name
     name: str
 
+    #: DataSignatures this workflow step consumes
+    consumes: dict[DataSignature, bool] = {}
+
+    #: DataSignatures this workflow step produces
+    produces: list[DataSignature] = []
+
     #: Override with the sheet shortcut class to use
     sheet_shortcut_class: type[ShortcutSampleSheet]
 
@@ -684,10 +691,12 @@ class BaseStep:
         config_paths: tuple[str, ...],
         work_dir: str,
         *,
+        task_name: str,
         config_model_class: type[C],
         previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
-        self.name = self.__class__.name
+        self.step_name = self.__class__.name
+        self.task_name = task_name
         #: Tuple with absolute paths to configuration files read
         self.config_paths = config_paths
         #: Pydantic model class for configuration validation
@@ -701,32 +710,29 @@ class BaseStep:
         self.workflow = workflow
         self.modules = {}
         #: Setup logger for the step
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.getLogger(self.task_name)
         #: Merge default configuration with true configuration
         workflow_config = config
-        local_config = workflow_config["step_config"].get(self.name, OrderedDict())
-        self.logger.info(local_config)
 
-        # #: Validate workflow step configuration using its accompanying pydantic model
-        # #: available through self.config_model_class (mandatory keyword arg for BaseStep)
-        # try:
-        #     self.config: C = validate_config(local_config, self.config_model_class)
-        #     # Also update the workflow config, just in case
-        #     workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
-        # except pydantic.ValidationError as ve:
-        #     self.logger.error(f"{self.name} failed validation:\n{local_config}")
-        #     raise ve
-
-        #: Validate complete workflow configuration using SnappyPipeline's ConfigModel
-        #: This includes static_data_config, step_config and data_sets
         try:
-            # local import of ConfigModel to avoid circular import
+            # 1. Validate complete workflow configuration (the global layout)
             from snappy_pipeline.workflow_model import ConfigModel
 
             self.w_config: ConfigModel = ConfigModel(**workflow_config)
-            self.config: C = self.w_config.step_config[self.name]
+
+            # 2. Find this specific task in the tasks list
+            self.task = next((t for t in self.w_config.tasks if t.name == self.task_name), None)
+            if not self.task:
+                raise ValueError(f"Task '{self.task_name}' not found in config tasks list.")
+
+            # 3. Store dependencies for module resolution
+            self.depends_on = self.task.depends_on
+
+            # 4. Validate the step-specific config using its strict Pydantic model
+            self.config: C = self.config_model_class(**self.task.config)
+
         except pydantic.ValidationError as ve:
-            self.logger.error(f"Workflow configuration failed validation:\n{workflow_config}")
+            self.logger.error(f"Configuration failed validation for task '{self.task_name}'")
             raise ve
 
         #: Paths with configuration paths, important for later retrieving sample sheet files
@@ -877,33 +883,39 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_module(self, step_name: str, prefix: os.PathLike, module_name: str | None = None):
+    def get_upstream_dir(self, requirement: DataSignature) -> str:
         """
-        Register workflow with given pipeline ``step_name``, using the given ``prefix``.
-        This requires importing the respective workflow in the Snakefile
-        (since the module API is not intended to be used programmatically).
-        For example:
-
-        ```
-        module ngs_mapping:
-            snakefile:
-                "../ngs_mapping/Snakefile"
-            config:
-                wf.w_config
-            prefix:
-                wf.w_config["step_config"]["your_workflow"].get("path_ngs_mapping", "../ngs_mapping")
-
-
-        use rule * from ngs_mapping
-        ```
-
-        Optionally, the module name can be given separate from ``step_name`` (the default)
-        value for it.
+        Resolves the physical output directory for a required dependency
+        based on the 'depends_on' configuration mapping.
         """
-        module_name = module_name or step_name
-        if module_name in self.modules:
-            raise ValueError("Sub workflow {} already registered!".format(module_name))
-        self.modules[module_name] = lambda path: os.path.join(prefix, path)
+        upstream_task_name = self.depends_on.get(requirement.type.value)
+
+        if not upstream_task_name:
+            if self.consumes.get(requirement, True):
+                raise ValueError(
+                    f"Task '{self.task_name}' requires '{requirement.type.value}', "
+                    f"but no upstream task was provided in 'depends_on'."
+                )
+            return ""  # Optional dependency not provided
+
+        upstream_instance = self.parent.get_workflow_instance(upstream_task_name)
+        if not any(p.satisfies(requirement) for p in upstream_instance.produces):
+            raise TypeError("Upstream task does not satisfy required DataSignature")
+
+        return f"output/{upstream_task_name}"
+
+    def register_module(self, logical_name: str, default_step_name: str):
+        """
+        Registers a dependency mapping for Snakemake 9.
+        Paths are resolved via the prefix directive applied during module import.
+        """
+        target_task_name = self.depends_on.get(logical_name, default_step_name)
+
+        if logical_name in self.modules:
+            raise ValueError(f"Dependency {logical_name} already registered!")
+
+        prefix = self.config.get(f"path_{logical_name}", f"../{target_task_name}")
+        self.modules[logical_name] = lambda path: os.path.join(prefix, path)
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards

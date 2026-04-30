@@ -1,0 +1,42 @@
+import tempfile
+import os
+
+tasks = config.get("tasks", [])
+all_target_files = []
+dsl_lines = []
+
+for task in tasks:
+    task_name = task["name"]
+    step_type = task["step"]
+
+    # Instantiate Python workflow object to extract targets
+    wf_instance = WORKFLOW_REGISTRY[step_type](
+        workflow, config, config_lookup_paths, config_paths, os.getcwd(), task_name=task_name
+    )
+    all_target_files.extend(wf_instance.get_result_files())
+
+    # Generate the module import with the isolated prefix
+    prefix = f"output/{task_name}"
+    dsl_lines.append(
+        f"""
+module {task_name}:
+    snakefile: "../{step_type}/Snakefile"
+    config: config
+    prefix: "{prefix}"
+
+use rule * from {task_name} as {task_name}_*
+"""
+    )
+
+# Write and include the dynamic imports
+with tempfile.NamedTemporaryFile(mode="w", suffix=".smk", delete=False) as tmp:
+    tmp.write("\n".join(dsl_lines))
+
+
+include: tmp.name
+
+
+rule all:
+    input:
+        all_target_files,
+    default_target: True

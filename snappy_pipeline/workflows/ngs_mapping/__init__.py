@@ -442,6 +442,7 @@ from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    DataSignature,
     LinkInPathGenerator,
     LinkInStepPart,
     ResourceUsage,
@@ -450,6 +451,7 @@ from snappy_pipeline.workflows.abstract import (
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+from ..abstract.protocol import DataType
 from .model import NgsMapping as NgsMappingConfigModel
 
 # TODO: Need something smarter still for @RG
@@ -1465,6 +1467,14 @@ class NgsMappingWorkflow(BaseStep):
 
     #: Step name
     name = "ngs_mapping"
+
+    consumes = {
+        DataSignature(DataType.RAW): True,
+    }
+
+    produces = [
+        DataSignature(DataType.ALIGNMENTS),
+    ]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
