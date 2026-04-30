@@ -858,7 +858,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             **kwargs,
         )
         # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

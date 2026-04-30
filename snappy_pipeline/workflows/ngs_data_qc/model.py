@@ -50,8 +50,6 @@ class PicardProgram(enum.StrEnum):
 
 
 class Picard(SnappyModel):
-    path_ngs_mapping: str = "../ngs_mapping"
-
     path_to_baits: str = ""
     """Required when CollectHsMetrics is among the programs"""
 
@@ -76,9 +74,14 @@ class Fastqc(SnappyModel):
     pass
 
 
+class NgsDataQcDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class NgsDataQc(SnappyStepModel, validators.ToolsMixin):
-    path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
+
+    depends_on: NgsDataQcDependsOn = Field(default_factory=NgsDataQcDependsOn)
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.fastqc, Tool.picard], min_length=1)]
 

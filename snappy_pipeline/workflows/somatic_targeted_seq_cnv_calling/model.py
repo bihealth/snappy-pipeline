@@ -194,12 +194,18 @@ class PureCn(SnappyModel):
     Mutect2 must be called with "--genotype-germline-sites true --genotype-pon-sites true
     """
 
-    path_somatic_variants: Annotated[str, Field(examples=["../somatic_variant_calling_for_purecn"])]
+
+class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
+    somatic_variants: str = "somatic_variants"
+    ngs_mapping: str = "ngs_mapping"
 
 
 class SomaticTargetedSeqCnvCalling(SnappyStepModel, validators.ToolsMixin):
+    depends_on: SomaticTargetedSeqCnvCallingDependsOn = Field(
+        default_factory=SomaticTargetedSeqCnvCallingDependsOn
+    )
+
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit], min_length=1)]
-    path_ngs_mapping: str = "../ngs_mapping"
 
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None

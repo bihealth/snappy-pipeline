@@ -408,15 +408,19 @@ class LinkOutStepPart(BaseStepPart):
     def get_input_files(self, action):
         """Return input file pattern"""
 
+        if not self.disable_patterns:
+            return self.base_path_in
+
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+
         def input_function(wildcards):
             """Helper wrapper function"""
             result = self.base_path_in.format(**wildcards)
             for pattern in self.disable_patterns:
                 if fnmatch(result, pattern):
                     raise ValueError("Blocking match...")
-            return result
+            return task_prefix + result
 
-        assert action == "run", "Unsupported action"
         return input_function
 
     def get_output_files(self, action):
@@ -966,7 +970,6 @@ class BaseStep:
         if logical_name in self.modules:
             raise ValueError(f"Dependency {logical_name} already registered!")
 
-        # Simply prepend the target task namespace to standard paths
         def resolve_dependency(path):
             if path.startswith("output/") or path.startswith("work/"):
                 return f"{target_task_name}/" + path

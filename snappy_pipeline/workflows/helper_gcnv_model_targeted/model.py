@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.models.gcnv import TargetIntervalEntry
 
@@ -19,7 +21,13 @@ class Gcnv(SnappyModel):
     """
 
 
+class HelperGcnvModelTargetedDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class HelperGcnvModelTargeted(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: HelperGcnvModelTargetedDependsOn = Field(
+        default_factory=HelperGcnvModelTargetedDependsOn
+    )
 
     gcnv: Gcnv

@@ -183,10 +183,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{var_caller}.{{tumor_library}}/out/{var_caller}.{{tumor_library}}{ext}"
-        )
-        # Build shortcut from cancer bio sample name to matched cancer sample
+        self.base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}{ext}"
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
             self.tumor_ngs_library_to_sample_pair.update(
@@ -252,19 +249,14 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         """
         # Validate action
         self._validate_action(action)
-        return dict(
-            zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
-        )
+        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
 
     @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
         # Validate action
         self._validate_action(action)
-
-        prefix = ("work/{var_caller}.{{tumor_library}}/log/{var_caller}.{{tumor_library}}").format(
-            var_caller=self.__class__.name
-        )
+        prefix = "work/{{tumor_library}}/log/{{tumor_library}}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -291,41 +283,13 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
     #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
     resource_usage_dict = {
-        "scatter": ResourceUsage(
-            threads=1,
-            runtime="2m",
-            mem="1000MB",
-        ),
-        "run": ResourceUsage(
-            threads=1,
-            runtime="5d",
-            mem="8000MB",
-        ),
-        "gather": ResourceUsage(
-            threads=1,
-            runtime="4h",
-            mem="32768MB",
-        ),
-        "filter": ResourceUsage(
-            threads=2,
-            runtime="4h",
-            mem="15872MB",
-        ),
-        "contamination": ResourceUsage(
-            threads=2,
-            runtime="4h",
-            mem="7680MB",
-        ),
-        "pileup_normal": ResourceUsage(
-            threads=2,
-            runtime="4h",
-            mem="8000MB",
-        ),
-        "pileup_tumor": ResourceUsage(
-            threads=2,
-            runtime="4h",
-            mem="8000MB",
-        ),
+        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
+        "run": ResourceUsage(threads=1, runtime="5d", mem="8000MB"),
+        "gather": ResourceUsage(threads=1, runtime="4h", mem="32768MB"),
+        "filter": ResourceUsage(threads=2, runtime="4h", mem="15872MB"),
+        "contamination": ResourceUsage(threads=2, runtime="4h", mem="7680MB"),
+        "pileup_normal": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+        "pileup_tumor": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
     }
 
     def __init__(self, parent):
@@ -417,9 +381,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
         tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-
-        scatteritem_base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}/mutect2par/scatter/{scatteritem}".format(
-            **wildcards
+        scatteritem_base_path = (
+            "work/{tumor_library}/out/{tumor_library}/mutect2par/scatter/{scatteritem}".format(
+                **wildcards
+            )
         )
 
         input_files = {
@@ -460,8 +425,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
     def _get_input_files_gather(self, wildcards):
         gather = self.parent.workflow.globals.get("gather")
         gather = getattr(gather, self.name)
-        scatteritem_base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}/mutect2par/run/{{scatteritem}}".format(
-            **wildcards
+        scatteritem_base_path = (
+            "work/{tumor_library}/out/{tumor_library}/mutect2par/run/{{scatteritem}}".format(
+                **wildcards
+            )
         )
         input_files = {
             "vcf": scatteritem_base_path + ".raw.vcf.gz",
@@ -472,15 +439,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return dict(map(lambda item: (item[0], gather(item[1])), input_files.items()))
 
     def _get_input_files_filter(self, wildcards):
-        """Get input files for rule ``filter``.
-
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
-        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns dictionary with input files for rule 'filter'.
-        """
-        base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}".format(**wildcards)
+        base_path = "work/{tumor_library}/out/{tumor_library}".format(**wildcards)
         input_files = {
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
@@ -538,16 +497,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def _get_input_files_contamination(self, wildcards: Wildcards):
-        """Get input files for rule ``contamination``.
-
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
-        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns dictionary with input files for rule 'contamination', Normal and Tumor
-        pileup files.
-        """
-        base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}".format(**wildcards)
+        base_path = "work/{tumor_library}/out/{tumor_library}".format(**wildcards)
         return {
             "normal": base_path + ".normal.pileup",
             "tumor": base_path + ".tumor.pileup",
@@ -555,34 +505,22 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def get_output_files(self, action):
-        """Get output files for Mutect2 rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns dictionary with expected output files based on inputted action.
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Initialise variables
         exts = {}
         output_files = {}
 
-        # Validate action
         self._validate_action(action)
-
-        # Set expected extensions and basepath based on action
         base_path_out = self.base_path_out
 
         if action == "scatter":
             scatter = self.parent.workflow.globals.get("scatter")
             scatter = getattr(scatter, self.name)
-            template = "work/{var_caller}.{{{{tumor_library}}}}/out/{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
-                var_caller=self.name
-            )
+            template = "work/{{{{tumor_library}}}}/out/{{{{tumor_library}}}}/mutect2par/scatter/{{scatteritem}}.region.bed"
             return {"regions": scatter(template)}
 
         if action == "run":
-            base_path_out = "work/{var_caller}.{{tumor_library}}/out/{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
+            base_path_out = (
+                "work/{{tumor_library}}/out/{{tumor_library}}/mutect2par/run/{{scatteritem}}{ext}"
+            )
             exts = {
                 "vcf": ".raw.vcf.gz",
                 "vcf_md5": ".raw.vcf.gz.md5",
@@ -629,7 +567,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         # Define output dictionary
         for k, v in exts.items():
-            output_files[k] = base_path_out.format(var_caller=self.name, ext=v)
+            output_files[k] = base_path_out.format(ext=v)
         return output_files
 
     def get_log_file(self, action):
@@ -729,14 +667,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                Mutect2StepPart,
-                LinkOutStepPart,
-            )
-        )
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping, "ngs_mapping")
+        self.register_sub_step_classes((Mutect2StepPart, LinkOutStepPart))
+        self.register_module("ngs_mapping", "ngs_mapping")
         if "mutect2" in self.config.tools:
             if self.config.mutect2.contamination.enabled:
                 actions = self.sub_steps["mutect2"].actions
@@ -746,38 +678,30 @@ class SomaticVariantCallingWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
+        active_callers = set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS)
+        if not active_callers:
+            return
 
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        name_pattern = "{tumor_library.name}"
-        for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller=caller,
-                ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller=caller,
-                ext=(
-                    ".log",
-                    ".log.md5",
-                    ".conda_info.txt",
-                    ".conda_info.txt.md5",
-                    ".conda_list.txt",
-                    ".conda_list.txt.md5",
-                ),
-            )
+        caller = list(active_callers)[0]
+        name_pattern = "{tumor_library}"
+
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
+        )
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
+            ext=(
+                ".log",
+                ".log.md5",
+                ".conda_info.txt",
+                ".conda_info.txt.md5",
+                ".conda_list.txt",
+                ".conda_list.txt.md5",
+            ),
+        )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for bio_entity in sheet.sheet.bio_entities.values():
                 for bio_sample in bio_entity.bio_samples.values():
@@ -791,4 +715,4 @@ class SomaticVariantCallingWorkflow(BaseStep):
                                 print(msg.format(test_sample.name), file=sys.stderr)
                             continue
                         for ngs_library in test_sample.ngs_libraries.values():
-                            yield from expand(tpl, tumor_library=[ngs_library], **kwargs)
+                            yield from expand(tpl, tumor_library=[ngs_library.name], **kwargs)

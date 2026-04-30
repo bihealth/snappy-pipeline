@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
@@ -15,7 +15,15 @@ class Ascat(SnappyModel):
     """BED file with loci for B allele frequency."""
 
 
+class SomaticPurityPloidyEstimateDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class SomaticPurityPloidyEstimate(SnappyStepModel, validators.ToolsMixin):
+    depends_on: SomaticPurityPloidyEstimateDependsOn = Field(
+        default_factory=SomaticPurityPloidyEstimateDependsOn
+    )
+
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.ascat], min_length=1)]
 
     tool_cnv_calling: str = "cnvetti"
@@ -27,8 +35,6 @@ class SomaticPurityPloidyEstimate(SnappyStepModel, validators.ToolsMixin):
         Will use this for generating a pileup using samtools
         for obtaining the b allele fraction and computing coverage.
     """
-
-    path_ngs_mapping: str = "../ngs_mapping"
 
     path_somatic_targeted_seq_cnv_calling: str = ""
 

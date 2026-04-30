@@ -527,7 +527,8 @@ class MappingGetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for library_name in self.parent.ngs_library_to_extra_infos.keys():
                     if not self.skip_result_files_for_library(library_name):
-                        yield from expand(path_tpl, mapper=[self.name], library_name=library_name)
+                        # The mapper name is now part of the output path to avoid ambiguity
+                        yield from expand(path_tpl, library_name=library_name, mapper=self.name)
 
 
 class ReportGetResultFilesMixin:
@@ -579,7 +580,8 @@ class ReportGetResultFilesMixin:
                         and not self.skip_result_files_for_library(library_name)
                     ):
                         for path_tpl in result_paths_tpls:
-                            yield path_tpl.format(mapper=sub_step.name, library_name=library_name)
+                            # Reports now match the tool-specific directory structure
+                            yield path_tpl.format(library_name=library_name, mapper=sub_step.name)
                 if action == "collect":
                     break  # only once
 
@@ -593,7 +595,8 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
+        # FIX: Re-introduce {mapper} into patterns to distinguish rules within the same module scope
+        self.base_path_out = "work/{{mapper}}.{{library_name}}/out/{{mapper}}.{{library_name}}{ext}"
         self.extensions = EXT_VALUES
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
@@ -651,24 +654,28 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     def _get_output_files_run_work(self):
         """Return dict of output files to write to the ``work/`` directory."""
         for ext in self.extensions:
-            yield ext[1:].replace(".", "_"), self.base_path_out.format(mapper=self.name, ext=ext)
+            yield ext[1:].replace(".", "_"), self.base_path_out.format(ext=ext)
         for ext in (".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
-            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
+            path = (
+                "work/{{mapper}}.{{library_name}}/report/bam_qc/{{mapper}}.{{library_name}}.bam{ext}"
+            ).format(ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_"), path
         for ext in (
             ".bamstats.txt.md5",
             ".flagstats.txt.md5",
             ".idxstats.txt.md5",
         ):
-            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
+            path = (
+                "work/{{mapper}}.{{library_name}}/report/bam_qc/{{mapper}}.{{library_name}}.bam{ext}"
+            ).format(ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         _ = action
-        _mapper = self.__class__.name
-        prefix = "work/{library_name}/log/{library_name}.mapping"
+        # Unique log paths per tool
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.mapping"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -720,13 +727,12 @@ class BwaStepPart(ReadMappingStepPart):
         """
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
         mem_mb = int(4.5 * 1024 * self.config.bwa.num_threads_align)
         return ResourceUsage(
-            threads=self.config.bwa.num_threads_align,
-            runtime="3d",  # 3 days
-            mem=f"{mem_mb}MB",
+            threads=self.config.bwa.num_threads_align, runtime="3d", mem=f"{mem_mb}MB"
         )
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -736,27 +742,18 @@ class BwaStepPart(ReadMappingStepPart):
 
 
 class BwaMem2StepPart(ReadMappingStepPart):
-    """Support for performing NGS alignment using BWA-MEM 2"""
-
     name = "bwa_mem2"
     tool_category = "dna"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
         mem_mb = int(4.5 * 1024 * self.config.bwa_mem2.num_threads_align)
         return ResourceUsage(
-            threads=self.config.bwa_mem2.num_threads_align,
-            runtime="3d",  # 3 days
-            mem=f"{mem_mb}MB",
+            threads=self.config.bwa_mem2.num_threads_align, runtime="3d", mem=f"{mem_mb}MB"
         )
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -782,12 +779,7 @@ class MBCsStepPart(ReadMappingStepPart):
         :raises UnsupportedActionException: if action not in class defined list of valid actions.
         """
         self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="72h",
-            mem="4GB",
-            partition="medium",
-        )
+        return ResourceUsage(threads=1, runtime="72h", mem="4GB", partition="medium")
 
     def _get_args_run(self, wildcards: Wildcards):
         args = super()._get_args_run(wildcards)
@@ -840,18 +832,12 @@ class StarStepPart(ReadMappingStepPart):
         if (cfg := self.config.get(self.name)) is None:
             return output_files
 
-        output_files["gene_counts"] = self.base_path_out.format(
-            mapper=self.name, ext=".GeneCounts.tab"
-        )
+        output_files["gene_counts"] = self.base_path_out.format(ext=".GeneCounts.tab")
         output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
-        output_files["junctions"] = self.base_path_out.format(
-            mapper=self.name, ext=".Junctions.tab"
-        )
+        output_files["junctions"] = self.base_path_out.format(ext=".Junctions.tab")
         output_files["junctions_md5"] = output_files["junctions"] + ".md5"
         if cfg.transcriptome:
-            output_files["transcriptome"] = self.base_path_out.format(
-                mapper=self.name, ext=".toTranscriptome.bam"
-            )
+            output_files["transcriptome"] = self.base_path_out.format(ext=".toTranscriptome.bam")
             output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
         return output_files
 
@@ -882,46 +868,30 @@ class StarStepPart(ReadMappingStepPart):
         return parent_args
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
         mem_gb = int(3.5 * self.config.star.num_threads_align)
         return ResourceUsage(
-            threads=self.config.star.num_threads_align,
-            runtime="2d",  # 2 days
-            mem=f"{mem_gb}GB",
+            threads=self.config.star.num_threads_align, runtime="2d", mem=f"{mem_gb}GB"
         )
 
 
 class StrandednessStepPart(BaseStepPart):
-    """Guess the protocol strandedness when missing and write it"""
-
-    #: Step name
     name = "strandedness"
-
-    #: Class available actions
     actions = ("infer", "counts")
 
     def get_input_files(self, action):
         self._validate_action(action)
         if action == "infer":
-            return {
-                "bam": "work/{library_name}/out/{library_name}.bam",
-            }
+            # Must reference the mapper-specific work directory
+            return {"bam": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"}
         elif action == "counts":
             return {
-                "counts": "work/{library_name}/out/{library_name}.GeneCounts.tab",
-                "decision": "work/{library_name}/strandedness/{library_name}.decision.json",
+                "counts": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab",
+                "decision": "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json",
             }
 
     @dictify
@@ -929,16 +899,20 @@ class StrandednessStepPart(BaseStepPart):
         self._validate_action(action)
         if action == "infer":
             for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.json")):
-                yield key, "work/{library_name}/strandedness/{library_name}" + ext
+                yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
                 yield (
                     key + "_md5",
-                    "work/{library_name}/strandedness/{library_name}" + ext + ".md5",
+                    "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}"
+                    + ext
+                    + ".md5",
                 )
             key, ext = ("output", ".decision.json")
-            yield key, "output/{library_name}/strandedness/{library_name}" + ext
+            yield key, "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
             yield (
                 key + "_md5",
-                "output/{library_name}/strandedness/{library_name}" + ext + ".md5",
+                "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}"
+                + ext
+                + ".md5",
             )
             for key, ext in (
                 ("log", ".log"),
@@ -947,41 +921,47 @@ class StrandednessStepPart(BaseStepPart):
             ):
                 yield (
                     key,
-                    "output/{library_name}/log/{library_name}.strandedness" + ext,
+                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext,
                 )
                 yield (
                     key + "_md5",
-                    "output/{library_name}/log/{library_name}.strandedness" + ext + ".md5",
+                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness"
+                    + ext
+                    + ".md5",
                 )
         elif action == "counts":
             key, ext = ("counts", ".GeneCounts.tab")
-            yield key, "work/{library_name}/strandedness/{library_name}" + ext
+            yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
             yield (
                 key + "_md5",
-                "work/{library_name}/strandedness/{library_name}" + ext + ".md5",
+                "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5",
             )
             key, ext = ("output", ".GeneCounts.tab")
-            yield key, "output/{library_name}/out/{library_name}" + ext
+            yield key, "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext
             yield (
                 key + "_md5",
-                "output/{library_name}/out/{library_name}" + ext + ".md5",
+                "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext + ".md5",
             )
 
     def get_result_files(self):
         for mapper in self.config.tools.rna:
-            tpl_out = "output/{library_name}/out/{library_name}.GeneCounts.tab"
-            tpl_strandedness = "output/{library_name}/strandedness/{library_name}.decision.json"
-            tpl_log = "output/{library_name}/log/{library_name}.strandedness.{ext}"
+            tpl_out = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
+            tpl_strandedness = (
+                "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
+            )
+            tpl_log = (
+                "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
+            )
             for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
                 if extra_info["extractionType"] == "RNA":
-                    yield tpl_out.format(mapper=mapper, library_name=library_name)
-                    yield tpl_out.format(mapper=mapper, library_name=library_name) + ".md5"
-                    yield tpl_strandedness.format(mapper=mapper, library_name=library_name)
-                    yield tpl_strandedness.format(mapper=mapper, library_name=library_name) + ".md5"
+                    yield tpl_out.format(library_name=library_name, mapper=mapper)
+                    yield tpl_out.format(library_name=library_name, mapper=mapper) + ".md5"
+                    yield tpl_strandedness.format(library_name=library_name, mapper=mapper)
+                    yield tpl_strandedness.format(library_name=library_name, mapper=mapper) + ".md5"
                     for ext in ("log", "conda_info.txt", "conda_list.txt"):
-                        yield tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
+                        yield tpl_log.format(library_name=library_name, mapper=mapper, ext=ext)
                         yield (
-                            tpl_log.format(mapper=mapper, library_name=library_name, ext=ext)
+                            tpl_log.format(library_name=library_name, mapper=mapper, ext=ext)
                             + ".md5"
                         )
 
@@ -989,7 +969,7 @@ class StrandednessStepPart(BaseStepPart):
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         _ = action
-        prefix = "work/{library_name}/log/{library_name}.strandedness"
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1032,13 +1012,12 @@ class Minimap2StepPart(ReadMappingStepPart):
         """
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
         mem_gb = int(3.5 * self.config.minimap2.mapping_threads)
         return ResourceUsage(
-            threads=self.config.minimap2.mapping_threads,
-            runtime="2d",  # 2 days
-            mem=f"{mem_gb}GB",
+            threads=self.config.minimap2.mapping_threads, runtime="2d", mem=f"{mem_gb}GB"
         )
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -1169,18 +1148,18 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def _get_output_files_run_work(self):
         yield (
             "json",
-            "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz",
+            "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz",
         )
         yield (
             "json_md5",
-            "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz.md5",
+            "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5",
         )
 
     @dictify
     def get_log_file(self, action):
         self._validate_action(action)
         if action == "run":
-            prefix = "work/{library_name}/log/{library_name}.target_cov_report"
+            prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report"
             key_ext = (
                 ("log", ".log"),
                 ("conda_info", ".conda_info.txt"),
@@ -1257,20 +1236,20 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         super().__init__(parent)
 
     def get_input_files(self, action):
-        """Return required input files"""
         self._check_action(action)
         return getattr(self, f"_get_input_files_{action}")
 
     def _check_action(self, action):
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
 
     @dictify
     def _get_input_files_run(self):
-        yield "bam", "work/{library_name}/out/{library_name}.bam"
-        yield "bai", "work/{library_name}/out/{library_name}.bam.bai"
+        yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
+        yield "bai", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai"
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
@@ -1289,42 +1268,22 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
             ],
         )
 
-    def get_args(self, action: str) -> dict[str, Any]:
-        self._check_action(action)
-        return {
-            "window_length": self.config.bam_collect_doc.window_length,
-        }
-
     @dictify
     def _get_output_files_run_work(self):
-        yield "vcf", "work/{library_name}/report/cov/{library_name}.cov.vcf.gz"
-        yield (
-            "vcf_md5",
-            "work/{library_name}/report/cov/{library_name}.cov.vcf.gz.md5",
-        )
-        yield (
-            "vcf_tbi",
-            "work/{library_name}/report/cov/{library_name}.cov.vcf.gz.tbi",
-        )
-        yield (
-            "vcf_tbi_md5",
-            "work/{library_name}/report/cov/{library_name}.cov.vcf.gz.tbi.md5",
-        )
-        yield "cov_bw", "work/{library_name}/report/cov/{library_name}.cov.bw"
-        yield (
-            "cov_bw_md5",
-            "work/{library_name}/report/cov/{library_name}.cov.bw.md5",
-        )
-        yield "mq_bw", "work/{library_name}/report/cov/{library_name}.mq.bw"
-        yield (
-            "mq_bw_md5",
-            "work/{library_name}/report/cov/{library_name}.mq.bw.md5",
-        )
+        prefix = "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}"
+        yield "vcf", prefix + ".cov.vcf.gz"
+        yield "vcf_md5", prefix + ".cov.vcf.gz.md5"
+        yield "vcf_tbi", prefix + ".cov.vcf.gz.tbi"
+        yield "vcf_tbi_md5", prefix + ".cov.vcf.gz.tbi.md5"
+        yield "cov_bw", prefix + ".cov.bw"
+        yield "cov_bw_md5", prefix + ".cov.bw.md5"
+        yield "mq_bw", prefix + ".mq.bw"
+        yield "mq_bw_md5", prefix + ".mq.bw.md5"
 
     @dictify
     def get_log_file(self, action):
         _ = action
-        prefix = "work/{library_name}/log/{library_name}.bam_collect_doc"
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_collect_doc"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1370,19 +1329,19 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         return not self.config.ngs_chew_fingerprint.enabled
 
     def get_input_files(self, action):
-        """Return required input files"""
         self._check_action(action)
         return getattr(self, f"_get_input_files_{action}")
 
     def _check_action(self, action):
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+            raise UnsupportedActionException(
+                f"Action '{action}' is not supported. Valid options: {actions_str}"
+            )
 
     @dictify
     def _get_input_files_fingerprint(self):
-        yield "bam", "work/{library_name}/out/{library_name}.bam"
+        yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
 
     @dictify
     def get_output_files(self, action):
@@ -1402,19 +1361,15 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_fingerprint_work(self):
-        yield "npz", "work/{library_name}/report/fingerprint/{library_name}.npz"
+        yield "npz", "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz"
         yield (
             "npz_md5",
-            "work/{library_name}/report/fingerprint/{library_name}.npz.md5",
+            "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz.md5",
         )
-
-    def get_log_file(self, action):
-        self._check_action(action)
-        return getattr(self, "_get_log_files_{action}".format(action=action))()
 
     @dictify
     def _get_log_files_fingerprint(self):
-        prefix = "work/{library_name}/log/{library_name}.ngs_chew_fingerprint"
+        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.ngs_chew_fingerprint"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1474,7 +1429,7 @@ class NgsMappingWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str = "",
         **kwargs,
     ):
         super().__init__(
@@ -1519,8 +1474,7 @@ class NgsMappingWorkflow(BaseStep):
         return result
 
     def _build_ngs_library_to_kit(self):
-        cov_config = self.get_task_config("ngs_mapping").target_coverage_report
-        # Build mapping.
+        cov_config = self.get_task_config(self.task_name).target_coverage_report
         default_kit_configured = False
         regexes = {}
         for item in cov_config.path_target_interval_list_mapping:

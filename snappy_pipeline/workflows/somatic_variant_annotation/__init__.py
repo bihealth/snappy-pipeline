@@ -125,17 +125,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
                 self.donors[donor.name] = donor
 
     @staticmethod
-    def _name_template(
-        config: SomaticVariantAnnotationConfigModel, annotator: str | None = None
-    ) -> str:
-        tpl = "{var_caller}"
-        if annotator:
-            tpl += ""
-        if config.is_filtered:
-            tpl += ".filtered.{tumor_library}"
-        else:
-            tpl += ".{tumor_library}"
-        return tpl
+    def _name_template(config: SomaticVariantAnnotationConfigModel) -> str:
+        return "{tumor_library}"
 
     @dictify
     def get_input_files(self, action):
@@ -154,7 +145,7 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
-        tpl = self._name_template(self.config, annotator=self.annotator)
+        tpl = self._name_template(self.config)
         prefix = os.path.join("work", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         if self.has_full:
@@ -166,10 +157,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
 
     @dictify
     def _get_log_file(self, action):
-        """Return mapping of log files."""
-        # Validate action
         self._validate_action(action)
-        tpl = self._name_template(self.config, annotator=self.annotator)
+        tpl = self._name_template(self.config)
         prefix = os.path.join("work", tpl, "log", tpl)
 
         key_ext = (
@@ -237,7 +226,7 @@ class VepAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=self.config.vep.num_threads,
-            runtime="24h",  # 24 hours
+            runtime="24h",
             mem=f"{16 * 1024 * 1}MB",
         )
 
@@ -360,35 +349,20 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             self.register_module("somatic_variant_filtration", "somatic_variant")
         else:
             self.register_module("somatic_variant_calling", "somatic_variant")
-        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
-        if not self.config.tools_somatic_variant_calling:
-            self.config.tools_somatic_variant_calling = self.get_task_config(
-                "somatic_variant_calling"
-            ).tools
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
+        active_annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
+        if not active_annotators:
+            return
 
-        We will process all primary DNA libraries and perform joint calling within pedigrees
-        """
-        annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
-        callers = set(self.config.tools_somatic_variant_calling)
-        name_pattern = AnnotateSomaticVcfStepPart._name_template(self.config, annotator="")
+        name_pattern = AnnotateSomaticVcfStepPart._name_template(self.config)
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
-            annotator=annotators,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
-            annotator=annotators,
             ext=(
                 ".log",
                 ".log.md5",
@@ -405,15 +379,11 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
                 set(self.config.tools) & set(ANNOTATION_TOOLS),
             ),
         )
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            var_caller=callers & set(SOMATIC_VARIANT_CALLERS),
-            annotator=full,
-            ext=EXT_VALUES,
-        )
-        # joint calling
-        name_pattern = AnnotateSomaticVcfStepPart._name_template(self.config, annotator="")
+        if full:
+            yield from self._yield_result_files_matched(
+                os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
+                ext=EXT_VALUES,
+            )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
         """Build output paths from path template and extension list.

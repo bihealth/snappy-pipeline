@@ -312,7 +312,7 @@ class HlaTypingWorkflow(BaseStep):
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping")
 
     @listify
     def get_result_files(self):

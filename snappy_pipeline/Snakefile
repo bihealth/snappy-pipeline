@@ -1,4 +1,3 @@
-import tempfile
 import os
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline import expand_ref
@@ -11,8 +10,6 @@ config, config_lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 tasks = config.get("tasks", [])
 all_target_files = []
-dsl_lines = []
-
 target_task = config.get("task")
 
 for task in tasks:
@@ -26,39 +23,27 @@ for task in tasks:
     if target_task is None or target_task == task_name:
         for f in wf_instance.get_result_files():
             if not f.endswith((".md5", ".tbi", ".txt")):
-                # Prepend the task_name because the module's prefix directive
-                # will namespace all targets
                 all_target_files.append(os.path.join(task_name, f))
 
-    dsl_lines.append(
-        f"""
-module {task_name}:
-    snakefile: "workflows/{step_type}/Snakefile"
-    config: config | {{"__task_name__": "{task_name}"}}
-    replace_prefix:
-        "output/": "{task_name}/output/"
-        "work/": "{task_name}/work/"
 
-use rule * from {task_name} as {task_name}_*
-"""
-    )
+for task in tasks:
+    t_name = task["name"]
+    alias = f"{t_name}_"
+    t_step = task["step"]
 
-# Write and include the dynamic imports
-with tempfile.NamedTemporaryFile(
-    mode="w", suffix=".smk", delete=False, delete_on_close=False
-) as tmp:
-    tmp.write("\n".join(dsl_lines))
+    module:
+        name: t_name
+        snakefile:
+            f"workflows/{t_step}/Snakefile"
+        config:
+            config | {"__task_name__": t_name}
+        replace_prefix:
+            {"output/": f"{t_name}/output/", "work/": f"{t_name}/work/"}
 
-    if config.get("dump_orchestrator"):
-        print("=" * 80)
-        print("RENDERED ORCHESTRATOR SNAKEFILE:")
-        print("=" * 80)
-        print("\n".join(dsl_lines))
-        print("=" * 80)
+    use rule * from t_name as alias*
 
-    include: tmp.name
 
-    rule all:
-        input:
-            all_target_files,
-        default_target: True
+rule all:
+    input:
+        all_target_files,
+    default_target: True

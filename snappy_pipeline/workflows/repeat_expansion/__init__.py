@@ -343,7 +343,7 @@ class RepeatExpansionWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping")
 
     @classmethod
     def default_config_yaml(cls):

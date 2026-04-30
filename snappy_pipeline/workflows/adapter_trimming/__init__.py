@@ -95,7 +95,7 @@ Step Output
 ===========
 
 Adapter trimming will be performed for all NGS libraries in all sample sheets.  For each combination
-of tool library, a directory ``{tool}/{lib_name}-{lib_pk}/out`` will be created.
+of tool library, a directory ``{lib_name}/out`` will be created.
 Therein, trimmed fastq files will be created.
 
 The input structure and file names will be maintained on output.  For example, it might look as
@@ -174,7 +174,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/{trimmer}.{{library_name}}"
+        self.base_path_out = "work/{{library_name}}"
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
@@ -186,39 +186,30 @@ class AdapterTrimmingStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         """Return input files"""
-        # Validate action
         self._validate_action(action)
         yield "done", "work/input_links/{library_name}/.done"
 
     @dictify
     def get_output_files(self, action):
         """Return output files"""
-        # Validate action
         self._validate_action(action)
         return (
-            ("out_done", self.base_path_out.format(trimmer=self.name) + "/out/.done"),
-            ("report_done", self.base_path_out.format(trimmer=self.name) + "/report/.done"),
-            ("rejected_done", self.base_path_out.format(trimmer=self.name) + "/rejected/.done"),
+            ("out_done", self.base_path_out + "/out/.done"),
+            ("report_done", self.base_path_out + "/report/.done"),
+            ("rejected_done", self.base_path_out + "/rejected/.done"),
         )
 
     @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
-        # Validate action
         self._validate_action(action)
-        _ = action
-        prefix = "work/{trimmer}.{{library_name}}/log/{trimmer}.{{library_name}}".format(
-            trimmer=self.__class__.name
-        )
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
         )
-        yield (
-            "done",
-            "work/{trimmer}.{{library_name}}/log/.done".format(trimmer=self.__class__.name),
-        )
+        yield ("done", "work/{{library_name}}/log/.done")
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
@@ -241,7 +232,6 @@ class AdapterTrimmingStepPart(BaseStepPart):
                 "config": dict(self.config.get(self.name)),
             }
 
-        # Validate action
         self._validate_action(action)
         return args_function
 
@@ -269,18 +259,10 @@ class BbdukStepPart(AdapterTrimmingStepPart):
     name = "bbduk"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
         self._validate_action(action)
         return ResourceUsage(
             threads=self.config.bbduk.num_threads,
-            runtime="12h",  # 40 hours
+            runtime="12h",
             mem="24000MB",
         )
 
@@ -288,22 +270,13 @@ class BbdukStepPart(AdapterTrimmingStepPart):
 class FastpStepPart(AdapterTrimmingStepPart):
     """fastp adapter trimming"""
 
-    #: Step name
     name = "fastp"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
         self._validate_action(action)
         return ResourceUsage(
             threads=self.config.fastp.num_threads,
-            runtime="12h",  # 60 hours
+            runtime="12h",
             mem="24000MB",
         )
 
@@ -315,15 +288,14 @@ class LinkOutFastqStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_in = "work/{wildcards.trimmer}.{wildcards.library_name}/{{sub_dir}}/.done"
-        self.base_path_out = "output/{{trimmer}}/{{library_name}}/{sub_dir}/.done"
+        self.base_path_in = "work/{wildcards.library_name}/{{sub_dir}}/.done"
+        self.base_path_out = "output/{{library_name}}/{sub_dir}/.done"
         self.sub_dirs = ["log", "report", "out"]
 
     def get_input_files(self, action):
         """Return required input files"""
 
         def input_function(wildcards):
-            """Helper wrapper function"""
             return expand(self.base_path_in.format(wildcards=wildcards), sub_dir=self.sub_dirs)
 
         self._validate_action(action)
@@ -335,7 +307,6 @@ class LinkOutFastqStepPart(BaseStepPart):
 
     def run_locally(self, action, wildcards):
         """Link out postprocessed (or not) files"""
-        # Validate action
         self._validate_action(action)
         for sub_dir in self.sub_dirs:
             in_ = os.path.dirname(
@@ -360,15 +331,11 @@ class LinkOutFastqStepPart(BaseStepPart):
 class AdapterTrimmingWorkflow(BaseStep):
     """Perform adapter & quality-based trimming"""
 
-    #: Step name
     name = "adapter_trimming"
     consumes = {DataSignature(DataType.RAW): True}
     produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
 
-    #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
-
-    #: config_model_class
     config_model_class = AdapterTrimmingConfigModel
 
     def __init__(self, *args, task_name: str, **kwargs):
@@ -383,21 +350,17 @@ class AdapterTrimmingWorkflow(BaseStep):
 
     @classmethod
     def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific
-        one
-        """
         return DEFAULT_CONFIG
 
     @listify
     def get_result_files(self):
         """Return list of fixed name result files for the adapter trimming workflow"""
         tpls = (
-            "output/{trimmer}/{ngs_library_name}/out/.done",
-            "output/{trimmer}/{ngs_library_name}/report/.done",
-            "output/{trimmer}/{ngs_library_name}/log/.done",
+            "output/{ngs_library_name}/out/.done",
+            "output/{ngs_library_name}/report/.done",
+            "output/{ngs_library_name}/log/.done",
         )
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                for tool in self.config.tools:
-                    for tpl in tpls:
-                        yield tpl.format(trimmer=tool, ngs_library_name=ngs_library.name)
+                for tpl in tpls:
+                    yield tpl.format(ngs_library_name=ngs_library.name)

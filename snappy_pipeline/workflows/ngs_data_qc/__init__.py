@@ -305,7 +305,7 @@ class NgsDataQcWorkflow(BaseStep):
             (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
         if "picard" in self.config.tools:
-            self.register_module("ngs_mapping", self.config.picard.path_ngs_mapping)
+            self.register_module("ngs_mapping")
 
     @listify
     def get_result_files(self):

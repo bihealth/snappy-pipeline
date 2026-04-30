@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
@@ -11,7 +13,11 @@ class Gcnv(SnappyModel):
     # NOTE: the wgs model do NOT need the path_target_interval_list_mapping
 
 
+class HelperGcnvModelWgsDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class HelperGcnvModelWgs(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: HelperGcnvModelWgsDependsOn = Field(default_factory=HelperGcnvModelWgsDependsOn)
 
     gcnv: Gcnv

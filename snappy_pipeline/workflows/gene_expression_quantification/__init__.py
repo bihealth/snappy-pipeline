@@ -525,7 +525,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping")
 
     def get_strandedness_file(self, action):
         _ = action

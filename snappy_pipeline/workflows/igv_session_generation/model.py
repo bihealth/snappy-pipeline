@@ -1,16 +1,17 @@
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
+
+
+class IgvSessionGenerationDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+    variant_phasing: str = ""
+    variant_annotation: str = ""
+    variant_calling: str = ""
 
 
 class IgvSessionGeneration(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
-
-    path_variant_phasing: str = ""
-
-    path_variant_annotation: str = ""
-
-    path_variant_calling: str = ""
+    depends_on: IgvSessionGenerationDependsOn = Field(default_factory=IgvSessionGenerationDependsOn)
 
     tools_ngs_mapping: list[str] = []
     """defaults to ngs_mapping tool"""
@@ -19,10 +20,10 @@ class IgvSessionGeneration(SnappyStepModel):
     """defaults to variant_annotation tool"""
 
     @model_validator(mode="after")
-    def ensure_at_least_one_path_is_specified(self):
+    def ensure_at_least_one_dependency_is_specified(self):
         if not any(
-            getattr(self, path)
-            for path in ("path_variant_phasing", "path_variant_annotation", "path_variant_calling")
+            getattr(self.depends_on, path)
+            for path in ("variant_phasing", "variant_annotation", "variant_calling")
         ):
-            raise ValueError("No path specified for variant phasing, annotation or calling")
+            raise ValueError("No dependency specified for variant phasing, annotation or calling")
         return self

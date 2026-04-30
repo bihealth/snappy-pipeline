@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, ToggleModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel, validators
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
 
@@ -57,11 +57,18 @@ class Mutect2(Parallel, GATK):
     """Whether to call variants in paired, tumor_only, or automatic mode."""
 
 
+class SomaticVariantCallingDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class SomaticVariantCalling(SnappyStepModel, validators.ToolsMixin):
+    depends_on: SomaticVariantCallingDependsOn = Field(
+        default_factory=SomaticVariantCallingDependsOn
+    )
+
     tools: Annotated[list[Tool], EnumField(Tool, [], min_length=1)]
     """List of tools"""
 
-    path_ngs_mapping: str = "../ngs_mapping"
     """Path to ngs_mapping"""
 
     ignore_chroms: Annotated[

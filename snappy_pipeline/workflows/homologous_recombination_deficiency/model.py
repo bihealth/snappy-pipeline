@@ -1,6 +1,8 @@
 import enum
 from typing import Annotated
 
+from pydantic import Field
+
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 
 
@@ -23,9 +25,15 @@ class ScarHRD(SnappyModel):
     """Wiggle track for GC reference file"""
 
 
-class HomologousRecombinationDeficiency(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scarHRD], min_length=1)]
+class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
+    cnv_calling: str = "cnv_calling"
 
-    path_cnv_calling: str
+
+class HomologousRecombinationDeficiency(SnappyStepModel, validators.ToolsMixin):
+    depends_on: HomologousRecombinationDeficiencyDependsOn = Field(
+        default_factory=HomologousRecombinationDeficiencyDependsOn
+    )
+
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scarHRD], min_length=1)]
 
     scarHRD: ScarHRD | None = None

@@ -348,8 +348,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
                         self.config.cnv_assay_type
                     )
                 )
-            self.register_module(cnv_calling, self.config.path_cnv_calling, "cnv_calling")
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+            self.register_module(cnv_calling, "cnv_calling")
+        self.register_module("ngs_mapping")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

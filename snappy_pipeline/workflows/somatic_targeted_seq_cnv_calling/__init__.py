@@ -739,7 +739,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             )
         )
         # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping")
         if "purecn" in self.config.tools:
             self.register_module(
                 "somatic_variant_calling",

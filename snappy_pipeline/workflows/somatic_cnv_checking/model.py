@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class CnvAssayType(enum.StrEnum):
@@ -11,10 +11,13 @@ class CnvAssayType(enum.StrEnum):
     WGS = "WGS"
 
 
-class SomaticCnvChecking(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+class SomaticCnvCheckingDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+    cnv_calling: str = "cnv_calling"
 
-    path_cnv_calling: Annotated[str, Field(examples=["../somatic_targeted_seq_cnv_calling"])] = ""
+
+class SomaticCnvChecking(SnappyStepModel):
+    depends_on: SomaticCnvCheckingDependsOn = Field(default_factory=SomaticCnvCheckingDependsOn)
 
     cnv_assay_type: CnvAssayType | None = None
     """

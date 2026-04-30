@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.annotation import Mehari, Vep
 
 
@@ -12,10 +12,16 @@ class Tool(enum.StrEnum):
     mehari = "mehari"
 
 
-class SomaticVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
+class SomaticVariantAnnotationDependsOn(SnappyModel):
+    somatic_variant: str = "somatic_variant"
 
-    path_somatic_variant: Annotated[str, Field(examples=["../somatic_variant_calling"])]
+
+class SomaticVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
+    depends_on: SomaticVariantAnnotationDependsOn = Field(
+        default_factory=SomaticVariantAnnotationDependsOn
+    )
+
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
 
     is_filtered: bool = False
     """Has the vcf been already filtered"""

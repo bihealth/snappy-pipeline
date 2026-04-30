@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 from typing import Any, TypedDict
 
-from pydantic import ConfigDict, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 
@@ -52,7 +52,6 @@ class GenomeName(enum.StrEnum):
 
 
 class Expression(ToggleModel):
-    path_ngs_mapping: str = "../ngs_mapping"
     """When missing, no expression data is uploaded to cBioPortal"""
 
     expression_tool: ExpressionTool = ExpressionTool.STAR
@@ -64,7 +63,6 @@ class SomaticVariantStep(enum.StrEnum):
 
 
 class CNA(ToggleModel):
-    path_copy_number: str | None = None
     """When missing, no CNV data uploaded to portal. Access WES & WGS steps"""
 
     copy_number_tool: CopyNumberTool = CopyNumberTool.CNVKIT
@@ -98,12 +96,19 @@ class ExtraInfos(TypedDict):
     column: str
 
 
+class CbioportalExportDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+    copy_number: str = "copy_number"
+    somatic_variant: str = "somatic_variant"
+
+
 class CbioportalExport(SnappyStepModel):
+    depends_on: CbioportalExportDependsOn = Field(default_factory=CbioportalExportDependsOn)
+
     model_config = ConfigDict(
         extra="forbid",
     )
 
-    path_somatic_variant: str
     """Annotation is mandatory, but filtration is optional, can happen before or after annotation"""
 
     mapping_tool: MappingTool = MappingTool.BWA

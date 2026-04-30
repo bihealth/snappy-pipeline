@@ -96,10 +96,14 @@ class PureCn(SnappyModel):
     seed: int = 1234567
 
 
-class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
+class PanelOfNormalsDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
 
-    path_ngs_mapping: str = "../ngs_mapping"
+
+class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
+    depends_on: PanelOfNormalsDependsOn = Field(default_factory=PanelOfNormalsDependsOn)
+
+    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
 
     ignore_chroms: Annotated[
         list[str],
