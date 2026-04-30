@@ -34,8 +34,10 @@ for task in tasks:
         f"""
 module {task_name}:
     snakefile: "workflows/{step_type}/Snakefile"
-    config: config
-    prefix: "{task_name}"
+    config: config | {{"__task_name__": "{task_name}"}}
+    replace_prefix:
+        "output/": "{task_name}/output/"
+        "work/": "{task_name}/work/"
 
 use rule * from {task_name} as {task_name}_*
 """
