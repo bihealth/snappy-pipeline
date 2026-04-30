@@ -368,8 +368,11 @@ class AdapterTrimmingWorkflow(BaseStep):
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, config_model_class=AdapterTrimmingConfigModel)
+    #: config_model_class
+    config_model_class = AdapterTrimmingConfigModel
+
+    def __init__(self, *args, task_name: str, **kwargs):
+        super().__init__(*args, task_name=task_name, **kwargs)
         self.register_sub_step_classes(
             (BbdukStepPart, FastpStepPart, LinkInStepPart, LinkOutFastqStepPart)
         )

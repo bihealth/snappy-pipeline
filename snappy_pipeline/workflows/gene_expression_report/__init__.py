@@ -138,6 +138,8 @@ class GeneExpressionReportWorkflow(BaseStep):
     consumes = {DataSignature(DataType.EXPRESSION, frozenset({"rna"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"expression_report"}))]
 
+    config_model_class = GeneExpressionReportConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -150,15 +152,25 @@ class GeneExpressionReportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=GeneExpressionReportConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -191,7 +203,7 @@ class GeneExpressionReportWorkflow(BaseStep):
                         yield from expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
-                            mapper=self.w_config.step_config["ngs_mapping"].tools.rna,
+                            mapper=self.get_task_config(self.task_name).tools.rna,
                             tool="featurecounts",
                             ext=exts,
                         )

@@ -719,6 +719,9 @@ class cbioportalExportWorkflow(BaseStep):
 
     #: Workflow name
     name = "cbioportal_export"
+
+    config_model_class = CbioportalExportConfigModel
+
     consumes = {
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True,
@@ -738,14 +741,24 @@ class cbioportalExportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=CbioportalExportConfigModel,
+            task_name=task_name,
+            **kwargs,
         )
 
         # cBioPortal requires the genome release as GRC[hm]3[78] in the MAF file

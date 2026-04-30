@@ -451,6 +451,7 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
     name = "variant_denovo_filtration"
     consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "denovo"}))]
+    config_model_class = VariantDenovoFiltrationConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -460,15 +461,25 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantDenovoFiltrationConfigModel,
             previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
@@ -498,9 +509,9 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         )
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
+            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
 
     @listify
     def get_result_files(self):
@@ -522,7 +533,7 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             ext=(".txt", ".txt.md5"),
         )
         # Collect MSDN statistics
-        if self.w_config.step_config["variant_denovo_filtration"].collect_msdn:
+        if self.get_task_config(self.task_name).collect_msdn:
             yield from expand(
                 "output/multisite_de_novo/out/multisite_de_novo{ext}",
                 mapper=self.config.tools_ngs_mapping,
@@ -553,7 +564,11 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
                         elif not donor.mother or not donor.mother.dna_ngs_library:
                             continue
                         else:
-                            yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
+                            yield from expand(
+                                tpl,
+                                index_library=[donor.dna_ngs_library],
+                                **kwargs,
+                            )
 
     def check_config(self):
         if not self.config.tools_ngs_mapping:

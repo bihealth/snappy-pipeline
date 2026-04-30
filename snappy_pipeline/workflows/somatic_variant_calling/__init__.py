@@ -693,6 +693,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))]
 
+    config_model_class = SomaticVariantCallingConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -705,17 +707,27 @@ class SomaticVariantCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticVariantCallingConfigModel,
             # FIXME
             previous_steps=(),
             # previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -742,13 +754,13 @@ class SomaticVariantCallingWorkflow(BaseStep):
         for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                mapper=self.get_task_config(self.task_name).tools.dna,
                 caller=caller,
                 ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                mapper=self.get_task_config(self.task_name).tools.dna,
                 caller=caller,
                 ext=(
                     ".log",

@@ -51,20 +51,31 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     #: Workflow name
     name = "sv_calling_targeted"
+    config_model_class = SvCallingTargetedConfigModel
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
 
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SvCallingTargetedConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Build mapping from NGS library name to kit
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()
@@ -85,7 +96,7 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        config = self.w_config.step_config["sv_calling_targeted"].gcnv
+        config = self.get_task_config(self.task_name).gcnv
         if not config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.all_donors():

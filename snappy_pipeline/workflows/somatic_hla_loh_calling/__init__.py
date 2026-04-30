@@ -126,6 +126,8 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"hla_loh"}))]
 
+    config_model_class = SomaticHlaLohCallingConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -138,15 +140,25 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticHlaLohCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart, LinkOutStepPart))
@@ -163,12 +175,12 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         name_pattern = "optitype.lohhla.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            mapper=self.get_task_config(self.task_name).tools.dna,
             ext=".done",
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            mapper=self.get_task_config(self.task_name).tools.dna,
             ext=(
                 ".log",
                 ".log.md5",
@@ -198,5 +210,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
                 yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )

@@ -73,6 +73,7 @@ class FastQcReportStepPart(BaseStepPart):
 
     #: Step name
     name = "fastqc"
+    config_model_class = NgsDataQcConfigModel
 
     #: Class available actions
     actions = ("run",)
@@ -281,14 +282,24 @@ class NgsDataQcWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=NgsDataQcConfigModel,
+            task_name=task_name,
+            **kwargs,
         )
         self.register_sub_step_classes(
             (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
@@ -325,7 +336,7 @@ class NgsDataQcWorkflow(BaseStep):
             yield from self._yield_result_files(
                 tpl=tpl,
                 allowed_extraction_types=("DNA",),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                mapper=self.get_task_config(self.task_name).tools.dna,
                 ext=exts,
             )
 

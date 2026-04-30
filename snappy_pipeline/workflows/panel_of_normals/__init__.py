@@ -823,6 +823,8 @@ class PanelOfNormalsWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.MODELS, frozenset({"pon"}))]
 
+    config_model_class = PanelOfNormalsConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -835,15 +837,25 @@ class PanelOfNormalsWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=PanelOfNormalsConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Initialize sub-workflows
         self.register_module("ngs_mapping", self.config.path_ngs_mapping)
@@ -945,6 +957,6 @@ class PanelOfNormalsWorkflow(BaseStep):
         return result_files
 
     def _expand_result_files(self, tpl, ext_list):
-        for mapper in self.w_config.step_config["ngs_mapping"].tools.dna:
+        for mapper in self.get_task_config(self.task_name).tools.dna:
             for ext in ext_list:
                 yield tpl.format(mapper=mapper, ext=ext)

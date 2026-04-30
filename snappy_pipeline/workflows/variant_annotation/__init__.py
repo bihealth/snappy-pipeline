@@ -130,7 +130,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.w_config.step_config["variant_calling"].tools}
+        return {"var_caller": self.parent.get_task_config(self.task_name).tools}
 
     @dictify
     def _get_log_file(self, action):
@@ -166,6 +166,7 @@ class VariantAnnotationWorkflow(BaseStep):
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "annotated"}))
     ]
+    config_model_class = VariantAnnotationConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -173,22 +174,30 @@ class VariantAnnotationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantAnnotationConfigModel,
             previous_steps=(VariantCallingWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))
         # Register sub workflows
-        self.register_module(
-            "ngs_mapping", self.w_config.step_config["variant_calling"].path_ngs_mapping
-        )
+        self.register_module("ngs_mapping", self.get_task_config(self.task_name).path_ngs_mapping)
         self.register_module("variant_calling", self.config.path_variant_calling)
 
     @listify

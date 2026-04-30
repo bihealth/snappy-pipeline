@@ -26,7 +26,7 @@ wf = SomaticVariantSignaturesWorkflow(workflow, config, lookup_paths, config_pat
 
 
 # Modules =====================================================================
-cfg = wf.w_config["step_config"]["somatic_variant_signatures"]
+cfg = wf.get_task_config(self.task_name)
 sub_workflow = "somatic_variant_filtration" if cfg["is_filtered"] else "somatic_variant_calling"
 
 

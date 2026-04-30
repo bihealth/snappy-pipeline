@@ -695,6 +695,8 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))]
 
+    config_model_class = SomaticTargetedSeqCnvCallingConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -707,15 +709,25 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticTargetedSeqCnvCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -768,7 +780,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
-                                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                                mapper=self.get_task_config(self.task_name).tools.dna,
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:

@@ -319,6 +319,8 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
     consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"purity_ploidy"}))]
 
+    config_model_class = SomaticPurityPloidyEstimateConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -333,15 +335,25 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticPurityPloidyEstimateConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
         # Initialize sub-workflows

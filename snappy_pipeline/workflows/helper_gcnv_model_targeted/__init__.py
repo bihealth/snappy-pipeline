@@ -112,7 +112,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        gcnv_config = self.w_config.step_config["helper_gcnv_model_targeted"].gcnv
+        gcnv_config = self.get_task_config(self.task_name).gcnv
         if not gcnv_config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
@@ -160,7 +160,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
     def get_args(self, action: str) -> dict[str, Any]:
-        gcnv_config = self.w_config.step_config["helper_gcnv_model_targeted"].gcnv
+        gcnv_config = self.get_task_config(self.task_name).gcnv
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_par_intervals": gcnv_config.path_par_intervals,
@@ -174,6 +174,7 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "helper_gcnv_model_targeted"
+    config_model_class = HelperGcnvModelTargetedConfigModel
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
@@ -185,15 +186,25 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=HelperGcnvModelTargetedConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

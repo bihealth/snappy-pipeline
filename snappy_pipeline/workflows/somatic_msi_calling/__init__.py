@@ -191,6 +191,8 @@ class SomaticMsiCallingWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"msi"}))]
 
+    config_model_class = SomaticMsiCallingConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -203,15 +205,25 @@ class SomaticMsiCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticMsiCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Mantis2StepPart, LinkOutStepPart))
@@ -225,13 +237,13 @@ class SomaticMsiCallingWorkflow(BaseStep):
         for msi_caller in set(self.config.tools) & set(MSI_CALLERS_MATCHED):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                mapper=self.get_task_config(self.task_name).tools.dna,
                 msi_caller=msi_caller,
                 ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                mapper=self.get_task_config(self.task_name).tools.dna,
                 msi_caller=msi_caller,
                 ext=(
                     ".log",
@@ -262,7 +274,9 @@ class SomaticMsiCallingWorkflow(BaseStep):
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
                 yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )
 
     def check_config(self):

@@ -153,6 +153,7 @@ class VariantCheckingWorkflow(BaseStep):
     name = "variant_checking"
     consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
     produces = [DataSignature(DataType.QC, frozenset({"pedigree_check"}))]
+    config_model_class = VariantCheckingConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -162,15 +163,25 @@ class VariantCheckingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantCheckingConfigModel,
             previous_steps=(VariantCallingWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))
@@ -178,9 +189,9 @@ class VariantCheckingWorkflow(BaseStep):
         self.register_module("variant_calling", self.config.path_variant_calling)
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools
+            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
+            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
 
     @listify
     def get_result_files(self):

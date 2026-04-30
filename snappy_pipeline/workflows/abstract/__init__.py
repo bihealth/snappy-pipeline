@@ -313,7 +313,7 @@ class WritePedigreeStepPart(BaseStepPart):
                 donor_names = list(sorted(d.name for d in pedigree.donors))
                 print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
                 return
-            mappers = self.w_config.step_config["ngs_mapping"].tools.dna
+            mappers = self.get_task_config(self.task_name).tools.dna
             tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 library_name = donor.dna_ngs_library.name
@@ -683,7 +683,10 @@ class BaseStep:
         """
         return ""  # pragma: no cover
 
-    def __init__[C: SnappyStepModel](
+    #: Override with the Pydantic model class for configuration validation
+    config_model_class: type[SnappyStepModel]
+
+    def __init__(
         self,
         workflow: Workflow,
         config: MutableMapping[str, Any],
@@ -692,15 +695,12 @@ class BaseStep:
         work_dir: str,
         *,
         task_name: str,
-        config_model_class: type[C],
         previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
         self.step_name = self.__class__.name
         self.task_name = task_name
         #: Tuple with absolute paths to configuration files read
         self.config_paths = config_paths
-        #: Pydantic model class for configuration validation
-        self.config_model_class = config_model_class
         #: Absolute path to directory of where to perform work
         self.work_dir = work_dir
         #: Classes of previously executed steps, used for merging their default configuration as
@@ -729,7 +729,7 @@ class BaseStep:
             self.depends_on = self.task.depends_on
 
             # 4. Validate the step-specific config using its strict Pydantic model
-            self.config: C = self.config_model_class(**self.task.config)
+            self.config = self.config_model_class(**self.task.config)
 
         except pydantic.ValidationError as ve:
             self.logger.error(f"Configuration failed validation for task '{self.task_name}'")
@@ -779,6 +779,30 @@ class BaseStep:
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
         self.logger.debug(f"Snakemake config\n{config}")
+
+    def get_task_config(self, name: str) -> SnappyStepModel:
+        """Retrieve the typed configuration model of an upstream task based on dependency resolution."""
+        # 1. Resolve name to the actual task name
+        task_name = self.depends_on.get(name, name)
+
+        # 2. Extract that task's raw config dictionary from global config
+        task = next((t for t in self.w_config.tasks if t.name == task_name), None)
+        if not task:
+            raise ValueError(
+                f"Task '{task_name}' (resolved from '{name}') not found in configuration."
+            )
+
+        # 3. Import WORKFLOW_REGISTRY lazily to avoid circular imports
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        wf_class = WORKFLOW_REGISTRY.get(task.step)
+        if not wf_class:
+            raise ValueError(
+                f"Workflow class for step '{task.step}' not found in WORKFLOW_REGISTRY."
+            )
+
+        # 4. Instantiate and return its strictly typed config model
+        return wf_class.config_model_class(**task.config)
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""

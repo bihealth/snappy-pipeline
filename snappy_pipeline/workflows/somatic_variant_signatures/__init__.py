@@ -176,25 +176,37 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
+    config_model_class = SomaticVariantSignaturesConfigModel
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticVariantSignaturesConfigModel,
             previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
                 SomaticVariantFiltrationWorkflow,
                 NgsMappingWorkflow,
             ),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub workflows
         config = self.config
@@ -203,14 +215,14 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         )
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
 
-        tools = set(self.w_config.step_config["ngs_mapping"].tools.dna)
+        tools = set(self.get_task_config(self.task_name).tools.dna)
         if not config.tools_ngs_mapping:
             config.tools_ngs_mapping = tools
         else:
             config.tools_ngs_mapping = set(config.tools_ngs_mapping) & tools
         assert len(config.tools_ngs_mapping) > 0, "No valid ngs mapping tool"
 
-        tools = set(self.w_config.step_config["somatic_variant_calling"].tools)
+        tools = set(self.get_task_config(self.task_name).tools)
         if not config.tools_somatic_variant_calling:
             config.tools_somatic_variant_calling = tools
         else:
@@ -220,7 +232,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         )
 
         if config.has_annotation:
-            tools = set(self.w_config.step_config["somatic_variant_annotation"].tools)
+            tools = set(self.get_task_config(self.task_name).tools)
             if not config.tools_somatic_variant_annotation:
                 config.tools_somatic_variant_annotation = tools
             config.tools_somatic_variant_annotation = (
@@ -277,5 +289,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
                 yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )

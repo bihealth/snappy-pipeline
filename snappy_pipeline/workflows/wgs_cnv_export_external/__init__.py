@@ -317,6 +317,7 @@ class WgsCnvExportExternalWorkflow(BaseStep):
     name = "wgs_cnv_export_external"
     consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    config_model_class = WgsCnvExportExternalConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -326,15 +327,25 @@ class WgsCnvExportExternalWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=WgsCnvExportExternalConfigModel,
             previous_steps=(),
+            task_name=task_name,
+            **kwargs,
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())
@@ -395,4 +406,8 @@ class WgsCnvExportExternalWorkflow(BaseStep):
                         file=sys.stderr,
                     )
                     continue  # pragma: no cover
-                yield from expand(tpl, index_library=[pedigree.index.dna_ngs_library], **kwargs)
+                yield from expand(
+                    tpl,
+                    index_library=[pedigree.index.dna_ngs_library],
+                    **kwargs,
+                )

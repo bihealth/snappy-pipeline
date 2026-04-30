@@ -299,6 +299,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
     consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True}
     produces = [DataSignature(DataType.QC, frozenset({"cnv_check"}))]
 
+    config_model_class = SomaticCnvCheckingConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -311,19 +313,29 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticCnvCheckingConfigModel,
             previous_steps=(
                 SomaticTargetedSeqCnvCallingWorkflow,
                 SomaticWgsCnvCallingWorkflow,
                 NgsMappingWorkflow,
             ),
+            task_name=task_name,
+            **kwargs,
         )
         if self.config.path_cnv_calling and self.config.cnv_assay_type:
             if self.config.cnv_assay_type == "WES":
@@ -377,14 +389,14 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         ext = ("log", "conda_info.txt", "conda_list.txt")
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".normal.{ext}{chksum}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            mapper=self.get_task_config(self.task_name).tools.dna,
             library_name=set(self.tumor_to_normal.values()),
             ext=ext,
             chksum=chksum,
         )
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".tumor.{ext}{chksum}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            mapper=self.get_task_config(self.task_name).tools.dna,
             library_name=self.tumor_to_normal.keys(),
             ext=ext,
             chksum=chksum,
@@ -394,7 +406,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         if self.config.path_cnv_calling:
             # CNV avaliable
             name_pattern = "{library_name}"
-            callers = self.w_config.step_config["somatic_targeted_seq_cnv_calling"].tools
+            callers = self.get_task_config(self.task_name).tools
             ext["out"] += [".tsv"]
             ext["report"] = (".cnv.pdf", ".locus.pdf", ".segment.pdf")
             ext["log"] = [
@@ -408,7 +420,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         for subdir, exts in ext.items():
             yield from expand(
                 os.path.join("output", name_pattern, subdir, name_pattern + "{ext}{chksum}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+                mapper=self.get_task_config(self.task_name).tools.dna,
                 caller=callers,
                 library_name=self.tumor_to_normal.keys(),
                 ext=exts,

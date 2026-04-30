@@ -139,6 +139,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     name = "tumor_mutational_burden"
     consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"tmb"}))]
+    config_model_class = TumorMutationalBurdenConfigModel
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
@@ -149,20 +150,30 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=TumorMutationalBurdenConfigModel,
             previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
                 SomaticVariantFiltrationWorkflow,
                 NgsMappingWorkflow,
             ),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub workflows
         config = self.config
@@ -170,14 +181,14 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
         )
 
-        tools = set(self.w_config.step_config["ngs_mapping"].tools.dna)
+        tools = set(self.get_task_config(self.task_name).tools.dna)
         if not config.tools_ngs_mapping:
             config.tools_ngs_mapping = tools
         else:
             config.tools_ngs_mapping = set(config.tools_ngs_mapping) & tools
         assert len(config.tools_ngs_mapping) > 0, "No valid ngs mapping tool"
 
-        tools = set(self.w_config.step_config["somatic_variant_calling"].tools)
+        tools = set(self.get_task_config(self.task_name).tools)
         if not config.tools_somatic_variant_calling:
             config.tools_somatic_variant_calling = tools
         else:
@@ -187,7 +198,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         )
 
         if config.has_annotation:
-            tools = set(self.w_config.step_config["somatic_variant_annotation"].tools)
+            tools = set(self.get_task_config(self.task_name).tools)
             if not config.tools_somatic_variant_annotation:
                 config.tools_somatic_variant_annotation = tools
             config.tools_somatic_variant_annotation = (

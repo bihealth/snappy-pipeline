@@ -183,6 +183,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS): True, DataSignature(DataType.VARIANTS): False}
     produces = [DataSignature(DataType.EXPORTS, frozenset({"igv"}))]
 
+    config_model_class = IgvSessionGenerationConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
@@ -191,15 +193,25 @@ class IgvSessionGenerationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=IgvSessionGenerationConfigModel,
             previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
@@ -220,9 +232,9 @@ class IgvSessionGenerationWorkflow(BaseStep):
         self.register_sub_step_classes((WriteIgvSessionFileStepPart, LinkOutStepPart))
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
+            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
 
     @listify
     def get_result_files(self):
@@ -249,4 +261,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
                     elif not donor.mother or not donor.mother.dna_ngs_library:
                         continue
                     else:
-                        yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
+                        yield from expand(
+                            tpl,
+                            index_library=[donor.dna_ngs_library],
+                            **kwargs,
+                        )

@@ -315,18 +315,30 @@ class RepeatExpansionWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "repeats"}))]
 
+    config_model_class = RepeatExpansionConfigModel
+
     #: Sample sheet shortcut class
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=RepeatExpansionConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
@@ -357,7 +369,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{tool}_annotated.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            mapper=self.get_task_config(self.task_name).tools.dna,
             tool=tools,
             ext=EXT_JSON,
         )
@@ -365,7 +377,7 @@ class RepeatExpansionWorkflow(BaseStep):
         name_pattern = "{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            mapper=self.get_task_config(self.task_name).tools.dna,
             tool=tools,
             ext=EXT_VCF,
         )

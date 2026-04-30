@@ -183,7 +183,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
     def get_args(self, action: str) -> dict[str, Any]:
-        gcnv_config = self.w_config.step_config["helper_gcnv_model_wgs"].gcnv
+        gcnv_config = self.get_task_config(self.task_name).gcnv
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_par_intervals": gcnv_config.path_par_intervals,
@@ -218,6 +218,7 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "helper_gcnv_model_wgs"
+    config_model_class = HelperGcnvModelWgsConfigModel
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
@@ -229,15 +230,25 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=HelperGcnvModelWgsConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

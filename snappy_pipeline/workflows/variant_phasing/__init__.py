@@ -373,6 +373,7 @@ class VariantPhasingWorkflow(BaseStep):
     name = "variant_phasing"
     consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))]
+    config_model_class = VariantPhasingConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -380,15 +381,25 @@ class VariantPhasingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantPhasingConfigModel,
             previous_steps=(VariantAnnotationWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -405,9 +416,9 @@ class VariantPhasingWorkflow(BaseStep):
         self.register_module("ngs_mapping", self.config.path_ngs_mapping)
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
         if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
+            self.config.tools_variant_calling = self.get_task_config(self.task_name).tools
 
     @listify
     def get_result_files(self):
@@ -441,4 +452,8 @@ class VariantPhasingWorkflow(BaseStep):
                         and donor.mother
                         and donor.mother.dna_ngs_library
                     ):  # only phase if both parents present
-                        yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
+                        yield from expand(
+                            tpl,
+                            index_library=[donor.dna_ngs_library],
+                            **kwargs,
+                        )

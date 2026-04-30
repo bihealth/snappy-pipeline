@@ -476,6 +476,9 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
     #: Workflow name
     name = "gene_expression_quantification"
+
+    config_model_class = GeneExpressionQuantificationConfigModel
+
     consumes = {DataSignature(DataType.RAW, frozenset({"rna"})): True}
     produces = [DataSignature(DataType.EXPRESSION, frozenset({"rna"}))]
 
@@ -487,15 +490,25 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=GeneExpressionQuantificationConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -561,7 +574,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                             fns = expand(
                                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                                 ngs_library=ngs_library,
-                                mapper=self.w_config.step_config["ngs_mapping"].tools.rna,
+                                mapper=self.get_task_config(self.task_name).tools.rna,
                                 # tool=set(self.config['tools']),
                                 tool=tool,
                                 ext=EXTENSIONS[tool].values(),

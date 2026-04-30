@@ -1457,6 +1457,8 @@ class NgsMappingWorkflow(BaseStep):
     consumes = {DataSignature(DataType.RAW): True}
     produces = [DataSignature(DataType.ALIGNMENTS, frozenset({"dna"}))]
 
+    config_model_class = NgsMappingConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
@@ -1465,14 +1467,24 @@ class NgsMappingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=NgsMappingConfigModel,
+            task_name=task_name,
+            **kwargs,
         )
         self.register_sub_step_classes(
             (
@@ -1507,7 +1519,7 @@ class NgsMappingWorkflow(BaseStep):
         return result
 
     def _build_ngs_library_to_kit(self):
-        cov_config = self.w_config.step_config["ngs_mapping"].target_coverage_report
+        cov_config = self.get_task_config(self.task_name).target_coverage_report
         # Build mapping.
         default_kit_configured = False
         regexes = {}

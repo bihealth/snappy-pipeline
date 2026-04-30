@@ -484,6 +484,8 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "filtered"}))
     ]
 
+    config_model_class = SomaticVariantFiltrationConfigModel
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -496,7 +498,16 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         # Ugly hack to allow exchanging the order of somatic_variant_annotation &
         # somatic_variant_filtration steps.
         # The import of the other workflow must be dependent on the config:
@@ -523,10 +534,11 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticVariantFiltrationConfigModel,
             # FIXME
             previous_steps=(),
             # previous_steps=previous_steps,
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -554,7 +566,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
+            self.config.tools_ngs_mapping = self.get_task_config(self.task_name).tools.dna
         if not self.config.tools_somatic_variant_calling:
             self.config.tools_somatic_variant_calling = self.w_config.step_config[
                 "somatic_variant_calling"
@@ -570,7 +582,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         Process all primary DNA libraries and perform pairwise calling for tumor/normal pairs
         """
         mappers = set(self.config.tools_ngs_mapping) & set(
-            self.w_config.step_config["ngs_mapping"].tools.dna
+            self.get_task_config(self.task_name).tools.dna
         )
         callers = set(self.config.tools_somatic_variant_calling) & set(SOMATIC_VARIANT_CALLERS)
         if self.config.has_annotation:

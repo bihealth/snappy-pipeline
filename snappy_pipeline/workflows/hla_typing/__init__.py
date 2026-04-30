@@ -292,6 +292,9 @@ class HlaTypingWorkflow(BaseStep):
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
+    #: config_model_class
+    config_model_class = HlaTypingConfigModel
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific
@@ -299,8 +302,8 @@ class HlaTypingWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
+    def __init__(self, *args, task_name: str, **kwargs):
+        super().__init__(*args, task_name=task_name, **kwargs)
         sub_steps = [LinkInStepPart, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]
         self.register_sub_step_classes(tuple(sub_steps))
         #: Mapping from library name to library object

@@ -527,6 +527,7 @@ class VariantExportExternalWorkflow(BaseStep):
     name = "variant_export_external"
     consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    config_model_class = VariantExportExternalConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -536,15 +537,25 @@ class VariantExportExternalWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantExportExternalConfigModel,
             previous_steps=(),
+            task_name=task_name,
+            **kwargs,
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())

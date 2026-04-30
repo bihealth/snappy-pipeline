@@ -406,6 +406,8 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "sv"}))]
 
+    config_model_class = SomaticWgsSvCallingConfigModel
+
     #: Default biomedsheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -418,15 +420,25 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticWgsSvCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Delly2StepPart, MantaStepPart, LinkOutStepPart))
@@ -442,7 +454,7 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         name_pattern = "{cancer_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
+            mapper=self.get_task_config(self.task_name).tools.dna,
             caller=self.config.tools,
             ext=EXT_VALUES,
         )
@@ -464,7 +476,9 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
                     )  # pragma: no cover
                     continue  # pragma: no cover
                 yield from expand(
-                    tpl, cancer_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )
 
     def check_config(self):

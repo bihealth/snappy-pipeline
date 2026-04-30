@@ -22,7 +22,7 @@ tools = config["step_config"]["panel_of_normals"]["tools"]
 # WorkflowImpl Object Setup ===================================================
 
 wf = PanelOfNormalsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.w_config["step_config"]["panel_of_normals"]["tools"]
+tools = wf.get_task_config(self.task_name)["tools"]
 
 
 # Modules =====================================================================
