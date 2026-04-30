@@ -568,13 +568,13 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.tools_somatic_variant_calling:
-            self.config.tools_somatic_variant_calling = self.w_config.step_config[
+            self.config.tools_somatic_variant_calling = self.get_task_config(
                 "somatic_variant_calling"
-            ].tools
+            ).tools
         if self.config.has_annotation and not self.config.tools_somatic_variant_annotation:
-            self.config.tools_somatic_variant_annotation = self.w_config.step_config[
+            self.config.tools_somatic_variant_annotation = self.get_task_config(
                 "somatic_variant_annotation"
-            ].tools
+            ).tools
 
     @listify
     def get_result_files(self):

@@ -357,20 +357,16 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         )
         # Register modules
         if self.config.is_filtered:
-            self.register_sub_workflow(
-                "somatic_variant_filtration", self.config.path_somatic_variant, "somatic_variant"
-            )
+            self.register_module("somatic_variant_filtration", "somatic_variant")
         else:
-            self.register_module(
-                "somatic_variant_calling", self.config.path_somatic_variant, "somatic_variant"
-            )
+            self.register_module("somatic_variant_calling", "somatic_variant")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
         if not self.config.tools_somatic_variant_calling:
-            self.config.tools_somatic_variant_calling = self.w_config.step_config[
+            self.config.tools_somatic_variant_calling = self.get_task_config(
                 "somatic_variant_calling"
-            ].tools
+            ).tools
 
     @listify
     def get_result_files(self):

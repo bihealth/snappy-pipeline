@@ -736,7 +736,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping", self.config.path_ngs_mapping, "ngs_mapping")
         if "mutect2" in self.config.tools:
             if self.config.mutect2.contamination.enabled:
                 actions = self.sub_steps["mutect2"].actions
