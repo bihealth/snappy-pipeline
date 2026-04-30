@@ -10,7 +10,6 @@ import logging
 import os
 import sys
 
-import ruamel.yaml as ruamel_yaml
 from snakemake.cli import main as snakemake_main
 
 from .. import __version__

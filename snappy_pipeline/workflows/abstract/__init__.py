@@ -427,15 +427,19 @@ class LinkOutStepPart(BaseStepPart):
     def get_shell_cmd(self, action, wildcards):
         """Return call for linking out"""
         assert action == "run", "Unsupported action"
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         tpl = "test -h {out} || ln -sr {in_} {out}"
-        in_ = self.base_path_in.replace("{", "{wildcards.")
-        out = self.base_path_out.replace("{", "{wildcards.")
+        # Prepend the task prefix to the paths
+        in_ = task_prefix + self.base_path_in.replace("{", "{wildcards.")
+        out = task_prefix + self.base_path_out.replace("{", "{wildcards.")
         return tpl.format(in_=in_, out=out)
 
     def run_locally(self, action, wildcards):
         assert action == "run", "Unsupported action"
-        path_out = f"output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
-        path_in = f"work/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        # Prepend the task prefix to the paths
+        path_out = task_prefix + f"output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        path_in = task_prefix + f"work/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
         if not os.path.islink(path_out):
             target = os.path.relpath(path_in, start=os.path.dirname(path_out))
             os.symlink(target, path_out)
@@ -932,19 +936,25 @@ class BaseStep:
 
         return f"output/{upstream_task_name}"
 
-    def register_module(self, logical_name: str, prefix: str = "", module_name: str = ""):
+    def register_module(self, logical_name: str, default_module_name: str = ""):
         """
         Registers a dependency mapping for Snakemake 9.
-        Paths are resolved via the prefix directive applied during module import.
+        Paths are resolved using the explicit depends_on configuration.
         """
-        _prefix = prefix  # prefix is ignored for now, just backwards compat
-        target_task_name = self.depends_on.get(logical_name, module_name)
+        if not default_module_name:
+            default_module_name = logical_name
+
+        if hasattr(self.config, "depends_on") and hasattr(self.config.depends_on, logical_name):
+            target_task_name = getattr(self.config.depends_on, logical_name)
+        else:
+            target_task_name = self.depends_on.get(logical_name, default_module_name)
 
         if logical_name in self.modules:
             raise ValueError(f"Dependency {logical_name} already registered!")
 
-        prefix = self.config.get(f"path_{logical_name}", f"../{target_task_name}")
-        self.modules[logical_name] = lambda path: os.path.join(prefix, path)
+        # Traverse up one directory to escape the current module's prefix
+        prefix = f"../{target_task_name}"
+        self.modules[logical_name] = lambda path: os.path.join(prefix, path).replace("\\", "/")
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards
@@ -1317,14 +1327,11 @@ class LinkInStepPart(BaseStepPart):
         return touch(self.base_pattern_out)
 
     def get_shell_cmd(self, action, wildcards):
-        """Return call for linking in the files
-
-        The files are linked, keeping their relative paths to the item matching the "folderName"
-        intact.
-        """
+        """Return call for linking in the files"""
         assert action == "run", "Unsupported action"
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         if self.config.path_link_in:
@@ -1360,14 +1367,11 @@ class LinkInStepPart(BaseStepPart):
         return "\n".join(lines)
 
     def run_locally(self, action, wildcards):
-        """Links fastq files
-
-        The files are linked, keeping their relative paths to the item matching the "folderName"
-        intact.
-        """
+        """Links fastq files"""
         assert action == "run", "Unsupported action"
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         if self.config.path_link_in:
@@ -1433,14 +1437,15 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
         intact.
         """
         self._validate_action(action)
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         # Define path generator
         path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_search_infos,
             self.parent.config_lookup_paths,
         )
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Perform the command generation
         lines = []
         tpl = (
@@ -1480,14 +1485,15 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
         intact.
         """
         self._validate_action(action)
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         # Define path generator
         path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_search_infos,
             self.parent.config_lookup_paths,
         )
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         filenames = self._create_all_symlinks(
             path_generator=path_gen,
             folder_name=wildcards.library_name,
