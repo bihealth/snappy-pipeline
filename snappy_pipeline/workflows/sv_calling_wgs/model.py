@@ -125,8 +125,12 @@ class Sniffles2(SnappyModel):
     """
 
 
+class SvCallingWgsDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class SvCallingWgs(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: SvCallingWgsDependsOn = Field(default_factory=SvCallingWgsDependsOn)
 
     tools: Tools
 

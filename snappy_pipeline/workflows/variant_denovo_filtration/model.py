@@ -16,15 +16,17 @@ class BesenbacherParams(SnappyModel):
     max_ad2: int = 1
 
 
+class VariantDenovoFiltrationDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+    variant_phasing: str = ""
+    variant_annotation: str = ""
+    variant_calling: str = ""
+
+
 class VariantDenovoFiltration(SnappyStepModel):
-    path_variant_phasing: str = ""
-
-    path_variant_annotation: str = ""
-
-    path_variant_calling: str = ""
-
-    path_ngs_mapping: str = "../ngs_mapping"
-
+    depends_on: VariantDenovoFiltrationDependsOn = Field(
+        default_factory=VariantDenovoFiltrationDependsOn
+    )
     tools_ngs_mapping: list[str] = []
     """defaults to ngs_mapping tool"""
 
@@ -49,6 +51,8 @@ class VariantDenovoFiltration(SnappyStepModel):
     @model_validator(mode="after")
     def ensure_variant_paths_are_configured(self):
         assert (
-            self.path_variant_phasing or self.path_variant_annotation or self.path_variant_calling
+            self.depends_on.variant_phasing
+            or self.depends_on.variant_annotation
+            or self.depends_on.variant_calling
         )
         return self

@@ -8,7 +8,6 @@ from snappy_pipeline.workflows.variant_export_external import (
     VariantExportExternalWorkflow,
 )
 
-
 # Configuration ===============================================================
 
 
@@ -39,9 +38,9 @@ localrules:
 
 
 rule variant_export_external_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,14 +106,14 @@ if wf.get_task_config("variant_export_external").gvcf_option:
             unpack(wf.get_input_files("varfish_annotator_external", "gvcf_to_vcf")),
         output:
             **wf.get_output_files("varfish_annotator_external", "gvcf_to_vcf"),
+        log:
+            **wf.get_log_file("varfish_annotator_external", "gvcf_to_vcf"),
         threads: wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "threads")
         resources:
             runtime=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "runtime"),
             mem=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "mem"),
             partition=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "partition"),
             tmpdir=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "tmpdir"),
-        log:
-            **wf.get_log_file("varfish_annotator_external", "gvcf_to_vcf"),
         params:
             args=wf.get_args("varfish_annotator_external", "gvcf_to_vcf"),
         wrapper:
@@ -127,14 +126,14 @@ else:
             unpack(wf.get_input_files("varfish_annotator_external", "merge_vcf")),
         output:
             **wf.get_output_files("varfish_annotator_external", "merge_vcf"),
+        log:
+            **wf.get_log_file("varfish_annotator_external", "merge_vcf"),
         threads: wf.get_resource("varfish_annotator_external", "merge_vcf", "threads")
         resources:
             runtime=wf.get_resource("varfish_annotator_external", "merge_vcf", "runtime"),
             mem=wf.get_resource("varfish_annotator_external", "merge_vcf", "mem"),
             partition=wf.get_resource("varfish_annotator_external", "merge_vcf", "partition"),
             tmpdir=wf.get_resource("varfish_annotator_external", "merge_vcf", "tmpdir"),
-        log:
-            **wf.get_log_file("varfish_annotator_external", "merge_vcf"),
         params:
             args=wf.get_args("varfish_annotator_external", "merge_vcf"),
         wrapper:
@@ -149,14 +148,14 @@ rule variant_export_external_varfish_annotator_annotate:
         unpack(wf.get_input_files("varfish_annotator_external", "annotate")),
     output:
         **wf.get_output_files("varfish_annotator_external", "annotate"),
+    log:
+        **wf.get_log_file("varfish_annotator_external", "annotate"),
     threads: wf.get_resource("varfish_annotator_external", "annotate", "threads")
     resources:
         runtime=wf.get_resource("varfish_annotator_external", "annotate", "runtime"),
         mem=wf.get_resource("varfish_annotator_external", "annotate", "mem"),
         partition=wf.get_resource("varfish_annotator_external", "annotate", "partition"),
         tmpdir=wf.get_resource("varfish_annotator_external", "annotate", "tmpdir"),
-    log:
-        **wf.get_log_file("varfish_annotator_external", "annotate"),
     params:
         args=wf.get_args("varfish_annotator_external", "annotate"),
     wrapper:
@@ -171,6 +170,8 @@ rule variant_export_external_bam_reports_bam_qc:
         unpack(wf.get_input_files("bam_reports", "bam_qc")),
     output:
         **wf.get_output_files("bam_reports", "bam_qc"),
+    log:
+        **wf.get_log_file("bam_reports", "bam_qc"),
     threads: wf.get_resource("bam_reports", "bam_qc", "threads")
     resources:
         runtime=wf.get_resource("bam_reports", "bam_qc", "runtime"),
@@ -179,8 +180,6 @@ rule variant_export_external_bam_reports_bam_qc:
         tmpdir=wf.get_resource("bam_reports", "bam_qc", "tmpdir"),
     params:
         args=wf.get_args("bam_reports", "bam_qc"),
-    log:
-        **wf.get_log_file("bam_reports", "bam_qc"),
     wrapper:
         wf.wrapper_path("samtools/bam_qc_report")
 
@@ -193,6 +192,8 @@ rule variant_export_external_bam_reports_run:
         unpack(wf.get_input_files("bam_reports", "run")),
     output:
         **wf.get_output_files("bam_reports", "run"),
+    log:
+        wf.get_log_file("bam_reports", "run"),
     threads: wf.get_resource("bam_reports", "run", "threads")
     resources:
         runtime=wf.get_resource("bam_reports", "run", "runtime"),
@@ -201,8 +202,6 @@ rule variant_export_external_bam_reports_run:
         tmpdir=wf.get_resource("bam_reports", "run", "tmpdir"),
     params:
         args=wf.get_args("bam_reports", "run"),
-    log:
-        wf.get_log_file("bam_reports", "run"),
     wrapper:
         wf.wrapper_path("target_cov_report/run_external")
 
@@ -215,14 +214,14 @@ rule variant_export_external_bam_reports_collect:
         wf.get_input_files("bam_reports", "collect"),
     output:
         **wf.get_output_files("bam_reports", "collect"),
+    log:
+        wf.get_log_file("bam_reports", "collect"),
     threads: wf.get_resource("bam_reports", "run", "threads")
     resources:
         runtime=wf.get_resource("bam_reports", "run", "runtime"),
         mem=wf.get_resource("bam_reports", "run", "mem"),
         partition=wf.get_resource("bam_reports", "run", "partition"),
         tmpdir=wf.get_resource("bam_reports", "run", "tmpdir"),
-    log:
-        wf.get_log_file("bam_reports", "collect"),
     wrapper:
         wf.wrapper_path("target_cov_report/collect")
 
@@ -235,6 +234,8 @@ rule variant_export_external_varfish_annotator_bam_qc:
         unpack(wf.get_input_files("varfish_annotator_external", "bam_qc")),
     output:
         **wf.get_output_files("varfish_annotator_external", "bam_qc"),
+    log:
+        **wf.get_log_file("varfish_annotator_external", "bam_qc"),
     threads: wf.get_resource("varfish_annotator_external", "bam_qc", "threads")
     resources:
         runtime=wf.get_resource("varfish_annotator_external", "bam_qc", "runtime"),
@@ -243,7 +244,5 @@ rule variant_export_external_varfish_annotator_bam_qc:
         tmpdir=wf.get_resource("varfish_annotator_external", "bam_qc", "tmpdir"),
     params:
         args=wf.get_args("varfish_annotator_external", "bam_qc"),
-    log:
-        **wf.get_log_file("varfish_annotator_external", "bam_qc"),
     wrapper:
         wf.wrapper_path("varfish_annotator/bam_qc")

@@ -52,9 +52,9 @@ localrules:
 
 
 rule panel_of_normals_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,21 +89,21 @@ if "mutect2" in tools:
         mutect2=wf.config.get("mutect2", {}).get("num_jobs", 24),
 
     rule panel_of_normals_mutect2_scatter:
-        localrule: True
         input:
             unpack(wf.get_input_files("mutect2", "scatter")),
         output:
             **wf.get_output_files("mutect2", "scatter"),
-        params:
-            args=wf.get_args("mutect2", "scatter"),
+        log:
+            **wf.get_log_file("mutect2", "scatter"),
+        localrule: True
+        threads: 1
         resources:
             runtime=wf.get_resource("mutect2", "scatter", "runtime"),
             mem=wf.get_resource("mutect2", "scatter", "mem"),
             partition=wf.get_resource("mutect2", "scatter", "partition"),
             tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
-        threads: 1
-        log:
-            **wf.get_log_file("mutect2", "scatter"),
+        params:
+            args=wf.get_args("mutect2", "scatter"),
         wrapper:
             wf.wrapper_path("split_regions")
 
@@ -112,16 +112,16 @@ if "mutect2" in tools:
             unpack(wf.get_input_files("mutect2", "prepare_panel")),
         output:
             **wf.get_output_files("mutect2", "prepare_panel"),
-        params:
-            args=wf.get_args("mutect2", "prepare_panel"),
+        log:
+            **wf.get_log_file("mutect2", "prepare_panel"),
         threads: wf.get_resource("mutect2", "prepare_panel", "threads")
         resources:
             runtime=wf.get_resource("mutect2", "prepare_panel", "runtime"),
             mem=wf.get_resource("mutect2", "prepare_panel", "mem"),
             partition=wf.get_resource("mutect2", "prepare_panel", "partition"),
             tmpdir=wf.get_resource("mutect2", "prepare_panel", "tmpdir"),
-        log:
-            **wf.get_log_file("mutect2", "prepare_panel"),
+        params:
+            args=wf.get_args("mutect2", "prepare_panel"),
         wrapper:
             wf.wrapper_path("mutect2/run")
 
@@ -130,14 +130,14 @@ if "mutect2" in tools:
             unpack(wf.get_input_files("mutect2", "gather")),
         output:
             **wf.get_output_files("mutect2", "gather"),
+        log:
+            **wf.get_log_file("mutect2", "gather"),
+        threads: 1
         resources:
             runtime=wf.get_resource("mutect2", "gather", "runtime"),
             mem=wf.get_resource("mutect2", "gather", "mem"),
             partition=wf.get_resource("mutect2", "gather", "partition"),
             tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
-        threads: 1
-        log:
-            **wf.get_log_file("mutect2", "gather"),
         wrapper:
             wf.wrapper_path("mutect2/gather")
 
@@ -146,16 +146,16 @@ if "mutect2" in tools:
             unpack(wf.get_input_files("mutect2", "create_panel")),
         output:
             **wf.get_output_files("mutect2", "create_panel"),
-        params:
-            args=wf.get_args("mutect2", "create_panel"),
+        log:
+            **wf.get_log_file("mutect2", "create_panel"),
         threads: wf.get_resource("mutect2", "create_panel", "threads")
         resources:
             runtime=wf.get_resource("mutect2", "create_panel", "runtime"),
             mem=wf.get_resource("mutect2", "create_panel", "mem"),
             partition=wf.get_resource("mutect2", "create_panel", "partition"),
             tmpdir=wf.get_resource("mutect2", "create_panel", "tmpdir"),
-        log:
-            **wf.get_log_file("mutect2", "create_panel"),
+        params:
+            args=wf.get_args("mutect2", "create_panel"),
         wrapper:
             wf.wrapper_path("mutect2/create_panel")
 
@@ -167,12 +167,12 @@ if "cnvkit" in tools:
     rule panel_of_normals_access_run:
         output:
             **wf.get_output_files("access", "run"),
+        log:
+            **wf.get_log_file("access", "run"),
         resources:
             runtime=wf.get_resource("access", "run", "runtime"),
             mem=wf.get_resource("access", "run", "mem"),
             partition=wf.get_resource("access", "run", "partition"),
-        log:
-            **wf.get_log_file("access", "run"),
         wrapper:
             wf.wrapper_path("cnvkit/access")
 
@@ -181,13 +181,13 @@ if "cnvkit" in tools:
             unpack(wf.get_input_files("cnvkit", "target")),
         output:
             **wf.get_output_files("cnvkit", "target"),
+        log:
+            **wf.get_log_file("cnvkit", "target"),
         threads: wf.get_resource("cnvkit", "target", "threads")
         resources:
             runtime=wf.get_resource("cnvkit", "target", "runtime"),
             mem=wf.get_resource("cnvkit", "target", "mem"),
             partition=wf.get_resource("cnvkit", "target", "partition"),
-        log:
-            **wf.get_log_file("cnvkit", "target"),
         params:
             args=wf.get_args("cnvkit", "target"),
         wrapper:
@@ -198,13 +198,13 @@ if "cnvkit" in tools:
             unpack(wf.get_input_files("cnvkit", "antitarget")),
         output:
             **wf.get_output_files("cnvkit", "antitarget"),
+        log:
+            **wf.get_log_file("cnvkit", "antitarget"),
         threads: wf.get_resource("cnvkit", "antitarget", "threads")
         resources:
             runtime=wf.get_resource("cnvkit", "antitarget", "runtime"),
             mem=wf.get_resource("cnvkit", "antitarget", "mem"),
             partition=wf.get_resource("cnvkit", "antitarget", "partition"),
-        log:
-            **wf.get_log_file("cnvkit", "antitarget"),
         params:
             args=wf.get_args("cnvkit", "antitarget"),
         wrapper:
@@ -215,13 +215,13 @@ if "cnvkit" in tools:
             unpack(wf.get_input_files("cnvkit", "coverage")),
         output:
             **wf.get_output_files("cnvkit", "coverage"),
+        log:
+            **wf.get_log_file("cnvkit", "coverage"),
         threads: wf.get_resource("cnvkit", "coverage", "threads")
         resources:
             runtime=wf.get_resource("cnvkit", "coverage", "runtime"),
             mem=wf.get_resource("cnvkit", "coverage", "mem"),
             partition=wf.get_resource("cnvkit", "coverage", "partition"),
-        log:
-            **wf.get_log_file("cnvkit", "coverage"),
         params:
             args=wf.get_args("cnvkit", "coverage"),
         wrapper:
@@ -232,13 +232,13 @@ if "cnvkit" in tools:
             unpack(wf.get_input_files("cnvkit", "create_panel")),
         output:
             **wf.get_output_files("cnvkit", "create_panel"),
+        log:
+            **wf.get_log_file("cnvkit", "create_panel"),
         threads: wf.get_resource("cnvkit", "create_panel", "threads")
         resources:
             runtime=wf.get_resource("cnvkit", "create_panel", "runtime"),
             mem=wf.get_resource("cnvkit", "create_panel", "mem"),
             partition=wf.get_resource("cnvkit", "create_panel", "partition"),
-        log:
-            **wf.get_log_file("cnvkit", "create_panel"),
         params:
             args=wf.get_args("cnvkit", "create_panel"),
         wrapper:
@@ -249,13 +249,13 @@ if "cnvkit" in tools:
             unpack(wf.get_input_files("cnvkit", "report")),
         output:
             **wf.get_output_files("cnvkit", "report"),
+        log:
+            **wf.get_log_file("cnvkit", "report"),
         threads: wf.get_resource("cnvkit", "report", "threads")
         resources:
             runtime=wf.get_resource("cnvkit", "report", "runtime"),
             mem=wf.get_resource("cnvkit", "report", "mem"),
             partition=wf.get_resource("cnvkit", "report", "partition"),
-        log:
-            **wf.get_log_file("cnvkit", "report"),
         params:
             args=wf.get_args("cnvkit", "report"),
         wrapper:
@@ -271,14 +271,14 @@ if "purecn" in tools:
     rule panel_of_normals_purecn_install:
         output:
             **wf.get_output_files("purecn", "install"),
-        params:
-            container="docker://markusriester/purecn",
+        log:
+            **wf.get_log_file("purecn", "install"),
         resources:
             runtime=wf.get_resource("purecn", "install", "runtime"),
             mem=wf.get_resource("purecn", "install", "mem"),
             partition=wf.get_resource("purecn", "install", "partition"),
-        log:
-            **wf.get_log_file("purecn", "install"),
+        params:
+            container="docker://markusriester/purecn",
         wrapper:
             wf.wrapper_path("singularity")
 
@@ -287,12 +287,12 @@ if "purecn" in tools:
             **wf.get_input_files("purecn", "prepare"),
         output:
             **wf.get_output_files("purecn", "prepare"),
+        log:
+            **wf.get_log_file("purecn", "prepare"),
         resources:
             runtime=wf.get_resource("purecn", "prepare", "runtime"),
             mem=wf.get_resource("purecn", "prepare", "mem"),
             partition=wf.get_resource("purecn", "prepare", "partition"),
-        log:
-            **wf.get_log_file("purecn", "prepare"),
         wrapper:
             wf.wrapper_path("purecn/prepare")
 
@@ -301,14 +301,14 @@ if "purecn" in tools:
             unpack(wf.get_input_files("purecn", "coverage")),
         output:
             **wf.get_output_files("purecn", "coverage"),
-        params:
-            args=wf.get_args("purecn", "coverage"),
+        log:
+            **wf.get_log_file("purecn", "coverage"),
         resources:
             runtime=wf.get_resource("purecn", "coverage", "runtime"),
             mem=wf.get_resource("purecn", "coverage", "mem"),
             partition=wf.get_resource("purecn", "coverage", "partition"),
-        log:
-            **wf.get_log_file("purecn", "coverage"),
+        params:
+            args=wf.get_args("purecn", "coverage"),
         wrapper:
             wf.wrapper_path("purecn/coverage")
 
@@ -317,11 +317,11 @@ if "purecn" in tools:
             unpack(wf.get_input_files("purecn", "create_panel")),
         output:
             **wf.get_output_files("purecn", "create_panel"),
+        log:
+            **wf.get_log_file("purecn", "create_panel"),
         resources:
             runtime=wf.get_resource("purecn", "create_panel", "runtime"),
             mem=wf.get_resource("purecn", "create_panel", "mem"),
             partition=wf.get_resource("purecn", "create_panel", "partition"),
-        log:
-            **wf.get_log_file("purecn", "create_panel"),
         wrapper:
             wf.wrapper_path("purecn/create_panel")

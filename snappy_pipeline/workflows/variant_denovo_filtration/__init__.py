@@ -468,7 +468,7 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -483,13 +483,13 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         )
         # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
-            if cfg := self.config.get(f"path_{prev}"):
+            if getattr(self.config.depends_on, prev, None):
                 self.previous_step = prev
-                self.register_module(prev, cfg)
+                self.register_module(prev)
                 break
         else:
-            raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+            raise Exception("No previous step given!")  # pragma: no cover
+        self.register_module("ngs_mapping")
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",

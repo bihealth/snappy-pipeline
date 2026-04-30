@@ -30,8 +30,14 @@ class Scramble(SnappyModel):
     """minimum fraction of clipped length for calling polyA tail."""
 
 
+class TargetedSeqMeiCallingDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class TargetedSeqMeiCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: TargetedSeqMeiCallingDependsOn = Field(
+        default_factory=TargetedSeqMeiCallingDependsOn
+    )
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.scramble], min_length=1)]
 

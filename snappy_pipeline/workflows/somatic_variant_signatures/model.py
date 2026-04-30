@@ -1,9 +1,8 @@
 import enum
-from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class SomaticVariantStep(enum.StrEnum):
@@ -12,8 +11,14 @@ class SomaticVariantStep(enum.StrEnum):
     FILTER = "somatic_variant_filtration"
 
 
+class SomaticVariantSignaturesDependsOn(SnappyModel):
+    somatic_variant: str = "somatic_variant"
+
+
 class SomaticVariantSignatures(SnappyStepModel):
-    path_somatic_variant: Annotated[str, Field(examples=["../somatic_variant_calling"])]
+    depends_on: SomaticVariantSignaturesDependsOn = Field(
+        default_factory=SomaticVariantSignaturesDependsOn
+    )
 
     somatic_variant_step: SomaticVariantStep = SomaticVariantStep.CALL
     """Which pipeline step is used to compute signatures"""

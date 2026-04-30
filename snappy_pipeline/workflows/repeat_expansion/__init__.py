@@ -327,7 +327,7 @@ class RepeatExpansionWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(

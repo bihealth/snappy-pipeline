@@ -440,7 +440,7 @@ class VariantFiltrationWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -467,7 +467,7 @@ class VariantFiltrationWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_module("variant_annotation", self.config.path_variant_annotation)
+        self.register_module("variant_annotation")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna

@@ -97,8 +97,12 @@ FILTER_COMBINATION_EXAMPLES = [
 ]
 
 
+class VariantFiltrationDependsOn(SnappyModel):
+    variant_annotation: str = "variant_annotation"
+
+
 class VariantFiltration(SnappyStepModel):
-    path_variant_annotation: str = "../variant_annotation"
+    depends_on: VariantFiltrationDependsOn = Field(default_factory=VariantFiltrationDependsOn)
 
     tools_ngs_mapping: list[str] = []
     """defaults to ngs_mapping tool"""

@@ -190,7 +190,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -210,9 +210,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         )
         # Register sub workflows
         config = self.config
-        self.register_module(
-            config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
-        )
+        self.register_module(config.somatic_variant_step, "somatic_variant")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
 
         tools = set(self.get_task_config("ngs_mapping").tools.dna)

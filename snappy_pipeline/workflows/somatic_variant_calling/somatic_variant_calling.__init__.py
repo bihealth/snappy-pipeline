@@ -1,5 +1,102 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_variant_calling`` step"""
+"""Implementation of the ``somatic_variant_calling`` step
+
+The ``somatic_variant_calling`` step takes as the input the results of the ``ngs_mapping`` step
+(aligned reads in BAM format) and performs somatic variant calling.  The result are variant files
+with somatic variants (bgzip-ed and indexed VCF files).
+
+Usually, the somatic variant calling step is followed by the ``somatic_variant_annotation`` step.
+
+==========
+Step Input
+==========
+
+The somatic variant calling step uses Snakemake sub workflows for using the result of the
+``ngs_mapping`` step.
+
+===========
+Step Output
+===========
+
+For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
+``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
+pipeline step will create a directory ``output/{var_caller}.{lib_name}-{lib_pk}/out``
+with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
+
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
+- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+
+Two ``vcf`` files are produced:
+
+- ``{var_caller}.{lib_name}.vcf.gz`` which contains only the variants that have passed all filters, or that were protected, and
+- ``{var_caller}.{lib_name}.full.vcf.gz`` which contains all variants, with the reason for rejection in the ``FILTER`` column.
+
+For example, it might look as follows for the example from above:
+
+::
+
+    output/
+    +-- bwa.mutect2.P001-N1-DNA1-WES1-4
+    |   `-- out
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.tbi
+    |       |-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.md5
+    |       `-- bwa.mutect2.P001-N1-DNA1-WES1-4.vcf.gz.tbi.md5
+    [...]
+
+Generally, the callers are set up to return many variants to avoid missing clinically important ones.
+They are likely to contain low-quality variants and for some callers variants flagged as being non-somatic.
+
+=====================
+Default Configuration
+=====================
+
+The default configuration is as follows.
+
+.. include:: DEFAULT_CONFIG_somatic_variant_calling.rst
+
+=================================
+Available Somatic Variant Callers
+=================================
+
+The following somatic variant callers are currently available
+
+- ``mutect2`` is the recommended caller
+- ``mutect`` & ``scalpel`` are deprecated
+- the joint variant callers ``bcftools``, ``platypus``, ``gatk`` & ``varscan`` are unsupported.
+
+==========================
+Efficient usage of mutect2
+==========================
+
+The recommended caller ``mutect2`` is implemented using a parallelisation mechanism to reduce execution runtime.
+During parallelisation, the genome is split into small chunks, and parallel jobs perform the somatic variant calling in their region only.
+All results are then assembled to generate the final output files.
+
+There is at least one chunk by contig defined in the reference genome, with the chunk size upper limit given by the ``window_length`` configuration option.
+So large chromosomes can be split into several chunks, while smaller contigs are left in one chunk.
+Even for large chunk size, this parallelisation can create hundreds of jobs when the reference genome contains many contigs
+(unplaced or unlocalized contigs, viral sequences, decoys, HLA alleles, ...).
+Somatic variant calling is generally meaningless for many of these small contigs.
+It is possible to configure the somatic variant calling to avoid the contigs irrelevant for downstream analysis, for example:
+
+.. code-block:: yaml
+
+  mutect2:
+    ignore_chroms: ['*_random', 'chrUn_*', '*_decoy', "EBV", "HPV*", "HBV", "HCV-*", "HIV-*", "HTLV-1", "CMV", "KSHV", "MCV", "SV40"] # GRCh38.d1.vd1
+    window_length: 300000000   # OK for WES, too large for WGS
+    keep_tmpdir: onerror       # Facilitates debugging
+    ...
+
+
+=======
+Reports
+=======
+
+Currently, no reports are generated.
+"""
 
 import os
 import sys
@@ -24,7 +121,10 @@ from .model import TumorNormalMode as TumorNormalMode
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+#: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
+
+#: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 EXT_MATCHED = {
@@ -66,14 +166,27 @@ EXT_MATCHED = {
     },
 }
 
+#: Available somatic variant callers
 SOMATIC_VARIANT_CALLERS = {"mutect2"}
+
+#: Default configuration for the somatic_variant_calling schema
 DEFAULT_CONFIG = SomaticVariantCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticVariantCallingStepPart(BaseStepPart):
+    """Base class for somatic variant calling step parts
+
+    Variant calling is performed on matched cancer bio sample pairs.  That is, the primary NGS
+    library for the primary bio sample is used for each cancer bio sample (paired with the primary
+    normal bio sample's primary NGS library).
+    """
+
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}{ext}"
+        self.base_path_out = (
+            "work/{var_caller}.{{tumor_library}}/out/{var_caller}.{{tumor_library}}{ext}"
+        )
+        # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
             self.tumor_ngs_library_to_sample_pair.update(
@@ -81,12 +194,27 @@ class SomaticVariantCallingStepPart(BaseStepPart):
             )
 
     def get_input_files(self, action: str):
+        """Return generic input function.
+
+        :param action: Action (i.e., step) in the workflow, examples: 'run', 'filter',
+        'contamination'.
+        :type action: str
+
+        :return: Returns input function based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
         self._validate_action(action)
         return getattr(self, f"_get_input_files_{action}")
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
+        """Helper wrapper function"""
+        # Get shortcut to Snakemake module for ngs_mapping
         ngs_mapping = self.parent.modules["ngs_mapping"]
+
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
         tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
 
         input_files = {
@@ -109,22 +237,34 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         return input_files
 
     def get_normal_lib_name(self, wildcards):
+        """Return name of normal (non-cancer) library"""
         pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
         return pair.normal_sample.dna_ngs_library.name if pair else None
 
     def get_tumor_lib_name(self, wildcards):
+        """Return name of tumor library"""
         pair = self.tumor_ngs_library_to_sample_pair.get(wildcards.tumor_library, None)
         return pair.tumor_sample.dna_ngs_library.name if pair else wildcards.tumor_library
 
     def get_output_files(self, action):
+        """Return output files that all somatic variant calling sub steps must
+        return (VCF + TBI file)
+        """
+        # Validate action
         self._validate_action(action)
-        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
+        return dict(
+            zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
+        )
 
     @dictify
     def _get_log_file(self, action):
+        """Return dict of log files."""
+        # Validate action
         self._validate_action(action)
 
-        prefix = "work/{{tumor_library}}/log/{{tumor_library}}"
+        prefix = ("work/{var_caller}.{{tumor_library}}/log/{var_caller}.{{tumor_library}}").format(
+            var_caller=self.__class__.name
+        )
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -136,23 +276,56 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
 
 class Mutect2StepPart(SomaticVariantCallingStepPart):
+    """Somatic variant calling with Mutect2"""
+
+    #: Step name
     name = "mutect2"
 
+    #: Class available actions
     actions = [
         "scatter",
         "run",
         "gather",
         "filter",
-    ]
+    ]  # "contamination", "pileup_normal", "pileup_tumor")
 
+    #: Class resource usage dictionary. Key: action (string); Value: resource (ResourceUsage).
     resource_usage_dict = {
-        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
-        "run": ResourceUsage(threads=1, runtime="5d", mem="8000MB"),
-        "gather": ResourceUsage(threads=1, runtime="4h", mem="32768MB"),
-        "filter": ResourceUsage(threads=2, runtime="4h", mem="15872MB"),
-        "contamination": ResourceUsage(threads=2, runtime="4h", mem="7680MB"),
-        "pileup_normal": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
-        "pileup_tumor": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+        "scatter": ResourceUsage(
+            threads=1,
+            runtime="2m",
+            mem="1000MB",
+        ),
+        "run": ResourceUsage(
+            threads=1,
+            runtime="5d",
+            mem="8000MB",
+        ),
+        "gather": ResourceUsage(
+            threads=1,
+            runtime="4h",
+            mem="32768MB",
+        ),
+        "filter": ResourceUsage(
+            threads=2,
+            runtime="4h",
+            mem="15872MB",
+        ),
+        "contamination": ResourceUsage(
+            threads=2,
+            runtime="4h",
+            mem="7680MB",
+        ),
+        "pileup_normal": ResourceUsage(
+            threads=2,
+            runtime="4h",
+            mem="8000MB",
+        ),
+        "pileup_tumor": ResourceUsage(
+            threads=2,
+            runtime="4h",
+            mem="8000MB",
+        ),
     }
 
     def __init__(self, parent):
@@ -166,14 +339,16 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
     def check_config(self):
         if self.name not in self.config.tools:
-            return
+            return  # Mutect not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for %s" % (self.name,),
         )
 
     def get_input_files(self, action):
+        # Validate action
         self._validate_action(action)
+        # Return requested function
         return getattr(self, "_get_input_files_{}".format(action))
 
     def get_args(self, action):
@@ -228,12 +403,23 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
 
     def _get_input_files_run(self, wildcards):
+        """Get input files for rule ``run``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'run', BAM and BAI files.
+        """
+        # Get shortcut to Snakemake module for ngs_mapping
         ngs_mapping = self.parent.modules["ngs_mapping"]
+
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
         tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-        scatteritem_base_path = (
-            "work/{tumor_library}/out/{tumor_library}/mutect2par/scatter/{scatteritem}".format(
-                **wildcards
-            )
+
+        scatteritem_base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}/mutect2par/scatter/{scatteritem}".format(
+            **wildcards
         )
 
         input_files = {
@@ -242,6 +428,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "region": scatteritem_base_path + ".region.bed",
         }
 
+        # Adjustment tumor_only mode
         tumor_normal_mode = self.config.mutect2.tumor_normal_mode
         if tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
             normal_library = self.get_normal_lib_name(wildcards)
@@ -273,20 +460,27 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
     def _get_input_files_gather(self, wildcards):
         gather = self.parent.workflow.globals.get("gather")
         gather = getattr(gather, self.name)
-        scatteritem_base_path = (
-            "work/{tumor_library}/out/{tumor_library}/mutect2par/run/{{scatteritem}}".format(
-                **wildcards
-            )
+        scatteritem_base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}/mutect2par/run/{{scatteritem}}".format(
+            **wildcards
         )
         input_files = {
             "vcf": scatteritem_base_path + ".raw.vcf.gz",
             "stats": scatteritem_base_path + ".raw.vcf.stats",
             "f1r2": scatteritem_base_path + ".raw.f1r2.tar.gz",
         }
+
         return dict(map(lambda item: (item[0], gather(item[1])), input_files.items()))
 
     def _get_input_files_filter(self, wildcards):
-        base_path = "work/{tumor_library}/out/{tumor_library}".format(**wildcards)
+        """Get input files for rule ``filter``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'filter'.
+        """
+        base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}".format(**wildcards)
         input_files = {
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
@@ -300,7 +494,19 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return input_files
 
     def _get_input_files_pileup_normal(self, wildcards):
+        """Get input files for rule ``pileup_normal``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'pileup_normal', BAM and BAI files.
+        """
+        # Get shortcut to Snakemake module for ngs_mapping
         ngs_mapping = self.parent.modules["ngs_mapping"]
+
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
         base_path = "output/{normal_library}/out/{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
@@ -312,7 +518,17 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def _get_input_files_pileup_tumor(self, wildcards):
+        """Get input files for rule ``pileup_tumor``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'pileup_tumor', BAM and BAI files.
+        """
+        # Get shortcut to Snakemake module for ngs_mapping
         ngs_mapping = self.parent.modules["ngs_mapping"]
+
         base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),
@@ -322,7 +538,16 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def _get_input_files_contamination(self, wildcards: Wildcards):
-        base_path = "work/{tumor_library}/out/{tumor_library}".format(**wildcards)
+        """Get input files for rule ``contamination``.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
+        and 'tumor_library' (e.g., 'P001-T1-DNA1-WGS1').
+        :type wildcards: snakemake.io.Wildcards
+
+        :return: Returns dictionary with input files for rule 'contamination', Normal and Tumor
+        pileup files.
+        """
+        base_path = "work/mutect2.{tumor_library}/out/mutect2.{tumor_library}".format(**wildcards)
         return {
             "normal": base_path + ".normal.pileup",
             "tumor": base_path + ".tumor.pileup",
@@ -330,22 +555,34 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def get_output_files(self, action):
+        """Get output files for Mutect2 rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns dictionary with expected output files based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Initialise variables
         exts = {}
         output_files = {}
 
+        # Validate action
         self._validate_action(action)
+
+        # Set expected extensions and basepath based on action
         base_path_out = self.base_path_out
 
         if action == "scatter":
             scatter = self.parent.workflow.globals.get("scatter")
             scatter = getattr(scatter, self.name)
-            template = "work/{{tumor_library}}/out/{{tumor_library}}/mutect2par/scatter/{scatteritem}.region.bed"
+            template = "work/{var_caller}.{{{{tumor_library}}}}/out/{var_caller}.{{{{tumor_library}}}}/{var_caller}par/scatter/{{scatteritem}}.region.bed".format(
+                var_caller=self.name
+            )
             return {"regions": scatter(template)}
 
         if action == "run":
-            base_path_out = (
-                "work/{{tumor_library}}/out/{{tumor_library}}/mutect2par/run/{{scatteritem}}{ext}"
-            )
+            base_path_out = "work/{var_caller}.{{tumor_library}}/out/{var_caller}.{{tumor_library}}/{var_caller}par/run/{{scatteritem}}{ext}"
             exts = {
                 "vcf": ".raw.vcf.gz",
                 "vcf_md5": ".raw.vcf.gz.md5",
@@ -390,11 +627,21 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         if action == "pileup_tumor":
             exts = {"pileup": ".tumor.pileup", "pileup_md5": ".tumor.pileup.md5"}
 
+        # Define output dictionary
         for k, v in exts.items():
-            output_files[k] = base_path_out.format(ext=v)
+            output_files[k] = base_path_out.format(var_caller=self.name, ext=v)
         return output_files
 
     def get_log_file(self, action):
+        """Get log files for Mutect2 rules.
+
+        :param action: Action (i.e., step) in the workflow.
+        :type action: str
+
+        :return: Returns dictionary with expected log files based on inputted action.
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Initialise variables
         postfix = ""
         log_files = {}
         key_ext = (
@@ -403,39 +650,61 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             ("conda_list", ".conda_list.txt"),
         )
 
+        # Validate action
         self._validate_action(action)
 
+        # Set expected format based on action
         if action != "gather":
             if action == "run":
                 postfix = ".{{scatteritem}}"
             else:
                 postfix = "." + action
 
-        prefix = ("work/{{tumor_library}}/log/{{tumor_library}}{postfix}").format(postfix=postfix)
+        prefix = (
+            "work/{var_caller}.{{tumor_library}}/log/{var_caller}.{{tumor_library}}{postfix}"
+        ).format(var_caller=self.name, postfix=postfix)
 
+        # Define output dictionary
         for key, ext in key_ext:
             log_files[key] = prefix + ext
             log_files[key + "_md5"] = prefix + ext + ".md5"
         return log_files
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        """Get Resource Usage
+
+        :param action: Action (i.e., step) in the workflow, example: 'run'.
+        :type action: str
+
+        :return: Returns ResourceUsage for step.
+
+        :raises UnsupportedActionException: if action not in class defined list of valid actions.
+        """
+        # Validate action
         self._validate_action(action)
         return self.resource_usage_dict.get(action)
 
 
 class SomaticVariantCallingWorkflow(BaseStep):
+    """Perform somatic variant calling"""
+
+    #: Workflow name
     name = "somatic_variant_calling"
     consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))]
 
     config_model_class = SomaticVariantCallingConfigModel
+
+    #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
     @classmethod
     def default_config_yaml(cls):
+        """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
     def __init__(
@@ -454,10 +723,13 @@ class SomaticVariantCallingWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
+            # FIXME
             previous_steps=(),
+            # previous_steps=(NgsMappingWorkflow,),
             task_name=task_name,
             **kwargs,
         )
+        # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
                 Mutect2StepPart,
@@ -474,14 +746,22 @@ class SomaticVariantCallingWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
+        """Return list of result files for the NGS mapping workflow
+
+        We will process all NGS libraries of all bio samples in all sample sheets.
+        """
         name_pattern = "{tumor_library.name}"
         for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
+                caller=caller,
                 ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,
             )
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
+                mapper=self.get_task_config("ngs_mapping").tools.dna,
+                caller=caller,
                 ext=(
                     ".log",
                     ".log.md5",
@@ -493,6 +773,11 @@ class SomaticVariantCallingWorkflow(BaseStep):
             )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
+        """Build output paths from path template and extension list.
+
+        This function returns the results from the matched somatic variant callers such as
+        Mutect.
+        """
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for bio_entity in sheet.sheet.bio_entities.values():
                 for bio_sample in bio_entity.bio_samples.values():

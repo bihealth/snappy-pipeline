@@ -181,7 +181,7 @@ class VariantAnnotationWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -200,7 +200,7 @@ class VariantAnnotationWorkflow(BaseStep):
         self.register_module(
             "ngs_mapping", self.get_task_config("variant_calling").path_ngs_mapping
         )
-        self.register_module("variant_calling", self.config.path_variant_calling)
+        self.register_module("variant_calling")
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

@@ -94,8 +94,12 @@ class Melt(SnappyModel):
     """
 
 
+class SvCallingTargetedDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class SvCallingTargeted(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: SvCallingTargetedDependsOn = Field(default_factory=SvCallingTargetedDependsOn)
 
     tools: Annotated[
         list[Tool], EnumField(Tool, [Tool.gcnv, Tool.delly2, Tool.manta], min_length=1)

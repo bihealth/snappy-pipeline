@@ -109,9 +109,9 @@ localrules:
 
 
 rule variant_denovo_filtration_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,16 +148,16 @@ rule variant_denovo_filtration_filter_denovo_run:
         unpack(wf.get_input_files("filter_denovo", "run")),
     output:
         **wf.get_output_files("filter_denovo", "run"),
-    params:
-        args=wg.get_args("filter_denovo", "run"),
+    log:
+        wf.get_log_file("filter_denovo", "run"),
     threads: wf.get_resource("filter_denovo", "run", "threads")
     resources:
         runtime=wf.get_resource("filter_denovo", "run", "runtime"),
         mem=wf.get_resource("filter_denovo", "run", "mem"),
         partition=wf.get_resource("filter_denovo", "run", "partition"),
         tmpdir=wf.get_resource("filter_denovo", "run", "tmpdir"),
-    log:
-        wf.get_log_file("filter_denovo", "run"),
+    params:
+        args=wg.get_args("filter_denovo", "run"),
     wrapper:
         wf.wrapper_path("variant_filtration/filter_denovo")
 
@@ -170,6 +170,8 @@ rule variant_denovo_filtration_filter_denovo_hard_run:
         **wf.get_input_files("filter_denovo_hard", "run"),
     output:
         **wf.get_output_files("filter_denovo_hard", "run"),
+    log:
+        wf.get_log_file("filter_denovo_hard", "run"),
     threads: wf.get_resource("filter_denovo_hard", "run", "threads")
     resources:
         runtime=wf.get_resource("filter_denovo_hard", "run", "runtime"),
@@ -178,8 +180,6 @@ rule variant_denovo_filtration_filter_denovo_hard_run:
         tmpdir=wf.get_resource("filter_denovo_hard", "run", "tmpdir"),
     params:
         args=wf.get_args("filter_denovo_hard", "run"),
-    log:
-        wf.get_log_file("filter_denovo_hard", "run"),
     wrapper:
         wf.wrapper_path("variant_filtration/filter_denovo_hard")
 
@@ -192,14 +192,14 @@ rule variant_denovo_filtration_summarize_counts_run:
         wf.get_input_files("summarize_counts", "run"),
     output:
         **wf.get_output_files("summarize_counts", "run"),
+    log:
+        wf.get_log_file("summarize_counts", "run"),
     threads: wf.get_resource("summarize_counts", "run", "threads")
     resources:
         runtime=wf.get_resource("summarize_counts", "run", "runtime"),
         mem=wf.get_resource("summarize_counts", "run", "mem"),
         partition=wf.get_resource("summarize_counts", "run", "partition"),
         tmpdir=wf.get_resource("summarize_counts", "run", "tmpdir"),
-    log:
-        wf.get_log_file("summarize_counts", "run"),
     wrapper:
         wf.wrapper_path("variant_filtration/summarize_counts")
 
@@ -212,13 +212,13 @@ rule variant_denovo_filtration_collect_msdn_run:
         **wf.get_input_files("collect_msdn", "run"),
     output:
         **wf.get_output_files("collect_msdn", "run"),
+    log:
+        wf.get_log_file("collect_msdn", "run"),
     threads: wf.get_resource("collect_msdn", "run", "threads")
     resources:
         runtime=wf.get_resource("collect_msdn", "run", "runtime"),
         mem=wf.get_resource("collect_msdn", "run", "mem"),
         partition=wf.get_resource("collect_msdn", "run", "partition"),
         tmpdir=wf.get_resource("collect_msdn", "run", "tmpdir"),
-    log:
-        wf.get_log_file("collect_msdn", "run"),
     wrapper:
         wf.wrapper_path("variant_filtration/collect_msdn")

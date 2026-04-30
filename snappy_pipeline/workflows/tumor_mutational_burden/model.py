@@ -1,9 +1,8 @@
 import enum
-from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class SomaticVariantStep(enum.StrEnum):
@@ -12,14 +11,17 @@ class SomaticVariantStep(enum.StrEnum):
     FILTER = "somatic_variant_filtration"
 
 
+class TumorMutationalBurdenDependsOn(SnappyModel):
+    somatic_variant: str = "somatic_variant"
+
+
 class TumorMutationalBurden(SnappyStepModel):
+    depends_on: TumorMutationalBurdenDependsOn = Field(
+        default_factory=TumorMutationalBurdenDependsOn
+    )
+
     has_annotation: bool = False
     """Needed for building filenames only"""
-
-    path_somatic_variant: Annotated[
-        str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
-    ]
-    """Path to variant (directory of vcf files)"""
 
     somatic_variant_step: SomaticVariantStep = SomaticVariantStep.FILTER
     """Which pipeline step is used to compute signatures"""

@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from pydantic import Field
 
 from snappy_pipeline.models import KeepTmpdir, SnappyModel, SnappyStepModel
@@ -51,12 +49,13 @@ class GatkPhaseByTransmission(SnappyModel):
     """use 1e-6 when interested in phasing de novos"""
 
 
-class VariantPhasing(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+class VariantPhasingDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+    variant_annotation: str = "variant_annotation"
 
-    path_variant_annotation: Annotated[str, Field(examples=["../variant_annotation"])] = (
-        "../variant_annotation"
-    )
+
+class VariantPhasing(SnappyStepModel):
+    depends_on: VariantPhasingDependsOn = Field(default_factory=VariantPhasingDependsOn)
 
     tools_ngs_mapping: list[str] = []
     """expected tools for ngs mapping"""

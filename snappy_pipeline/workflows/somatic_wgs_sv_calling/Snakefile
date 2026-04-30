@@ -51,9 +51,9 @@ localrules:
 
 
 rule somatic_wgs_sv_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,13 +80,13 @@ rule somatic_wgs_sv_calling_manta_run:
         unpack(wf.get_input_files("manta", "run")),
     output:
         **wf.get_output_files("manta", "run"),
+    log:
+        wf.get_log_file("manta", "run"),
     threads: wf.get_resource("manta", "run", "threads")
     resources:
         runtime=wf.get_resource("manta", "run", "runtime"),
         mem=wf.get_resource("manta", "run", "mem"),
         partition=wf.get_resource("manta", "run", "partition"),
         tmpdir=wf.get_resource("manta", "run", "tmpdir"),
-    log:
-        wf.get_log_file("manta", "run"),
     wrapper:
         wf.wrapper_path("manta/somatic_wgs")

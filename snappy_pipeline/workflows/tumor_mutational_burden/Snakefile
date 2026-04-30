@@ -55,9 +55,9 @@ localrules:
 
 
 rule tumor_mutational_burden_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # Generic linking out ---------------------------------------------------------
@@ -77,6 +77,8 @@ rule tumor_mutational_burden_calculation:
         **wf.get_input_files("tmb_gathering", "run"),
     output:
         **wf.get_output_files("tmb_gathering", "run"),
+    log:
+        **wf.get_log_file("tmb_gathering", "run"),
     threads: wf.get_resource("tmb_gathering", "run", "threads")
     resources:
         runtime=wf.get_resource("tmb_gathering", "run", "runtime"),
@@ -85,7 +87,5 @@ rule tumor_mutational_burden_calculation:
         tmpdir=wf.get_resource("tmb_gathering", "run", "tmpdir"),
     params:
         args=wf.get_args("tmb_gathering", "run"),
-    log:
-        **wf.get_log_file("tmb_gathering", "run"),
     wrapper:
         wf.wrapper_path("bcftools/TMB")

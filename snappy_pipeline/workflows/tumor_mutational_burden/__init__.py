@@ -157,7 +157,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -177,9 +177,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         )
         # Register sub workflows
         config = self.config
-        self.register_module(
-            config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
-        )
+        self.register_module(config.somatic_variant_step, "somatic_variant")
 
         tools = set(self.get_task_config("ngs_mapping").tools.dna)
         if not config.tools_ngs_mapping:

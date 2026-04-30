@@ -78,12 +78,15 @@ class CnvkitWgs(Cnvkit):
     pass
 
 
+class SomaticWgsCnvCallingDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+    somatic_variant_calling: str = "somatic_variant_calling"
+
+
 class SomaticWgsCnvCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: SomaticWgsCnvCallingDependsOn = Field(default_factory=SomaticWgsCnvCallingDependsOn)
 
     tools_ngs_mapping: list[str] = []
-
-    path_somatic_variant_calling: Annotated[str, Field(examples=["../somatic_variant_calling"])]
 
     somatic_variant_calling_tool: str
 

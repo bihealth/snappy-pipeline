@@ -6,7 +6,6 @@ import os
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.repeat_expansion import RepeatExpansionWorkflow
 
-
 # Configuration ===============================================================
 
 
@@ -49,9 +48,9 @@ localrules:
 
 
 rule repeat_expansion_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,6 +72,8 @@ rule repeat_expansion_run_expansionhunter:
         wf.get_input_files("expansionhunter", "run"),
     output:
         **wf.get_output_files("expansionhunter", "run"),
+    log:
+        wf.get_log_file("expansionhunter", "run"),
     threads: wf.get_resource("expansionhunter", "run", "threads")
     resources:
         runtime=wf.get_resource("expansionhunter", "run", "runtime"),
@@ -81,8 +82,6 @@ rule repeat_expansion_run_expansionhunter:
         tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
     params:
         args=wf.get_args("expansionhunter", "run"),
-    log:
-        wf.get_log_file("expansionhunter", "run"),
     wrapper:
         wf.wrapper_path("expansionhunter")
 

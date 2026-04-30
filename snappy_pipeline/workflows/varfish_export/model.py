@@ -1,24 +1,27 @@
-from typing import Annotated
-
 from pydantic import Field
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
+
+
+class VarfishExportDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+    variant_calling: str = "variant_calling"
+    sv_calling_targeted: str = "sv_calling_targeted"
+    sv_calling_wgs: str = "sv_calling_wgs"
 
 
 class VarfishExport(SnappyStepModel):
     """Configuration of the input path enables export from the corresponding pipeline step."""
 
-    path_ngs_mapping: Annotated[str, Field(examples=["../ngs_mapping"])]
     """Used output of ngs_mapping is alignment quality control data"""
 
-    path_variant_calling: Annotated[str, Field(examples=["../variant_calling"])]
     """Used output of variant_calling is variant calls"""
 
-    path_sv_calling_targeted: str | None = None
     """Used output of targeted SV calling is variant calls"""
 
-    path_sv_calling_wgs: str | None = None
     """Used output of WGS SV calling is variant calls"""
+
+    depends_on: VarfishExportDependsOn = Field(default_factory=VarfishExportDependsOn)
 
     # Optionally, you can override the exported mappers and variant callers by setting
     # the following variables.

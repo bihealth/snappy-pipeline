@@ -776,7 +776,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -800,8 +800,8 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
-        self.register_module("somatic_variant_calling", self.config.path_somatic_variant_calling)
+        self.register_module("ngs_mapping")
+        self.register_module("somatic_variant_calling")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna

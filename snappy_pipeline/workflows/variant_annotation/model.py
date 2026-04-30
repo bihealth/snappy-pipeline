@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.annotation import Vep
 
 
@@ -24,11 +24,12 @@ class VepCustom(Vep):
     more_flags: str = "--af_gnomade --af_gnomadg"
 
 
+class VariantAnnotationDependsOn(SnappyModel):
+    variant_calling: str = "variant_calling"
+
+
 class VariantAnnotation(SnappyStepModel, validators.ToolsMixin):
-    path_variant_calling: Annotated[str, Field(examples=["../variant_calling"])] = (
-        "../variant_calling"
-    )
-    """Path to variant calling"""
+    depends_on: VariantAnnotationDependsOn = Field(default_factory=VariantAnnotationDependsOn)
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
 

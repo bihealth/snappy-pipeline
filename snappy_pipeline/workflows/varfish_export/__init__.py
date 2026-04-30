@@ -471,7 +471,7 @@ class VarfishExportWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -489,12 +489,12 @@ class VarfishExportWorkflow(BaseStep):
         self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))
 
         # Register sub workflows
-        self.register_module("variant_calling", self.config.path_variant_calling)
+        self.register_module("variant_calling")
         if self.config.path_sv_calling_targeted:
-            self.register_module("sv_calling_targeted", self.config.path_sv_calling_targeted)
+            self.register_module("sv_calling_targeted")
         if self.config.path_sv_calling_wgs:
-            self.register_module("sv_calling_wgs", self.config.path_sv_calling_wgs)
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+            self.register_module("sv_calling_wgs")
+        self.register_module("ngs_mapping")
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
         if not self.config.tools_ngs_mapping:

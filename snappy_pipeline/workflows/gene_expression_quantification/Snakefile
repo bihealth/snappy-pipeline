@@ -53,9 +53,9 @@ localrules:
 
 
 rule gene_expression_quantification_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,16 +94,16 @@ rule gene_expression_quantification_strandedness_run:
         unpack(wf.get_input_files("strandedness", "run")),
     output:
         **wf.get_output_files("strandedness", "run"),
-    params:
-        args=wf.get_args("strandedness", "run"),
+    log:
+        **wf.get_log_file("strandedness", "run"),
     threads: wf.get_resource("strandedness", "run", "threads")
     resources:
         runtime=wf.get_resource("strandedness", "run", "runtime"),
         mem=wf.get_resource("strandedness", "run", "mem"),
         partition=wf.get_resource("strandedness", "run", "partition"),
         tmpdir=wf.get_resource("strandedness", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("strandedness", "run"),
+    params:
+        args=wf.get_args("strandedness", "run"),
     wrapper:
         wf.wrapper_path("rseqc")
 
@@ -117,16 +117,16 @@ rule gene_expression_quantification_duplication_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("duplication", "run"),
-    params:
-        args=wf.get_args("duplication", "run"),
+    log:
+        **wf.get_log_file("duplication", "run"),
     threads: wf.get_resource("duplication", "run", "threads")
     resources:
         runtime=wf.get_resource("duplication", "run", "runtime"),
         mem=wf.get_resource("duplication", "run", "mem"),
         partition=wf.get_resource("duplication", "run", "partition"),
         tmpdir=wf.get_resource("duplication", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("duplication", "run"),
+    params:
+        args=wf.get_args("duplication", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/duplication")
 
@@ -137,16 +137,16 @@ rule gene_expression_quantification_dupradar_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("dupradar", "run"),
-    params:
-        args=wf.get_args("dupradar", "run"),
+    log:
+        **wf.get_log_file("dupradar", "run"),
     threads: wf.get_resource("dupradar", "run", "threads")
     resources:
         runtime=wf.get_resource("dupradar", "run", "runtime"),
         mem=wf.get_resource("dupradar", "run", "mem"),
         partition=wf.get_resource("dupradar", "run", "partition"),
         tmpdir=wf.get_resource("dupradar", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("dupradar", "run"),
+    params:
+        args=wf.get_args("dupradar", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/dupradar")
 
@@ -157,16 +157,16 @@ rule gene_expression_quantification_rnaseqc_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("rnaseqc", "run"),
-    params:
-        args=wf.get_args("rnaseqc", "run"),
+    log:
+        **wf.get_log_file("rnaseqc", "run"),
     threads: wf.get_resource("rnaseqc", "run", "threads")
     resources:
         runtime=wf.get_resource("rnaseqc", "run", "runtime"),
         mem=wf.get_resource("rnaseqc", "run", "mem"),
         partition=wf.get_resource("rnaseqc", "run", "partition"),
         tmpdir=wf.get_resource("rnaseqc", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("rnaseqc", "run"),
+    params:
+        args=wf.get_args("rnaseqc", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/rnaseqc")
 
@@ -177,16 +177,16 @@ rule gene_expression_quantification_stats_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("stats", "run"),
-    params:
-        args=wf.get_args("stats", "run"),
+    log:
+        **wf.get_log_file("stats", "run"),
     threads: wf.get_resource("stats", "run", "threads")
     resources:
         runtime=wf.get_resource("stats", "run", "runtime"),
         mem=wf.get_resource("stats", "run", "mem"),
         partition=wf.get_resource("stats", "run", "partition"),
         tmpdir=wf.get_resource("stats", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("stats", "run"),
+    params:
+        args=wf.get_args("stats", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/stats")
 
@@ -202,14 +202,14 @@ rule gene_expression_quantification_featurecounts_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("featurecounts", "run"),
+    log:
+        **wf.get_log_file("featurecounts", "run"),
     threads: wf.get_resource("featurecounts", "run", "threads")
     resources:
         runtime=wf.get_resource("featurecounts", "run", "runtime"),
         mem=wf.get_resource("featurecounts", "run", "mem"),
         partition=wf.get_resource("featurecounts", "run", "partition"),
         tmpdir=wf.get_resource("featurecounts", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("featurecounts", "run"),
     wrapper:
         wf.wrapper_path("featurecounts")
 
@@ -224,14 +224,14 @@ rule gene_expression_quantification_salmon_run:
         **wf.get_input_files("salmon", "run"),
     output:
         **wf.get_output_files("salmon", "run"),
+    log:
+        **wf.get_log_file("salmon", "run"),
     threads: wf.get_resource("salmon", "run", "threads")
     resources:
         runtime=wf.get_resource("salmon", "run", "runtime"),
         mem=wf.get_resource("salmon", "run", "mem"),
         partition=wf.get_resource("salmon", "run", "partition"),
         tmpdir=wf.get_resource("salmon", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("salmon", "run"),
     params:
         args=wf.get_args("salmon", "run"),
     wrapper:

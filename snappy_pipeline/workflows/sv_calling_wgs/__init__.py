@@ -301,7 +301,7 @@ class SvCallingWgsWorkflow(BaseStep):
         config_lookup_paths,
         config_paths,
         workdir,
-        task_name: str,
+        task_name: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -327,7 +327,7 @@ class SvCallingWgsWorkflow(BaseStep):
             )
         )
         # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        self.register_module("ngs_mapping")
 
     @listify
     def all_donors(self, include_background=True):

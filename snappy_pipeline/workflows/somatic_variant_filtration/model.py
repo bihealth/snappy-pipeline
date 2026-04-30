@@ -108,13 +108,15 @@ class Filter(TypedDict, total=False):
     protected: Protected
 
 
-class SomaticVariantFiltration(SnappyStepModel):
-    path_somatic_variant: Annotated[
-        str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
-    ] = "../somatic_variant"
+class SomaticVariantFiltrationDependsOn(SnappyModel):
+    somatic_variant: str = "somatic_variant"
+    ngs_mapping: str = "ngs_mapping"
 
-    path_ngs_mapping: str = "../ngs_mapping"
-    """Needed for dkfz & ebfilter"""
+
+class SomaticVariantFiltration(SnappyStepModel):
+    depends_on: SomaticVariantFiltrationDependsOn = Field(
+        default_factory=SomaticVariantFiltrationDependsOn
+    )
 
     tools_ngs_mapping: list[str] = []
     """Default: use those defined in ngs_mapping step"""

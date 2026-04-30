@@ -57,9 +57,9 @@ localrules:
 
 
 rule homologous_recombination_deficiency_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,19 +84,19 @@ rule homologous_recombination_deficiency_link_out_run:
 rule homologous_recombination_deficiency_scarHRD_install:
     output:
         **wf.get_output_files("scarHRD", "install"),
+    log:
+        **wf.get_log_file("scarHRD", "install"),
+    resources:
+        runtime=wf.get_resource("scarHRD", "install", "runtime"),
+        mem=wf.get_resource("scarHRD", "install", "mem"),
+        partition=wf.get_resource("scarHRD", "install", "partition"),
+        tmpdir=wf.get_resource("scarHRD", "install", "tmpdir"),
     params:
         packages=[
             {"name": "aroneklund/copynumber", "repo": "github"},
             {"name": "sequenzatools/sequenza@3.0.0", "repo": "bitbucket"},
             {"name": "sztup/scarHRD", "repo": "github"},
         ],
-    resources:
-        runtime=wf.get_resource("scarHRD", "install", "runtime"),
-        mem=wf.get_resource("scarHRD", "install", "mem"),
-        partition=wf.get_resource("scarHRD", "install", "partition"),
-        tmpdir=wf.get_resource("scarHRD", "install", "tmpdir"),
-    log:
-        **wf.get_log_file("scarHRD", "install"),
     wrapper:
         wf.wrapper_path("scarHRD/install")
 
@@ -106,15 +106,15 @@ rule homologous_recombination_deficiency_scarHRD_run:
         unpack(wf.get_input_files("scarHRD", "run")),
     output:
         **wf.get_output_files("scarHRD", "run"),
-    params:
-        args=wf.get_args("scarHRD", "run"),
+    log:
+        **wf.get_log_file("scarHRD", "run"),
     threads: wf.get_resource("scarHRD", "run", "threads")
     resources:
         runtime=wf.get_resource("scarHRD", "run", "runtime"),
         mem=wf.get_resource("scarHRD", "run", "mem"),
         partition=wf.get_resource("scarHRD", "run", "partition"),
         tmpdir=wf.get_resource("scarHRD", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("scarHRD", "run"),
+    params:
+        args=wf.get_args("scarHRD", "run"),
     wrapper:
         wf.wrapper_path("scarHRD/run")

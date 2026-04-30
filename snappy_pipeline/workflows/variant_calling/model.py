@@ -71,8 +71,12 @@ class Gatk4HcGvcf(SnappyModel):
     allow_seq_dict_incompatibility: bool = False
 
 
+class VariantCallingDependsOn(SnappyModel):
+    ngs_mapping: str = "ngs_mapping"
+
+
 class VariantCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: VariantCallingDependsOn = Field(default_factory=VariantCallingDependsOn)
 
     tools: Annotated[list[Tool], EnumField(Tool, [Tool.gatk4_hc_gvcf], min_length=1)]
 

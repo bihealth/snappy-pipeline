@@ -52,9 +52,9 @@ localrules:
 
 
 rule variant_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,16 +82,16 @@ if "bcftools_call" in tools:
             unpack(wf.get_input_files("bcftools_call", "run")),
         output:
             **wf.get_output_files("bcftools_call", "run"),
-        params:
-            args=wf.get_args("bcftools_call", "run"),
+        log:
+            **wf.get_log_file("bcftools_call", "run"),
         threads: wf.get_resource("bcftools_call", "run", "threads")
         resources:
             runtime=wf.get_resource("bcftools_call", "run", "runtime"),
             mem=wf.get_resource("bcftools_call", "run", "mem"),
             partition=wf.get_resource("bcftools_call", "run", "partition"),
             tmpdir=wf.get_resource("bcftools_call", "run", "tmpdir"),
-        log:
-            **wf.get_log_file("bcftools_call", "run"),
+        params:
+            args=wf.get_args("bcftools_call", "run"),
         wrapper:
             wf.wrapper_path("bcftools_call")
 
@@ -106,16 +106,16 @@ if "gatk3_hc" in tools:
             unpack(wf.get_input_files("gatk3_hc", "run")),
         output:
             **wf.get_output_files("gatk3_hc", "run"),
-        params:
-            args=wf.get_args("gatk3_hc", "run"),
+        log:
+            **wf.get_log_file("gatk3_hc", "run"),
         threads: wf.get_resource("gatk3_hc", "run", "threads")
         resources:
             runtime=wf.get_resource("gatk3_hc", "run", "runtime"),
             mem=wf.get_resource("gatk3_hc", "run", "mem"),
             partition=wf.get_resource("gatk3_hc", "run", "partition"),
             tmpdir=wf.get_resource("gatk3_hc", "run", "tmpdir"),
-        log:
-            **wf.get_log_file("gatk3_hc", "run"),
+        params:
+            args=wf.get_args("gatk3_hc", "run"),
         wrapper:
             wf.wrapper_path("gatk3_hc")
 
@@ -130,16 +130,16 @@ if "gatk3_ug" in tools:
             unpack(wf.get_input_files("gatk3_ug", "run")),
         output:
             **wf.get_output_files("gatk3_ug", "run"),
-        params:
-            args=wf.get_args("gatk3_ug", "run"),
+        log:
+            **wf.get_log_file("gatk3_ug", "run"),
         threads: wf.get_resource("gatk3_ug", "run", "threads")
         resources:
             runtime=wf.get_resource("gatk3_ug", "run", "runtime"),
             mem=wf.get_resource("gatk3_ug", "run", "mem"),
             partition=wf.get_resource("gatk3_ug", "run", "partition"),
             tmpdir=wf.get_resource("gatk3_ug", "run", "tmpdir"),
-        log:
-            **wf.get_log_file("gatk3_ug", "run"),
+        params:
+            args=wf.get_args("gatk3_ug", "run"),
         wrapper:
             wf.wrapper_path("gatk3_ug")
 
@@ -154,14 +154,14 @@ if "gatk4_hc_joint" in tools:
             unpack(wf.get_input_files("gatk4_hc_joint", "run")),
         output:
             **wf.get_output_files("gatk4_hc_joint", "run"),
+        log:
+            **wf.get_log_file("gatk4_hc_joint", "run"),
         threads: wf.get_resource("gatk4_hc_joint", "run", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_joint", "run", "runtime"),
             mem=wf.get_resource("gatk4_hc_joint", "run", "mem"),
             partition=wf.get_resource("gatk4_hc_joint", "run", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_joint", "run", "tmpdir"),
-        log:
-            **wf.get_log_file("gatk4_hc_joint", "run"),
         wrapper:
             wf.wrapper_path("gatk4_hc/joint")
 
@@ -177,6 +177,8 @@ if "gatk4_hc_gvcf" in tools:
             unpack(wf.get_input_files("gatk4_hc_gvcf", "discover")),
         output:
             **wf.get_output_files("gatk4_hc_gvcf", "discover"),
+        log:
+            **wf.get_log_file("gatk4_hc_gvcf", "discover"),
         threads: wf.get_resource("gatk4_hc_gvcf", "discover", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_gvcf", "discover", "runtime"),
@@ -185,8 +187,6 @@ if "gatk4_hc_gvcf" in tools:
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "discover", "tmpdir"),
         params:
             args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
-        log:
-            **wf.get_log_file("gatk4_hc_gvcf", "discover"),
         wrapper:
             wf.wrapper_path("gatk4_hc/discover")
 
@@ -196,6 +196,8 @@ if "gatk4_hc_gvcf" in tools:
             unpack(wf.get_input_files("gatk4_hc_gvcf", "combine_gvcfs")),
         output:
             **wf.get_output_files("gatk4_hc_gvcf", "combine_gvcfs"),
+        log:
+            **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
         threads: wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "runtime"),
@@ -204,8 +206,6 @@ if "gatk4_hc_gvcf" in tools:
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "tmpdir"),
         params:
             args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
-        log:
-            **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
         wrapper:
             wf.wrapper_path("gatk4_hc/combine_gvcfs")
 
@@ -215,6 +215,8 @@ if "gatk4_hc_gvcf" in tools:
             unpack(wf.get_input_files("gatk4_hc_gvcf", "genotype")),
         output:
             **wf.get_output_files("gatk4_hc_gvcf", "genotype"),
+        log:
+            **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
         threads: wf.get_resource("gatk4_hc_gvcf", "genotype", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_gvcf", "genotype", "runtime"),
@@ -223,8 +225,6 @@ if "gatk4_hc_gvcf" in tools:
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "genotype", "tmpdir"),
         params:
             args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
-        log:
-            **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
         wrapper:
             wf.wrapper_path("gatk4_hc/genotype")
 
@@ -239,16 +239,16 @@ rule variant_calling_bcftools_stats_report:
         **wf.get_input_files("bcftools_stats", "run"),
     output:
         **wf.get_output_files("bcftools_stats", "run"),
-    params:
-        args=wf.get_args("bcftools_stats", "run"),
+    log:
+        **wf.get_log_file("bcftools_stats", "run"),
     threads: wf.get_resource("bcftools_stats", "run", "threads")
     resources:
         runtime=wf.get_resource("bcftools_stats", "run", "runtime"),
         mem=wf.get_resource("bcftools_stats", "run", "mem"),
         partition=wf.get_resource("bcftools_stats", "run", "partition"),
         tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("bcftools_stats", "run"),
+    params:
+        args=wf.get_args("bcftools_stats", "run"),
     wrapper:
         wf.wrapper_path("bcftools_stats/run")
 
@@ -261,16 +261,16 @@ rule variant_calling_jannovar_stats_report:
         **wf.get_input_files("jannovar_stats", "run"),
     output:
         **wf.get_output_files("jannovar_stats", "run"),
-    params:
-        args=wf.get_args("jannovar_stats", "run"),
+    log:
+        **wf.get_log_file("jannovar_stats", "run"),
     threads: wf.get_resource("jannovar_stats", "run", "threads")
     resources:
         runtime=wf.get_resource("jannovar_stats", "run", "runtime"),
         mem=wf.get_resource("jannovar_stats", "run", "mem"),
         partition=wf.get_resource("jannovar_stats", "run", "partition"),
         tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("jannovar_stats", "run"),
+    params:
+        args=wf.get_args("jannovar_stats", "run"),
     wrapper:
         wf.wrapper_path("jannovar/statistics")
 
@@ -283,16 +283,16 @@ rule variant_calling_baf_file_generation:
         **wf.get_input_files("baf_file_generation", "run"),
     output:
         **wf.get_output_files("baf_file_generation", "run"),
-    params:
-        args=wf.get_args("baf_file_generation", "run"),
+    log:
+        **wf.get_log_file("baf_file_generation", "run"),
     threads: wf.get_resource("baf_file_generation", "run", "threads")
     resources:
         runtime=wf.get_resource("baf_file_generation", "run", "runtime"),
         mem=wf.get_resource("baf_file_generation", "run", "mem"),
         partition=wf.get_resource("baf_file_generation", "run", "partition"),
         tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("baf_file_generation", "run"),
+    params:
+        args=wf.get_args("baf_file_generation", "run"),
     wrapper:
         wf.wrapper_path("baf_file_generation")
 
@@ -305,15 +305,15 @@ rule variant_calling_bcftools_roh:
         **wf.get_input_files("bcftools_roh", "run"),
     output:
         **wf.get_output_files("bcftools_roh", "run"),
-    params:
-        args=wf.get_args("bcftools_roh", "run"),
+    log:
+        **wf.get_log_file("bcftools_roh", "run"),
     threads: wf.get_resource("bcftools_roh", "run", "threads")
     resources:
         runtime=wf.get_resource("bcftools_roh", "run", "runtime"),
         mem=wf.get_resource("bcftools_roh", "run", "mem"),
         partition=wf.get_resource("bcftools_roh", "run", "partition"),
         tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("bcftools_roh", "run"),
+    params:
+        args=wf.get_args("bcftools_roh", "run"),
     wrapper:
         wf.wrapper_path("bcftools_roh")
