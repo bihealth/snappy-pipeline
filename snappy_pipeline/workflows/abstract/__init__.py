@@ -427,12 +427,7 @@ class LinkOutStepPart(BaseStepPart):
     def get_shell_cmd(self, action, wildcards):
         """Return call for linking out"""
         assert action == "run", "Unsupported action"
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
-        tpl = "test -h {out} || ln -sr {in_} {out}"
-        # Prepend the task prefix to the paths
-        in_ = task_prefix + self.base_path_in.replace("{", "{wildcards.")
-        out = task_prefix + self.base_path_out.replace("{", "{wildcards.")
-        return tpl.format(in_=in_, out=out)
+        return "test -h {output[0]} || ln -sr {input[0]} {output[0]}"
 
     def run_locally(self, action, wildcards):
         assert action == "run", "Unsupported action"
