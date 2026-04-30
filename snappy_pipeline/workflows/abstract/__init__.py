@@ -932,12 +932,13 @@ class BaseStep:
 
         return f"output/{upstream_task_name}"
 
-    def register_module(self, logical_name: str, default_step_name: str):
+    def register_module(self, logical_name: str, prefix: str = "", module_name: str = ""):
         """
         Registers a dependency mapping for Snakemake 9.
         Paths are resolved via the prefix directive applied during module import.
         """
-        target_task_name = self.depends_on.get(logical_name, default_step_name)
+        _prefix = prefix  # prefix is ignored for now, just backwards compat
+        target_task_name = self.depends_on.get(logical_name, module_name)
 
         if logical_name in self.modules:
             raise ValueError(f"Dependency {logical_name} already registered!")
