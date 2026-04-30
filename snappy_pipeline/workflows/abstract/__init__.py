@@ -786,7 +786,9 @@ class BaseStep:
         task_name = self.depends_on.get(name, name)
 
         # 2. Extract that task's raw config dictionary from global config
-        task = next((t for t in self.w_config.tasks if t.name == task_name), None)
+        task = next((t for t in self.w_config.tasks if t.name == task_name), None) or next(
+            (t for t in self.w_config.tasks if t.step == task_name), None
+        )
         if not task:
             raise ValueError(
                 f"Task '{task_name}' (resolved from '{name}') not found in configuration."
