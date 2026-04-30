@@ -1,9 +1,12 @@
 import tempfile
 import os
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
 tasks = config.get("tasks", [])
 all_target_files = []
 dsl_lines = []
+
+target_step = config.get("step")
 
 for task in tasks:
     task_name = task["name"]
@@ -13,14 +16,16 @@ for task in tasks:
     wf_instance = WORKFLOW_REGISTRY[step_type](
         workflow, config, config_lookup_paths, config_paths, os.getcwd(), task_name=task_name
     )
-    all_target_files.extend(wf_instance.get_result_files())
+
+    if target_step is None or target_step == step_type:
+        all_target_files.extend(wf_instance.get_result_files())
 
     # Generate the module import with the isolated prefix
     prefix = f"output/{task_name}"
     dsl_lines.append(
         f"""
 module {task_name}:
-    snakefile: "../{step_type}/Snakefile"
+    snakefile: "workflows/{step_type}/Snakefile"
     config: config
     prefix: "{prefix}"
 

@@ -120,13 +120,22 @@ def setup_logging(args):
 
 def run(wrapper_args, snakemake_args):
     """Launch the CUBI Pipeline wrapper for the given arguments"""
-    module = STEP_TO_MODULE[wrapper_args.step]
+    # The module lookup is no longer strictly necessary for finding the Snakefile,
+    # but we keep it to validate the step or for other module metadata if needed.
+    _module = STEP_TO_MODULE[wrapper_args.step]
+
+    # Point to the master orchestrator Snakefile
+    orchestrator_snakefile = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Snakefile"
+    )
 
     snakemake_argv = [
         "--directory",
         wrapper_args.directory,
         "--snakefile",
-        os.path.join(os.path.dirname(os.path.abspath(module.__file__)), "Snakefile"),
+        orchestrator_snakefile,
+        "--config",
+        f"step={wrapper_args.step}",
     ]
 
     # Configure profile if snappy pipeline profile is requested
