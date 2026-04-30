@@ -520,14 +520,14 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
         # This must be done before initialisation of the workflow.
         from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 
-        previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
-        default = SomaticVariantFiltrationConfigModel.model_fields["has_annotation"].default
-        if config["step_config"]["somatic_variant_filtration"].get("has_annotation", default):
-            from snappy_pipeline.workflows.somatic_variant_annotation import (
-                SomaticVariantAnnotationWorkflow,
-            )
+        # previous_steps = [SomaticVariantCallingWorkflow, NgsMappingWorkflow]
+        # default = SomaticVariantFiltrationConfigModel.model_fields["has_annotation"].default
+        # if config["step_config"]["somatic_variant_filtration"].get("has_annotation", default):
+        #     from snappy_pipeline.workflows.somatic_variant_annotation import (
+        #         SomaticVariantAnnotationWorkflow,
+        #     )
 
-            previous_steps.insert(0, SomaticVariantAnnotationWorkflow)
+        #     previous_steps.insert(0, SomaticVariantAnnotationWorkflow)
         super().__init__(
             workflow,
             config,
