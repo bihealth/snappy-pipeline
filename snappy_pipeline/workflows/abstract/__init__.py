@@ -720,9 +720,7 @@ class BaseStep:
             self.w_config: ConfigModel = ConfigModel(**workflow_config)
 
             # 2. Find this specific task in the tasks list
-            self.task = next(
-                (t for t in self.w_config.tasks if t.name == self.task_name), None
-            ) or next((t for t in self.w_config.tasks if t.step == self.task_name), None)
+            self.task = next((t for t in self.w_config.tasks if t.name == self.task_name), None)
             if not self.task:
                 raise ValueError(f"Task '{self.task_name}' not found in config tasks list.")
 
@@ -769,33 +767,55 @@ class BaseStep:
         self._check_config()
 
         config_string = self.config.model_dump_yaml(by_alias=True)
-        self.logger.debug(f"Configuration for step {self.name}\n{config_string}")
+        # self.logger.debug(f"Configuration for step {self.name}\n{config_string}")
 
         config_string = self.w_config.model_dump_yaml(by_alias=True)
-        self.logger.debug(f"Configuration for workflow\n{config_string}")
+        # self.logger.debug(f"Configuration for workflow\n{config_string}")
 
         # Update snakemake.config (which `config` is a reference to)
         # with the validated configuration.
         # All fields with default values are explicitly defined.
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
-        self.logger.debug(f"Snakemake config\n{config}")
+        # self.logger.debug(f"Snakemake config\n{config}")
 
     def get_task_config(self, name: str) -> SnappyStepModel:
         """Retrieve the typed configuration model of an upstream task based on dependency resolution."""
-        # 1. Resolve name to the actual task name
-        task_name = self.depends_on.get(name, name)
 
-        # 2. Extract that task's raw config dictionary from global config
-        task = next((t for t in self.w_config.tasks if t.name == task_name), None) or next(
-            (t for t in self.w_config.tasks if t.step == task_name), None
-        )
+        # If the requested name matches this instance's step type or task name, return own config.
+        if name == self.name or name == getattr(self, "task_name", ""):
+            return self.config
+
+        # Resolve via dependency mapping
+        target_task_name = None
+        if hasattr(self.config, "depends_on") and hasattr(self.config.depends_on, name):
+            target_task_name = getattr(self.config.depends_on, name)
+        else:
+            target_task_name = self.depends_on.get(name)
+
+        # Fallback to the requested name if no explicit dependency mapping is found
+        if not target_task_name:
+            target_task_name = name
+
+        # Find the task in the global config
+        task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
+
+        if not task:
+            matching_steps = [t for t in self.w_config.tasks if t.step == target_task_name]
+            if len(matching_steps) == 1:
+                task = matching_steps[0]
+            elif len(matching_steps) > 1:
+                raise ValueError(
+                    f"Ambiguous dependency: '{target_task_name}' matches multiple tasks by step type. "
+                    f"Please explicitly map it in the 'depends_on' block for task '{self.task_name}'."
+                )
+
         if not task:
             raise ValueError(
-                f"Task '{task_name}' (resolved from '{name}') not found in configuration."
+                f"Task '{target_task_name}' (resolved from '{name}') not found in configuration."
             )
 
-        # 3. Import WORKFLOW_REGISTRY lazily to avoid circular imports
+        # Instantiate and return its strictly typed config model
         from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
         wf_class = WORKFLOW_REGISTRY.get(task.step)
@@ -804,7 +824,6 @@ class BaseStep:
                 f"Workflow class for step '{task.step}' not found in WORKFLOW_REGISTRY."
             )
 
-        # 4. Instantiate and return its strictly typed config model
         return wf_class.config_model_class(**task.config)
 
     def _setup_hooks(self):
@@ -947,9 +966,13 @@ class BaseStep:
         if logical_name in self.modules:
             raise ValueError(f"Dependency {logical_name} already registered!")
 
-        # Traverse up one directory to escape the current module's prefix
-        prefix = f"../{target_task_name}"
-        self.modules[logical_name] = lambda path: os.path.join(prefix, path).replace("\\", "/")
+        # Simply prepend the target task namespace to standard paths
+        def resolve_dependency(path):
+            if path.startswith("output/") or path.startswith("work/"):
+                return f"{target_task_name}/" + path
+            return os.path.join(target_task_name, path).replace("\\", "/")
+
+        self.modules[logical_name] = resolve_dependency
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards
@@ -1022,12 +1045,14 @@ class BaseStep:
         """
         return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
 
-    def run_locally(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
+    def run_locally(
+        self, sub_step: str, action: str, wildcards: Wildcards, output: Outputs | None = None
+    ) -> str:
         """Runs a function locally for the pipeline sub step
 
         Delegates to the sub step object's run_locally function
         """
-        return self.substep_dispatch(sub_step, "run_locally", action, wildcards)
+        return self.substep_dispatch(sub_step, "run_locally", action, wildcards, output)
 
     def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Run command for the given action of the given sub step with the given wildcards
@@ -1361,16 +1386,15 @@ class LinkInStepPart(BaseStepPart):
             raise Exception(msg)
         return "\n".join(lines)
 
-    def run_locally(self, action, wildcards):
+    def run_locally(self, action, wildcards, output):
         """Links fastq files"""
         assert action == "run", "Unsupported action"
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
-        # Get base out path with the task prefix prepended
-        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
-        # Get folder name of first library candidate
+        out_path = os.path.dirname(str(output[0]))
+
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if getattr(self.config, "path_link_in", None):
             folder_name = wildcards.library_name
+
         filenames = self._create_all_symlinks(self.path_gen, folder_name, out_path)
         if not filenames:
             msg = "Found no files to link in for {}".format(dict(**wildcards))
