@@ -1,7 +1,6 @@
 import enum
-from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 
 
 class Strand(enum.IntEnum):
