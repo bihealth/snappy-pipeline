@@ -154,9 +154,8 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             raw_path_tpls = self._get_output_files_annotate_seqvars().values()
         elif action == "annotate_strucvars":
             # Only annotate_seqvars SVs if path to step for calling them is configured.
-            if (
-                not self.parent.config.path_sv_calling_targeted
-                and not self.parent.config.path_sv_calling_wgs
+            if not (
+                self.parent.depends_on.sv_calling_targeted or self.parent.depends_on.sv_calling_wgs
             ):
                 return
             raw_path_tpls = self._get_output_files_annotate_strucvars().values()
@@ -168,7 +167,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Create concrete paths for all pedigrees in the sample sheet.
         index_ngs_libraries = self._get_index_ngs_libraries(
             require_consistent_pedigree_kits=(
-                bool(self.parent.config.path_sv_calling_targeted)
+                bool(self.parent.depends_on.sv_calling_targeted)
                 and (action == "annotate_strucvars")
             )
         )
@@ -217,7 +216,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
         variant_calling = self.parent.modules["variant_calling"]
 
-        path = "output/{var_caller}.{index_ngs_library}/out/{var_caller}.{index_ngs_library}.vcf.gz"
+        path = "output/{index_ngs_library}/out/{index_ngs_library}.vcf.gz"
 
         vcfs = [
             variant_calling(path).format(
@@ -281,7 +280,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        if self.parent.config.path_sv_calling_targeted:
+        if self.parent.depends_on.sv_calling_targeted:
             sv_calling = self.parent.modules["sv_calling_targeted"]
             sv_callers = self.parent.config.tools_sv_calling_targeted
             skip_libraries = {
@@ -290,7 +289,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 ).skip_libraries
                 for sv_caller in sv_callers
             }
-        elif self.parent.config.path_sv_calling_wgs:
+        elif self.parent.depends_on.sv_calling_wgs:
             sv_calling = self.parent.modules["sv_calling_wgs"]
             sv_callers = self.parent.config.tools_sv_calling_wgs.dna
             skip_libraries = {
@@ -307,15 +306,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         ]
 
-        path = "output/{sv_caller}.{index_ngs_library}/out/{sv_caller}.{index_ngs_library}.vcf.gz"
+        path = "output/{index_ngs_library}/out/{index_ngs_library}.vcf.gz"
 
         vcfs = []
         for sv_caller in sv_callers:
             if any(map(skip_libraries[sv_caller].__contains__, library_names)):
-                msg = (
-                    f"Found libraries to skip in family {library_names}.  All samples will be skipped "
-                    f"for {sv_caller}."
-                )
+                msg = f"Found libraries to skip in family {library_names}.  All samples will be skipped."
                 warnings.warn(SkipLibraryWarning(msg))
                 continue
 

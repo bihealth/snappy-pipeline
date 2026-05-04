@@ -5,21 +5,20 @@ from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 class VarfishExportDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
+    """Used output of ngs_mapping is alignment quality control data"""
+
     variant_calling: str = "variant_calling"
-    sv_calling_targeted: str = "sv_calling_targeted"
-    sv_calling_wgs: str = "sv_calling_wgs"
+    """Used output of variant_calling is variant calls"""
+
+    sv_calling_targeted: str = ""
+    """Used output of targeted SV calling is variant calls"""
+
+    sv_calling_wgs: str = ""
+    """Used output of WGS SV calling is variant calls"""
 
 
 class VarfishExport(SnappyStepModel):
     """Configuration of the input path enables export from the corresponding pipeline step."""
-
-    """Used output of ngs_mapping is alignment quality control data"""
-
-    """Used output of variant_calling is variant calls"""
-
-    """Used output of targeted SV calling is variant calls"""
-
-    """Used output of WGS SV calling is variant calls"""
 
     depends_on: VarfishExportDependsOn = Field(default_factory=VarfishExportDependsOn)
 
