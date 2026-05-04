@@ -7,6 +7,6 @@ repos:
         args: [ --fix ]
       - id: ruff-format
   - repo: https://github.com/snakemake/snakefmt
-    rev: v0.11.2 # https://github.com/snakemake/snakefmt/releases
+    rev: v1.1.0 # https://github.com/snakemake/snakefmt/releases
     hooks:
       - id: snakefmt
