@@ -1521,6 +1521,7 @@ class NgsMappingWorkflow(BaseStep):
         :type sample_sheets_list: list
         """
         pass
+
     #     # Initialise variables
     #     dna_bool_list = []
     #     rna_bool_list = []
