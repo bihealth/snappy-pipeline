@@ -687,6 +687,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         if self.config.path_link_in:
             folder_name = library_name
@@ -694,6 +695,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         seen = []
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            path = task_prefix + path
             if path in seen:
                 print("WARNING: ignoring path seen before %s" % path, file=sys.stderr)
             else:
@@ -1041,9 +1043,11 @@ class ExternalStepPart(ReadMappingStepPart):
     def _collect_bams(self, wildcards, library_name):
         """Yield the path to bam files"""
         _ = library_name
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         for _, path_infix, filename in self.path_gen.run(folder_name, ("bam",)):
-            yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            yield task_prefix + path
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

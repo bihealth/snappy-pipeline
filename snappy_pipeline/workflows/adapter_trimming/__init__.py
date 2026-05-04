@@ -104,10 +104,14 @@ class AdapterTrimmingStepPart(BaseStepPart):
         return args_function
 
     def _collect_reads(self, wildcards, folder_name, prefix):
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         path_info = {}
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
             input_path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            input_path = task_prefix + input_path
+
             assert input_path not in path_info.keys()
             paths = {
                 "relative_path": path_infix,
