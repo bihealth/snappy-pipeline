@@ -313,7 +313,6 @@ class WritePedigreeStepPart(BaseStepPart):
                 donor_names = list(sorted(d.name for d in pedigree.donors))
                 print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
                 return
-            mapper = self.get_task_config("ngs_mapping").tool
             tpl = "output/{library_name}/out/{library_name}{ext}"
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 library_name = donor.dna_ngs_library.name
@@ -759,7 +758,6 @@ class BaseStep:
         self._check_config()
 
         config_string = self.config.model_dump_yaml(by_alias=True)
-        config_string_w = self.w_config.model_dump_yaml(by_alias=True)
 
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
@@ -1032,14 +1030,12 @@ class BaseStep:
         """
         return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
 
-    def run_locally(
-        self, sub_step: str, action: str, wildcards: Wildcards, output: Outputs | None = None
-    ) -> str:
+    def run_locally(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Runs a function locally for the pipeline sub step
 
         Delegates to the sub step object's run_locally function
         """
-        return self.substep_dispatch(sub_step, "run_locally", action, wildcards, output)
+        return self.substep_dispatch(sub_step, "run_locally", action, wildcards)
 
     def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Run command for the given action of the given sub step with the given wildcards
@@ -1373,10 +1369,12 @@ class LinkInStepPart(BaseStepPart):
             raise Exception(msg)
         return "\n".join(lines)
 
-    def run_locally(self, action, wildcards, output):
+    def run_locally(self, action, wildcards):
         """Links fastq files"""
         assert action == "run", "Unsupported action"
-        out_path = os.path.dirname(str(output[0]))
+
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
 
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         if getattr(self.config, "path_link_in", None):
