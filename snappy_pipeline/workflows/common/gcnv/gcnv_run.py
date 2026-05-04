@@ -227,7 +227,7 @@ class ContigPloidyMixin:
     def _get_output_files_contig_ploidy(self):
         """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE."""
         ext = "done"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        name_pattern = "gcnv_contig_ploidy.{library_kit}"
         yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
     def _get_args_contig_ploidy(self, wildcards: Wildcards):
@@ -263,9 +263,9 @@ class CallCnvsMixin:
         """
         # Initialise variables
         tsv_ext = "tsv"
-        tsv_path_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        tsv_path_pattern = "gcnv_coverage.{library_name}"
         ploidy_ext = "ploidy"
-        ploidy_path_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        ploidy_path_pattern = "gcnv_contig_ploidy.{library_kit}"
 
         # Yield coverage tsv files for all library associated with kit
         coverage_files = []
@@ -283,7 +283,7 @@ class CallCnvsMixin:
     def _get_output_files_call_cnvs(self):
         """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
         ext = "done"
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        name_pattern = "gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
     def _get_args_call_cnvs(self, wildcards):
@@ -313,7 +313,7 @@ class PostGermlineCallsMixin:
 
     @dictify
     def _get_output_files_post_germline_calls(self):
-        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
+        name_pattern = "gcnv_post_germline_calls.{library_name}"
         extensions = {
             "ratio_tsv": ".ratio.tsv",
             "itv_vcf": ".interval.vcf.gz",
@@ -393,7 +393,7 @@ class JointGermlineCnvSegmentationMixin:
 
     @dictify
     def _get_output_files_joint_germline_cnv_segmentation(self):
-        name_pattern = "{mapper}.gcnv_joint_segmentation.{kit}.{library_name}"
+        name_pattern = "gcnv_joint_segmentation.{kit}.{library_name}"
         work_files = {}
         for key, suffix in RESULT_EXTENSIONS.items():
             work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
@@ -402,7 +402,7 @@ class JointGermlineCnvSegmentationMixin:
     @dictify
     def _get_log_file_joint_germline_cnv_segmentation(self):
         """Return log file **pattern** for the step ``joint_germline_cnv_segmentation``."""
-        name_pattern = "{mapper}.gcnv_joint_segmentation.{kit}.{library_name}"
+        name_pattern = "gcnv_joint_segmentation.{kit}.{library_name}"
         for key, ext in LOG_EXTENSIONS.items():
             yield key, f"work/{name_pattern}/log/{name_pattern}.joint_germline_segmentation{ext}"
 
@@ -441,7 +441,7 @@ class MergeMultikitFamiliesMixin:
 
     @dictify
     def _get_output_files_merge_multikit_families(self):
-        name_pattern = "{mapper}.gcnv.{library_name}"
+        name_pattern = "gcnv.{library_name}"
         work_files = {}
         for key, suffix in RESULT_EXTENSIONS.items():
             work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
@@ -459,7 +459,7 @@ class MergeMultikitFamiliesMixin:
     @dictify
     def _get_log_file_merge_multikit_families(self):
         """Return log file **pattern** for the step ``merge_multikit_families``."""
-        name_pattern = "{mapper}.gcnv.{library_name}"
+        name_pattern = "gcnv.{library_name}"
         for key, ext in LOG_EXTENSIONS.items():
             yield key, f"work/{name_pattern}/log/{name_pattern}.merge_multikit_families{ext}"
 

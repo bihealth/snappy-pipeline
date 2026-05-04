@@ -48,11 +48,11 @@ class FilterIntervalsMixin:
     @dictify
     def _get_output_files_filter_intervals(self):
         ext = "interval_list"
-        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
+        name_pattern = "gcnv_filter_intervals.{library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
 
     def _get_log_file_filter_intervals(self):
-        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
+        name_pattern = "gcnv_filter_intervals.{library_kit}"
         return f"work/{name_pattern}/log/{name_pattern}.log"
 
 
@@ -66,11 +66,11 @@ class ScatterIntervalsMixin:
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
 
     def _get_output_files_scatter_intervals(self):
-        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}"
+        name_pattern = "gcnv_scatter_intervals.{library_kit}"
         return f"work/{name_pattern}/out/{name_pattern}"
 
     def _get_log_file_scatter_intervals(self):
-        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}"
+        name_pattern = "gcnv_scatter_intervals.{library_kit}"
         return f"work/{name_pattern}/log/{name_pattern}.log"
 
 
@@ -86,7 +86,7 @@ class ContigPloidyMixin:
         :type wildcards: snakemake.io.Wildcards
         """
         ext = "interval_list"
-        name_pattern = "{mapper}.gcnv_filter_intervals.{library_kit}"
+        name_pattern = "gcnv_filter_intervals.{library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
         ext = "tsv"
         tsvs = []
@@ -106,7 +106,7 @@ class ContigPloidyMixin:
     def _get_output_files_contig_ploidy(self):
         """Yield dictionary with output files for ``contig_ploidy`` rule in COHORT MODE."""
         ext = "done"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        name_pattern = "gcnv_contig_ploidy.{library_kit}"
         yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
 
@@ -121,7 +121,7 @@ class CallCnvsMixin:
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         :type wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "{mapper}.gcnv_scatter_intervals.{library_kit}"
+        name_pattern = "gcnv_scatter_intervals.{library_kit}"
         path_pattern = (
             f"work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
@@ -144,7 +144,7 @@ class CallCnvsMixin:
     def _get_output_files_call_cnvs(self):
         """Yield dictionary with output files for ``call_cnvs`` rle in COHORT MODE."""
         ext = "done"
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        name_pattern = "gcnv_call_cnvs.{library_kit}.{shard}"
         yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
 
 
@@ -153,7 +153,7 @@ class PostGermlineCallsMixin:
 
     @dictify
     def _get_output_files_post_germline_calls(self):
-        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
+        name_pattern = "gcnv_post_germline_calls.{library_name}"
         pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
         for key, ext in pairs.items():
             yield key, touch(f"work/{name_pattern}/out/{name_pattern}{ext}")

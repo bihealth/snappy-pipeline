@@ -23,7 +23,7 @@ class SvCallingGetResultFilesMixin:
             return  # tool not enabled, no result files
 
         ngs_mapping_config = self.get_task_config("ngs_mapping")
-        for mapper in ngs_mapping_config.tools.dna:
+        if ngs_mapping_config.tool.is_dna():
             # Get list of result path templates.
             output_files_tmp = self.get_output_files(self.actions[-1])
             if isinstance(output_files_tmp, dict):
@@ -41,7 +41,7 @@ class SvCallingGetResultFilesMixin:
                 for library_name in self.index_ngs_library_to_pedigree.keys():
                     if cfg := self.config.get(self.name):
                         if library_name not in cfg.skip_libraries:
-                            yield from expand(path_tpl, mapper=[mapper], library_name=library_name)
+                            yield from expand(path_tpl, library_name=library_name)
 
 
 class SvCallingGetLogFileMixin:
@@ -58,7 +58,7 @@ class SvCallingGetLogFileMixin:
         if hasattr(self, f"_get_log_file_infix_{action}"):
             infix = getattr(self, f"_get_log_file_infix_{action}")()
         else:
-            infix = f"{{mapper}}.{token}.{{library_name}}"
+            infix = f"{token}.{{library_name}}"
         prefix = f"work/{infix}/log/{infix}.sv_calling"
         key_ext = (
             ("log", ".log"),

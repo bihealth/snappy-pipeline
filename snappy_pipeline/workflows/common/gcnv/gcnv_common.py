@@ -60,18 +60,18 @@ class CoverageCommonMixin:
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
         # Yield input BAM and BAI files
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+        bam_tpl = "output/{library_name}/out/{library_name}{ext}"
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
     @dictify
     def _get_output_files_coverage(self):
         ext = "tsv"
-        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        name_pattern = "gcnv_coverage.{library_name}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
 
     def _get_log_file_coverage(self):
-        name_pattern = "{mapper}.gcnv_coverage.{library_name}"
+        name_pattern = "gcnv_coverage.{library_name}"
         return f"work/{name_pattern}/log/{name_pattern}.log"
 
 
@@ -79,7 +79,7 @@ class ContigPloidyCommonMixin:
     """Mixin used for ``contig_ploidy`` step"""
 
     def _get_log_file_contig_ploidy(self):
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}"
+        name_pattern = "gcnv_contig_ploidy.{library_kit}"
         return f"work/{name_pattern}/log/{name_pattern}.log"
 
 
@@ -87,7 +87,7 @@ class CallCnvsCommonMixin:
     """Mixin used for the ``call_cnvs`` step"""
 
     def _get_log_file_call_cnvs(self):
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}.{shard}"
+        name_pattern = "gcnv_call_cnvs.{library_kit}.{shard}"
         return f"work/{name_pattern}/log/{name_pattern}.log"
 
 
@@ -95,7 +95,7 @@ class GcnvPostGermlineCallsCommonMixin:
     """Mixin used for the ``gcnv_post_germline_calls`` step"""
 
     def _get_log_file_post_germline_calls(self):
-        name_pattern = "{mapper}.gcnv_post_germline_calls.{library_name}"
+        name_pattern = "gcnv_post_germline_calls.{library_name}"
         return f"work/{name_pattern}/log/{name_pattern}.log"
 
 

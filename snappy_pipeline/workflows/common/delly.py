@@ -64,13 +64,13 @@ class Delly2StepPart(
     @dictify
     def _get_input_files_call(self, wildcards):
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        token = f"{wildcards.mapper}.{wildcards.library_name}"
+        token = f"{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{token}/out/{token}.bam")
         yield "bai", ngs_mapping(f"output/{token}/out/{token}.bam.bai")
 
     @dictify
     def _get_output_files_call(self):
-        infix = "{mapper}.delly2_call.{library_name}"
+        infix = "delly2_call.{library_name}"
         yield "bcf", f"work/{infix}/out/{infix}.bcf"
         yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
         yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
@@ -82,13 +82,13 @@ class Delly2StepPart(
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                infix = f"{wildcards.mapper}.delly2_call.{donor.dna_ngs_library.name}"
+                infix = f"delly2_call.{donor.dna_ngs_library.name}"
                 bcfs.append(f"work/{infix}/out/{infix}.bcf")
         yield "bcf", bcfs
 
     @dictify
     def _get_output_files_merge_calls(self):
-        infix = "{mapper}.delly2_merge_calls.{library_name}"
+        infix = "delly2_merge_calls.{library_name}"
         yield "bcf", f"work/{infix}/out/{infix}.bcf"
         yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
         yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
@@ -98,12 +98,12 @@ class Delly2StepPart(
     def _get_input_files_genotype(self, wildcards):
         yield from self._get_input_files_call(wildcards).items()
         pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
-        infix = f"{wildcards.mapper}.delly2_merge_calls.{pedigree.index.dna_ngs_library.name}"
+        infix = f"delly2_merge_calls.{pedigree.index.dna_ngs_library.name}"
         yield "bcf", f"work/{infix}/out/{infix}.bcf"
 
     @dictify
     def _get_output_files_genotype(self):
-        infix = "{mapper}.delly2_genotype.{library_name}"
+        infix = "delly2_genotype.{library_name}"
         yield "bcf", f"work/{infix}/out/{infix}.bcf"
         yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
         yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
@@ -121,7 +121,7 @@ class Delly2StepPart(
 
     @dictify
     def _get_output_files_merge_genotypes(self):
-        infix = "{mapper}.delly2.{library_name}"
+        infix = "delly2.{library_name}"
         work_files = {
             "vcf": f"work/{infix}/out/{infix}.vcf.gz",
             "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",

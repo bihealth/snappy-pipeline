@@ -32,6 +32,27 @@ class Tool(enum.StrEnum):
     star = "star"
     mbcs = "mbcs"
 
+    def is_dna(self):
+        return self in {self.bwa, self.bwa_mem2, self.minimap2}
+
+    def is_rna(self):
+        return self in {self.star}
+
+    def supports_long_reads(self):
+        return self in {self.bwa_mem2, self.minimap2}
+
+    def get_tags(self):
+        tags = set()
+        if self.is_dna():
+            tags |= {"dna"}
+        if self.is_rna():
+            tags |= {"rna"}
+        if self.supports_long_reads():
+            tags |= {"long_read"}
+        if self == self.mbcs:
+            tags |= {"mbcs", "meta"}
+        return tags
+
 
 class TargetCoverageReportEntry(SnappyModel):
     """

@@ -64,14 +64,14 @@ class MantaStepPart(
         bams = []
         for donor in self.index_ngs_library_to_pedigree[wildcards.library_name].donors:
             if donor.dna_ngs_library:
-                token = f"{wildcards.mapper}.{donor.dna_ngs_library.name}"
+                token = f"{donor.dna_ngs_library.name}"
                 bams.append(ngs_mapping(f"output/{token}/out/{token}.bam"))
         yield "bam", bams
         yield "reference", self.parent.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_run(self):
-        infix = "{mapper}.manta.{library_name}"
+        infix = "manta.{library_name}"
         work_files = {
             "vcf": f"work/{infix}/out/{infix}.vcf.gz",
             "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
