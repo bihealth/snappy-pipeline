@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running bcftools filter"""
 
+import shlex
 from typing import TYPE_CHECKING
 
 from snakemake.shell import shell
@@ -11,7 +12,9 @@ if TYPE_CHECKING:
 args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"]
 expressions = args["expressions"]
-expressions_cmd = " ".join(f"--tag {tag}={expr}" for tag, expr in expressions.items())
+expressions_cmd = " ".join(
+    f"--tag {tag}={shlex.quote(str(expr))}" for tag, expr in expressions.items()
+)
 tag_mode = "--tag-mode fail" if args["tag_mode"] == "include" else "--tag-mode pass"
 extra = args["extra_args"]
 
