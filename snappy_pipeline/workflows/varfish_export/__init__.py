@@ -174,7 +174,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
         kwargs = {
             "index_ngs_library": list(index_ngs_libraries.keys()),
-            "mapper": [[""][0]],  # FIXME: used to be self.parent.config.tools_ngs_mapping[0]
         }
         for path_tpl in path_tpls:
             yield from expand(path_tpl, **kwargs)
@@ -220,17 +219,11 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
         path = "output/{var_caller}.{index_ngs_library}/out/{var_caller}.{index_ngs_library}.vcf.gz"
 
-        vcfs = []
-        for var_caller in [""]:  # FIXME: used to be self.parent.config.tools_variant_calling
-            vcfs.append(
-                variant_calling(path).format(
-                    # FIXME: do we need the mapper wildcard?
-                    mapper=wildcards.mapper,
-                    # FIXME: do we need the var_caller?
-                    var_caller=var_caller,
-                    index_ngs_library=wildcards.index_ngs_library,
-                )
+        vcfs = [
+            variant_calling(path).format(
+                index_ngs_library=wildcards.index_ngs_library,
             )
+        ]
         yield "vcf", vcfs
 
     @dictify
