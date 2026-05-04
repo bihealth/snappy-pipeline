@@ -1520,66 +1520,67 @@ class NgsMappingWorkflow(BaseStep):
         :param sample_sheets_list: List with biomedical sample sheets.
         :type sample_sheets_list: list
         """
-        # Initialise variables
-        dna_bool_list = []
-        rna_bool_list = []
+        pass
+    #     # Initialise variables
+    #     dna_bool_list = []
+    #     rna_bool_list = []
 
-        # Get tools dictionary
-        tools = config.tools
+    #     # Get tools dictionary
+    #     tools = config.tools
 
-        # Iterate over sheets
-        for sheet in sample_sheets_list:
-            dna_present, rna_present = self.extraction_type_check(sample_sheet=sheet)
-            # Append to respective lists
-            dna_bool_list.append(dna_present)
-            rna_bool_list.append(rna_present)
+    #     # Iterate over sheets
+    #     for sheet in sample_sheets_list:
+    #         dna_present, rna_present = self.extraction_type_check(sample_sheet=sheet)
+    #         # Append to respective lists
+    #         dna_bool_list.append(dna_present)
+    #         rna_bool_list.append(rna_present)
 
-        # Evaluate type of project
-        dna_analysis = any(dna_bool_list)
-        rna_analysis = any(rna_bool_list)
+    #     # Evaluate type of project
+    #     dna_analysis = any(dna_bool_list)
+    #     rna_analysis = any(rna_bool_list)
 
-        # Validate DNA project
-        dna_tool_list = tools.dna
-        if dna_analysis and not dna_tool_list:
-            raise InvalidConfiguration(
-                "Sample sheet contains DNA but configuration has no DNA "
-                "mapper defined in tool list."
-            )
-        # Validate RNA project
-        rna_tool_list = tools.rna
-        if rna_analysis and not rna_tool_list:
-            raise InvalidConfiguration(
-                "Sample sheet contains RNA but configuration has no RNA "
-                "mapper defined in tool list."
-            )
+    #     # Validate DNA project
+    #     dna_tool_list = tools.dna
+    #     if dna_analysis and not dna_tool_list:
+    #         raise InvalidConfiguration(
+    #             "Sample sheet contains DNA but configuration has no DNA "
+    #             "mapper defined in tool list."
+    #         )
+    #     # Validate RNA project
+    #     rna_tool_list = tools.rna
+    #     if rna_analysis and not rna_tool_list:
+    #         raise InvalidConfiguration(
+    #             "Sample sheet contains RNA but configuration has no RNA "
+    #             "mapper defined in tool list."
+    #         )
 
-    @staticmethod
-    def extraction_type_check(sample_sheet):
-        """Retrieve extraction type from biomedsheet.
+    # @staticmethod
+    # def extraction_type_check(sample_sheet):
+    #     """Retrieve extraction type from biomedsheet.
 
-        Method crawls through all bio entities in the biomedsheet and checks if there are DNA
-        and/or RNA extraction types. In both cases, the test will be consider True if at least one
-        test sample contains the extraction type (i.e., DNA or RNA).
+    #     Method crawls through all bio entities in the biomedsheet and checks if there are DNA
+    #     and/or RNA extraction types. In both cases, the test will be consider True if at least one
+    #     test sample contains the extraction type (i.e., DNA or RNA).
 
-        :param sample_sheet: Sample sheet.
-        :type sample_sheet: biomedsheets.models.Sheet
+    #     :param sample_sheet: Sample sheet.
+    #     :type sample_sheet: biomedsheets.models.Sheet
 
-        :return: Returns tuple with boolean for DNA, RNA extraction types: (DNA extraction type
-        present, RNA extraction type present).
-        """
-        # Initialise variables
-        contains_rna_extraction = False
-        contains_dna_extraction = False
+    #     :return: Returns tuple with boolean for DNA, RNA extraction types: (DNA extraction type
+    #     present, RNA extraction type present).
+    #     """
+    #     # Initialise variables
+    #     contains_rna_extraction = False
+    #     contains_dna_extraction = False
 
-        # Crawl over bio entities until test_sample
-        for _, entity in sample_sheet.bio_entities.items():
-            for _, bio_sample in entity.bio_samples.items():
-                for _, test_sample in bio_sample.test_samples.items():
-                    extraction_type = test_sample.extra_infos.get("extractionType")
-                    if extraction_type.lower() == "dna":
-                        contains_dna_extraction = True
-                    elif extraction_type.lower() == "rna":
-                        contains_rna_extraction = True
+    #     # Crawl over bio entities until test_sample
+    #     for _, entity in sample_sheet.bio_entities.items():
+    #         for _, bio_sample in entity.bio_samples.items():
+    #             for _, test_sample in bio_sample.test_samples.items():
+    #                 extraction_type = test_sample.extra_infos.get("extractionType")
+    #                 if extraction_type.lower() == "dna":
+    #                     contains_dna_extraction = True
+    #                 elif extraction_type.lower() == "rna":
+    #                     contains_rna_extraction = True
 
-        # Return
-        return contains_dna_extraction, contains_rna_extraction
+    #     # Return
+    #     return contains_dna_extraction, contains_rna_extraction
