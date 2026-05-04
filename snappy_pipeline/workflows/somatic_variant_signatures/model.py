@@ -23,15 +23,6 @@ class SomaticVariantSignatures(SnappyStepModel):
     somatic_variant_step: SomaticVariantStep = SomaticVariantStep.CALL
     """Which pipeline step is used to compute signatures"""
 
-    tool_ngs_mapping: str = ""
-    """default to that configured for ngs_mapping"""
-
-    tool_somatic_variant_calling: str = ""
-    """default to that configured for somatic_variant_calling"""
-
-    tool_somatic_variant_annotation: str = ""
-    """default to that configured for somatic_variant_annotation"""
-
     has_annotation: bool = False
     """Needed for building filenames only"""
 

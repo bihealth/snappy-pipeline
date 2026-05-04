@@ -26,12 +26,6 @@ class SomaticVariantAnnotation(SnappyStepModel):
     is_filtered: bool = False
     """Has the vcf been already filtered"""
 
-    tools_ngs_mapping: list[str] = []
-    """default to those configured for ngs_mapping"""
-
-    tools_somatic_variant_calling: list[str] = []
-    """default to those configured for somatic_variant_calling"""
-
     vep: Vep | None = None
 
     mehari: Mehari | None = None

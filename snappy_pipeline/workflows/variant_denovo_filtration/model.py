@@ -27,11 +27,6 @@ class VariantDenovoFiltration(SnappyStepModel):
     depends_on: VariantDenovoFiltrationDependsOn = Field(
         default_factory=VariantDenovoFiltrationDependsOn
     )
-    tools_ngs_mapping: list[str] = []
-    """defaults to ngs_mapping tool"""
-
-    tools_variant_calling: list[str] = []
-    """defaults to variant_annotation tool"""
 
     info_key_reliable_regions: list[str] = []
     """optional INFO keys with reliable regions"""

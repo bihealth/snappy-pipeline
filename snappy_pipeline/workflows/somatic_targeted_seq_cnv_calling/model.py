@@ -200,12 +200,12 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class SomaticTargetedSeqCnvCalling(SnappyStepModel, validators.ToolsMixin):
+class SomaticTargetedSeqCnvCalling(SnappyStepModel):
     depends_on: SomaticTargetedSeqCnvCallingDependsOn = Field(
         default_factory=SomaticTargetedSeqCnvCallingDependsOn
     )
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvkit)]
 
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None

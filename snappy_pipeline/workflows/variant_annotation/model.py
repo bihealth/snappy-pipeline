@@ -28,9 +28,9 @@ class VariantAnnotationDependsOn(SnappyModel):
     variant_calling: str = "variant_calling"
 
 
-class VariantAnnotation(SnappyStepModel, validators.ToolsMixin):
+class VariantAnnotation(SnappyStepModel):
     depends_on: VariantAnnotationDependsOn = Field(default_factory=VariantAnnotationDependsOn)
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.vep)]
 
     vep: VepCustom | None = None

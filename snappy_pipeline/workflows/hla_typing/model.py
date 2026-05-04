@@ -26,12 +26,12 @@ class HlaTypingDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class HlaTyping(SnappyStepModel, validators.ToolsMixin, validators.NgsMappingMixin):
+class HlaTyping(SnappyStepModel, validators.NgsMappingMixin):
     """Override data set configuration search paths for FASTQ files"""
 
     depends_on: HlaTypingDependsOn = Field(default_factory=HlaTypingDependsOn)
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.optitype], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.optitype)]
 
     optitype: Optitype = Optitype()
 

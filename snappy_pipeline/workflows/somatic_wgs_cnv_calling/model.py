@@ -83,14 +83,12 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
     somatic_variant_calling: str = "somatic_variant_calling"
 
 
-class SomaticWgsCnvCalling(SnappyStepModel, validators.ToolsMixin):
+class SomaticWgsCnvCalling(SnappyStepModel):
     depends_on: SomaticWgsCnvCallingDependsOn = Field(default_factory=SomaticWgsCnvCallingDependsOn)
-
-    tools_ngs_mapping: list[str] = []
 
     somatic_variant_calling_tool: str
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvetti], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvetti)]
 
     canvas: Canvas | None = None
 

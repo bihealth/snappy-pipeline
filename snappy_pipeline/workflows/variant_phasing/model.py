@@ -57,12 +57,6 @@ class VariantPhasingDependsOn(SnappyModel):
 class VariantPhasing(SnappyStepModel):
     depends_on: VariantPhasingDependsOn = Field(default_factory=VariantPhasingDependsOn)
 
-    tools_ngs_mapping: list[str] = []
-    """expected tools for ngs mapping"""
-
-    tools_variant_calling: list[str] = []
-    """expected tools for variant calling"""
-
     phasings: list[str] = ["gatk_phasing_both"]
 
     ignore_chroms: list[str] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*"]

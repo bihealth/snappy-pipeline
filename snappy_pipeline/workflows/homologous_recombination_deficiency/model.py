@@ -29,11 +29,11 @@ class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
     cnv_calling: str = "cnv_calling"
 
 
-class HomologousRecombinationDeficiency(SnappyStepModel, validators.ToolsMixin):
+class HomologousRecombinationDeficiency(SnappyStepModel):
     depends_on: HomologousRecombinationDeficiencyDependsOn = Field(
         default_factory=HomologousRecombinationDeficiencyDependsOn
     )
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scarHRD], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.scarHRD)]
 
     scarHRD: ScarHRD | None = None

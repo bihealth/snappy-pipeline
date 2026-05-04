@@ -34,11 +34,11 @@ class TargetedSeqMeiCallingDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class TargetedSeqMeiCalling(SnappyStepModel, validators.ToolsMixin):
+class TargetedSeqMeiCalling(SnappyStepModel):
     depends_on: TargetedSeqMeiCallingDependsOn = Field(
         default_factory=TargetedSeqMeiCallingDependsOn
     )
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scramble], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.scramble)]
 
     scramble: Scramble | None = None

@@ -26,15 +26,6 @@ class TumorMutationalBurden(SnappyStepModel):
     somatic_variant_step: SomaticVariantStep = SomaticVariantStep.FILTER
     """Which pipeline step is used to compute signatures"""
 
-    tools_ngs_mapping: list[str] = []
-    """default to those configured for ngs_mapping"""
-
-    tools_somatic_variant_calling: list[str] = []
-    """default to those configured for somatic_variant_calling"""
-
-    tools_somatic_variant_annotation: list[str] = []
-    """default to those configured for somatic_variant_annotation"""
-
     has_annotation: bool = True
     """Has the inpyut vcf been annotated"""
 

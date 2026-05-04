@@ -95,7 +95,7 @@ class Arriba(SnappyModel):
         return self
 
 
-class SomaticGeneFusionCalling(SnappyStepModel, validators.ToolsMixin):
+class SomaticGeneFusionCalling(SnappyStepModel):
     path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
 

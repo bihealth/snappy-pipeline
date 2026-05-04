@@ -24,10 +24,10 @@ class SomaticWgsSvCallingDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class SomaticWgsSvCalling(SnappyStepModel, validators.ToolsMixin):
+class SomaticWgsSvCalling(SnappyStepModel):
     depends_on: SomaticWgsSvCallingDependsOn = Field(default_factory=SomaticWgsSvCallingDependsOn)
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.manta], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.manta)]
 
     manta: Manta | None = None
 

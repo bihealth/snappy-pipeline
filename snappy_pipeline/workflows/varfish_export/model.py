@@ -25,17 +25,6 @@ class VarfishExport(SnappyStepModel):
 
     # Optionally, you can override the exported mappers and variant callers by setting
     # the following variables.
-    tools_ngs_mapping: list[str] = []
-    """Can be used to override the exported mappers and variant callers"""
-
-    tools_variant_calling: list[str] = []
-    """Can be used to override the exported mappers and variant callers"""
-
-    tools_sv_calling_targeted: list[str] = []
-    """Can be used to override the exported mappers and variant callers"""
-
-    tools_sv_calling_wgs: list[str] = []
-    """Can be used to override the exported mappers and variant callers"""
 
     # The following configuration is used for parameterizing the output itself.
     release: str = "GRCh37"

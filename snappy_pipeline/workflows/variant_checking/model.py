@@ -17,12 +17,6 @@ class VariantCheckingDependsOn(SnappyModel):
 class VariantChecking(SnappyStepModel):
     depends_on: VariantCheckingDependsOn = Field(default_factory=VariantCheckingDependsOn)
 
-    tools_ngs_mapping: list[str] = []
-    """copied from ngs mapping config"""
-
-    tools_variant_calling: list[str] = []
-    """copied from variant calling config"""
-
     """Path to variant calling"""
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.peddy], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.peddy)]

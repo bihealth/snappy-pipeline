@@ -19,22 +19,12 @@ class SomaticPurityPloidyEstimateDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class SomaticPurityPloidyEstimate(SnappyStepModel, validators.ToolsMixin):
+class SomaticPurityPloidyEstimate(SnappyStepModel):
     depends_on: SomaticPurityPloidyEstimateDependsOn = Field(
         default_factory=SomaticPurityPloidyEstimateDependsOn
     )
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.ascat], min_length=1)]
-
-    tool_cnv_calling: str = "cnvetti"
-    """When set to 'copywriter', will trigger 'somatic_targeted_seq_cnv_calling'"""
-
-    tool_ngs_mapping: str = "bwa"
-    """
-        Configuration with read mapper and path to mapping output.
-        Will use this for generating a pileup using samtools
-        for obtaining the b allele fraction and computing coverage.
-    """
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.ascat)]
 
     path_somatic_targeted_seq_cnv_calling: str = ""
 

@@ -100,10 +100,10 @@ class PanelOfNormalsDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
+class PanelOfNormals(SnappyStepModel):
     depends_on: PanelOfNormalsDependsOn = Field(default_factory=PanelOfNormalsDependsOn)
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.mutect2)]
 
     ignore_chroms: Annotated[
         list[str],

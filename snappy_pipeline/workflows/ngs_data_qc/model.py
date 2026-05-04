@@ -78,12 +78,12 @@ class NgsDataQcDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class NgsDataQc(SnappyStepModel, validators.ToolsMixin):
+class NgsDataQc(SnappyStepModel):
     """Override data set configuration search paths for FASTQ files"""
 
     depends_on: NgsDataQcDependsOn = Field(default_factory=NgsDataQcDependsOn)
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.fastqc, Tool.picard], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.fastqc)]
 
     picard: Picard | None = None
 

@@ -75,10 +75,10 @@ class VariantCallingDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class VariantCalling(SnappyStepModel, validators.ToolsMixin):
+class VariantCalling(SnappyStepModel):
     depends_on: VariantCallingDependsOn = Field(default_factory=VariantCallingDependsOn)
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.gatk4_hc_gvcf], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.gatk4_hc_gvcf)]
 
     ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
 

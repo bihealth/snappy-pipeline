@@ -17,7 +17,7 @@ class SomaticMsiCallingDependsOn(SnappyModel):
 class SomaticMsiCalling(SnappyStepModel):
     depends_on: SomaticMsiCallingDependsOn = Field(default_factory=SomaticMsiCallingDependsOn)
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis_msi2], min_length=1)]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.mantis_msi2)]
 
     loci_bed: Annotated[
         str,

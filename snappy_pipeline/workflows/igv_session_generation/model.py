@@ -13,12 +13,6 @@ class IgvSessionGenerationDependsOn(SnappyModel):
 class IgvSessionGeneration(SnappyStepModel):
     depends_on: IgvSessionGenerationDependsOn = Field(default_factory=IgvSessionGenerationDependsOn)
 
-    tools_ngs_mapping: list[str] = []
-    """defaults to ngs_mapping tool"""
-
-    tools_variant_calling: list[str] = []
-    """defaults to variant_annotation tool"""
-
     @model_validator(mode="after")
     def ensure_at_least_one_dependency_is_specified(self):
         if not any(

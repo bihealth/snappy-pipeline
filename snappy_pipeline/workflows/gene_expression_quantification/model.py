@@ -56,14 +56,14 @@ class Tool(enum.Enum):
 
 
 class GeneExpressionQuantification(
-    SnappyStepModel, validators.NgsMappingMixin, validators.ToolsMixin
+    SnappyStepModel, validators.NgsMappingMixin
 ):
     path_ngs_mapping: str = "../ngs_mapping"
 
     path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[list[Tool], EnumField(Tool, min_length=1)] = [Tool.salmon]
+    tool: Tool  # TODO: add default = [Tool.salmon]
 
     strand: Strand | int = -1  # TODO: what is this default value of -1?
     """Use 0, 1 or 2 to force unstranded, forward or reverse strand. Use -1 to guess."""
