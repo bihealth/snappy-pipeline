@@ -174,7 +174,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
         kwargs = {
             "index_ngs_library": list(index_ngs_libraries.keys()),
-            "mapper": [self.parent.config.tools_ngs_mapping[0]],
+            "mapper": [[""][0]],
         }
         for path_tpl in path_tpls:
             yield from expand(path_tpl, **kwargs)
@@ -221,7 +221,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         path = "output/{var_caller}.{index_ngs_library}/out/{var_caller}.{index_ngs_library}.vcf.gz"
 
         vcfs = []
-        for var_caller in self.parent.config.tools_variant_calling:
+        for var_caller in [""]:
             vcfs.append(
                 variant_calling(path).format(
                     mapper=wildcards.mapper,
@@ -497,16 +497,6 @@ class VarfishExportWorkflow(BaseStep):
         self.register_module("ngs_mapping")
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
-        if not self.config.tools_variant_calling and self.depends_on.get("variant_calling"):
-            self.config.tools_variant_calling = self.get_task_config("variant_calling").tools
-        if not self.config.tools_sv_calling_targeted and self.depends_on.get("sv_calling_targeted"):
-            self.config.tools_sv_calling_targeted = self.get_task_config(
-                "sv_calling_targeted"
-            ).tools
-        if not self.config.tools_sv_calling_wgs and self.depends_on.get("sv_calling_wgs"):
-            self.config.tools_sv_calling_wgs = self.get_task_config("sv_calling_wgs").tools
 
         # Build additional information
         self.ngs_library_to_kit = self._build_ngs_library_to_kit()

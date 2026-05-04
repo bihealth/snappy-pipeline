@@ -55,9 +55,7 @@ class Tool(enum.Enum):
     stats = "stats"
 
 
-class GeneExpressionQuantification(
-    SnappyStepModel, validators.NgsMappingMixin
-):
+class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):
     path_ngs_mapping: str = "../ngs_mapping"
 
     path_link_in: str = ""

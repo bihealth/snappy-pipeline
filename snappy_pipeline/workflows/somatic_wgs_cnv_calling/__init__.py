@@ -803,12 +803,6 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         self.register_module("ngs_mapping")
         self.register_module("somatic_variant_calling")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
-        if not self.config.somatic_variant_calling_tool:
-            self.config.somatic_variant_calling_tool = self.w_config.step_config[
-                "somatic_variant_calling"
-            ].tools[0]
 
     @listify
     def get_result_files(self):

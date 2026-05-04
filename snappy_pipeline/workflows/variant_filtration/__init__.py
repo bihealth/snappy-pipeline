@@ -469,10 +469,6 @@ class VariantFiltrationWorkflow(BaseStep):
         # Register sub workflows
         self.register_module("variant_annotation")
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
-        if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.get_task_config("variant_calling").tools
 
     @listify
     def get_result_files(self):
@@ -481,8 +477,6 @@ class VariantFiltrationWorkflow(BaseStep):
         name_pattern = "jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            caller=self.config.tools_variant_calling,
             ext=EXT_VALUES,
         )
 

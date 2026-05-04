@@ -231,10 +231,6 @@ class IgvSessionGenerationWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WriteIgvSessionFileStepPart, LinkOutStepPart))
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.get_task_config("ngs_mapping").tools.dna
-        if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.get_task_config("variant_calling").tools
 
     @listify
     def get_result_files(self):
@@ -243,8 +239,6 @@ class IgvSessionGenerationWorkflow(BaseStep):
         name_pattern = "%s.{index_library.name}" % (self.prev_token,)
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            caller=self.config.tools_variant_calling,
             ext=EXT_VALUES,
         )
 
