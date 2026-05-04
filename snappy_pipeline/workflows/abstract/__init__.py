@@ -943,10 +943,12 @@ class BaseStep:
         if not default_module_name:
             default_module_name = logical_name
 
-        if hasattr(self.config, "depends_on") and hasattr(self.config.depends_on, logical_name):
+        if logical_name in self.depends_on:
+            target_task_name = self.depends_on[logical_name]
+        elif hasattr(self.config, "depends_on") and hasattr(self.config.depends_on, logical_name):
             target_task_name = getattr(self.config.depends_on, logical_name)
         else:
-            target_task_name = self.depends_on.get(logical_name, default_module_name)
+            target_task_name = default_module_name
 
         if logical_name in self.modules:
             raise ValueError(f"Dependency {logical_name} already registered!")
