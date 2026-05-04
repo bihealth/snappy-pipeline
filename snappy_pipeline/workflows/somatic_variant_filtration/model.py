@@ -118,14 +118,14 @@ class SomaticVariantFiltration(SnappyStepModel):
         default_factory=SomaticVariantFiltrationDependsOn
     )
 
-    tools_ngs_mapping: list[str] = []
-    """Default: use those defined in ngs_mapping step"""
+    tool_ngs_mapping: str = ""
+    """Default: use that defined in ngs_mapping step"""
 
-    tools_somatic_variant_calling: list[str] = []
-    """Default: use those defined in somatic_variant_calling step"""
+    tool_somatic_variant_calling: str = ""
+    """Default: use that defined in somatic_variant_calling step"""
 
-    tools_somatic_variant_annotation: list[str] = []
-    """Default: use those defined in somatic_variant_annotation step"""
+    tool_somatic_variant_annotation: str = ""
+    """Default: use that defined in somatic_variant_annotation step"""
 
     has_annotation: bool = True
 

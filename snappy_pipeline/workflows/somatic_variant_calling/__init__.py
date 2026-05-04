@@ -165,7 +165,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         )
 
     def check_config(self):
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -334,6 +334,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         output_files = {}
 
         self._validate_action(action)
+        if self.name != self.config.tool:
+            return {}
         base_path_out = self.base_path_out
 
         if action == "scatter":
@@ -404,6 +406,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         )
 
         self._validate_action(action)
+        if self.name != self.config.tool:
+            return {}
 
         if action != "gather":
             if action == "run":
@@ -465,7 +469,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
             )
         )
         self.register_module("ngs_mapping", "ngs_mapping")
-        if "mutect2" in self.config.tools:
+        if self.config.tool == "mutect2":
             if self.config.mutect2.contamination.enabled:
                 actions = self.sub_steps["mutect2"].actions
                 self.sub_steps["mutect2"].actions = tuple(
@@ -475,7 +479,8 @@ class SomaticVariantCallingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         name_pattern = "{tumor_library.name}"
-        for caller in set(self.config.tools) & set(SOMATIC_VARIANT_CALLERS):
+        caller = str(self.config.tool)
+        if caller in SOMATIC_VARIANT_CALLERS:
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                 ext=EXT_MATCHED[caller].values() if caller in EXT_MATCHED else EXT_VALUES,

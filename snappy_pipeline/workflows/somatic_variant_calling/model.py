@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
 
@@ -61,13 +61,13 @@ class SomaticVariantCallingDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
 
 
-class SomaticVariantCalling(SnappyStepModel, validators.ToolsMixin):
+class SomaticVariantCalling(SnappyStepModel):
     depends_on: SomaticVariantCallingDependsOn = Field(
         default_factory=SomaticVariantCallingDependsOn
     )
 
-    tools: Annotated[list[Tool], EnumField(Tool, [], min_length=1)]
-    """List of tools"""
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.mutect2)]
+    """Tool to use for somatic variant calling"""
 
     """Path to ngs_mapping"""
 

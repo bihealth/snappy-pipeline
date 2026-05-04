@@ -1,12 +1,11 @@
 import enum
-import itertools
 import os
 from enum import Enum
 from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
 
-from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.models import SizeString, SnappyModel, SnappyStepModel, ToggleModel
 
 
 class DnaMapper(Enum):
@@ -26,26 +25,12 @@ class MetaTool(Enum):
     MBCS = "mbcs"
 
 
-CombinedDnaTool = Enum(
-    "CombinedDnaTool",
-    {
-        (name, member.value)
-        for name, member in itertools.chain(
-            DnaMapper.__members__.items(), MetaTool.__members__.items()
-        )
-    },
-)
-
-
-class Tools(SnappyModel):
-    dna: Annotated[list[CombinedDnaTool], EnumField(CombinedDnaTool, [])]
-    """Required if DNA analysis; otherwise, leave empty."""
-
-    rna: Annotated[list[RnaMapper], EnumField(RnaMapper, [])]
-    """Required if RNA analysis; otherwise, leave empty."""
-
-    dna_long: Annotated[list[LongDnaMapper], EnumField(LongDnaMapper, [])]
-    """Required if long-read mapper used; otherwise, leave empty."""
+class Tool(enum.StrEnum):
+    bwa = "bwa"
+    bwa_mem2 = "bwa_mem2"
+    minimap2 = "minimap2"
+    star = "star"
+    mbcs = "mbcs"
 
 
 class TargetCoverageReportEntry(SnappyModel):
@@ -277,8 +262,8 @@ class Mbcs(SnappyModel):
 
 
 class NgsMapping(SnappyStepModel):
-    tools: Tools
-    """Aligners to use for the different NGS library types"""
+    tool: Tool
+    """Aligner to use for the NGS library"""
 
     path_link_in: str = ""
     """OPTIONAL Override data set configuration search paths for FASTQ files"""
@@ -316,12 +301,9 @@ class NgsMapping(SnappyStepModel):
     """
 
     @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for data_type in ("dna", "rna", "dna_long"):
-            tool_list = getattr(self.tools, data_type)
-            for tool in tool_list:
-                if not getattr(self, tool):
-                    raise ValueError(f"Tool {tool} not configured")
+    def ensure_tool_is_configured(self):
+        if not getattr(self, self.tool):
+            raise ValueError(f"Tool {self.tool} not configured")
         return self
 
     @model_validator(mode="after")

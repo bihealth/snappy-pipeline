@@ -56,6 +56,8 @@ class AdapterTrimmingStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
+        if self.name != self.config.tool:
+            return []
         return (
             ("out_done", self.base_path_out + "/out/.done"),
             ("report_done", self.base_path_out + "/report/.done"),
@@ -65,6 +67,8 @@ class AdapterTrimmingStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
+        if self.name != self.config.tool:
+            return []
         _ = action
         prefix = "work/{library_name}/log/{library_name}"
         key_ext = (

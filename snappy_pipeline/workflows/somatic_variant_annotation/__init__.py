@@ -61,6 +61,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
+        if self.name != self.config.tool:
+            return []
         tpl = self._name_template(self.config)
         prefix = os.path.join("work", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
@@ -74,6 +76,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
+        if self.name != self.config.tool:
+            return []
         tpl = self._name_template(self.config, annotator=self.annotator)
         prefix = os.path.join("work", tpl, "log", tpl)
 
@@ -213,8 +217,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        active_annotators = set(self.config.tools) & set(ANNOTATION_TOOLS)
-        if not active_annotators:
+        if str(self.config.tool) not in ANNOTATION_TOOLS:
             return
 
         name_pattern = AnnotateSomaticVcfStepPart._name_template(self.config)
@@ -234,13 +237,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
             ),
         )
 
-        full = list(
-            filter(
-                lambda x: self.sub_steps[x].has_full,
-                set(self.config.tools) & set(ANNOTATION_TOOLS),
-            ),
-        )
-        if full:
+        if self.sub_steps[self.config.tool].has_full:
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + ".full{ext}"),
                 ext=EXT_VALUES,

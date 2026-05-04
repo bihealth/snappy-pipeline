@@ -492,7 +492,7 @@ class MappingGetResultFilesMixin:
         if self.tool_category not in ("__any__", library_tool_category):
             return True
         else:
-            return self.name not in self.config.tools.get(library_tool_category)
+            return self.name != self.config.tool
 
     @listify
     def get_result_files(self):
@@ -505,9 +505,7 @@ class MappingGetResultFilesMixin:
         a library.
         """
         # Skip if step part has a tool category and it is not enabled
-        if self.tool_category != "__any__" and self.name not in getattr(
-            self.config.tools, self.tool_category, []
-        ):
+        if self.tool_category != "__any__" and self.name != self.config.tool:
             return
 
         for action in self.actions:
@@ -527,8 +525,7 @@ class MappingGetResultFilesMixin:
             for path_tpl in result_paths_tpls:
                 for library_name in self.parent.ngs_library_to_extra_infos.keys():
                     if not self.skip_result_files_for_library(library_name):
-                        # The mapper name is now part of the output path to avoid ambiguity
-                        yield from expand(path_tpl, library_name=library_name, mapper=self.name)
+                        yield from expand(path_tpl, library_name=library_name)
 
 
 class ReportGetResultFilesMixin:
@@ -580,8 +577,7 @@ class ReportGetResultFilesMixin:
                         and not self.skip_result_files_for_library(library_name)
                     ):
                         for path_tpl in result_paths_tpls:
-                            # Reports now match the tool-specific directory structure
-                            yield path_tpl.format(library_name=library_name, mapper=sub_step.name)
+                            yield path_tpl.format(library_name=library_name)
                 if action == "collect":
                     break  # only once
 
@@ -595,9 +591,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = (
-            f"work/{self.name}.{{{{library_name}}}}/out/{self.name}.{{{{library_name}}}}{{ext}}"
-        )
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
@@ -639,6 +633,8 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return concrete output files that all read mapping sub steps will write"""
         assert action in self.actions
+        if self.name != self.config.tool:
+            return
         # Obtain and yield the paths in the ``work/`` directory
         paths_work = self._get_output_files_run_work()
         yield from paths_work.items()
@@ -657,26 +653,24 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         for ext in self.extensions:
             yield ext[1:].replace(".", "_"), self.base_path_out.format(ext=ext)
         for ext in (".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
-            path = (
-                "work/{{mapper}}.{{library_name}}/report/bam_qc/{{mapper}}.{{library_name}}.bam{ext}"
-            ).format(ext=ext)
+            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_"), path
         for ext in (
             ".bamstats.txt.md5",
             ".flagstats.txt.md5",
             ".idxstats.txt.md5",
         ):
-            path = (
-                "work/{{mapper}}.{{library_name}}/report/bam_qc/{{mapper}}.{{library_name}}.bam{ext}"
-            ).format(ext=ext)
+            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
             yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         _ = action
+        if self.name != self.config.tool:
+            return
         # Unique log paths per tool
-        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.mapping"
+        prefix = "work/{library_name}/log/{library_name}.mapping"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -817,7 +811,7 @@ class StarStepPart(ReadMappingStepPart):
         extensions. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if self.__class__.name not in self.config.tools.rna:
+        if self.name != self.config.tool:
             return  # STAR not run, don't check configuration  # pragma: no cover
 
         # Check required global configuration settings present
@@ -888,11 +882,11 @@ class StrandednessStepPart(BaseStepPart):
         self._validate_action(action)
         if action == "infer":
             # Must reference the mapper-specific work directory
-            return {"bam": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"}
+            return {"bam": "work/{library_name}/out/{library_name}.bam"}
         elif action == "counts":
             return {
-                "counts": "work/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab",
-                "decision": "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json",
+                "counts": "work/{library_name}/out/{library_name}.GeneCounts.tab",
+                "decision": "work/{library_name}/strandedness/{library_name}.decision.json",
             }
 
     @dictify
@@ -900,20 +894,16 @@ class StrandednessStepPart(BaseStepPart):
         self._validate_action(action)
         if action == "infer":
             for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.json")):
-                yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+                yield key, "work/{library_name}/strandedness/{library_name}" + ext
                 yield (
                     key + "_md5",
-                    "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}"
-                    + ext
-                    + ".md5",
+                    "work/{library_name}/strandedness/{library_name}" + ext + ".md5",
                 )
             key, ext = ("output", ".decision.json")
-            yield key, "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+            yield key, "output/{library_name}/strandedness/{library_name}" + ext
             yield (
                 key + "_md5",
-                "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}"
-                + ext
-                + ".md5",
+                "output/{library_name}/strandedness/{library_name}" + ext + ".md5",
             )
             for key, ext in (
                 ("log", ".log"),
@@ -922,55 +912,47 @@ class StrandednessStepPart(BaseStepPart):
             ):
                 yield (
                     key,
-                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness" + ext,
+                    "output/{library_name}/log/{library_name}.strandedness" + ext,
                 )
                 yield (
                     key + "_md5",
-                    "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness"
-                    + ext
-                    + ".md5",
+                    "output/{library_name}/log/{library_name}.strandedness" + ext + ".md5",
                 )
         elif action == "counts":
             key, ext = ("counts", ".GeneCounts.tab")
-            yield key, "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext
+            yield key, "work/{library_name}/strandedness/{library_name}" + ext
             yield (
                 key + "_md5",
-                "work/{mapper}.{library_name}/strandedness/{mapper}.{library_name}" + ext + ".md5",
+                "work/{library_name}/strandedness/{library_name}" + ext + ".md5",
             )
             key, ext = ("output", ".GeneCounts.tab")
-            yield key, "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext
+            yield key, "output/{library_name}/out/{library_name}" + ext
             yield (
                 key + "_md5",
-                "output/{mapper}.{library_name}/out/{mapper}.{library_name}" + ext + ".md5",
+                "output/{library_name}/out/{library_name}" + ext + ".md5",
             )
 
     def get_result_files(self):
-        for mapper in self.config.tools.rna:
-            tpl_out = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.GeneCounts.tab"
-            tpl_strandedness = (
-                "output/{mapper}.{library_name}/strandedness/{mapper}.{library_name}.decision.json"
-            )
-            tpl_log = (
-                "output/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness.{ext}"
-            )
-            for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
-                if extra_info["extractionType"] == "RNA":
-                    yield tpl_out.format(library_name=library_name, mapper=mapper)
-                    yield tpl_out.format(library_name=library_name, mapper=mapper) + ".md5"
-                    yield tpl_strandedness.format(library_name=library_name, mapper=mapper)
-                    yield tpl_strandedness.format(library_name=library_name, mapper=mapper) + ".md5"
-                    for ext in ("log", "conda_info.txt", "conda_list.txt"):
-                        yield tpl_log.format(library_name=library_name, mapper=mapper, ext=ext)
-                        yield (
-                            tpl_log.format(library_name=library_name, mapper=mapper, ext=ext)
-                            + ".md5"
-                        )
+        if self.config.tool != "star":
+            return
+        tpl_out = "output/{library_name}/out/{library_name}.GeneCounts.tab"
+        tpl_strandedness = "output/{library_name}/strandedness/{library_name}.decision.json"
+        tpl_log = "output/{library_name}/log/{library_name}.strandedness.{ext}"
+        for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
+            if extra_info["extractionType"] == "RNA":
+                yield tpl_out.format(library_name=library_name)
+                yield tpl_out.format(library_name=library_name) + ".md5"
+                yield tpl_strandedness.format(library_name=library_name)
+                yield tpl_strandedness.format(library_name=library_name) + ".md5"
+                for ext in ("log", "conda_info.txt", "conda_list.txt"):
+                    yield tpl_log.format(library_name=library_name, ext=ext)
+                    yield (tpl_log.format(library_name=library_name, ext=ext) + ".md5")
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         _ = action
-        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.strandedness"
+        prefix = "work/{library_name}/log/{library_name}.strandedness"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1045,7 +1027,7 @@ class ExternalStepPart(ReadMappingStepPart):
         configuration. If invalid configuration, it raises InvalidConfiguration exception.
         """
         # Check if tool is at all included in workflow
-        if "external" not in self.config.tools.dna:
+        if self.name != self.config.tool:
             return  # External not run, don't check configuration  # pragma: no cover
 
     def _get_args_run(self, wildcards: Wildcards):
@@ -1149,18 +1131,18 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def _get_output_files_run_work(self):
         yield (
             "json",
-            "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz",
+            "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz",
         )
         yield (
             "json_md5",
-            "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz.md5",
+            "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz.md5",
         )
 
     @dictify
     def get_log_file(self, action):
         self._validate_action(action)
         if action == "run":
-            prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.target_cov_report"
+            prefix = "work/{library_name}/log/{library_name}.target_cov_report"
             key_ext = (
                 ("log", ".log"),
                 ("conda_info", ".conda_info.txt"),
@@ -1249,8 +1231,8 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_run(self):
-        yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-        yield "bai", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam.bai"
+        yield "bam", "work/{library_name}/out/{library_name}.bam"
+        yield "bai", "work/{library_name}/out/{library_name}.bam.bai"
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
@@ -1277,7 +1259,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_run_work(self):
-        prefix = "work/{mapper}.{library_name}/report/cov/{mapper}.{library_name}"
+        prefix = "work/{library_name}/report/cov/{library_name}"
         yield "vcf", prefix + ".cov.vcf.gz"
         yield "vcf_md5", prefix + ".cov.vcf.gz.md5"
         yield "vcf_tbi", prefix + ".cov.vcf.gz.tbi"
@@ -1290,7 +1272,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     @dictify
     def get_log_file(self, action):
         _ = action
-        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_collect_doc"
+        prefix = "work/{library_name}/log/{library_name}.bam_collect_doc"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1348,7 +1330,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_fingerprint(self):
-        yield "bam", "work/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
+        yield "bam", "work/{library_name}/out/{library_name}.bam"
 
     @dictify
     def get_output_files(self, action):
@@ -1368,10 +1350,10 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_fingerprint_work(self):
-        yield "npz", "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz"
+        yield "npz", "work/{library_name}/report/fingerprint/{library_name}.npz"
         yield (
             "npz_md5",
-            "work/{mapper}.{library_name}/report/fingerprint/{mapper}.{library_name}.npz.md5",
+            "work/{library_name}/report/fingerprint/{library_name}.npz.md5",
         )
 
     def get_log_file(self, action):
@@ -1380,7 +1362,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_log_files_fingerprint(self):
-        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.ngs_chew_fingerprint"
+        prefix = "work/{library_name}/log/{library_name}.ngs_chew_fingerprint"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),

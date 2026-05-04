@@ -284,7 +284,7 @@ rule ngs_mapping_counts_with_strand:
     shell:
         r"""
             set -x
-            if [[ "{wildcards[mapper]}" == "star" ]]
+            if [[ "{wf.config.tool}" == "star" ]]
             then
                 strand=$(grep -E '^ *"decision": "[012]"$' {input.decision} | sed -re 's/.*"([012])"$/\1/')
                 column=$(($strand + 2))

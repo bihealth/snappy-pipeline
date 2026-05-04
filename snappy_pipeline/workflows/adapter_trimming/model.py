@@ -4,7 +4,6 @@ from pydantic import Field, PositiveInt
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.models.validators import ToolsMixin
 
 
 class Tool(Enum):
@@ -874,10 +873,10 @@ class Bbduk(SnappyModel):
     """
 
 
-class AdapterTrimming(SnappyStepModel, ToolsMixin):
+class AdapterTrimming(SnappyStepModel):
     path_link_in: str | None = None
     """Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[list[Tool], EnumField(Tool, min_length=1, default=["bbduk", "fastp"])]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.FASTP)]
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None
