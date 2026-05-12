@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0](https://github.com/bihealth/snappy-pipeline/compare/v0.4.0...v0.5.0) (2026-04-27)
+
+
+### Features
+
+* add mehari as available tool to somatic variant annotation ([#655](https://github.com/bihealth/snappy-pipeline/issues/655)) ([a576d5e](https://github.com/bihealth/snappy-pipeline/commit/a576d5ee0efa6fa9afd017df4c68d38e8a610ab2))
+* add vembrane as somatic variant filtration tool ([#656](https://github.com/bihealth/snappy-pipeline/issues/656)) ([d827501](https://github.com/bihealth/snappy-pipeline/commit/d827501a205a99038cd4de0c5db87bf5221348c6))
+* allow cbioportal export for tumor only datasets ([#649](https://github.com/bihealth/snappy-pipeline/issues/649)) ([2aea68d](https://github.com/bihealth/snappy-pipeline/commit/2aea68d006caa5ef47316223a14763965c8993cd))
+* move config accesses in wrappers to params ([#536](https://github.com/bihealth/snappy-pipeline/issues/536)) ([1e937d3](https://github.com/bihealth/snappy-pipeline/commit/1e937d38c98978562c345c69d757371c7207dc6e))
+
+
+### Bug Fixes
+
+* wrappers/arriba: properly escape trim_cmd, raise default memory resource usage ([#645](https://github.com/bihealth/snappy-pipeline/issues/645)) ([aeead91](https://github.com/bihealth/snappy-pipeline/commit/aeead91544dc48e1c58815421e015e8558c32a99))
+
 ## [0.4.0](https://github.com/bihealth/snappy-pipeline/compare/v0.3.0...v0.4.0) (2025-09-16)
 
 
