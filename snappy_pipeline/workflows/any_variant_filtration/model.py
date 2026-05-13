@@ -95,6 +95,7 @@ class Filter(TypedDict, total=False):
     bcftools: Bcftools
     dkfz: Dkfz
     regions: Regions
+    vembrane: Vembrane
     protected: Protected
 
 

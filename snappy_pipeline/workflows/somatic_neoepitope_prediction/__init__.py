@@ -244,13 +244,9 @@ class PvacToolsStepPart(BaseStepPart):
 
     def _get_sample_names(self, wildcards: Wildcards) -> dict[str, str]:
         args = {}
-        tumor = self.parent.sample_table[
-            self.parent.sample_table["ngs_library"] == wildcards.tumor_dna
-        ]
         args["tumor_sample"] = wildcards.tumor_dna
         args["tumor_library"] = wildcards.tumor_dna
         if normal_dna := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
-            normal = self.parent.sample_table[self.parent.sample_table["ngs_library"] == normal_dna]
             args["normal_sample"] = normal_dna
             args["normal_library"] = normal_dna
         return args
@@ -432,7 +428,10 @@ class PvacSeqStepPart(PvacToolsStepPart):
             yield "vcf", "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.prepare_tpl)
         else:
             if self.cfg.use_all_transcripts:
-                yield "vcf", "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
+                yield (
+                    "vcf",
+                    "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl),
+                )
             else:
                 yield "vcf", "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl)
 
@@ -929,7 +928,10 @@ class NetChopStepPart(BaseStepPart):
             yield "vcf", combined(os.path.join("output", tpl, "out", tpl + ".vcf.gz"))
         else:
             if self.config.get(wildcards.tool).get("use_all_transcripts"):
-                yield "vcf", "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
+                yield (
+                    "vcf",
+                    "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl),
+                )
             else:
                 yield "vcf", "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl)
 

@@ -104,8 +104,8 @@ class Variant:
                 f"Illegal mutation position ?-{self.end} for variant {self.identifier}"
             )
         try:
-            trimmed = self.sequence[:self.sequence.index("*")]
-        except ValueError as e:
+            trimmed = self.sequence[: self.sequence.index("*")]
+        except ValueError:
             trimmed = self.sequence
         if self.end > len(trimmed):
             logging.warning(f"Mutation for variant {self.identifier} outside bounds")
@@ -173,8 +173,8 @@ class Variant:
             wt_seq = mutation[0]
             mt_seq = mutation[1]
             try:
-                mt_seq = mt_seq[:(mt_seq.index("*") + 1)]
-            except ValueError as e:
+                mt_seq = mt_seq[: (mt_seq.index("*") + 1)]
+            except ValueError:
                 pass
 
             sequence = tokens[9] if tokens[8] == "." or tokens[8] == "" else tokens[8]

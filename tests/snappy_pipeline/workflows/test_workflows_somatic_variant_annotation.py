@@ -5,6 +5,7 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
+from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 
@@ -49,13 +50,20 @@ def minimal_config():
 
           somatic_variant_annotation:
             path_somatic_variant: /path/to/somatic_variant_filtration
-            tools: ["vep"]
+            tools: ["vep", "mehari"]
             is_filtered: true
             vep:
               cache_dir: /path/to/dir/cache
               plugins:
                 - {'name': 'local_plugin', 'path': '/path/to/local_plugin.pm'}
                 - {'name': 'remote_plugin', 'url': 'https://to.com/remote_plugin.pm'}
+            mehari:
+              reference: /path/to/ref.fa
+              transcripts: ["/path/to/transcripts.zst"]
+              frequencies: /path/to/frequencies/CURRENT
+              clinvar: /path/to/clinvar/CURRENT
+              pick_transcript: "mane-select"
+              pick_transcript_mode: "all"
 
         data_sets:
           first_batch:
@@ -149,6 +157,7 @@ def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
 
 def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={})
     expected = {
         "config": {
             "cache_dir": "/path/to/dir/cache",
@@ -189,6 +198,87 @@ def test_vep_step_part_get_resource_usage(somatic_variant_annotation_workflow):
         assert actual == expected, msg_error
 
 
+# Tests for MehariAnnotateSomaticVcfStepPart ----------------------------------------------------------
+
+
+def test_mehari_step_part_get_input_files(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_input_files()"""
+    base_out = (
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.filtered.{tumor_library}"
+    )
+    expected = {
+        "vcf": base_out + ".vcf.gz",
+        "vcf_tbi": base_out + ".vcf.gz.tbi",
+        "reference": "/path/to/ref.fa",
+        "transcripts": ["/path/to/transcripts.zst"],
+        "frequencies": "/path/to/frequencies/CURRENT",
+        "clinvar": "/path/to/clinvar/CURRENT",
+    }
+    actual = somatic_variant_annotation_workflow.get_input_files("mehari", "run")
+    assert actual == expected
+
+
+def test_mehari_step_part_get_output_files(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_output_files()"""
+    base_out = (
+        "work/{mapper}.{var_caller}.mehari.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.mehari.filtered.{tumor_library}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_out)
+    actual = somatic_variant_annotation_workflow.get_output_files("mehari", "run")
+    assert actual == expected
+
+
+def test_mehari_step_part_get_log_file(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_output_files()"""
+    base_out = (
+        "work/{mapper}.{var_caller}.mehari.filtered.{tumor_library}/log/"
+        "{mapper}.{var_caller}.mehari.filtered.{tumor_library}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_out)
+    actual = somatic_variant_annotation_workflow.get_log_file("mehari", "run")
+    assert actual == expected
+
+
+def test_mehari_step_part_get_args(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={})
+    expected = {
+        "config": {
+            "assembly": "GRCh38",
+            "clinvar": "/path/to/clinvar/CURRENT",
+            "discard_utr_splice_variants": None,
+            "enable_compound_variants": None,
+            "frequencies": "/path/to/frequencies/CURRENT",
+            "in_memory_reference": None,
+            "keep_intergenic": None,
+            "phasing_strategy": None,
+            "pick_transcript": "mane-select",
+            "pick_transcript_mode": "all",
+            "reference": "/path/to/ref.fa",
+            "report_cdna_sequence": None,
+            "report_most_severe_consequence_by": None,
+            "report_protein_sequence": None,
+            "threads": 1,
+            "transcripts": ["/path/to/transcripts.zst"],
+        },
+    }
+    actual = somatic_variant_annotation_workflow.get_args("mehari", "run")(wildcards)
+    assert actual == expected
+
+
+def test_mehari_step_part_get_resource_usage(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "00:20:00", "memory": "8G", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_annotation_workflow.get_resource("mehari", "run", resource)()
+        assert actual == expected, msg_error
+
+
 # Tests for SomaticVariantAnnotationWorkflow -------------------------------------------------------
 
 
@@ -212,7 +302,7 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
         for var_caller in ("mutect2",)
-        for annotator in ("vep",)
+        for annotator in ("mehari", "vep")
     ]
     expected += [
         tpl.format(
@@ -239,7 +329,7 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         )
         for mapper in ("bwa",)
         for var_caller in ("mutect2",)
-        for annotator in ("vep",)
+        for annotator in ("mehari", "vep")
     ]
     expected = sorted(expected)
     actual = sorted(somatic_variant_annotation_workflow.get_result_files())
