@@ -124,7 +124,8 @@ class AnyVariantFiltration(SnappyStepModel):
     ] = []
     """Default: use those defined in variant annotation step"""
 
-    has_annotation: bool = True
+    has_annotation: bool
+    """Was variant annotation step already run? Mandatory input"""
 
     filter_list: list[Filter] = []
     """

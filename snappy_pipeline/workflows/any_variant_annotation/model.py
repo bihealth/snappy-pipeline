@@ -22,8 +22,8 @@ class AnyVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
         str, Field(examples=["../somatic_variant_calling"], alias="path_somatic_variant")
     ]
 
-    is_filtered: bool = False
-    """Has the vcf been already filtered"""
+    is_filtered: bool
+    """Has the vcf been already filtered. Mandatory input"""
 
     tools_ngs_mapping: list[str] = []
     """default to those configured for ngs_mapping"""
