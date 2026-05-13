@@ -51,8 +51,8 @@ bcftools view \
 | bcftools reheader \
     --samples <(echo "{samples}" | tr '\t' '\n') \
 | bcftools norm \
-    --multiallelics -both \
-    --output-type z --output {snakemake.output.vcf} --write-index=tbi
+    --multiallelics -any \
+    --output-type z --output {snakemake.output.vcf} --write-index=tbi \
 
 pushd $(dirname {snakemake.output.vcf})
 md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5

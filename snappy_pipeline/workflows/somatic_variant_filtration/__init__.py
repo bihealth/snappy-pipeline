@@ -95,7 +95,7 @@ class SomaticVariantFiltrationWorkflow(AnyVariantFiltrationWorkflow):
 
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=False, allow_missing_tumor=False)
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=False)
     }
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):

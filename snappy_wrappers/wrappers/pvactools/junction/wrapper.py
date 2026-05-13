@@ -55,6 +55,13 @@ conda info > {snakemake.log.conda_info}
 export TMPDIR=$(realpath $TMPDIR)
 vcf=$TMPDIR/normalized.vcf.gz
 
+if [[ "{snakemake.input.features}" == "*.gz" ]]
+then
+    zcat {snakemake.input.features} > $TMPDIR/features.gtf
+else
+    ln -sr {snakemake.input.features} $TMPDIR/features.gtf
+fi
+
 bcftools norm \
     --multiallelics -both \
     --output $vcf --output-type z --write-index=tbi \
@@ -65,6 +72,6 @@ regtools cis-splice-effects identify -s {args[strandedness]} \
     $vcf \
     {snakemake.input.bam} \
     {snakemake.input.reference} \
-    {snakemake.input.features}
+    $TMPDIR/features.gtf
 """
 )

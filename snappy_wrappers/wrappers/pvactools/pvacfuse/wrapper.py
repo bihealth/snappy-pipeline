@@ -47,7 +47,7 @@ def bindings_for_container(
 alleles = ",".join(args["class_i"] + args["class_ii"])
 
 if peptides := getattr(snakemake.input, "peptides", ""):
-    peptides = f"--peptide-fasta {input_fns['peptides']}"
+    peptides = f"--run-reference-proteome-similarity --peptide-fasta {input_fns['peptides']}"
 if genes := getattr(snakemake.input, "genes", ""):
     genes = f"--genes-of-interest-file {input_fns['genes']}"
 
@@ -91,21 +91,20 @@ md5() {{
 set -x
 # -----------------------------------------------------------------------------
 
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 export TMPDIR=$(realpath $TMPDIR)
+export LC_ALL=C.UTF-8
 
 # Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
 # Create home on TMPDIR? But then the calling script is gone...
-home=$(dirname {snakemake.output.path})/../home/pvacfuse
+out=$(dirname {snakemake.output.done})
+out=$(realpath $out)
+rm -rf $out
+mkdir -p $out
+
+home=$(dirname $out)/home
 home=$(realpath $home)
 rm -rf $home
 mkdir -p $home
-
-rm -rf $(dirname {snakemake.output.path})
-mkdir -p $(dirname {snakemake.output.path})
 
 cat << __EOF > $home/run_pVACfuse.sh
 pvacfuse run --n-threads {snakemake.threads} \\
@@ -114,7 +113,7 @@ pvacfuse run --n-threads {snakemake.threads} \\
     {peptides} {genes} \\
     {input_fns[fusions]} \\
     {args[tumor_sample]} {alleles} {args[algorithms]} \\
-    $(dirname {output_fns[path]})
+    $(dirname {output_fns[done]})
 __EOF
 chmod +x $home/run_pVACfuse.sh
 
@@ -122,7 +121,8 @@ apptainer exec \
     --home $home --bind $TMPDIR:$TMPDIR:rw \
     {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACfuse.sh
 
-touch {snakemake.output.path}
 touch {snakemake.output.done}
+mkdir -p $(dirname {snakemake.output.filtered})
+touch {snakemake.output.filtered}
 """
 )

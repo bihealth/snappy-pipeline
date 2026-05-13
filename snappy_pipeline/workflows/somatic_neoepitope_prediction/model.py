@@ -1,4 +1,6 @@
+import dataclasses
 import enum
+import re
 
 from pydantic import model_validator
 
@@ -8,6 +10,38 @@ from snappy_pipeline.workflows.hla_typing.model import (
     MHCIClassRnaTool,
     MHCIIClassDnaTool,
     MHCIIClassRnaTool,
+)
+
+
+@dataclasses.dataclass
+class MHC_CLASS:
+    name: str
+    genes: tuple[str]
+    dirname: str
+    filename: str
+    prefix: str
+    pattern: re.Pattern = dataclasses.field(init=False)
+
+    def __post_init__(self):
+        self.pattern = re.compile(
+            r"^(?P<valid>({})\*[0-9]+:[0-9]+N?)(?P<suppl>.*)$".format("|".join(self.genes))
+        )
+
+
+MHC_CLASS_I = MHC_CLASS(
+    name="class_i",
+    genes=("A", "B", "C"),
+    dirname="MHC_Class_I",
+    filename="MHC_I",
+    prefix="HLA-",
+)
+
+MHC_CLASS_II = MHC_CLASS(
+    name="class_ii",
+    genes=("DPA1", "DPB1", "DPA2", "DPB2", "DQA1", "DQB1"),
+    dirname="MHC_Class_II",
+    filename="MHC_II",
+    prefix="",
 )
 
 
@@ -206,9 +240,6 @@ class PVACtools(SnappyModel):
 
     problematic_amino_acids: list[str] = []
 
-    run_reference_proteome_similarity: bool = False
-    peptide_fasta: str | None = None
-
     genes_of_interest_file: str | None = None
 
     fasta_size: int = 200
@@ -224,16 +255,10 @@ class PVACtools(SnappyModel):
             raise ValueError("Epitope lengths must be defined for at least one MHC class")
         return self
 
-    @model_validator(mode="after")
-    def ensure_peptide_fasta_exists(self):
-        if self.run_reference_proteome_similarity and not self.peptide_fasta:
-            raise ValueError(
-                "Missing peptide fasta file required when enabling 'run_reference_proteome_similarity'"
-            )
-        return self
-
 
 class PVACseq(PVACtools):
+    use_all_transcripts: bool = False
+
     normal_cov: int = 25
     tdna_cov: int = 25
     trna_cov: int = 2
@@ -265,6 +290,8 @@ class PVACfuse(PVACtools):
 
 
 class PVACsplice(PVACtools):
+    use_all_transcripts: bool = False
+
     normal_cov: int = 25
     tdna_cov: int = 25
     trna_cov: int = 2
@@ -348,6 +375,8 @@ class RnaQuantification(ToggleModel):
     path_gene_expression_quantification: str = "../gene_expression_quantification"
     tool_gene_expression_quantification: SupportedExpressionTool = SupportedExpressionTool.SALMON
 
+    duplicate_transcripts_table: str | None = None
+
     ensembl_id: bool = True
     use_ensembl_version: EnsemblVersion = EnsemblVersion.NONE
 
@@ -371,6 +400,54 @@ class Phasing(ToggleModel):
     path_combine_variants: str = "../combine_variants"
 
 
+class GermlineVariantStep(enum.StrEnum):
+    CALL = "germline_variant_calling"
+    ANNOTATION = "germline_variant_annotation"
+    FILTER = "germline_variant_filtration"
+
+
+class Proteome(ToggleModel):
+    path_germline_variants: str | None = None
+    tool_ngs_mapping: str = "bwa"
+    tool_germline_variant_calling: str = "gatk4_hc"
+    tool_germline_variant_annotation: str | None = None
+    is_filtered: bool = True
+    germline_variant_step: GermlineVariantStep = GermlineVariantStep.FILTER
+
+    add_unmutated: bool = True
+    external_proteome: str | None = None
+
+    @model_validator(mode="after")
+    def ensure_valid_variant_configuration(self):
+        if self.enabled and self.path_germline_variants:
+            match self.germline_variant_step:
+                case GermlineVariantStep.CALL:
+                    if self.is_filtered | self.tool_germline_variant_annotation:
+                        raise ValueError(
+                            "Filtration & annotation tool must be unset in calling mode"
+                        )
+                case GermlineVariantStep.FILTER:
+                    if not self.is_filtered:
+                        raise ValueError("Filtration must be set in filtration mode")
+                case GermlineVariantStep.ANNOTATION:
+                    if not self.tool_germline_variant_annotation:
+                        raise ValueError("Annotation tool must be set in annotation mode")
+        return self
+
+    @model_validator(mode="after")
+    def ensure_at_least_one_proteome_source(self):
+        if (
+            self.enabled
+            and not self.path_germline_variants
+            and not self.add_unmutated
+            and not self.external_proteome
+        ):
+            raise ValueError(
+                "One proteome source must be configured when proteome similarity is enabled"
+            )
+        return self
+
+
 class SomaticNeoepitopePrediction(SnappyStepModel):
     tools: list[SupportedPredictionTool] = [SupportedPredictionTool.PVACSEQ]
 
@@ -383,6 +460,7 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
     pileup: RnaMapping = RnaMapping()
     quantification: RnaQuantification = RnaQuantification()
     phasing: Phasing = Phasing()
+    proteome: Proteome = Proteome()
 
     pvacseq: PVACseq = PVACseq()
     pvacfuse: PVACfuse = PVACfuse()

@@ -1,4 +1,5 @@
 import argparse
+import csv
 import enum
 import logging
 import os
@@ -85,7 +86,7 @@ class TPM:
         self.feature_type = feature_type
 
         self.filename: Optional[str | Path] = None
-        self.tpm: dict[str, float] = {}
+        self.tpms: dict[str, float] = {}
 
     def _process_feature(self, feature_id: str, fmt: TPMFileFormat) -> str:
         if fmt.ensembl_feature:
@@ -150,6 +151,27 @@ class TPM:
 
         logging.info(
             f"{len(self.tpms)} features read from file {self.filename}, summing to {sum(self.tpms.values())}"
+        )
+        return self.tpms
+
+    def read_duplicates(self, filename: str | Path) -> dict[str, float]:
+        """Read file of duplicates, typically transcripts with identical sequence"""
+        n = len(self.tpms)
+        s = sum(self.tpms.values())
+
+        with open(filename, "rt") as f:
+            reader = csv.DictReader(f, delimiter="\t")
+            for row in reader:
+                assert row["RetainedRef"] in self.tpms, (
+                    f"Unknown retained feature {row['RetainedRef']}"
+                )
+                assert row["DuplicateRef"] not in self.tpms, (
+                    f"Duplicated feature {row['DuplicateRef']} already in database"
+                )
+                self.tpms[row["DuplicateRef"]] = self.tpms[row["RetainedRef"]]
+
+        logging.info(
+            f"{len(self.tpms) - n} duplicate features read from file {self.filename}, adding {sum(self.tpms.values()) - s} to the total expression"
         )
         return self.tpms
 
@@ -641,6 +663,7 @@ def main() -> int:
         "--transcript-tpms",
         help="Transcript expression file (*.transcript.sf), must contain the ENSEMBL feature ID in column 'Name', and the TPM value in column 'TPM'",
     )
+    parser.add_argument("-d", "--duplicates", help="Table of duplicate transcripts")
     parser.add_argument(
         "-p",
         "--pileup",
@@ -740,6 +763,8 @@ def main() -> int:
         expression_format = _get_expression_format(args, FeatureType.Transcript)
         transcript_tpms = TPM(feature_type=FeatureType.Transcript)
         transcript_tpms.read_file(args.transcript_tpms, fmt=expression_format)
+        if args.duplicates:
+            transcript_tpms.read_duplicates(args.duplicates)
     else:
         transcript_tpms = None
 

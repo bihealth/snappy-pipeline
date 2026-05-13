@@ -74,7 +74,6 @@ The default configuration is as follows.
 
 import json
 import os
-import re
 
 import pandas as pd
 
@@ -100,6 +99,9 @@ from .model import PVACseq as PVACseqModel
 from .model import PVACfuse as PVACfuseModel
 from .model import PVACsplice as PVACspliceModel
 from .model import NetChop as NetChopModel
+from .model import Proteome as ProteomeModel
+from .model import GermlineVariantStep
+from .model import MHC_CLASS, MHC_CLASS_I, MHC_CLASS_II
 
 
 __author__ = "Eric Blanc"
@@ -107,22 +109,8 @@ __email__ = "eric.blanc@bih-charite.de"
 
 #: Extensions of files to create as main payload
 PREPARE_EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-PREDICT_EXT_VALUES = (
-    ".all_epitopes.tsv",
-    ".filtered.tsv",
-    ".all_epitopes.tsv.md5",
-    ".filtered.tsv.md5",
-)
 #: Default configuration for the somatic_gene_fusion_calling step
 DEFAULT_CONFIG = SomaticNeoepitopePredictionConfigModel.default_config_yaml_string()
-
-#: MHC class I & II genes & pseudo-genes
-CLASS_I = ("A", "B", "C")  # , "E", "F", "G", "H", "J", "K", "L", "N", "S", "T", "U", "V", "W", "Y")
-CLASS_II = ("DPA1", "DPB1", "DPA2", "DPB2", "DQA1", "DQB1")
-# , "DRB1", "DRB2", "DRB3", "DRB4", "DRB5", "DRB7")
-
-EXTRACTION_TYPES = ("dna", "rna")
-MHC_CLASSES = ("class_i", "class_ii")
 
 
 class UnsupportedProtocolStrand(Exception):
@@ -135,15 +123,14 @@ class PvacToolsStepPart(BaseStepPart):
     #: Step name
     name = "pvactools"
 
-    actions = ("install",)
+    actions = ("install", "normalize", "normalize_full")
     require_rna: bool = False
 
-    CLASS_I_PATTERN = re.compile(
-        r"^(?P<valid>({})\*[0-9]+:[0-9]+N?)(?P<suppl>.*)$".format("|".join(CLASS_I))
-    )
-    CLASS_II_PATTERN = re.compile(
-        r"^(?P<valid>({})\*[0-9]+:[0-9]+N?)(?P<suppl>.*)$".format("|".join(CLASS_II))
-    )
+    default_resource_usage = {
+        "install": ResourceUsage(threads=1, time="03:59:59", memory="6G"),
+        "normalize": ResourceUsage(threads=1, time="01:00:00", memory="4G"),
+        "normalize_full": ResourceUsage(threads=1, time="01:00:00", memory="4G"),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -156,10 +143,11 @@ class PvacToolsStepPart(BaseStepPart):
         self.output_tpl = f"{prefix}.{self.name}.{postfix}"
 
         self.hla_tools = {}
-        for extraction_type in EXTRACTION_TYPES:
-            for mhc_class in MHC_CLASSES:
+        for extraction_type in ExtractionType:
+            extraction_type = extraction_type.lower()
+            for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
                 if tool := self.config.tools_hla_typing.get(extraction_type, {}).get(
-                    mhc_class, None
+                    mhc_class.name, None
                 ):
                     if extraction_type not in self.hla_tools:
                         self.hla_tools[extraction_type] = {}
@@ -168,13 +156,35 @@ class PvacToolsStepPart(BaseStepPart):
                         .get(tool)
                         .get("mapper", None)
                     ):
-                        self.hla_tools[extraction_type][mhc_class] = f"{mapper}.{tool}"
+                        self.hla_tools[extraction_type][mhc_class.name] = f"{mapper}.{tool}"
                     else:
-                        self.hla_tools[extraction_type][mhc_class] = tool
+                        self.hla_tools[extraction_type][mhc_class.name] = tool
+
+        if self.config.proteome.enabled:
+            if self.config.proteome.path_germline_variants:
+                self.proteome_file = (
+                    f"work/{self.prepare_tpl}/out/{self.prepare_tpl}.proteome.fa.gz"
+                )
+            elif self.config.proteome.add_unmutated:
+                self.proteome_file = "work/pvactools/out/proteome.fa.gz"
+            else:
+                self.proteome_file = self.config.proteome.external_proteome
+        else:
+            self.proteome_file = None
 
     def get_input_files(self, action):
         self._validate_action(action)
         return getattr(self, f"_get_input_files_{action}")
+
+    def _get_input_files_normalize(self, wildcards: Wildcards) -> dict[str, str]:
+        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
+        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
+        return {"annotated": annotation(tpl)}
+
+    def _get_input_files_normalize_full(self, wildcards: Wildcards) -> dict[str, str]:
+        tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
+        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
+        return {"annotated": annotation(tpl)}
 
     def get_output_files(self, action):
         if action == "install":
@@ -183,23 +193,39 @@ class PvacToolsStepPart(BaseStepPart):
         return getattr(self, f"_get_output_files_{action}")()
 
     def _get_output_files_run(self):
-        tpl = (
-            "work/"
+        return {
+            "filtered": "work/"
             + self.output_tpl
-            + "/{mhc_class_d,MHC_Class_II?|combined}/{sample}.{mhc_class_fn,MHC_II?|Combined}.filtered.tsv"
-        )
-        return {"filtered": tpl}
+            + "/out/{mhc_class_d,MHC_Class_II?|combined}/{tumor_dna}.{mhc_class_fn,MHC_II?|Combined}.filtered.tsv",
+            "done": "work/"
+            + self.output_tpl
+            + "/out/{mhc_class_d,MHC_Class_II?|combined}.{tumor_dna}.{mhc_class_fn,MHC_II?|Combined}.done",
+        }
+
+    def _get_output_files_normalize(self):
+        tpl = "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl)
+        return {"vcf": tpl}
+
+    def _get_output_files_normalize_full(self):
+        tpl = "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
+        return {"vcf": tpl}
 
     def get_args(self, action):
         self._validate_action(action)
         return getattr(self, f"_get_args_{action}")
+
+    def _get_args_normalize(self, wildcards: Wildcards) -> dict[str, str]:
+        return self._get_sample_names(wildcards)
+
+    def _get_args_normalize_full(self, wildcards: Wildcards) -> dict[str, str]:
+        return self._get_args_normalize(wildcards)
 
     def get_log_file(self, action):
         """Return mapping of log files."""
         if action == "install":
             return f"work/containers/log/{self.name}.log"
         if action == self.name:
-            tpl = "work/{tpl}/log/{{mhc_class_d,MHC_Class_II?|combined}}.{{sample}}.{{mhc_class_fn,MHC_II?|Combined}}.filtered".format(
+            tpl = "work/{tpl}/log/{{mhc_class_d,MHC_Class_II?|combined}}.{{tumor_dna}}.{{mhc_class_fn,MHC_II?|Combined}}.filtered".format(
                 tpl=self.output_tpl
             )
         else:
@@ -221,25 +247,13 @@ class PvacToolsStepPart(BaseStepPart):
         tumor = self.parent.sample_table[
             self.parent.sample_table["ngs_library"] == wildcards.tumor_dna
         ]
-        args["tumor_sample"] = tumor["bio_sample"].iat[0]
+        args["tumor_sample"] = wildcards.tumor_dna
         args["tumor_library"] = wildcards.tumor_dna
         if normal_dna := self.parent.tumor_dna.get(wildcards.tumor_dna, None):
             normal = self.parent.sample_table[self.parent.sample_table["ngs_library"] == normal_dna]
-            args["normal_sample"] = normal["bio_sample"].iat[0]
+            args["normal_sample"] = normal_dna
             args["normal_library"] = normal_dna
         return args
-
-    def _get_mhc_classes_labels(self) -> tuple[str, str]:
-        if self.config.get(self.name).get("class_i_epitope_length", []):
-            tool_dirname = "MHC_Class_I"
-            tool_filename = "MHC_I"
-            if self.config.get(self.name).get("class_ii_epitope_length", []):
-                tool_dirname = "combined"
-                tool_filename = "Combined"
-        else:
-            tool_dirname = "MHC_Class_II"
-            tool_filename = "MHC_II"
-        return (tool_dirname, tool_filename)
 
     @listify
     def _get_hla_files(self, wildcards: Wildcards):
@@ -249,15 +263,15 @@ class PvacToolsStepPart(BaseStepPart):
         tumor_rna = self.parent.tumor_rna.get(tumor_dna, None)
 
         input_files = []
-        for mhc_class in MHC_CLASSES:
-            if tool := self.hla_tools.get("dna", {}).get(mhc_class, None):
+        for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
+            if tool := self.hla_tools.get("dna", {}).get(mhc_class.name, None):
                 tpl = "output/{tool}.{library_name}/out/{tool}.{library_name}.json"
                 input_files.append(tpl.format(tool=tool, library_name=tumor_dna))
                 if normal_dna:
                     input_files.append(tpl.format(tool=tool, library_name=normal_dna))
         if tumor_rna:
-            for mhc_class in MHC_CLASSES:
-                if tool := self.hla_tools.get("rna", {}).get(mhc_class, None):
+            for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
+                if tool := self.hla_tools.get("rna", {}).get(mhc_class.name, None):
                     tpl = "output/{tool}.{library_name}/out/{tool}.{library_name}.json"
                     input_files.append(tpl.format(tool=tool, library_name=tumor_rna))
 
@@ -293,34 +307,21 @@ class PvacToolsStepPart(BaseStepPart):
             yield f"--{k} {v}"
 
     @classmethod
-    def _read_hla_values(cls, hla_typing_files: list[str], mhc_class: str) -> list[str]:
-        if mhc_class == MHC_CLASSES[0]:
-            loci = CLASS_I
-            pattern = cls.CLASS_I_PATTERN
-            prefix = "HLA-"
-        elif mhc_class == MHC_CLASSES[1]:
-            loci = CLASS_II
-            pattern = cls.CLASS_II_PATTERN
-            prefix = ""
-        else:
-            raise MissingConfiguration(f"Unknown MHC class {mhc_class}")
-
+    def _read_hla_values(cls, hla_typing_files: list[str], mhc_class: MHC_CLASS) -> list[str]:
         hla_types = []
         for fn in hla_typing_files:
             with open(fn, "rt") as f:
                 calls: dict[str, Any] = json.load(f)
             for locus, alleles in calls.items():
-                if locus in loci:
+                if locus in mhc_class.genes:
                     for allele in alleles:
-                        m = pattern.match(allele)
+                        m = mhc_class.pattern.match(allele)
                         if m:
-                            hla_types.append(prefix + m.group("valid"))
+                            hla_types.append(mhc_class.prefix + m.group("valid"))
 
         return list(set(hla_types))
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        if action == "install":
-            return ResourceUsage(threads=1, time="03:59:59", memory="6G")
         self._validate_action(action)
         if action in ("pvacseq", "pvacfuse", "pvacsplice"):
             return ResourceUsage(
@@ -343,7 +344,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
     name = "pvacseq"
 
     #: Actions
-    actions = ("pileup", "rename", "combine", "pvacseq")
+    actions = ("pileup", "combine", "pvacseq")
 
     #: Resources
     default_resource_usage = {
@@ -351,11 +352,6 @@ class PvacSeqStepPart(PvacToolsStepPart):
             threads=1,
             time="03:59:59",
             memory="6G",
-        ),
-        "rename": ResourceUsage(
-            threads=1,
-            time="00:59:59",
-            memory="2G",
         ),
         "combine": ResourceUsage(
             threads=1,
@@ -371,7 +367,6 @@ class PvacSeqStepPart(PvacToolsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.tool_dirname, self.tool_filename = self._get_mhc_classes_labels()
         self.cfg: PVACseqModel = self.config.pvacseq
 
     def _get_input_files_pileup(self, wildcards: Wildcards) -> dict[str, str]:
@@ -384,7 +379,10 @@ class PvacSeqStepPart(PvacToolsStepPart):
         ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
         input_files["bam"] = ngs_mapping(tpl)
 
-        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
+        if self.cfg.use_all_transcripts:
+            tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
+        else:
+            tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
         annotation = self.parent.sub_workflows["somatic_variant_annotation"]
         input_files["loci"] = annotation(tpl)
 
@@ -392,15 +390,12 @@ class PvacSeqStepPart(PvacToolsStepPart):
 
         return input_files
 
-    def _get_input_files_rename(self, wildcards: Wildcards) -> dict[str, str]:
-        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.sub_workflows["somatic_variant_annotation"]
-        return {"annotated": annotation(tpl)}
-
     def _get_input_files_combine(self, wildcards: Wildcards) -> dict[str, str]:
-        input_files = {
-            "annotated": "work/{tpl}/out/{tpl}.renamed.vcf.gz".format(tpl=self.prepare_tpl)
-        }
+        if self.cfg.use_all_transcripts:
+            tpl = "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
+        else:
+            tpl = "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl)
+        input_files = {"annotated": tpl}
 
         if self.config.pileup.enabled and wildcards.tumor_dna in self.parent.tumor_rna:
             tpl = "work/{tpl}/out/{tpl}.pileup.vcf.gz".format(tpl=self.prepare_tpl)
@@ -417,6 +412,11 @@ class PvacSeqStepPart(PvacToolsStepPart):
             tpl = f"output/{name}/out/{name}.transcript.sf"
             input_files["transcript_tpms"] = quantification(tpl)
 
+            if self.config.quantification.duplicate_transcripts_table:
+                input_files["duplicate_transcripts_table"] = (
+                    self.config.quantification.duplicate_transcripts_table
+                )
+
         return input_files
 
     @dictify
@@ -426,7 +426,15 @@ class PvacSeqStepPart(PvacToolsStepPart):
         else:
             yield "container", "work/containers/out/pvactools.sif"
 
-        yield "vcf", "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.prepare_tpl)
+        if wildcards.tumor_dna in self.parent.tumor_rna and (
+            self.config.pileup.enabled or self.config.quantification.enabled
+        ):
+            yield "vcf", "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.prepare_tpl)
+        else:
+            if self.cfg.use_all_transcripts:
+                yield "vcf", "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
+            else:
+                yield "vcf", "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl)
 
         yield "alleles", self._get_hla_files(wildcards)
 
@@ -435,14 +443,11 @@ class PvacSeqStepPart(PvacToolsStepPart):
 
         if self.cfg.genes_of_interest_file:
             yield "genes", self.cfg.genes_of_interest_file
-        if self.cfg.run_reference_proteome_similarity and self.cfg.peptide_fasta:
-            yield "peptides", self.cfg.peptide_fasta
+        if self.proteome_file:
+            yield "peptides", self.proteome_file
 
     def _get_output_files_pileup(self):
         return {"vcf": "work/{tpl}/out/{tpl}.pileup.vcf.gz".format(tpl=self.prepare_tpl)}
-
-    def _get_output_files_rename(self):
-        return {"vcf": "work/{tpl}/out/{tpl}.renamed.vcf.gz".format(tpl=self.prepare_tpl)}
 
     def _get_output_files_combine(self):
         return {"vcf": "work/{tpl}/out/{tpl}.combined.vcf.gz".format(tpl=self.prepare_tpl)}
@@ -459,30 +464,28 @@ class PvacSeqStepPart(PvacToolsStepPart):
         if args["baq"] is None:
             del args["baq"]
 
-        args = PvacSeqStepPart._extra_args_lists(args)
-        extra_args = " ".join(sorted(list(PvacSeqStepPart._extra_args_flags(args))))
+        args = self._extra_args_lists(args)
+        extra_args = " ".join(sorted(list(self._extra_args_flags(args))))
 
-        extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
+        extra_args += " " + " ".join(sorted(list(self._group_extra_args(args))))
 
         return {
             "tumor_sample": self._get_sample_names(wildcards)["tumor_sample"],
             "extra_args": extra_args.strip(),
         }
 
-    def _get_args_rename(self, wildcards: Wildcards) -> dict[str, str]:
-        return self._get_sample_names(wildcards)
-
     def _get_args_combine(self, wildcards: Wildcards) -> dict[str, str]:
         args = dict(self.config.quantification.model_dump(by_alias=True))
 
         del args["enabled"]
         del args["path_gene_expression_quantification"]
+        del args["duplicate_transcripts_table"]
         args["format"] = args.pop("tool_gene_expression_quantification")
 
-        args = PvacSeqStepPart._extra_args_lists(args)
-        extra_args = " ".join(sorted(list(PvacSeqStepPart._extra_args_flags(args))))
+        args = self._extra_args_lists(args)
+        extra_args = " ".join(sorted(list(self._extra_args_flags(args))))
 
-        extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
+        extra_args += " " + " ".join(sorted(list(self._group_extra_args(args))))
 
         sample_names = self._get_sample_names(wildcards)
         return {
@@ -495,7 +498,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
         args = dict(self.cfg.model_dump(by_alias=True))
 
         del args["path_container"]
-        del args["peptide_fasta"]
+        del args["use_all_transcripts"]
         del args["genes_of_interest_file"]
         del args["net_chop"]
         del args["netmhc_stab"]
@@ -514,24 +517,27 @@ class PvacSeqStepPart(PvacToolsStepPart):
         if args["maximum_transcript_support_level"] is None:
             del args["maximum_transcript_support_level"]
 
-        args = PvacSeqStepPart._extra_args_lists(args)
-        extra_args = " ".join(sorted(list(PvacSeqStepPart._extra_args_flags(args))))
-
-        extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
-
-        class_i = self._read_hla_values(input["alleles"], MHC_CLASSES[0])
-        class_ii = self._read_hla_values(input["alleles"], MHC_CLASSES[1])
-
         samples = self._get_sample_names(wildcards)
 
+        if "normal_sample" not in samples:
+            del args["normal_vaf"]
+            del args["normal_cov"]
+
+        args = self._extra_args_lists(args)
+        extra_args = " ".join(sorted(list(self._extra_args_flags(args))))
+
+        extra_args += " " + " ".join(sorted(list(self._group_extra_args(args))))
+
+        class_i = self._read_hla_values(input["alleles"], MHC_CLASS_I)
+        class_ii = self._read_hla_values(input["alleles"], MHC_CLASS_II)
         return {
-            "normal_sample": samples["normal_sample"],
+            "normal_sample": samples.get("normal_sample", None),
             "tumor_sample": samples["tumor_sample"],
             "class_i": sorted(class_i),
             "class_ii": sorted(class_ii),
             "algorithms": algorithms,
             "n_threads": n_threads,
-            "exclude_bind": ["container", "alleles"],
+            "exclude_bind": ["container", "alleles", "filtered"],
             "extra_args": extra_args.strip(),
         }
 
@@ -558,7 +564,6 @@ class PvacFuseStepPart(PvacToolsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.tool_dirname, self.tool_filename = self._get_mhc_classes_labels()
         self.cfg: PVACfuseModel = self.config.pvacfuse
 
     def _get_input_files_pvacfuse(self, wildcards: Wildcards):
@@ -579,8 +584,8 @@ class PvacFuseStepPart(PvacToolsStepPart):
 
         if self.cfg.genes_of_interest_file:
             input_files["genes"] = self.cfg.genes_of_interest_file
-        if self.cfg.run_reference_proteome_similarity and self.cfg.peptide_fasta:
-            input_files["peptides"] = self.cfg.peptide_fasta
+        if self.proteome_file:
+            input_files["peptides"] = self.proteome_file
 
         return input_files
 
@@ -595,7 +600,6 @@ class PvacFuseStepPart(PvacToolsStepPart):
         del args["tool_somatic_gene_fusion_calling"]
         del args["net_chop"]
         del args["netmhc_stab"]
-        del args["peptide_fasta"]
         del args["genes_of_interest_file"]
         n_threads = args.pop("n_threads")
 
@@ -609,13 +613,13 @@ class PvacFuseStepPart(PvacToolsStepPart):
         else:
             del args["binding_threshold"]
 
-        args = PvacSeqStepPart._extra_args_lists(args)
-        extra_args = " ".join(sorted(list(PvacSeqStepPart._extra_args_flags(args))))
+        args = self._extra_args_lists(args)
+        extra_args = " ".join(sorted(list(self._extra_args_flags(args))))
 
-        extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
+        extra_args += " " + " ".join(sorted(list(self._group_extra_args(args))))
 
-        class_i = self._read_hla_values(input["alleles"], MHC_CLASSES[0])
-        class_ii = self._read_hla_values(input["alleles"], MHC_CLASSES[1])
+        class_i = self._read_hla_values(input["alleles"], MHC_CLASS_I)
+        class_ii = self._read_hla_values(input["alleles"], MHC_CLASS_II)
 
         samples = self._get_sample_names(wildcards)
 
@@ -625,7 +629,7 @@ class PvacFuseStepPart(PvacToolsStepPart):
             "class_ii": sorted(class_ii),
             "algorithms": algorithms,
             "n_threads": n_threads,
-            "exclude_bind": ["container", "alleles"],
+            "exclude_bind": ["container", "alleles", "filtered"],
             "extra_args": extra_args.strip(),
         }
 
@@ -642,7 +646,7 @@ class PvacSpliceStepPart(PvacToolsStepPart):
     name = "pvacsplice"
 
     #: Actions
-    actions = ("junction", "pvacsplice")
+    actions = ("junction", "pvacsplice", "workaround")
 
     require_rna: bool = True
 
@@ -651,24 +655,31 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         "junction": ResourceUsage(
             threads=1,
             time="03:59:59",
-            memory="6G",
+            memory="16G",
         ),
         "pvacsplice": ResourceUsage(
             threads=16,
             time="23:59:59",
             memory="64G",
         ),
+        "workaround": ResourceUsage(
+            threads=1,
+            time="01:00:00",
+            memory="4G",
+        ),
     }
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.tool_dirname, self.tool_filename = self._get_mhc_classes_labels()
         self.cfg: PVACspliceModel = self.config.pvacsplice
 
     def _get_input_files_junction(self, wildcards: Wildcards) -> dict[str, str]:
         input_files = {}
 
-        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
+        if self.cfg.use_all_transcripts:
+            tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
+        else:
+            tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
         annotation = self.parent.sub_workflows["somatic_variant_annotation"]
         input_files["annotated"] = annotation(tpl)
 
@@ -686,7 +697,8 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         input_files["strandedness"] = ngs_mapping(tpl)
 
         input_files["reference"] = self.w_config.static_data_config.reference.path
-        input_files["features"] = self.w_config.static_data_config.features.path
+        # input_files["features"] = self.w_config.static_data_config.features.path
+        input_files["features"] = "work/pvacsplice_workaround/out/features.gtf"
 
         return input_files
 
@@ -700,10 +712,16 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         yield "reference", self.w_config.static_data_config.reference.path
         yield "features", self.w_config.static_data_config.features.path
 
-        yield (
-            "annotated",
-            "work/{tpl}/out/{tpl}.renamed.vcf.gz".format(tpl=self.prepare_tpl),
-        )
+        if self.cfg.use_all_transcripts:
+            yield (
+                "annotated",
+                "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl),
+            )
+        else:
+            yield (
+                "annotated",
+                "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl),
+            )
 
         yield (
             "junctions",
@@ -714,8 +732,8 @@ class PvacSpliceStepPart(PvacToolsStepPart):
 
         if self.cfg.genes_of_interest_file:
             yield "genes", self.cfg.genes_of_interest_file
-        if self.cfg.run_reference_proteome_similarity and self.cfg.peptide_fasta:
-            yield "peptides", self.cfg.peptide_fasta
+        if self.proteome_file:
+            yield "peptides", self.proteome_file
 
     def _get_output_files_junction(self):
         return {"junctions": "work/{tpl}/out/{tpl}.junctions.tsv".format(tpl=self.prepare_tpl)}
@@ -743,9 +761,9 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         args = dict(self.cfg.model_dump(by_alias=True))
 
         del args["path_container"]
+        del args["use_all_transcripts"]
         del args["net_chop"]
         del args["netmhc_stab"]
-        del args["peptide_fasta"]
         del args["genes_of_interest_file"]
         n_threads = args.pop("n_threads")
 
@@ -767,8 +785,8 @@ class PvacSpliceStepPart(PvacToolsStepPart):
 
         extra_args += " " + " ".join(sorted(list(PvacSeqStepPart._group_extra_args(args))))
 
-        class_i = self._read_hla_values(input["alleles"], MHC_CLASSES[0])
-        class_ii = self._read_hla_values(input["alleles"], MHC_CLASSES[1])
+        class_i = self._read_hla_values(input["alleles"], MHC_CLASS_I)
+        class_ii = self._read_hla_values(input["alleles"], MHC_CLASS_II)
 
         samples = self._get_sample_names(wildcards)
 
@@ -779,14 +797,14 @@ class PvacSpliceStepPart(PvacToolsStepPart):
             "class_ii": sorted(class_ii),
             "algorithms": algorithms,
             "n_threads": n_threads,
-            "exclude_bind": ["container", "alleles"],
+            "exclude_bind": ["container", "alleles", "filtered"],
             "extra_args": extra_args.strip(),
         }
 
 
 class PhasingStepPart(BaseStepPart):
     """
-    Phase sometic with germline variants using obsolete GATK, for pVACtools only.
+    Phase somatic with germline variants using obsolete GATK, for pVACtools only.
 
     TODO: A better solution sould be developed using current GATK tools
     """
@@ -858,10 +876,15 @@ class NetChopStepPart(BaseStepPart):
     """run netchop after pVACseq, pVACsplice or pVACfuse"""
 
     name = "netchop"
-    actions = ("run",)
+    actions = ("pvacseq", "pvacfuse", "pvacsplice")
 
     #: Resources
-    default_resource_usage = {"run": ResourceUsage(threads=1, time="23:59:59", memory="32G")}
+    resource_usage = ResourceUsage(threads=1, time="23:59:59", memory="32G")
+    default_resource_usage = {
+        "pvacseq": resource_usage,
+        "pvacfuse": resource_usage,
+        "pvacsplice": resource_usage,
+    }
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -878,13 +901,37 @@ class NetChopStepPart(BaseStepPart):
         self._validate_action(action)
         return getattr(self, f"_get_input_files_{action}")
 
+    def _get_input_files_pvacseq(self, wildcards: Wildcards):
+        assert wildcards.tool == "pvacseq", (
+            "Internal error: tool {wildcards.tool} should be 'pvacseq'"
+        )
+        return self._get_input_files_run(wildcards)
+
+    def _get_input_files_pvacfuse(self, wildcards: Wildcards):
+        assert wildcards.tool == "pvacfuse", (
+            "Internal error: tool {wildcards.tool} should be 'pvacfuse'"
+        )
+        return self._get_input_files_run(wildcards)
+
+    def _get_input_files_pvacsplice(self, wildcards: Wildcards):
+        assert wildcards.tool == "pvacsplice", (
+            "Internal error: tool {wildcards.tool} should be 'pvacsplice'"
+        )
+        return self._get_input_files_run(wildcards)
+
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield "netchop", self.config.get(wildcards.tool).get("net_chop").get("path_netchop")
 
-        combined = self.parent.sub_workflows["combine_variants"]
-        tpl = f"{self.config.phasing.tool_ngs_mapping}.combined.{wildcards.tumor_dna}"
-        yield "vcf", combined(os.path.join("output", tpl, "out", tpl + ".vcf.gz"))
+        if self.config.phasing.enabled:
+            combined = self.parent.sub_workflows["combine_variants"]
+            tpl = f"{self.config.phasing.tool_ngs_mapping}.combined.{wildcards.tumor_dna}"
+            yield "vcf", combined(os.path.join("output", tpl, "out", tpl + ".vcf.gz"))
+        else:
+            if self.config.get(wildcards.tool).get("use_all_transcripts"):
+                yield "vcf", "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
+            else:
+                yield "vcf", "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl)
 
         tool = wildcards.tool
         if self.config.get(tool).get("class_i_epitope_length", []):
@@ -897,26 +944,22 @@ class NetChopStepPart(BaseStepPart):
             tool_dirname = "MHC_Class_II"
             tool_filename = "MHC_II"
 
-        tumor = self.parent.sample_table[
-            self.parent.sample_table["ngs_library"] == wildcards.tumor_dna
-        ]
-        sample = tumor["bio_sample"].iat[0]
-
         yield (
             "epitopes",
             os.path.join(
                 "work",
                 self.input_tpl.format(**wildcards),
+                "out",
                 tool_dirname,
-                f"{sample}.{tool_filename}.filtered.tsv",
+                f"{wildcards.tumor_dna}.{tool_filename}.filtered.tsv",
             ),
         )
 
     def get_output_files(self, action: str) -> dict[str, Any]:
         match action:
-            case "run":
+            case "pvacseq" | "pvacfuse" | "pvacsplice":
                 return {
-                    "epitopes": f"work/{self.output_tpl}/{{mhc_class_d}}/{{sample}}.{{mhc_class_fn}}.netchop.tsv"
+                    "epitopes": f"work/{self.output_tpl}/out/{{mhc_class_d}}/{{sample}}.{{mhc_class_fn}}.netchop.tsv"
                 }
             case _:
                 raise MissingConfiguration(f"Unknown action {action} during phasing")
@@ -924,6 +967,24 @@ class NetChopStepPart(BaseStepPart):
     def get_args(self, action):
         self._validate_action(action)
         return getattr(self, f"_get_args_{action}")
+
+    def _get_args_pvacseq(self, wildcards: Wildcards):
+        assert wildcards.tool == "pvacseq", (
+            "Internal error: tool {wildcards.tool} should be 'pvacseq'"
+        )
+        return self._get_args_run(wildcards)
+
+    def _get_args_pvacfuse(self, wildcards: Wildcards):
+        assert wildcards.tool == "pvacfuse", (
+            "Internal error: tool {wildcards.tool} should be 'pvacfuse'"
+        )
+        return self._get_args_run(wildcards)
+
+    def _get_args_pvacsplice(self, wildcards: Wildcards):
+        assert wildcards.tool == "pvacsplice", (
+            "Internal error: tool {wildcards.tool} should be 'pvacsplice'"
+        )
+        return self._get_args_run(wildcards)
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg: NetChopModel = self.config.get(wildcards.tool).get("net_chop")
@@ -933,6 +994,87 @@ class NetChopStepPart(BaseStepPart):
         """Return mapping of log files."""
         self._validate_action(action)
         tpl = f"work/{self.output_tpl}/log/{{mhc_class_d}}.{{sample}}.{{mhc_class_fn}}.netchop"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        log_files = {}
+        for key, ext in key_ext:
+            log_files[key] = tpl + ext
+            log_files[key + "_md5"] = log_files[key] + ".md5"
+        return log_files
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        self._validate_action(action)
+        return self.default_resource_usage[action]
+
+
+class ProteomeStepPart(BaseStepPart):
+    """Create personalised proteome"""
+
+    name = "proteome"
+    actions = ("run",)
+
+    #: Resources
+    default_resource_usage = {"run": ResourceUsage(threads=1, time="03:59:59", memory="24G")}
+
+    def get_input_files(self, action: str):
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        cfg: ProteomeModel = self.config.proteome
+        if cfg.path_germline_variants:
+            tpl = f"{cfg.tool_ngs_mapping}.{cfg.tool_germline_variant_calling}"
+            if cfg.tool_germline_variant_annotation:
+                tpl += f".{cfg.tool_germline_variant_annotation}"
+            if cfg.is_filtered:
+                tpl += ".filtered"
+            tpl += ".{normal_dna}".format(normal_dna=self.parent.tumor_dna[wildcards.tumor_dna])
+            germline_variant = self.parent.sub_workflows["germline_variant"]
+            yield "vcf", germline_variant(f"output/{tpl}/out/{tpl}.vcf.gz")
+        if cfg.external_proteome:
+            yield "path_proteome", cfg.external_proteome
+        yield "reference", self.w_config.static_data_config.reference.path
+        yield "features", self.w_config.static_data_config.features.path
+
+    def get_output_files(self, action: str) -> dict[str, str]:
+        match action:
+            case "run":
+                if self.config.proteome.path_germline_variants:
+                    tpl = "{mapper}.{caller}.{annotator}"
+                    if self.config.is_filtered:
+                        tpl += ".filtered"
+                    tpl += ".{tumor_dna}"
+                    return {"proteome": f"work/{tpl}/out/{tpl}.proteome.fa.gz"}
+                else:
+                    return {"proteome": "work/pvactools/out/proteome.fa.gz"}
+            case _:
+                raise MissingConfiguration(
+                    f"Unknown action {action} during personal proteome building"
+                )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        match action:
+            case "run":
+                return {"add_unmutated": self.config.proteome.add_unmutated}
+            case _:
+                raise MissingConfiguration(
+                    f"Unknown action {action} during personal proteome building"
+                )
+
+    def get_log_file(self, action: str) -> dict[str, str]:
+        self._validate_action(action)
+        if self.config.proteome.path_germline_variants:
+            tpl = "{mapper}.{caller}.{annotator}"
+            if self.config.is_filtered:
+                tpl += ".filtered"
+            tpl += ".{tumor_dna}"
+            tpl = f"work/{tpl}/log/{tpl}.proteome"
+        else:
+            tpl = "work/pvactools/log/proteome"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -982,7 +1124,27 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
 
             previous_steps.append(CombineVariantsWorkflow)
+        if cfg.get("proteome", {}).get("enabled", False) and cfg.get("proteome", {}).get(
+            "path_germline_variants", None
+        ):
+            if cfg.get("proteome").get("tool_variant_annotation") == GermlineVariantStep.CALL:
+                from snappy_pipeline.workflows.germline_variant_calling import (
+                    GermlineVariantCallingWorkflow,
+                )
 
+                previous_steps.append(GermlineVariantCallingWorkflow)
+            elif cfg.get("proteome").get("germline_variant_step") == GermlineVariantStep.FILTER:
+                from snappy_pipeline.workflows.germline_variant_filtration import (
+                    GermlineVariantFiltrationWorkflow,
+                )
+
+                previous_steps.append(GermlineVariantFiltrationWorkflow)
+            else:
+                from snappy_pipeline.workflows.germline_variant_annotation import (
+                    GermlineVariantAnnotationWorkflow,
+                )
+
+                previous_steps.append(GermlineVariantAnnotationWorkflow)
         super().__init__(
             workflow,
             config,
@@ -1001,6 +1163,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 PvacSpliceStepPart,
                 PhasingStepPart,
                 NetChopStepPart,
+                ProteomeStepPart,
                 LinkOutStepPart,
             )
         )
@@ -1043,6 +1206,12 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 "combine_variants",
                 self.config.phasing.path_combine_variants,
             )
+        if self.config.proteome.enabled and self.config.proteome.path_germline_variants:
+            self.register_sub_workflow(
+                self.config.proteome.germline_variant_step,
+                self.config.proteome.path_germline_variants,
+                "germline_variant",
+            )
         if "pvacfuse" in self.config.tools:
             self.register_sub_workflow(
                 "somatic_gene_fusion_calling",
@@ -1062,6 +1231,11 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         if self.config.is_filtered:
             library_prefix += ".filtered"
 
+        tumor_samples = self.sample_table[
+            (self.sample_table["extractionType"] == ExtractionType.DNA)
+            & (self.sample_table["isTumor"])
+        ]["ngs_library"]
+
         for tool_name in self.config.tools:
             tool = self.sub_steps[tool_name]
 
@@ -1080,15 +1254,12 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             else:
                 ext = "filtered"
 
-            for tumor_dna in self.tumor_dna.keys():
+            for tumor_dna in tumor_samples:
                 if tool.require_rna and self.tumor_rna.get(tumor_dna, None) is None:
                     continue
 
-                tumor = self.sample_table[self.sample_table["ngs_library"] == tumor_dna]
-                sample = tumor["bio_sample"].iat[0]
-
                 d = f"output/{library_prefix}.{tumor_dna}"
-                fn = f"{mhc_class_d}/{sample}.{mhc_class_fn}.{ext}.tsv"
+                fn = f"out/{mhc_class_d}/{tumor_dna}.{mhc_class_fn}.{ext}.tsv"
                 yield from expand(
                     d + "/" + fn,
                     mapper=mappers,
@@ -1097,7 +1268,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                     tool_name=[tool_name],
                 )
 
-                fn = f"log/{mhc_class_d}.{sample}.{mhc_class_fn}.{ext}.{{log_ext}}{{hash_ext}}"
+                fn = f"log/{mhc_class_d}.{tumor_dna}.{mhc_class_fn}.{ext}.{{log_ext}}{{hash_ext}}"
                 yield from expand(
                     d + "/" + fn,
                     mapper=mappers,
@@ -1110,9 +1281,19 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
 
     def check_config(self):
         hla_typing_config = self.w_config.step_config.get("hla_typing", None)
-        for extraction_type in EXTRACTION_TYPES:
-            for mhc_class in MHC_CLASSES:
-                tool = self.config.tools_hla_typing.get(extraction_type, {}).get(mhc_class, None)
+        extraction_type = ExtractionType.DNA
+        for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
+            tool = self.config.tools_hla_typing.get(extraction_type, {}).get(mhc_class.name, None)
+            if tool and tool not in hla_typing_config.tools.get(extraction_type, []):
+                raise MissingConfiguration(f"hla_typing tool {tool} not configured")
+        extraction_type = ExtractionType.RNA
+        if (self.config.pileup.enabled or self.config.quantification.enabled) or (
+            "pvacfuse" in self.config.tools or "pvacsplice" in self.config.tools
+        ):
+            for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
+                tool = self.config.tools_hla_typing.get(extraction_type, {}).get(
+                    mhc_class.name, None
+                )
                 if tool and tool not in hla_typing_config.tools.get(extraction_type, []):
                     raise MissingConfiguration(f"hla_typing tool {tool} not configured")
 

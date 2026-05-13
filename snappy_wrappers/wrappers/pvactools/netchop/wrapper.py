@@ -57,10 +57,6 @@ md5() {{
 set -x
 # -----------------------------------------------------------------------------
 
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 tmpdir=$(dirname {snakemake.output.epitopes})
 tmpdir="$tmpdir/tmp"
 rm -rf $tmpdir

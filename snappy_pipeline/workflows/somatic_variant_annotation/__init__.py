@@ -12,5 +12,5 @@ class SomaticVariantAnnotationWorkflow(AnyVariantAnnotationWorkflow):
 
     sheet_shortcut_class = CancerCaseSheet
     sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=False)
     }

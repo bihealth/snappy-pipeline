@@ -21,6 +21,8 @@ if gene_tpms := getattr(snakemake.input, "gene_tpms", None):
     expression.append(f"--gene-tpms {gene_tpms}")
 if transcript_tpms := getattr(snakemake.input, "transcript_tpms", None):
     expression.append(f"--transcript-tpms {transcript_tpms}")
+    if duplicates := getattr(snakemake.input, "duplicate_transcripts_table", None):
+        expression.append(f"--duplicates {duplicates}")
 expression = " ".join(expression)
 
 shell(

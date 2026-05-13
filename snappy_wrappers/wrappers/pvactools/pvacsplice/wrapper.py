@@ -47,7 +47,7 @@ def bindings_for_container(
 alleles = ",".join(args["class_i"] + args["class_ii"])
 
 if peptides := getattr(snakemake.input, "peptides", ""):
-    peptides = f"--peptide-fasta {input_fns['peptides']}"
+    peptides = f"--run-reference-proteome-similarity --peptide-fasta {input_fns['peptides']}"
 if genes := getattr(snakemake.input, "genes", ""):
     genes = f"--genes-of-interest-file {input_fns['genes']}"
 
@@ -75,7 +75,7 @@ md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
 # Setup auto-cleaned tmpdir
 export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+# trap "rm -rf $TMPDIR" EXIT
 
 # Compute md5 checksum
 md5() {{
@@ -91,21 +91,20 @@ md5() {{
 set -x
 # -----------------------------------------------------------------------------
 
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 export TMPDIR=$(realpath $TMPDIR)
+export LC_ALL=C.UTF-8
 
 # Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
 # Create home on TMPDIR? But then the calling script is gone...
-home=$(dirname {snakemake.output.path})/../home/pvacsplice
+out=$(dirname {snakemake.output.done})
+out=$(realpath $out)
+rm -rf $out
+mkdir -p $out
+
+home=$(dirname $out)/home
 home=$(realpath $home)
 rm -rf $home
 mkdir -p $home
-
-rm -rf $(dirname {snakemake.output.path})
-mkdir -p $(dirname {snakemake.output.path})
 
 cat << __EOF > $home/run_pVACsplice.sh
 pvacsplice run --n-threads {snakemake.threads} \\
@@ -115,16 +114,20 @@ pvacsplice run --n-threads {snakemake.threads} \\
     {peptides} {genes} \\
     {input_fns[junctions]} \\
     {args[tumor_sample]} {alleles} {args[algorithms]} \\
-    $(dirname {output_fns[path]}) \\
+    $(dirname {output_fns[done]}) \\
     {input_fns[annotated]} {input_fns[reference]} {input_fns[features]}
 __EOF
 chmod +x $home/run_pVACsplice.sh
 
+# pVACsplice (version 6.0.5) fails with an error when there are no predicted neo-epitopes from splice variants
+# The current workaround is to prevent snakemake to fail, and to manually create the required directories
+# before creating an empty target file.
 apptainer exec \
     --home $home --bind $TMPDIR:$TMPDIR:rw \
-    {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACsplice.sh
+    {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACsplice.sh  \; || true
 
-touch {snakemake.output.path}
 touch {snakemake.output.done}
+mkdir -p $(dirname {snakemake.output.filtered})
+touch {snakemake.output.filtered}
 """
 )

@@ -50,9 +50,15 @@ if phased := getattr(snakemake.input, "phased", ""):
     phased = f"--phased-proximal-variants-vcf {input_fns['phased']}"
 
 if peptides := getattr(snakemake.input, "peptides", ""):
-    peptides = f"--peptide-fasta {input_fns['peptides']}"
+    peptides = f"--run-reference-proteome-similarity --peptide-fasta {input_fns['peptides']}"
 if genes := getattr(snakemake.input, "genes", ""):
     genes = f"--genes-of-interest-file {input_fns['genes']}"
+
+normal = args.get("normal_sample", None)
+if normal:
+    normal = f"--normal-sample-name {normal}"
+else:
+    normal = ""
 
 shell.executable("/bin/bash")
 
@@ -94,31 +100,30 @@ md5() {{
 set -x
 # -----------------------------------------------------------------------------
 
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 export TMPDIR=$(realpath $TMPDIR)
+export LC_ALL=C.UTF-8
 
 # Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
 # Create home on TMPDIR? But then the calling script is gone...
-home=$(dirname {snakemake.output.path})/../home/pvacseq
+out=$(dirname {snakemake.output.done})
+out=$(realpath $out)
+rm -rf $out
+mkdir -p $out
+
+home=$(dirname $out)/home
 home=$(realpath $home)
 rm -rf $home
 mkdir -p $home
 
-rm -rf $(dirname {snakemake.output.path})
-mkdir -p $(dirname {snakemake.output.path})
-
 cat << __EOF > $home/run_pVACseq.sh
 pvacseq run --n-threads {snakemake.threads} \\
-    --normal-sample-name {args[normal_sample]} \\
+    {normal} \\
     --iedb-install-directory /opt/iedb \\
     {args[extra_args]} \\
     {peptides} {genes} {phased} \\
     {input_fns[vcf]} \\
     {args[tumor_sample]} {alleles} {args[algorithms]} \\
-    $(dirname {output_fns[path]})
+    $(dirname {output_fns[done]})
 __EOF
 chmod +x $home/run_pVACseq.sh
 
@@ -126,7 +131,6 @@ apptainer exec \
     --home $home --bind $TMPDIR:$TMPDIR:rw \
     {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACseq.sh
 
-touch {snakemake.output.path}
 touch {snakemake.output.done}
 """
 )

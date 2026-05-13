@@ -26,11 +26,11 @@ class Variant:
     Only protein sequence altering variants are stored.
     """
 
-    AMINO_ACID: re.Pattern = re.compile(r"[ACDEFGHIKLMNPQRSTVWY]+")
+    AMINO_ACID: re.Pattern = re.compile(r"[ACDEFGHIKLMNPQRSTVWYX]+")
     NUCLEOTIDE: re.Pattern = re.compile(r"^[ACGT-]+")
-    PROTEIN_POSITION: re.Pattern = re.compile(r"^([0-9]+)(-([0-9]+))?$")
+    PROTEIN_POSITION: re.Pattern = re.compile(r"^([0-9]+|\?)(-([0-9]+|\?))?$")
     MUTATION: re.Pattern = re.compile(
-        r"^([ACDEFGHIKLMNPQRSTVWY]*[X\*]|[ACDEFGHIKLMNPQRSTVWY]+[X\*]?|-+)$"
+        r"^([ACDEFGHIKLMNPQRSTVWYX]*\*|[ACDEFGHIKLMNPQRSTVWYX]+\*?|-+)$"
     )
     BCFTOOLS_COLUMNS: list[str] = [
         "CHROM",
@@ -56,8 +56,8 @@ class Variant:
         sequence: str,
         wt_seq: str,
         mt_seq: str,
-        start: int,
-        end: int | None = None,
+        start: int | None,
+        end: int | None,
     ):
         self.chrom = chrom
         self.pos = pos
@@ -79,24 +79,36 @@ class Variant:
         self._check_input()
 
     def _check_input(self):
-        assert self.pos > 0, f"Negative variant position {self.pos}"
-        assert self.NUCLEOTIDE.match(self.ref), f"Illegal reference allele {self.ref}"
-        assert self.NUCLEOTIDE.match(self.alt), f"Illegal alt allele {self.alt}"
-        assert self.AMINO_ACID.match(self.sequence), f"Illegal protein sequence {self.sequence}"
-        assert self.MUTATION.match(self.wt_seq), f"Illegal wild-type sequence {self.wt_seq}"
-        assert self.MUTATION.match(self.mt_seq), f"Illegal mutation sequence {self.mt_seq}"
-
-        if "fs" not in self.identifier:
-            assert (
-                self.start > 0 and self.end >= self.start and self.end <= len(self.sequence) + 1
-            ), (
-                f"Mutation position {self.start}-{self.end} illegal or outside protein bounds (length {len(self.sequence)})"
+        assert self.pos > 0, f"Negative variant position {self.pos} for variant {self.identifier}"
+        assert self.NUCLEOTIDE.match(self.ref), (
+            f"Illegal reference allele {self.ref} for variant {self.identifier}"
+        )
+        assert self.NUCLEOTIDE.match(self.alt), (
+            f"Illegal alt allele {self.alt} for variant {self.identifier}"
+        )
+        assert self.AMINO_ACID.match(self.sequence), (
+            f"Illegal protein sequence {self.sequence} for variant {self.identifier}"
+        )
+        assert self.MUTATION.match(self.wt_seq), (
+            f"Illegal wild-type sequence {self.wt_seq} for variant {self.identifier}"
+        )
+        assert self.MUTATION.match(self.mt_seq), (
+            f"Illegal mutation sequence {self.mt_seq} for variant {self.identifier}"
+        )
+        if self.start is not None:
+            assert self.start > 0 and (self.end is None or self.end >= self.start), (
+                f"Illegal mutation position {self.start}-{self.end if self.end else '?'} for variant {self.identifier}"
             )
-
-            if self.end == len(self.sequence) + 1:
-                assert self.wt_seq.endswith("*"), (
-                    f"Mutation position {self.start}-{self.end} illegal or outside protein bounds (length {len(self.sequence)})"
-                )
+        else:
+            assert self.end is not None and self.end > 0, (
+                f"Illegal mutation position ?-{self.end} for variant {self.identifier}"
+            )
+        try:
+            trimmed = self.sequence[:self.sequence.index("*")]
+        except ValueError as e:
+            trimmed = self.sequence
+        if self.end > len(trimmed):
+            logging.warning(f"Mutation for variant {self.identifier} outside bounds")
 
     @staticmethod
     def _parse_table(out: str) -> list[Self]:
@@ -136,12 +148,22 @@ class Variant:
             feature = tokens[5]
             assert identifier not in variants, f"Duplicated variant {identifier}"
 
-            # Check that variant is in coding sequence
-            m = Variant.PROTEIN_POSITION.match(tokens[6])
-            if not m:
+            if tokens[6] == "" or tokens[6] == ".":
                 continue
-            start = int(m.group(1))
-            end = int(m.group(3)) if m.group(2) is not None else None
+
+            m = Variant.PROTEIN_POSITION.match(tokens[6])
+            assert m, f"Illegal protein position {tokens[6]}"
+            if m.group(1) == "?":
+                start = None
+            else:
+                start = int(m.group(1))
+            if m.group(2):
+                if m.group(3) == "?":
+                    end = None
+                else:
+                    end = int(m.group(3))
+            else:
+                end = start
 
             # Check that variant is not silent
             mutation = tokens[7].split("/")
@@ -150,6 +172,10 @@ class Variant:
             assert len(mutation) == 2, f"Illegal mutation {tokens[7]}"
             wt_seq = mutation[0]
             mt_seq = mutation[1]
+            try:
+                mt_seq = mt_seq[:(mt_seq.index("*") + 1)]
+            except ValueError as e:
+                pass
 
             sequence = tokens[9] if tokens[8] == "." or tokens[8] == "" else tokens[8]
 
@@ -440,7 +466,7 @@ def read_epitopes_table(fn: str | Path, columns: list[str] = []) -> dict[str, di
                     epitope[column] = row[column]
             else:
                 epitope = row
-            identifier = f"{row['HGVSp']}_{row['HLA Allele']}_{row['MT Epitope Seq']}"
+            identifier = f"{row['HGVSp']}|{row['HLA Allele']}|{row['MT Epitope Seq']}"
             assert identifier not in epitopes, f"Duplicated epitope {identifier}"
             epitopes[identifier] = epitope
     return epitopes
@@ -452,7 +478,7 @@ def match_variant_to_epitope(
     """Creates a mapping table from epitope to corresponding variant, based on HGVSp identifiers"""
     mapping_table = {}
     for identifier in epitopes.keys():
-        variant_id = identifier.split("_")[0]
+        variant_id = identifier.split("|")[0]
         assert variant_id in variants, f"Variant identifer {variant_id} not in variant table"
         mapping_table[identifier] = variant_id
     return mapping_table

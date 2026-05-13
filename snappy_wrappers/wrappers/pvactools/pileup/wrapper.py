@@ -3,8 +3,6 @@
 Wrapper to combine a somatic variant vcf with RNA expression values & pileup of RNA data at variant loci.
 """
 
-import os
-
 from snakemake.shell import shell
 
 __author__ = "Eric Blanc"
