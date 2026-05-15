@@ -472,6 +472,10 @@ class AnyVariantFiltrationWorkflow(BaseStep):
                 self.register_sub_workflow(
                     "somatic_variant_annotation", self.config.path_variant, "variant"
                 )
+                if not self.config.tools_variant_annotation:
+                    self.config.tools_variant_annotation = self.w_config.step_config[
+                        "somatic_variant_annotation"
+                    ].tools
             else:
                 self.register_sub_workflow(
                     "somatic_variant_calling", self.config.path_variant, "variant"
@@ -485,6 +489,10 @@ class AnyVariantFiltrationWorkflow(BaseStep):
                 self.register_sub_workflow(
                     "germline_variant_annotation", self.config.path_variant, "variant"
                 )
+                if not self.config.tools_variant_annotation:
+                    self.config.tools_variant_annotation = self.w_config.step_config[
+                        "germline_variant_annotation"
+                    ].tools
             else:
                 self.register_sub_workflow(
                     "germline_variant_calling", self.config.path_variant, "variant"
@@ -507,7 +515,9 @@ class AnyVariantFiltrationWorkflow(BaseStep):
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"]["tools"]["dna"]
 
-        if not self.config.has_annotation:
+        if self.config.has_annotation:
+            assert self.config.tools_variant_annotation, "No tool configured for variant annotation"
+        else:
             self.config.tools_variant_annotation = []
 
         self.table = filter_table_by_modality(sample_sheets(self.sheets), modality="dna")
