@@ -66,6 +66,7 @@ def minimal_config():
           somatic_variant_annotation:
             path_somatic_variant: ../somatic_variant_calling
             tools: ["vep"]
+            is_filtered: false
             vep:
                 cache_dir: /path/to/dir/cache
 
@@ -77,6 +78,7 @@ def minimal_config():
 
           germline_variant_filtration:
             path_variant: ../germline_variant_calling
+            has_annotation: false
             filter_list:
               - bcftools:
                   exclude: "AD[0:0]+AD[0:1]<50 | AD[0:1]<5 | AD[0:1]/(AD[0:0]+AD[0:1])<0.05"

@@ -42,6 +42,7 @@ def minimal_config():
           somatic_variant_annotation:
             path_somatic_variant: ../path/to/somatic_variant_calling
             tools: [vep]
+            is_filtered: false
             vep: {}
 
           somatic_variant_filtration:

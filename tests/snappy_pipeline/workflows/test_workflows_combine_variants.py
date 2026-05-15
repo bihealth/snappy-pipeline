@@ -44,6 +44,7 @@ def minimal_config():
           somatic_variant_annotation:
             path_somatic_variant: /path/to/somatic_variant_filtration
             tools: ["vep"]
+            is_filtered: false
             vep:
               cache_dir: /path/to/dir/cache
               plugins:
