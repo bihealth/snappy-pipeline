@@ -25,45 +25,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticPurityPloidyEstimateWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-
-
-target_upstream = wf.depends_on.get("ngs_mapping", "ngs_mapping")
-upstream_prefix = wf.config.get(f"path_ngs_mapping", f"../{target_upstream}")
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from ngs_mapping as ngs_mapping_*
-
-
-if wf.config.get("tool_cnv_calling", None) == "copywriter":
-
-    target_upstream = wf.depends_on.get(
-        "somatic_targeted_seq_cnv_calling", "somatic_targeted_seq_cnv_calling"
-    )
-upstream_prefix = wf.config.get(f"path_somatic_targeted_seq_cnv_calling", f"../{target_upstream}")
-
-
-module somatic_targeted_seq_cnv_calling:
-    snakefile:
-        "../somatic_targeted_seq_cnv_calling/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from somatic_targeted_seq_cnv_calling as somatic_targeted_seq_cnv_calling_*
-
-
 # Rules =======================================================================
 
 

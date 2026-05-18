@@ -25,41 +25,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticWgsCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-
-
-target_upstream = wf.depends_on.get("ngs_mapping", "ngs_mapping")
-upstream_prefix = wf.config.get(f"path_ngs_mapping", f"../{target_upstream}")
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from ngs_mapping as ngs_mapping_*
-
-
-target_upstream = wf.depends_on.get("somatic_variant_calling", "somatic_variant_calling")
-upstream_prefix = wf.config.get(f"path_somatic_variant_calling", f"../{target_upstream}")
-
-
-module somatic_variant_calling:
-    snakefile:
-        "../somatic_variant_calling/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from somatic_variant_calling as somatic_variant_calling_*
-
-
 # Rules =======================================================================
 
 

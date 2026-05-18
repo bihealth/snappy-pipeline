@@ -23,39 +23,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = SomaticTargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.get_task_config("somatic_targeted_seq_cnv_calling")["tools"]
-
-
-# Modules =====================================================================
-
-
-target_upstream = wf.depends_on.get("ngs_mapping", "ngs_mapping")
-upstream_prefix = wf.config.get(f"path_ngs_mapping", f"../{target_upstream}")
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from ngs_mapping as ngs_mapping_*
-
-
-if "purecn" in wf.config["tools"]:
-
-    module somatic_variant_calling:
-        snakefile:
-            "../somatic_variant_calling"
-        config:
-            wf.w_config
-        prefix:
-            wf.config["purecn"]["path_somatic_variants"]
-
-    use rule * from somatic_variant_calling
+tool = str(wf.config.tool)
 
 
 # Rules =======================================================================
@@ -92,7 +60,7 @@ rule somatic_targeted_seq_cnv_calling_link_out_run:
 
 
 # cnvkit requires a large number of rules, thus externalized
-if "cnvkit" in tools:
+if tool == "cnvkit":
 
     include: "cnvkit.rules"
 
@@ -100,7 +68,7 @@ if "cnvkit" in tools:
 # Run sequenza ----------------------------------------------------
 
 
-if "sequenza" in tools:
+if tool == "sequenza":
 
     rule somatic_targeted_seq_cnv_calling_sequenza_install:
         output:
@@ -177,7 +145,7 @@ if "sequenza" in tools:
 # Run PureCN ------------------------------------------------------
 
 
-if "purecn" in tools:
+if tool == "purecn":
 
     rule somatic_targeted_seq_cnv_calling_purecn_coverage:
         input:
