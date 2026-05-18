@@ -193,7 +193,7 @@ class Cnvkit(SnappyModel):
         str,
         Field(
             examples=[
-                "../panel_of_normals/output/{mapper}.cnvkit.create_panel/out/{mapper}.cnvkit.panel_of_normals.cnn"
+                "../panel_of_normals/output/cnvkit.create_panel/out/cnvkit.panel_of_normals.cnn"
             ]
         ),
     ]

@@ -170,8 +170,7 @@ class PicardStepPart(BaseStepPart):
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
-        infix = f"{mapper}.{wildcards.library_name}"
+        infix = f"{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
     @dictify
@@ -233,10 +232,9 @@ class PicardStepPart(BaseStepPart):
         }
 
     def _get_args_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
-        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         params = {
             "reference": self.parent.w_config.static_data_config.reference.path,
-            "prefix": f"{mapper}.{wildcards.library_name}.",
+            "prefix": f"{wildcards.library_name}.",
             "programs": self.config.picard.programs,
         }
         if self.config.picard.bait_name:
