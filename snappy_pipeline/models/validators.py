@@ -2,23 +2,23 @@ import pydantic
 from pydantic import BaseModel
 
 
-def validate_tools():
-    def ensure_tools_are_configured(instance):
-        for tool in instance.tools:
+def validate_tool():
+    def ensure_tool_is_configured(instance):
+        for tool in [instance.tool]:
             if not getattr(instance, str(tool)):
                 raise ValueError(f"Tool {tool} not configured")
         return instance
 
-    return pydantic.model_validator(mode="after")(ensure_tools_are_configured)
+    return pydantic.model_validator(mode="after")(ensure_tool_is_configured)
 
 
-class ToolsMixin(BaseModel):
+class ToolMixin(BaseModel):
     """
-    A mixin for validating that all defined tools in `self.tools`
-    have an accompanying configuration field in the model.
+    A mixin for validating that the tool in `self.tool`
+    has an accompanying configuration field in the model.
     """
 
-    _validate_tools = validate_tools()
+    _validate_tool = validate_tool()
 
 
 def validate_ngs_mapping_or_link():

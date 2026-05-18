@@ -23,29 +23,29 @@ Step Output
 ===========
 
 For all samples, repeat analysis will be performed on the primary DNA NGS libraries separately for
-each configured read mapper and repeat analysis tool. The name of the primary DNA NGS library will
+each configured repeat analysis tool. The name of the primary DNA NGS library will
 be used as an identification token in the output file.
 
-For each read mapper, repeat analysis tool, and sample, the following files will be generated:
+For each repeat analysis tool, and sample, the following files will be generated:
 
-- ``{repeat_tool}.{lib_name}.vcf``
-- ``{repeat_tool}.{lib_name}.vcf.md5``
-- ``{repeat_tool}_annotated.{lib_name}.json``
-- ``{repeat_tool}_annotated.{lib_name}.json.md5``
+- ``{lib_name}.vcf``
+- ``{lib_name}.vcf.md5``
+- ``annotated.{lib_name}.json``
+- ``annotated.{lib_name}.json.md5``
 
 For example, it might look as follows for the example from above:
 
 ::
 
     output/
-    +-- bwa.expansionhunter.P001-N1-DNA1-WES1
+    +-- P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.expansionhunter.P001-N1-DNA1-WES1.vcf
-    |       |-- bwa.expansionhunter.P001-N1-DNA1-WES1.vcf.md5
-    +-- bwa.expansionhunter_annotated.P001-N1-DNA1-WES1
+    |       |-- P001-N1-DNA1-WES1.vcf
+    |       |-- P001-N1-DNA1-WES1.vcf.md5
+    +-- annotated.P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.expansionhunter_annotated.P001-N1-DNA1-WES1.json
-    |       |-- bwa.expansionhunter_annotated.P001-N1-DNA1-WES1.json.md5
+    |       |-- annotated.P001-N1-DNA1-WES1.json
+    |       |-- annotated.P001-N1-DNA1-WES1.json.md5
     [...]
 
 ====================
@@ -218,7 +218,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         :param _wildcards: Snakemake rule wildcards (unused).
         :type _wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "expansionhunter.{library_name}"
+        name_pattern = "{library_name}"
         yield "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext="json"
         )
@@ -228,7 +228,7 @@ class ExpansionHunterStepPart(BaseStepPart):
     def _get_output_files_run():
         """Yield output files' patterns for rule `run` - ExpansionHunter call."""
         # Initialise variables
-        name_pattern = "expansionhunter.{library_name}"
+        name_pattern = "{library_name}"
         ext_dict = {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}
         # Yield
         for key, ext in ext_dict.items():
@@ -244,7 +244,7 @@ class ExpansionHunterStepPart(BaseStepPart):
     def _get_output_files_annotate():
         """Yield output files' patterns for rule `annotate`."""
         # Initialise variables
-        name_pattern = "expansionhunter_annotated.{library_name}"
+        name_pattern = "annotated.{library_name}"
         ext_dict = {"json": "json", "json_md5": "json.md5"}
         # Yield
         for key, ext in ext_dict.items():
@@ -260,7 +260,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         """
         :return: Returns log file pattern for rule `run` - ExpansionHunter call.
         """
-        name_pattern = "expansionhunter.{library_name}"
+        name_pattern = "{library_name}"
         return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
     def get_args(self, action):
@@ -363,22 +363,16 @@ class RepeatExpansionWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the germline repeat expansion analysis workflow."""
-        # Initialise variable
-        tools = ("expansionhunter",)
         # Yield the JSON annotated results files
-        name_pattern = "{tool}_annotated.{donor.dna_ngs_library.name}"
+        name_pattern = "annotated.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
-            tool=tools,
             ext=EXT_JSON,
         )
         # Yield the VCF results files
         name_pattern = "{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
-            tool=tools,
             ext=EXT_VCF,
         )
 
