@@ -107,8 +107,8 @@ class ScarHRDStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         self.cnv_calling = self.parent.modules["cnv_calling"]
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
-        caller = getattr(wildcards, "caller", self.parent.get_task_config("cnv_calling").tool)
+        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
+        caller = str(self.parent.get_task_config("cnv_calling").tool)
         base_name = f"{mapper}.{caller}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
         yield "seqz", self.cnv_calling(f"output/{base_name}/out/{base_name}.seqz.gz")
@@ -218,6 +218,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the homologous recombination deficiency step"""
         tool_actions = {"scarHRD": ("run",)}
+        tool = str(self.config.tool)
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
                 if (
@@ -230,24 +231,21 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                for tool in self.config.tools:
-                    for action in tool_actions[tool]:
-                        try:
-                            tpls = self.sub_steps[tool].get_output_files(action).values()
-                        except AttributeError:
-                            tpls = self.sub_steps[tool].get_output_files(action)
-                        tpls = list(tpls)
-                        tpls += list(self.sub_steps[tool].get_log_file(action).values())
-                        for tpl in tpls:
-                            filenames = expand(
-                                tpl,
-                                mapper=[self.get_task_config("ngs_mapping").tool],
-                                caller=[self.get_task_config("cnv_calling").tool],
-                                library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
-                            )
-                            for f in filenames:
-                                if ".tmp." not in f and not f.endswith(".done"):
-                                    yield f.replace("work/", "output/")
+                for action in tool_actions[tool]:
+                    try:
+                        tpls = self.sub_steps[tool].get_output_files(action).values()
+                    except AttributeError:
+                        tpls = self.sub_steps[tool].get_output_files(action)
+                    tpls = list(tpls)
+                    tpls += list(self.sub_steps[tool].get_log_file(action).values())
+                    for tpl in tpls:
+                        filenames = expand(
+                            tpl,
+                            library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
+                        )
+                        for f in filenames:
+                            if ".tmp." not in f and not f.endswith(".done"):
+                                yield f.replace("work/", "output/")
 
     def check_config(self):
         """Check that the necessary globalc onfiguration is present"""
@@ -255,4 +253,4 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
         )
-        assert "sequenza" in self.get_task_config("somatic_targeted_seq_cnv_calling").tools
+        assert self.get_task_config("somatic_targeted_seq_cnv_calling").tool == "sequenza"

@@ -170,13 +170,13 @@ class PicardStepPart(BaseStepPart):
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         infix = f"{mapper}.{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
     @dictify
     def get_output_files(self, action):
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return {}
         if action == "prepare":
             yield "baits", "work/static_data/picard/out/baits.interval_list"
@@ -233,7 +233,7 @@ class PicardStepPart(BaseStepPart):
         }
 
     def _get_args_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         params = {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "prefix": f"{mapper}.{wildcards.library_name}.",
@@ -309,7 +309,7 @@ class NgsDataQcWorkflow(BaseStep):
         self.register_sub_step_classes(
             (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
-        if "picard" in self.config.tools:
+        if self.config.tool == "picard":
             self.register_module("ngs_mapping")
 
     @listify
@@ -319,7 +319,7 @@ class NgsDataQcWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        if "fastqc" in self.config.tools:
+        if self.config.tool == "fastqc":
             yield from self._yield_result_files(
                 tpl="output/{ngs_library.name}/report/fastqc/.done",
                 allowed_extraction_types=(
@@ -327,7 +327,7 @@ class NgsDataQcWorkflow(BaseStep):
                     "RNA",
                 ),
             )
-        if "picard" in self.config.tools:
+        if self.config.tool == "picard":
             tpl = "output/{ngs_library.name}/report/picard/{ngs_library.name}.{ext}"
             exts = []
             for pgm in self.config.picard.programs:
@@ -341,7 +341,6 @@ class NgsDataQcWorkflow(BaseStep):
             yield from self._yield_result_files(
                 tpl=tpl,
                 allowed_extraction_types=("DNA",),
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
                 ext=exts,
             )
 

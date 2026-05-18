@@ -416,7 +416,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return self._get_args_all
 
     def _get_args_all(self, wildcards):
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         return {
             "config": self.config.get(self.name).model_dump(by_alias=True),
             "mapper": mapper,
@@ -741,7 +741,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         self.register_module("ngs_mapping")
-        if "purecn" in self.config.tools:
+        if self.config.tool == "purecn":
             self.register_module(
                 "somatic_variant_calling",
                 self.config.purecn.path_somatic_variants,
@@ -768,25 +768,24 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                for tool in self.config.tools:
-                    for action in tool_actions[tool]:
-                        try:
-                            tpls = list(self.sub_steps[tool].get_output_files(action).values())
-                        except AttributeError:
-                            tpls = [self.sub_steps[tool].get_output_files(action)]
-                        try:
-                            tpls += list(self.sub_steps[tool].get_log_file(action).values())
-                        except AttributeError:
-                            tpls += [self.sub_steps[tool].get_log_file(action)]
-                        for tpl in tpls:
-                            filenames = expand(
-                                tpl,
-                                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                                library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
-                            )
-                            for f in filenames:
-                                if ".tmp." not in f:
-                                    yield f.replace("work/", "output/")
+                tool = str(self.config.tool)
+                for action in tool_actions[tool]:
+                    try:
+                        tpls = list(self.sub_steps[tool].get_output_files(action).values())
+                    except AttributeError:
+                        tpls = [self.sub_steps[tool].get_output_files(action)]
+                    try:
+                        tpls += list(self.sub_steps[tool].get_log_file(action).values())
+                    except AttributeError:
+                        tpls += [self.sub_steps[tool].get_log_file(action)]
+                    for tpl in tpls:
+                        filenames = expand(
+                            tpl,
+                            library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
+                        )
+                        for f in filenames:
+                            if ".tmp." not in f:
+                                yield f.replace("work/", "output/")
 
     def check_config(self):
         """Check that the necessary global configuration is present"""

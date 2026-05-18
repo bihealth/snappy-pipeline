@@ -309,7 +309,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         path = "output/{index_ngs_library}/out/{index_ngs_library}.vcf.gz"
 
         vcfs = []
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         for sv_caller in sv_callers:
             if any(map(skip_libraries[sv_caller].__contains__, library_names)):
                 msg = f"Found libraries to skip in family {library_names}.  All samples will be skipped."
@@ -374,7 +374,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             "Target coverage report must be enabled in the configuration of the ngs_mapping step"
         )
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]

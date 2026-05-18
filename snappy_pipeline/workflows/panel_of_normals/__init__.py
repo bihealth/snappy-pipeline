@@ -165,9 +165,6 @@ from .model import PanelOfNormals as PanelOfNormalsConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Names of the tools that might use panel of normals
-TOOLS = ("mutect2", "cnvkit", "access", "purecn")
-
 #: Default configuration for the somatic_variant_calling schema
 DEFAULT_CONFIG = PanelOfNormalsConfigModel.default_config_yaml_string()
 
@@ -255,7 +252,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     }
 
     def get_input_files(self, action):
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return {}
         self._validate_action(action)
         self.ngs_mapping = self.parent.modules["ngs_mapping"]
@@ -286,14 +283,13 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_create(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/purecn/out/purecn.{library_name}_coverage_loess.txt.gz"
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         yield (
             "normals",
-            [tpl.format(mapper=mapper, library_name=lib) for lib in self.normal_libraries],
+            [tpl.format(library_name=lib) for lib in self.normal_libraries],
         )
 
     def get_output_files(self, action):
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return {}
         self._validate_action(action)
 
@@ -335,7 +331,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def _get_args_coverage(self, wildcards):
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         return {
             "config": self.config.get(self.name).model_dump(by_alias=True),
             "mapper": mapper,
@@ -343,7 +339,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         }
 
     def get_log_file(self, action):
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return {}
         tpls = {
             "install": "work/containers/log/purecn",
@@ -561,11 +557,11 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        if self.name in self.config.tools:
+        if self.name == self.config.tool:
             self.is_wgs = self.config.cnvkit.path_target == ""
 
     def check_config(self):
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return None  # cnvkit not enabled, skip
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -573,7 +569,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         )
 
     def get_args(self, action):
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return None  # cnvkit not enabled, skip
         self._validate_action(action)
         cfg: CnvKitModel = self.config.get(self.name)
@@ -595,7 +591,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def get_input_files(self, action):
         """Return input files for cnvkit panel of normals creation"""
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return None  # cnvkit not enabled, skip
         # Validate action
         self._validate_action(action)
@@ -621,10 +617,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             return input_files
         ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{normal_library}/out/{normal_library}.bam"
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
-        bams = [
-            ngs_mapping(tpl.format(mapper=mapper, normal_library=x)) for x in self.normal_libraries
-        ]
+        bams = [ngs_mapping(tpl.format(normal_library=x)) for x in self.normal_libraries]
         bais = [x + ".bai" for x in bams]
         input_files = {
             "bams": bams,
@@ -663,14 +656,13 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for computing panel of normals"""
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn"
-        targets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
+        targets = [tpl.format(normal_library=x) for x in self.normal_libraries]
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn"
-        antitargets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
+        antitargets = [tpl.format(normal_library=x) for x in self.normal_libraries]
         tpl = "work/cnvkit/log/cnvkit.{normal_library}.coverage.{ext}"
         logs = [
-            tpl.format(mapper=mapper, normal_library=x, ext=ext)
+            tpl.format(normal_library=x, ext=ext)
             for x in self.normal_libraries
             for ext in ("log", "conda_list.txt", "conda_info.txt")
         ]
@@ -689,11 +681,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_report(self, wildcards):
         """Helper wrapper function for the panel of normals report"""
-        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn"
-        targets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
+        targets = [tpl.format(normal_library=x) for x in self.normal_libraries]
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn"
-        antitargets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
+        antitargets = [tpl.format(normal_library=x) for x in self.normal_libraries]
         return {
             "target": targets,
             "antitarget": antitargets,
@@ -701,7 +692,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def get_output_files(self, action):
         """Return panel of normal files"""
-        if self.name not in self.config.tools:
+        if self.name != self.config.tool:
             return {}  # cnvkit not enabled, skip
         if action == "target":
             return self._get_output_files_target()
@@ -880,7 +871,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             "conda_info.txt.md5",
         ]
 
-        if "mutect2" in set(self.config.tools) & set(TOOLS):
+        if self.config.tool == "mutect2":
             tpl = "output/mutect2/out/mutect2.panel_of_normals.{ext}"
             ext_list = ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
@@ -890,7 +881,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/mutect2/log/mutect2.panel_of_normals.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
-        if "cnvkit" in set(self.config.tools) & set(TOOLS):
+        if self.config.tool == "cnvkit":
             tpls = [
                 ("output/cnvkit/out/cnvkit.target.{ext}", ("bed", "bed.md5")),
                 ("output/cnvkit/out/cnvkit.antitarget.{ext}", ("bed", "bed.md5")),
@@ -920,13 +911,13 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/cnvkit/log/cnvkit.merged.tar.gz{ext}"
             result_files.extend(self._expand_result_files(tpl, ("", ".md5")))
 
-        if "access" in set(self.config.tools) & set(TOOLS):
+        if self.config.tool == "access":
             tpl = "output/cnvkit.access/out/cnvkit.access.bed"
             result_files.extend([tpl + md5 for md5 in ("", ".md5")])
             tpl = "output/cnvkit.access/log/cnvkit.access.{ext}"
             result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
-        if "purecn" in set(self.config.tools) & set(TOOLS):
+        if self.config.tool == "purecn":
             tpl = "output/purecn/out/purecn.panel_of_normals.{ext}"
             ext_list = ("rds", "rds.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
@@ -950,6 +941,5 @@ class PanelOfNormalsWorkflow(BaseStep):
         return result_files
 
     def _expand_result_files(self, tpl, ext_list):
-        for mapper in self.get_task_config("ngs_mapping").tools.dna:
-            for ext in ext_list:
-                yield tpl.format(mapper=mapper, ext=ext)
+        for ext in ext_list:
+            yield tpl.format(ext=ext)
