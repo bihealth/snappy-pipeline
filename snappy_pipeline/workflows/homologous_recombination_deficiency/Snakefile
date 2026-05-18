@@ -27,27 +27,6 @@ wf = HomologousRecombinationDeficiencyWorkflow(
 )
 
 
-# Modules =====================================================================
-
-
-target_upstream = wf.depends_on.get(
-    "somatic_targeted_seq_cnv_calling", "somatic_targeted_seq_cnv_calling"
-)
-upstream_prefix = wf.config.get(f"path_somatic_targeted_seq_cnv_calling", f"../{target_upstream}")
-
-
-module somatic_targeted_seq_cnv_calling:
-    snakefile:
-        "../somatic_targeted_seq_cnv_calling/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from somatic_targeted_seq_cnv_calling as somatic_targeted_seq_cnv_calling_*
-
-
 # Rules =======================================================================
 
 

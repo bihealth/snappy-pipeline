@@ -24,25 +24,6 @@ wf = HelperBuildTargetSeqGcnvModelWorkflow(
 )
 
 
-# Modules =====================================================================
-
-
-target_upstream = wf.depends_on.get("ngs_mapping", "ngs_mapping")
-upstream_prefix = wf.config.get(f"path_ngs_mapping", f"../{target_upstream}")
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from ngs_mapping as ngs_mapping_*
-
-
 # Rules =======================================================================
 
 

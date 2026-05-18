@@ -25,23 +25,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticVariantSignaturesWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-cfg = wf.get_task_config("somatic_variant_signatures")
-sub_workflow = "somatic_variant_filtration" if cfg["is_filtered"] else "somatic_variant_calling"
-
-
-module somatic_variant:
-    snakefile:
-        f"../{sub_workflow}/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        cfg("path_somatic_variant", os.path.join("..", sub_workflow))
-
-
-use rule * from somatic_variant
-
-
 # Rules =======================================================================
 
 
