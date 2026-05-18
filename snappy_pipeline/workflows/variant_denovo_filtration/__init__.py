@@ -30,19 +30,19 @@ Step Output
 
 For all children with both parents present, variant *de novo* annotation will be attempted on
 the primary DNA NGS library of that child.  The name of this library will be used as the
-identification token in the output file and file name.  For each read mapper, variant caller,
-and pedigree, the following files will be generated:
+identification token in the output file and file name.
+For each pedigree, the following files will be generated:
 
-- ``{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz.tbi``
-- ``{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz``
-- ``{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz.md5``
-- ``{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz.tbi.md5``
-- ``{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz``
-- ``{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz.tbi``
-- ``{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz.md5``
-- ``{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz.tbi.md5``
-- ``{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.summary.txt``
-- ``{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.summary.txt.md5``
+- ``de_novos.{lib_name}.vcf.gz.tbi``
+- ``de_novos.{lib_name}.vcf.gz``
+- ``de_novos.{lib_name}.vcf.gz.md5``
+- ``de_novos.{lib_name}.vcf.gz.tbi.md5``
+- ``de_novos_hard.{lib_name}.vcf.gz``
+- ``de_novos_hard.{lib_name}.vcf.gz.tbi``
+- ``de_novos_hard.{lib_name}.vcf.gz.md5``
+- ``de_novos_hard.{lib_name}.vcf.gz.tbi.md5``
+- ``de_novos_hard.{lib_name}.summary.txt``
+- ``de_novos_hard.{lib_name}.summary.txt.md5``
 
 The the ``annotation`` and ``phasing`` will only be persent when the input is read from the
 ``variant_annotation`` or ``variant_phasing`` steps, respectively.

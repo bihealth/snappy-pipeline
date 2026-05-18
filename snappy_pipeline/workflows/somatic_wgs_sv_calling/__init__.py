@@ -159,9 +159,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
         """
         # Validate action
         self._validate_action(action)
-        return dict(
-            zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
-        )
+        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
 
     def get_log_file(self, action):
         # Validate action
