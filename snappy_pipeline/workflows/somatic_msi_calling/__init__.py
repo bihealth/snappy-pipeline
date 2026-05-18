@@ -28,9 +28,9 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``mantis_msi2.{lib_name}-{lib_pk}/out/``
-    - ``mantis_msi2.{lib_name}-{lib_pk}.results.txt``
-    - ``mantis_msi2.{lib_name}-{lib_pk}.results.txt.status``
+- ``{lib_name}-{lib_pk}/out/``
+    - ``{lib_name}-{lib_pk}.results.txt``
+    - ``{lib_name}-{lib_pk}.results.txt.status``
 
 =====================
 Default Configuration
@@ -101,7 +101,7 @@ class Mantis2StepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/msi.{tumor_library}/out/msi.{tumor_library}{ext}"
+        self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -150,7 +150,7 @@ class Mantis2StepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        prefix = "work/msi.{tumor_library}/log/msi.{tumor_library}"
+        prefix = "work/{tumor_library}/log/{tumor_library}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -230,7 +230,7 @@ class SomaticMsiCallingWorkflow(BaseStep):
         msi_tool = str(self.config.tool)
         if msi_tool not in MSI_CALLERS_MATCHED:
             return
-        name_pattern = "msi.{tumor_library.name}"
+        name_pattern = "{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             ext=EXT_MATCHED[msi_tool].values() if msi_tool in EXT_MATCHED else EXT_VALUES,

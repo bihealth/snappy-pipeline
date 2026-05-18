@@ -502,7 +502,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return input_files
 
     def _get_input_files_fix(self, wildcards):
-        tpl_base = "cnvkit.{library_name}"
+        tpl_base = "{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
         input_files = {
             "target": tpl.format(target="target", **wildcards),
@@ -512,18 +512,18 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return input_files
 
     def _get_input_files_segment(self, wildcards):
-        cnr_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.cnr"
+        cnr_pattern = "work/{library_name}/out/{library_name}.cnr"
         input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
     def _get_input_files_call(self, wildcards):
-        segment_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.segment.cns"
+        segment_pattern = "work/{library_name}/out/{library_name}.segment.cns"
         input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
     def _get_input_files_postprocess(self, wildcards):
-        segment_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.segment.cns"
-        call_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.call.cns"
+        segment_pattern = "work/{library_name}/out/{library_name}.segment.cns"
+        call_pattern = "work/{library_name}/out/{library_name}.call.cns"
         input_files = {
             "segment": segment_pattern.format(**wildcards),
             "call": call_pattern.format(**wildcards),
@@ -531,12 +531,12 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return input_files
 
     def _get_input_files_export(self, wildcards):
-        cns_pattern = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.call.cns"
+        cns_pattern = "work/{library_name}/out/{library_name}.call.cns"
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
     def _get_input_files_plot(self, wildcards):
-        tpl = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.{ext}"
+        tpl = "work/{library_name}/out/{library_name}.{ext}"
         input_files = {
             "cnr": tpl.format(ext="cnr", **wildcards),
             "cns": tpl.format(ext="call.cns", **wildcards),
@@ -544,7 +544,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return input_files
 
     def _get_input_files_report(self, wildcards):
-        tpl = "work/cnvkit.{library_name}/out/cnvkit.{library_name}.{ext}"
+        tpl = "work/{library_name}/out/{library_name}.{ext}"
         input_files = {
             "target": tpl.format(ext="targetcoverage.cnn", **wildcards),
             "antitarget": tpl.format(ext="antitargetcoverage.cnn", **wildcards),
@@ -594,7 +594,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @staticmethod
     def _get_output_files_coverage():
-        name_pattern = "cnvkit.{library_name}"
+        name_pattern = "{library_name}"
         output_files = {}
         for target in ("target", "antitarget"):
             output_files[target] = os.path.join(
@@ -605,25 +605,25 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @staticmethod
     def _get_output_files_fix():
-        name_pattern = "cnvkit.{library_name}"
+        name_pattern = "{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cnr")
         return {"ratios": tpl, "ratios_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_segment():
-        name_pattern = "cnvkit.{library_name}"
+        name_pattern = "{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".segment.cns")
         return {"segments": tpl, "segments_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_call():
-        name_pattern = "cnvkit.{library_name}"
+        name_pattern = "{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".call.cns")
         return {"calls": tpl, "calls_md5": tpl + ".md5"}
 
     @staticmethod
     def _get_output_files_postprocess():
-        name_pattern = "cnvkit.{library_name}"
+        name_pattern = "{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + "_dnacopy.seg")
         return {
             "final": tpl,
@@ -637,14 +637,12 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         chroms = list(chain(range(1, 23), ["X", "Y"]))
         output_files = {}
         # Yield file name pairs for global plots
-        tpl = "work/cnvkit.{{library_name}}/report/cnvkit.{{library_name}}.{plot}.{ext}"
+        tpl = "work/{library_name}/report/{library_name}.{plot}.{ext}"
         for plot, ext in plots:
             output_files[plot] = tpl.format(plot=plot, ext=ext)
             output_files[plot + "_md5"] = output_files[plot] + ".md5"
         # Yield file name pairs for the chromosome-wise plots
-        tpl_chrom = (
-            "work/cnvkit.{{library_name}}/report/cnvkit.{{library_name}}.{plot}.chr{chrom}.{ext}"
-        )
+        tpl_chrom = "work/{library_name}/report/{library_name}.{plot}.chr{chrom}.{ext}"
         for plot, ext in chrom_plots:
             for chrom in chroms:
                 key = "{plot}_chr{chrom}".format(plot=plot, chrom=chrom)
@@ -662,7 +660,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             ("vcf_tbi", "vcf.gz.tbi"),
         )
         output_files = {}
-        tpl = "work/cnvkit.{{library_name}}/out/cnvkit.{{library_name}}.{ext}"
+        tpl = "work/{library_name}/out/{library_name}.{ext}"
         for export, ext in exports:
             output_files[export] = tpl.format(export=export, ext=ext)
             output_files[export + "_md5"] = output_files[export] + ".md5"
@@ -672,7 +670,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_output_files_report(self):
         reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
         output_files = {}
-        tpl = "work/cnvkit.{{library_name}}/report/cnvkit.{{library_name}}.{report}.txt"
+        tpl = "work/{library_name}/report/{library_name}.{report}.txt"
         for report in reports:
             output_files[report] = tpl.format(report=report)
             output_files[report + "_md5"] = output_files[report] + ".md5"
@@ -682,9 +680,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         """Return path to log file for the given action"""
         # Validate action
         self._validate_action(action)
-        prefix = ("work/cnvkit.{{library_name}}/log/cnvkit.{action}.{{library_name}}").format(
-            action=action
-        )
+        prefix = f"work/{{library_name}}/log/{action}.{{library_name}}"
         return self._get_log_file_from_prefix(prefix)
 
 
@@ -730,12 +726,17 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
+        sub_step_map = {
+            "cnvkit": CnvKitStepPart,
+            "sequenza": SequenzaStepPart,
+            "purecn": PureCNStepPart,
+        }
+        selected_tool = str(self.config.tool)
+        selected_sub_step = sub_step_map[selected_tool]
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
-                CnvKitStepPart,
-                SequenzaStepPart,
-                PureCNStepPart,
+                selected_sub_step,
                 LinkOutStepPart,
             )
         )
