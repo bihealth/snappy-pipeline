@@ -55,9 +55,9 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def get_input_files(self, action):
         self._validate_action(action)
 
-        base_name = "{var_caller}"
+        base_name = self.parent.somatic_variant_caller
         if self.config.has_annotation:
-            base_name += ".{anno_caller}"
+            base_name += f".{self.parent.somatic_variant_annotation_tool}"
         if self.config.is_filtered:
             base_name += ".filtered.{tumor_library}"
         else:
@@ -75,9 +75,9 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        base_name = "{var_caller}"
+        base_name = self.parent.somatic_variant_caller
         if self.config.has_annotation:
-            base_name += ".{anno_caller}"
+            base_name += f".{self.parent.somatic_variant_annotation_tool}"
         if self.config.is_filtered:
             base_name += ".filtered.tmb.{tumor_library}"
         else:
@@ -94,9 +94,9 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def _get_log_file(self, action):
         self._validate_action(action)
 
-        base_name = "{var_caller}"
+        base_name = self.parent.somatic_variant_caller
         if self.config.has_annotation:
-            base_name += ".{anno_caller}"
+            base_name += f".{self.parent.somatic_variant_annotation_tool}"
         if self.config.is_filtered:
             base_name += ".filtered.tmb.{tumor_library}"
         else:
@@ -178,35 +178,13 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         # Register sub workflows
         config = self.config
         self.register_module(config.somatic_variant_step, "somatic_variant")
-
-        tools = set(self.get_task_config("ngs_mapping").tools.dna)
-        if not config.tools_ngs_mapping:
-            config.tools_ngs_mapping = tools
-        else:
-            config.tools_ngs_mapping = set(config.tools_ngs_mapping) & tools
-        assert len(config.tools_ngs_mapping) > 0, "No valid ngs mapping tool"
-
-        tools = set(self.get_task_config("somatic_variant_calling").tools)
-        if not config.tools_somatic_variant_calling:
-            config.tools_somatic_variant_calling = tools
-        else:
-            config.tools_somatic_variant_calling = set(config.tools_somatic_variant_calling) & tools
-        assert len(config.tools_somatic_variant_calling) > 0, (
-            "No valid somatic variant calling tool"
+        self.ngs_mapping_tool = str(self.get_task_config("ngs_mapping").tool)
+        self.somatic_variant_caller = str(self.get_task_config("somatic_variant_calling").tool)
+        self.somatic_variant_annotation_tool = (
+            str(self.get_task_config("somatic_variant_annotation").tool)
+            if config.has_annotation
+            else None
         )
-
-        if config.has_annotation:
-            tools = set(self.get_task_config("somatic_variant_annotation").tools)
-            if not config.tools_somatic_variant_annotation:
-                config.tools_somatic_variant_annotation = tools
-            config.tools_somatic_variant_annotation = (
-                set(config.tools_somatic_variant_annotation) & tools
-            )
-            assert len(config.tools_somatic_variant_annotation) > 0, (
-                "No valid somatic variant annotation tool"
-            )
-
-        self.config = config
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
@@ -214,28 +192,20 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         config = self.config
-        name_pattern = ""
+        name_pattern = self.somatic_variant_caller
         if config.has_annotation:
-            name_pattern += ".{anno_caller}"
+            name_pattern += f".{self.somatic_variant_annotation_tool}"
         if config.is_filtered:
             name_pattern += ".filtered.tmb.{tumor_library.name}"
         else:
             name_pattern += ".tmb.{tumor_library.name}"
 
-        anno_callers = config.tools_somatic_variant_annotation if config.has_annotation else []
-
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=config.tools_ngs_mapping,
-            caller=config.tools_somatic_variant_calling,
-            anno_caller=anno_callers,
             ext=EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=config.tools_ngs_mapping,
-            caller=config.tools_somatic_variant_calling,
-            anno_caller=anno_callers,
             ext=(
                 ".log",
                 ".log.md5",

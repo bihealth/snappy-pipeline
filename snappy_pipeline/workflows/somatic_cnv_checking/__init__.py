@@ -19,15 +19,14 @@ calling, either``somatic_wgs_cnv_calling`` or ``somatic_targetd_seq_cnv_calling`
 Step Output
 ===========
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
-``mapper`` that the library has been aligned with, and the CNV caller ``caller``, the
-pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
+For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk``
+the pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{lib_name}-{lib_pk}.vcf.gz.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
 For example, it might look as follows for the example from above:
 
@@ -389,14 +388,12 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         ext = ("log", "conda_info.txt", "conda_list.txt")
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".normal.{ext}{chksum}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
             library_name=set(self.tumor_to_normal.values()),
             ext=ext,
             chksum=chksum,
         )
         yield from expand(
             os.path.join("output", name_pattern, "log", name_pattern + ".tumor.{ext}{chksum}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
             library_name=self.tumor_to_normal.keys(),
             ext=ext,
             chksum=chksum,
@@ -406,7 +403,6 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         if self.config.path_cnv_calling:
             # CNV avaliable
             name_pattern = "{library_name}"
-            callers = self.get_task_config("somatic_targeted_seq_cnv_calling").tools
             ext["out"] += [".tsv"]
             ext["report"] = (".cnv.pdf", ".locus.pdf", ".segment.pdf")
             ext["log"] = [
@@ -416,12 +412,9 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             ]
         else:
             name_pattern = "{library_name}"
-            callers = []
         for subdir, exts in ext.items():
             yield from expand(
                 os.path.join("output", name_pattern, subdir, name_pattern + "{ext}{chksum}"),
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller=callers,
                 library_name=self.tumor_to_normal.keys(),
                 ext=exts,
                 chksum=chksum,

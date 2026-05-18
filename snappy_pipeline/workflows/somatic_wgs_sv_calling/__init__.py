@@ -16,15 +16,14 @@ The variant annotation step uses Snakemake sub workflows for using the result of
 Step Output
 ===========
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
-``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
-pipeline step will create a directory ``output/{var_caller}.{lib_name}-{lib_pk}/out``
+For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk``
+the pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{lib_name}-{lib_pk}.vcf.gz.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
 For example, it might look as follows for the example from above:
 
@@ -119,9 +118,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{var_caller}.{{cancer_library}}/out/{var_caller}.{{cancer_library}}{ext}"
-        )
+        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
         # Build shortcut from cancer bio sample name to matched tumor sample
         self.cancer_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -169,9 +166,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return (
-            "work/{var_caller}.{{cancer_library}}/log/snakemake.somatic_wgs_sv_calling.log"
-        ).format(var_caller=self.__class__.name)
+        return ("work/{{cancer_library}}/log/snakemake.somatic_wgs_sv_calling.log").format()
 
 
 class MantaStepPart(SomaticWgsSvCallingStepPart):
@@ -226,9 +221,7 @@ class Delly2StepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{var_caller}.{{cancer_library}}/out/{var_caller}.{{cancer_library}}{ext}"
-        )
+        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
         # Build shortcut from cancer bio sample name to matched tumor sample
         self.cancer_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -454,8 +447,6 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         name_pattern = "{cancer_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
-            caller=self.config.tools,
             ext=EXT_VALUES,
         )
 

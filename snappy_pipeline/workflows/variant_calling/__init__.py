@@ -31,8 +31,7 @@ BAM files from the ``ngs_mapping`` step.
 Step Output
 ===========
 
-Creates one output directory for each read mapper (from ``ngs_mapping``), each variant caller, and
-each pedigree from the germline sample sheet.
+Creates one output directory for each pedigree from the germline sample sheet.
 
 **Primary Output**
 
@@ -132,7 +131,6 @@ Reports
 ``bcftools_stats``
 
     Create statistics on variants using ``bcftools stats`` for each donor in each pedigree
-    for each mapper and caller.
 
     ::
 
@@ -140,8 +138,8 @@ Reports
 
 ``baf_file_generation``
 
-    Create one UCSC BigWig file for each individual in each pedigree for each mapper and caller
-    with B-allele fraction.  These files can be used for to visually confirm structural variants
+    Create one UCSC BigWig file for each individual in each pedigree with B-allele fraction.
+    These files can be used for to visually confirm structural variants
     or runs of homozygosity.
 
     ::
@@ -189,60 +187,60 @@ Example Output
 ==============
 
 Given a pedigree with index ``index`` and two more donors ``mother`` and ``father``, the following
-files would be created into ``output/`` (each VCF file has a ``.tbi`` file and overall each file has
-a ``.md5`` file).  In this case, the read mapper is ``bwa`` and the variant caller is ``gatk4_hc_gvcf``.
+files would be created into ``output/``
+(each VCF file has a ``.tbi`` file and overall each file has a ``.md5`` file).
 
 
 ```
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/out/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.g.vcf.gz
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/out/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.vcf.gz
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf.bw
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf.bw
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf.bw
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/jannovar_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.wrapper.py
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.conda_info.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.conda_list.txt
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.environment.yaml
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.log
+index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.wrapper.py
+index-N1-DNA1-WES1/out/index-N1-DNA1-WES1.g.vcf.gz
+index-N1-DNA1-WES1/out/index-N1-DNA1-WES1.vcf.gz
+index-N1-DNA1-WES1/report/baf/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf.bw
+index-N1-DNA1-WES1/report/baf/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf.bw
+index-N1-DNA1-WES1/report/baf/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf.bw
+index-N1-DNA1-WES1/report/bcftools_stats/index-N1-DNA1-WES1.index-N1-DNA1-WES1.txt
+index-N1-DNA1-WES1/report/bcftools_stats/index-N1-DNA1-WES1.father-N1-DNA1-WES1.txt
+index-N1-DNA1-WES1/report/bcftools_stats/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.txt
+index-N1-DNA1-WES1/report/jannovar_stats/index-N1-DNA1-WES1.txt
 ```
 """
 
@@ -320,9 +318,7 @@ class GetResultFilesMixin:
             ]
             for path_tpl in result_paths_tpls:
                 for index_library_name, member_library_names in index_dna_ngs_libraries.items():
-                    kwargs = {
-                        "mapper": self.get_task_config("ngs_mapping").tools.dna,
-                    }
+                    kwargs = {}
                     if "index_library_name" in path_tpl:
                         kwargs["index_library_name"] = [index_library_name]
                         kwargs["donor_library_name"] = member_library_names
@@ -337,7 +333,7 @@ class GetResultFilesMixin:
                     )
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.config.tools}
+        return {}
 
     @dictify
     def _get_index_dna_ngs_libraries(
@@ -406,9 +402,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{var_caller}.{{index_library_name}}/out/{var_caller}.{{index_library_name}}{ext}"
-        )
+        self.base_path_out = "work/{index_library_name}/out/{index_library_name}{ext}"
         self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
         # Build shortcut from index library name to pedigree
         self.index_ngs_library_to_pedigree = OrderedDict()
@@ -696,7 +690,7 @@ class ReportGetLogFileMixin:
         """Return dict of log files in the "log" directory."""
         self._validate_action(action)
         assert self.report_per_donor is not None
-        token = "{var_caller}.{index_library_name}"
+        token = f"{self.parent.config.tool}.{{index_library_name}}"
         prefix = f"work/{token}/log/{token}.{{donor_library_name}}.{self.name}_{action}"
         if not self.report_per_donor:
             prefix = prefix.replace("{donor_library_name}.", "")
@@ -736,7 +730,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            ("work/{var_caller}.{index_library_name}/out/{var_caller}.{index_library_name}.vcf.gz"),
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
         )
 
     def get_output_files(self, action: str) -> SnakemakeDict:
@@ -748,8 +742,8 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
         base_path = (
-            "work/{var_caller}.{index_library_name}/report/bcftools_stats/"
-            "{var_caller}.{index_library_name}.{donor_library_name}"
+            "work/{index_library_name}/report/bcftools_stats/"
+            "{index_library_name}.{donor_library_name}"
         )
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
@@ -801,10 +795,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            (
-                "output/{var_caller}.{index_library_name}/out/"
-                "{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            ("output/{index_library_name}/out/{index_library_name}.vcf.gz"),
         )
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
         if self.config.get(self.name).get("path_targets"):
@@ -833,9 +824,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        base_path = (
-            "work/{var_caller}.{index_library_name}/report/roh/{var_caller}.{index_library_name}"
-        )
+        base_path = "work/{index_library_name}/report/roh/{index_library_name}"
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
         yield (
@@ -878,7 +867,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         self._validate_action(action)
         yield (
             "vcf",
-            ("work/{var_caller}.{index_library_name}/out/{var_caller}.{index_library_name}.vcf.gz"),
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
         )
         yield "path_ser", self.config.jannovar_stats.path_ser
 
@@ -892,10 +881,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
-        base_path = (
-            "work/{var_caller}.{index_library_name}/report/jannovar_stats/"
-            "{var_caller}.{index_library_name}"
-        )
+        base_path = "work/{index_library_name}/report/jannovar_stats/{index_library_name}"
         ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
@@ -947,7 +933,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         self._validate_action(action)
         yield (
             "vcf",
-            ("work/{var_caller}.{index_library_name}/out/{var_caller}.{index_library_name}.vcf.gz"),
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
         )
         yield "reference_index", self.w_config.static_data_config.reference.path + ".fai"
 
@@ -955,8 +941,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     def get_output_files(self, action: str) -> SnakemakeDictItemsGenerator:
         self._validate_action(action)
         base_path = (
-            "{var_caller}.{index_library_name}/report/baf/"
-            r"{var_caller}.{index_library_name}.{donor_library_name,[^\.]+}.baf"
+            "{index_library_name}/report/baf/{index_library_name}.{donor_library_name,[^\\.]+}.baf"
         )
         ext_names = {"bw": ".bw", "bw_md5": ".bw.md5"}
         work_files = {}
@@ -1037,8 +1022,7 @@ class VariantCallingWorkflow(BaseStep):
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config.tools:
-            yield from self.sub_steps[tool].get_result_files()
+        yield from self.sub_steps[self.config.tool].get_result_files()
         for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
             name_config = self.config.get(name)
             if name_config and name_config.enabled:

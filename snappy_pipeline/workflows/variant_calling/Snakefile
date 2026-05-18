@@ -21,27 +21,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = VariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.config.tools
-
-
-# Modules =====================================================================
-
-
-target_upstream = wf.depends_on.get("ngs_mapping", "ngs_mapping")
-upstream_prefix = wf.config.get(f"path_ngs_mapping", f"../{target_upstream}")
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        upstream_prefix
-
-
-use rule * from ngs_mapping as ngs_mapping_*
-
+tools = [str(wf.config.tool)]
 
 # Rules =======================================================================
 

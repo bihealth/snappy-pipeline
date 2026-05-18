@@ -94,10 +94,14 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    @property
+    def _variant_caller(self) -> str:
+        return str(self.parent.get_task_config("variant_calling").tool)
+
     def get_input_files(self, action):
         """Return path to pedigree input file"""
         self._validate_action(action)
-        token = "{var_caller}.{library_name}"
+        token = f"{self._variant_caller}.{{library_name}}"
         variant_calling = self.parent.modules["variant_calling"]
         return {
             "reference": self.w_config.static_data_config.reference.path,
@@ -109,7 +113,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return output files for the filtration"""
         self._validate_action(action)
-        token = "{var_caller}.vep.{library_name}"
+        token = f"{self._variant_caller}.vep.{{library_name}}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -130,12 +134,12 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.get_task_config("variant_calling").tools}
+        return {}
 
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        token = "{var_caller}.vep.{library_name}"
+        token = f"{self._variant_caller}.vep.{{library_name}}"
         prefix = f"work/{token}/log/{token}"
         key_ext = (
             ("log", ".log"),
@@ -204,8 +208,7 @@ class VariantAnnotationWorkflow(BaseStep):
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config.tools:
-            yield from self.sub_steps[tool].get_result_files()
+        yield from self.sub_steps[self.config.tool].get_result_files()
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""
