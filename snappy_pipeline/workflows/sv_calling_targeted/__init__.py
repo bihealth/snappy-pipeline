@@ -27,9 +27,6 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
-#: Available SV callers
-SV_CALLERS = ("gcnv", "delly2", "manta", "melt")
-
 #: Minimum number of samples per kit to apply gCNV calling criteria to be analyzed
 GCNV_MIN_KIT_SAMPLES = 10
 
@@ -77,22 +74,25 @@ class SvCallingTargetedWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Build mapping from NGS library name to kit
-        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                WritePedigreeStepPart,
-                GcnvTargetedStepPart,
-                Delly2StepPart,
-                MantaStepPart,
-                MeltStepPart,
-            )
-        )
+        selected_tool = str(self.config.tool)
+        sub_step_map = {
+            "gcnv": GcnvTargetedStepPart,
+            "delly2": Delly2StepPart,
+            "manta": MantaStepPart,
+            "melt": MeltStepPart,
+        }
+        selected_sub_step = sub_step_map[selected_tool]
+        # Register only the selected tool's step part.
+        self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
         # Register sub workflows
         self.register_module("ngs_mapping")
-        # Build dictionary with sample count per library kit
-        _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+        # gCNV-specific shortcuts are only required when running gCNV.
+        if selected_tool == "gcnv":
+            self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+            _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+        else:
+            self.ngs_library_to_kit = {}
+            self.library_kit_counts_dict = {}
 
     @dictify
     def _build_ngs_library_to_kit(self):

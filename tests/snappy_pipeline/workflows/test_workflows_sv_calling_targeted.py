@@ -37,12 +37,7 @@ def minimal_config():
 
           sv_calling_targeted:
             path_ngs_mapping: ../ngs_mapping
-            tools:
-              - delly2
-              - manta
-              - gcnv
-            delly2: {}  # use defaults
-            manta: {}   # use defaults
+            tool: gcnv
             gcnv:
               # path_uniquely_mapable_bed: /path/to/uniquely/mappable/variable/GRCh37/file.bed.gz
               path_target_interval_list_mapping:
@@ -242,7 +237,7 @@ def test_target_seq_cnv_calling_workflow_get_result_files(sv_calling_targeted_wo
     expected = [
         pattern_out.format(i=i, tool=tool, ext=ext)
         for i in (1, 4)  # only index: P001, P004
-        for tool in ("gcnv", "manta", "delly2")
+        for tool in ("gcnv",)
         for ext in (
             ".vcf.gz",
             ".vcf.gz.md5",
@@ -256,11 +251,7 @@ def test_target_seq_cnv_calling_workflow_get_result_files(sv_calling_targeted_wo
     expected += [
         pattern_log.format(i=i, tool=tool, step_name=step_name, ext=ext)
         for i in (1, 4)  # only index: P001, P004
-        for tool, step_name in (
-            ("gcnv", "merge_multikit_families"),
-            ("manta", "sv_calling"),
-            ("delly2", "sv_calling"),
-        )
+        for tool, step_name in (("gcnv", "merge_multikit_families"),)
         for ext in (
             ".log",
             ".log.md5",
