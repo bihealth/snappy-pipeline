@@ -128,6 +128,8 @@ class OptiTypeStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext)
         # add additional optitype output files
@@ -139,6 +141,8 @@ class OptiTypeStepPart(BaseStepPart):
         """Return dict of log files."""
         self._validate_action(action)
 
+        if self.name != str(self.config.tool):
+            return {}
         prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
@@ -251,6 +255,8 @@ class ArcasHlaStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext, mapper=self.config.arcashla.mapper)
 

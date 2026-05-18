@@ -157,6 +157,8 @@ class SalmonStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         for k, v in self.extensions.items():
             yield k, self.base_path_out.format(ext=v)
 
@@ -164,6 +166,8 @@ class SalmonStepPart(BaseStepPart):
     def _get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
@@ -255,6 +259,8 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         return dict(
             zip(
                 EXTENSIONS[self.name].keys(),
@@ -270,6 +276,8 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),

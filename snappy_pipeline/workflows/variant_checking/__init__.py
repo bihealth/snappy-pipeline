@@ -88,8 +88,8 @@ class PeddyStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.variant_tool = str(self.parent.get_task_config("variant_calling").tool)
-        self.base_path_out = "work/peddy.{index_ngs_library}/out/.done"
-        self.log_path = "work/peddy.{index_ngs_library}/log/snakemake.filter.log"
+        self.base_path_out = "work/{index_ngs_library}/out/.done"
+        self.log_path = "work/{index_ngs_library}/log/snakemake.filter.log"
 
     @dictify
     def get_input_files(self, action):
@@ -112,7 +112,7 @@ class PeddyStepPart(BaseStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
-        prefix = "work/peddy.{index_ngs_library}/out/peddy.{index_ngs_library}"
+        prefix = "work/{index_ngs_library}/out/{index_ngs_library}"
         key_ext = {
             "background_pca": ".background_pca.json",
             "het_check": ".het_check.csv",

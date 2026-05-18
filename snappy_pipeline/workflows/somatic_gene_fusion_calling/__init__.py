@@ -25,7 +25,7 @@ Step Output
 
 There is no standard for reporting gene fusions, and therefore the output is different for all implemented tools.
 
-``arriba`` returns two tab-separated files: ``arriba.<library name>.fusions.tsv`` & ``arriba.<library name>.discarded_fusions.tsv.gz``.
+``arriba`` returns two tab-separated files: ``<library name>.fusions.tsv`` & ``<library name>.discarded_fusions.tsv.gz``.
 Both files list the affected genes, reads supporting the fusion & a confidence level.
 Obviously, the discarded fusion file contains all hints of fusion that have been discarded because of insufficient evidence.
 
@@ -93,7 +93,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/{name}.{{library_name}}/out/.done".format(name=self.name)
+        self.base_path_out = "work/{library_name}/out/.done"
         # Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
@@ -120,9 +120,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         """Return path to log file"""
         # Validate action
         self._validate_action(action)
-        return "work/{name}.{{library_name}}/log/snakemake.gene_fusion_calling.log".format(
-            name=self.name
-        )
+        return "work/{library_name}/log/snakemake.gene_fusion_calling.log"
 
     def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
@@ -426,21 +424,21 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
-        base_path_out = "work/{name}.{{library_name}}/out/{name}.{{library_name}}.{ext}"
+        base_path_out = "work/{library_name}/out/{library_name}.{ext}"
         key_ext = (
             ("fusions", "fusions.tsv"),
             ("discarded", "discarded_fusions.tsv.gz"),
         )
         for key, ext in key_ext:
-            yield key, base_path_out.format(name=self.name, ext=ext)
-            yield key + "_md5", base_path_out.format(name=self.name, ext=ext) + ".md5"
-        yield "done", "work/arriba.{library_name}/out/.done"
+            yield key, base_path_out.format(ext=ext)
+            yield key + "_md5", base_path_out.format(ext=ext) + ".md5"
+        yield "done", "work/{library_name}/out/.done"
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files."""
         _ = action
-        prefix = "work/{name}.{{library_name}}/log/{name}.{{library_name}}".format(name=self.name)
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -449,7 +447,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-        prefix = "work/{name}.{{library_name}}/log/".format(name=self.name)
+        prefix = "work/{library_name}/log/"
         key_ext = (
             ("out", "Log.out"),
             ("final", "Log.final.out"),
@@ -518,15 +516,20 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
+        sub_step_map = {
+            "fusioncatcher": FusioncatcherStepPart,
+            "jaffa": JaffaStepPart,
+            "pizzly": PizzlyStepPart,
+            "hera": HeraStepPart,
+            "star_fusion": StarFusionStepPart,
+            "defuse": DefuseStepPart,
+            "arriba": ArribaStepPart,
+        }
+        selected_tool = str(self.config.tool)
+        selected_sub_step = sub_step_map[selected_tool]
         self.register_sub_step_classes(
             (
-                FusioncatcherStepPart,
-                JaffaStepPart,
-                PizzlyStepPart,
-                HeraStepPart,
-                StarFusionStepPart,
-                DefuseStepPart,
-                ArribaStepPart,
+                selected_sub_step,
                 LinkInStepPart,
                 LinkOutStepPart,
             )
@@ -543,7 +546,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         library_names_list = list(self._get_all_rna_ngs_libraries())
         # Get results
         fusion_tool = str(self.config.tool)
-        name_pattern = f"{fusion_tool}.{{ngs_library}}"
+        name_pattern = "{ngs_library}"
         for ngs_library in library_names_list:
             # Constant to all callers
             name_pattern_value = name_pattern.format(ngs_library=ngs_library)
@@ -567,15 +570,15 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
                                 yield ngs_library.name
 
     def _yield_arriba_files(self, ngs_library):
-        tpl = "output/arriba.{library_name}/out/arriba.{library_name}.{ext}"
+        tpl = "output/{library_name}/out/{library_name}.{ext}"
         for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
             yield tpl.format(library_name=ngs_library, ext=ext)
             yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
-        tpl = "output/arriba.{library_name}/log/arriba.{library_name}.{ext}"
+        tpl = "output/{library_name}/log/{library_name}.{ext}"
         for ext in ("log", "conda_list.txt", "conda_info.txt"):
             yield tpl.format(library_name=ngs_library, ext=ext)
             yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
-        tpl = "output/arriba.{library_name}/log/{ext}"
+        tpl = "output/{library_name}/log/{ext}"
         for ext in ("Log.out", "Log.std.out", "Log.final.out", "SJ.out.tab"):
             yield tpl.format(library_name=ngs_library, ext=ext)
             yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
