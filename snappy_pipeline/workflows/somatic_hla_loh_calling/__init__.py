@@ -52,8 +52,7 @@ class LohhlaStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.hla_tool = str(self.parent.get_task_config("hla_typing").tool)
-        self.base_path_out = "work/lohhla.{tumor_library}/out/lohhla.{tumor_library}{ext}"
+        self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -76,10 +75,9 @@ class LohhlaStepPart(BaseStepPart):
                 normal_library=self.get_normal_lib_name(wildcards), **wildcards
             )
             tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-            hla = (
-                f"output/{self.hla_tool}.{{normal_library}}/out/"
-                f"{self.hla_tool}.{{normal_library}}.txt"
-            ).format(normal_library=self.get_normal_lib_name(wildcards))
+            hla = "output/{normal_library}/out/{normal_library}.txt".format(
+                normal_library=self.get_normal_lib_name(wildcards)
+            )
 
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),
@@ -106,7 +104,7 @@ class LohhlaStepPart(BaseStepPart):
     def _get_log_file(self, action):
         """Return dict of log files."""
         _ = action
-        prefix = "work/lohhla.{tumor_library}/log/lohhla.{tumor_library}"
+        prefix = "work/{tumor_library}/log/{tumor_library}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -171,7 +169,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "lohhla.{tumor_library.name}"
+        name_pattern = "{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             ext=".done",

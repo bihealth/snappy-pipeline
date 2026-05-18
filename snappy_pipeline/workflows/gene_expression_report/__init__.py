@@ -31,7 +31,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/featurecounts.{ngs_library}/out/featurecounts.{ngs_library}{ext}"
+        self.base_path_out = "work/{ngs_library}/out/{ngs_library}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -41,9 +41,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
 
     def get_log_file(self, action):
         _ = action
-        return (
-            "work/{tool}.{{ngs_library}}/log/snakemake.gene_expression_quantification.log"
-        ).format(tool=self.__class__.name)
+        return "work/{ngs_library}/log/snakemake.gene_expression_quantification.log"
 
 
 class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
@@ -69,10 +67,9 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                 # if there is more than one lib, cbioportal cannot use it
                                 if lib.extra_infos["libraryType"] == "mRNA_seq":
                                     rna_library = lib.name
-                                    exp_tpl = (
-                                        "output/featurecounts.{library_name}/out/"
-                                        "featurecounts.{library_name}.tsv"
-                                    ).format(library_name=rna_library)
+                                    exp_tpl = "output/{library_name}/out/{library_name}.tsv".format(
+                                        library_name=rna_library
+                                    )
                                     exp_file = gene_expression(exp_tpl)
                                     yield exp_file
 
@@ -188,7 +185,7 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        name_pattern = "featurecounts.{ngs_library.name}"
+        name_pattern = "{ngs_library.name}"
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():

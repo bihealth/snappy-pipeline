@@ -23,12 +23,11 @@ for prior mapping.
 Step Output
 ===========
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
-``mapper`` that the library has been aligned with, and the tool ``tool``, the
-pipeline step will create a directory ``output/{tool}.{lib_name}-{lib_pk}/out``
+For each RNA NGS library with name ``lib_name``/key ``lib_pk``, the
+pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting TSV files.
 
-- ``{tool}.{lib_name}-{lib_pk}.tsv``
+- ``{lib_name}-{lib_pk}.tsv``
 
 =====================
 Default Configuration
@@ -132,7 +131,7 @@ class SalmonStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/salmon.{{library_name}}/out/salmon.{{library_name}}{ext}"
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
         if (
             self.config.salmon.path_transcript_to_gene is not None
@@ -165,7 +164,7 @@ class SalmonStepPart(BaseStepPart):
     def _get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
-        prefix = "work/salmon.{library_name}/log/salmon.{library_name}"
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -235,7 +234,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{tool}.{{library_name}}/out/{tool}.{{library_name}}{ext}"
+        self.base_path_out = "work/{library_name}/out/{library_name}{ext}"
 
     def get_input_files(self, action):
         assert action == "run", "Unsupported actions"
@@ -259,7 +258,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         return dict(
             zip(
                 EXTENSIONS[self.name].keys(),
-                expand(self.base_path_out, tool=[self.name], ext=EXTENSIONS[self.name].values()),
+                expand(self.base_path_out, ext=EXTENSIONS[self.name].values()),
             )
         )
 
@@ -271,9 +270,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
-        prefix = "work/{tool}.{{library_name}}/log/{tool}.{{library_name}}".format(
-            tool=self.__class__.name
-        )
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -350,7 +347,7 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
     def get_strandedness_file(self, action):
         _ = action
-        return expand(self.base_path_out, tool=[self.name], ext=[".decision"])
+        return expand(self.base_path_out, ext=[".decision"])
 
     def get_args(self, action: str):
         self._validate_action(action)
@@ -541,10 +538,10 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
         tool = self.config.tool.value
-        name_pattern = f"{tool}.{{ngs_library.name}}"
+        name_pattern = "{ngs_library.name}"
 
         # Salmon special case
-        salmon_name_pattern = "salmon.{ngs_library.name}"
+        salmon_name_pattern = "{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
         if self.w_config.step_config[
             "gene_expression_quantification"

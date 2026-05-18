@@ -17,22 +17,22 @@ See :ref:`ngs_mapping_step_input` for more information.
 Step Output
 ===========
 
-HLA typing will be performed for all NGS libraries in all sample sheets.  For each combination
-of HLA typer and library, a directory ``{hla_typer}.{lib_name}-{lib_pk}/out`` will be created.
+HLA typing will be performed for all NGS libraries in all sample sheets. For each
+library, a directory ``{lib_name}-{lib_pk}/out`` will be created.
 Therein, the following files will be created:
 
-- ``{hla_typer}.{lib_name}-{lib_pk}.txt``
-- ``{hla_typer}.{lib_name}-{lib_pk}.txt.md5``
+- ``{lib_name}-{lib_pk}.txt``
+- ``{lib_name}-{lib_pk}.txt.md5``
 
 For example, it might look as follows for the example from above:
 
 ::
 
     output/
-    +-- optitype.P001-N1-DNA1-WES1-4
+    +-- P001-N1-DNA1-WES1-4
     |   `-- out
-    |       |-- optitype.P001-N1-DNA1-WES1-4.txt
-    |       `-- optitype.P001-N1-DNA1-WES1-4.txt.md5
+    |       |-- P001-N1-DNA1-WES1-4.txt
+    |       `-- P001-N1-DNA1-WES1-4.txt.md5
     [...]
 
 =====================
@@ -103,7 +103,7 @@ class OptiTypeStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/optitype.{{library_name}}/out/optitype.{{library_name}}{ext}"
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
@@ -139,7 +139,7 @@ class OptiTypeStepPart(BaseStepPart):
         """Return dict of log files."""
         self._validate_action(action)
 
-        prefix = "work/{name}.{{library_name}}/log/{name}.{{library_name}}".format(name=self.name)
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -229,7 +229,7 @@ class ArcasHlaStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.mapper = self.config.arcashla.mapper
-        self.base_path_out = "work/arcashla.{{library_name}}/out/arcashla.{{library_name}}{ext}"
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
 
     def get_input_files(self, action):
@@ -255,13 +255,13 @@ class ArcasHlaStepPart(BaseStepPart):
             yield name, self.base_path_out.format(ext=ext, mapper=self.config.arcashla.mapper)
 
     def get_output_prefix(self):
-        return "%s." % self.config.arcashla.mapper
+        return ""
 
     @staticmethod
     def get_log_file(action):
         """Return path to log file"""
         _ = action
-        return "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
+        return "work/{library_name}/log/snakemake.hla_typing.log"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -326,7 +326,7 @@ class HlaTypingWorkflow(BaseStep):
         """
         from os.path import join
 
-        name_pattern = "{prefix}{hla_typer}.{ngs_library.name}"
+        name_pattern = "{ngs_library.name}"
         yield from self._yield_result_files(
             join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
@@ -347,8 +347,6 @@ class HlaTypingWorkflow(BaseStep):
                 if extraction_type in supported:
                     yield from expand(
                         tpl,
-                        prefix=self.sub_steps[tool].get_output_prefix(),
-                        hla_typer=[tool],
                         ngs_library=[ngs_library],
                         **kwargs,
                     )
