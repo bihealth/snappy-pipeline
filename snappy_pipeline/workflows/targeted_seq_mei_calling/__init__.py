@@ -22,24 +22,23 @@ result of the ``ngs_mapping`` step.
 Step Output
 ===========
 
-For all samples, MEI identification will be performed on the primary DNA NGS libraries separately
-for each configured read mapper and mobile element identification tool. The name of the primary DNA
-NGS library will be used as an identification token in the output file.
+For all samples, MEI identification will be performed on primary DNA NGS libraries. The name
+of the primary DNA NGS library is used as the output identification token.
 
-For each read mapper, MEI tool, and sample the following files will be generated:
+For each sample the following files will be generated:
 
-- ``{mei_tool}.{lib_name}.vcf.gz``
-- ``{mei_tool}.{lib_name}.vcf.gz.md5``
+- ``{lib_name}.vcf.gz``
+- ``{lib_name}.vcf.gz.md5``
 
 For example, it might look as follows for the example from above:
 
 ::
 
     output/
-    +-- bwa.scramble.P001-N1-DNA1-WES1
+    +-- P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.scramble.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.scramble.P001-N1-DNA1-WES1.vcf.gz.md5
+    |       |-- P001-N1-DNA1-WES1.vcf.gz
+    |       |-- P001-N1-DNA1-WES1.vcf.gz.md5
     [...]
 
 
@@ -156,9 +155,9 @@ class ScrambleStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action=action)
         # Set log
-        name_pattern = "scramble.{library_name}"
+        name_pattern = "{library_name}"
         if action == "annotate":
-            name_pattern_annotated = "scramble_annotated.{library_name}"
+            name_pattern_annotated = "{library_name}.annotated"
             return "work/{name_pattern}/log/{name_pattern}.log".format(
                 name_pattern=name_pattern_annotated
             )
@@ -196,7 +195,7 @@ class ScrambleStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "scramble.{library_name}"
+        name_pattern = "{library_name}"
         base_name_out = "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
             name_pattern=name_pattern, ext="txt"
         )
@@ -206,7 +205,7 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_cluster():
         """Yield output files' patterns for scramble cluster call."""
-        name_pattern = "scramble.{library_name}"
+        name_pattern = "{library_name}"
         ext = "txt"
         yield (
             ext,
@@ -219,7 +218,7 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_analysis():
         """Yield output files' patterns for scramble call."""
-        name_pattern = "scramble.{library_name}"
+        name_pattern = "{library_name}"
         ext_dict = {
             "txt": "_MEIs.txt",
             "txt_md5": "_MEIs.txt.md5",
@@ -346,7 +345,7 @@ class MeiWorkflow(BaseStep):
         detection workflow.
         """
         # Initialise variable
-        name_pattern = "scramble.{donor.dna_ngs_library.name}"
+        name_pattern = "{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             ext=EXT_VALUES,

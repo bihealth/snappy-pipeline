@@ -113,7 +113,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return output files for the filtration"""
         self._validate_action(action)
-        token = "vep.{library_name}"
+        token = "{library_name}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -139,7 +139,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        token = "vep.{library_name}"
+        token = "{library_name}"
         prefix = f"work/{token}/log/{token}"
         key_ext = (
             ("log", ".log"),
