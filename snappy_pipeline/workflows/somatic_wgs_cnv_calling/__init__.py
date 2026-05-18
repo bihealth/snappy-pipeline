@@ -18,15 +18,14 @@ caller must be configured of which to use the results.
 Step Output
 ===========
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
-``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
-pipeline step will create a directory ``output/{var_caller}.{lib_name}-{lib_pk}/out``
+For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk``
+the pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{lib_name}-{lib_pk}.vcf.gz.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
 For example, it might look as follows for the example from above:
 
@@ -123,9 +122,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{var_caller}.{{cancer_library}}/out/{var_caller}.{{cancer_library}}{ext}"
-        )
+        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
         # Build shortcut from cancer bio sample name to matched tumor sample
         self.cancer_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -175,9 +172,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         """
         # Validate action
         self._validate_action(action)
-        return dict(
-            zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
-        )
+        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
 
     @dictify
     def _get_log_file(self, action):
@@ -185,7 +180,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        name_pattern = "{var_caller}.{{cancer_library}}".format(var_caller=self.__class__.name)
+        name_pattern = "{{cancer_library}}".format()
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         key_ext = (
             ("log", ".log"),
@@ -677,10 +672,8 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         self._validate_action(action)
 
         if action == "run":
-            result["ratio"] = self.base_path_out.format(var_caller=self.name, ext=".ratio.txt")
-            result["ratio_md5"] = self.base_path_out.format(
-                var_caller=self.name, ext=".ratio.txt.md5"
-            )
+            result["ratio"] = self.base_path_out.format(ext=".ratio.txt")
+            result["ratio_md5"] = self.base_path_out.format(ext=".ratio.txt.md5")
         elif action == "transform":
             transform_ext_names = ("log2", "call", "segments", "cns", "cnr")
             transform_ext_values = (
@@ -693,7 +686,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             result = dict(
                 zip(
                     transform_ext_names,
-                    expand(self.base_path_out, var_caller=[self.name], ext=transform_ext_values),
+                    expand(self.base_path_out, ext=transform_ext_values),
                 )
             )
         elif action == "plot":
@@ -702,7 +695,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             result = dict(
                 zip(
                     plot_ext_names,
-                    expand(self.base_path_out, var_caller=[self.name], ext=plot_ext_values),
+                    expand(self.base_path_out, ext=plot_ext_values),
                 )
             )
 
