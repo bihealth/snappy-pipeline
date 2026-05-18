@@ -310,9 +310,9 @@ def test_somatic_purity_ploidy_estimate_workflow(somatic_purity_ploidy_estimate_
 
     # Check result file construction
     expected = [
-        "output/bwa.ascat.P002-T2-DNA1-WGS1/out/.done",
-        "output/bwa.ascat.P002-T1-DNA1-WGS1/out/.done",
-        "output/bwa.ascat.P001-T1-DNA1-WGS1/out/.done",
+        "output/ascat.P002-T2-DNA1-WGS1/out/.done",
+        "output/ascat.P002-T1-DNA1-WGS1/out/.done",
+        "output/ascat.P001-T1-DNA1-WGS1/out/.done",
     ]
     expected = set(expected)
     actual = set(somatic_purity_ploidy_estimate_workflow.get_result_files())

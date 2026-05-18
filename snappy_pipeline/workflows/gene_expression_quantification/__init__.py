@@ -540,7 +540,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "{tool}.{ngs_library.name}"
+        tool = self.config.tool.value
+        name_pattern = f"{tool}.{{ngs_library.name}}"
 
         # Salmon special case
         salmon_name_pattern = "salmon.{ngs_library.name}"
@@ -554,7 +555,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # TODO: too many ifs, use shortcut?
         # if fixed, please do the same for somatic_gene_fusion_calling
         all_fns = []
-        tool = self.config.tool.value
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for ngs_library in sheet.all_ngs_libraries:
                 extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
@@ -575,7 +575,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                         fns = expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
-                            tool=tool,
                             ext=EXTENSIONS[tool].values(),
                         )
                         all_fns.extend(fns)

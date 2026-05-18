@@ -96,7 +96,7 @@ def test_scramble_cluster_step_part_get_input_files(mei_workflow):
 
 def test_scramble_cluster_step_part_get_output_files(mei_workflow):
     """Tests ScrambleStepPart._get_output_files_cluster()"""
-    pattern_out = "work/{mapper}.scramble.{library_name}/out/{mapper}.scramble.{library_name}"
+    pattern_out = "work/scramble.{library_name}/out/scramble.{library_name}"
     expected = {"txt": pattern_out + "_cluster.txt"}
     actual = mei_workflow.get_output_files("scramble", "cluster")
     assert actual == expected
@@ -104,9 +104,7 @@ def test_scramble_cluster_step_part_get_output_files(mei_workflow):
 
 def test_scramble_cluster_step_part_get_log_file(mei_workflow):
     """Tests ScrambleStepPart._get_log_files_cluster()"""
-    expected = (
-        "work/{mapper}.scramble.{library_name}/log/{mapper}.scramble.{library_name}_cluster.log"
-    )
+    expected = "work/scramble.{library_name}/log/scramble.{library_name}_cluster.log"
     actual = mei_workflow.get_log_file("scramble", "cluster")
     assert actual == expected
 
@@ -117,16 +115,14 @@ def test_scramble_cluster_step_part_get_log_file(mei_workflow):
 def test_scramble_analysis_step_part_get_input_files(mei_workflow):
     """Tests ScrambleStepPart._get_input_files_analysis()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-    expected = [
-        "work/bwa.scramble.P001-N1-DNA1-WGS1/out/bwa.scramble.P001-N1-DNA1-WGS1_cluster.txt"
-    ]
+    expected = ["work/scramble.P001-N1-DNA1-WGS1/out/scramble.P001-N1-DNA1-WGS1_cluster.txt"]
     actual = mei_workflow.get_input_files("scramble", "analysis")(wildcards)
     assert actual == expected
 
 
 def test_scramble_analysis_step_part_get_output_files(mei_workflow):
     """Tests ScrambleStepPart._get_output_files_analysis()"""
-    pattern_out = "work/{mapper}.scramble.{library_name}/out/{mapper}.scramble.{library_name}"
+    pattern_out = "work/scramble.{library_name}/out/scramble.{library_name}"
     expected = {
         "txt": pattern_out + "_MEIs.txt",
         "txt_md5": pattern_out + "_MEIs.txt.md5",
@@ -142,9 +138,7 @@ def test_scramble_analysis_step_part_get_output_files(mei_workflow):
 
 def test_scramble_analysis_step_part_get_log_file(mei_workflow):
     """Tests ScrambleStepPart._get_log_files_analysis()"""
-    expected = (
-        "work/{mapper}.scramble.{library_name}/log/{mapper}.scramble.{library_name}_analysis.log"
-    )
+    expected = "work/scramble.{library_name}/log/scramble.{library_name}_analysis.log"
     actual = mei_workflow.get_log_file("scramble", "analysis")
     assert actual == expected
 
@@ -183,9 +177,7 @@ def test_mei_workflow_files(mei_workflow):
     Tests simple functionality of the workflow: checks if file structure is created according
     to the expected results for scramble.
     """
-    pattern_out = (
-        "output/bwa.scramble.P00{i}-N1-DNA1-WGS1/out/bwa.scramble.P00{i}-N1-DNA1-WGS1.{ext}"
-    )
+    pattern_out = "output/scramble.P00{i}-N1-DNA1-WGS1/out/scramble.P00{i}-N1-DNA1-WGS1.{ext}"
     expected = [
         pattern_out.format(i=i, ext=ext)
         for i in range(1, 7)  # all donors: P001 - P006

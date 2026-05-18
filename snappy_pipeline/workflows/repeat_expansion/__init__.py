@@ -370,7 +370,7 @@ class RepeatExpansionWorkflow(BaseStep):
             ext=EXT_JSON,
         )
         # Yield the VCF results files
-        name_pattern = "{tool}.{donor.dna_ngs_library.name}"
+        name_pattern = "{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             ext=EXT_VCF,

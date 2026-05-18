@@ -82,13 +82,9 @@ def test_repeat_expansion_workflow_files(repeat_expansion_workflow):
     """
     # Define expected
     pattern_json_out = (
-        "output/bwa.expansionhunter_annotated.P00{i}-N1-DNA1-WGS1/out/"
-        "bwa.expansionhunter_annotated.P00{i}-N1-DNA1-WGS1.{ext}"
+        "output/annotated.P00{i}-N1-DNA1-WGS1/out/annotated.P00{i}-N1-DNA1-WGS1.{ext}"
     )
-    pattern_vcf_out = (
-        "output/bwa.expansionhunter.P00{i}-N1-DNA1-WGS1/out/"
-        "bwa.expansionhunter.P00{i}-N1-DNA1-WGS1.{ext}"
-    )
+    pattern_vcf_out = "output/P00{i}-N1-DNA1-WGS1/out/P00{i}-N1-DNA1-WGS1.{ext}"
     expected = [
         pattern_json_out.format(i=i, ext=ext)
         for i in range(1, 7)  # all donors: P001 - P006
@@ -131,9 +127,7 @@ def test_expansionhunter_run_step_part_get_input_files(repeat_expansion_workflow
 def test_expansionhunter_run_step_part_get_output_files(repeat_expansion_workflow):
     """Tests ExpansionHunterStepPart._get_output_files_run()"""
     # Define expected
-    pattern_out = (
-        "work/{mapper}.expansionhunter.{library_name}/out/{mapper}.expansionhunter.{library_name}"
-    )
+    pattern_out = "work/{library_name}/out/{library_name}"
     expected = {
         "json": pattern_out + ".json",
         "vcf": pattern_out + ".vcf",
@@ -147,10 +141,7 @@ def test_expansionhunter_run_step_part_get_output_files(repeat_expansion_workflo
 def test_expansionhunter_run_step_part_get_log_file(repeat_expansion_workflow):
     """Tests RepeatExpansionWorkflow._get_log_files_run()"""
     # Define expected
-    expected = (
-        "work/{mapper}.expansionhunter.{library_name}/log/"
-        "{mapper}.expansionhunter.{library_name}.log"
-    )
+    expected = "work/{library_name}/log/{library_name}.log"
     # Get actual
     actual = repeat_expansion_workflow.get_log_file("expansionhunter", "run")
     assert actual == expected
@@ -187,10 +178,7 @@ def test_expansionhunter_step_part_get_resource_usage(repeat_expansion_workflow)
 def test_expansionhunter_annotate_step_part_get_input_files(repeat_expansion_workflow):
     """Tests ExpansionHunterStepPart._get_input_files_annotate()"""
     # Define expected
-    json_out = (
-        "work/{mapper}.expansionhunter.{library_name}/out/"
-        "{mapper}.expansionhunter.{library_name}.json"
-    )
+    json_out = "work/{library_name}/out/{library_name}.json"
     expected = [json_out]
 
     # Get actual
@@ -202,10 +190,7 @@ def test_expansionhunter_annotate_step_part_get_input_files(repeat_expansion_wor
 def test_expansionhunter_annotate_step_part_get_output_files(repeat_expansion_workflow):
     """Tests ExpansionHunterStepPart._get_output_files_annotate()"""
     # Define expected
-    json_out = (
-        "work/{mapper}.expansionhunter_annotated.{library_name}/out/"
-        "{mapper}.expansionhunter_annotated.{library_name}"
-    )
+    json_out = "work/annotated.{library_name}/out/annotated.{library_name}"
     expected = {"json": json_out + ".json", "json_md5": json_out + ".json.md5"}
     # Get actual
     actual = repeat_expansion_workflow.get_output_files("expansionhunter", "annotate")

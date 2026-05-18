@@ -107,8 +107,8 @@ def test_gene_expression_rep_aggregate_feature_counts_step_part_get_input_files(
 ):
     """Tests GeneExpressionReportAggreateFeaturecounts.get_input_files()"""
     base_out = (
-        "GENE_EXPRESSION_QUANTIFICATION/output/star.featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
-        "star.featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1.tsv"
+        "GENE_EXPRESSION_QUANTIFICATION/output/featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
+        "featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1.tsv"
     )
     expected = [base_out.format(i=1, t=1), base_out.format(i=2, t=2)]
     actual = gene_expression_report_workflow.get_input_files("aggregate_counts", "run")
@@ -129,8 +129,7 @@ def test_gene_expression_rep_aggregate_feature_counts_step_part_get_log_file(
 ):
     """Tests GeneExpressionReportAggreateFeaturecounts.get_log_file()"""
     expected = (
-        "work/{mapper}.aggregate_counts.{ngs_library}/log/"
-        "snakemake.gene_expression_quantification.log"
+        "work/aggregate_counts.{ngs_library}/log/snakemake.gene_expression_quantification.log"
     )
     actual = gene_expression_report_workflow.get_log_file("aggregate_counts", "run")
     assert actual == expected
@@ -152,7 +151,7 @@ def test_gene_expression_rep_compute_ranks_step_part_get_output_files(
     gene_expression_report_workflow,
 ):
     """Tests GeneExpressionReportRankExpression.get_output_files()"""
-    expected = {"tsv": "work/{mapper}.{tool}.{ngs_library}/out/{mapper}.{tool}.{ngs_library}.tsv"}
+    expected = {"tsv": "work/featurecounts.{ngs_library}/out/featurecounts.{ngs_library}.tsv"}
     actual = gene_expression_report_workflow.get_output_files("compute_ranks", "run")
     assert actual == expected
 
@@ -161,9 +160,7 @@ def test_gene_expression_rep_compute_ranks_step_part_get_log_file(
     gene_expression_report_workflow,
 ):
     """Tests GeneExpressionReportRankExpression.get_log_file()"""
-    expected = (
-        "work/{mapper}.compute_ranks.{ngs_library}/log/snakemake.gene_expression_quantification.log"
-    )
+    expected = "work/compute_ranks.{ngs_library}/log/snakemake.gene_expression_quantification.log"
     actual = gene_expression_report_workflow.get_log_file("compute_ranks", "run")
     assert actual == expected
 
@@ -175,7 +172,7 @@ def test_gene_expression_rep_compute_signatures_step_part_get_output_files(
     gene_expression_report_workflow,
 ):
     """Tests GeneExpressionReportComputeSignatures.get_output_files()"""
-    expected = {"pdf": ["work/{mapper}.{tool}.{ngs_library}/out/{mapper}.{tool}.{ngs_library}.pdf"]}
+    expected = {"pdf": ["work/featurecounts.{ngs_library}/out/featurecounts.{ngs_library}.pdf"]}
     actual = gene_expression_report_workflow.get_output_files("compute_signatures", "run")
     assert actual == expected
 
@@ -185,8 +182,7 @@ def test_gene_expression_rep_compute_signatures_step_part_get_log_file(
 ):
     """Tests GeneExpressionReportComputeSignatures.get_log_file()"""
     expected = (
-        "work/{mapper}.compute_signatures.{ngs_library}/log/"
-        "snakemake.gene_expression_quantification.log"
+        "work/compute_signatures.{ngs_library}/log/snakemake.gene_expression_quantification.log"
     )
     actual = gene_expression_report_workflow.get_log_file("compute_signatures", "run")
     assert actual == expected
@@ -200,7 +196,7 @@ def test_gene_expression_rep_plot_expression_distribution_step_part_get_output_f
 ):
     """Tests GeneExpressionReportPlotGeneDistribution.get_output_files()"""
     expected = {
-        "pdf": ["work/{mapper}.{tool}.{ngs_library}/out/{mapper}.{tool}.{ngs_library}.genes.pdf"]
+        "pdf": ["work/featurecounts.{ngs_library}/out/featurecounts.{ngs_library}.genes.pdf"]
     }
     actual = gene_expression_report_workflow.get_output_files("plot_expression_distribution", "run")
     assert actual == expected
@@ -211,7 +207,7 @@ def test_gene_expression_rep_plot_expression_distribution_step_part_get_log_file
 ):
     """Tests GeneExpressionReportPlotGeneDistribution.get_log_file()"""
     expected = (
-        "work/{mapper}.plot_expression_distribution.{ngs_library}/log/"
+        "work/plot_expression_distribution.{ngs_library}/log/"
         "snakemake.gene_expression_quantification.log"
     )
     actual = gene_expression_report_workflow.get_log_file("plot_expression_distribution", "run")
@@ -236,8 +232,8 @@ def test_gene_expression_report_workflow(gene_expression_report_workflow):
 
     # Check result file construction
     base_out = (
-        "output/star.featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
-        "star.featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1.{ext}"
+        "output/featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1/out/"
+        "featurecounts.P00{i}-T{t}-RNA1-mRNA_seq1.{ext}"
     )
     expected = [
         base_out.format(i=i, t=t, ext=ext)

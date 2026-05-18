@@ -31,7 +31,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{{tool}}.{{ngs_library}}/out/{{tool}}.{{ngs_library}}{ext}"
+        self.base_path_out = "work/featurecounts.{ngs_library}/out/featurecounts.{ngs_library}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -70,11 +70,9 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                 if lib.extra_infos["libraryType"] == "mRNA_seq":
                                     rna_library = lib.name
                                     exp_tpl = (
-                                        "output/{tool}.{library_name}/out/{tool}.{library_name}.tsv"
-                                    ).format(
-                                        tool="featurecounts",
-                                        library_name=rna_library,
-                                    )
+                                        "output/featurecounts.{library_name}/out/"
+                                        "featurecounts.{library_name}.tsv"
+                                    ).format(library_name=rna_library)
                                     exp_file = gene_expression(exp_tpl)
                                     yield exp_file
 
@@ -190,7 +188,7 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        name_pattern = "{tool}.{ngs_library.name}"
+        name_pattern = "featurecounts.{ngs_library.name}"
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():
@@ -203,6 +201,5 @@ class GeneExpressionReportWorkflow(BaseStep):
                         yield from expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
-                            tool="featurecounts",
                             ext=exts,
                         )

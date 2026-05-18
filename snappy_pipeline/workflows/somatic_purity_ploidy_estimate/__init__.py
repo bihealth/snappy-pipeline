@@ -370,8 +370,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        name_pattern = "{tool}.{ngs_library.name}"
-        tool = str(self.config.tool)
+        name_pattern = "ascat.{ngs_library.name}"
         for sheet in self.shortcut_sheets:
             for donor in sheet.donors:
                 # Skip all donors that do not have a non-tumor bio sample, estimation only
@@ -384,9 +383,5 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
                         continue
                     for _test_sample in bio_sample.test_samples.values():
                         ngs_library = bio_sample.dna_ngs_library
-                        name_pattern_value = name_pattern.format(
-                            mapper=self.config.tool_ngs_mapping,
-                            tool=tool,
-                            ngs_library=ngs_library,
-                        )
+                        name_pattern_value = name_pattern.format(ngs_library=ngs_library)
                         yield os.path.join("output", name_pattern_value, "out", ".done")

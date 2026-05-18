@@ -109,12 +109,10 @@ def test_vep_run_step_part_get_input_files(variant_annotation_workflow):
 def test_vep_run_step_part_get_output_files(variant_annotation_workflow):
     """Tests VepStepPart.get_output_files()"""
     # Define expected
-    base_name_out = (
-        "work/{mapper}.{var_caller}.vep.{library_name}/out/{mapper}.{var_caller}.vep.{library_name}"
-    )
+    base_name_out = "work/vep.{library_name}/out/vep.{library_name}"
     expected = get_expected_output_vcf_files_dict(base_out=base_name_out)
     expected["output_links"] = [path.replace("work/", "output/") for path in expected.values()]
-    token = "{mapper}.{var_caller}.vep.{library_name}"
+    token = "vep.{library_name}"
     for ext in ("log", "conda_info.txt", "conda_list.txt", "wrapper.py", "environment.yaml"):
         for full_ext in (ext, f"{ext}.md5"):
             base = f"output/{token}/log/{token}"
@@ -159,9 +157,7 @@ def test_vep_run_step_part_get_args(variant_annotation_workflow):
 def test_vep_run_step_part_get_log_file(variant_annotation_workflow):
     """Tests VepStepPart.get_log_file()"""
     # Define expected
-    base_name_out = (
-        "work/{mapper}.{var_caller}.vep.{library_name}/log/{mapper}.{var_caller}.vep.{library_name}"
-    )
+    base_name_out = "work/vep.{library_name}/log/vep.{library_name}"
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=True)
     # Get actual
     actual = variant_annotation_workflow.get_log_file("vep", "run")
@@ -190,23 +186,15 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
     assert actual == expected
 
     # Check result file construction
-    tpl = (
-        "output/{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1/out/"
-        "{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1.{ext}"
-    )
+    tpl = "output/vep.P00{i}-N1-DNA1-WGS1/out/vep.P00{i}-N1-DNA1-WGS1.{ext}"
     expected = [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
+        tpl.format(i=i, ext=ext)
         for i in (1, 4)  # only for indices
         for ext in ("vcf.gz", "vcf.gz.tbi", "vcf.gz.md5", "vcf.gz.tbi.md5")
-        for mapper in ("bwa",)
-        for var_caller in ("gatk3_hc",)
     ]
-    tpl = (
-        "output/{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1/log/"
-        "{mapper}.{var_caller}.vep.P00{i}-N1-DNA1-WGS1.{ext}"
-    )
+    tpl = "output/vep.P00{i}-N1-DNA1-WGS1/log/vep.P00{i}-N1-DNA1-WGS1.{ext}"
     expected += [
-        tpl.format(mapper=mapper, var_caller=var_caller, i=i, ext=ext)
+        tpl.format(i=i, ext=ext)
         for i in (1, 4)  # only for indices
         for ext in (
             "environment.yaml",
@@ -220,8 +208,6 @@ def test_variant_annotation_workflow(variant_annotation_workflow):
             "conda_list.txt",
             "conda_list.txt.md5",
         )
-        for mapper in ("bwa",)
-        for var_caller in ("gatk3_hc",)
     ]
     actual = variant_annotation_workflow.get_result_files()
     actual.sort()
