@@ -94,7 +94,6 @@ class BwaMode(Enum):
 
 class BwaMapper(SnappyModel):
     path_index: str
-    """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -205,7 +204,6 @@ class Agent(SnappyModel):
 
 class Star(SnappyModel):
     path_index: str
-    """Required if listed in ngs_mapping.tools.rna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4

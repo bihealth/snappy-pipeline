@@ -282,7 +282,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
         if self.parent.depends_on.sv_calling_targeted:
             sv_calling = self.parent.modules["sv_calling_targeted"]
-            sv_callers = self.parent.config.tools_sv_calling_targeted
+            sv_callers = [str(self.parent.get_task_config("sv_calling_targeted").tool)]
             skip_libraries = {
                 sv_caller: getattr(
                     self.parent.get_task_config("sv_calling_targeted"), sv_caller
@@ -291,7 +291,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             }
         elif self.parent.depends_on.sv_calling_wgs:
             sv_calling = self.parent.modules["sv_calling_wgs"]
-            sv_callers = self.parent.config.tools_sv_calling_wgs.dna
+            sv_callers = [str(self.parent.get_task_config("sv_calling_wgs").tool)]
             skip_libraries = {
                 sv_caller: getattr(
                     self.parent.get_task_config("sv_calling_wgs"), sv_caller

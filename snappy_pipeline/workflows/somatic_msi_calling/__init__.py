@@ -234,26 +234,26 @@ class SomaticMsiCallingWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the MSI calling workflow"""
         name_pattern = "{msi_caller}.{tumor_library.name}"
-        for msi_caller in set(self.config.tools) & set(MSI_CALLERS_MATCHED):
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                msi_caller=msi_caller,
-                ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                msi_caller=msi_caller,
-                ext=(
-                    ".log",
-                    ".log.md5",
-                    ".conda_info.txt",
-                    ".conda_info.txt.md5",
-                    ".conda_list.txt",
-                    ".conda_list.txt.md5",
-                ),
-            )
+        msi_caller = str(self.config.tool)
+        if msi_caller not in MSI_CALLERS_MATCHED:
+            return
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            msi_caller=msi_caller,
+            ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
+        )
+        yield from self._yield_result_files_matched(
+            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
+            msi_caller=msi_caller,
+            ext=(
+                ".log",
+                ".log.md5",
+                ".conda_info.txt",
+                ".conda_info.txt.md5",
+                ".conda_list.txt",
+                ".conda_list.txt.md5",
+            ),
+        )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
         """Build output paths from path template and extension list.

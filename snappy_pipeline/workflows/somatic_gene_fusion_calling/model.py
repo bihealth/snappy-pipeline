@@ -4,7 +4,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
 
 class Tool(enum.StrEnum):
@@ -99,21 +99,7 @@ class SomaticGeneFusionCalling(SnappyStepModel):
     path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[
-        list[Tool],
-        EnumField(
-            Tool,
-            [
-                Tool.fusioncatcher,
-                Tool.jaffa,
-                Tool.arriba,
-                Tool.defuse,
-                Tool.hera,
-                Tool.pizzly,
-                Tool.star_fusion,
-            ],
-        ),
-    ]
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.fusioncatcher)]
 
     fusioncatcher: Fusioncatcher | None = None
 

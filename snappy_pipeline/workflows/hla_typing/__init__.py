@@ -337,18 +337,18 @@ class HlaTypingWorkflow(BaseStep):
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""
+        tool = str(self.config.tool)
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                for tool in self.config.tools:
-                    supported = self.sub_steps[tool].supported_extraction_types
-                    extraction_type = ngs_library.test_sample.extra_infos.get(
-                        "extractionType", "DNA"
-                    ).lower()
-                    if extraction_type in supported:
-                        yield from expand(
-                            tpl,
-                            prefix=self.sub_steps[tool].get_output_prefix(),
-                            hla_typer=[tool],
-                            ngs_library=[ngs_library],
-                            **kwargs,
-                        )
+                supported = self.sub_steps[tool].supported_extraction_types
+                extraction_type = ngs_library.test_sample.extra_infos.get(
+                    "extractionType", "DNA"
+                ).lower()
+                if extraction_type in supported:
+                    yield from expand(
+                        tpl,
+                        prefix=self.sub_steps[tool].get_output_prefix(),
+                        hla_typer=[tool],
+                        ngs_library=[ngs_library],
+                        **kwargs,
+                    )

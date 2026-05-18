@@ -346,12 +346,11 @@ class MeiWorkflow(BaseStep):
         detection workflow.
         """
         # Initialise variable
-        tools = ("scramble",)
+        tool = str(self.config.tool)
         name_pattern = "{tool}.{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
-            tool=tools,
+            tool=[tool],
             ext=EXT_VALUES,
         )
 

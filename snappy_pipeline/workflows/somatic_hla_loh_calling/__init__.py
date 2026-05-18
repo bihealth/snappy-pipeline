@@ -175,12 +175,10 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         name_pattern = "optitype.lohhla.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
             ext=".done",
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
             ext=(
                 ".log",
                 ".log.md5",

@@ -95,7 +95,7 @@ class ValidationMixin:
         :raises InvalidConfiguration: if information provided in configuration isn't enough to run
         the analysis.
         """
-        if "gcnv" not in self.config.tools:
+        if self.config.tool != "gcnv":
             return
 
         # Get precomputed models from configurations
@@ -543,9 +543,7 @@ class RunGcnvStepPart(
 
         The function will skip pedigrees where samples have inconsistent library kits and print a warning.
         """
-        if "gcnv" not in self.config.tools and not (
-            hasattr(self.config.tools, "dna") and "gcnv" in self.config.tools.dna
-        ):
+        if self.config.tool != "gcnv":
             return
 
         # Get list with all result path template strings.

@@ -554,34 +554,30 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         # TODO: too many ifs, use shortcut?
         # if fixed, please do the same for somatic_gene_fusion_calling
         all_fns = []
-        for tool in self.config.tools:
-            for sheet in filter(is_not_background, self.shortcut_sheets):
-                for ngs_library in sheet.all_ngs_libraries:
-                    extraction_type = ngs_library.test_sample.extra_infos.get(
-                        "extractionType", "DNA"
-                    )
-                    if extraction_type.lower() == "rna":
-                        if tool == "salmon":
-                            fns = expand(
-                                os.path.join(
-                                    "output",
-                                    salmon_name_pattern,
-                                    "out",
-                                    salmon_name_pattern + "{ext}",
-                                ),
-                                ngs_library=ngs_library,
-                                ext=salmon_exts.values(),
-                            )
-                            all_fns.extend(fns)
-                        else:
-                            fns = expand(
-                                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                                ngs_library=ngs_library,
-                                mapper=self.get_task_config("ngs_mapping").tools.rna,
-                                # tool=set(self.config['tools']),
-                                tool=tool,
-                                ext=EXTENSIONS[tool].values(),
-                            )
-                            all_fns.extend(fns)
+        tool = self.config.tool.value
+        for sheet in filter(is_not_background, self.shortcut_sheets):
+            for ngs_library in sheet.all_ngs_libraries:
+                extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
+                if extraction_type.lower() == "rna":
+                    if tool == "salmon":
+                        fns = expand(
+                            os.path.join(
+                                "output",
+                                salmon_name_pattern,
+                                "out",
+                                salmon_name_pattern + "{ext}",
+                            ),
+                            ngs_library=ngs_library,
+                            ext=salmon_exts.values(),
+                        )
+                        all_fns.extend(fns)
+                    else:
+                        fns = expand(
+                            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+                            ngs_library=ngs_library,
+                            tool=tool,
+                            ext=EXTENSIONS[tool].values(),
+                        )
+                        all_fns.extend(fns)
 
         return all_fns

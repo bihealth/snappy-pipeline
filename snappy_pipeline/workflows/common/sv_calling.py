@@ -17,9 +17,7 @@ class SvCallingGetResultFilesMixin:
         The implementation will return a list of all paths with prefix ``output/` that are
         returned by ``self.get_output_files()`` for all actions in ``self.actions``.
         """
-        if self.name not in self.config.tools and not (
-            hasattr(self.config.tools, "dna") and self.name in self.config.tools.dna
-        ):
+        if self.name != self.config.tool:
             return  # tool not enabled, no result files
 
         ngs_mapping_config = self.get_task_config("ngs_mapping")

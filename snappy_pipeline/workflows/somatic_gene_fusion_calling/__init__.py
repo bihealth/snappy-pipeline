@@ -543,20 +543,20 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         library_names_list = list(self._get_all_rna_ngs_libraries())
         # Get results
         name_pattern = "{fusion_caller}.{ngs_library}"
-        for fusion_caller in self.config.tools:
-            for ngs_library in library_names_list:
-                # Constant to all callers
-                name_pattern_value = name_pattern.format(
-                    fusion_caller=fusion_caller, ngs_library=ngs_library
+        fusion_caller = str(self.config.tool)
+        for ngs_library in library_names_list:
+            # Constant to all callers
+            name_pattern_value = name_pattern.format(
+                fusion_caller=fusion_caller, ngs_library=ngs_library
+            )
+            yield os.path.join("output", name_pattern_value, "out", ".done")
+            # Caller specific stuff...
+            if fusion_caller == "arriba":
+                yield from self._yield_arriba_files(ngs_library)
+            else:
+                yield os.path.join(
+                    "output", name_pattern_value, "log", "snakemake.gene_fusion_calling.log"
                 )
-                yield os.path.join("output", name_pattern_value, "out", ".done")
-                # Caller specific stuff...
-                if fusion_caller == "arriba":
-                    yield from self._yield_arriba_files(ngs_library)
-                else:
-                    yield os.path.join(
-                        "output", name_pattern_value, "log", "snakemake.gene_fusion_calling.log"
-                    )
 
     def _get_all_rna_ngs_libraries(self):
         for sheet in self.shortcut_sheets:

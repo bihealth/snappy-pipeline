@@ -371,22 +371,22 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         sheets.
         """
         name_pattern = "{tool}.{ngs_library.name}"
-        for tool in self.config.tools:
-            for sheet in self.shortcut_sheets:
-                for donor in sheet.donors:
-                    # Skip all donors that do not have a non-tumor bio sample, estimation only
-                    # implemented for matched samples at the moment.
-                    has_normal = any(not s.is_tumor for s in donor.bio_samples.values())
-                    if not has_normal:
+        tool = str(self.config.tool)
+        for sheet in self.shortcut_sheets:
+            for donor in sheet.donors:
+                # Skip all donors that do not have a non-tumor bio sample, estimation only
+                # implemented for matched samples at the moment.
+                has_normal = any(not s.is_tumor for s in donor.bio_samples.values())
+                if not has_normal:
+                    continue
+                for bio_sample in donor.bio_samples.values():
+                    if not bio_sample.is_tumor:
                         continue
-                    for bio_sample in donor.bio_samples.values():
-                        if not bio_sample.is_tumor:
-                            continue
-                        for _test_sample in bio_sample.test_samples.values():
-                            ngs_library = bio_sample.dna_ngs_library
-                            name_pattern_value = name_pattern.format(
-                                mapper=self.config.tool_ngs_mapping,
-                                tool=tool,
-                                ngs_library=ngs_library,
-                            )
-                            yield os.path.join("output", name_pattern_value, "out", ".done")
+                    for _test_sample in bio_sample.test_samples.values():
+                        ngs_library = bio_sample.dna_ngs_library
+                        name_pattern_value = name_pattern.format(
+                            mapper=self.config.tool_ngs_mapping,
+                            tool=tool,
+                            ngs_library=ngs_library,
+                        )
+                        yield os.path.join("output", name_pattern_value, "out", ".done")

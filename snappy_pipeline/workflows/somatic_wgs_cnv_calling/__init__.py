@@ -805,27 +805,15 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         """
         name_pattern = "{cancer_library.name}"
         tpl = os.path.join("output", name_pattern, "out", name_pattern + "{ext}")
-        vcf_tools = [
-            t for t in self.config.tools if t not in ("cnvetti", "control_freec", "cnvkit")
-        ]
-        bcf_tools = [t for t in self.config.tools if t in ("cnvetti",)]
-        yield from self._yield_result_files(
-            tpl,
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
-            caller=vcf_tools,
-            ext=EXT_VALUES,
-        )
-        yield from self._yield_result_files(
-            tpl,
-            mapper=self.get_task_config("ngs_mapping").tools.dna,
-            caller=bcf_tools,
-            ext=BCF_EXT_VALUES,
-        )
-        if "control_freec" in self.config.tools:
+        tool = str(self.config.tool)
+        if tool == "cnvetti":
             yield from self._yield_result_files(
                 tpl,
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller="control_freec",
+                ext=BCF_EXT_VALUES,
+            )
+        elif tool == "control_freec":
+            yield from self._yield_result_files(
+                tpl,
                 ext=[
                     ".ratio.txt",
                     ".ratio.txt.md5",
@@ -837,27 +825,20 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                     ".diagram.pdf",
                 ],
             )
-        # Plots for cnvetti
-        if "cnvkit" in self.config.tools:
+        elif tool == "cnvkit":
             exts = (".cnr", ".cns", ".bed", ".seg", ".vcf.gz", ".vcf.gz.tbi")
             yield from self._yield_result_files(
                 tpl,
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller="cnvkit",
                 ext=exts,
             )
             yield from self._yield_result_files(
                 tpl,
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller="cnvkit",
                 ext=[ext + ".md5" for ext in exts],
             )
             reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
             yield from self._yield_report_files(
                 ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
                 [(report, "txt", False) for report in reports],
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller="cnvkit",
             )
             plots = (
                 ("diagram", "pdf", False),
@@ -867,10 +848,13 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             yield from self._yield_report_files(
                 ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
                 plots,
-                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                caller="cnvkit",
             )
-        if "cnvetti" in bcf_tools:
+        else:
+            yield from self._yield_result_files(
+                tpl,
+                ext=EXT_VALUES,
+            )
+        if tool == "cnvetti":
             for sheet in filter(is_not_background, self.shortcut_sheets):
                 for donor in sheet.donors:
                     if donor.all_pairs:
@@ -880,7 +864,6 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                                 os.path.join(
                                     "output", name_pattern, "out", name_pattern + "_genome" + ext
                                 ),
-                                mapper=self.get_task_config("ngs_mapping").tools.dna,
                                 donor=[donor.name],
                             )
                             yield from expand(
@@ -890,7 +873,6 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                                     "out",
                                     name_pattern + "_chr{chrom}" + ext,
                                 ),
-                                mapper=self.get_task_config("ngs_mapping").tools.dna,
                                 donor=[donor.name],
                                 chrom=map(str, chain(range(1, 23), ("X", "Y"))),
                             )
