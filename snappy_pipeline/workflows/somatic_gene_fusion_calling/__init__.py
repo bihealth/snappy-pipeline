@@ -542,16 +542,14 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         # Convert sheet parsing into method
         library_names_list = list(self._get_all_rna_ngs_libraries())
         # Get results
-        name_pattern = "{fusion_caller}.{ngs_library}"
-        fusion_caller = str(self.config.tool)
+        fusion_tool = str(self.config.tool)
+        name_pattern = f"{fusion_tool}.{{ngs_library}}"
         for ngs_library in library_names_list:
             # Constant to all callers
-            name_pattern_value = name_pattern.format(
-                fusion_caller=fusion_caller, ngs_library=ngs_library
-            )
+            name_pattern_value = name_pattern.format(ngs_library=ngs_library)
             yield os.path.join("output", name_pattern_value, "out", ".done")
             # Caller specific stuff...
-            if fusion_caller == "arriba":
+            if fusion_tool == "arriba":
                 yield from self._yield_arriba_files(ngs_library)
             else:
                 yield os.path.join(

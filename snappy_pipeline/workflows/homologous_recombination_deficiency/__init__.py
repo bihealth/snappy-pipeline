@@ -107,9 +107,9 @@ class ScarHRDStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         self.cnv_calling = self.parent.modules["cnv_calling"]
-        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
-        caller = str(self.parent.get_task_config("cnv_calling").tool)
-        base_name = f"{mapper}.{caller}.{wildcards.library_name}"
+        aligner_tool = str(self.parent.get_task_config("ngs_mapping").tool)
+        cnv_tool = str(self.parent.get_task_config("cnv_calling").tool)
+        base_name = f"{aligner_tool}.{cnv_tool}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
         yield "seqz", self.cnv_calling(f"output/{base_name}/out/{base_name}.seqz.gz")
 

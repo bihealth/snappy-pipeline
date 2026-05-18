@@ -101,9 +101,7 @@ class Mantis2StepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{msi_caller}.{{tumor_library}}/out/{msi_caller}.{{tumor_library}}{ext}"
-        )
+        self.base_path_out = "work/msi.{tumor_library}/out/msi.{tumor_library}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -144,9 +142,7 @@ class Mantis2StepPart(BaseStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        return dict(
-            zip(EXT_NAMES, expand(self.base_path_out, msi_caller=[self.name], ext=EXT_VALUES))
-        )
+        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
 
     @dictify
     def _get_log_file(self, action):
@@ -154,9 +150,7 @@ class Mantis2StepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        prefix = ("work/{msi_caller}.{{tumor_library}}/log/{msi_caller}.{{tumor_library}}").format(
-            msi_caller=self.__class__.name
-        )
+        prefix = "work/msi.{tumor_library}/log/msi.{tumor_library}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -233,18 +227,16 @@ class SomaticMsiCallingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the MSI calling workflow"""
-        name_pattern = "{msi_caller}.{tumor_library.name}"
-        msi_caller = str(self.config.tool)
-        if msi_caller not in MSI_CALLERS_MATCHED:
+        msi_tool = str(self.config.tool)
+        if msi_tool not in MSI_CALLERS_MATCHED:
             return
+        name_pattern = "msi.{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            msi_caller=msi_caller,
-            ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
+            ext=EXT_MATCHED[msi_tool].values() if msi_tool in EXT_MATCHED else EXT_VALUES,
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            msi_caller=msi_caller,
             ext=(
                 ".log",
                 ".log.md5",

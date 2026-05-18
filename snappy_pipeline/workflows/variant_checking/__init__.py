@@ -87,11 +87,9 @@ class PeddyStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.variant_caller = str(self.parent.get_task_config("variant_calling").tool)
-        self.base_path_out = f"work/{self.variant_caller}.peddy.{{index_ngs_library}}/out/.done"
-        self.log_path = (
-            f"work/{self.variant_caller}.peddy.{{index_ngs_library}}/log/snakemake.filter.log"
-        )
+        self.variant_tool = str(self.parent.get_task_config("variant_calling").tool)
+        self.base_path_out = "work/peddy.{index_ngs_library}/out/.done"
+        self.log_path = "work/peddy.{index_ngs_library}/log/snakemake.filter.log"
 
     @dictify
     def get_input_files(self, action):
@@ -101,8 +99,8 @@ class PeddyStepPart(BaseStepPart):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         tpl = (
-            f"output/{self.variant_caller}.{{index_ngs_library}}/out/"
-            f"{self.variant_caller}.{{index_ngs_library}}"
+            f"output/{self.variant_tool}.{{index_ngs_library}}/out/"
+            f"{self.variant_tool}.{{index_ngs_library}}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
         variant_calling = self.parent.modules["variant_calling"]
@@ -114,10 +112,7 @@ class PeddyStepPart(BaseStepPart):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
-        prefix = (
-            f"work/{self.variant_caller}.peddy.{{index_ngs_library}}/out/"
-            f"{self.variant_caller}.peddy.{{index_ngs_library}}"
-        )
+        prefix = "work/peddy.{index_ngs_library}/out/peddy.{index_ngs_library}"
         key_ext = {
             "background_pca": ".background_pca.json",
             "het_check": ".het_check.csv",

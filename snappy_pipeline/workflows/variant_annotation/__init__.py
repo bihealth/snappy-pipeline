@@ -95,13 +95,13 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     actions = ("run",)
 
     @property
-    def _variant_caller(self) -> str:
+    def _variant_tool(self) -> str:
         return str(self.parent.get_task_config("variant_calling").tool)
 
     def get_input_files(self, action):
         """Return path to pedigree input file"""
         self._validate_action(action)
-        token = f"{self._variant_caller}.{{library_name}}"
+        token = f"{self._variant_tool}.{{library_name}}"
         variant_calling = self.parent.modules["variant_calling"]
         return {
             "reference": self.w_config.static_data_config.reference.path,
@@ -113,7 +113,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return output files for the filtration"""
         self._validate_action(action)
-        token = f"{self._variant_caller}.vep.{{library_name}}"
+        token = f"{self._variant_tool}.vep.{{library_name}}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -139,7 +139,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        token = f"{self._variant_caller}.vep.{{library_name}}"
+        token = f"{self._variant_tool}.vep.{{library_name}}"
         prefix = f"work/{token}/log/{token}"
         key_ext = (
             ("log", ".log"),
