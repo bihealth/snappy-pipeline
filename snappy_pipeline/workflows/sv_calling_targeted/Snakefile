@@ -316,7 +316,6 @@ rule sv_calling_targeted_melt_preprocess:
     log:
         **wf.get_log_file("melt", "preprocess"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
         library_name=RE_NO_DOT,
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "preprocess", "threads")
@@ -338,7 +337,6 @@ rule sv_calling_targeted_melt_indiv_analysis:
     log:
         **wf.get_log_file("melt", "indiv_analysis"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
         library_name=RE_NO_DOT,
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "indiv_analysis", "threads")
@@ -360,7 +358,6 @@ rule sv_calling_targeted_melt_group_analysis:
     log:
         **wf.get_log_file("melt", "group_analysis"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
         index_library_name=RE_NO_DOT,
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "group_analysis", "threads")
@@ -382,7 +379,6 @@ rule sv_calling_targeted_melt_genotype:
     log:
         **wf.get_log_file("melt", "genotype"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
         index_library_name=RE_NO_DOT,
         me_type=RE_NO_DOT,
     threads: wf.get_resource("melt", "genotype", "threads")
@@ -404,7 +400,6 @@ rule sv_calling_targeted_melt_make_vcf:
     log:
         **wf.get_log_file("melt", "make_vcf"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
         index_library_name=RE_NO_DOT,
     threads: wf.get_resource("melt", "make_vcf", "threads")
     resources:
@@ -425,7 +420,6 @@ rule sv_calling_targeted_melt_merge_vcf:
     log:
         **wf.get_log_file("melt", "merge_vcf"),
     wildcard_constraints:
-        mapper=RE_NO_DOT,
         library_name=RE_NO_DOT,
     threads: wf.get_resource("melt", "merge_vcf", "threads")
     resources:

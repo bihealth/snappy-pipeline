@@ -309,6 +309,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         path = "output/{index_ngs_library}/out/{index_ngs_library}.vcf.gz"
 
         vcfs = []
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         for sv_caller in sv_callers:
             if any(map(skip_libraries[sv_caller].__contains__, library_names)):
                 msg = f"Found libraries to skip in family {library_names}.  All samples will be skipped."
@@ -333,7 +334,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
             vcfs.append(
                 sv_calling(path).format(
-                    mapper=wildcards.mapper,
+                    mapper=mapper,
                     sv_caller=sv_caller,
                     index_ngs_library=wildcards.index_ngs_library,
                 )
@@ -373,6 +374,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             "Target coverage report must be enabled in the configuration of the ngs_mapping step"
         )
         ngs_mapping = self.parent.modules["ngs_mapping"]
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -381,14 +383,14 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             if not donor.dna_ngs_library:
                 continue
             tpl = (
-                f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/bam_qc/"
-                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.bam.%s.txt"
+                f"output/{mapper}.{donor.dna_ngs_library.name}/report/bam_qc/"
+                f"{mapper}.{donor.dna_ngs_library.name}.bam.%s.txt"
             )
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(ngs_mapping(tpl % key))
             path = (
-                f"output/{wildcards.mapper}.{donor.dna_ngs_library.name}/report/alfred_qc/"
-                f"{wildcards.mapper}.{donor.dna_ngs_library.name}.alfred.json.gz"
+                f"output/{mapper}.{donor.dna_ngs_library.name}/report/alfred_qc/"
+                f"{mapper}.{donor.dna_ngs_library.name}.alfred.json.gz"
             )
             result["alfred_qc"].append(ngs_mapping(path))
         return result

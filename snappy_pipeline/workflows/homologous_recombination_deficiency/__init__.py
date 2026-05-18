@@ -107,7 +107,9 @@ class ScarHRDStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         self.cnv_calling = self.parent.modules["cnv_calling"]
-        base_name = f"{wildcards.mapper}.{wildcards.caller}.{wildcards.library_name}"
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
+        caller = getattr(wildcards, "caller", self.parent.get_task_config("cnv_calling").tool)
+        base_name = f"{mapper}.{caller}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
         yield "seqz", self.cnv_calling(f"output/{base_name}/out/{base_name}.seqz.gz")
 
@@ -239,8 +241,8 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                         for tpl in tpls:
                             filenames = expand(
                                 tpl,
-                                mapper=self.get_task_config("ngs_mapping").tools.dna,
-                                caller=["sequenza"],
+                                mapper=[self.get_task_config("ngs_mapping").tool],
+                                caller=[self.get_task_config("cnv_calling").tool],
                                 library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
                             )
                             for f in filenames:

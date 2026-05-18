@@ -241,7 +241,6 @@ rule sv_calling_wgs_popdel_profile:
     log:
         **wf.get_log_file("popdel", "profile"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         index_ngs_library=RE_BETWEEN_DOTS,
     threads: wf.get_resource("popdel", "profile", "threads")
     resources:
@@ -263,7 +262,6 @@ rule sv_calling_wgs_popdel_call:
     log:
         **wf.get_log_file("popdel", "call"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         chrom=RE_BETWEEN_DOTS,
         begin=RE_BETWEEN_DOTS,
         end=RE_BETWEEN_DOTS,
@@ -286,8 +284,6 @@ rule sv_calling_wgs_popdel_concat_calls:
         **wf.get_output_files("popdel", "concat_calls"),
     log:
         **wf.get_log_file("popdel", "concat_calls"),
-    wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
     threads: wf.get_resource("popdel", "concat_calls", "threads")
     resources:
         runtime=wf.get_resource("popdel", "concat_calls", "runtime"),
@@ -306,7 +302,6 @@ rule sv_calling_wgs_popdel_reorder_vcf:
     log:
         **wf.get_log_file("popdel", "reorder_vcf"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         index_ngs_library=RE_BETWEEN_DOTS,
     threads: wf.get_resource("popdel", "reorder_vcf", "threads")
     resources:
@@ -331,7 +326,6 @@ rule sv_calling_wgs_melt_preprocess:
     log:
         **wf.get_log_file("melt", "preprocess"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         library_name=RE_BETWEEN_DOTS,
         me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "preprocess", "threads")
@@ -353,7 +347,6 @@ rule sv_calling_wgs_melt_indiv_analysis:
     log:
         **wf.get_log_file("melt", "indiv_analysis"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         library_name=RE_BETWEEN_DOTS,
         me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "indiv_analysis", "threads")
@@ -375,7 +368,6 @@ rule sv_calling_wgs_melt_group_analysis:
     log:
         **wf.get_log_file("melt", "group_analysis"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         index_library_name=RE_BETWEEN_DOTS,
         me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "group_analysis", "threads")
@@ -397,7 +389,6 @@ rule sv_calling_wgs_melt_genotype:
     log:
         **wf.get_log_file("melt", "genotype"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         index_library_name=RE_BETWEEN_DOTS,
         me_type=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "genotype", "threads")
@@ -419,7 +410,6 @@ rule sv_calling_wgs_melt_make_vcf:
     log:
         **wf.get_log_file("melt", "make_vcf"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         index_library_name=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "make_vcf", "threads")
     resources:
@@ -440,7 +430,6 @@ rule sv_calling_wgs_melt_merge_vcf:
     log:
         **wf.get_log_file("melt", "merge_vcf"),
     wildcard_constraints:
-        mapper=RE_BETWEEN_DOTS,
         library_name=RE_BETWEEN_DOTS,
     threads: wf.get_resource("melt", "merge_vcf", "threads")
     resources:

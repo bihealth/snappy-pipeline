@@ -438,7 +438,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
             for donor in pedigree.donors:
                 if not donor.dna_ngs_library:
                     continue  # skip
-                infix = f"{wildcards.mapper}.{donor.dna_ngs_library.name}"
+                infix = donor.dna_ngs_library.name
                 bams.append(ngs_mapping(f"output/{infix}/out/{infix}.bam"))
             yield "bam", bams
 
@@ -594,7 +594,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
     def _get_input_files_discover(self, wildcards):
         yield "reference", self.w_config.static_data_config.reference.path
         yield "dbsnp", self.w_config.static_data_config.dbsnp.path
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        infix = wildcards.library_name
         bam_path = f"output/{infix}/out/{infix}.bam"
         ngs_mapping = self.parent.modules["ngs_mapping"]
         yield "bam", ngs_mapping(bam_path)
@@ -619,7 +619,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             for donor in pedigree.donors:
                 if not donor.dna_ngs_library:
                     continue  # skip
-                infix = f"{wildcards.mapper}.gatk4_hc_gvcf_discover.{donor.dna_ngs_library.name}"
+                infix = f"gatk4_hc_gvcf_discover.{donor.dna_ngs_library.name}"
                 gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
             yield "gvcf", gvcfs
 
@@ -627,7 +627,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
     def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield "reference", self.w_config.static_data_config.reference.path
 
-        infix = f"{wildcards.mapper}.gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
+        infix = f"gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"

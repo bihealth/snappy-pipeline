@@ -213,7 +213,7 @@ class ContigPloidyMixin:
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = f"{wildcards.mapper}.gcnv_coverage.{lib}"
+                name_pattern = f"gcnv_coverage.{lib}"
                 tsvs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
         yield ext, tsvs
         # Yield path to pedigree file
@@ -271,7 +271,7 @@ class CallCnvsMixin:
         coverage_files = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = tsv_path_pattern.format(mapper=wildcards.mapper, library_name=lib)
+                name_pattern = tsv_path_pattern.format(library_name=lib)
                 coverage_files.append(f"work/{name_pattern}/out/{name_pattern}.{tsv_ext}")
         yield tsv_ext, coverage_files
 
@@ -349,7 +349,7 @@ class PostGermlineCallsMixin:
             raise InvalidConfiguration(msg_error)
 
         # Yield cnv calls output
-        name_pattern = f"{wildcards.mapper}.gcnv_call_cnvs.{library_kit}"
+        name_pattern = f"gcnv_call_cnvs.{library_kit}"
         yield (
             "calls",
             [
@@ -360,7 +360,7 @@ class PostGermlineCallsMixin:
 
         # Yield contig-ploidy output
         ext = "ploidy"
-        name_pattern = f"{wildcards.mapper}.gcnv_contig_ploidy.{library_kit}"
+        name_pattern = f"gcnv_contig_ploidy.{library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}/.done"
 
     def _get_args_post_germline_calls(self, wildcards):
@@ -418,7 +418,7 @@ class JointGermlineCnvSegmentationMixin:
         ]
         vcfs = []
         for library_name in sorted(ped_ngs_library_names):
-            name_pattern = f"{wildcards.mapper}.gcnv_post_germline_calls.{library_name}"
+            name_pattern = f"gcnv_post_germline_calls.{library_name}"
             vcfs.append(f"work/{name_pattern}/out/{name_pattern}.vcf.gz")
         yield "vcf", vcfs
         # Yield path to interval list file
@@ -476,9 +476,7 @@ class MergeMultikitFamiliesMixin:
         # Yield list of paths to input VCF files
         vcfs = []
         for kit in kits:
-            name_pattern = (
-                f"{wildcards.mapper}.gcnv_joint_segmentation.{kit}.{wildcards.library_name}"
-            )
+            name_pattern = f"gcnv_joint_segmentation.{kit}.{wildcards.library_name}"
             vcfs.append(f"work/{name_pattern}/out/{name_pattern}.vcf.gz")
         yield "vcf", vcfs
 
@@ -577,6 +575,5 @@ class RunGcnvStepPart(
             for path_tpl in result_path_tpls:
                 yield from expand(
                     path_tpl,
-                    mapper=self.get_task_config("ngs_mapping").tools.dna,
                     library_name=[index_library_name],
                 )

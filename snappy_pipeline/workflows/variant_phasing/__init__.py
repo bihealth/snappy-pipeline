@@ -267,7 +267,7 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         tpl = "output/{index_library}/out/{index_library}{ext}"
         ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
-            vals = {"mapper": wildcards.mapper, "ext": ext}
+            vals = {"ext": ext}
             # Note that we only perform phasing for pedigree members we have both parents, so
             # the following works.
             if (

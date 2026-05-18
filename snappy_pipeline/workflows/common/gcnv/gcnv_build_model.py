@@ -40,7 +40,7 @@ class FilterIntervalsMixin:
         covs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = f"{wildcards.mapper}.gcnv_coverage.{lib}"
+                name_pattern = f"gcnv_coverage.{lib}"
                 ext = "tsv"
                 covs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
         yield key, covs
@@ -62,7 +62,7 @@ class ScatterIntervalsMixin:
     @dictify
     def _get_input_files_scatter_intervals(self, wildcards):
         ext = "interval_list"
-        name_pattern = f"{wildcards.mapper}.gcnv_filter_intervals.{wildcards.library_kit}"
+        name_pattern = f"gcnv_filter_intervals.{wildcards.library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
 
     def _get_output_files_scatter_intervals(self):
@@ -92,7 +92,7 @@ class ContigPloidyMixin:
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = f"{wildcards.mapper}.gcnv_coverage.{lib}"
+                name_pattern = f"gcnv_coverage.{lib}"
                 tsvs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
         yield ext, tsvs
         # Yield path to pedigree file
@@ -130,11 +130,11 @@ class CallCnvsMixin:
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                path_pattern = f"{wildcards.mapper}.gcnv_coverage.{lib}"
+                path_pattern = f"gcnv_coverage.{lib}"
                 tsvs.append(f"work/{path_pattern}/out/{path_pattern}.{ext}")
         yield ext, tsvs
         ext = "ploidy"
-        path_pattern = f"{wildcards.mapper}.gcnv_contig_ploidy.{wildcards.library_kit}"
+        path_pattern = f"gcnv_contig_ploidy.{wildcards.library_kit}"
         yield ext, f"work/{path_pattern}/out/{path_pattern}/.done"
         key = "intervals"
         path_pattern = "gcnv_annotate_gc.{library_kit}"
@@ -200,6 +200,5 @@ class BuildGcnvModelStepPart(
             for path_tpl in result_path_tpls:
                 yield from expand(
                     path_tpl,
-                    mapper=self.get_task_config("ngs_mapping").tools.dna,
                     library_name=library_names,
                 )

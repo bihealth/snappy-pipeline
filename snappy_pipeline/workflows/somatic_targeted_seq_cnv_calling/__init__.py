@@ -416,9 +416,10 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return self._get_args_all
 
     def _get_args_all(self, wildcards):
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         return {
             "config": self.config.get(self.name).model_dump(by_alias=True),
-            "mapper": wildcards.mapper,
+            "mapper": mapper,
             "library_name": wildcards.library_name,
         }
 

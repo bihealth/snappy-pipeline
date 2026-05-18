@@ -112,7 +112,7 @@ class PopDelStepPart(
     def _get_input_files_profile(self, wildcards):
         """Return input files for "call" action"""
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        infix = wildcards.library_name
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
     @dictify
@@ -125,7 +125,7 @@ class PopDelStepPart(
     def _get_input_files_call(self, wildcards):
         paths = []
         for donor in self._donors_with_dna_ngs_library():
-            infix = f"{wildcards.mapper}.popdel_profile.{donor.dna_ngs_library.name}"
+            infix = f"popdel_profile.{donor.dna_ngs_library.name}"
             paths.append(f"work/{infix}/out/{infix}.profile")
         yield "profile", paths
 
@@ -162,7 +162,7 @@ class PopDelStepPart(
                 if r.begin == 0:
                     r.begin = 1
                 chrom = escape_dots_dashes(r.chrom)
-                infix = f"{wildcards.mapper}.popdel_call.{chrom}-{r.begin}-{r.end}"
+                infix = f"popdel_call.{chrom}-{r.begin}-{r.end}"
                 vcfs.append(f"work/{infix}/out/{infix}.vcf.gz")
         yield "vcf", vcfs
 
@@ -185,7 +185,7 @@ class PopDelStepPart(
 
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
-        infix = f"{wildcards.mapper}.popdel_concat_calls"
+        infix = "popdel_concat_calls"
         yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
 
     @dictify
@@ -256,7 +256,7 @@ class Sniffles2StepPart(BaseStepPart):
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
         ngs_mapping = self.parent.modules["ngs_mapping"]
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        infix = wildcards.library_name
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
 
     @dictify
@@ -270,7 +270,7 @@ class Sniffles2StepPart(BaseStepPart):
         snfs = []
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                infix = f"{wildcards.mapper}.sniffles2_bam_to_snf.{donor.dna_ngs_library.name}.snf"
+                infix = f"sniffles2_bam_to_snf.{donor.dna_ngs_library.name}"
                 snfs.append(f"work/{infix}/out/{infix}.snf")
         yield "snf", snfs
 

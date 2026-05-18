@@ -286,12 +286,10 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_create(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/purecn/out/purecn.{library_name}_coverage_loess.txt.gz"
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         yield (
             "normals",
-            [
-                tpl.format(mapper=wildcards.mapper, library_name=lib)
-                for lib in self.normal_libraries
-            ],
+            [tpl.format(mapper=mapper, library_name=lib) for lib in self.normal_libraries],
         )
 
     def get_output_files(self, action):
@@ -337,9 +335,10 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def _get_args_coverage(self, wildcards):
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         return {
             "config": self.config.get(self.name).model_dump(by_alias=True),
-            "mapper": wildcards.mapper,
+            "mapper": mapper,
             "library_name": wildcards.library_name,
         }
 
@@ -622,9 +621,9 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             return input_files
         ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{normal_library}/out/{normal_library}.bam"
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         bams = [
-            ngs_mapping(tpl.format(mapper=wildcards["mapper"], normal_library=x))
-            for x in self.normal_libraries
+            ngs_mapping(tpl.format(mapper=mapper, normal_library=x)) for x in self.normal_libraries
         ]
         bais = [x + ".bai" for x in bams]
         input_files = {
@@ -664,17 +663,14 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for computing panel of normals"""
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn"
-        targets = [
-            tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
-        ]
+        targets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn"
-        antitargets = [
-            tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
-        ]
+        antitargets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
         tpl = "work/cnvkit/log/cnvkit.{normal_library}.coverage.{ext}"
         logs = [
-            tpl.format(mapper=wildcards["mapper"], normal_library=x, ext=ext)
+            tpl.format(mapper=mapper, normal_library=x, ext=ext)
             for x in self.normal_libraries
             for ext in ("log", "conda_list.txt", "conda_info.txt")
         ]
@@ -693,14 +689,11 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_report(self, wildcards):
         """Helper wrapper function for the panel of normals report"""
+        mapper = getattr(wildcards, "mapper", self.parent.get_task_config("ngs_mapping").tool)
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn"
-        targets = [
-            tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
-        ]
+        targets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
         tpl = "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn"
-        antitargets = [
-            tpl.format(mapper=wildcards["mapper"], normal_library=x) for x in self.normal_libraries
-        ]
+        antitargets = [tpl.format(mapper=mapper, normal_library=x) for x in self.normal_libraries]
         return {
             "target": targets,
             "antitarget": antitargets,

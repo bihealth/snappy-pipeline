@@ -115,7 +115,7 @@ class Delly2StepPart(
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                infix = f"{wildcards.mapper}.delly2_genotype.{donor.dna_ngs_library.name}"
+                infix = f"delly2_genotype.{donor.dna_ngs_library.name}"
                 bcfs.append(f"work/{infix}/out/{infix}.bcf")
         yield "bcf", bcfs
 
