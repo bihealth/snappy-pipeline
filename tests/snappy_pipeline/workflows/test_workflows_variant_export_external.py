@@ -27,18 +27,20 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
-        step_config:
-          variant_export_external:
-            bam_available_flag: true
-            merge_vcf_flag: true
-            search_paths: [/search_path]
-            search_patterns: [{"vcf": "*.vcf.gz", "bam": "*.bam", "bai": "*.bai"}]
-            external_tool: dragen
-            path_refseq_ser: /data/refseq_ser
-            path_ensembl_ser: /data/ensembl_ser
-            path_db: /data/db
-            target_coverage_report:
-              path_targets_bed: /path/to/targets.bed
+        tasks:
+          - step: variant_export_external
+            name: variant_export_external
+            config:
+              bam_available_flag: true
+              merge_vcf_flag: true
+              search_paths: [/search_path]
+              search_patterns: [{"vcf": "*.vcf.gz", "bam": "*.bam", "bai": "*.bai"}]
+              external_tool: dragen
+              path_refseq_ser: /data/refseq_ser
+              path_ensembl_ser: /data/ensembl_ser
+              path_db: /data/db
+              target_coverage_report:
+                path_targets_bed: /path/to/targets.bed
 
         data_sets:
           first_batch:
@@ -87,6 +89,7 @@ def variant_export_external_workflow(
         config_lookup_paths,
         config_paths,
         work_dir,
+        task_name="variant_export_external",
     )
 
 
@@ -116,6 +119,7 @@ def test_workflow_check_config_invalid_annotator_files(
             config_lookup_paths,
             config_paths,
             work_dir,
+            task_name="variant_export_external",
         )
     errors = exec_info.value.errors()
     assert len(errors) == 3
@@ -159,6 +163,7 @@ def test_workflow_check_config_invalid_search_directory(
             config_lookup_paths,
             config_paths,
             work_dir,
+            task_name="variant_export_external",
         )
 
     errors = exec_info.value.errors()
@@ -194,7 +199,7 @@ def test_workflow_check_config_invalid_search_pattern(
     )
     # Change search patterns to invalid
     modified_config = deepcopy(minimal_config)
-    modified_config["step_config"]["variant_export_external"]["search_patterns"] = [
+    modified_config["tasks"][0]["config"]["search_patterns"] = [
         "vcf",
         "*/*.vcf.gz",
     ]
@@ -206,6 +211,7 @@ def test_workflow_check_config_invalid_search_pattern(
             config_lookup_paths,
             config_paths,
             work_dir,
+            task_name="variant_export_external",
         )
 
     errors = exec_info.value.errors()
@@ -221,7 +227,7 @@ def test_workflow_check_config_invalid_search_pattern(
     expected_errors = [
         {
             "input": input_str,
-            "loc": ("step_config", "variant_export_external", "search_patterns", i),
+            "loc": ("search_patterns", i),
             "msg": "Input should be a valid dictionary",
             "type": "dict_type",
             "url": f"https://errors.pydantic.dev/{pydantic_version}/v/dict_type",
@@ -254,12 +260,12 @@ def test_bam_reports_step_part_call_get_output_files_bam_qc(
 ):
     """Tests BamReportsExternalStepPart._get_output_files_bam_qc()"""
     expected = {
-        "bamstats": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt",
-        "bamstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.bamstats.txt.md5",
-        "flagstats": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt",
-        "flagstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.flagstats.txt.md5",
-        "idxstats": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt",
-        "idxstats_md5": "work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.idxstats.txt.md5",
+        "bamstats": "work/{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt",
+        "bamstats_md5": "work/{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt.md5",
+        "flagstats": "work/{library_name}/report/bam_qc/{library_name}.bam.flagstats.txt",
+        "flagstats_md5": "work/{library_name}/report/bam_qc/{library_name}.bam.flagstats.txt.md5",
+        "idxstats": "work/{library_name}/report/bam_qc/{library_name}.bam.idxstats.txt",
+        "idxstats_md5": "work/{library_name}/report/bam_qc/{library_name}.bam.idxstats.txt.md5",
         "output_links": [],
     }
     actual = variant_export_external_workflow.get_output_files("bam_reports", "bam_qc")
@@ -270,7 +276,7 @@ def test_bam_reports_step_part_call_get_log_file_bam_qc(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_log_file_bam_qc()"""
-    base_out = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc"
+    base_out = "work/{library_name}/log/{library_name}.bam_qc"
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = variant_export_external_workflow.get_log_file("bam_reports", "bam_qc")
     assert actual == expected
@@ -293,9 +299,7 @@ def test_bam_reports_step_part_call_get_input_files_collect(
     variant_export_external_workflow,
 ):
     """Tests BamReportsExternalStepPart._get_input_files_collect()"""
-    expected = [
-        "work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
-    ]
+    expected = ["work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"]
     actual = variant_export_external_workflow.get_input_files("bam_reports", "collect")(None)
     assert actual == expected
 
@@ -581,10 +585,8 @@ def test_varfish_annotator_step_part_get_input_files_bam_qc(variant_export_exter
     )
     # Define expected
     donor_indices = (1, 2, 3)
-    base_name_bam = "work/dragen.P00{i}-N1-DNA1-WGS1/report/bam_qc/dragen.P00{i}-N1-DNA1-WGS1.{ext}"
-    base_name_cov = (
-        "work/dragen.P00{i}-N1-DNA1-WGS1/report/alfred_qc/dragen.P00{i}-N1-DNA1-WGS1.alfred.json.gz"
-    )
+    base_name_bam = "work/P00{i}-N1-DNA1-WGS1/report/bam_qc/P00{i}-N1-DNA1-WGS1.{ext}"
+    base_name_cov = "work/P00{i}-N1-DNA1-WGS1/report/alfred_qc/P00{i}-N1-DNA1-WGS1.alfred.json.gz"
     expected = {
         "bamstats": [base_name_bam.format(i=i, ext="bam.bamstats.txt") for i in donor_indices],
         "flagstats": [base_name_bam.format(i=i, ext="bam.flagstats.txt") for i in donor_indices],
