@@ -21,7 +21,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = PanelOfNormalsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.get_task_config("panel_of_normals")["tools"]
+tool = str(wf.config.tool)
 
 
 # Rules =======================================================================
@@ -64,7 +64,7 @@ rule panel_of_normals_link_out_run:
 
 # Write out the tumor-only results for the normals ----------------------------
 
-if "mutect2" in tools:
+if tool == "mutect2":
 
     scattergather:
         mutect2=wf.config.get("mutect2", {}).get("num_jobs", 24),
@@ -143,7 +143,7 @@ if "mutect2" in tools:
 
 # Panel of normals (cnvkit) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if "cnvkit" in tools:
+elif tool in ("cnvkit", "access"):
 
     rule panel_of_normals_access_run:
         output:
@@ -157,95 +157,97 @@ if "cnvkit" in tools:
         wrapper:
             wf.wrapper_path("cnvkit/access")
 
-    rule panel_of_normals_cnvkit_target:
-        input:
-            unpack(wf.get_input_files("cnvkit", "target")),
-        output:
-            **wf.get_output_files("cnvkit", "target"),
-        log:
-            **wf.get_log_file("cnvkit", "target"),
-        threads: wf.get_resource("cnvkit", "target", "threads")
-        resources:
-            runtime=wf.get_resource("cnvkit", "target", "runtime"),
-            mem=wf.get_resource("cnvkit", "target", "mem"),
-            partition=wf.get_resource("cnvkit", "target", "partition"),
-        params:
-            args=wf.get_args("cnvkit", "target"),
-        wrapper:
-            wf.wrapper_path("cnvkit/target")
+    if tool == "cnvkit":
 
-    rule panel_of_normals_cnvkit_antitarget:
-        input:
-            unpack(wf.get_input_files("cnvkit", "antitarget")),
-        output:
-            **wf.get_output_files("cnvkit", "antitarget"),
-        log:
-            **wf.get_log_file("cnvkit", "antitarget"),
-        threads: wf.get_resource("cnvkit", "antitarget", "threads")
-        resources:
-            runtime=wf.get_resource("cnvkit", "antitarget", "runtime"),
-            mem=wf.get_resource("cnvkit", "antitarget", "mem"),
-            partition=wf.get_resource("cnvkit", "antitarget", "partition"),
-        params:
-            args=wf.get_args("cnvkit", "antitarget"),
-        wrapper:
-            wf.wrapper_path("cnvkit/antitarget")
+        rule panel_of_normals_cnvkit_target:
+            input:
+                unpack(wf.get_input_files("cnvkit", "target")),
+            output:
+                **wf.get_output_files("cnvkit", "target"),
+            log:
+                **wf.get_log_file("cnvkit", "target"),
+            threads: wf.get_resource("cnvkit", "target", "threads")
+            resources:
+                runtime=wf.get_resource("cnvkit", "target", "runtime"),
+                mem=wf.get_resource("cnvkit", "target", "mem"),
+                partition=wf.get_resource("cnvkit", "target", "partition"),
+            params:
+                args=wf.get_args("cnvkit", "target"),
+            wrapper:
+                wf.wrapper_path("cnvkit/target")
 
-    rule panel_of_normals_cnvkit_coverage:
-        input:
-            unpack(wf.get_input_files("cnvkit", "coverage")),
-        output:
-            **wf.get_output_files("cnvkit", "coverage"),
-        log:
-            **wf.get_log_file("cnvkit", "coverage"),
-        threads: wf.get_resource("cnvkit", "coverage", "threads")
-        resources:
-            runtime=wf.get_resource("cnvkit", "coverage", "runtime"),
-            mem=wf.get_resource("cnvkit", "coverage", "mem"),
-            partition=wf.get_resource("cnvkit", "coverage", "partition"),
-        params:
-            args=wf.get_args("cnvkit", "coverage"),
-        wrapper:
-            wf.wrapper_path("cnvkit/coverage")
+        rule panel_of_normals_cnvkit_antitarget:
+            input:
+                unpack(wf.get_input_files("cnvkit", "antitarget")),
+            output:
+                **wf.get_output_files("cnvkit", "antitarget"),
+            log:
+                **wf.get_log_file("cnvkit", "antitarget"),
+            threads: wf.get_resource("cnvkit", "antitarget", "threads")
+            resources:
+                runtime=wf.get_resource("cnvkit", "antitarget", "runtime"),
+                mem=wf.get_resource("cnvkit", "antitarget", "mem"),
+                partition=wf.get_resource("cnvkit", "antitarget", "partition"),
+            params:
+                args=wf.get_args("cnvkit", "antitarget"),
+            wrapper:
+                wf.wrapper_path("cnvkit/antitarget")
 
-    rule panel_of_normals_cnvkit_create_panel:
-        input:
-            unpack(wf.get_input_files("cnvkit", "create_panel")),
-        output:
-            **wf.get_output_files("cnvkit", "create_panel"),
-        log:
-            **wf.get_log_file("cnvkit", "create_panel"),
-        threads: wf.get_resource("cnvkit", "create_panel", "threads")
-        resources:
-            runtime=wf.get_resource("cnvkit", "create_panel", "runtime"),
-            mem=wf.get_resource("cnvkit", "create_panel", "mem"),
-            partition=wf.get_resource("cnvkit", "create_panel", "partition"),
-        params:
-            args=wf.get_args("cnvkit", "create_panel"),
-        wrapper:
-            wf.wrapper_path("cnvkit/reference")
+        rule panel_of_normals_cnvkit_coverage:
+            input:
+                unpack(wf.get_input_files("cnvkit", "coverage")),
+            output:
+                **wf.get_output_files("cnvkit", "coverage"),
+            log:
+                **wf.get_log_file("cnvkit", "coverage"),
+            threads: wf.get_resource("cnvkit", "coverage", "threads")
+            resources:
+                runtime=wf.get_resource("cnvkit", "coverage", "runtime"),
+                mem=wf.get_resource("cnvkit", "coverage", "mem"),
+                partition=wf.get_resource("cnvkit", "coverage", "partition"),
+            params:
+                args=wf.get_args("cnvkit", "coverage"),
+            wrapper:
+                wf.wrapper_path("cnvkit/coverage")
 
-    rule panel_of_normals_cnvkit_report:
-        input:
-            unpack(wf.get_input_files("cnvkit", "report")),
-        output:
-            **wf.get_output_files("cnvkit", "report"),
-        log:
-            **wf.get_log_file("cnvkit", "report"),
-        threads: wf.get_resource("cnvkit", "report", "threads")
-        resources:
-            runtime=wf.get_resource("cnvkit", "report", "runtime"),
-            mem=wf.get_resource("cnvkit", "report", "mem"),
-            partition=wf.get_resource("cnvkit", "report", "partition"),
-        params:
-            args=wf.get_args("cnvkit", "report"),
-        wrapper:
-            wf.wrapper_path("cnvkit/report")
+        rule panel_of_normals_cnvkit_create_panel:
+            input:
+                unpack(wf.get_input_files("cnvkit", "create_panel")),
+            output:
+                **wf.get_output_files("cnvkit", "create_panel"),
+            log:
+                **wf.get_log_file("cnvkit", "create_panel"),
+            threads: wf.get_resource("cnvkit", "create_panel", "threads")
+            resources:
+                runtime=wf.get_resource("cnvkit", "create_panel", "runtime"),
+                mem=wf.get_resource("cnvkit", "create_panel", "mem"),
+                partition=wf.get_resource("cnvkit", "create_panel", "partition"),
+            params:
+                args=wf.get_args("cnvkit", "create_panel"),
+            wrapper:
+                wf.wrapper_path("cnvkit/reference")
+
+        rule panel_of_normals_cnvkit_report:
+            input:
+                unpack(wf.get_input_files("cnvkit", "report")),
+            output:
+                **wf.get_output_files("cnvkit", "report"),
+            log:
+                **wf.get_log_file("cnvkit", "report"),
+            threads: wf.get_resource("cnvkit", "report", "threads")
+            resources:
+                runtime=wf.get_resource("cnvkit", "report", "runtime"),
+                mem=wf.get_resource("cnvkit", "report", "mem"),
+                partition=wf.get_resource("cnvkit", "report", "partition"),
+            params:
+                args=wf.get_args("cnvkit", "report"),
+            wrapper:
+                wf.wrapper_path("cnvkit/report")
 
 
 # Panel of normals (PureCN) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if "purecn" in tools:
+elif tool == "purecn":
 
     # Install the annotation R package --------------------------
 

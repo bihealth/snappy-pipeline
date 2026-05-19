@@ -68,7 +68,7 @@ if tool == "cnvkit":
 # Run sequenza ----------------------------------------------------
 
 
-if tool == "sequenza":
+elif tool == "sequenza":
 
     rule somatic_targeted_seq_cnv_calling_sequenza_install:
         output:
@@ -145,7 +145,7 @@ if tool == "sequenza":
 # Run PureCN ------------------------------------------------------
 
 
-if tool == "purecn":
+elif tool == "purecn":
 
     rule somatic_targeted_seq_cnv_calling_purecn_coverage:
         input:
