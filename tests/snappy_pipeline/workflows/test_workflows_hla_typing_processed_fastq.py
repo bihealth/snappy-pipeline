@@ -25,14 +25,32 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
-        step_config:
-          hla_typing:
-            path_link_in: /preprocess
-            tool: optitype
-            optitype:
-              max_reads: 5000
-            arcashla:
-              mapper: star
+        tasks:
+          - step: ngs_mapping
+            name: ngs_mapping
+            config:
+              tool: bwa
+              path_link_in: /preprocess
+              bwa:
+                path_index: /path/to/bwa/index.fa
+
+          - step: hla_typing
+            name: hla_typing_optitype
+            depends_on:
+              ngs_mapping: ngs_mapping
+            config:
+              tool: optitype
+              optitype:
+                max_reads: 5000
+
+          - step: hla_typing
+            name: hla_typing_arcashla
+            depends_on:
+              ngs_mapping: ngs_mapping
+            config:
+              tool: arcashla
+              arcashla:
+                mapper: star
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -47,7 +65,7 @@ def minimal_config():
 
 
 @pytest.fixture
-def hla_typing_workflow(
+def hla_typing_workflow_optitype(
     dummy_workflow,
     minimal_config,
     config_lookup_paths,
@@ -66,44 +84,67 @@ def hla_typing_workflow(
         config_lookup_paths,
         config_paths,
         work_dir,
+        task_name="hla_typing_optitype",
+    )
+
+
+@pytest.fixture
+def hla_typing_workflow_arcashla(
+    dummy_workflow,
+    minimal_config,
+    config_lookup_paths,
+    work_dir,
+    config_paths,
+    cancer_sheet_fake_fs_path_link_in,
+    mocker,
+):
+    """Return HlaTypingWorkflow object pre-configured with cancer sheet"""
+    patch_module_fs("snappy_pipeline.workflows.abstract", cancer_sheet_fake_fs_path_link_in, mocker)
+    return HlaTypingWorkflow(
+        dummy_workflow,
+        minimal_config,
+        config_lookup_paths,
+        config_paths,
+        work_dir,
+        task_name="hla_typing_arcashla",
     )
 
 
 # Tests for OptiTypeStepPart ----------------------------------------------------------------------
 
 
-def test_optitype_step_part_get_input_files(hla_typing_workflow):
+def test_optitype_step_part_get_input_files(hla_typing_workflow_optitype):
     """Tests OptiTypeStepPart.get_input_files()"""
     expected = {"done": "work/input_links/{library_name}/.done"}
-    actual = hla_typing_workflow.get_input_files("optitype", "run")
+    actual = hla_typing_workflow_optitype.get_input_files("optitype", "run")
     assert actual == expected
 
 
-def test_optitype_step_part_get_output_files(hla_typing_workflow):
+def test_optitype_step_part_get_output_files(hla_typing_workflow_optitype):
     """Tests OptiTypeStepPart.get_output_files()"""
     expected = {
-        "cov_pdf": "work/optitype.{library_name}/out/optitype.{library_name}_coverage_plot.pdf",
-        "tsv": "work/optitype.{library_name}/out/optitype.{library_name}_result.tsv",
-        "txt": "work/optitype.{library_name}/out/optitype.{library_name}.txt",
-        "txt_md5": "work/optitype.{library_name}/out/optitype.{library_name}.txt.md5",
+        "cov_pdf": "work/{library_name}/out/{library_name}_coverage_plot.pdf",
+        "tsv": "work/{library_name}/out/{library_name}_result.tsv",
+        "txt": "work/{library_name}/out/{library_name}.txt",
+        "txt_md5": "work/{library_name}/out/{library_name}.txt.md5",
     }
-    actual = hla_typing_workflow.get_output_files("optitype", "run")
+    actual = hla_typing_workflow_optitype.get_output_files("optitype", "run")
     assert actual == expected
 
 
-def test_optitype_step_part_get_seq_type_rna(hla_typing_workflow):
+def test_optitype_step_part_get_seq_type_rna(hla_typing_workflow_optitype):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-RNA1-mRNA_seq1"})
-    sinput = hla_typing_workflow.get_args("optitype", "run")(wildcards)
+    sinput = hla_typing_workflow_optitype.get_args("optitype", "run")(wildcards)
     assert sinput["seq_type"] == "rna"
 
 
-def test_optitype_step_part_get_seq_type_dna(hla_typing_workflow):
+def test_optitype_step_part_get_seq_type_dna(hla_typing_workflow_optitype):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
-    sinput = hla_typing_workflow.get_args("optitype", "run")(wildcards)
+    sinput = hla_typing_workflow_optitype.get_args("optitype", "run")(wildcards)
     assert sinput["seq_type"] == "dna"
 
 
-def test_optitype_step_part_get_args_input(hla_typing_workflow):
+def test_optitype_step_part_get_args_input(hla_typing_workflow_optitype):
     wildcards = Wildcards(fromdict={"library_name": "P001-T1-DNA1-WGS1"})
     expected = {
         "input": {
@@ -116,87 +157,84 @@ def test_optitype_step_part_get_args_input(hla_typing_workflow):
         "num_mapping_threads": 4,
         "max_reads": 5000,
     }
-    actual = hla_typing_workflow.get_args("optitype", "run")(wildcards)
+    actual = hla_typing_workflow_optitype.get_args("optitype", "run")(wildcards)
     assert actual == expected
 
 
-def test_optitype_step_part_get_log_file(hla_typing_workflow):
+def test_optitype_step_part_get_log_file(hla_typing_workflow_optitype):
     """Tests OptiTypeStepPart.get_log_file()"""
     expected = {
-        "conda_info": "work/optitype.{library_name}/log/optitype.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/optitype.{library_name}/log/optitype.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/optitype.{library_name}/log/optitype.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/optitype.{library_name}/log/optitype.{library_name}.conda_list.txt.md5",
-        "log": "work/optitype.{library_name}/log/optitype.{library_name}.log",
-        "log_md5": "work/optitype.{library_name}/log/optitype.{library_name}.log.md5",
+        "conda_info": "work/{library_name}/log/{library_name}.conda_info.txt",
+        "conda_info_md5": "work/{library_name}/log/{library_name}.conda_info.txt.md5",
+        "conda_list": "work/{library_name}/log/{library_name}.conda_list.txt",
+        "conda_list_md5": "work/{library_name}/log/{library_name}.conda_list.txt.md5",
+        "log": "work/{library_name}/log/{library_name}.log",
+        "log_md5": "work/{library_name}/log/{library_name}.log.md5",
     }
-    actual = hla_typing_workflow.get_log_file("optitype", "run")
+    actual = hla_typing_workflow_optitype.get_log_file("optitype", "run")
     assert actual == expected
 
 
-def test_optitype_step_part_get_resource_usage(hla_typing_workflow):
+def test_optitype_step_part_get_resource_usage(hla_typing_workflow_optitype):
     """Tests OptiTypeStepPart.get_resource_usage()"""
     # Define expected
     expected_dict = {"threads": 6, "runtime": "40h", "mem": "45000MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = hla_typing_workflow.get_resource("optitype", "run", resource)()
+        actual = hla_typing_workflow_optitype.get_resource("optitype", "run", resource)()
         assert actual == expected, msg_error
 
 
 # Tests for ArcasHlaStepPart ----------------------------------------------------------------------
 
 
-def test_arcashla_step_part_get_input_files(hla_typing_workflow):
+def test_arcashla_step_part_get_input_files(hla_typing_workflow_arcashla):
     """Tests ArcasHlaStepPart.get_input_files()"""
     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
     expected_keys = ("ref_done", "bam")
     expected_ref = "work/arcashla.prepare_reference/out/.done"
-    actual = hla_typing_workflow.get_input_files("arcashla", "run")(wildcards)
+    actual = hla_typing_workflow_arcashla.get_input_files("arcashla", "run")(wildcards)
     assert all([key in expected_keys for key in actual])
     assert actual.get("ref_done") == expected_ref
 
 
-def test_arcashla_step_part_get_output_files(hla_typing_workflow):
+def test_arcashla_step_part_get_output_files(hla_typing_workflow_arcashla):
     """Tests ArcasHlaStepPart.get_output_files()"""
     expected = {
-        "txt": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.txt",
-        "txt_md5": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.txt.md5",
+        "txt": "work/{library_name}/out/{library_name}.txt",
+        "txt_md5": "work/{library_name}/out/{library_name}.txt.md5",
     }
-    actual = hla_typing_workflow.get_output_files("arcashla", "run")
+    actual = hla_typing_workflow_arcashla.get_output_files("arcashla", "run")
     assert actual == expected
 
 
-def test_arcashla_step_part_get_log_file(hla_typing_workflow):
+def test_arcashla_step_part_get_log_file(hla_typing_workflow_arcashla):
     """Tests ArcasHlaStepPart.get_log_file()"""
-    expected = "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
-    actual = hla_typing_workflow.get_log_file("arcashla", "run")
+    expected = "work/{library_name}/log/snakemake.hla_typing.log"
+    actual = hla_typing_workflow_arcashla.get_log_file("arcashla", "run")
     assert actual == expected
 
 
-def test_arcashla_step_part_get_resource_usage(hla_typing_workflow):
+def test_arcashla_step_part_get_resource_usage(hla_typing_workflow_arcashla):
     """Tests ArcasHlaStepPart.get_resource_usage()"""
     # Define expected
     expected_dict = {"threads": 4, "runtime": "60h", "mem": "15000MB", "partition": "medium"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."
-        actual = hla_typing_workflow.get_resource("arcashla", "run", resource)()
+        actual = hla_typing_workflow_arcashla.get_resource("arcashla", "run", resource)()
         assert actual == expected, msg_error
 
 
 # Tests for HlaTypingWorkflow ---------------------------------------------------------------------
 
 
-def test_hla_typing_workflow(hla_typing_workflow):
-    """Tests simple functionality of the workflow."""
-    # Check created sub steps
-    expected = ["arcashla", "link_in", "link_out", "optitype"]
-    actual = list(sorted(hla_typing_workflow.sub_steps.keys()))
-    assert actual == expected
+def test_hla_typing_workflow_optitype(hla_typing_workflow_optitype):
+    """Tests simple functionality of the optitype task workflow."""
+    actual_sub_steps = list(sorted(hla_typing_workflow_optitype.sub_steps.keys()))
+    assert "optitype" in actual_sub_steps
 
-    # Check result file construction
     dna_samples = {
         "P001-N1-DNA1-WGS1",
         "P001-T1-DNA1-WGS1",
@@ -211,27 +249,52 @@ def test_hla_typing_workflow(hla_typing_workflow):
     }
 
     expected = []
-    tools = [("star.arcashla", rna_samples), ("optitype", dna_samples | rna_samples)]
+    samples = dna_samples | rna_samples
     expected += [
-        "output/{tool}.{sample}/out/{tool}.{sample}.{ext}{chksum}".format(
-            tool=tool, sample=sample, ext=ext, chksum=chksum
-        )
-        for tool, samples in tools
+        "output/{sample}/out/{sample}.{ext}{chksum}".format(sample=sample, ext=ext, chksum=chksum)
         for sample in samples
         for ext in ("txt",)
         for chksum in ("", ".md5")
     ]
     expected += [
-        "output/{tool}.{sample}/log/{tool}.{sample}.{ext}{chksum}".format(
-            tool=tool, sample=sample, ext=ext, chksum=chksum
-        )
-        for tool, samples in tools
+        "output/{sample}/log/{sample}.{ext}{chksum}".format(sample=sample, ext=ext, chksum=chksum)
         for sample in samples
         for ext in ("log", "conda_list.txt", "conda_info.txt")
         for chksum in ("", ".md5")
     ]
     expected.sort()
-    actual = hla_typing_workflow.get_result_files()
+    actual = hla_typing_workflow_optitype.get_result_files()
+    actual.sort()
+
+    assert actual == expected
+
+
+def test_hla_typing_workflow_arcashla(hla_typing_workflow_arcashla):
+    """Tests simple functionality of the arcashla task workflow."""
+    actual_sub_steps = list(sorted(hla_typing_workflow_arcashla.sub_steps.keys()))
+    assert "arcashla" in actual_sub_steps
+
+    rna_samples = {
+        "P001-T1-RNA1-mRNA_seq1",
+        "P002-T2-RNA1-mRNA_seq1",
+    }
+
+    expected = []
+    samples = rna_samples
+    expected += [
+        "output/{sample}/out/{sample}.{ext}{chksum}".format(sample=sample, ext=ext, chksum=chksum)
+        for sample in samples
+        for ext in ("txt",)
+        for chksum in ("", ".md5")
+    ]
+    expected += [
+        "output/{sample}/log/{sample}.{ext}{chksum}".format(sample=sample, ext=ext, chksum=chksum)
+        for sample in samples
+        for ext in ("log", "conda_list.txt", "conda_info.txt")
+        for chksum in ("", ".md5")
+    ]
+    expected.sort()
+    actual = hla_typing_workflow_arcashla.get_result_files()
     actual.sort()
 
     assert actual == expected
