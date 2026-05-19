@@ -47,7 +47,7 @@ def minimal_config():
               path_transcript_to_gene: /path/to/salmon/transcript_to_gene
               path_index: /path/to/salmon/index
           ngs_mapping:
-            tool: 'star
+            tool: star
             star:
               path_index: /path/to/star/index
 

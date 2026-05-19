@@ -24,7 +24,7 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tool: 'star
+            tool: star
             star:
               path_index: /path/to/star/index
 

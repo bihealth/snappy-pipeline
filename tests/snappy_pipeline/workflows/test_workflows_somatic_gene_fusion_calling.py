@@ -29,7 +29,7 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tool: 'bwa
+            tool: bwa
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_gene_fusion_calling:

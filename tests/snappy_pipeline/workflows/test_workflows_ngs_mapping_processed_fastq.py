@@ -33,7 +33,7 @@ def minimal_config():
         step_config:
           ngs_mapping:
             path_link_in: "/preprocess"
-            tool: 'bwa
+            tool: bwa
               rna: ['star']
             target_coverage_report:
               enabled: true
