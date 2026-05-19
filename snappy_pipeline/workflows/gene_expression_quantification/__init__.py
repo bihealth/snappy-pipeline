@@ -237,7 +237,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{library_name}/out/{library_name}{ext}"
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
 
     def get_input_files(self, action):
         assert action == "run", "Unsupported actions"
