@@ -21,7 +21,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = VariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = [str(wf.config.tool)]
+tool = str(wf.config.tool)
 
 # Rules =======================================================================
 
@@ -55,7 +55,7 @@ rule variant_calling_write_pedigree_run:
 
 # Run bcftools call -----------------------------------------------------------
 
-if "bcftools_call" in tools:
+if tool == "bcftools_call":
 
     rule variant_calling_bcftools_call_run:
         input:
@@ -79,7 +79,7 @@ if "bcftools_call" in tools:
 # Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
 
 
-if "gatk3_hc" in tools:
+elif tool == "gatk3_hc":
 
     rule variant_calling_gatk3_hc_run:
         input:
@@ -103,7 +103,7 @@ if "gatk3_hc" in tools:
 # Run GATK UnifiedGenotyper ---------------------------------------------------
 
 
-if "gatk3_ug" in tools:
+elif tool == "gatk3_ug":
 
     rule variant_calling_gatk3_ug_run:
         input:
@@ -127,7 +127,7 @@ if "gatk3_ug" in tools:
 # Run GATK 4 HaplotypeCaller Joint (direct, pedigree/multi-sample) ------------
 
 
-if "gatk4_hc_joint" in tools:
+elif tool == "gatk4_hc_joint":
 
     rule variant_calling_gatk4_hc_joint_run:
         input:
@@ -149,7 +149,7 @@ if "gatk4_hc_joint" in tools:
 # Run GATK 4 HaplotypeCaller gVCF (going via per-sample gVCF files) -----------
 
 
-if "gatk4_hc_gvcf" in tools:
+elif tool == "gatk4_hc_gvcf":
 
     # Discover variants with GATK HaplotypeCaller, create per-sample gVCF file
     rule variant_calling_gatk4_hc_gvcf_discover:
