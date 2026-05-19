@@ -282,7 +282,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     @dictify
     def _get_input_files_create(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
-        tpl = "work/purecn/out/purecn.{library_name}_coverage_loess.txt.gz"
+        tpl = "work/purecn/out/{library_name}_coverage_loess.txt.gz"
         yield (
             "normals",
             [tpl.format(library_name=lib) for lib in self.normal_libraries],
@@ -402,7 +402,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{normal_library}/out/{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
-        scatteritem_base_path = "work/mutect2.{normal_library}/par/scatter/{scatteritem}.region.bed"
+        scatteritem_base_path = "work/{normal_library}/par/scatter/{scatteritem}.region.bed"
         return {
             "normal_bam": bam,
             "normal_bai": bam + ".bai",
@@ -413,15 +413,15 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     def _get_input_files_gather(self, wildcards):
         gather = self.parent.workflow.globals.get("gather")
         gather = getattr(gather, self.name)
-        tpl = "work/mutect2.{normal_library}/par/run/{{scatteritem}}.vcf.gz".format(**wildcards)
+        tpl = "work/{normal_library}/par/run/{{scatteritem}}.vcf.gz".format(**wildcards)
         return {"vcf": gather(tpl)}
 
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for merging individual results & panel creation"""
         paths = []
-        tpl = "work/{tool}.{normal_library}/out/{tool}.{normal_library}.prepare.vcf.gz"
+        tpl = "work/{normal_library}/out/{normal_library}.prepare.vcf.gz"
         for normal in self.normal_libraries:
-            paths.append(tpl.format(normal_library=normal, tool=self.name, **wildcards))
+            paths.append(tpl.format(normal_library=normal, **wildcards))
         return {
             "normals": paths,
             "reference": self.w_config.static_data_config.reference.path,
@@ -446,8 +446,8 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         }
 
         tpls = {
-            "prepare_panel": "work/mutect2.{normal_library}/par/run/{scatteritem}",
-            "gather": "work/mutect2.{normal_library}/out/mutect2.{normal_library}.prepare",
+            "prepare_panel": "work/{normal_library}/par/run/{scatteritem}",
+            "gather": "work/{normal_library}/out/{normal_library}.prepare",
             "create_panel": "work/mutect2/out/mutect2.panel_of_normals",
         }
         output_files = {}
@@ -494,14 +494,14 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         self._validate_action(action)
 
         # Set expected format based on action
-        tpl = f"{self.name}.{{normal_library}}"
+        tpl = "{normal_library}"
         match action:
             case "gather":
                 postfix = ""
             case "prepare_panel":
                 postfix = ".{scatteritem}"
             case "create_panel":
-                tpl = f"{self.name}"
+                tpl = self.name
                 postfix = ".panel_of_normals"
             case _:
                 postfix = "." + action
@@ -656,11 +656,11 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for computing panel of normals"""
-        tpl = "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn"
+        tpl = "work/cnvkit/out/{normal_library}.targetcoverage.cnn"
         targets = [tpl.format(normal_library=x) for x in self.normal_libraries]
-        tpl = "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn"
+        tpl = "work/cnvkit/out/{normal_library}.antitargetcoverage.cnn"
         antitargets = [tpl.format(normal_library=x) for x in self.normal_libraries]
-        tpl = "work/cnvkit/log/cnvkit.{normal_library}.coverage.{ext}"
+        tpl = "work/cnvkit/log/{normal_library}.coverage.{ext}"
         logs = [
             tpl.format(normal_library=x, ext=ext)
             for x in self.normal_libraries
@@ -681,9 +681,9 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_report(self, wildcards):
         """Helper wrapper function for the panel of normals report"""
-        tpl = "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn"
+        tpl = "work/cnvkit/out/{normal_library}.targetcoverage.cnn"
         targets = [tpl.format(normal_library=x) for x in self.normal_libraries]
-        tpl = "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn"
+        tpl = "work/cnvkit/out/{normal_library}.antitargetcoverage.cnn"
         antitargets = [tpl.format(normal_library=x) for x in self.normal_libraries]
         return {
             "target": targets,
@@ -723,10 +723,10 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_output_files_coverage(self):
         return {
-            "target": "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn",
-            "target_md5": "work/cnvkit/out/cnvkit.{normal_library}.targetcoverage.cnn.md5",
-            "antitarget": "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn",
-            "antitarget_md5": "work/cnvkit/out/cnvkit.{normal_library}.antitargetcoverage.cnn.md5",
+            "target": "work/cnvkit/out/{normal_library}.targetcoverage.cnn",
+            "target_md5": "work/cnvkit/out/{normal_library}.targetcoverage.cnn.md5",
+            "antitarget": "work/cnvkit/out/{normal_library}.antitargetcoverage.cnn",
+            "antitarget_md5": "work/cnvkit/out/{normal_library}.antitargetcoverage.cnn.md5",
         }
 
     def _get_output_files_create_panel(self):
@@ -757,7 +757,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         tpls = {
             "target": "work/cnvkit/log/cnvkit.target",
             "antitarget": "work/cnvkit/log/cnvkit.antitarget",
-            "coverage": "work/cnvkit/log/cnvkit.{normal_library}.coverage",
+            "coverage": "work/cnvkit/log/{normal_library}.coverage",
             "create_panel": "work/cnvkit/log/cnvkit.panel_of_normals",
             "report": "work/cnvkit/log/cnvkit.report",
             "access": "work/cnvkit.access/log/cnvkit.access",

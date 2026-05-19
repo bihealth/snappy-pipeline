@@ -12,16 +12,21 @@ from pathlib import Path
 
 import pytest
 
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
 WORKFLOW_ROOT = Path("snappy_pipeline/workflows")
 
-# Start with migrated workflows; extend this list as steps are refactored.
-POLICY_ENFORCED_STEPS = [
-    "adapter_trimming",
-    "hla_typing",
-    "link_in",
-    "ngs_mapping",
-    "tumor_mutational_burden",
-]
+ALL_POLICY_STEPS = sorted(
+    step_name
+    for step_name in WORKFLOW_REGISTRY
+    if (WORKFLOW_ROOT / step_name / "__init__.py").exists()
+)
+
+# Backlog snapshot: workflows still encoding config-derived naming dimensions.
+# Keep this list explicit so newly introduced regressions fail immediately.
+NEEDS_ADAPTATION = set()
+
+POLICY_ENFORCED_STEPS = sorted(set(ALL_POLICY_STEPS) - NEEDS_ADAPTATION)
 
 # Config-derived wildcard dimensions that should not appear in path templates.
 FORBIDDEN_PLACEHOLDER_RE = re.compile(
@@ -74,3 +79,13 @@ def test_no_config_derived_dimensions_in_path_templates(step_name: str):
 
     violations = _scan_file(init_py)
     assert not violations, "\n".join(violations)
+
+
+def test_path_template_policy_backlog_snapshot():
+    offenders = set()
+    for step_name in ALL_POLICY_STEPS:
+        init_py = WORKFLOW_ROOT / step_name / "__init__.py"
+        if _scan_file(init_py):
+            offenders.add(step_name)
+
+    assert offenders == NEEDS_ADAPTATION

@@ -238,7 +238,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         @dictify
         def input_function(wildcards):
             yield "packages", "work/R_packages/out/sequenza.done"
-            name_pattern = "sequenza.{library_name}"
+            name_pattern = "{library_name}"
             yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
 
         return input_function
@@ -253,13 +253,13 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 )
             }
         elif action == "coverage":
-            name_pattern = "sequenza.{library_name}"
+            name_pattern = "{library_name}"
             return {
                 "seqz": f"work/{name_pattern}/out/{name_pattern}.seqz.gz",
                 "seqz_md5": f"work/{name_pattern}/out/{name_pattern}.seqz.gz.md5",
             }
         elif action == "run":
-            name_pattern = "sequenza.{library_name}"
+            name_pattern = "{library_name}"
             return {
                 "seg": f"work/{name_pattern}/out/{name_pattern}_dnacopy.seg",
                 "seg_md5": f"work/{name_pattern}/out/{name_pattern}_dnacopy.seg.md5",
@@ -321,7 +321,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 length=self.config.sequenza.length,
             )
         else:
-            name_pattern = "sequenza.{library_name}"
+            name_pattern = "{library_name}"
             prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
         return self._get_log_file_from_prefix(prefix)
 
@@ -360,7 +360,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        name_pattern = "purecn.{library_name}".format(**wildcards)
+        name_pattern = "{library_name}".format(**wildcards)
         yield (
             "tumor",
             os.path.join(
@@ -390,7 +390,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         """Return output paths, dependent on rule"""
         # Validate action
         self._validate_action(action)
-        name_pattern = "purecn.{library_name}"
+        name_pattern = "{library_name}"
         prefix = os.path.join("work", name_pattern, "out", name_pattern)
         action_mapping = {
             "coverage": {"coverage": prefix + "_coverage_loess.txt.gz"},
@@ -428,7 +428,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
 
-        name_pattern = "purecn.{library_name}"
+        name_pattern = "{library_name}"
         prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
         return self._get_log_file_from_prefix(prefix)
 
