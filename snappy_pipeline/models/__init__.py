@@ -299,7 +299,10 @@ def _dump_commented_yaml(model: type[BaseModel], comment_optional: bool = True) 
 def _model_to_commented_yaml(model_instance: BaseModel, **kwargs):
     yaml = _yaml_instance()
     with StringIO() as s:
-        yaml.dump(json.loads(model_instance.model_dump_json(**kwargs)), stream=s)
+        yaml.dump(
+            json.loads(model_instance.model_dump_json(warnings=False, **kwargs)),
+            stream=s,
+        )
         s.flush()
         yaml_config_string = s.getvalue()
         max_column = max(map(len, yaml_config_string.splitlines())) + 2
