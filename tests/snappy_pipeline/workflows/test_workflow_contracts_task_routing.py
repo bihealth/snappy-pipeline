@@ -63,13 +63,19 @@ def test_get_task_config_uses_config_level_depends_on(
         [
             _mapping_task("explicit_map"),
             _mapping_task("typed_map"),
-            {"step": "link_in", "name": "preprocessed_fastq", "config": {"path": "/preprocess"}},
+            {
+                "step": "link_in",
+                "name": "preprocessed_fastq",
+                "config": {"path": "/preprocess"},
+            },
             {
                 "step": "hla_typing",
                 "name": "hla_explicit",
-                "depends_on": {"ngs_mapping": "explicit_map", "link_in": "preprocessed_fastq"},
                 "config": {
-                    "depends_on": {"ngs_mapping": "typed_map"},
+                    "depends_on": {
+                        "ngs_mapping": "explicit_map",
+                        "link_in": "preprocessed_fastq",
+                    },
                     "tool": "optitype",
                     "optitype": {"max_reads": 5000},
                 },
@@ -90,42 +96,6 @@ def test_get_task_config_uses_config_level_depends_on(
     assert str(step.get_task_config("ngs_mapping").tool) == "bwa"
     assert step.get_task_config("ngs_mapping").bwa.path_index == "/path/to/bwa/index.fa"
     assert step.get_preprocessed_path() == "/preprocess"
-
-
-def test_get_task_config_falls_back_to_typed_depends_on(
-    dummy_workflow,
-    config_lookup_paths,
-    config_paths,
-    work_dir,
-    cancer_sheet_fake_fs,
-    mocker,
-):
-    config = _make_base_config(
-        [
-            _mapping_task("typed_map"),
-            {
-                "step": "hla_typing",
-                "name": "hla_typed",
-                "config": {
-                    "depends_on": {"ngs_mapping": "typed_map"},
-                    "tool": "optitype",
-                    "optitype": {"max_reads": 5000},
-                },
-            },
-        ]
-    )
-    step = _build_workflow(
-        dummy_workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        work_dir,
-        cancer_sheet_fake_fs,
-        mocker,
-        task_name="hla_typed",
-    )
-
-    assert str(step.get_task_config("ngs_mapping").tool) == "bwa"
 
 
 def test_get_task_config_falls_back_to_literal_task_name(
