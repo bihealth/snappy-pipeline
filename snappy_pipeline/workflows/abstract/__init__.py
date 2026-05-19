@@ -729,8 +729,10 @@ class BaseStep:
 
         print(f"\n[DEBUG] Initializing step '{self.step_name}' for task '{self.task_name}'")
 
-        self.depends_on = self.task.depends_on
         self.config = self.config_model_class(**self.task.config)
+        self.depends_on = (
+            self.config.depends_on.model_dump() if hasattr(self.config, "depends_on") else {}
+        )
 
         self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps: dict[str, BaseStepPart] = {}
@@ -769,17 +771,8 @@ class BaseStep:
         if name == self.name or name == getattr(self, "task_name", ""):
             return self.config
 
-        # Resolve via dependency mapping, task-level dict (user-explicit) takes priority,
-        # then the config model's typed depends_on defaults, then the literal name as fallback.
-        target_task_name = (
-            self.depends_on.get(name)
-            or (
-                getattr(self.config.depends_on, name, None)
-                if hasattr(self.config, "depends_on")
-                else None
-            )
-            or name
-        )
+        # Resolve via config-model typed dependency mapping, then literal name as fallback.
+        target_task_name = self.depends_on.get(name) or name
 
         # Find the task in the global config
         task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
@@ -966,8 +959,6 @@ class BaseStep:
 
         if logical_name in self.depends_on:
             target_task_name = self.depends_on[logical_name]
-        elif hasattr(self.config, "depends_on") and hasattr(self.config.depends_on, logical_name):
-            target_task_name = getattr(self.config.depends_on, logical_name)
         else:
             target_task_name = default_module_name
 

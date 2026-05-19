@@ -56,7 +56,8 @@ def dependency_closure(task_name: str, tasks_by_name: dict[str, dict[str, Any]])
         task = tasks_by_name.get(current)
         if not task:
             continue
-        depends_on = task.get("depends_on", {})
+        task_config = task.get("config", {}) if isinstance(task, dict) else {}
+        depends_on = task_config.get("depends_on", {}) if isinstance(task_config, dict) else {}
         if not isinstance(depends_on, dict):
             continue
         for dep_task_name in depends_on.values():

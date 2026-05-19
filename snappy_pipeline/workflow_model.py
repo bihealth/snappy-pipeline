@@ -55,9 +55,6 @@ class TaskModel(SnappyModel):
     name: str
     """The unique instance name for this pipeline execution (e.g., 'mapping_stringent')"""
 
-    depends_on: dict[str, str] = Field(default_factory=dict)
-    """Maps internal logical dependencies to external task names (e.g., {'mapping': 'mapping_stringent'})"""
-
     config: dict[str, Any] = Field(default_factory=dict)
     """The raw configuration dictionary for the step. Validated downstream."""
 
