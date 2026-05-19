@@ -257,7 +257,7 @@ def infer_link_in_path(base_config: dict[str, Any], base_config_path: Path) -> s
     return str(base_config_path.parent)
 
 
-def get_dep_defaults(workflow_cls: type) -> dict[str, str]:
+def get_dep_defaults(workflow_cls: type) -> dict[str, str | None]:
     config_model = getattr(workflow_cls, "config_model_class", None)
     if not config_model:
         return {}
@@ -270,7 +270,38 @@ def get_dep_defaults(workflow_cls: type) -> dict[str, str]:
     dep_model = dep_field.annotation
     dep_instance = dep_model()
     dep_dict = dep_instance.model_dump()
-    return {k: v for k, v in dep_dict.items() if isinstance(v, str) and v}
+    return {k: v for k, v in dep_dict.items()}
+
+
+def _guess_bwa_index_from_reference(base_config: dict[str, Any]) -> str:
+    static_data = base_config.get("static_data_config", {})
+    if isinstance(static_data, dict):
+        ref = static_data.get("reference", {})
+        if isinstance(ref, dict):
+            path = ref.get("path")
+            if isinstance(path, str) and path:
+                return path
+    return "AUTO"
+
+
+def bootstrap_step_config(
+    step_name: str,
+    step_config: dict[str, Any],
+    base_config: dict[str, Any],
+) -> dict[str, Any]:
+    cfg = copy.deepcopy(step_config)
+
+    if step_name == "ngs_mapping":
+        cfg["tool"] = "bwa"
+        cfg.setdefault(
+            "target_coverage_report",
+            {"enabled": False, "path_target_interval_list_mapping": []},
+        )
+        cfg.setdefault("bwa", {})
+        if isinstance(cfg["bwa"], dict):
+            cfg["bwa"].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+
+    return cfg
 
 
 def _candidate_score(candidate_step: str, requirement: DataSignature) -> tuple[int, int, str]:
@@ -313,6 +344,7 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
     tasks: list[dict[str, Any]] = []
     for step_name, cls in workflow_items:
         step_config = parse_default_step_config(cls, step_name)
+        step_config = bootstrap_step_config(step_name, step_config, base_config)
         if step_name == "link_in" and "path" not in step_config:
             step_config["path"] = infer_link_in_path(base_config, base_config_path)
 
@@ -323,7 +355,6 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             {
                 "step": step_name,
                 "name": step_name,
-                "depends_on": {},
                 "config": step_config,
             }
         )
@@ -337,8 +368,15 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
         # 1) Use typed depends_on defaults first (if available).
         dep_defaults = get_dep_defaults(cls)
         for logical_name, default_target in dep_defaults.items():
-            if default_target in all_steps and default_target != step_name:
+            if (
+                isinstance(default_target, str)
+                and default_target
+                and default_target in all_steps
+                and default_target != step_name
+            ):
                 depends_on[logical_name] = default_target
+            elif logical_name in all_steps and logical_name != step_name:
+                depends_on[logical_name] = logical_name
             elif logical_name in LOGICAL_DEP_ALIASES:
                 alias_target = LOGICAL_DEP_ALIASES[logical_name]
                 if alias_target in all_steps and alias_target != step_name:
@@ -367,7 +405,10 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             if producer and producer != step_name:
                 depends_on[logical_name] = producer
 
-        task["depends_on"] = depends_on
+        if depends_on:
+            task_config = task.get("config", {})
+            if isinstance(task_config, dict):
+                task_config["depends_on"] = depends_on
 
     if generation_notes:
         print("Generation notes:")
