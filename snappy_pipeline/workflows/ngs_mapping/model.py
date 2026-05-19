@@ -1,5 +1,6 @@
 import enum
 import os
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
@@ -24,7 +25,7 @@ class MetaTool(StrEnum):
     MBCS = "mbcs"
 
 
-class Tool(enum.StrEnum):
+class Tool(StrEnum):
     bwa = "bwa"
     bwa_mem2 = "bwa_mem2"
     minimap2 = "minimap2"
