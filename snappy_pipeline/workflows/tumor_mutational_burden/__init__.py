@@ -55,13 +55,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def get_input_files(self, action):
         self._validate_action(action)
 
-        base_name = self.parent.somatic_variant_caller
-        if self.config.has_annotation:
-            base_name += f".{self.parent.somatic_variant_annotation_tool}"
-        if self.config.is_filtered:
-            base_name += ".filtered.{tumor_library}"
-        else:
-            base_name += ".{tumor_library}"
+        base_name = "{tumor_library}"
 
         tpl = os.path.join("output", base_name, "out", base_name)
 
@@ -75,13 +69,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        base_name = self.parent.somatic_variant_caller
-        if self.config.has_annotation:
-            base_name += f".{self.parent.somatic_variant_annotation_tool}"
         if self.config.is_filtered:
-            base_name += ".filtered.tmb.{tumor_library}"
+            base_name = "filtered.tmb.{tumor_library}"
         else:
-            base_name += ".tmb.{tumor_library}"
+            base_name = "tmb.{tumor_library}"
 
         tpl = os.path.join("output", base_name, "out", base_name)
 
@@ -94,13 +85,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def _get_log_file(self, action):
         self._validate_action(action)
 
-        base_name = self.parent.somatic_variant_caller
-        if self.config.has_annotation:
-            base_name += f".{self.parent.somatic_variant_annotation_tool}"
         if self.config.is_filtered:
-            base_name += ".filtered.tmb.{tumor_library}"
+            base_name = "filtered.tmb.{tumor_library}"
         else:
-            base_name += ".tmb.{tumor_library}"
+            base_name = "tmb.{tumor_library}"
 
         tpl = os.path.join("output", base_name, "log", base_name)
 
@@ -177,14 +165,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         )
         # Register sub workflows
         config = self.config
-        self.register_module(config.somatic_variant_step, "somatic_variant")
-        self.ngs_mapping_tool = str(self.get_task_config("ngs_mapping").tool)
-        self.somatic_variant_caller = str(self.get_task_config("somatic_variant_calling").tool)
-        self.somatic_variant_annotation_tool = (
-            str(self.get_task_config("somatic_variant_annotation").tool)
-            if config.has_annotation
-            else None
-        )
+        self.register_module("somatic_variant", str(config.somatic_variant_step))
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
@@ -192,13 +173,10 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         config = self.config
-        name_pattern = self.somatic_variant_caller
-        if config.has_annotation:
-            name_pattern += f".{self.somatic_variant_annotation_tool}"
         if config.is_filtered:
-            name_pattern += ".filtered.tmb.{tumor_library.name}"
+            name_pattern = "filtered.tmb.{tumor_library.name}"
         else:
-            name_pattern += ".tmb.{tumor_library.name}"
+            name_pattern = "tmb.{tumor_library.name}"
 
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
