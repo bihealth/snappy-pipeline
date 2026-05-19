@@ -44,7 +44,7 @@ class Stats(SnappyModel):
     pass
 
 
-class Tool(enum.Enum):
+class Tool(enum.StrEnum):
     strandedness = "strandedness"
     featurecounts = "featurecounts"
     dupradar = "dupradar"

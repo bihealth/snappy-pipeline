@@ -133,10 +133,7 @@ class SalmonStepPart(BaseStepPart):
         self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
-        if (
-            self.config.salmon.path_transcript_to_gene is not None
-            and self.config.salmon.path_transcript_to_gene != ""
-        ):
+        if self.config.salmon and self.config.salmon.path_transcript_to_gene:
             self.extensions["gene_sf"] = ".gene.sf"
             self.extensions["gene_sf_md5"] = ".gene.sf.md5"
         self.path_gen = LinkInPathGenerator(
@@ -157,7 +154,8 @@ class SalmonStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         assert action == "run"
-        if self.name != str(self.config.tool):
+        tool = self.config.tool
+        if self.name != tool:
             return {}
         for k, v in self.extensions.items():
             yield k, self.base_path_out.format(ext=v)
@@ -166,7 +164,8 @@ class SalmonStepPart(BaseStepPart):
     def _get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
-        if self.name != str(self.config.tool):
+        tool = self.config.tool
+        if self.name != tool:
             return {}
         prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
@@ -259,7 +258,8 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
         assert action == "run"
-        if self.name != str(self.config.tool):
+        tool = self.config.tool
+        if self.name != tool:
             return {}
         return dict(
             zip(
@@ -276,7 +276,8 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
-        if self.name != str(self.config.tool):
+        tool = self.config.tool
+        if self.name != tool:
             return {}
         prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
@@ -545,15 +546,13 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        tool = self.config.tool.value
+        tool = self.config.tool
         name_pattern = "{ngs_library.name}"
 
         # Salmon special case
         salmon_name_pattern = "{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
-        if self.w_config.step_config[
-            "gene_expression_quantification"
-        ].salmon.path_transcript_to_gene:
+        if self.config.salmon and self.config.salmon.path_transcript_to_gene:
             salmon_exts["gene_sf"] = ".gene.sf"
             salmon_exts["gene_sf_md5"] = ".gene.sf.md5"
 

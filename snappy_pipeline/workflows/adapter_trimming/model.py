@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum, StrEnum
 
 from pydantic import Field, PositiveInt
 from typing_extensions import Annotated
@@ -6,51 +6,51 @@ from typing_extensions import Annotated
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
 
-class Tool(Enum):
+class Tool(StrEnum):
     BBDUK = "bbduk"
     FASTP = "fastp"
 
 
-class Interleaved(Enum):
+class Interleaved(StrEnum):
     AUTO = "auto"
 
 
-class Qin(Enum):
-    AUTO = "auto"
-    FIELD_33 = "33"
-    FIELD_64 = "64"
-
-
-class Qout(Enum):
+class Qin(StrEnum):
     AUTO = "auto"
     FIELD_33 = "33"
     FIELD_64 = "64"
 
 
-class Statscolumns(Enum):
+class Qout(StrEnum):
+    AUTO = "auto"
+    FIELD_33 = "33"
+    FIELD_64 = "64"
+
+
+class Statscolumns(IntEnum):
     INTEGER_3 = 3
     INTEGER_5 = 5
 
 
-class Gcbins(Enum):
+class Gcbins(StrEnum):
     AUTO = "auto"
 
 
-class Maxhistlen(Enum):
+class Maxhistlen(StrEnum):
     AUTO = "auto"
 
 
-class Idbins(Enum):
+class Idbins(StrEnum):
     AUTO = "auto"
 
 
-class Ktrim(Enum):
+class Ktrim(StrEnum):
     F = "f"
     R = "r"
     L = "l"
 
 
-class Qtrim(Enum):
+class Qtrim(StrEnum):
     RL = "rl"
     F = "f"
     R = "r"
@@ -58,13 +58,13 @@ class Qtrim(Enum):
     W = "w"
 
 
-class Barcodefilter(Enum):
+class Barcodefilter(StrEnum):
     T = "t"
     F = "f"
     CRASH = "crash"
 
 
-class Entropytrim(Enum):
+class Entropytrim(StrEnum):
     F = "f"
     """Do not entropy-trim"""
 
@@ -78,13 +78,13 @@ class Entropytrim(Enum):
     """Trim low entropy on both ends."""
 
 
-class Entropymask(Enum):
+class Entropymask(StrEnum):
     F = "f"
     T = "t"
     LC = "lc"
 
 
-class UmiLoc(Enum):
+class UmiLoc(StrEnum):
     INDEX1 = "index1"
     INDEX2 = "index2"
     READ1 = "read1"

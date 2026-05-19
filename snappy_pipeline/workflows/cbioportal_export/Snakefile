@@ -23,7 +23,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = cbioportalExportWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 step_config = wf.get_task_config("cbioportal_export")
-exclude_flag = step_config["exclude_variant_with_flag"]
+exclude_flag = step_config.exclude_variant_with_flag
 
 
 # Rules =======================================================================
@@ -122,7 +122,7 @@ rule cbioportal_export_concatenate_maf:
 
 # Copy number files (data_cna_log2.txt, data_cna_gistic.txt, data_segment.txt)
 
-if step_config["copy_number_alteration"]["enabled"]:
+if step_config.copy_number_alteration.enabled:
 
     # Create CNA files (discrete, continuous from cns files) ----------------------
 
@@ -203,7 +203,7 @@ if step_config["copy_number_alteration"]["enabled"]:
 
 # Create expression RPKMs -----------------------------------------------------
 
-if step_config["expression"]["enabled"]:
+if step_config.expression.enabled:
 
     rule cbioportal_export_expression:
         input:

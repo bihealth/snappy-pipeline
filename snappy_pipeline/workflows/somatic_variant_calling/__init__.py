@@ -19,7 +19,13 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
-from .model import SomaticVariantCalling as SomaticVariantCallingConfigModel
+from .model import (
+    Contamination,
+    Mutect2,
+)
+from .model import (
+    SomaticVariantCalling as SomaticVariantCallingConfigModel,
+)
 from .model import TumorNormalMode as TumorNormalMode
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -165,7 +171,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         )
 
     def check_config(self):
-        if self.name != self.config.tool:
+        tool = self.config.tool
+        if self.name != tool:
             return
         self.parent.ensure_w_config(
             ("static_data_config", "reference", "path"),
@@ -334,7 +341,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         output_files = {}
 
         self._validate_action(action)
-        if self.name != self.config.tool:
+        tool = self.config.tool
+        if self.name != tool:
             return {}
         base_path_out = self.base_path_out
 
@@ -406,7 +414,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         )
 
         self._validate_action(action)
-        if self.name != self.config.tool:
+        tool = self.config.tool
+        if self.name != tool:
             return {}
 
         if action != "gather":
@@ -462,6 +471,9 @@ class SomaticVariantCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
+        tool = self.config.tool
+        if tool == "mutect2" and self.config.mutect2 is None:
+            self.config.mutect2 = Mutect2(contamination=Contamination())
         self.register_sub_step_classes(
             (
                 Mutect2StepPart,
@@ -469,7 +481,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
             )
         )
         self.register_module("ngs_mapping", "ngs_mapping")
-        if self.config.tool == "mutect2":
+        if tool == "mutect2":
             if self.config.mutect2.contamination.enabled:
                 actions = self.sub_steps["mutect2"].actions
                 self.sub_steps["mutect2"].actions = tuple(
@@ -479,7 +491,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         name_pattern = "{tumor_library.name}"
-        caller = str(self.config.tool)
+        caller = self.config.tool
         if caller in SOMATIC_VARIANT_CALLERS:
             yield from self._yield_result_files_matched(
                 os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),

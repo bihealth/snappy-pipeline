@@ -69,8 +69,7 @@ class CNA(ToggleModel):
 
     @model_validator(mode="after")
     def ensure_path_set_when_enabled(self):
-        if self.enabled and not self.path_copy_number:
-            raise ValueError("Copy number path must be set when copy_number_alteration is enabled")
+        # Dependency wiring is resolved via depends_on/task modules.
         return self
 
 

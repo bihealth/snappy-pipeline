@@ -39,7 +39,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/{{library_name}}"
+        self.base_path_out = "work/{library_name}"
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
@@ -56,7 +56,8 @@ class AdapterTrimmingStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
-        if self.name != self.config.tool:
+        tool = self.config.tool
+        if self.name != tool:
             return []
         return (
             ("out_done", self.base_path_out + "/out/.done"),
@@ -67,7 +68,8 @@ class AdapterTrimmingStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        if self.name != self.config.tool:
+        tool = self.config.tool
+        if self.name != tool:
             return []
         _ = action
         prefix = "work/{library_name}/log/{library_name}"

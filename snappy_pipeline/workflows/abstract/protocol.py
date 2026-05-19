@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class DataType(Enum):
+class DataType(StrEnum):
     RAW = "raw"
     ALIGNMENTS = "alignments"
     VARIANTS = "variants"

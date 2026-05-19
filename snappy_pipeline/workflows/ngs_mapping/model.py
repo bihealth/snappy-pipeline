@@ -1,6 +1,5 @@
 import enum
 import os
-from enum import Enum
 from typing import Annotated
 
 from pydantic import Field, field_validator, model_validator
@@ -8,20 +7,20 @@ from pydantic import Field, field_validator, model_validator
 from snappy_pipeline.models import SizeString, SnappyModel, SnappyStepModel, ToggleModel
 
 
-class DnaMapper(Enum):
+class DnaMapper(StrEnum):
     BWA = "bwa"
     BWA_MEM2 = "bwa_mem2"
 
 
-class LongDnaMapper(Enum):
+class LongDnaMapper(StrEnum):
     MINIMAP2 = "minimap2"
 
 
-class RnaMapper(Enum):
+class RnaMapper(StrEnum):
     STAR = "star"
 
 
-class MetaTool(Enum):
+class MetaTool(StrEnum):
     MBCS = "mbcs"
 
 
@@ -86,7 +85,7 @@ class NgsChewFingerprint(ToggleModel):
     pass
 
 
-class BwaMode(Enum):
+class BwaMode(StrEnum):
     AUTO = "auto"
     BWA_ALN = "bwa-aln"
     BWA_MEM = "bwa-mem"
@@ -149,7 +148,7 @@ class BwaMem2(BwaMapper):
         return prefix
 
 
-class BarcodeTool(Enum):
+class BarcodeTool(StrEnum):
     AGENT = "agent"
 
 
@@ -158,7 +157,7 @@ class Bqsr(SnappyModel):
     """Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)"""
 
 
-class AgentLibPrepType(Enum):
+class AgentLibPrepType(StrEnum):
     HALO_PLEX = "halo"
     HALO_PLEX_HS = "hs"
     SURE_SELECT = "xt"
@@ -176,7 +175,7 @@ class AgentPrepare(SnappyModel):
     """Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data"""
 
 
-class AgentMarkDuplicatesConsensusMode(Enum):
+class AgentMarkDuplicatesConsensusMode(enum.StrEnum):
     SINGLE = "SINGLE"
     HYBRID = "HYBRID"
     DUPLEX = "DUPLEX"

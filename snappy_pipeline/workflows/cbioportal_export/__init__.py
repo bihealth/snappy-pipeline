@@ -364,16 +364,11 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{tumor_library}"
+        copy_number = self.parent.modules["copy_number"]
         yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
-            os.path.join(
-                self.config.copy_number_alteration.path_copy_number,
-                "output",
-                name_pattern,
-                "out",
-                name_pattern + "_dnacopy.seg",
-            ),
+            copy_number(os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg")),
         )
 
     @dictify
@@ -506,12 +501,9 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
             + self.config.copy_number_alteration.copy_number_tool
             + ".{library_name}"
         )
-        self.input_tpl = os.path.join(
-            self.config.copy_number_alteration.path_copy_number,
-            "output",
-            name_pattern,
-            "out",
-            name_pattern + "_dnacopy.seg",
+        copy_number = self.parent.modules["copy_number"]
+        self.input_tpl = copy_number(
+            os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg")
         )
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -550,12 +542,9 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         super().__init__(parent)
 
         name_pattern = self.config.expression.expression_tool + ".{library_name}"
-        self.input_tpl = os.path.join(
-            self.config.expression.path_ngs_mapping,
-            "output",
-            name_pattern,
-            "out",
-            name_pattern + ".GeneCounts.tab",
+        ngs_mapping = self.parent.modules["ngs_mapping"]
+        self.input_tpl = ngs_mapping(
+            os.path.join("output", name_pattern, "out", name_pattern + ".GeneCounts.tab")
         )
 
     def get_args(self, action):
@@ -775,6 +764,18 @@ class cbioportalExportWorkflow(BaseStep):
             translated = "mouse"
         self.config.study.reference_genome = translated
 
+        # Initialize sub-workflows first so step-parts can resolve module paths at init time.
+        self.register_module("somatic_variant", str(self.config.somatic_variant_step))
+        if self.config.copy_number_alteration.copy_number_tool in (
+            "cnvkit",
+            "purecn",
+            "sequenza",
+        ):
+            self.register_module("copy_number", "somatic_targeted_seq_cnv_calling")
+        else:
+            self.register_module("copy_number", "somatic_wgs_cnv_calling")
+        self.register_module("ngs_mapping", "ngs_mapping")
+
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
@@ -789,35 +790,7 @@ class cbioportalExportWorkflow(BaseStep):
                 cbioportalExpressionStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_module(
-            self.config.somatic_variant_step,
-            prefix=self.config.path_somatic_variant,
-            module_name="somatic_variant",
-        )
-        if self.config.copy_number_alteration.enabled:
-            if self.config.copy_number_alteration.copy_number_tool in (
-                "cnvkit",
-                "purecn",
-                "sequenza",
-            ):
-                self.register_module(
-                    "somatic_targeted_seq_cnv_calling",
-                    prefix=self.config.copy_number_alteration.path_copy_number,
-                    module_name="copy_number_step",
-                )
-            else:
-                self.register_module(
-                    "somatic_wgs_cnv_calling",
-                    prefix=self.config.copy_number_alteration.path_copy_number,
-                    module_name="copy_number_step",
-                )
-        if self.config.expression.enabled:
-            self.register_module(
-                "ngs_mapping",
-                prefix=self.config.expression.path_ngs_mapping,
-                module_name="ngs_mapping",
-            )
+        # Sub-workflows were registered above.
 
     @listify
     def get_result_files(self):
