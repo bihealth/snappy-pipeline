@@ -953,6 +953,12 @@ class BaseStep:
         """
         Registers a dependency mapping for Snakemake 9.
         Paths are resolved using the explicit depends_on configuration.
+
+        Arguments:
+            logical_name: The logical name of the step depended on, e.g. "ngs_mapping" or "variant_calling"
+            default_module_name: The default step to use if depends_on isn't specified explicitly,
+                e.g., "somatic_variant_calling"
+                (meaning that `depends_on: variant_calling: "somatic_variant_calling"` reads as "the variant_calling task is done by the task named somatic_variant_calling")
         """
         if not default_module_name:
             default_module_name = logical_name
