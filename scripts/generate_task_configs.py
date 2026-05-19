@@ -304,6 +304,37 @@ def bootstrap_step_config(
     return cfg
 
 
+def ensure_explicit_selected_tool_config(
+    step_name: str,
+    workflow_cls: type,
+    step_config: dict[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    config_model = getattr(workflow_cls, "config_model_class", None)
+    if not config_model:
+        return step_config, []
+
+    model_fields = getattr(config_model, "model_fields", {})
+    if "tool" not in model_fields:
+        return step_config, []
+
+    selected_tool = step_config.get("tool")
+    if isinstance(selected_tool, enum.Enum):
+        selected_tool = selected_tool.value
+    if not isinstance(selected_tool, str) or not selected_tool:
+        return step_config, []
+
+    # Most workflow models name the tool-specific section after the tool value.
+    if selected_tool not in model_fields:
+        return step_config, []
+
+    if selected_tool in step_config:
+        return step_config, []
+
+    cfg = copy.deepcopy(step_config)
+    cfg[selected_tool] = {}
+    return cfg, [f"{step_name}: added explicit selected-tool section {selected_tool}: {{}}"]
+
+
 def _candidate_score(candidate_step: str, requirement: DataSignature) -> tuple[int, int, str]:
     tags = getattr(requirement, "tags", frozenset())
     positive_tags = [t for t in tags if isinstance(t, str) and not t.startswith("-")]
@@ -350,6 +381,11 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
 
         step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
         generation_notes.extend(notes)
+        step_config, notes = ensure_explicit_selected_tool_config(step_name, cls, step_config)
+        generation_notes.extend(notes)
+        if notes:
+            step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
+            generation_notes.extend(notes)
 
         tasks.append(
             {

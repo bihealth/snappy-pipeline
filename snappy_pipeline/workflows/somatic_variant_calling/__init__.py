@@ -20,10 +20,6 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import (
-    Contamination,
-    Mutect2,
-)
-from .model import (
     SomaticVariantCalling as SomaticVariantCallingConfigModel,
 )
 from .model import TumorNormalMode as TumorNormalMode
@@ -473,7 +469,9 @@ class SomaticVariantCallingWorkflow(BaseStep):
         )
         tool = self.config.tool
         if tool == "mutect2" and self.config.mutect2 is None:
-            self.config.mutect2 = Mutect2(contamination=Contamination())
+            raise ValueError(
+                "somatic_variant_calling.tool=mutect2 requires explicit config section 'mutect2'"
+            )
         self.register_sub_step_classes(
             (
                 Mutect2StepPart,
