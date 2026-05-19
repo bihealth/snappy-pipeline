@@ -25,14 +25,16 @@ def minimal_config():
           reference:
             path: /path/to/ref.fa
 
-        step_config:
-           adapter_trimming:
-             tool: bbduk
-             bbduk:
-               adapter_sequences:
-                 - /path/to/adapter_sequences.fa
-             fastp:
-               num_threads: 4
+        tasks:
+          - step: adapter_trimming
+            name: adapter_trimming
+            config:
+              tool: bbduk
+              bbduk:
+                adapter_sequences:
+                  - /path/to/adapter_sequences.fa
+              fastp:
+                num_threads: 4
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -66,6 +68,7 @@ def adapter_trimming_workflow(
         config_lookup_paths,
         config_paths,
         work_dir,
+        task_name="adapter_trimming",
     )
 
 
@@ -75,9 +78,9 @@ def adapter_trimming_workflow(
 def test_link_out_fastq_step_part_get_output_files(adapter_trimming_workflow):
     """Tests LinkOutFastqStepPart.get_output_files()"""
     expected = [
-        "output/{trimmer}/{library_name}/log/.done",
-        "output/{trimmer}/{library_name}/report/.done",
-        "output/{trimmer}/{library_name}/out/.done",
+        "output/{library_name}/log/.done",
+        "output/{library_name}/report/.done",
+        "output/{library_name}/out/.done",
     ]
     actual = adapter_trimming_workflow.get_output_files("link_out_fastq", "run")
     assert actual == expected
@@ -111,9 +114,9 @@ def test_bbduk_step_part_get_input_files(adapter_trimming_workflow):
 def test_bbduk_step_part_get_output_files(adapter_trimming_workflow):
     """Tests BbdukStepPart.get_output_files()"""
     expected = {
-        "out_done": "work/bbduk.{library_name}/out/.done",
-        "report_done": "work/bbduk.{library_name}/report/.done",
-        "rejected_done": "work/bbduk.{library_name}/rejected/.done",
+        "out_done": "work/{{library_name}}/out/.done",
+        "report_done": "work/{{library_name}}/report/.done",
+        "rejected_done": "work/{{library_name}}/rejected/.done",
     }
     actual = adapter_trimming_workflow.get_output_files("bbduk", "run")
     assert actual == expected
@@ -126,13 +129,13 @@ def test_bbduk_step_part_get_args_input(adapter_trimming_workflow):
         "library_name": "P001-T1-DNA1-WGS1",
         "input": {
             "reads_left": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz": {
+                "adapter_trimming/work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
                     "filename": "P001_T1_DNA1_WGS1_R1.fastq.gz",
                 },
             },
             "reads_right": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz": {
+                "adapter_trimming/work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
                     "filename": "P001_T1_DNA1_WGS1_R2.fastq.gz",
                 },
@@ -237,8 +240,8 @@ def test_bbduk_step_part_get_args_input(adapter_trimming_workflow):
 def test_bbduk_step_part_get_log_file(adapter_trimming_workflow):
     """Tests BbdukStepPart.get_log_file()"""
     expected = {
-        "done": "work/bbduk.{library_name}/log/.done",
-        "done_md5": "work/bbduk.{library_name}/log/.done.md5",
+        "done": "work/{library_name}/log/.done",
+        "done_md5": "work/{library_name}/log/.done.md5",
     }
     key_ext = (
         ("log", ".log"),
@@ -246,8 +249,8 @@ def test_bbduk_step_part_get_log_file(adapter_trimming_workflow):
         ("conda_list", ".conda_list.txt"),
     )
     for key, ext in key_ext:
-        expected[key] = "work/bbduk.{library_name}/log/bbduk.{library_name}" + ext
-        expected[key + "_md5"] = "work/bbduk.{library_name}/log/bbduk.{library_name}" + ext + ".md5"
+        expected[key] = "work/{library_name}/log/{library_name}" + ext
+        expected[key + "_md5"] = "work/{library_name}/log/{library_name}" + ext + ".md5"
     actual = adapter_trimming_workflow.get_log_file("bbduk", "run")
     assert actual == expected
 
@@ -275,11 +278,7 @@ def test_fastp_step_part_get_input_files(adapter_trimming_workflow):
 
 def test_fastp_step_part_get_output_files(adapter_trimming_workflow):
     """Tests FastpStepPart.get_output_files()"""
-    expected = {
-        "out_done": "work/fastp.{library_name}/out/.done",
-        "report_done": "work/fastp.{library_name}/report/.done",
-        "rejected_done": "work/fastp.{library_name}/rejected/.done",
-    }
+    expected = {}
     actual = adapter_trimming_workflow.get_output_files("fastp", "run")
     assert actual == expected
 
@@ -291,13 +290,13 @@ def test_fastp_step_part_get_args_input(adapter_trimming_workflow):
         "library_name": "P001-T1-DNA1-WGS1",
         "input": {
             "reads_left": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz": {
+                "adapter_trimming/work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R1.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
                     "filename": "P001_T1_DNA1_WGS1_R1.fastq.gz",
                 },
             },
             "reads_right": {
-                "work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz": {
+                "adapter_trimming/work/input_links/P001-T1-DNA1-WGS1/FCXXXXXX/L001/P001_T1_DNA1_WGS1_R2.fastq.gz": {
                     "relative_path": "FCXXXXXX/L001",
                     "filename": "P001_T1_DNA1_WGS1_R2.fastq.gz",
                 },
@@ -357,18 +356,7 @@ def test_fastp_step_part_get_args_input(adapter_trimming_workflow):
 
 def test_fastp_step_part_get_log_file(adapter_trimming_workflow):
     """Tests FastpStepPart.get_log_file()"""
-    expected = {
-        "done": "work/fastp.{library_name}/log/.done",
-        "done_md5": "work/fastp.{library_name}/log/.done.md5",
-    }
-    key_ext = (
-        ("log", ".log"),
-        ("conda_info", ".conda_info.txt"),
-        ("conda_list", ".conda_list.txt"),
-    )
-    for key, ext in key_ext:
-        expected[key] = "work/fastp.{library_name}/log/fastp.{library_name}" + ext
-        expected[key + "_md5"] = "work/fastp.{library_name}/log/fastp.{library_name}" + ext + ".md5"
+    expected = {}
     actual = adapter_trimming_workflow.get_log_file("fastp", "run")
     assert actual == expected
 
@@ -398,11 +386,10 @@ def test_adapter_trimming_workflow_get_results(adapter_trimming_workflow):
         "P002-T2-DNA1-WGS1",
         "P002-T2-RNA1-mRNA_seq1",
     )
-    tpl = "output/{tool}/{library}/{sub_dir}/.done"
+    tpl = "output/{library}/{sub_dir}/.done"
     expected = []
     for library in libraries:
-        for tool in ["bbduk", "fastp"]:
-            for sub_dir in ["out", "report", "log"]:
-                expected.append(tpl.format(tool=tool, library=library, sub_dir=sub_dir))
+        for sub_dir in ["out", "report", "log"]:
+            expected.append(tpl.format(library=library, sub_dir=sub_dir))
     actual = adapter_trimming_workflow.get_result_files()
     assert actual == expected
