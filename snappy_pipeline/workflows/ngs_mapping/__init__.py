@@ -453,6 +453,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataType
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from .model import NgsMapping as NgsMappingConfigModel
+from .model import Tool
 
 # TODO: Need something smarter still for @RG
 
@@ -1515,8 +1516,8 @@ class NgsMappingWorkflow(BaseStep):
         """Validates project.
 
         Method compares sample information included in the sample sheet and the configuration. If
-        sheet contains 'DNA' samples, a DNA mapper should be defined. Similarly, if it contains
-        'RNA', a RNA mapper should be defined.
+        sheet contains 'DNA' samples, the configured tool must support DNA mapping. Similarly, if
+        it contains 'RNA', the tool must support RNA mapping.
 
         :param config: SnappyStepModel with configurations as found in the project's yaml file.
         :type config: SnappyStepModel
@@ -1524,4 +1525,49 @@ class NgsMappingWorkflow(BaseStep):
         :param sample_sheets_list: List with biomedical sample sheets.
         :type sample_sheets_list: list
         """
-        pass
+        dna_analysis = False
+        rna_analysis = False
+        for sheet in sample_sheets_list:
+            dna_present, rna_present = self.extraction_type_check(sample_sheet=sheet)
+            dna_analysis = dna_analysis or dna_present
+            rna_analysis = rna_analysis or rna_present
+
+        tool = config.tool
+        if not isinstance(tool, Tool):
+            tool = Tool(tool)
+        if dna_analysis and not tool.is_dna():
+            raise InvalidConfiguration(
+                "Sample sheet contains DNA but the configured tool does not support DNA mapping."
+            )
+        if rna_analysis and not tool.is_rna():
+            raise InvalidConfiguration(
+                "Sample sheet contains RNA but the configured tool does not support RNA mapping."
+            )
+
+    @staticmethod
+    def extraction_type_check(sample_sheet):
+        """Retrieve extraction type from biomedsheet.
+
+        Method crawls through all bio entities in the biomedsheet and checks if there are DNA
+        and/or RNA extraction types. In both cases, the test will be considered True if at least
+        one test sample contains the extraction type (i.e., DNA or RNA).
+
+        :param sample_sheet: Sample sheet.
+        :type sample_sheet: biomedsheets.models.Sheet
+
+        :return: Returns tuple with boolean for DNA, RNA extraction types: (DNA extraction type
+        present, RNA extraction type present).
+        """
+        contains_rna_extraction = False
+        contains_dna_extraction = False
+
+        for _, entity in sample_sheet.bio_entities.items():
+            for _, bio_sample in entity.bio_samples.items():
+                for _, test_sample in bio_sample.test_samples.items():
+                    extraction_type = test_sample.extra_infos.get("extractionType")
+                    if extraction_type and extraction_type.lower() == "dna":
+                        contains_dna_extraction = True
+                    elif extraction_type and extraction_type.lower() == "rna":
+                        contains_rna_extraction = True
+
+        return contains_dna_extraction, contains_rna_extraction

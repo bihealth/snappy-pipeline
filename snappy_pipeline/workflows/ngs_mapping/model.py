@@ -33,7 +33,7 @@ class Tool(enum.StrEnum):
     mbcs = "mbcs"
 
     def is_dna(self):
-        return self in {self.bwa, self.bwa_mem2, self.minimap2}
+        return self in {self.bwa, self.bwa_mem2, self.minimap2, self.mbcs}
 
     def is_rna(self):
         return self in {self.star}
