@@ -30,13 +30,12 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
           panel_of_normals:
-              tools: ['mutect2', 'cnvkit', 'access', 'purecn']
+              tool: mutect2
               path_ngs_mapping: ../ngs_mapping
               mutect2:
                   germline_resource: /path/to/germline_resource.vcf

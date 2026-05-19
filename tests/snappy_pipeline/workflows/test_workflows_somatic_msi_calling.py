@@ -28,12 +28,11 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_msi_calling:
-            tools: ["mantis_msi2"]
+            tool: mantis_msi2
             path_ngs_mapping: ../ngs_mapping  # REQUIRED
             loci_bed: /path/to/hg19/loci.bed  # REQUIRED
 

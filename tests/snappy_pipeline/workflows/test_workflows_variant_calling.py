@@ -31,8 +31,7 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
@@ -48,8 +47,7 @@ def minimal_config():
             bcftools_roh:
               enabled: true
               path_af_file: /path/to/af_file.txt
-            tools:
-            - bcftools_call
+            tool: bcftools_call
             - gatk3_hc
             - gatk3_ug
             bcftools_call: {}

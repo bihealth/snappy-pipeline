@@ -31,13 +31,12 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              rna: ['star']
+            tool: 'star
             star:
               path_index: /path/to/star/index
           gene_expression_quantification:
             path_ngs_mapping: ../ngs_mapping
-            tools: [strandedness, featurecounts, dupradar, duplication, rnaseqc, salmon, stats]
+            tool: strandedness
             featurecounts:
               path_annotation_gtf: /path/to/annotation.gtf
             strandedness:

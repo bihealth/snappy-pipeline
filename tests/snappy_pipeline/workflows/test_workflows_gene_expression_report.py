@@ -24,14 +24,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              rna: ['star']
+            tool: 'star
             star:
               path_index: /path/to/star/index
 
           gene_expression_quantification:
             path_ngs_mapping: ../ngs_mapping
-            tools: ['strandedness']
+            tool: strandedness
             strandedness:
               path_exon_bed: /path/to/exon.bed
 

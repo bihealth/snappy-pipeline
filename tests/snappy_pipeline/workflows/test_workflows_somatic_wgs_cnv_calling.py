@@ -35,8 +35,7 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
@@ -44,11 +43,7 @@ def minimal_config():
             path_somatic_variant_calling: ../somatic_variant_calling
             somatic_variant_calling_tool: mutect
             path_ngs_mapping: ../ngs_mapping
-            tools:
-            - canvas
-            - cnvetti
-            - control_freec
-            - cnvkit
+            tool: cnvetti
             tools_ngs_mapping:
                 - bwa
             canvas:

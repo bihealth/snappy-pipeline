@@ -28,13 +28,12 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fasta
 
           somatic_purity_ploidy_estimate:
-            tools: ['ascat']
+            tool: ascat
             tool_cnv_calling: cnvetti
             path_somatic_targeted_seq_cnv_calling: ../somatic_targeted_seq_cnv_calling
             ascat:

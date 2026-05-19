@@ -34,12 +34,6 @@ from .model import SvCallingWgs as SvCallingWgsConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Available (short) DNA WGS SV callers
-DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel", "melt", "gcnv")
-
-#: Available (long) DNA WGS SV callers
-LONG_DNA_WGS_SV_CALLERS = ("pb_honey_spots", "sniffles", "sniffles2")
-
 #: Default configuration for the sv_calling_wgs step
 DEFAULT_CONFIG = SvCallingWgsConfigModel.default_config_yaml_string()
 
@@ -314,18 +308,17 @@ class SvCallingWgsWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                Delly2StepPart,
-                MantaStepPart,
-                PopDelStepPart,
-                GcnvWgsStepPart,
-                MeltStepPart,
-                # Sniffles2StepPart,
-                WritePedigreeStepPart,
-            )
-        )
+        selected_tool = str(self.config.tool)
+        sub_step_map = {
+            "delly2": Delly2StepPart,
+            "manta": MantaStepPart,
+            "popdel": PopDelStepPart,
+            "gcnv": GcnvWgsStepPart,
+            "melt": MeltStepPart,
+        }
+        selected_sub_step = sub_step_map[selected_tool]
+        # Register only the selected tool step class.
+        self.register_sub_step_classes((selected_sub_step, WritePedigreeStepPart))
         # Register sub workflows
         self.register_module("ngs_mapping")
 

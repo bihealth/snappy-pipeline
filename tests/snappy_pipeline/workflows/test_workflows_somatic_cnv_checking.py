@@ -30,13 +30,12 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
           somatic_targeted_seq_cnv_calling:
-            tools: ["cnvkit"]
+            tool: cnvkit
             cnvkit:
               path_target: DUMMY
               path_antitarget: DUMMY

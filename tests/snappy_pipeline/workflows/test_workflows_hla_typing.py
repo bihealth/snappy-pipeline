@@ -28,7 +28,7 @@ def minimal_config():
         step_config:
           hla_typing:
             path_ngs_mapping: ../ngs_mapping
-            tools: [optitype, arcashla]
+            tool: optitype
             optitype:
               max_reads: 5000
             arcashla:

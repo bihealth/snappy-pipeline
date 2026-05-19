@@ -28,8 +28,7 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              rna: [star]
+            tool: star
             star:
               path_index: /path/to/star/index
           cbioportal_export:

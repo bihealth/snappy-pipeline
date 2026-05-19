@@ -34,8 +34,7 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['mbcs']
+            tool: mbcs
             target_coverage_report:
               enabled: true
               path_target_interval_list_mapping:

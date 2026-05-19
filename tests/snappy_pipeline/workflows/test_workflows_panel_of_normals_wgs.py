@@ -30,14 +30,13 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
           panel_of_normals:
             path_ngs_mapping: ../ngs_mapping/
-            tools: ['cnvkit']
+            tool: cnvkit
             cnvkit:
               path_target: ""  # WGS mode
 

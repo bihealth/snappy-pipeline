@@ -30,15 +30,14 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: [bwa]
+            tool: bwa
             bwa:
               path_index: /path/to/bwa/index.fasta.amb
           somatic_targeted_seq_cnv_calling:
-            tools: ['sequenza']
+            tool: sequenza
             sequenza: {}
           homologous_recombination_deficiency:
-            tools: ['scarHRD']
+            tool: scarHRD
             path_cnv_calling: ../somatic_targeted_seq_cnv_calling  # REQUIRED
             scarHRD:
               genome_name: grch37

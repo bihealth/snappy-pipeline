@@ -26,12 +26,11 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: [bwa]
+            tool: bwa
             bwa:
               path_index: /path/to/bwa/index.fasta.amb
           ngs_data_qc:
-            tools: ['picard']
+            tool: picard
             picard:
               path_ngs_mapping: ../ngs_mapping
               path_to_baits: /path/to/baits

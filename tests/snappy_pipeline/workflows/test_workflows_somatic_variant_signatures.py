@@ -25,19 +25,18 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fasta
 
           somatic_variant_calling:
-            tools: ['mutect2']
+            tool: mutect2
             mutect2:
               keep_tmpdir: onerror
               contamination: {}
 
           somatic_variant_annotation:
-            tools: [vep]
+            tool: vep
             tools_somatic_variant_calling: ['mutect2']
             path_somatic_variant: ../somatic_variant_calling
             vep:

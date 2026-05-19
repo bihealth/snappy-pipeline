@@ -32,14 +32,12 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
           somatic_variant_calling:
-            tools:
-              - mutect2
+            tool: mutect2
             mutect2:
               contamination:
                 enabled: true

@@ -34,18 +34,12 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna:
-              - bwa
+            tool: bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
           sv_calling_wgs:
-            tools:
-              dna:
-              - delly2
-              - gcnv
-              - melt
+            tool: delly2
             delly2: {}
             gcnv:
               # path_par_intervals: /path/to/par.intervals

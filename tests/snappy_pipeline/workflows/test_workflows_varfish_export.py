@@ -26,8 +26,7 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fa
             target_coverage_report:
@@ -38,12 +37,10 @@ def minimal_config():
                 path: "path/to/targets.bed"
 
           variant_calling:
-            tools:
-            - gatk3_hc
+            tool: gatk3_hc
             gatk3_hc: {}
           variant_annotation:
-            tools:
-              - vep
+            tool: vep
             vep: {}
           varfish_export:
             path_ngs_mapping: ../ngs_mapping

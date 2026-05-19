@@ -24,21 +24,19 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
-            tools:
-            - gatk3_hc
+            tool: gatk3_hc
             gatk3_hc: {}
 
           variant_checking:
             tools_ngs_mapping: ['bwa']  # optional, copied from ngs mapping config
             tools_variant_calling: ['gatk3_hc']  # optional, copied from variant calling config
             path_variant_calling: VAR_CALLING
-            tools: ['peddy']
+            tool: peddy
 
         data_sets:
           first_batch:

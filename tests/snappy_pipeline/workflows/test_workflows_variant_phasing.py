@@ -30,22 +30,20 @@ def minimal_config():
 
         step_config:
           ngs_mapping:
-            tools:
-              dna: ['bwa']
+            tool: 'bwa
             bwa:
               path_index: /path/to/bwa/index.fa
 
           variant_calling:
             path_ngs_mapping: ../ngs_mapping
-            tools:
-              - bcftools_call
+            tool: bcftools_call
               - gatk3_hc
               - gatk3_ug
             bcftools_call: {}
             gatk3_hc: {}
             gatk3_ug: {}
           variant_annotation:
-            tools: ['vep']
+            tool: vep
             vep: {}
           variant_phasing:
             path_ngs_mapping: ../ngs_mapping

@@ -28,7 +28,7 @@ def minimal_config():
         step_config:
           hla_typing:
             path_link_in: /preprocess
-            tools: [optitype, arcashla]
+            tool: optitype
             optitype:
               max_reads: 5000
             arcashla:
