@@ -129,7 +129,7 @@ def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_work
 
 def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_output_files()"""
-    base_out = "output/filtered.tmb.{tumor_library}/out/filtered.tmb.{tumor_library}"
+    base_out = "output/tmb.{tumor_library}/out/tmb.{tumor_library}"
     expected = get_expected_output_json_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_output_files("tmb_gathering", "run")
     assert actual == expected
@@ -137,7 +137,7 @@ def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_wor
 
 def test_tumor_mutational_step_part_get_log_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_log_files()"""
-    base_out = "output/filtered.tmb.{tumor_library}/log/filtered.tmb.{tumor_library}"
+    base_out = "output/tmb.{tumor_library}/log/tmb.{tumor_library}"
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_log_file("tmb_gathering", "run")
     assert actual == expected
@@ -165,9 +165,7 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
     assert actual == expected
 
     # Check result file construction
-    tpl = (
-        "output/filtered.tmb.P00{i}-T{t}-DNA1-WGS1/{dir_}/filtered.tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
-    )
+    tpl = "output/tmb.P00{i}-T{t}-DNA1-WGS1/{dir_}/tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
     expected = [
         tpl.format(
             i=i,
