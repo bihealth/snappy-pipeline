@@ -6,14 +6,13 @@ import textwrap
 from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import TypedDict
 
 import pytest
 import ruamel.yaml as ruamel_yaml
 from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
 from snakemake.iocontainers import OutputFiles, Wildcards
 
-from snappy_pipeline.base import MissingConfiguration, merge_dictlikes
+from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     DataSearchInfo,
@@ -226,7 +225,7 @@ def dummy_config():
     return yaml.load(
         textwrap.dedent(
             r"""
-        step_config: {}
+        tasks: []
         static_data_config:
           reference:
             path: /path/to/reference.fasta
@@ -263,6 +262,7 @@ def dummy_generic_step(
 
         name = "dummy"
         sheet_shortcut_class = GenericSampleSheet
+        config_model_class = DummyModel
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -273,25 +273,18 @@ def dummy_generic_step(
             """Return default config YAML"""
             return textwrap.dedent(
                 r"""
-                step_config:
-                  dummy:
-                    path_link_in: ""
-                    key: value
+                tasks:
+                  - step: dummy
+                    name: dummy
+                    config:
+                      key: value
                 """
             ).lstrip()
 
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
 
-    class DummyStepConfig(TypedDict, total=False):
-        dummy: DummyModel
-
-    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
-
-    config = deepcopy(dummy_config)
-    yaml = ruamel_yaml.YAML()
-    local_config = yaml.load(DummyBaseStep.default_config_yaml())
-    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
-    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+    dummy_config = deepcopy(dummy_config)
+    dummy_config["tasks"] = [{"step": "dummy", "name": "dummy", "config": {"key": "value"}}]
 
     return DummyBaseStep(
         dummy_workflow,
@@ -299,7 +292,7 @@ def dummy_generic_step(
         config_lookup_paths,
         config_paths,
         work_dir,
-        config_model_class=DummyModel,
+        task_name="dummy",
     )
 
 
@@ -322,6 +315,7 @@ def dummy_generic_step_path_link_in(
 
         name = "dummy"
         sheet_shortcut_class = GenericSampleSheet
+        config_model_class = DummyModel
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -332,10 +326,17 @@ def dummy_generic_step_path_link_in(
             """Return default config YAML"""
             return textwrap.dedent(
                 r"""
-                step_config:
-                  dummy:
-                    path_link_in: "/preprocess"
-                    key: value
+                tasks:
+                  - step: link_in
+                    name: preprocessed_fastq
+                    config:
+                      path: /preprocess
+                  - step: dummy
+                    name: dummy
+                    depends_on:
+                      link_in: preprocessed_fastq
+                    config:
+                      key: value
                 """
             ).lstrip()
 
@@ -343,16 +344,16 @@ def dummy_generic_step_path_link_in(
         "snappy_pipeline.workflows.abstract", germline_sheet_fake_fs_path_link_in, mocker
     )
 
-    class DummyStepConfig(TypedDict, total=False):
-        dummy: DummyModel
-
-    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
-
-    config = deepcopy(dummy_config)
-    yaml = ruamel_yaml.YAML()
-    local_config = yaml.load(DummyBaseStep.default_config_yaml())
-    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
-    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+    dummy_config = deepcopy(dummy_config)
+    dummy_config["tasks"] = [
+        {"step": "link_in", "name": "preprocessed_fastq", "config": {"path": "/preprocess"}},
+        {
+            "step": "dummy",
+            "name": "dummy",
+            "depends_on": {"link_in": "preprocessed_fastq"},
+            "config": {"key": "value"},
+        },
+    ]
 
     return DummyBaseStep(
         dummy_workflow,
@@ -360,7 +361,7 @@ def dummy_generic_step_path_link_in(
         config_lookup_paths,
         config_paths,
         work_dir,
-        config_model_class=DummyModel,
+        task_name="dummy",
     )
 
 
@@ -383,10 +384,10 @@ def test_link_in_step_part_get_shell_cmd(germline_sheet_fake_fs, mocker, dummy_g
     # Check results
     expected = textwrap.dedent(
         r"""
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz.md5 dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz.md5 || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz.md5 dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
         """
     ).strip()
     assert actual == expected
@@ -409,10 +410,10 @@ def test_link_in_step_part_get_shell_cmd_path_link_in(
     # Check results
     expected = textwrap.dedent(
         r"""
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R1.fastq.gz.md5 dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 || ln -sr /preprocess/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out/P001_R2.fastq.gz.md5 dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/out; }}
         """
     ).strip()
     assert actual == expected
@@ -428,15 +429,15 @@ def test_link_in_step_part_get_shell_cmd_double_link_in_regression(
     actual = dummy_generic_step.get_shell_cmd("link_in", "run", wildcards)
     # Check stdout/stderr
     out, err = capsys.readouterr()
-    assert out == ""
+    assert "[DEBUG] Initializing step 'dummy' for task 'dummy'" in out
     assert err == ""
     # Check results
     expected = textwrap.dedent(
         r"""
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCYYYYYY/L001/P001_R1.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001 && {{ test -h work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCYYYYYY/L001/P001_R2.fastq.gz work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R1.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCXXXXXX/L001/P001_R2.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCXXXXXX/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001/P001_R1.fastq.gz || ln -sr /path/P001/FCYYYYYY/L001/P001_R1.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001 && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001/P001_R2.fastq.gz || ln -sr /path/P001/FCYYYYYY/L001/P001_R2.fastq.gz dummy/work/input_links/P001-N1-DNA1-WGS1/FCYYYYYY/L001; }}
         """
     ).strip()
     assert actual == expected
@@ -452,7 +453,7 @@ def vcf_dummy_config():
     return yaml.load(
         textwrap.dedent(
             r"""
-        step_config: {}
+        tasks: []
         static_data_config:
           reference:
             path: /path/to/reference.fasta
@@ -489,6 +490,7 @@ def vcf_dummy_generic_step(
 
         name = "dummy"
         sheet_shortcut_class = GenericSampleSheet
+        config_model_class = DummyModel
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -500,11 +502,13 @@ def vcf_dummy_generic_step(
             """Return default config YAML"""
             return textwrap.dedent(
                 r"""
-                step_config:
-                  dummy:
-                    key: value
-                    search_paths: ["/vcf_path"]  # Path to all VCF files.
-                    search_patterns: [{"vcf": "*_dragen.vcf.gz"}] # List of search pattern.
+                tasks:
+                  - step: dummy
+                    name: dummy
+                    config:
+                      key: value
+                      search_paths: ["/vcf_path"]  # Path to all VCF files.
+                      search_patterns: [{"vcf": "*_dragen.vcf.gz"}] # List of search pattern.
                 """
             ).lstrip()
 
@@ -512,16 +516,18 @@ def vcf_dummy_generic_step(
         "snappy_pipeline.workflows.abstract", germline_sheet_with_ext_vcf_fake_fs, mocker
     )
 
-    class DummyStepConfig(TypedDict, total=False):
-        dummy: DummyModel
-
-    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
-
-    config = deepcopy(vcf_dummy_config)
-    yaml = ruamel_yaml.YAML()
-    local_config = yaml.load(DummyBaseStep.default_config_yaml())
-    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
-    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+    dummy_config = deepcopy(vcf_dummy_config)
+    dummy_config["tasks"] = [
+        {
+            "step": "dummy",
+            "name": "dummy",
+            "config": {
+                "key": "value",
+                "search_paths": ["/vcf_path"],
+                "search_patterns": [{"vcf": "*_dragen.vcf.gz"}],
+            },
+        }
+    ]
 
     return DummyBaseStep(
         dummy_workflow,
@@ -529,7 +535,7 @@ def vcf_dummy_generic_step(
         config_lookup_paths,
         config_paths,
         work_dir,
-        config_model_class=DummyModel,
+        task_name="dummy",
     )
 
 
@@ -559,8 +565,8 @@ def test_link_in_external_step_part_get_shell_cmd(
     # Define expected
     expected = textwrap.dedent(
         r"""
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/. && {{ test -h work/input_links/P001-N1-DNA1-WGS1/./P001_dragen.vcf.gz || ln -sr /vcf_path/220911_A00000_0000_BH7MHCDMXY/P001-N1-DNA1-WGS1/P001_dragen.vcf.gz work/input_links/P001-N1-DNA1-WGS1/.; }}
-        mkdir -p work/input_links/P001-N1-DNA1-WGS1/. && {{ test -h work/input_links/P001-N1-DNA1-WGS1/./P001_dragen.vcf.gz.md5 || ln -sr /vcf_path/220911_A00000_0000_BH7MHCDMXY/P001-N1-DNA1-WGS1/P001_dragen.vcf.gz.md5 work/input_links/P001-N1-DNA1-WGS1/.; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/. && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/./P001_dragen.vcf.gz || ln -sr /vcf_path/220911_A00000_0000_BH7MHCDMXY/P001-N1-DNA1-WGS1/P001_dragen.vcf.gz dummy/work/input_links/P001-N1-DNA1-WGS1/.; }}
+        mkdir -p dummy/work/input_links/P001-N1-DNA1-WGS1/. && {{ test -h dummy/work/input_links/P001-N1-DNA1-WGS1/./P001_dragen.vcf.gz.md5 || ln -sr /vcf_path/220911_A00000_0000_BH7MHCDMXY/P001-N1-DNA1-WGS1/P001_dragen.vcf.gz.md5 dummy/work/input_links/P001-N1-DNA1-WGS1/.; }}
         """
     ).strip()
     # Check results
@@ -572,11 +578,8 @@ def test_link_in_external_step_part_get_shell_cmd(
 
 
 def test_link_out_step_part_get_input_files(dummy_generic_step):
-    func = dummy_generic_step.get_input_files("link_out", "run")
-    assert callable(func)
-    expected = "work/path/file.txt"
-    wildcards = Wildcards(fromdict={"path": "path", "file": "file", "ext": "txt"})
-    actual = func(wildcards)
+    actual = dummy_generic_step.get_input_files("link_out", "run")
+    expected = "work/{path}/{file}.{ext}"
     assert actual == expected
 
 
@@ -587,12 +590,7 @@ def test_link_out_step_part_get_output_files(dummy_generic_step):
 
 
 def test_link_out_step_part_get_shell_cmd(dummy_generic_step):
-    # Define expected
-    expected = (
-        "test -h output/{wildcards.path}/{wildcards.file}.{wildcards.ext} || "
-        "ln -sr work/{wildcards.path}/{wildcards.file}.{wildcards.ext} "
-        "output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
-    )
+    expected = "test -h {output[0]} || ln -sr {input[0]} {output[0]}"
     # Get actual
     wildcards = Wildcards(fromdict={"path": "path", "file": "file", "ext": "txt"})
     actual = dummy_generic_step.get_shell_cmd("link_out", "run", wildcards)
@@ -622,6 +620,7 @@ def dummy_generic_step_w_write_pedigree(
 
         name = "dummy"
         sheet_shortcut_class = GermlineCaseSheet
+        config_model_class = DummyModel
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -632,24 +631,18 @@ def dummy_generic_step_w_write_pedigree(
             """Return default config YAML"""
             return textwrap.dedent(
                 r"""
-                step_config:
-                  dummy:
-                    key: value
+                tasks:
+                  - step: dummy
+                    name: dummy
+                    config:
+                      key: value
                 """
             ).lstrip()
 
     patch_module_fs("snappy_pipeline.workflows.abstract", germline_sheet_fake_fs, mocker)
 
-    class DummyStepConfig(TypedDict, total=False):
-        dummy: DummyModel
-
-    mocker.patch("snappy_pipeline.workflow_model.StepConfig", DummyStepConfig)
-
-    config = deepcopy(dummy_config)
-    yaml = ruamel_yaml.YAML()
-    local_config = yaml.load(DummyBaseStep.default_config_yaml())
-    dummy_model = DummyModel(**local_config["step_config"]["dummy"])
-    dummy_config = merge_dictlikes(config, {"step_config": {"dummy": dummy_model}})
+    dummy_config = deepcopy(dummy_config)
+    dummy_config["tasks"] = [{"step": "dummy", "name": "dummy", "config": {"key": "value"}}]
 
     return DummyBaseStep(
         dummy_workflow,
@@ -657,7 +650,7 @@ def dummy_generic_step_w_write_pedigree(
         config_lookup_paths,
         config_paths,
         work_dir,
-        config_model_class=DummyModel,
+        task_name="dummy",
     )
 
 
@@ -721,6 +714,6 @@ def test_write_pedigree_sample_name_step_part_run_for_library(dummy_generic_step
 
 
 def test_base_step_ensure_w_config(dummy_generic_step):
-    dummy_generic_step.ensure_w_config(("step_config", "dummy", "key"), "should be OK")
+    dummy_generic_step.ensure_w_config(("tasks",), "should be OK")
     with pytest.raises(MissingConfiguration):
-        dummy_generic_step.ensure_w_config(("step_config", "dummy", "foo"), "should fail")
+        dummy_generic_step.ensure_w_config(("step_config",), "should fail")

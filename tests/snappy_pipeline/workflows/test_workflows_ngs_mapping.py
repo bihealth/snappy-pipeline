@@ -3,8 +3,6 @@
 
 import io
 import textwrap
-from collections import OrderedDict
-from copy import deepcopy
 
 import pytest
 import ruamel.yaml as ruamel_yaml
