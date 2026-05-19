@@ -30,34 +30,48 @@ def minimal_config():
           dbsnp:
             path: /path/to/dbsnp.vcf.gz
 
-        step_config:
-          ngs_mapping:
-            tools:
-              dna: ['bwa']
-            bwa:
-              path_index: /path/to/bwa/index.fa
+        tasks:
+          - step: ngs_mapping
+            name: ngs_mapping
+            config:
+              tool: bwa
+              bwa:
+                path_index: /path/to/bwa/index.fa
 
-          somatic_variant_calling:
-            tools:
-            - mutect2
-            mutect2:
-              contamination: {}
+          - step: somatic_variant_calling
+            name: somatic_variant_calling
+            depends_on:
+              ngs_mapping: ngs_mapping
+            config:
+              tool: mutect2
+              mutect2:
+                contamination: {}
 
-          somatic_variant_annotation:
-            path_somatic_variant: ../somatic_variant_calling
-            tools: ["vep"]
-            vep:
-              cache_dir: /path/to/dir/cache
+          - step: somatic_variant_annotation
+            name: somatic_variant_annotation
+            depends_on:
+              somatic_variant: somatic_variant_calling
+            config:
+              tool: vep
+              vep:
+                cache_dir: /path/to/dir/cache
 
-          somatic_variant_filtration:
-            filter_list:
-            - dkfz: {}
+          - step: somatic_variant_filtration
+            name: somatic_variant_filtration
+            depends_on:
+              somatic_variant: somatic_variant_annotation
+            config:
+              filter_list:
+              - dkfz: {}
 
-          tumor_mutational_burden:
-            path_somatic_variant: ../somatic_variant_filtration
-            somatic_variant_step: somatic_variant_filtration
-            has_annotation: True # REQUIRED
-            target_regions: /path/to/regions.bed
+          - step: tumor_mutational_burden
+            name: tumor_mutational_burden
+            depends_on:
+              somatic_variant: somatic_variant_filtration
+            config:
+              somatic_variant_step: somatic_variant_filtration
+              has_annotation: True # REQUIRED
+              target_regions: /path/to/regions.bed
 
         data_sets:
           first_batch:
@@ -95,6 +109,7 @@ def tumor_mutational_burden_workflow(
         config_lookup_paths,
         config_paths,
         work_dir,
+        task_name="tumor_mutational_burden",
     )
 
 
@@ -103,10 +118,7 @@ def tumor_mutational_burden_workflow(
 
 def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_workflow):
     """Test TumorMutationalBurdenCalculationStepPart.get_input_files()"""
-    base_out = (
-        "../somatic_variant_filtration/output/{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}/out/"
-        "{mapper}.{var_caller}.{anno_caller}.filtered.{tumor_library}"
-    )
+    base_out = "somatic_variant_filtration/output/{tumor_library}/out/{tumor_library}"
     expected = {
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
@@ -117,10 +129,7 @@ def test_tumor_mutational_step_part_get_input_files(tumor_mutational_burden_work
 
 def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_output_files()"""
-    base_out = (
-        "output/{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}/out/"
-        "{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}"
-    )
+    base_out = "output/filtered.tmb.{tumor_library}/out/filtered.tmb.{tumor_library}"
     expected = get_expected_output_json_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_output_files("tmb_gathering", "run")
     assert actual == expected
@@ -128,10 +137,7 @@ def test_tumor_mutational_step_part_get_output_files(tumor_mutational_burden_wor
 
 def test_tumor_mutational_step_part_get_log_files(tumor_mutational_burden_workflow):
     """Tests TumorMutationalBurdenCalculationStepPart.get_log_files()"""
-    base_out = (
-        "output/{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}/log/"
-        "{mapper}.{var_caller}.{anno_caller}.filtered.tmb.{tumor_library}"
-    )
+    base_out = "output/filtered.tmb.{tumor_library}/log/filtered.tmb.{tumor_library}"
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = tumor_mutational_burden_workflow.get_log_file("tmb_gathering", "run")
     assert actual == expected
@@ -160,14 +166,10 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
 
     # Check result file construction
     tpl = (
-        "output/{mapper}.{var_caller}.{anno_caller}.filtered.tmb.P00{i}-T{t}-DNA1-WGS1/{dir_}/"
-        "{mapper}.{var_caller}.{anno_caller}.filtered.tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        "output/filtered.tmb.P00{i}-T{t}-DNA1-WGS1/{dir_}/filtered.tmb.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected = [
         tpl.format(
-            mapper=mapper,
-            var_caller=var_caller,
-            anno_caller=anno_caller,
             i=i,
             t=t,
             ext=ext,
@@ -175,15 +177,9 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
         )
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("json", "json.md5")
-        for mapper in ("bwa",)
-        for var_caller in ("mutect2",)
-        for anno_caller in ("vep",)
     ]
     expected += [
         tpl.format(
-            mapper=mapper,
-            var_caller=var_caller,
-            anno_caller=anno_caller,
             i=i,
             t=t,
             ext=ext,
@@ -198,9 +194,6 @@ def test_tumor_mutational_burden_workflow(tumor_mutational_burden_workflow):
             "conda_list.txt.md5",
             "log.md5",
         )
-        for mapper in ("bwa",)
-        for var_caller in ("mutect2",)
-        for anno_caller in ("vep",)
     ]
     expected = list(sorted(expected))
     actual = list(sorted(tumor_mutational_burden_workflow.get_result_files()))
