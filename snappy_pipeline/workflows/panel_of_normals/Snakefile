@@ -67,7 +67,11 @@ rule panel_of_normals_link_out_run:
 if tool == "mutect2":
 
     scattergather:
-        mutect2=wf.config.get("mutect2", {}).get("num_jobs", 24),
+        mutect2=(
+            getattr(wf.config, "mutect2", None).num_jobs
+            if getattr(wf.config, "mutect2", None)
+            else 24
+        ),
 
     rule panel_of_normals_mutect2_scatter:
         input:

@@ -51,7 +51,7 @@ def _build_workflow(
     )
 
 
-def test_get_task_config_prefers_task_level_depends_on(
+def test_get_task_config_uses_config_level_depends_on(
     dummy_workflow,
     config_lookup_paths,
     config_paths,

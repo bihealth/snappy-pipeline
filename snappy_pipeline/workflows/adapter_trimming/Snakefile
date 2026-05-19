@@ -20,7 +20,14 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = AdapterTrimmingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = AdapterTrimmingWorkflow(
+    workflow,
+    config,
+    lookup_paths,
+    config_paths,
+    os.getcwd(),
+    task_name=config.get("__task_name__", "adapter_trimming"),
+)
 
 # Rules =======================================================================
 

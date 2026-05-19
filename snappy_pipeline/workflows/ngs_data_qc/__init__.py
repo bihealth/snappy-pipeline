@@ -73,7 +73,6 @@ class FastQcReportStepPart(BaseStepPart):
 
     #: Step name
     name = "fastqc"
-    config_model_class = NgsDataQcConfigModel
 
     #: Class available actions
     actions = ("run",)
@@ -274,6 +273,7 @@ class NgsDataQcWorkflow(BaseStep):
     """Perform NGS raw data QC"""
 
     name = "ngs_data_qc"
+    config_model_class = NgsDataQcConfigModel
     consumes = {DataSignature(DataType.RAW): True, DataSignature(DataType.ALIGNMENTS): False}
     produces = [DataSignature(DataType.QC)]
     sheet_shortcut_class = GenericSampleSheet
