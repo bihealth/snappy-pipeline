@@ -24,8 +24,9 @@ def minimal_config():
             path: /path/to/ref.fa
 
         step_config:
+          link_in:
+            path: "/preprocess"
           ngs_data_qc:
-            path_link_in: "/preprocess"
             tool: fastqc
             fastqc: {}
 

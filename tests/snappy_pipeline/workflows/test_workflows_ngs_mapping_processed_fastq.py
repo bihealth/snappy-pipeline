@@ -31,8 +31,9 @@ def minimal_config():
             path: /path/to/features.gtf
 
         step_config:
+          link_in:
+            path: "/preprocess"
           ngs_mapping:
-            path_link_in: "/preprocess"
             tool: bwa
               rna: ['star']
             target_coverage_report:

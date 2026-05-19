@@ -284,9 +284,6 @@ class NgsMapping(SnappyStepModel):
     tool: Tool
     """Aligner to use for the NGS library"""
 
-    path_link_in: str = ""
-    """OPTIONAL Override data set configuration search paths for FASTQ files"""
-
     target_coverage_report: TargetCoverageReport | None = None
     """Thresholds for targeted sequencing coverage QC."""
 

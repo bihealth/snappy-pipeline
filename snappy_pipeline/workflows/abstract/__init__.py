@@ -769,16 +769,17 @@ class BaseStep:
         if name == self.name or name == getattr(self, "task_name", ""):
             return self.config
 
-        # Resolve via dependency mapping
-        target_task_name = None
-        if hasattr(self.config, "depends_on") and hasattr(self.config.depends_on, name):
-            target_task_name = getattr(self.config.depends_on, name)
-        else:
-            target_task_name = self.depends_on.get(name)
-
-        # Fallback to the requested name if no explicit dependency mapping is found
-        if not target_task_name:
-            target_task_name = name
+        # Resolve via dependency mapping, task-level dict (user-explicit) takes priority,
+        # then the config model's typed depends_on defaults, then the literal name as fallback.
+        target_task_name = (
+            self.depends_on.get(name)
+            or (
+                getattr(self.config.depends_on, name, None)
+                if hasattr(self.config, "depends_on")
+                else None
+            )
+            or name
+        )
 
         # Find the task in the global config
         task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
@@ -808,6 +809,28 @@ class BaseStep:
             )
 
         return wf_class.config_model_class(**task.config)
+
+    def get_preprocessed_path(self) -> str:
+        """Return the external preprocessed FASTQ directory declared by an upstream ``link_in`` task.
+
+        Workflows that need to link in pre-processed FASTQs from outside the pipeline (instead of
+        crawling ``data_sets`` search paths) should declare a ``link_in`` dependency:
+
+        .. code-block:: yaml
+
+            depends_on:
+              link_in: my_link_in_task
+
+        This method resolves that dependency via the standard ``get_task_config("link_in")``
+        mechanism and returns the ``path`` field of the upstream :class:`LinkIn` config.
+
+        Returns an empty string if no ``link_in`` dependency is configured.
+        """
+        try:
+            upstream_config = self.get_task_config("link_in")
+            return getattr(upstream_config, "path", "") or ""
+        except Exception:
+            return ""
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
@@ -1303,14 +1326,7 @@ class LinkInStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_pattern_out = "work/input_links/{library_name}/.done"
-
-        # The key 'path_link_in' is only defined for pipelines that could used preprocessed
-        # FASTQ files. That doesn't make sense for pipelines that are using externally generated
-        # data already.
-        try:
-            preprocessed_path = self.config.path_link_in
-        except AttributeError:
-            preprocessed_path = ""
+        self.preprocessed_path = self.parent.get_preprocessed_path()
 
         # Path generator.
         self.path_gen = LinkInPathGenerator(
@@ -1318,7 +1334,7 @@ class LinkInStepPart(BaseStepPart):
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
             cache_file_name=".snappy_path_cache",
-            preprocessed_path=preprocessed_path,
+            preprocessed_path=self.preprocessed_path,
         )
 
     def get_input_files(self, action):
@@ -1337,7 +1353,7 @@ class LinkInStepPart(BaseStepPart):
         out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.preprocessed_path:
             folder_name = wildcards.library_name
         # Perform the command generation
         lines = []
@@ -1377,7 +1393,7 @@ class LinkInStepPart(BaseStepPart):
         out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
 
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if getattr(self.config, "path_link_in", None):
+        if self.preprocessed_path:
             folder_name = wildcards.library_name
 
         filenames = self._create_all_symlinks(self.path_gen, folder_name, out_path)

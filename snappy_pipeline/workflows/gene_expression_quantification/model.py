@@ -57,9 +57,6 @@ class Tool(enum.Enum):
 class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):
     path_ngs_mapping: str = "../ngs_mapping"
 
-    path_link_in: str = ""
-    """OPTIONAL Override data set configuration search paths for FASTQ files"""
-
     tool: Tool  # TODO: add default = [Tool.salmon]
 
     strand: Strand | int = -1  # TODO: what is this default value of -1?

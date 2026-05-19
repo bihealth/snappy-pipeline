@@ -99,7 +99,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config.path_link_in,
+            preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
     @dictify
@@ -128,7 +128,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.parent.get_preprocessed_path():
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):

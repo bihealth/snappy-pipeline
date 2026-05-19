@@ -96,9 +96,6 @@ class Arriba(SnappyModel):
 
 
 class SomaticGeneFusionCalling(SnappyStepModel):
-    path_link_in: str = ""
-    """Override data set configuration search paths for FASTQ files"""
-
     tool: Annotated[Tool, EnumField(Tool, default=Tool.fusioncatcher)]
 
     fusioncatcher: Fusioncatcher | None = None

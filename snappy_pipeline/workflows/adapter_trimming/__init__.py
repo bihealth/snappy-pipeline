@@ -45,7 +45,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config.path_link_in,
+            preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
     @dictify
@@ -87,7 +87,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
     def get_args(self, action):
         def args_function(wildcards):
             folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-            if self.config.path_link_in:
+            if self.parent.get_preprocessed_path():
                 folder_name = wildcards.library_name
             reads_left = self._collect_reads(wildcards, folder_name, "")
             reads_right = self._collect_reads(wildcards, folder_name, "right-")

@@ -105,12 +105,13 @@ class OptiTypeStepPart(BaseStepPart):
         self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
+        self.preprocessed_path = self.parent.get_preprocessed_path()
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config.path_link_in,
+            preprocessed_path=self.preprocessed_path,
         )
 
     @staticmethod
@@ -184,7 +185,7 @@ class OptiTypeStepPart(BaseStepPart):
         """
         task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.preprocessed_path:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):

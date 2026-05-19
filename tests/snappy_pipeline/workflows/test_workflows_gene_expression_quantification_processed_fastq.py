@@ -30,9 +30,10 @@ def minimal_config():
             path: /path/to/features.gtf
 
         step_config:
+          link_in:
+            path: "/preprocess"
           gene_expression_quantification:
             tool: strandedness
-            path_link_in: "/preprocess"
             featurecounts:
               path_annotation_gtf: /path/to/annotation.gtf
             strandedness:

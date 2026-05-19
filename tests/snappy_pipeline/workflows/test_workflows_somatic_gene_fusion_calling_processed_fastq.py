@@ -28,12 +28,13 @@ def minimal_config():
             path: /path/to/features.gtf
 
         step_config:
+          link_in:
+            path: /preprocess
           ngs_mapping:
             tool: bwa
             bwa:
               path_index: /path/to/bwa/index.fasta
           somatic_gene_fusion_calling:
-              path_link_in: /preprocess
               tool: arriba
               fusioncatcher:
                 data_dir: REQUIRED   # REQUIRED

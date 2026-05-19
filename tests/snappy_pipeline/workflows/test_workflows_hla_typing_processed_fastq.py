@@ -26,11 +26,15 @@ def minimal_config():
             path: /path/to/ref.fa
 
         tasks:
+          - step: link_in
+            name: link_in_preprocess
+            config:
+              path: /preprocess
+
           - step: ngs_mapping
             name: ngs_mapping
             config:
               tool: bwa
-              path_link_in: /preprocess
               bwa:
                 path_index: /path/to/bwa/index.fa
 
@@ -38,6 +42,7 @@ def minimal_config():
             name: hla_typing_optitype
             depends_on:
               ngs_mapping: ngs_mapping
+              link_in: link_in_preprocess
             config:
               tool: optitype
               optitype:
@@ -47,6 +52,7 @@ def minimal_config():
             name: hla_typing_arcashla
             depends_on:
               ngs_mapping: ngs_mapping
+              link_in: link_in_preprocess
             config:
               tool: arcashla
               arcashla:
