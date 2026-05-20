@@ -91,6 +91,12 @@ def run_dry_run(config_dir: Path) -> tuple[int, str]:
     return proc.returncode, output
 
 
+def ensure_shard_lookup_scaffold(shards_root: Path) -> None:
+    # `expand_ref()` adds `<cwd>/../.snappy_pipeline` as a default lookup path.
+    # For shard dirs this resolves to `<shards_root>/.snappy_pipeline`.
+    (shards_root / ".snappy_pipeline").mkdir(parents=True, exist_ok=True)
+
+
 def first_error_line(output: str) -> str:
     for line in output.splitlines():
         line = line.strip()
@@ -220,6 +226,7 @@ def main() -> int:
     results: list[DryRunResult] = []
     shards_root = out_dir / "shards"
     shards_root.mkdir(parents=True, exist_ok=True)
+    ensure_shard_lookup_scaffold(shards_root)
 
     ordered_task_names = [t["name"] for t in tasks if isinstance(t, dict) and "name" in t]
     if args.max_steps > 0:
