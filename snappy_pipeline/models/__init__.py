@@ -11,7 +11,7 @@ from typing import Annotated
 import ruamel
 import typing_extensions
 from annotated_types import Predicate
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML
 
@@ -86,6 +86,25 @@ class SnappyStepModel(SnappyModel, object):
     """
     A base class for all workflow step configuration models.
     """
+
+    @model_validator(mode="after")
+    def validate_selected_tool_config(self):
+        model_fields = type(self).model_fields
+        if "tool" not in model_fields:
+            return self
+
+        selected = getattr(self, "tool", None)
+        if selected is None:
+            return self
+        if isinstance(selected, enum.Enum):
+            selected = selected.value
+        if not isinstance(selected, str) or not selected:
+            return self
+
+        if selected in model_fields and getattr(self, selected, None) is None:
+            raise ValueError(f"tool={selected} requires explicit '{selected}' config section")
+
+        return self
 
     @classmethod
     def default_config_yaml_string(
