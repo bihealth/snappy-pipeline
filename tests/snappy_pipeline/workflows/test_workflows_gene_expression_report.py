@@ -35,7 +35,8 @@ def minimal_config():
               path_exon_bed: /path/to/exon.bed
 
           gene_expression_report:
-            path_gene_expression_quantification: GENE_EXPRESSION_QUANTIFICATION
+            depends_on:
+              gene_expression_quantification: GENE_EXPRESSION_QUANTIFICATION
 
         data_sets:
           first_batch:

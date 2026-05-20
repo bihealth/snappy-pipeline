@@ -340,23 +340,31 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
 
+        cfg = getattr(self.config, self.name)
+
+        preset_cfg = cfg.presets.get(cfg.preset)
+        assert preset_cfg is not None, f"Undefined preset '{cfg.preset}'"
+        preset_values = (
+            preset_cfg.model_dump(by_alias=True)
+            if hasattr(preset_cfg, "model_dump")
+            else preset_cfg
+        )
+
         params = {}
         if action in self.params_for_action:
-            cfg = getattr(self.config, self.name)
-            assert cfg.preset in cfg.presets, f"Undefined preset '{cfg.preset}'"
             for k in self.params_for_action[action]:
                 v = getattr(cfg, k, None)
                 if v is None:
-                    assert k in cfg.presets[cfg.preset], (
+                    assert isinstance(preset_values, dict) and k in preset_values, (
                         f"Missing parameter '{k}' from preset '{cfg.preset}'"
                     )
-                    v = cfg.presets[cfg.preset].get(k)
+                    v = preset_values.get(k)
                 params[k] = v
 
         if action == "coverage":
             params["reference"] = self.parent.w_config.static_data_config.reference.path
 
-        return getattr(self, "_get_args_{}".format(action))
+        return params
 
     @dictify
     def get_log_file(self, action):

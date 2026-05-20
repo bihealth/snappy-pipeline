@@ -105,6 +105,12 @@ class GeneExpressionReportComputeSignatures(GeneExpressionReportStepPart):
     #: Step name
     name = "compute_signatures"
 
+    @dictify
+    def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+        yield "tsv", self.base_path_out.format(ext=".tsv")
+
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
         # Validate action
@@ -117,6 +123,12 @@ class GeneExpressionReportPlotGeneDistribution(GeneExpressionReportStepPart):
 
     #: Step name
     name = "plot_expression_distribution"
+
+    @dictify
+    def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+        yield "tsv", self.base_path_out.format(ext=".tsv")
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
@@ -177,11 +189,8 @@ class GeneExpressionReportWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        if self.config.path_gene_expression_quantification:
-            self.register_module(
-                "gene_expression_quantification", self.config.path_gene_expression_quantification
-            )
+        # Initialize dependency module via depends_on routing.
+        self.register_module("gene_expression_quantification", "gene_expression_quantification")
 
     @listify
     def get_result_files(self):

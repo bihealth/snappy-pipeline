@@ -468,10 +468,6 @@ class SomaticVariantCallingWorkflow(BaseStep):
             **kwargs,
         )
         tool = self.config.tool
-        if tool == "mutect2" and self.config.mutect2 is None:
-            raise ValueError(
-                "somatic_variant_calling.tool=mutect2 requires explicit config section 'mutect2'"
-            )
         self.register_sub_step_classes(
             (
                 Mutect2StepPart,
