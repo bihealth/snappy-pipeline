@@ -360,6 +360,8 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
     def get_args(self, action: str):
         self._validate_action(action)
+        if self.config.tool != self.name:
+            return super().get_args(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
             config = self.config.strandedness.model_dump(by_alias=True) | {
@@ -403,9 +405,14 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards)
+        if self.config.tool != self.name:
+            return
         yield "dupradar_path_annotation_gtf", self.config.dupradar.dupradar_path_annotation_gtf
 
     def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        if self.config.tool != self.name:
+            return super().get_args(action)
         return super().get_args(action) | {
             "num_threads": self.config.dupradar.num_threads,
         }
@@ -436,6 +443,8 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards)
+        if self.config.tool != self.name:
+            return
         yield "reference", self.w_config.static_data_config.reference.path
         yield "rnaseqc_path_annotation_gtf", self.config.rnaseqc.rnaseqc_path_annotation_gtf
 
