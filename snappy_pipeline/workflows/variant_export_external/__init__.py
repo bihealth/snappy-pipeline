@@ -145,6 +145,11 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.alfred.json.gz"
 
     @dictify
+    def _get_output_files_collect_work(self):
+        yield "report", "work/target_cov_report/out/target_coverage_summary.txt"
+        yield "report_md5", "work/target_cov_report/out/target_coverage_summary.txt.md5"
+
+    @dictify
     def _get_output_files_bam_qc_work(self):
         for report in ("bamstats", "flagstats", "idxstats"):
             report_path = f"work/{{library_name}}/report/bam_qc/{{library_name}}.bam.{report}.txt"

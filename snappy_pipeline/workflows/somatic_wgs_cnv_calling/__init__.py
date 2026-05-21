@@ -582,16 +582,17 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         chroms = list(chain(range(1, 23), ["X", "Y"]))
         output_files = {}
         # Yield file name pairs for global plots
-        tpl = "work/{library_name}/report/{library_name}.{plot}.{ext}"
+        name_pattern = "{library_name}"
         for plot, ext in plots:
-            output_files[plot] = tpl.format(plot=plot, ext=ext)
+            output_files[plot] = f"work/{name_pattern}/report/{name_pattern}.{plot}.{ext}"
             output_files[plot + "_md5"] = output_files[plot] + ".md5"
         # Yield file name pairs for the chromosome-wise plots
-        tpl_chrom = "work/{library_name}/report/{library_name}.{plot}.chr{chrom}.{ext}"
         for plot, ext in chrom_plots:
             for chrom in chroms:
                 key = "{plot}_chr{chrom}".format(plot=plot, chrom=chrom)
-                output_files[key] = tpl_chrom.format(plot=plot, ext=ext, chrom=chrom)
+                output_files[key] = (
+                    f"work/{name_pattern}/report/{name_pattern}.{plot}.chr{chrom}.{ext}"
+                )
                 output_files[key + "_md5"] = output_files[key] + ".md5"
         return output_files
 
@@ -599,9 +600,9 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_export():
         exports = (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi"))
         output_files = {}
-        tpl = "work/{library_name}/out/{library_name}.{ext}"
+        name_pattern = "{library_name}"
         for export, ext in exports:
-            output_files[export] = tpl.format(export=export, ext=ext)
+            output_files[export] = f"work/{name_pattern}/out/{name_pattern}.{ext}"
             output_files[export + "_md5"] = output_files[export] + ".md5"
         return output_files
 
@@ -609,9 +610,9 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_report(self):
         reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
         output_files = {}
-        tpl = "work/{library_name}/report/{library_name}.{report}.txt"
+        name_pattern = "{library_name}"
         for report in reports:
-            output_files[report] = tpl.format(report=report)
+            output_files[report] = f"work/{name_pattern}/report/{name_pattern}.{report}.txt"
             output_files[report + "_md5"] = output_files[report] + ".md5"
         return output_files
 

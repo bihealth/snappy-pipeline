@@ -130,15 +130,18 @@ class SomaticTargetedSeqCnvCallingStepPart(BaseStepPart):
                 sheet.all_sample_pairs_by_tumor_dna_ngs_library
             )
 
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        library_name = wildcards.library_name
-        if library_name not in self.tumor_ngs_library_to_sample_pair and "." in library_name:
-            # Some upstream outputs embed mapper/caller prefixes in {library_name}.
+    def _resolve_library_name(self, library_name: str) -> str:
+        if library_name in self.tumor_ngs_library_to_sample_pair:
+            return library_name
+        if "." in library_name:
             unprefixed_name = library_name.split(".")[-1]
             if unprefixed_name in self.tumor_ngs_library_to_sample_pair:
-                library_name = unprefixed_name
+                return unprefixed_name
+        return library_name
 
+    def get_normal_lib_name(self, wildcards):
+        """Return name of normal (non-cancer) library"""
+        library_name = self._resolve_library_name(wildcards.library_name)
         pair = self.tumor_ngs_library_to_sample_pair[library_name]
         return pair.normal_sample.dna_ngs_library.name
 
@@ -225,10 +228,11 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         @dictify
         def input_function(wildcards):
             ngs_mapping = self.parent.modules["ngs_mapping"]
+            tumor_library = self._resolve_library_name(wildcards.library_name)
             normal_base_path = "output/{normal_library}/out/{normal_library}".format(
                 normal_library=self.get_normal_lib_name(wildcards), **wildcards
             )
-            tumor_base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
+            tumor_base_path = f"output/{tumor_library}/out/{tumor_library}"
             yield (
                 "gc",
                 "work/static_data/out/sequenza.{length}.wig.gz".format(
