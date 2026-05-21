@@ -25,9 +25,9 @@ class Frequencies(SnappyModel):
 
 
 class ScoreThreshold(SnappyModel):
-    require_coding: bool
-    require_gerpp_gt2: bool
-    min_cadd: int | None
+    require_coding: bool = False
+    require_gerpp_gt2: bool = False
+    min_cadd: int | None = None
 
 
 def check_combination(s: str) -> str:
