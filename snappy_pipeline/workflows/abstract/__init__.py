@@ -991,7 +991,22 @@ class BaseStep:
 
         Delegates to the sub step object's get_input_files function
         """
-        return self._get_sub_step(sub_step).get_input_files(action)
+        input_files = self._get_sub_step(sub_step).get_input_files(action)
+        if callable(input_files):
+
+            def input_wrapper(*args, **kwargs):
+                try:
+                    return input_files(*args, **kwargs)
+                except TypeError as e:
+                    if kwargs and "unexpected keyword argument" in str(e):
+                        if args:
+                            return input_files(*args)
+                        if "wildcards" in kwargs:
+                            return input_files(kwargs["wildcards"])
+                    raise
+
+            return input_wrapper
+        return input_files
 
     def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
