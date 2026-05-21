@@ -214,86 +214,94 @@ elif tool == "gatk4_hc_gvcf":
 # Generate BCFtools stats report ----------------------------------------------
 
 
-rule variant_calling_bcftools_stats_report:
-    input:
-        **wf.get_input_files("bcftools_stats", "run"),
-    output:
-        **wf.get_output_files("bcftools_stats", "run"),
-    log:
-        **wf.get_log_file("bcftools_stats", "run"),
-    threads: wf.get_resource("bcftools_stats", "run", "threads")
-    resources:
-        runtime=wf.get_resource("bcftools_stats", "run", "runtime"),
-        mem=wf.get_resource("bcftools_stats", "run", "mem"),
-        partition=wf.get_resource("bcftools_stats", "run", "partition"),
-        tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
-    params:
-        args=wf.get_args("bcftools_stats", "run"),
-    wrapper:
-        wf.wrapper_path("bcftools_stats/run")
+if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
+
+    rule variant_calling_bcftools_stats_report:
+        input:
+            **wf.get_input_files("bcftools_stats", "run"),
+        output:
+            **wf.get_output_files("bcftools_stats", "run"),
+        log:
+            **wf.get_log_file("bcftools_stats", "run"),
+        threads: wf.get_resource("bcftools_stats", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bcftools_stats", "run", "runtime"),
+            mem=wf.get_resource("bcftools_stats", "run", "mem"),
+            partition=wf.get_resource("bcftools_stats", "run", "partition"),
+            tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bcftools_stats", "run"),
+        wrapper:
+            wf.wrapper_path("bcftools_stats/run")
 
 
 # Generate Jannovar statistics report -----------------------------------------
 
 
-rule variant_calling_jannovar_stats_report:
-    input:
-        **wf.get_input_files("jannovar_stats", "run"),
-    output:
-        **wf.get_output_files("jannovar_stats", "run"),
-    log:
-        **wf.get_log_file("jannovar_stats", "run"),
-    threads: wf.get_resource("jannovar_stats", "run", "threads")
-    resources:
-        runtime=wf.get_resource("jannovar_stats", "run", "runtime"),
-        mem=wf.get_resource("jannovar_stats", "run", "mem"),
-        partition=wf.get_resource("jannovar_stats", "run", "partition"),
-        tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
-    params:
-        args=wf.get_args("jannovar_stats", "run"),
-    wrapper:
-        wf.wrapper_path("jannovar/statistics")
+if wf.config.jannovar_stats and wf.config.jannovar_stats.enabled:
+
+    rule variant_calling_jannovar_stats_report:
+        input:
+            **wf.get_input_files("jannovar_stats", "run"),
+        output:
+            **wf.get_output_files("jannovar_stats", "run"),
+        log:
+            **wf.get_log_file("jannovar_stats", "run"),
+        threads: wf.get_resource("jannovar_stats", "run", "threads")
+        resources:
+            runtime=wf.get_resource("jannovar_stats", "run", "runtime"),
+            mem=wf.get_resource("jannovar_stats", "run", "mem"),
+            partition=wf.get_resource("jannovar_stats", "run", "partition"),
+            tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
+        params:
+            args=wf.get_args("jannovar_stats", "run"),
+        wrapper:
+            wf.wrapper_path("jannovar/statistics")
 
 
 # Generate B allele fraction files --------------------------------------------
 
 
-rule variant_calling_baf_file_generation:
-    input:
-        **wf.get_input_files("baf_file_generation", "run"),
-    output:
-        **wf.get_output_files("baf_file_generation", "run"),
-    log:
-        **wf.get_log_file("baf_file_generation", "run"),
-    threads: wf.get_resource("baf_file_generation", "run", "threads")
-    resources:
-        runtime=wf.get_resource("baf_file_generation", "run", "runtime"),
-        mem=wf.get_resource("baf_file_generation", "run", "mem"),
-        partition=wf.get_resource("baf_file_generation", "run", "partition"),
-        tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
-    params:
-        args=wf.get_args("baf_file_generation", "run"),
-    wrapper:
-        wf.wrapper_path("baf_file_generation")
+if wf.config.baf_file_generation and wf.config.baf_file_generation.enabled:
+
+    rule variant_calling_baf_file_generation:
+        input:
+            **wf.get_input_files("baf_file_generation", "run"),
+        output:
+            **wf.get_output_files("baf_file_generation", "run"),
+        log:
+            **wf.get_log_file("baf_file_generation", "run"),
+        threads: wf.get_resource("baf_file_generation", "run", "threads")
+        resources:
+            runtime=wf.get_resource("baf_file_generation", "run", "runtime"),
+            mem=wf.get_resource("baf_file_generation", "run", "mem"),
+            partition=wf.get_resource("baf_file_generation", "run", "partition"),
+            tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
+        params:
+            args=wf.get_args("baf_file_generation", "run"),
+        wrapper:
+            wf.wrapper_path("baf_file_generation")
 
 
 # Run bcftools roh ------------------------------------------------------------
 
 
-rule variant_calling_bcftools_roh:
-    input:
-        **wf.get_input_files("bcftools_roh", "run"),
-    output:
-        **wf.get_output_files("bcftools_roh", "run"),
-    log:
-        **wf.get_log_file("bcftools_roh", "run"),
-    threads: wf.get_resource("bcftools_roh", "run", "threads")
-    resources:
-        runtime=wf.get_resource("bcftools_roh", "run", "runtime"),
-        mem=wf.get_resource("bcftools_roh", "run", "mem"),
-        partition=wf.get_resource("bcftools_roh", "run", "partition"),
-        tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
-    params:
-        args=wf.get_args("bcftools_roh", "run"),
-    wrapper:
-        wf.wrapper_path("bcftools_roh")
+if wf.config.bcftools_roh and wf.config.bcftools_roh.enabled:
+
+    rule variant_calling_bcftools_roh:
+        input:
+            **wf.get_input_files("bcftools_roh", "run"),
+        output:
+            **wf.get_output_files("bcftools_roh", "run"),
+        log:
+            **wf.get_log_file("bcftools_roh", "run"),
+        threads: wf.get_resource("bcftools_roh", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bcftools_roh", "run", "runtime"),
+            mem=wf.get_resource("bcftools_roh", "run", "mem"),
+            partition=wf.get_resource("bcftools_roh", "run", "partition"),
+            tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bcftools_roh", "run"),
+        wrapper:
+            wf.wrapper_path("bcftools_roh")
