@@ -62,6 +62,7 @@ from pathlib import Path
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
 from matplotlib.cbook import flatten
+from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import SkipLibraryWarning
@@ -155,11 +156,15 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         elif action == "annotate_strucvars":
             # Only annotate_seqvars SVs if path to step for calling them is configured.
             if not (
-                self.parent.depends_on.sv_calling_targeted or self.parent.depends_on.sv_calling_wgs
+                self.parent.config.depends_on.sv_calling_targeted
+                or self.parent.config.depends_on.sv_calling_wgs
             ):
                 return
             raw_path_tpls = self._get_output_files_annotate_strucvars().values()
         elif action == "bam_qc":
+            # BAM QC depends on ngs_mapping target coverage report outputs.
+            if not self.parent.get_task_config("ngs_mapping").target_coverage_report.enabled:
+                return
             raw_path_tpls = self._get_output_files_bam_qc().values()
         # Filter the templates to the paths in the output directory.
         path_tpls = [tpl for tpl in flatten(raw_path_tpls) if tpl.startswith("output/")]
@@ -167,7 +172,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Create concrete paths for all pedigrees in the sample sheet.
         index_ngs_libraries = self._get_index_ngs_libraries(
             require_consistent_pedigree_kits=(
-                bool(self.parent.depends_on.sv_calling_targeted)
+                bool(self.parent.config.depends_on.sv_calling_targeted)
                 and (action == "annotate_strucvars")
             )
         )
@@ -215,11 +220,16 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         variant_calling = self.parent.modules["variant_calling"]
+        seqvar_caller = str(self.parent.get_task_config("variant_calling").tool)
 
-        path = "output/{index_ngs_library}/out/{index_ngs_library}.vcf.gz"
+        path = (
+            "output/{seqvar_caller}.{index_ngs_library}/out/"
+            "{seqvar_caller}.{index_ngs_library}.vcf.gz"
+        )
 
         vcfs = [
             variant_calling(path).format(
+                seqvar_caller=seqvar_caller,
                 index_ngs_library=wildcards.index_ngs_library,
             )
         ]
@@ -280,7 +290,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_annotate_strucvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        if self.parent.depends_on.sv_calling_targeted:
+        if self.parent.config.depends_on.sv_calling_targeted:
             sv_calling = self.parent.modules["sv_calling_targeted"]
             sv_callers = [str(self.parent.get_task_config("sv_calling_targeted").tool)]
             skip_libraries = {
@@ -289,7 +299,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 ).skip_libraries
                 for sv_caller in sv_callers
             }
-        elif self.parent.depends_on.sv_calling_wgs:
+        elif self.parent.config.depends_on.sv_calling_wgs:
             sv_calling = self.parent.modules["sv_calling_wgs"]
             sv_callers = [str(self.parent.get_task_config("sv_calling_wgs").tool)]
             skip_libraries = {
@@ -306,7 +316,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         ]
 
-        path = "output/{index_ngs_library}/out/{index_ngs_library}.vcf.gz"
+        path = "output/{sv_caller}.{index_ngs_library}/out/{sv_caller}.{index_ngs_library}.vcf.gz"
 
         vcfs = []
         for sv_caller in sv_callers:
@@ -367,10 +377,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
-        # Ensure target_coverage_report is enabled
-        assert self.get_task_config("ngs_mapping")["target_coverage_report"]["enabled"], (
-            "Target coverage report must be enabled in the configuration of the ngs_mapping step"
-        )
         ngs_mapping = self.parent.modules["ngs_mapping"]
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
@@ -480,9 +486,9 @@ class VarfishExportWorkflow(BaseStep):
 
         # Register sub workflows
         self.register_module("variant_calling")
-        if self.config.path_sv_calling_targeted:
+        if self.config.depends_on.sv_calling_targeted:
             self.register_module("sv_calling_targeted")
-        if self.config.path_sv_calling_wgs:
+        if self.config.depends_on.sv_calling_wgs:
             self.register_module("sv_calling_wgs")
         self.register_module("ngs_mapping")
 
