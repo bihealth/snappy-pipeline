@@ -301,6 +301,24 @@ def bootstrap_step_config(
         if isinstance(cfg["bwa"], dict):
             cfg["bwa"].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
 
+    if step_name == "variant_calling":
+        cfg["tool"] = "bcftools_call"
+        cfg.setdefault("bcftools_call", {})
+        cfg.setdefault("baf_file_generation", {"enabled": False, "min_dp": 10})
+        cfg.setdefault("bcftools_stats", {"enabled": False})
+        cfg.setdefault("jannovar_stats", {"enabled": False, "path_ser": "AUTO"})
+        cfg.setdefault(
+            "bcftools_roh",
+            {
+                "enabled": False,
+                "path_af_file": "AUTO",
+                "path_targets": None,
+                "ignore_homref": False,
+                "skip_indels": False,
+                "rec_rate": 1e-8,
+            },
+        )
+
     return cfg
 
 
