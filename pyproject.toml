@@ -218,6 +218,10 @@ include = "\\.smk$|\\.rules$|^Snakefile"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--cov=snappy_pipeline --cov-report=xml"
+markers = [
+    "integration: tests requiring workflow-level integration setup",
+    "slow: tests that are expected to take longer runtime",
+]
 testpaths = [
     "tests",
 ]
