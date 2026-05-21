@@ -269,15 +269,19 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_input_files_tumor_normal_ratio(self, wildcards, **kwargs):
         """Return input files that the merge step ("bcftools merge") needs"""
-        # TODO: Potential bug as 'library_name' is required in the wildcards but also obtained using
-        #  `get_normal_lib_name()`.
-        #  Error: "TypeError: str.format() got multiple values for keyword argument 'library_name'"
-        libraries = {"tumor": wildcards.library_name, "normal": self.get_normal_lib_name(wildcards)}
+        _ = kwargs
+        tumor_library = (
+            wildcards.library_name
+            if hasattr(wildcards, "library_name")
+            else wildcards.cancer_library
+        )
+        normal_library = self.cancer_ngs_library_to_sample_pair[
+            tumor_library
+        ].normal_sample.dna_ngs_library.name
+        libraries = {"tumor": tumor_library, "normal": normal_library}
         for kind, library_name in libraries.items():
             key = "{}_bcf".format(kind)
-            name_pattern = "cnvetti_coverage.{library_name}".format(
-                library_name=library_name, **wildcards
-            )
+            name_pattern = "cnvetti_coverage.{}".format(library_name)
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -288,8 +292,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_input_files_segment(self, wildcards, **kwargs):
         """Return input files that "cnvetti segment" needs"""
+        _ = kwargs
         for key, ext in self.bcf_dict.items():
-            name_pattern = "cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)
+            name_pattern = "cnvetti_tumor_normal_ratio.{cancer_library}".format(**wildcards)
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -328,7 +333,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_segment(self):
         for key, ext in self.bcf_dict.items():
-            name_pattern = "cnvetti_segment.{library_name}"
+            name_pattern = "{cancer_library}"
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -370,7 +375,10 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def get_log_file(self, action):
         """Return path to log file"""
-        name_pattern = "cnvetti_{action}.{{library_name}}".format(action=action)
+        wildcard_name = (
+            "library_name" if action in {"coverage", "tumor_normal_ratio"} else "cancer_library"
+        )
+        name_pattern = f"cnvetti_{action}.{{{{{wildcard_name}}}}}"
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         key_ext = (
             ("log", ".log"),
@@ -864,28 +872,8 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 tpl,
                 ext=EXT_VALUES,
             )
-        if tool == "cnvetti":
-            for sheet in filter(is_not_background, self.shortcut_sheets):
-                for donor in sheet.donors:
-                    if donor.all_pairs:
-                        name_pattern = "cnvetti_plot.{donor}"
-                        for ext in (".png", ".png.md5"):
-                            yield from expand(
-                                os.path.join(
-                                    "output", name_pattern, "out", name_pattern + "_genome" + ext
-                                ),
-                                donor=[donor.name],
-                            )
-                            yield from expand(
-                                os.path.join(
-                                    "output",
-                                    name_pattern,
-                                    "out",
-                                    name_pattern + "_chr{chrom}" + ext,
-                                ),
-                                donor=[donor.name],
-                                chrom=map(str, chain(range(1, 23), ("X", "Y"))),
-                            )
+        # NOTE: CNVetti plotting outputs are not part of this workflow anymore.
+        # Keep result files limited to payloads that are actually produced by rules.
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""
