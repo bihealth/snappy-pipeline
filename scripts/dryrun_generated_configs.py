@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create dependency-closure task shards from a generated config and dry-run each shard.
+"""Create dependency-closure task configs and dry-run each task closure.
 
 This is intended to make migration/fix work tractable: each step is tested in a
 minimal config containing itself plus transitive `depends_on` tasks.
@@ -24,7 +24,7 @@ yaml.indent(sequence=4, offset=2)
 @dataclass
 class DryRunResult:
     task_name: str
-    shard_dir: Path
+    closure_dir: Path
     return_code: int
     ok: bool
     first_error_line: str
@@ -66,7 +66,7 @@ def dependency_closure(task_name: str, tasks_by_name: dict[str, dict[str, Any]])
     return seen
 
 
-def build_shard_config(
+def build_task_closure_config(
     base_config: dict[str, Any], tasks_subset: list[dict[str, Any]]
 ) -> dict[str, Any]:
     return {
@@ -91,10 +91,10 @@ def run_dry_run(config_dir: Path) -> tuple[int, str]:
     return proc.returncode, output
 
 
-def ensure_shard_lookup_scaffold(shards_root: Path) -> None:
+def ensure_task_closure_lookup_scaffold(task_closures_root: Path) -> None:
     # `expand_ref()` adds `<cwd>/../.snappy_pipeline` as a default lookup path.
-    # For shard dirs this resolves to `<shards_root>/.snappy_pipeline`.
-    (shards_root / ".snappy_pipeline").mkdir(parents=True, exist_ok=True)
+    # For task-closure dirs this resolves to `<task_closures_root>/.snappy_pipeline`.
+    (task_closures_root / ".snappy_pipeline").mkdir(parents=True, exist_ok=True)
 
 
 def first_error_line(output: str) -> str:
@@ -139,7 +139,7 @@ def write_reports(out_dir: Path, results: list[DryRunResult]) -> None:
     reports_dir = out_dir / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    json_path = reports_dir / "dryrun_shards_report.json"
+    json_path = reports_dir / "dryrun_task_closures_report.json"
     payload = {
         "summary": {
             "total": len(results),
@@ -149,7 +149,7 @@ def write_reports(out_dir: Path, results: list[DryRunResult]) -> None:
         "results": [
             {
                 "task_name": r.task_name,
-                "shard_dir": str(r.shard_dir),
+                "closure_dir": str(r.closure_dir),
                 "return_code": r.return_code,
                 "ok": r.ok,
                 "first_error_line": r.first_error_line,
@@ -159,10 +159,14 @@ def write_reports(out_dir: Path, results: list[DryRunResult]) -> None:
         ],
     }
     json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    # Backward-compatible alias while callers migrate away from the old term.
+    (reports_dir / "dryrun_shards_report.json").write_text(
+        json.dumps(payload, indent=2), encoding="utf-8"
+    )
 
-    md_path = reports_dir / "dryrun_shards_report.md"
+    md_path = reports_dir / "dryrun_task_closures_report.md"
     lines = []
-    lines.append("# Dry-Run Shard Report")
+    lines.append("# Dry-Run Task Closure Report")
     lines.append("")
     lines.append(f"- Total: {payload['summary']['total']}")
     lines.append(f"- OK: {payload['summary']['ok']}")
@@ -189,6 +193,7 @@ def write_reports(out_dir: Path, results: list[DryRunResult]) -> None:
     lines.append("")
 
     md_path.write_text("\n".join(lines), encoding="utf-8")
+    (reports_dir / "dryrun_shards_report.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def main() -> int:
@@ -197,13 +202,13 @@ def main() -> int:
         "--config",
         type=Path,
         default=Path("scratch/generated-configs/all-workflows/config.yaml"),
-        help="Generated all-workflows config to shard.",
+        help="Generated all-workflows config to dry-run by task closure.",
     )
     parser.add_argument(
         "--out-dir",
         type=Path,
         default=Path("scratch/generated-configs"),
-        help="Base output dir for shards and reports.",
+        help="Base output dir for task closures and reports.",
     )
     parser.add_argument(
         "--task",
@@ -225,14 +230,17 @@ def main() -> int:
     config = load_yaml(config_path)
     tasks = config.get("tasks", [])
     if not isinstance(tasks, list) or not tasks:
-        raise ValueError("Config has no tasks to shard")
+        raise ValueError("Config has no tasks to dry-run")
 
-    tasks_by_name = {t.get("name"): t for t in tasks if isinstance(t, dict) and t.get("name")}
+    tasks_by_name: dict[str, dict[str, Any]] = {}
+    for task in tasks:
+        if isinstance(task, dict) and isinstance(task.get("name"), str):
+            tasks_by_name[task["name"]] = task
 
     results: list[DryRunResult] = []
-    shards_root = out_dir / "shards"
-    shards_root.mkdir(parents=True, exist_ok=True)
-    ensure_shard_lookup_scaffold(shards_root)
+    task_closures_root = out_dir / "task_closures"
+    task_closures_root.mkdir(parents=True, exist_ok=True)
+    ensure_task_closure_lookup_scaffold(task_closures_root)
 
     ordered_task_names = [t["name"] for t in tasks if isinstance(t, dict) and "name" in t]
     if args.task:
@@ -248,16 +256,16 @@ def main() -> int:
         closure = dependency_closure(task_name, tasks_by_name)
         tasks_subset = [t for t in tasks if isinstance(t, dict) and t.get("name") in closure]
 
-        shard_dir = shards_root / task_name
-        shard_config_path = shard_dir / "config.yaml"
-        shard_config = build_shard_config(config, tasks_subset)
-        dump_yaml(shard_config_path, shard_config)
+        closure_dir = task_closures_root / task_name
+        closure_config_path = closure_dir / "config.yaml"
+        closure_config = build_task_closure_config(config, tasks_subset)
+        dump_yaml(closure_config_path, closure_config)
 
-        rc, output = run_dry_run(shard_dir)
-        (shard_dir / "dryrun.log").write_text(output, encoding="utf-8")
+        rc, output = run_dry_run(closure_dir)
+        (closure_dir / "dryrun.log").write_text(output, encoding="utf-8")
         result = DryRunResult(
             task_name=task_name,
-            shard_dir=shard_dir,
+            closure_dir=closure_dir,
             return_code=rc,
             ok=(rc == 0),
             first_error_line=first_error_line(output),

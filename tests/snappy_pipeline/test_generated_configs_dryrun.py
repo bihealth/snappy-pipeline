@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 import subprocess
@@ -10,6 +9,10 @@ from typing import Any
 
 import pytest
 import yaml
+
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+TASK_NAMES = sorted(WORKFLOW_REGISTRY)
 
 
 def _repo_root() -> Path:
@@ -25,59 +28,60 @@ def _tail(text: str, n: int = 40) -> str:
     return "\n".join(lines[-n:])
 
 
-def _run_generate_and_dryrun() -> tuple[Path, str]:
+@pytest.fixture(scope="session")
+def generated_task_config(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     root = _repo_root()
+    out_dir = tmp_path_factory.mktemp("generated-task-configs")
 
-    gen = _run([sys.executable, "scripts/generate_task_configs.py"], cwd=root)
-    if gen.returncode != 0:
-        raise AssertionError(
-            "generate_task_configs.py failed\n"
-            f"stdout/stderr tail:\n{_tail((gen.stdout or '') + '\n' + (gen.stderr or ''))}"
-        )
-
-    dry = _run([sys.executable, "scripts/dryrun_generated_configs.py"], cwd=root)
-    dry_output = (dry.stdout or "") + "\n" + (dry.stderr or "")
-    if dry.returncode != 0:
-        raise AssertionError(
-            f"dryrun_generated_configs.py failed\nstdout/stderr tail:\n{_tail(dry_output)}"
-        )
-
-    report_json = root / "scratch/generated-configs/reports/dryrun_shards_report.json"
-    if not report_json.exists():
-        raise AssertionError(f"Expected report not found: {report_json}")
-
-    return report_json, dry_output
-
-
-@pytest.mark.integration
-@pytest.mark.slow
-def test_generated_config_shards_all_pass() -> None:
-    report_json, _ = _run_generate_and_dryrun()
-    report = json.loads(report_json.read_text(encoding="utf-8"))
-
-    summary = report.get("summary", {})
-    total = int(summary.get("total", -1))
-    failed = int(summary.get("failed", -1))
-
-    assert total >= 40
-    assert failed == 0
-
-
-@pytest.mark.integration
-@pytest.mark.slow
-def test_generated_config_audit_regression_guard() -> None:
-    root = _repo_root()
-
-    gen = _run([sys.executable, "scripts/generate_task_configs.py"], cwd=root)
+    gen = _run(
+        [sys.executable, "scripts/generate_task_configs.py", "--out-dir", str(out_dir)], cwd=root
+    )
     gen_output = (gen.stdout or "") + "\n" + (gen.stderr or "")
     if gen.returncode != 0:
         raise AssertionError(
             f"generate_task_configs.py failed\nstdout/stderr tail:\n{_tail(gen_output)}"
         )
 
+    return {
+        "root": root,
+        "out_dir": out_dir,
+        "config_path": out_dir / "all-workflows" / "config.yaml",
+        "generate_output": gen_output,
+    }
+
+
+@pytest.mark.integration
+@pytest.mark.slow
+@pytest.mark.parametrize("task_name", TASK_NAMES, ids=TASK_NAMES)
+def test_generated_config_task_closure_passes(
+    task_name: str, generated_task_config: dict[str, Any], tmp_path: Path
+) -> None:
+    root = generated_task_config["root"]
+    config_path = generated_task_config["config_path"]
+    out_dir = tmp_path / "dryrun"
+    dry = _run(
+        [
+            sys.executable,
+            "scripts/dryrun_generated_configs.py",
+            "--config",
+            str(config_path),
+            "--out-dir",
+            str(out_dir),
+            "--task",
+            task_name,
+        ],
+        cwd=root,
+    )
+    dry_output = (dry.stdout or "") + "\n" + (dry.stderr or "")
+    assert dry.returncode == 0, f"task closure failed for {task_name}\n{_tail(dry_output)}"
+
+
+@pytest.mark.integration
+def test_generated_config_audit_regression_guard(generated_task_config: dict[str, Any]) -> None:
+    gen_output = generated_task_config["generate_output"]
     unresolved = re.findall(r"unresolved validation errors, kept best-effort config", gen_output)
 
-    cfg_path = root / "scratch/generated-configs/all-workflows/config.yaml"
+    cfg_path = generated_task_config["config_path"]
     cfg: dict[str, Any] = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
 
     auto_count = 0
