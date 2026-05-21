@@ -7,8 +7,8 @@ rule somatic_wgs_cnv_calling_cnvkit_coverage:
         **wf.get_log_file("cnvkit", "coverage"),
     threads: wf.get_resource("cnvkit", "coverage", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "coverage", "time"),
-        mem_mb=wf.get_resource("cnvkit", "coverage", "memory"),
+        runtime=wf.get_resource("cnvkit", "coverage", "runtime"),
+        mem=wf.get_resource("cnvkit", "coverage", "mem"),
         partition=wf.get_resource("cnvkit", "coverage", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/coverage")
@@ -23,8 +23,8 @@ rule somatic_wgs_cnv_calling_cnvkit_fix:
         **wf.get_log_file("cnvkit", "fix"),
     threads: wf.get_resource("cnvkit", "fix", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "fix", "time"),
-        mem_mb=wf.get_resource("cnvkit", "fix", "memory"),
+        runtime=wf.get_resource("cnvkit", "fix", "runtime"),
+        mem=wf.get_resource("cnvkit", "fix", "mem"),
         partition=wf.get_resource("cnvkit", "fix", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/fix")
@@ -39,8 +39,8 @@ rule somatic_wgs_cnv_calling_cnvkit_segment:
         **wf.get_log_file("cnvkit", "segment"),
     threads: wf.get_resource("cnvkit", "segment", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "segment", "time"),
-        mem_mb=wf.get_resource("cnvkit", "segment", "memory"),
+        runtime=wf.get_resource("cnvkit", "segment", "runtime"),
+        mem=wf.get_resource("cnvkit", "segment", "mem"),
         partition=wf.get_resource("cnvkit", "segment", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/segment")
@@ -55,8 +55,8 @@ rule somatic_wgs_cnv_calling_cnvkit_call:
         **wf.get_log_file("cnvkit", "call"),
     threads: wf.get_resource("cnvkit", "call", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "call", "time"),
-        mem_mb=wf.get_resource("cnvkit", "call", "memory"),
+        runtime=wf.get_resource("cnvkit", "call", "runtime"),
+        mem=wf.get_resource("cnvkit", "call", "mem"),
         partition=wf.get_resource("cnvkit", "call", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/call")
@@ -71,8 +71,8 @@ rule somatic_wgs_cnv_calling_cnvkit_postprocess:
         **wf.get_log_file("cnvkit", "postprocess"),
     threads: wf.get_resource("cnvkit", "postprocess", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "postprocess", "time"),
-        mem_mb=wf.get_resource("cnvkit", "postprocess", "memory"),
+        runtime=wf.get_resource("cnvkit", "postprocess", "runtime"),
+        mem=wf.get_resource("cnvkit", "postprocess", "mem"),
         partition=wf.get_resource("cnvkit", "postprocess", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/postprocess")
@@ -87,8 +87,8 @@ rule somatic_wgs_cnv_calling_cnvkit_plot:
         **wf.get_log_file("cnvkit", "plot"),
     threads: wf.get_resource("cnvkit", "plot", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "plot", "time"),
-        mem_mb=wf.get_resource("cnvkit", "plot", "memory"),
+        runtime=wf.get_resource("cnvkit", "plot", "runtime"),
+        mem=wf.get_resource("cnvkit", "plot", "mem"),
         partition=wf.get_resource("cnvkit", "plot", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/plot")
@@ -103,8 +103,8 @@ rule somatic_wgs_cnv_calling_cnvkit_export:
         **wf.get_log_file("cnvkit", "export"),
     threads: wf.get_resource("cnvkit", "export", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "export", "time"),
-        mem_mb=wf.get_resource("cnvkit", "export", "memory"),
+        runtime=wf.get_resource("cnvkit", "export", "runtime"),
+        mem=wf.get_resource("cnvkit", "export", "mem"),
         partition=wf.get_resource("cnvkit", "export", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/export")
@@ -119,8 +119,8 @@ rule somatic_wgs_cnv_calling_cnvkit_report:
         **wf.get_log_file("cnvkit", "report"),
     threads: wf.get_resource("cnvkit", "report", "threads")
     resources:
-        runtime=wf.get_resource("cnvkit", "report", "time"),
-        mem_mb=wf.get_resource("cnvkit", "report", "memory"),
+        runtime=wf.get_resource("cnvkit", "report", "runtime"),
+        mem=wf.get_resource("cnvkit", "report", "mem"),
         partition=wf.get_resource("cnvkit", "report", "partition"),
     wrapper:
         wf.wrapper_path("cnvkit/report")

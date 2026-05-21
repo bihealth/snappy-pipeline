@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Any, Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import Cnvkit
@@ -36,6 +36,8 @@ class SequenzaExtractExtraArgs(SnappyModel):
 
 
 class SequenzaFitExtraArgs(SnappyModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     N_ratio_filter: int = Field(10, alias="N.ratio.filter")
     N_BAF_filter: int = Field(1, alias="N.BAF.filter")
     segment_filter: int = Field(3000000, alias="segment.filter")
@@ -96,7 +98,9 @@ class Sequenza(SnappyModel):
     assembly: str = "hg19"
     """Must be hg38 for GRCh38. See copynumber for complete list (augmented with hg38)"""
 
-    extra_args: SequenzaExtraArgs | dict[str, Any] = {}
+    extra_args: Annotated[SequenzaExtraArgs | dict[str, Any], Field(union_mode="left_to_right")] = (
+        SequenzaExtraArgs()
+    )
     """Extra arguments for sequenza bam2seqz"""
 
     ignore_chroms: list[str] = [
@@ -111,10 +115,14 @@ class Sequenza(SnappyModel):
     ]
     """patterns of chromosome names to ignore"""
 
-    extra_args_extract: SequenzaExtractExtraArgs | dict[str, Any] = SequenzaExtractExtraArgs()
+    extra_args_extract: Annotated[
+        SequenzaExtractExtraArgs | dict[str, Any], Field(union_mode="left_to_right")
+    ] = SequenzaExtractExtraArgs()
     """Valid arguments: see ?sequenza::sequenza.extract in R"""
 
-    extra_args_fit: SequenzaFitExtraArgs | dict[str, Any] = SequenzaFitExtraArgs()
+    extra_args_fit: Annotated[
+        SequenzaFitExtraArgs | dict[str, Any], Field(union_mode="left_to_right")
+    ] = SequenzaFitExtraArgs()
     """Valid arguments: see ?sequenza::sequenza.fit in R"""
 
 

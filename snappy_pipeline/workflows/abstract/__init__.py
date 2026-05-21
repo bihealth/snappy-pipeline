@@ -729,7 +729,8 @@ class BaseStep:
 
         print(f"\n[DEBUG] Initializing step '{self.step_name}' for task '{self.task_name}'")
 
-        self.config = self.config_model_class(**self.task.config)
+        # Validate from mapping input explicitly to ensure nested coercion is applied consistently.
+        self.config = self.config_model_class.model_validate(self.task.config)
         self.depends_on = (
             self.config.depends_on.model_dump() if hasattr(self.config, "depends_on") else {}
         )

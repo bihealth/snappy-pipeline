@@ -371,6 +371,8 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
+        if not self.config.filter_list:
+            return  # nothing to filter → no output files
         log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
         name_pattern = "{tumor_library}"
 

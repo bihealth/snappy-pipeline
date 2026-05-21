@@ -89,6 +89,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import Cnvkit as CnvkitModel
+from .model import SequenzaExtraArgs, SequenzaExtractExtraArgs, SequenzaFitExtraArgs
 from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -131,7 +132,14 @@ class SomaticTargetedSeqCnvCallingStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.library_name]
+        library_name = wildcards.library_name
+        if library_name not in self.tumor_ngs_library_to_sample_pair and "." in library_name:
+            # Some upstream outputs embed mapper/caller prefixes in {library_name}.
+            unprefixed_name = library_name.split(".")[-1]
+            if unprefixed_name in self.tumor_ngs_library_to_sample_pair:
+                library_name = unprefixed_name
+
+        pair = self.tumor_ngs_library_to_sample_pair[library_name]
         return pair.normal_sample.dna_ngs_library.name
 
     @staticmethod
@@ -276,12 +284,19 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         self._validate_action(action)
         return getattr(self, f"_get_args_{action}")
 
+    @staticmethod
+    def _coerce_model(model_cls, value):
+        if isinstance(value, model_cls):
+            return value
+        return model_cls.model_validate(value or {})
+
     def _get_args_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        extra_args = self._coerce_model(SequenzaExtraArgs, self.config.sequenza.extra_args)
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "length": self.config.sequenza.length,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
-            "extra_arguments": self.config.sequenza.extra_args,
+            "extra_arguments": extra_args.model_dump(by_alias=True),
         }
 
     def _get_args_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -291,22 +306,34 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
 
     def _get_args_report(self, wildcards: Wildcards) -> dict[str, Any]:
+        extra_args_extract = self._coerce_model(
+            SequenzaExtractExtraArgs, self.config.sequenza.extra_args_extract
+        )
+        extra_args_fit = self._coerce_model(
+            SequenzaFitExtraArgs, self.config.sequenza.extra_args_fit
+        )
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "assembly": self.config.sequenza.assembly,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
-            "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
-            "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
+            "extra_args_extract": extra_args_extract.model_dump(by_alias=True),
+            "extra_args_fit": extra_args_fit.model_dump(by_alias=True),
             "library_name": wildcards.library_name,
         }
 
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        extra_args_extract = self._coerce_model(
+            SequenzaExtractExtraArgs, self.config.sequenza.extra_args_extract
+        )
+        extra_args_fit = self._coerce_model(
+            SequenzaFitExtraArgs, self.config.sequenza.extra_args_fit
+        )
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "assembly": self.config.sequenza.assembly,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
-            "extra_args_extract": self.config.sequenza.extra_args_extract.model_dump(by_alias=True),
-            "extra_args_fit": self.config.sequenza.extra_args_fit.model_dump(by_alias=True),
+            "extra_args_extract": extra_args_extract.model_dump(by_alias=True),
+            "extra_args_fit": extra_args_fit.model_dump(by_alias=True),
             "library_name": wildcards.library_name,
         }
 
