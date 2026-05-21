@@ -435,7 +435,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         if action == "scatter":
             scatter = self.parent.workflow.globals.get("scatter")
             scatter = getattr(scatter, self.name)
-            tpl = "work/mutect2.{{normal_library}}/par/scatter/{scatteritem}.region.bed"
+            tpl = "work/{{normal_library}}/par/scatter/{scatteritem}.region.bed"
             return {"regions": scatter(tpl)}
 
         ext_dict = {
