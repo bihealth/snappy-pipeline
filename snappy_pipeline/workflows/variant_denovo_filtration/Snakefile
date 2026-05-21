@@ -84,7 +84,7 @@ rule variant_denovo_filtration_filter_denovo_run:
         partition=wf.get_resource("filter_denovo", "run", "partition"),
         tmpdir=wf.get_resource("filter_denovo", "run", "tmpdir"),
     params:
-        args=wg.get_args("filter_denovo", "run"),
+        args=wf.get_args("filter_denovo", "run"),
     wrapper:
         wf.wrapper_path("variant_filtration/filter_denovo")
 

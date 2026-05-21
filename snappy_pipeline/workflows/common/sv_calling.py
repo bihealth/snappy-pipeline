@@ -43,7 +43,7 @@ class SvCallingGetResultFilesMixin:
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
                 for library_name in self.index_ngs_library_to_pedigree.keys():
-                    if cfg := self.config.get(self.name):
+                    if cfg := getattr(self.config, self.name, None):
                         if library_name not in cfg.skip_libraries:
                             yield from expand(path_tpl, library_name=library_name)
 

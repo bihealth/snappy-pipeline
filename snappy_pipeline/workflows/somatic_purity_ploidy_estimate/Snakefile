@@ -57,7 +57,7 @@ rule somatic_purity_ploidy_estimate_link_out_run:
 
 # Decide if WGS or WES rules should be used:
 
-if wf.get_task_config("somatic_purity_ploidy_estimate").tool_cnv_calling == "cnvetti":
+if wf.depends_on.get("somatic_targeted_seq_cnv_calling"):
 
     ruleorder: somatic_purity_ploidy_estimate_ascat_cnv_tumor > somatic_purity_ploidy_estimate_ascat_cnv_tumor_wes
     ruleorder:

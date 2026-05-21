@@ -64,7 +64,6 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_n
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -157,7 +156,9 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         base_path_out = "work/{{library_name}}/out/{{library_name}}.{action}{ext}"
         return dict(zip(EXT_NAMES, expand(base_path_out, action=action, ext=EXT_VALUES)))
 
-    def get_args(self, **kwargs):
+    def get_args(self, action: str):
+        self._validate_action(action)
+
         def args_fn(_wildcards):
             return {
                 "reference_path": self.w_config.static_data_config.reference.path,
@@ -336,28 +337,17 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        if self.config.path_cnv_calling and self.config.cnv_assay_type:
-            if self.config.cnv_assay_type == "WES":
-                cnv_calling = "somatic_targeted_seq_cnv_calling"
-            elif self.config.cnv_assay_type == "WES":
-                cnv_calling = "somatic_wgs_cnv_calling"
-            else:
-                raise InvalidConfiguration(
-                    "Illegal cnv_assay_type {}, must be either WES or WGS".format(
-                        self.config.cnv_assay_type
-                    )
-                )
-            self.register_module(cnv_calling, "cnv_calling")
         self.register_module("ngs_mapping")
+        self.has_cnv_calling = False
+        if self.depends_on.get("cnv_calling"):
+            self.register_module("cnv_calling")
+            self.has_cnv_calling = True
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                SomaticCnvCheckingPileupStepPart,
-                SomaticCnvCheckingCnvStepPart,
-                SomaticCnvCheckingReportStepPart,
-                LinkOutStepPart,
-            )
-        )
+        sub_steps = [SomaticCnvCheckingPileupStepPart]
+        if self.has_cnv_calling:
+            sub_steps += [SomaticCnvCheckingCnvStepPart, SomaticCnvCheckingReportStepPart]
+        sub_steps.append(LinkOutStepPart)
+        self.register_sub_step_classes(tuple(sub_steps))
         # Assemble normal/tumor pairs
         self.tumor_to_normal = {}
         for sheet in filter(is_not_background, self.shortcut_sheets):
@@ -400,11 +390,11 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         )
         # Main result: vcf & optionally segment table if CNV available
         ext = {"out": [".vcf.gz", ".vcf.gz.tbi"]}
-        if self.config.path_cnv_calling:
-            # CNV avaliable
+        if self.has_cnv_calling:
+            # CNV available
             name_pattern = "{library_name}"
             ext["out"] += [".tsv"]
-            ext["report"] = (".cnv.pdf", ".locus.pdf", ".segment.pdf")
+            ext["report"] = [".cnv.pdf", ".locus.pdf", ".segment.pdf"]
             ext["log"] = [
                 suffix + "." + e
                 for suffix in ("", ".report")

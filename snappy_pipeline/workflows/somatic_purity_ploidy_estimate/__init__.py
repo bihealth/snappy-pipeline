@@ -358,7 +358,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
         # Initialize sub-workflows
         self.register_module("ngs_mapping")
-        if self.config.tool_cnv_calling == "copywriter":
+        if self.depends_on.get("somatic_targeted_seq_cnv_calling"):
             self.register_module(
                 "somatic_targeted_seq_cnv_calling",
             )

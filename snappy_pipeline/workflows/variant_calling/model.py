@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel
 
 
 class BafFileGeneration(ToggleModel):

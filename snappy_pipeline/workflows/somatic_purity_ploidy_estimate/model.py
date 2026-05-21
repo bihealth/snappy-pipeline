@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 
 
 class Tool(enum.StrEnum):
@@ -26,15 +26,4 @@ class SomaticPurityPloidyEstimate(SnappyStepModel):
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.ascat)]
 
-    path_somatic_targeted_seq_cnv_calling: str = ""
-
     ascat: Ascat | None = None
-
-    @model_validator(mode="after")
-    def check_tool_cnv_calling(self):
-        if self.tool_cnv_calling == "copywriter" and not self.path_somatic_targeted_seq_cnv_calling:
-            raise ValueError(
-                "When using 'copywriter' as tool_cnv_calling, "
-                "path_somatic_targeted_seq_cnv_calling must be set"
-            )
-        return self
