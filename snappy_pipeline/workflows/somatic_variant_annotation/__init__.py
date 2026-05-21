@@ -12,9 +12,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
-from snappy_pipeline.workflows.somatic_variant_calling import (
-    SOMATIC_VARIANT_CALLERS,
-)
 
 from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
 
@@ -145,11 +142,11 @@ class MehariAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
 
         yield "reference", self.w_config.static_data_config.reference.path
 
-        if self.config.mehari.transcripts:
+        if self.config.mehari and self.config.mehari.transcripts:
             yield "transcripts", self.config.mehari.transcripts
-        if self.config.mehari.frequencies:
+        if self.config.mehari and self.config.mehari.frequencies:
             yield "frequencies", self.config.mehari.frequencies
-        if self.config.mehari.clinvar:
+        if self.config.mehari and self.config.mehari.clinvar:
             yield "clinvar", self.config.mehari.clinvar
 
     def get_args(self, action):
