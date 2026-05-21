@@ -206,10 +206,16 @@ def main() -> int:
         help="Base output dir for shards and reports.",
     )
     parser.add_argument(
+        "--task",
+        type=str,
+        default=None,
+        help="Run only a specific task by name (e.g. --task homologous_recombination_deficiency).",
+    )
+    parser.add_argument(
         "--max-steps",
         type=int,
         default=0,
-        help="Optional cap for number of tasks to process (0 means all).",
+        help="Optional cap for number of tasks to process (0 means all). Ignored if --task is set.",
     )
     args = parser.parse_args()
 
@@ -229,7 +235,13 @@ def main() -> int:
     ensure_shard_lookup_scaffold(shards_root)
 
     ordered_task_names = [t["name"] for t in tasks if isinstance(t, dict) and "name" in t]
-    if args.max_steps > 0:
+    if args.task:
+        if args.task not in ordered_task_names:
+            print(f"ERROR: task '{args.task}' not found in config")
+            print(f"Available tasks: {', '.join(ordered_task_names)}")
+            return 1
+        ordered_task_names = [args.task]
+    elif args.max_steps > 0:
         ordered_task_names = ordered_task_names[: args.max_steps]
 
     for task_name in ordered_task_names:

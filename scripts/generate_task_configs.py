@@ -211,6 +211,19 @@ def validate_and_autofill_step_config(
                     _remove_top_level_extra(candidate, loc)
                     notes.append(f"{step_name}: removed extra field {'.'.join(map(str, loc))}")
                     changed = True
+                elif err_type == "too_short" and isinstance(loc[0], str):
+                    # Add a single-element placeholder list so min_length constraints are met.
+                    resolved_ann = _resolve_annotation_for_loc(config_model, loc)
+                    inner_args = get_args(_unwrap_optional(resolved_ann))
+                    if inner_args:
+                        inner_placeholder = _placeholder_for_annotation(inner_args[0])
+                    else:
+                        inner_placeholder = "AUTO"
+                    _set_nested(candidate, loc, [inner_placeholder])
+                    notes.append(
+                        f"{step_name}: added single-item placeholder list for too_short field {'.'.join(map(str, loc))}"
+                    )
+                    changed = True
                 elif isinstance(loc[0], str):
                     resolved_ann = _resolve_annotation_for_loc(config_model, loc)
                     placeholder = _placeholder_for_annotation(resolved_ann)
@@ -300,6 +313,25 @@ def bootstrap_step_config(
         cfg.setdefault("bwa", {})
         if isinstance(cfg["bwa"], dict):
             cfg["bwa"].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+
+    if step_name == "somatic_targeted_seq_cnv_calling":
+        # HRD requires sequenza; sequenza also produces _dnacopy.seg used by cnv_checking
+        cfg["tool"] = "sequenza"
+        cfg.setdefault("sequenza", {})
+
+    if step_name == "somatic_wgs_cnv_calling":
+        # cnvkit produces _dnacopy.seg expected by somatic_cnv_checking
+        cfg["tool"] = "cnvkit"
+        cfg.setdefault("cnvkit", {})
+
+    if step_name in (
+        "variant_export_external",
+        "wgs_cnv_export_external",
+        "wgs_sv_export_external",
+    ):
+        # These require at least one search_path and search_pattern
+        cfg.setdefault("search_paths", ["/tmp"])
+        cfg.setdefault("search_patterns", [{"vcf": "*.vcf.gz"}])
 
     if step_name == "variant_calling":
         cfg["tool"] = "bcftools_call"
