@@ -335,7 +335,10 @@ def ensure_explicit_selected_tool_config(
     if "tool" not in model_fields:
         return step_config, []
 
+    tool_field = model_fields.get("tool")
     selected_tool = step_config.get("tool")
+    if selected_tool is None and tool_field is not None:
+        selected_tool = tool_field.default
     if isinstance(selected_tool, enum.Enum):
         selected_tool = selected_tool.value
     if not isinstance(selected_tool, str) or not selected_tool:
@@ -345,12 +348,21 @@ def ensure_explicit_selected_tool_config(
     if selected_tool not in model_fields:
         return step_config, []
 
-    if selected_tool in step_config:
-        return step_config, []
-
     cfg = copy.deepcopy(step_config)
+    if "tool" not in cfg:
+        cfg["tool"] = selected_tool
+        note = f"{step_name}: added explicit tool selection tool: {selected_tool}"
+    else:
+        note = None
+
+    if selected_tool in cfg:
+        return cfg, ([note] if note else [])
+
     cfg[selected_tool] = {}
-    return cfg, [f"{step_name}: added explicit selected-tool section {selected_tool}: {{}}"]
+    notes = [f"{step_name}: added explicit selected-tool section {selected_tool}: {{}}"]
+    if note:
+        notes.insert(0, note)
+    return cfg, notes
 
 
 def _candidate_score(candidate_step: str, requirement: DataSignature) -> tuple[int, int, str]:

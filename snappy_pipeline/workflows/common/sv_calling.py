@@ -20,8 +20,14 @@ class SvCallingGetResultFilesMixin:
         if self.name != self.config.tool:
             return  # tool not enabled, no result files
 
-        ngs_mapping_config = self.get_task_config("ngs_mapping")
-        if ngs_mapping_config.tool.is_dna():
+        ngs_mapping_config = self.parent.get_task_config("ngs_mapping")
+        ngs_mapping_tool = ngs_mapping_config.tool
+        is_dna = (
+            ngs_mapping_tool.is_dna()
+            if hasattr(ngs_mapping_tool, "is_dna")
+            else str(ngs_mapping_tool) in {"bwa", "bwa_mem2", "minimap2", "mbcs"}
+        )
+        if is_dna:
             # Get list of result path templates.
             output_files_tmp = self.get_output_files(self.actions[-1])
             if isinstance(output_files_tmp, dict):
