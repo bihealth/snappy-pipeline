@@ -191,18 +191,20 @@ rule one_protected:
         wf.wrapper_path("bcftools/protected")
 
 
-rule last_filter:
-    input:
-        **wf.get_input_files("last_filter", "run"),
-    output:
-        **wf.get_output_files("last_filter", "run"),
-    log:
-        **wf.get_log_file("last_filter", "run"),
-    threads: wf.get_resource("last_filter", "run", "threads")
-    resources:
-        runtime=wf.get_resource("last_filter", "run", "runtime"),
-        mem=wf.get_resource("last_filter", "run", "mem"),
-        partition=wf.get_resource("last_filter", "run", "partition"),
-        tmpdir=wf.get_resource("last_filter", "run", "tmpdir"),
-    wrapper:
-        wf.wrapper_path("somatic_variant_filtration/apply_all_filters")
+if wf.config.filter_list:
+
+    rule last_filter:
+        input:
+            **wf.get_input_files("last_filter", "run"),
+        output:
+            **wf.get_output_files("last_filter", "run"),
+        log:
+            **wf.get_log_file("last_filter", "run"),
+        threads: wf.get_resource("last_filter", "run", "threads")
+        resources:
+            runtime=wf.get_resource("last_filter", "run", "runtime"),
+            mem=wf.get_resource("last_filter", "run", "mem"),
+            partition=wf.get_resource("last_filter", "run", "partition"),
+            tmpdir=wf.get_resource("last_filter", "run", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("somatic_variant_filtration/apply_all_filters")
