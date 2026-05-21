@@ -189,8 +189,8 @@ def validate_and_autofill_step_config(
     max_rounds = 12
     for _ in range(max_rounds):
         try:
-            validated = config_model(**candidate)
-            return validated.model_dump(exclude_none=True), notes
+            validated = config_model.model_validate(candidate)
+            return validated.model_dump(mode="json", exclude_none=True), notes
         except pydantic.ValidationError as e:
             changed = False
             for err in e.errors():
@@ -297,6 +297,14 @@ def _guess_bwa_index_from_reference(base_config: dict[str, Any]) -> str:
     return "AUTO"
 
 
+def _existing_placeholder_file() -> str:
+    repo_root = Path(__file__).resolve().parent.parent
+    candidate = repo_root / "test.fai"
+    if candidate.exists():
+        return str(candidate)
+    return str(__file__)
+
+
 def bootstrap_step_config(
     step_name: str,
     step_config: dict[str, Any],
@@ -329,9 +337,16 @@ def bootstrap_step_config(
         "wgs_cnv_export_external",
         "wgs_sv_export_external",
     ):
-        # These require at least one search_path and search_pattern
-        cfg.setdefault("search_paths", ["/tmp"])
-        cfg.setdefault("search_patterns", [{"vcf": "*.vcf.gz"}])
+        # These require list-typed non-empty search config and existing DB/serializer files.
+        if not isinstance(cfg.get("search_paths"), list) or not cfg.get("search_paths"):
+            cfg["search_paths"] = ["/tmp"]
+        if not isinstance(cfg.get("search_patterns"), list) or not cfg.get("search_patterns"):
+            cfg["search_patterns"] = [{"vcf": "*.vcf.gz"}]
+        placeholder_file = _existing_placeholder_file()
+        for key in ("path_refseq_ser", "path_ensembl_ser", "path_db"):
+            value = cfg.get(key)
+            if not isinstance(value, str) or not value or value == "AUTO":
+                cfg[key] = placeholder_file
 
     if step_name == "variant_calling":
         cfg["tool"] = "bcftools_call"
