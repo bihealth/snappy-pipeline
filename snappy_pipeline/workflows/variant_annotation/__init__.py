@@ -131,7 +131,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
 
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
-        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+        return {"config": getattr(self.config, self.name).model_dump(by_alias=True)}
 
     def get_extra_kv_pairs(self):
         return {}
@@ -154,7 +154,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = self.config[self.name].num_threads
+        num_threads = getattr(self.config, self.name).num_threads
         return ResourceUsage(
             threads=num_threads,
             runtime="1d",
@@ -201,9 +201,7 @@ class VariantAnnotationWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))
         # Register sub workflows
-        self.register_module(
-            "ngs_mapping", self.get_task_config("variant_calling").path_ngs_mapping
-        )
+        self.register_module("ngs_mapping")
         self.register_module("variant_calling")
 
     @listify

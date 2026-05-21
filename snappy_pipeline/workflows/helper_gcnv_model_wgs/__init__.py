@@ -183,7 +183,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
     def get_args(self, action: str) -> dict[str, Any]:
-        gcnv_config = self.get_task_config("helper_gcnv_model_wgs").gcnv
+        gcnv_config = self.parent.get_task_config("helper_gcnv_model_wgs").gcnv
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_par_intervals": gcnv_config.path_par_intervals,

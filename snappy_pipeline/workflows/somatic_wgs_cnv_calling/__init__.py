@@ -793,7 +793,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             "cnvkit": CnvkitSomaticWgsStepPart,
             "control_freec": ControlFreecSomaticWgsStepPart,
         }
-        selected_tool = str(self.config.tool)
+        selected_tool = self.config.tool
         selected_sub_step = sub_step_map[selected_tool]
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -815,7 +815,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         """
         name_pattern = "{cancer_library.name}"
         tpl = os.path.join("output", name_pattern, "out", name_pattern + "{ext}")
-        tool = str(self.config.tool)
+        tool = self.config.tool
         if tool == "cnvetti":
             yield from self._yield_result_files(
                 tpl,
