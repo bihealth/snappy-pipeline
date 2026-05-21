@@ -5,14 +5,13 @@ on:
     branches:
       - main
   pull_request:
-    branches_ignore: []
+    branches_ignore: [ ]
 
 defaults:
   run:
-    shell: bash -el {0}
+    shell: bash
 
 jobs:
-
   cancel-previous:
     runs-on: ubuntu-latest
     if: github.ref != 'refs/heads/main'
@@ -25,47 +24,32 @@ jobs:
 
   linting:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          - "3.12"
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup conda
-        uses: ./.github/actions/conda-cache
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.6
         with:
-          python-version: ${{ matrix.python-version }}
-          environment-file: environment.yml
-          cache-number: 2
-
-      - name: Install dependencies
-        run: |
-            pip install -e ".[dev]"
-            pip freeze
+          environments: dev
+          cache: true
 
       - name: Run linting tools
-        run: |
-          make lint
+        run: pixi run -e dev lint
 
       - name: Comment PR
         if: github.event_name == 'pull_request' && failure()
         uses: marocchino/sticky-pull-request-comment@v1.1.0
         with:
           message: |
-            - Please format your Python code with [ruff](https://docs.astral.sh/ruff/): `make fmt`
-            - Please check your Python code with [ruff](https://docs.astral.sh/ruff/): `make check`
-            - Please format your Snakemake code with [snakefmt](https://github.com/snakemake/snakefmt): `make snakefmt`
+            - Please format your Python code with [ruff](https://docs.astral.sh/ruff/): `pixi run -e dev fmt`
+            - Please check your Python code with [ruff](https://docs.astral.sh/ruff/): `pixi run -e dev check`
+            - Please format your Snakemake code with [snakefmt](https://github.com/snakemake/snakefmt): `pixi run -e dev snakefmt`
 
-            You can trigger all lints locally by running `make lint`
+            You can trigger all lints locally by running `pixi run -e dev lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   testing:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          - "3.12"
     needs: linting
     steps:
       - name: Checkout repository
@@ -74,22 +58,20 @@ jobs:
           lfs: true
           fetch-depth: 2
 
-      - name: Setup conda
-        uses: ./.github/actions/conda-cache
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.6
         with:
-          python-version: ${{ matrix.python-version }}
-          environment-file: environment.yml
-          cache-number: 2
+          environments: test
+          cache: true
 
-      - run: which pip
-      - name: Install some more dependencies via pip
-        run: pip install '.[test]'  # 'pyproject.toml[test]'
       - name: Run tests
-        run: pytest
+        run: pixi run -e test test
         env:
           DIFF_MAIN: ${{ github.event_name == 'pull_request' }}
           DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}
+
       - name: Create text report
-        run: coverage report
+        run: pixi run -e test coverage report
+
       - name: Coveralls
         uses: AndreMiras/coveralls-python-action@develop
