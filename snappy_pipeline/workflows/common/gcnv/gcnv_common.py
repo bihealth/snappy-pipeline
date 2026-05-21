@@ -27,8 +27,8 @@ class TooFewSamplesWarning(GcnvWarning):
 class PreprocessIntervalsCommonMixin:
     """Mixin used for the ``preprocess_intervals`` step."""
 
-    def _get_input_files_preprocess_intervals(self, wildcards):
-        _ = wildcards
+    def _get_input_files_preprocess_intervals(self, wildcards, **kwargs):
+        _ = wildcards, kwargs
         return {}
 
     @dictify
@@ -46,13 +46,14 @@ class CoverageCommonMixin:
     """Mixin used for ``coverage`` step"""
 
     @dictify
-    def _get_input_files_coverage(self, wildcards):
+    def _get_input_files_coverage(self, wildcards, **kwargs):
         """Yield input files for ``coverage`` rule
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
         and 'library_name' (e.g., 'P001-N1-DNA1-WGS1').
         :type wildcards: snakemake.io.Wildcards
         """
+        _ = kwargs
         # Yield .interval list file.
         ext = "interval_list"
         library_kit = self.ngs_library_to_kit[wildcards.library_name]

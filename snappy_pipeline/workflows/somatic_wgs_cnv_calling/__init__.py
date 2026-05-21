@@ -257,8 +257,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         return getattr(self, "_get_input_files_{}".format(action))
 
     @dictify
-    def _get_input_files_coverage(self, wildcards):
+    def _get_input_files_coverage(self, wildcards, **kwargs):
         """Return input files that "cnvetti coverage" needs"""
+        _ = kwargs
         ngs_mapping = self.parent.modules["ngs_mapping"]
         # Yield input BAM and BAI file
         bam_tpl = "output/{library_name}/out/{library_name}{ext}"
@@ -266,7 +267,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             yield ext.split(".")[-1], ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
     @dictify
-    def _get_input_files_tumor_normal_ratio(self, wildcards):
+    def _get_input_files_tumor_normal_ratio(self, wildcards, **kwargs):
         """Return input files that the merge step ("bcftools merge") needs"""
         # TODO: Potential bug as 'library_name' is required in the wildcards but also obtained using
         #  `get_normal_lib_name()`.
@@ -285,7 +286,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             )
 
     @dictify
-    def _get_input_files_segment(self, wildcards):
+    def _get_input_files_segment(self, wildcards, **kwargs):
         """Return input files that "cnvetti segment" needs"""
         for key, ext in self.bcf_dict.items():
             name_pattern = "cnvetti_tumor_normal_ratio.{library_name}".format(**wildcards)

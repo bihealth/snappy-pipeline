@@ -11,7 +11,8 @@ class AnnotateGcMixin:
     """Mixin providing functions for ``annotate_gc``"""
 
     @dictify
-    def _get_input_files_annotate_gc(self, wildcards):
+    def _get_input_files_annotate_gc(self, wildcards, **kwargs):
+        _ = kwargs
         name_pattern = f"gcnv_preprocess_intervals.{wildcards.library_kit}"
         ext = "interval_list"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
@@ -31,7 +32,8 @@ class FilterIntervalsMixin:
     """Mixin providing functions for ``filter_intervals``"""
 
     @dictify
-    def _get_input_files_filter_intervals(self, wildcards):
+    def _get_input_files_filter_intervals(self, wildcards, **kwargs):
+        _ = kwargs
         yield from self._get_input_files_annotate_gc(wildcards).items()
         name_pattern = f"gcnv_annotate_gc.{wildcards.library_kit}"
         ext = "tsv"
@@ -60,7 +62,8 @@ class ScatterIntervalsMixin:
     """Mixin providing functions for ``scatter_intervals``"""
 
     @dictify
-    def _get_input_files_scatter_intervals(self, wildcards):
+    def _get_input_files_scatter_intervals(self, wildcards, **kwargs):
+        _ = kwargs
         ext = "interval_list"
         name_pattern = f"gcnv_filter_intervals.{wildcards.library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
@@ -78,13 +81,14 @@ class ContigPloidyMixin:
     """Mixin providing functions for ``contig_ploidy``"""
 
     @dictify
-    def _get_input_files_contig_ploidy(self, wildcards):
+    def _get_input_files_contig_ploidy(self, wildcards, **kwargs):
         """Yield input files for ``contig_ploidy`` rule in COHORT MODE.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         :type wildcards: snakemake.io.Wildcards
         """
+        _ = kwargs
         ext = "interval_list"
         name_pattern = "gcnv_filter_intervals.{library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
@@ -114,13 +118,14 @@ class CallCnvsMixin:
     """Mixin providing functions for ``call_cnvs``"""
 
     @dictify
-    def _get_input_files_call_cnvs(self, wildcards):
+    def _get_input_files_call_cnvs(self, wildcards, **kwargs):
         """Yield input files for ``call_cnvs`` in COHORT mode.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         :type wildcards: snakemake.io.Wildcards
         """
+        _ = kwargs
         name_pattern = "gcnv_scatter_intervals.{library_kit}"
         path_pattern = (
             f"work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
