@@ -34,6 +34,9 @@ rule repeat_expansion_all:
         wf.get_result_files(),
 
 
+ruleorder: repeat_expansion_annotate_expansionhunter > repeat_expansion_run_expansionhunter
+
+
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Generic linking out ---------------------------------------------------------
