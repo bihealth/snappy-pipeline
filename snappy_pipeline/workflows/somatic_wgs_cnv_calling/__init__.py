@@ -598,11 +598,16 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @staticmethod
     def _get_output_files_export():
-        exports = (("bed", "bed"), ("seg", "seg"), ("vcf", "vcf.gz"), ("tbi", "vcf.gz.tbi"))
+        exports = (
+            ("bed", ".bed"),
+            ("seg", "_dnacopy.seg"),
+            ("vcf", ".vcf.gz"),
+            ("tbi", ".vcf.gz.tbi"),
+        )
         output_files = {}
         name_pattern = "{library_name}"
-        for export, ext in exports:
-            output_files[export] = f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        for export, suffix in exports:
+            output_files[export] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
             output_files[export + "_md5"] = output_files[export] + ".md5"
         return output_files
 
@@ -845,7 +850,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 ],
             )
         elif tool == "cnvkit":
-            exts = (".cnr", ".cns", ".bed", ".seg", ".vcf.gz", ".vcf.gz.tbi")
+            exts = (".cnr", ".cns", ".bed", "_dnacopy.seg", ".vcf.gz", ".vcf.gz.tbi")
             yield from self._yield_result_files(
                 tpl,
                 ext=exts,

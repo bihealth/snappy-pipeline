@@ -98,7 +98,7 @@ class LohhlaStepPart(BaseStepPart):
         """Return output files from LOHHLA"""
         # Validate action
         self._validate_action(action)
-        return {"done": expand(self.base_path_out, ext=".done")}
+        return {"done": self.base_path_out.replace("{ext}", ".done")}
 
     @dictify
     def _get_log_file(self, action):

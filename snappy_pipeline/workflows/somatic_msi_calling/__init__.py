@@ -142,7 +142,9 @@ class Mantis2StepPart(BaseStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
+        return {
+            key: self.base_path_out.replace("{ext}", ext) for key, ext in zip(EXT_NAMES, EXT_VALUES)
+        }
 
     @dictify
     def _get_log_file(self, action):
