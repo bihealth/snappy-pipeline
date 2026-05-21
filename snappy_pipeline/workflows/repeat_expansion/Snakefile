@@ -34,9 +34,6 @@ rule repeat_expansion_all:
         wf.get_result_files(),
 
 
-ruleorder: repeat_expansion_annotate_expansionhunter > repeat_expansion_run_expansionhunter
-
-
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Generic linking out ---------------------------------------------------------
@@ -58,6 +55,8 @@ rule repeat_expansion_run_expansionhunter:
         **wf.get_output_files("expansionhunter", "run"),
     log:
         wf.get_log_file("expansionhunter", "run"),
+    wildcard_constraints:
+        library_name=r"(?!annotated\.).+",
     threads: wf.get_resource("expansionhunter", "run", "threads")
     resources:
         runtime=wf.get_resource("expansionhunter", "run", "runtime"),
