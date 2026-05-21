@@ -212,7 +212,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
         # Initialize sub-workflows
-        self.register_module("somatic_targeted_seq_cnv_calling", "cnv_calling")
+        self.register_module("cnv_calling")
 
     @listify
     def get_result_files(self):

@@ -26,7 +26,7 @@ class ScarHRD(SnappyModel):
 
 
 class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
-    cnv_calling: str = "cnv_calling"
+    cnv_calling: str = "somatic_targeted_seq_cnv_calling"
 
 
 class HomologousRecombinationDeficiency(SnappyStepModel):
