@@ -16,7 +16,7 @@ class Tool(enum.StrEnum):
 class RepeatExpansion(SnappyStepModel):
     depends_on: RepeatExpansionDependsOn = Field(default_factory=RepeatExpansionDependsOn)
 
-    tool: Tool
+    tool: Tool = Tool.expansionhunter
     """Tool to use for repeat expansion"""
 
     repeat_catalog: str

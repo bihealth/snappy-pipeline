@@ -18,7 +18,7 @@ class VariantExportExternal(SnappyStepModel):
     external_tool: str = "dragen"
     """external tool name."""
 
-    bam_available_flag: bool
+    bam_available_flag: bool = False
     """BAM QC only possible if BAM files are present."""
 
     merge_vcf_flag: bool = False
