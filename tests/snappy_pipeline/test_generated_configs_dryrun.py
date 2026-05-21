@@ -34,7 +34,8 @@ def generated_task_config(tmp_path_factory: pytest.TempPathFactory) -> dict[str,
     out_dir = tmp_path_factory.mktemp("generated-task-configs")
 
     gen = _run(
-        [sys.executable, "scripts/generate_task_configs.py", "--out-dir", str(out_dir)], cwd=root
+        [sys.executable, "tests/scripts/generate_task_configs.py", "--out-dir", str(out_dir)],
+        cwd=root,
     )
     gen_output = (gen.stdout or "") + "\n" + (gen.stderr or "")
     if gen.returncode != 0:
@@ -62,7 +63,7 @@ def test_generated_config_task_closure_passes(
     dry = _run(
         [
             sys.executable,
-            "scripts/dryrun_generated_configs.py",
+            "tests/scripts/dryrun_generated_configs.py",
             "--config",
             str(config_path),
             "--out-dir",
