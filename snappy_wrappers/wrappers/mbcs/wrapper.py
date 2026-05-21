@@ -226,7 +226,7 @@ if len(pairs.keys()) > 1:
         cmds=cmd,
         threads="1",
         mem="16000M",
-        time="4:00:00",
+        runtime="4:00:00",
     )
     snakefile.append(rule)
 in_ = out
