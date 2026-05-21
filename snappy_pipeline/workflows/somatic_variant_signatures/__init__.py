@@ -206,31 +206,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         )
         # Register sub workflows
         config = self.config
-        self.register_module(config.somatic_variant_step, "somatic_variant")
-        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-
-        tool = str(self.get_task_config("ngs_mapping").tool)
-        if not config.tool_ngs_mapping:
-            config.tool_ngs_mapping = tool
-        else:
-            assert config.tool_ngs_mapping == tool, "Mismatch in ngs_mapping tool"
-
-        tool = str(self.get_task_config("somatic_variant_calling").tool)
-        if not config.tool_somatic_variant_calling:
-            config.tool_somatic_variant_calling = tool
-        else:
-            assert config.tool_somatic_variant_calling == tool, (
-                "Mismatch in somatic_variant_calling tool"
-            )
-
-        if config.has_annotation:
-            tool = str(self.get_task_config("somatic_variant_annotation").tool)
-            if not config.tool_somatic_variant_annotation:
-                config.tool_somatic_variant_annotation = tool
-            else:
-                assert config.tool_somatic_variant_annotation == tool, (
-                    "Mismatch in somatic_variant_annotation tool"
-                )
+        self.register_module("somatic_variant")
 
         self.config = config
 
