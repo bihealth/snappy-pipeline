@@ -731,9 +731,7 @@ class BaseStep:
 
         # Validate from mapping input explicitly to ensure nested coercion is applied consistently.
         self.config = self.config_model_class.model_validate(self.task.config)
-        self.depends_on = (
-            self.config.depends_on.model_dump() if hasattr(self.config, "depends_on") else {}
-        )
+        self.depends_on = getattr(self.config, "depends_on", None)
 
         self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps: dict[str, BaseStepPart] = {}
@@ -773,7 +771,8 @@ class BaseStep:
             return self.config
 
         # Resolve via config-model typed dependency mapping, then literal name as fallback.
-        target_task_name = self.depends_on.get(name) or name
+        dep_target = getattr(self.depends_on, name, None) if self.depends_on is not None else None
+        target_task_name = dep_target or name
 
         # Find the task in the global config
         task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
@@ -802,7 +801,7 @@ class BaseStep:
                 f"Workflow class for step '{task.step}' not found in WORKFLOW_REGISTRY."
             )
 
-        return wf_class.config_model_class(**task.config)
+        return wf_class.config_model_class.model_validate(task.config)
 
     def get_preprocessed_path(self) -> str:
         """Return the external preprocessed FASTQ directory declared by an upstream ``link_in`` task.
@@ -934,7 +933,11 @@ class BaseStep:
         Resolves the physical output directory for a required dependency
         based on the 'depends_on' configuration mapping.
         """
-        upstream_task_name = self.depends_on.get(requirement.type.value)
+        upstream_task_name = (
+            getattr(self.depends_on, requirement.type.value, None)
+            if self.depends_on is not None
+            else None
+        )
 
         if not upstream_task_name:
             if self.consumes.get(requirement, True):
@@ -964,8 +967,9 @@ class BaseStep:
         if not default_module_name:
             default_module_name = logical_name
 
-        if logical_name in self.depends_on:
-            target_task_name = self.depends_on[logical_name]
+        if self.depends_on is not None and hasattr(self.depends_on, logical_name):
+            # Empty values in optional dependencies are treated as "not mapped".
+            target_task_name = getattr(self.depends_on, logical_name) or default_module_name
         else:
             target_task_name = default_module_name
 

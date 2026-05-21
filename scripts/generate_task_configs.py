@@ -305,6 +305,17 @@ def _existing_placeholder_file() -> str:
     return str(__file__)
 
 
+def _guess_reference_from_static_data(base_config: dict[str, Any]) -> str:
+    static_data = base_config.get("static_data_config", {})
+    if isinstance(static_data, dict):
+        ref = static_data.get("reference", {})
+        if isinstance(ref, dict):
+            path = ref.get("path")
+            if isinstance(path, str) and path:
+                return path
+    return _existing_placeholder_file()
+
+
 def bootstrap_step_config(
     step_name: str,
     step_config: dict[str, Any],
@@ -331,6 +342,47 @@ def bootstrap_step_config(
         # cnvkit produces _dnacopy.seg expected by somatic_cnv_checking
         cfg["tool"] = "cnvkit"
         cfg.setdefault("cnvkit", {})
+
+    if step_name == "sv_calling_targeted":
+        # Avoid gCNV model path requirements for generic dry-run shards.
+        cfg["tool"] = "delly2"
+        cfg.setdefault("delly2", {})
+
+    if step_name == "repeat_expansion":
+        placeholder = _guess_reference_from_static_data(base_config)
+        if not isinstance(cfg.get("repeat_catalog"), str) or cfg.get("repeat_catalog") in (
+            "",
+            "AUTO",
+        ):
+            cfg["repeat_catalog"] = placeholder
+        if not isinstance(cfg.get("repeat_annotation"), str) or cfg.get("repeat_annotation") in (
+            "",
+            "AUTO",
+        ):
+            cfg["repeat_annotation"] = placeholder
+
+    if step_name == "panel_of_normals":
+        cfg["tool"] = "mutect2"
+        cfg.setdefault("mutect2", {})
+        if isinstance(cfg["mutect2"], dict):
+            if not isinstance(cfg["mutect2"].get("germline_resource"), str) or cfg["mutect2"].get(
+                "germline_resource"
+            ) in ("", "AUTO"):
+                cfg["mutect2"]["germline_resource"] = _guess_reference_from_static_data(base_config)
+
+    if step_name == "somatic_msi_calling":
+        cfg["tool"] = "mantis_msi2"
+        if not isinstance(cfg.get("loci_bed"), str) or cfg.get("loci_bed") in ("", "AUTO"):
+            cfg["loci_bed"] = _guess_reference_from_static_data(base_config)
+
+    if step_name == "targeted_seq_mei_calling":
+        cfg["tool"] = "scramble"
+        cfg.setdefault("scramble", {})
+        if isinstance(cfg["scramble"], dict):
+            if not isinstance(cfg["scramble"].get("blast_ref"), str) or cfg["scramble"].get(
+                "blast_ref"
+            ) in ("", "AUTO"):
+                cfg["scramble"]["blast_ref"] = _guess_reference_from_static_data(base_config)
 
     if step_name in (
         "variant_export_external",
