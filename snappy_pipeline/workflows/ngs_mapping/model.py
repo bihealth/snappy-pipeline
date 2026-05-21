@@ -124,8 +124,10 @@ class Bwa(BwaMapper):
                 if ext not in extensions:
                     logging.warning(f"unknown extension '{v}'")
         for extension in extensions:
-            if not os.path.exists(prefix + extension):
-                logging.warning(f"{v} does not exist")
+            sidecar = prefix + extension
+            alt_sidecar = os.path.splitext(prefix)[0] + extension
+            if not (os.path.exists(sidecar) or os.path.exists(alt_sidecar)):
+                logging.warning(f"missing BWA index sidecar file: {sidecar} (or {alt_sidecar})")
         return prefix
 
 
@@ -144,8 +146,12 @@ class BwaMem2(BwaMapper):
                 if ext not in extensions:
                     logging.warning(f"unknown extension '{v}'")
         for extension in extensions:
-            if not os.path.exists(prefix + extension):
-                logging.warning(f"{v} does not exist")
+            sidecar = prefix + extension
+            alt_sidecar = os.path.splitext(prefix)[0] + extension
+            if not (os.path.exists(sidecar) or os.path.exists(alt_sidecar)):
+                logging.warning(
+                    f"missing BWA-MEM2 index sidecar file: {sidecar} (or {alt_sidecar})"
+                )
         return prefix
 
 
