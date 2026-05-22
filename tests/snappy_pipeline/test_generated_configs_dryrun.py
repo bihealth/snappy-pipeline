@@ -39,16 +39,22 @@ def _get_task_names() -> list[str]:
 TASK_NAMES = _get_task_names()
 
 
-FIXTURE_INCOMPATIBLE_TASKS = {
-    # STAR-only mapping is incompatible with the DNA-only fixture sample sheet.
-    "ngs_mapping_star",
-    # Arriba requires RNA-library aware fixtures; current dryrun fixture is DNA-only.
-    "somatic_gene_fusion_calling_arriba",
-    # PureCN panel generation currently has unresolved wildcard wiring in upstream workflow rules.
-    "panel_of_normals_purecn",
-    # Mehari annotation dryrun still needs fully resolved upstream somatic-variant resources.
-    "somatic_variant_annotation_mehari",
-}
+RNA_TASKS = {"ngs_mapping_star", "somatic_gene_fusion_calling_arriba"}
+
+
+def _fixture_dir() -> Path:
+    return _repo_root() / "tests" / "snappy_pipeline" / "fixtures"
+
+
+def _task_sample_sheet(task_name: str) -> Path:
+    fixture_name = "samplesheet_rna.tsv" if task_name in RNA_TASKS else "samplesheet.tsv"
+    return _fixture_dir() / fixture_name
+
+
+def _task_raw_folders(task_name: str) -> tuple[str, ...]:
+    if task_name in RNA_TASKS:
+        return ("case001subregion-T1-RNA1-mRNA_seq1",)
+    return ("case001subregion-N1-DNA1-WES1", "case001subregion-T1-DNA1-WES1")
 
 
 def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -140,9 +146,6 @@ def dependency_closure(task_name: str, tasks_by_name: dict[str, dict[str, Any]])
 def test_generated_config_task_closure_passes(
     task_name: str, generated_task_config: dict[str, Any], tmp_path: Path
 ) -> None:
-    if task_name in FIXTURE_INCOMPATIBLE_TASKS:
-        pytest.skip(f"task {task_name} is incompatible with the current generated dryrun fixture")
-
     root = generated_task_config["root"]
     config_path = generated_task_config["config_path"]
 
@@ -168,10 +171,11 @@ def test_generated_config_task_closure_passes(
     if "data_sets" in closure_config:
         for ds_name, ds_config in closure_config["data_sets"].items():
             if isinstance(ds_config, dict):
+                ds_config["file"] = str(_task_sample_sheet(task_name))
                 ds_config["search_paths"] = [str(raw_dir)]
 
     # Touch dummy FASTQ files
-    for folder in ("case001subregion-N1-DNA1-WES1", "case001subregion-T1-DNA1-WES1"):
+    for folder in _task_raw_folders(task_name):
         f_dir = raw_dir / folder
         f_dir.mkdir(parents=True, exist_ok=True)
         (f_dir / f"{folder}.R1.fastq.gz").touch()

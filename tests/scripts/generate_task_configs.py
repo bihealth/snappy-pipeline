@@ -417,11 +417,7 @@ def bootstrap_step_config(
                 "path_genomicsDB"
             ) in ("", "AUTO"):
                 cfg["purecn"]["path_genomicsDB"] = _guess_reference_from_static_data(base_config)
-            # Point to an existing file with no matching library names to allow empty-normal dryrun.
-            if not isinstance(cfg["purecn"].get("path_normals_list"), str) or not cfg["purecn"].get(
-                "path_normals_list"
-            ):
-                cfg["purecn"]["path_normals_list"] = _existing_placeholder_file()
+            cfg["purecn"]["path_normals_list"] = ""
 
     if step_name == "somatic_gene_fusion_calling":
         tool = cfg.get("tool") or "arriba"
@@ -440,9 +436,9 @@ def bootstrap_step_config(
             ) in ("", "AUTO"):
                 cfg["mehari"]["reference"] = _guess_reference_from_static_data(base_config)
             if not isinstance(cfg["mehari"].get("transcripts"), list):
-                cfg["mehari"]["transcripts"] = []
+                cfg["mehari"]["transcripts"] = [_existing_placeholder_file()]
             elif cfg["mehari"].get("transcripts") == ["AUTO"]:
-                cfg["mehari"]["transcripts"] = []
+                cfg["mehari"]["transcripts"] = [_existing_placeholder_file()]
 
     if step_name == "somatic_msi_calling":
         tool = cfg.get("tool") or "mantis_msi2"

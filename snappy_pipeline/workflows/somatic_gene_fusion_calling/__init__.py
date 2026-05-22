@@ -424,14 +424,15 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
-        base_path_out = "work/{library_name}/out/{library_name}.{ext}"
+        base_path_out = "work/{{library_name}}/out/{{library_name}}.{ext}"
         key_ext = (
             ("fusions", "fusions.tsv"),
             ("discarded", "discarded_fusions.tsv.gz"),
         )
         for key, ext in key_ext:
-            yield key, base_path_out.format(ext=ext)
-            yield key + "_md5", base_path_out.format(ext=ext) + ".md5"
+            path = base_path_out.format(ext=ext)
+            yield key, path
+            yield key + "_md5", path + ".md5"
         yield "done", "work/{library_name}/out/.done"
 
     @dictify
