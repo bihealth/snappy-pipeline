@@ -75,6 +75,15 @@ class SvCallingTargetedWorkflow(BaseStep):
             **kwargs,
         )
         selected_tool = str(self.config.tool)
+        # gCNV-specific shortcuts must be initialized BEFORE registering sub-step classes
+        # so that GcnvTargetedStepPart.__init__ can access them.
+        if selected_tool == "gcnv":
+            self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+            _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+        else:
+            self.ngs_library_to_kit = {}
+            self.library_kit_counts_dict = {}
+
         sub_step_map = {
             "gcnv": GcnvTargetedStepPart,
             "delly2": Delly2StepPart,
@@ -86,13 +95,6 @@ class SvCallingTargetedWorkflow(BaseStep):
         self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
         # Register sub workflows
         self.register_module("ngs_mapping")
-        # gCNV-specific shortcuts are only required when running gCNV.
-        if selected_tool == "gcnv":
-            self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-            _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
-        else:
-            self.ngs_library_to_kit = {}
-            self.library_kit_counts_dict = {}
 
     @dictify
     def _build_ngs_library_to_kit(self):

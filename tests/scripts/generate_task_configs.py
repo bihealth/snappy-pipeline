@@ -314,6 +314,39 @@ def _star_index_fixture_dir() -> str:
     return str(repo_root)
 
 
+def _gcnv_ploidy_model_dir() -> str:
+    """Return path to gCNV ploidy model fixture."""
+    repo_root = Path(__file__).resolve().parent.parent
+    candidate = repo_root / "snappy_pipeline" / "fixtures" / "gcnv_models" / "ploidy_model"
+    if candidate.exists():
+        return str(candidate)
+    return str(repo_root)
+
+
+def _gcnv_call_model_pattern() -> str:
+    """Return path pattern for gCNV call model fixtures."""
+    repo_root = Path(__file__).resolve().parent.parent
+    candidate = repo_root / "snappy_pipeline" / "fixtures" / "gcnv_models" / "call_model_*"
+    # Return the base directory, the pattern will be expanded by get_model_dir_list
+    return str(candidate)
+
+
+def _get_gcnv_precomputed_models(workflow_type: str = "targeted") -> list[dict[str, str]]:
+    """Generate precomputed model paths for gCNV testing.
+
+    Args:
+        workflow_type: Either "targeted" (uses "default" library name) or "wgs" (uses "wgs" library name)
+    """
+    library_name = "wgs" if workflow_type == "wgs" else "default"
+    return [
+        {
+            "library": library_name,
+            "contig_ploidy": _gcnv_ploidy_model_dir(),
+            "model_pattern": _gcnv_call_model_pattern(),
+        }
+    ]
+
+
 def _guess_reference_from_static_data(base_config: dict[str, Any]) -> str:
     static_data = base_config.get("static_data_config", {})
     if isinstance(static_data, dict):
@@ -386,10 +419,20 @@ def bootstrap_step_config(
         cfg.setdefault(tool, {})
 
     if step_name == "sv_calling_targeted":
-        # Avoid gCNV model path requirements for generic dry-run shards.
         tool = cfg.get("tool") or "delly2"
         cfg["tool"] = tool
         cfg.setdefault(tool, {})
+        if tool == "gcnv" and isinstance(cfg.get("gcnv"), dict):
+            cfg["gcnv"].setdefault(
+                "precomputed_model_paths", _get_gcnv_precomputed_models("targeted")
+            )
+
+    if step_name == "sv_calling_wgs":
+        tool = cfg.get("tool") or "delly2"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
+        if tool == "gcnv" and isinstance(cfg.get("gcnv"), dict):
+            cfg["gcnv"].setdefault("precomputed_model_paths", _get_gcnv_precomputed_models("wgs"))
 
     if step_name == "repeat_expansion":
         placeholder = _guess_reference_from_static_data(base_config)
