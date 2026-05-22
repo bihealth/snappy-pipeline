@@ -17,7 +17,7 @@ def test_snappy_snake_help(germline_sheet_fake_project_ngs_mapping_fs, mocker):
     patch_module_fs("snappy_pipeline.apps.impl.fsmanip", fake_fs, mocker)
     m = mocker.MagicMock()
     mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", m)
-    
+
     runner = CliRunner()
     result = runner.invoke(snappy_cli.main, ["run", "--help"])
     assert result.exit_code == 0
@@ -31,11 +31,11 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
     patch_module_fs("snappy_pipeline.apps.impl.fsmanip", fake_fs, mocker)
     m = mocker.MagicMock(return_value=0)
     mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", m)
-    
+
     runner = CliRunner()
     result = runner.invoke(snappy_cli.main, ["run", "--verbose"])
     assert result.exit_code == 0
-    
+
     p = os.path.realpath(snappy_pipeline.workflows.__path__[0] + "/..")
     m.assert_called_once_with(
         [
