@@ -17,7 +17,7 @@ from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-from .model import SvCallingTargeted as SvCallingTargetedConfigModel
+from .model import SvCallingTargeted as SvCallingTargetedConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -74,23 +74,27 @@ class SvCallingTargetedWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        selected_tool = str(self.config.tool)
+        selected_tool = self.config.tool
         # gCNV-specific shortcuts must be initialized BEFORE registering sub-step classes
         # so that GcnvTargetedStepPart.__init__ can access them.
-        if selected_tool == "gcnv":
+        if selected_tool == Tool.gcnv:
             self.ngs_library_to_kit = self._build_ngs_library_to_kit()
             _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
         else:
             self.ngs_library_to_kit = {}
             self.library_kit_counts_dict = {}
 
-        sub_step_map = {
-            "gcnv": GcnvTargetedStepPart,
-            "delly2": Delly2StepPart,
-            "manta": MantaStepPart,
-            "melt": MeltStepPart,
-        }
-        selected_sub_step = sub_step_map[selected_tool]
+        match selected_tool:
+            case Tool.gcnv:
+                selected_sub_step = GcnvTargetedStepPart
+            case Tool.delly2:
+                selected_sub_step = Delly2StepPart
+            case Tool.manta:
+                selected_sub_step = MantaStepPart
+            case Tool.melt:
+                selected_sub_step = MeltStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool's step part.
         self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
         # Register sub workflows

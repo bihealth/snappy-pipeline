@@ -65,7 +65,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
-from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel
+from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -517,17 +517,24 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        sub_step_map = {
-            "fusioncatcher": FusioncatcherStepPart,
-            "jaffa": JaffaStepPart,
-            "pizzly": PizzlyStepPart,
-            "hera": HeraStepPart,
-            "star_fusion": StarFusionStepPart,
-            "defuse": DefuseStepPart,
-            "arriba": ArribaStepPart,
-        }
-        selected_tool = str(self.config.tool)
-        selected_sub_step = sub_step_map[selected_tool]
+        selected_tool = self.config.tool
+        match selected_tool:
+            case Tool.fusioncatcher:
+                selected_sub_step = FusioncatcherStepPart
+            case Tool.jaffa:
+                selected_sub_step = JaffaStepPart
+            case Tool.pizzly:
+                selected_sub_step = PizzlyStepPart
+            case Tool.hera:
+                selected_sub_step = HeraStepPart
+            case Tool.star_fusion:
+                selected_sub_step = StarFusionStepPart
+            case Tool.defuse:
+                selected_sub_step = DefuseStepPart
+            case Tool.arriba:
+                selected_sub_step = ArribaStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
         self.register_sub_step_classes(
             (
                 selected_sub_step,

@@ -92,7 +92,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-from .model import SomaticWgsCnvCalling as SomaticWgsCnvCallingConfigModel
+from .model import SomaticWgsCnvCalling as SomaticWgsCnvCallingConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -801,14 +801,18 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        sub_step_map = {
-            "canvas": CanvasSomaticWgsStepPart,
-            "cnvetti": CnvettiSomaticWgsStepPart,
-            "cnvkit": CnvkitSomaticWgsStepPart,
-            "control_freec": ControlFreecSomaticWgsStepPart,
-        }
         selected_tool = self.config.tool
-        selected_sub_step = sub_step_map[selected_tool]
+        match selected_tool:
+            case Tool.canvas:
+                selected_sub_step = CanvasSomaticWgsStepPart
+            case Tool.cnvetti:
+                selected_sub_step = CnvettiSomaticWgsStepPart
+            case Tool.cnvkit:
+                selected_sub_step = CnvkitSomaticWgsStepPart
+            case Tool.control_freec:
+                selected_sub_step = ControlFreecSomaticWgsStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

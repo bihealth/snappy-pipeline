@@ -90,7 +90,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import Cnvkit as CnvkitModel
 from .model import SequenzaExtraArgs, SequenzaExtractExtraArgs, SequenzaFitExtraArgs
-from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingConfigModel
+from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -762,13 +762,16 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        sub_step_map = {
-            "cnvkit": CnvKitStepPart,
-            "sequenza": SequenzaStepPart,
-            "purecn": PureCNStepPart,
-        }
-        selected_tool = str(self.config.tool)
-        selected_sub_step = sub_step_map[selected_tool]
+        selected_tool = self.config.tool
+        match selected_tool:
+            case Tool.cnvkit:
+                selected_sub_step = CnvKitStepPart
+            case Tool.sequenza:
+                selected_sub_step = SequenzaStepPart
+            case Tool.purecn:
+                selected_sub_step = PureCNStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
@@ -778,16 +781,16 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         self.register_module("ngs_mapping")
-        if str(self.config.tool) == "purecn":
+        if selected_tool == Tool.purecn:
             self.register_module("somatic_variants", "somatic_variant_calling")
 
     @listify
     def get_result_files(self):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
         tool_actions = {
-            "cnvkit": ("fix", "postprocess", "report", "plot", "export"),
-            "sequenza": ("coverage", "run"),
-            "purecn": ("run",),
+            Tool.cnvkit: ("fix", "postprocess", "report", "plot", "export"),
+            Tool.sequenza: ("coverage", "run"),
+            Tool.purecn: ("run",),
         }
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
@@ -801,7 +804,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                tool = str(self.config.tool)
+                tool = self.config.tool
                 for action in tool_actions[tool]:
                     try:
                         tpls = list(self.sub_steps[tool].get_output_files(action).values())
