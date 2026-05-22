@@ -358,10 +358,20 @@ def _guess_reference_from_static_data(base_config: dict[str, Any]) -> str:
     return _existing_placeholder_file()
 
 
+def _resolve_path(path: str, base_config_path: Path | None) -> str:
+    """Resolve a path to absolute if it's relative and base_config_path is provided."""
+    if not path or path.startswith("/") or path.startswith("AUTO"):
+        return path
+    if base_config_path is None:
+        return path
+    return str((base_config_path.parent / path).resolve())
+
+
 def bootstrap_step_config(
     step_name: str,
     step_config: dict[str, Any],
     base_config: dict[str, Any],
+    base_config_path: Path | None = None,
 ) -> dict[str, Any]:
     cfg = copy.deepcopy(step_config)
 
@@ -379,9 +389,12 @@ def bootstrap_step_config(
             cfg["star"].setdefault("path_index", _star_index_fixture_dir())
             cfg.setdefault("strandedness", {})
             if isinstance(cfg["strandedness"], dict):
+                ref_path = _guess_reference_from_static_data(base_config).replace(
+                    ".fa", ".exon.bed"
+                )
                 cfg["strandedness"].setdefault(
                     "path_exon_bed",
-                    _guess_reference_from_static_data(base_config).replace(".fa", ".exon.bed"),
+                    _resolve_path(ref_path, base_config_path),
                 )
                 cfg["strandedness"].setdefault("strand", -1)
                 cfg["strandedness"].setdefault("threshold", 0.85)
@@ -393,9 +406,8 @@ def bootstrap_step_config(
                 cfg["bwa"].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
             cfg.setdefault("bqsr", {})
             if isinstance(cfg["bqsr"], dict):
-                cfg["bqsr"].setdefault(
-                    "common_variants", _guess_reference_from_static_data(base_config)
-                )
+                ref_path = _guess_reference_from_static_data(base_config)
+                cfg["bqsr"].setdefault("common_variants", _resolve_path(ref_path, base_config_path))
 
     if step_name == "ngs_data_qc":
         tool = cfg.get("tool") or "fastqc"
@@ -436,6 +448,7 @@ def bootstrap_step_config(
 
     if step_name == "repeat_expansion":
         placeholder = _guess_reference_from_static_data(base_config)
+        placeholder = _resolve_path(placeholder, base_config_path)
         if not isinstance(cfg.get("repeat_catalog"), str) or cfg.get("repeat_catalog") in (
             "",
             "AUTO",
@@ -455,7 +468,8 @@ def bootstrap_step_config(
             if not isinstance(cfg["mutect2"].get("germline_resource"), str) or cfg["mutect2"].get(
                 "germline_resource"
             ) in ("", "AUTO"):
-                cfg["mutect2"]["germline_resource"] = _guess_reference_from_static_data(base_config)
+                ref_path = _guess_reference_from_static_data(base_config)
+                cfg["mutect2"]["germline_resource"] = _resolve_path(ref_path, base_config_path)
         elif tool == "cnvkit" and isinstance(cfg["cnvkit"], dict):
             # Empty target path puts CNVkit into WGS mode and avoids unresolved external target BEDs.
             cfg["cnvkit"]["path_target"] = ""
@@ -463,7 +477,8 @@ def bootstrap_step_config(
             if not isinstance(cfg["purecn"].get("path_bait_regions"), str) or cfg["purecn"].get(
                 "path_bait_regions"
             ) in ("", "AUTO"):
-                cfg["purecn"]["path_bait_regions"] = _guess_reference_from_static_data(base_config)
+                ref_path = _guess_reference_from_static_data(base_config)
+                cfg["purecn"]["path_bait_regions"] = _resolve_path(ref_path, base_config_path)
             cfg["purecn"]["path_normals_list"] = ""
             # path_genomicsDB removed: the genomicsDB is now a tracked Snakemake input derived
             # from depends_on.panel_of_normals, not a bare config path.
@@ -483,7 +498,8 @@ def bootstrap_step_config(
             if not isinstance(cfg["mehari"].get("reference"), str) or cfg["mehari"].get(
                 "reference"
             ) in ("", "AUTO"):
-                cfg["mehari"]["reference"] = _guess_reference_from_static_data(base_config)
+                ref_path = _guess_reference_from_static_data(base_config)
+                cfg["mehari"]["reference"] = _resolve_path(ref_path, base_config_path)
             if not isinstance(cfg["mehari"].get("transcripts"), list):
                 cfg["mehari"]["transcripts"] = [_existing_placeholder_file()]
             elif cfg["mehari"].get("transcripts") == ["AUTO"]:
@@ -493,7 +509,8 @@ def bootstrap_step_config(
         tool = cfg.get("tool") or "mantis_msi2"
         cfg["tool"] = tool
         if not isinstance(cfg.get("loci_bed"), str) or cfg.get("loci_bed") in ("", "AUTO"):
-            cfg["loci_bed"] = _guess_reference_from_static_data(base_config)
+            ref_path = _guess_reference_from_static_data(base_config)
+            cfg["loci_bed"] = _resolve_path(ref_path, base_config_path)
 
     if step_name == "targeted_seq_mei_calling":
         tool = cfg.get("tool") or "scramble"
@@ -503,7 +520,8 @@ def bootstrap_step_config(
             if not isinstance(cfg["scramble"].get("blast_ref"), str) or cfg["scramble"].get(
                 "blast_ref"
             ) in ("", "AUTO"):
-                cfg["scramble"]["blast_ref"] = _guess_reference_from_static_data(base_config)
+                ref_path = _guess_reference_from_static_data(base_config)
+                cfg["scramble"]["blast_ref"] = _resolve_path(ref_path, base_config_path)
 
     if step_name in (
         "variant_export_external",
@@ -724,7 +742,9 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
 
                 step_config = parse_default_step_config(cls, step_name)
                 step_config["tool"] = tool_name
-                step_config = bootstrap_step_config(step_name, step_config, base_config)
+                step_config = bootstrap_step_config(
+                    step_name, step_config, base_config, base_config_path
+                )
                 if step_name == "link_in" and "path" not in step_config:
                     step_config["path"] = infer_link_in_path(base_config, base_config_path)
 
@@ -750,7 +770,9 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
         else:
             task_name = step_name
             step_config = parse_default_step_config(cls, step_name)
-            step_config = bootstrap_step_config(step_name, step_config, base_config)
+            step_config = bootstrap_step_config(
+                step_name, step_config, base_config, base_config_path
+            )
             if step_name == "link_in" and "path" not in step_config:
                 step_config["path"] = infer_link_in_path(base_config, base_config_path)
 
