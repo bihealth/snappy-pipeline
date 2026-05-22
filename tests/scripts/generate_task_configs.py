@@ -14,6 +14,7 @@ import argparse
 import copy
 import enum
 from pathlib import Path
+import typing
 from typing import Any, get_args, get_origin
 
 import pydantic
@@ -324,29 +325,36 @@ def bootstrap_step_config(
     cfg = copy.deepcopy(step_config)
 
     if step_name == "ngs_mapping":
-        cfg["tool"] = "bwa"
+        tool = cfg.get("tool") or "bwa"
+        cfg["tool"] = tool
         cfg.setdefault(
             "target_coverage_report",
             {"enabled": False, "path_target_interval_list_mapping": []},
         )
-        cfg.setdefault("bwa", {})
-        if isinstance(cfg["bwa"], dict):
-            cfg["bwa"].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+        cfg.setdefault(tool, {})
+        if tool in ("bwa", "bwa_mem2", "minimap2") and isinstance(cfg[tool], dict):
+            cfg[tool].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+        elif tool == "mbcs":
+            if isinstance(cfg["mbcs"], dict):
+                cfg["mbcs"].setdefault("mapping_tool", "bwa")
 
     if step_name == "somatic_targeted_seq_cnv_calling":
         # HRD requires sequenza; sequenza also produces _dnacopy.seg used by cnv_checking
-        cfg["tool"] = "sequenza"
-        cfg.setdefault("sequenza", {})
+        tool = cfg.get("tool") or "sequenza"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
 
     if step_name == "somatic_wgs_cnv_calling":
         # cnvkit produces _dnacopy.seg expected by somatic_cnv_checking
-        cfg["tool"] = "cnvkit"
-        cfg.setdefault("cnvkit", {})
+        tool = cfg.get("tool") or "cnvkit"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
 
     if step_name == "sv_calling_targeted":
         # Avoid gCNV model path requirements for generic dry-run shards.
-        cfg["tool"] = "delly2"
-        cfg.setdefault("delly2", {})
+        tool = cfg.get("tool") or "delly2"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
 
     if step_name == "repeat_expansion":
         placeholder = _guess_reference_from_static_data(base_config)
@@ -362,23 +370,26 @@ def bootstrap_step_config(
             cfg["repeat_annotation"] = placeholder
 
     if step_name == "panel_of_normals":
-        cfg["tool"] = "mutect2"
-        cfg.setdefault("mutect2", {})
-        if isinstance(cfg["mutect2"], dict):
+        tool = cfg.get("tool") or "mutect2"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
+        if tool == "mutect2" and isinstance(cfg["mutect2"], dict):
             if not isinstance(cfg["mutect2"].get("germline_resource"), str) or cfg["mutect2"].get(
                 "germline_resource"
             ) in ("", "AUTO"):
                 cfg["mutect2"]["germline_resource"] = _guess_reference_from_static_data(base_config)
 
     if step_name == "somatic_msi_calling":
-        cfg["tool"] = "mantis_msi2"
+        tool = cfg.get("tool") or "mantis_msi2"
+        cfg["tool"] = tool
         if not isinstance(cfg.get("loci_bed"), str) or cfg.get("loci_bed") in ("", "AUTO"):
             cfg["loci_bed"] = _guess_reference_from_static_data(base_config)
 
     if step_name == "targeted_seq_mei_calling":
-        cfg["tool"] = "scramble"
-        cfg.setdefault("scramble", {})
-        if isinstance(cfg["scramble"], dict):
+        tool = cfg.get("tool") or "scramble"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
+        if tool == "scramble" and isinstance(cfg["scramble"], dict):
             if not isinstance(cfg["scramble"].get("blast_ref"), str) or cfg["scramble"].get(
                 "blast_ref"
             ) in ("", "AUTO"):
@@ -401,8 +412,9 @@ def bootstrap_step_config(
                 cfg[key] = placeholder_file
 
     if step_name == "variant_calling":
-        cfg["tool"] = "bcftools_call"
-        cfg.setdefault("bcftools_call", {})
+        tool = cfg.get("tool") or "bcftools_call"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
         cfg.setdefault("baf_file_generation", {"enabled": False, "min_dp": 10})
         cfg.setdefault("bcftools_stats", {"enabled": False})
         cfg.setdefault("jannovar_stats", {"enabled": False, "path_ser": "AUTO"})
@@ -496,38 +508,146 @@ def find_producer_for_requirement(
     return candidates[0]
 
 
+def get_possible_tools(workflow_cls: type) -> list[str]:
+    config_model = getattr(workflow_cls, "config_model_class", None)
+    if not config_model:
+        return []
+    model_fields = getattr(config_model, "model_fields", {})
+    tool_field = model_fields.get("tool")
+    if tool_field is None:
+        return []
+
+    ann = tool_field.annotation
+    # Unwrap Annotated, Union, Optional
+    while True:
+        origin = get_origin(ann)
+        args = get_args(ann)
+        if origin is not None and getattr(origin, "__name__", None) == "Annotated":
+            ann = args[0]
+            continue
+        if origin is typing.Union or (
+            origin is not None and getattr(origin, "__name__", None) in ("Union", "UnionType")
+        ):
+            non_none_args = [a for a in args if a is not type(None)]
+            if non_none_args:
+                ann = non_none_args[0]
+                continue
+        break
+
+    # Now check if ann is Enum or Literal
+    origin = get_origin(ann)
+    if origin is typing.Literal or getattr(origin, "__name__", None) == "Literal":
+        return [str(val) for val in get_args(ann)]
+
+    if isinstance(ann, type) and issubclass(ann, enum.Enum):
+        return [str(item.value) for item in ann]
+
+    return []
+
+
+def get_default_tool(workflow_cls: type) -> str | None:
+    config_model = getattr(workflow_cls, "config_model_class", None)
+    if not config_model:
+        return None
+    model_fields = getattr(config_model, "model_fields", {})
+    tool_field = model_fields.get("tool")
+    if tool_field is None:
+        return None
+    default_val = tool_field.default
+    from pydantic_core import PydanticUndefined
+
+    if default_val is PydanticUndefined:
+        default_val = None
+    if default_val is not None:
+        if isinstance(default_val, enum.Enum):
+            return str(default_val.value)
+        if isinstance(default_val, str):
+            return default_val
+    possible = get_possible_tools(workflow_cls)
+    if possible:
+        return possible[0]
+    return None
+
+
+def get_default_task_name(step_name: str, workflow_cls: type) -> str:
+    default_tool = get_default_tool(workflow_cls)
+    if default_tool:
+        return f"{step_name}_default"
+    return step_name
+
+
 def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list[dict[str, Any]]:
     workflow_items = sorted(WORKFLOW_REGISTRY.items())
     all_steps = {name for name, _ in workflow_items}
 
+    step_to_default_task: dict[str, str] = {}
+    for name, cls in workflow_items:
+        step_to_default_task[name] = get_default_task_name(name, cls)
+
     generation_notes: list[str] = []
     tasks: list[dict[str, Any]] = []
     for step_name, cls in workflow_items:
-        step_config = parse_default_step_config(cls, step_name)
-        step_config = bootstrap_step_config(step_name, step_config, base_config)
-        if step_name == "link_in" and "path" not in step_config:
-            step_config["path"] = infer_link_in_path(base_config, base_config_path)
+        tools = get_possible_tools(cls)
+        default_tool = get_default_tool(cls)
 
-        step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
-        generation_notes.extend(notes)
-        step_config, notes = ensure_explicit_selected_tool_config(step_name, cls, step_config)
-        generation_notes.extend(notes)
-        if notes:
+        if tools:
+            for tool_name in tools:
+                if tool_name == default_tool:
+                    task_name = f"{step_name}_default"
+                else:
+                    task_name = f"{step_name}_{tool_name}"
+
+                step_config = parse_default_step_config(cls, step_name)
+                step_config["tool"] = tool_name
+                step_config = bootstrap_step_config(step_name, step_config, base_config)
+                if step_name == "link_in" and "path" not in step_config:
+                    step_config["path"] = infer_link_in_path(base_config, base_config_path)
+
+                step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
+                generation_notes.extend(notes)
+                step_config, notes = ensure_explicit_selected_tool_config(
+                    step_name, cls, step_config
+                )
+                generation_notes.extend(notes)
+                if notes:
+                    step_config, notes = validate_and_autofill_step_config(
+                        step_name, cls, step_config
+                    )
+                    generation_notes.extend(notes)
+
+                tasks.append(
+                    {
+                        "step": step_name,
+                        "name": task_name,
+                        "config": step_config,
+                    }
+                )
+        else:
+            task_name = step_name
+            step_config = parse_default_step_config(cls, step_name)
+            step_config = bootstrap_step_config(step_name, step_config, base_config)
+            if step_name == "link_in" and "path" not in step_config:
+                step_config["path"] = infer_link_in_path(base_config, base_config_path)
+
             step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
             generation_notes.extend(notes)
+            step_config, notes = ensure_explicit_selected_tool_config(step_name, cls, step_config)
+            generation_notes.extend(notes)
+            if notes:
+                step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
+                generation_notes.extend(notes)
 
-        tasks.append(
-            {
-                "step": step_name,
-                "name": step_name,
-                "config": step_config,
-            }
-        )
+            tasks.append(
+                {
+                    "step": step_name,
+                    "name": task_name,
+                    "config": step_config,
+                }
+            )
 
-    tasks_by_step = {t["step"]: t for t in tasks}
-
-    for step_name, cls in workflow_items:
-        task = tasks_by_step[step_name]
+    for task in tasks:
+        step_name = task["step"]
+        cls = WORKFLOW_REGISTRY[step_name]
         depends_on: dict[str, str] = {}
 
         # 1) Use typed depends_on defaults first (if available).
@@ -539,13 +659,31 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 and default_target in all_steps
                 and default_target != step_name
             ):
-                depends_on[logical_name] = default_target
+                if (
+                    step_name == "homologous_recombination_deficiency"
+                    and default_target == "somatic_targeted_seq_cnv_calling"
+                ):
+                    depends_on[logical_name] = "somatic_targeted_seq_cnv_calling_sequenza"
+                else:
+                    depends_on[logical_name] = step_to_default_task[default_target]
             elif logical_name in all_steps and logical_name != step_name:
-                depends_on[logical_name] = logical_name
+                if (
+                    step_name == "homologous_recombination_deficiency"
+                    and logical_name == "somatic_targeted_seq_cnv_calling"
+                ):
+                    depends_on[logical_name] = "somatic_targeted_seq_cnv_calling_sequenza"
+                else:
+                    depends_on[logical_name] = step_to_default_task[logical_name]
             elif logical_name in LOGICAL_DEP_ALIASES:
                 alias_target = LOGICAL_DEP_ALIASES[logical_name]
                 if alias_target in all_steps and alias_target != step_name:
-                    depends_on[logical_name] = alias_target
+                    if (
+                        step_name == "homologous_recombination_deficiency"
+                        and alias_target == "somatic_targeted_seq_cnv_calling"
+                    ):
+                        depends_on[logical_name] = "somatic_targeted_seq_cnv_calling_sequenza"
+                    else:
+                        depends_on[logical_name] = step_to_default_task[alias_target]
 
         # 2) Fill remaining typed dependency keys by consumes/produces matching.
         unresolved = [k for k in dep_defaults if k not in depends_on]
@@ -568,7 +706,7 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 continue
             producer = find_producer_for_requirement(selected_req, workflow_items, step_name)
             if producer and producer != step_name:
-                depends_on[logical_name] = producer
+                depends_on[logical_name] = step_to_default_task[producer]
 
         if depends_on:
             task_config = task.get("config", {})

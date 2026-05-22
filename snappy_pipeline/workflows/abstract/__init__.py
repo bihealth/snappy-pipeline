@@ -772,6 +772,14 @@ class BaseStep:
 
         # Resolve via config-model typed dependency mapping, then literal name as fallback.
         dep_target = getattr(self.depends_on, name, None) if self.depends_on is not None else None
+        if dep_target is None and self.depends_on is not None:
+            # Check if any resolved dependency task has a step that matches `name`
+            for dep_field, dep_val in self.depends_on.model_dump().items():
+                if isinstance(dep_val, str) and dep_val:
+                    t = next((tk for tk in self.w_config.tasks if tk.name == dep_val), None)
+                    if t and t.step == name:
+                        dep_target = dep_val
+                        break
         target_task_name = dep_target or name
 
         # Find the task in the global config

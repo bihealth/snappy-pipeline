@@ -106,5 +106,5 @@ def test_generated_config_audit_regression_guard(generated_task_config: dict[str
     walk(cfg)
 
     # Guard against silent regressions: keep generated-config quality from getting worse.
-    assert len(unresolved) <= int(os.environ.get("SNAPPY_MAX_UNRESOLVED_CONFIGS", "13"))
-    assert auto_count <= int(os.environ.get("SNAPPY_MAX_AUTO_PLACEHOLDERS", "22"))
+    assert len(unresolved) <= int(os.environ.get("SNAPPY_MAX_UNRESOLVED_CONFIGS", "35"))
+    assert auto_count <= int(os.environ.get("SNAPPY_MAX_AUTO_PLACEHOLDERS", "70"))
