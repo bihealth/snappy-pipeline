@@ -763,6 +763,13 @@ def build_config(
     # Enrich static_data_config with placeholders for optional but frequently accessed fields
     static_data = config.get("static_data_config", {})
     if isinstance(static_data, dict):
+        # Resolve any relative paths to absolute relative to the base config file
+        for k, v in static_data.items():
+            if isinstance(v, dict) and "path" in v and isinstance(v["path"], str):
+                p = v["path"]
+                if p and not p.startswith("/") and not p.startswith("AUTO"):
+                    v["path"] = str((base_config_path.parent / p).resolve())
+
         ref_path = "AUTO"
         ref_obj = static_data.get("reference")
         if isinstance(ref_obj, dict) and ref_obj.get("path"):
@@ -783,9 +790,7 @@ def main() -> int:
     parser.add_argument(
         "--base-config",
         type=Path,
-        default=Path(
-            ".tests/test-workflow/pipelines/snappy-cancer_wes/.snappy_pipeline/config.yaml"
-        ),
+        default=Path("tests/snappy_pipeline/fixtures/base_config.yaml"),
         help="Path to an existing config.yaml used as source for static_data_config and data_sets.",
     )
     parser.add_argument(

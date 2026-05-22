@@ -19,12 +19,8 @@ def test_start_step_ngs_mapping(germline_sheet_fake_project_fs, mocker):
 
     # Check result
     assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/pipeline_job.sh")
-    assert germline_sheet_fake_project_fs.os.path.exists(
-        "/project-dir/.snappy_pipeline/config.yaml.bak"
-    )
-    with germline_sheet_fake_project_fs.open(
-        "/project-dir/.snappy_pipeline/config.yaml", "rt"
-    ) as f:
+    assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/config.yaml.bak")
+    with germline_sheet_fake_project_fs.open("/project-dir/config.yaml", "rt") as f:
         content = f.read()
         assert "ngs_mapping" in content
 
@@ -42,12 +38,8 @@ def test_start_step_custom_task_name(germline_sheet_fake_project_fs, mocker):
 
     # Check result
     assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/pipeline_job.sh")
-    assert germline_sheet_fake_project_fs.os.path.exists(
-        "/project-dir/.snappy_pipeline/config.yaml.bak"
-    )
-    with germline_sheet_fake_project_fs.open(
-        "/project-dir/.snappy_pipeline/config.yaml", "rt"
-    ) as f:
+    assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/config.yaml.bak")
+    with germline_sheet_fake_project_fs.open("/project-dir/config.yaml", "rt") as f:
         content = f.read()
         assert "custom_mapping" in content
         assert "step: ngs_mapping" in content

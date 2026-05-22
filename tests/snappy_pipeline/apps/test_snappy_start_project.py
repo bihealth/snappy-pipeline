@@ -19,7 +19,5 @@ def test_start_project(germline_sheet_fake_noproject_fs, mocker):
 
     # Check result
     assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/project/README.md")
-    assert germline_sheet_fake_noproject_fs.os.path.exists(
-        "/projects/project/.snappy_pipeline/config.yaml"
-    )
+    assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/project/config.yaml")
     assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/project/pipeline_job.sh")

@@ -47,7 +47,7 @@ def germline_sheet_ngs_mapping_config_yaml():
           name: ngs_mapping
           version: 1
 
-        $ref: 'file://../.snappy_pipeline/config.yaml'
+        $ref: 'file://../config.yaml'
         """
     ).lstrip()
 
@@ -77,14 +77,13 @@ def germline_sheet_fake_project_fs(
     germline_sheet_fake_fs,  # noqa: F811
     germline_sheet_config_yaml,  # noqa: F811
 ):
-    fake_fs.fs.create_dir("/project-dir/.snappy_pipeline")
     # Create the configuration YAML file
     fake_fs.fs.create_file(
-        "/project-dir/.snappy_pipeline/config.yaml", contents=germline_sheet_config_yaml
+        "/project-dir/config.yaml", contents=germline_sheet_config_yaml, create_missing_dirs=True
     )
     # Create the sample TSV file
     fake_fs.fs.create_file(
-        "/project-dir/.snappy_pipeline/sheet.tsv",
+        "/project-dir/sheet.tsv",
         contents=germline_sheet_tsv,
         create_missing_dirs=True,
     )
