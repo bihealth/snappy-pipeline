@@ -621,6 +621,21 @@ def build_config(
         "tasks": tasks,
         "data_sets": copy.deepcopy(base_config.get("data_sets", {})),
     }
+
+    # Enrich static_data_config with placeholders for optional but frequently accessed fields
+    static_data = config.get("static_data_config", {})
+    if isinstance(static_data, dict):
+        ref_path = "AUTO"
+        ref_obj = static_data.get("reference")
+        if isinstance(ref_obj, dict) and ref_obj.get("path"):
+            ref_path = ref_obj["path"]
+        else:
+            ref_path = _existing_placeholder_file()
+
+        for key in ("cosmic", "dbsnp", "dbnsfp", "features"):
+            if key not in static_data or static_data[key] is None:
+                static_data[key] = {"path": ref_path}
+
     normalize_data_set_paths(config, base_config_path)
     return config
 

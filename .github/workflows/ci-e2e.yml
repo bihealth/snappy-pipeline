@@ -7,25 +7,12 @@ on:
     branches_ignore: [ ]
     paths:
       - '.tests/**'
-      - '.github/**'
-      - 'snappy_pipeline/*'
-      - 'snappy_pipeline/workflows/abstract/**'
-      - 'snappy_pipeline/workflows/ngs_mapping/**'
-      - 'snappy_pipeline/workflows/somatic_variant_calling/**'
-      - 'snappy_pipeline/workflows/somatic_variant_annotation/**'
-      - 'snappy_pipeline/workflows/somatic_variant_filtration/**'
-      - 'snappy_wrappers/*'
-      - 'snappy_wrappers/wrappers/alfred/**'
-      - 'snappy_wrappers/wrappers/bcftools/**'
-      - 'snappy_wrappers/wrappers/bwa/**'
-      - 'snappy_wrappers/wrappers/link_in_bam/**'
-      - 'snappy_wrappers/wrappers/mutect/**'
-      - 'snappy_wrappers/wrappers/mutect_par/**'
-      - 'snappy_wrappers/wrappers/mutect2/**'
-      - 'snappy_wrappers/wrappers/mutect2_par/**'
-      - 'snappy_wrappers/wrappers/ngs_chew/**'
-      - 'snappy_wrappers/wrappers/somatic_variant_filtration/**'
-      - 'snappy_wrappers/wrappers/vep/**'
+      - '.github/workflows/ci-e2e.yml'
+      - 'snappy_pipeline/**'
+      - 'snappy_wrappers/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'pixi.lock'
 
 defaults:
   run:
