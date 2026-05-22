@@ -643,9 +643,14 @@ def get_default_tool(step_name: str, workflow_cls: type) -> str | None:
 
 
 def get_default_task_name(step_name: str, workflow_cls: type) -> str:
+    """Return the task name for the default tool of a step.
+
+    Uses the actual tool name (e.g., 'mutect2', 'bwa') instead of the generic '_default' suffix.
+    This makes task names explicit and easier to debug.
+    """
     default_tool = get_default_tool(step_name, workflow_cls)
     if default_tool:
-        return f"{step_name}_default"
+        return f"{step_name}_{default_tool}"
     return step_name
 
 
@@ -661,14 +666,10 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
     tasks: list[dict[str, Any]] = []
     for step_name, cls in workflow_items:
         tools = get_possible_tools(cls)
-        default_tool = get_default_tool(step_name, cls)
 
         if tools:
             for tool_name in tools:
-                if tool_name == default_tool:
-                    task_name = f"{step_name}_default"
-                else:
-                    task_name = f"{step_name}_{tool_name}"
+                task_name = f"{step_name}_{tool_name}"
 
                 step_config = parse_default_step_config(cls, step_name)
                 step_config["tool"] = tool_name
@@ -780,6 +781,17 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             producer = find_producer_for_requirement(selected_req, workflow_items, step_name)
             if producer and producer != step_name:
                 depends_on[logical_name] = step_to_default_task[producer]
+
+        # 3) Special handling for panel_of_normals:
+        # - For purecn: depends_on.panel_of_normals must point to the mutect2 variant
+        # - For other tools: remove any panel_of_normals dependency (it's only for purecn)
+        task_config = task.get("config", {})
+        if step_name == "panel_of_normals" and isinstance(task_config, dict):
+            if task_config.get("tool") == "purecn":
+                depends_on["panel_of_normals"] = f"{step_name}_mutect2"
+            else:
+                # Remove panel_of_normals dependency for non-purecn tools
+                depends_on.pop("panel_of_normals", None)
 
         if depends_on:
             task_config = task.get("config", {})
