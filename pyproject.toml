@@ -33,7 +33,7 @@ dependencies = [
     "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality
     "snakemake >=9.19.0,<10",
-    "snakemake-executor-plugin-slurm >=1.8.0,<2",
+    "snakemake-executor-plugin-slurm >=2,<3",
     # Required for plotting
     "matplotlib >=3.8.4",
     # Library for working with VCF files.
@@ -231,7 +231,7 @@ bcftools = "1.20.*"
 samtools = "1.20.*"
 conda = ">=25,<26"
 snakemake = ">=9.19.0,<10"
-snakemake-executor-plugin-slurm = ">=1.8.0,<2"
+snakemake-executor-plugin-slurm = ">=2,<3"
 
 # PREVENT CONFLICTS: Force Conda to pick older versions of these
 # dependencies so that uv doesn't block the PyPI/Git package installations.

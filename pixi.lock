@@ -15,8 +15,8 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.20-h5efdd21_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.20-h50ea8bc_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-9.21.0-hdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-1.9.2-pyhdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.3.0-pyhdfd78af_0.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-2.7.0-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.4.0-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-common-1.23.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-executor-plugins-9.4.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-logger-plugins-2.0.1-pyh84498cf_0.conda
@@ -258,8 +258,8 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.20-h5efdd21_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.20-h50ea8bc_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-9.21.0-hdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-1.9.2-pyhdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.3.0-pyhdfd78af_0.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-2.7.0-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.4.0-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-common-1.23.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-executor-plugins-9.4.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-logger-plugins-2.0.1-pyh84498cf_0.conda
@@ -541,8 +541,8 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.20-h5efdd21_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.20-h50ea8bc_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-9.21.0-hdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-1.9.2-pyhdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.3.0-pyhdfd78af_0.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-2.7.0-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.4.0-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-common-1.23.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-executor-plugins-9.4.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-logger-plugins-2.0.1-pyh84498cf_0.conda
@@ -799,8 +799,8 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.20-h5efdd21_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/samtools-1.20-h50ea8bc_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-9.21.0-hdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-1.9.2-pyhdfd78af_0.conda
-      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.3.0-pyhdfd78af_0.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-2.7.0-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.4.0-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-common-1.23.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-executor-plugins-9.4.0-pyh84498cf_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-logger-plugins-2.0.1-pyh84498cf_0.conda
@@ -1094,14 +1094,15 @@ packages:
   purls: []
   size: 11287
   timestamp: 1778751130891
-- conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-1.9.2-pyhdfd78af_0.conda
-  sha256: 69a7bf42dae2f6e14294602af237444b7deb03c387e31db79bb30fab744420ef
-  md5: d154a174a811bf42513b2d7636ce0a5f
+- conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-2.7.0-pyhdfd78af_0.conda
+  sha256: 5ccbbf2cffffbee58f60cfd457aeccd12db22f89eb6502f10933fb6aee581748
+  md5: 62ab14970d6313ab9a5eea92c8a4bd77
   depends:
   - numpy >=1.26.4,<3.0
   - pandas >=2.2.3,<3.0
   - python >=3.11.0,<4.0.0
-  - snakemake-executor-plugin-slurm-jobstep >=0.3.0,<0.4.0
+  - pyyaml
+  - snakemake-executor-plugin-slurm-jobstep >=0.4.0,<0.5.0
   - snakemake-interface-common >=1.21.0,<2.0.0
   - snakemake-interface-executor-plugins >=9.3.9,<10.0.0
   - throttler >=1.2.2,<2.0.0
@@ -1109,11 +1110,11 @@ packages:
   license_family: MIT
   purls:
   - pkg:pypi/snakemake-executor-plugin-slurm?source=hash-mapping
-  size: 26133
-  timestamp: 1761842453023
-- conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.3.0-pyhdfd78af_0.tar.bz2
-  sha256: de9cc97d872147bfd5928f653c6d8dc1f0f1e47cb744672ffb743c4b2f8c919a
-  md5: 1e3d84ab0cd46fbf1dd4e5b290f7c7a5
+  size: 46970
+  timestamp: 1779442603897
+- conda: https://conda.anaconda.org/bioconda/noarch/snakemake-executor-plugin-slurm-jobstep-0.4.0-pyhdfd78af_0.conda
+  sha256: 82ad84bf106e0fbab62f6c001311aff53faefe323254c8b2b3540f310bb48dfe
+  md5: 7d4f2bf739967798eb4d8c02d59cf36c
   depends:
   - python >=3.11.0,<4.0.0
   - snakemake-interface-common >=1.13.0,<2.0.0
@@ -1121,8 +1122,8 @@ packages:
   license: MIT
   purls:
   - pkg:pypi/snakemake-executor-plugin-slurm-jobstep?source=hash-mapping
-  size: 12881
-  timestamp: 1739611671448
+  size: 14678
+  timestamp: 1765807808315
 - conda: https://conda.anaconda.org/bioconda/noarch/snakemake-interface-common-1.23.0-pyh84498cf_0.conda
   sha256: e0304136ad68e797f0e9bc0d2adcedb3239d77a7363c7a5d708b8d7f1559be1e
   md5: 9e6c1430992f6fe49bc25030426f5969
@@ -3944,7 +3945,7 @@ packages:
   - pydantic>=2.9.0,<3
   - pysam>=0.22.1,<1
   - ruamel-yaml>=0.18.6,<1
-  - snakemake-executor-plugin-slurm>=1.8.0,<2
+  - snakemake-executor-plugin-slurm>=2,<3
   - snakemake>=9.19.0,<10
   - termcolor>=1.1.0,<3
   - varfish-cli>=0.6.3
