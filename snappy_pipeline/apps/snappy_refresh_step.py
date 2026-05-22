@@ -47,12 +47,11 @@ class RefreshStepApp:
         """Actually perform the step."""
         log("")
         log(
-            'Refresh step "{step}" in sub-directory "{directory}" of project dir "{project_dir}"',
-            args={"step": self.step, "directory": self.directory, "project_dir": self.directory},
+            'Refresh step "{step}" in project dir "{project_dir}"',
+            args={"step": self.step, "project_dir": self.args.project_directory},
         )
 
-        dest_dir = os.path.join(self.args.project_directory, self.directory)
-        if not assume_path_existing(dest_dir):
+        if not assume_path_existing(self.args.project_directory):
             return 1  # pragma: nocover
 
         # Load project-wide configuration and check that the step already exists.

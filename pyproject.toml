@@ -87,12 +87,7 @@ all = [
 ]
 
 [project.scripts]
-snappy-pull-sheet = "snappy_pipeline.apps.snappy_pull_sheet:main"
-snappy-snake = "snappy_pipeline.apps.snappy_snake:main"
-snappy-start-project = "snappy_pipeline.apps.snappy_start_project:main"
-snappy-start-step = "snappy_pipeline.apps.snappy_start_step:main"
-snappy-refresh-step = "snappy_pipeline.apps.snappy_refresh_step:main"
-snappy-slurm-status = "snappy_pipeline.apps.snappy_slurm_status:main"
+snappy = "snappy_pipeline.apps.snappy_cli:main"
 # additional tools
 snappy-bed_filter_jaccard = "snappy_wrappers.tools.bed_filter_jaccard:main"
 snappy-fix_vcf = "snappy_wrappers.tools.fix_vcf:main"

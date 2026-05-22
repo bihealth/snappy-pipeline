@@ -223,6 +223,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.7.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/yte-1.9.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
+      - pypi: .
       - pypi: git+https://github.com/bihealth/altamisa.git?rev=7091c49dcea5584192daf0b0d8a4730208b841d8#7091c49dcea5584192daf0b0d8a4730208b841d8
       - pypi: git+https://github.com/bihealth/biomedsheets.git?rev=8a86f4c0b94b2c0bde14a22acf552387958ad688#8a86f4c0b94b2c0bde14a22acf552387958ad688
       - pypi: https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl
@@ -466,6 +467,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.7.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/yte-1.9.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
+      - pypi: .
       - pypi: git+https://github.com/bihealth/altamisa.git?rev=7091c49dcea5584192daf0b0d8a4730208b841d8#7091c49dcea5584192daf0b0d8a4730208b841d8
       - pypi: git+https://github.com/bihealth/biomedsheets.git?rev=8a86f4c0b94b2c0bde14a22acf552387958ad688#8a86f4c0b94b2c0bde14a22acf552387958ad688
       - pypi: https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl
@@ -747,6 +749,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.7.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/yte-1.9.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
+      - pypi: .
       - pypi: git+https://github.com/bihealth/altamisa.git?rev=7091c49dcea5584192daf0b0d8a4730208b841d8#7091c49dcea5584192daf0b0d8a4730208b841d8
       - pypi: git+https://github.com/bihealth/biomedsheets.git?rev=8a86f4c0b94b2c0bde14a22acf552387958ad688#8a86f4c0b94b2c0bde14a22acf552387958ad688
       - pypi: https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl
@@ -1004,6 +1007,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.7.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/yte-1.9.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
+      - pypi: .
       - pypi: git+https://github.com/bihealth/altamisa.git?rev=7091c49dcea5584192daf0b0d8a4730208b841d8#7091c49dcea5584192daf0b0d8a4730208b841d8
       - pypi: git+https://github.com/bihealth/biomedsheets.git?rev=8a86f4c0b94b2c0bde14a22acf552387958ad688#8a86f4c0b94b2c0bde14a22acf552387958ad688
       - pypi: https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl
@@ -3929,6 +3933,53 @@ packages:
   - pkg:pypi/zipp?source=compressed-mapping
   size: 24190
   timestamp: 1779159948016
+- pypi: .
+  name: snappy-pipeline
+  requires_dist:
+  - altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8
+  - biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688
+  - fasteners>=0.17.3,<1
+  - jinja2>=3.1.4,<4
+  - matplotlib>=3.8.4
+  - pydantic>=2.9.0,<3
+  - pysam>=0.22.1,<1
+  - ruamel-yaml>=0.18.6,<1
+  - snakemake-executor-plugin-slurm>=1.8.0,<2
+  - snakemake>=9.19.0,<10
+  - termcolor>=1.1.0,<3
+  - varfish-cli>=0.6.3
+  - vcfpy>=0.13.8,<1
+  - coverage>=7.5.3,<8 ; extra == 'all'
+  - coveralls>=4.0.1,<5 ; extra == 'all'
+  - pre-commit>=4.0.1,<5 ; extra == 'all'
+  - pyfakefs>=5.5.0,<6 ; extra == 'all'
+  - pytabix>=0.1.0,<1 ; extra == 'all'
+  - pytest-cov>=5.0.0,<6 ; extra == 'all'
+  - pytest-mock>=3.14.0,<4 ; extra == 'all'
+  - pytest-subprocess>=1.5.0,<2 ; extra == 'all'
+  - pytest-sugar>=1.0.0,<2 ; extra == 'all'
+  - pytest>=8.2.2,<9 ; extra == 'all'
+  - ruff>=0.15.11,<1 ; extra == 'all'
+  - snakefmt>=1,<2 ; extra == 'all'
+  - sphinx-mdinclude>=0.6.0,<1 ; extra == 'all'
+  - sphinx-rtd-theme>=2.0.0,<3 ; extra == 'all'
+  - sphinx>=7.3.7,<8 ; extra == 'all'
+  - pre-commit>=4.0.1,<5 ; extra == 'dev'
+  - ruff>=0.15.11,<1 ; extra == 'dev'
+  - snakefmt>=1,<2 ; extra == 'dev'
+  - sphinx-mdinclude>=0.6.0,<1 ; extra == 'docs'
+  - sphinx-rtd-theme>=2.0.0,<3 ; extra == 'docs'
+  - sphinx>=7.3.7,<8 ; extra == 'docs'
+  - coverage>=7.5.3,<8 ; extra == 'test'
+  - coveralls>=4.0.1,<5 ; extra == 'test'
+  - pyfakefs>=5.5.0,<6 ; extra == 'test'
+  - pytabix>=0.1.0,<1 ; extra == 'test'
+  - pytest-cov>=5.0.0,<6 ; extra == 'test'
+  - pytest-mock>=3.14.0,<4 ; extra == 'test'
+  - pytest-subprocess>=1.5.0,<2 ; extra == 'test'
+  - pytest-sugar>=1.0.0,<2 ; extra == 'test'
+  - pytest>=8.2.2,<9 ; extra == 'test'
+  requires_python: '>=3.12'
 - pypi: git+https://github.com/bihealth/altamisa.git?rev=7091c49dcea5584192daf0b0d8a4730208b841d8#7091c49dcea5584192daf0b0d8a4730208b841d8
   name: altamisa
   version: 0.3.0
