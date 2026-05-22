@@ -4,6 +4,8 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Mapping, Sequence
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +51,31 @@ def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
 def _tail(text: str, n: int = 40) -> str:
     lines = text.splitlines()
     return "\n".join(lines[-n:])
+
+
+def to_plain_obj(obj: Any) -> Any:
+    """Convert ruamel/pydantic/path-like values to plain YAML-safe builtins."""
+    if obj is None:
+        return None
+    if isinstance(obj, bool):
+        return bool(obj)
+    if isinstance(obj, int):
+        return int(obj)
+    if isinstance(obj, float):
+        return float(obj)
+    if isinstance(obj, str):
+        return str(obj)
+    if isinstance(obj, Path):
+        return str(obj)
+    if isinstance(obj, Enum):
+        return to_plain_obj(obj.value)
+    if isinstance(obj, Mapping):
+        return {str(k): to_plain_obj(v) for k, v in obj.items()}
+    if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes, bytearray)):
+        return [to_plain_obj(v) for v in obj]
+    if isinstance(obj, set):
+        return [to_plain_obj(v) for v in sorted(obj, key=lambda x: str(x))]
+    return str(obj)
 
 
 @pytest.fixture(scope="session")
@@ -137,19 +164,20 @@ def test_generated_config_task_closure_passes(
         (raw_dir / f"{folder}.R1.fastq.gz").touch()
         (raw_dir / f"{folder}.R2.fastq.gz").touch()
 
-    def to_plain_obj(obj: Any) -> Any:
-        if isinstance(obj, dict):
-            return {str(k): to_plain_obj(v) for k, v in obj.items()}
-        elif isinstance(obj, (list, tuple, set)):
-            return [to_plain_obj(v) for v in obj]
-        elif isinstance(obj, Path):
-            return str(obj)
-        return obj
-
     # Write config.yaml directly in tmp_path (no .snappy_pipeline subfolder!)
     closure_config_path = tmp_path / "config.yaml"
+    closure_config_plain = to_plain_obj(closure_config)
     with closure_config_path.open("wt", encoding="utf-8") as f:
-        yaml.dump(to_plain_obj(closure_config), f)
+        yaml.safe_dump(closure_config_plain, f, sort_keys=False)
+
+    # Ensure we emitted parseable YAML before invoking snappy/snakemake.
+    try:
+        reloaded = yaml.safe_load(closure_config_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as e:
+        raise AssertionError(
+            f"Generated closure config is invalid YAML for {task_name}: {e}"
+        ) from e
+    assert isinstance(reloaded, dict), f"Generated closure config is not a mapping for {task_name}"
 
     # Run the dryrun command
     cmd = [
