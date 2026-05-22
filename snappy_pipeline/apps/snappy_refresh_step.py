@@ -22,7 +22,7 @@ STEPS = tuple(sorted(STEP_TO_MODULE))
 FILENAME_PIPELINE_JOB_SH = "pipeline_job.sh"
 
 #: Configuration sub directory
-CONFIG_SUBDIR = ".snappy_pipeline"
+CONFIG_SUBDIR = ""
 
 #: Configuration file name
 CONFIG_FILENAME = "config.yaml"

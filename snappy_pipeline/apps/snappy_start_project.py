@@ -33,20 +33,23 @@ def run(args):
         return 1
 
     # Create project directory and subdirectory for configuration files
-    paths = (args.project_directory, os.path.join(args.project_directory, CONFIG_SUBDIR))
+    paths = [args.project_directory]
+    if CONFIG_SUBDIR:
+        paths.append(os.path.join(args.project_directory, CONFIG_SUBDIR))
     for path in paths:
         create_directory(path)
 
     # Create config file in subdirectory based on template
+    config_dest_path = os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
     create_from_tpl(
         src_path=os.path.join(os.path.dirname(__file__), "tpls", "project_config.yaml"),
-        dest_path=os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME),
+        dest_path=config_dest_path,
         format_args={
             "created_at": datetime.datetime.now().isoformat(),
             "project_name": (args.project_name or os.path.basename(args.project_directory)),
         },
         message="Creating project-wide configuration in {path}",
-        message_args={"path": os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)},
+        message_args={"path": config_dest_path},
     )
 
     # Create readme file in subdirectory based on template
@@ -86,7 +89,7 @@ def run(args):
         run_start_step(step=step, directory=step, args=args)
 
     log(
-        "\nDo not forget to review .snappy_pipeline/config.yaml and to fill out README.md!\n",
+        "\nDo not forget to review config.yaml and to fill out README.md!\n",
         level=LVL_IMPORTANT,
     )
     log("All done, have a nice day!", level=LVL_SUCCESS)
