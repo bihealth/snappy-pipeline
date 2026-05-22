@@ -112,6 +112,9 @@ snappy-ped_to_vcf_header = "snappy_wrappers.tools.ped_to_vcf_header:main"
 [tool.hatch.version]
 path = "snappy_pipeline/version.py"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["snappy_pipeline", "snappy_wrappers"]
 
@@ -199,7 +202,11 @@ markers = [
 ]
 testpaths = ["tests"]
 norecursedirs = ["docs", "*.egg-info", ".git"]
-filterwarnings = ["error", "ignore::DeprecationWarning"]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+    "ignore::coverage.exceptions.CoverageWarning",
+]
 
 
 # ==============================================================================
@@ -244,12 +251,15 @@ test = { features = ["test"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 dev = { features = ["test", "docs", "dev"], solve-group = "default" }
 
+[tool.pixi.pypi-dependencies]
+snappy-pipeline = { path = ".", editable = true }
+
 # ==============================================================================
 # PIXI TASKS
 # ==============================================================================
 
 [tool.pixi.feature.test.tasks]
-test = { cmd = "pytest", description = "Run tests through pytest" }
+test = { cmd = "pytest", env = { PYTHONPATH = "." }, description = "Run tests through pytest" }
 coverage = { cmd = "coverage report && coverage html", description = "Generate code coverage reports" }
 
 [tool.pixi.feature.dev.tasks]
