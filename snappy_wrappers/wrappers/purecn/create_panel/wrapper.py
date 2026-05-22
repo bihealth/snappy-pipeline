@@ -8,10 +8,7 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 config = args["config"]
 
-if "path_genomicsDB" in config.keys() and config["path_genomicsDB"]:
-    genomicsDB = config["path_genomicsDB"]
-else:
-    genomicsDB = ""
+genomicsDB = getattr(snakemake.input, "genomicsdb", "")
 
 shell.executable("/bin/bash")
 

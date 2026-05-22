@@ -283,10 +283,11 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_create(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/purecn/out/{library_name}_coverage_loess.txt.gz"
-        yield (
-            "normals",
-            [tpl.format(library_name=lib) for lib in self.normal_libraries],
-        )
+        yield "normals", [tpl.format(library_name=lib) for lib in self.normal_libraries]
+        # The Mutect2 genomicsDB is the output of the upstream panel_of_normals (mutect2) task;
+        # resolve it through the registered module so Snakemake tracks it as a real dependency.
+        pon_module = self.parent.modules["panel_of_normals"]
+        yield "genomicsdb", pon_module("work/mutect2/out/mutect2.genomicsDB.tar.gz")
 
     def get_output_files(self, action):
         if self.name != self.config.tool:
@@ -309,9 +310,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 "tbi_md5": "work/purecn/out/" + base_out + ".bed.gz.tbi.md5",
             }
         if action == "coverage":
-            return {
-                "coverage": "work/purecn/out/purecn.{library_name,.+-DNA[0-9]+-WES[0-9]+}_coverage_loess.txt.gz"
-            }
+            return {"coverage": "work/purecn/out/{library_name}_coverage_loess.txt.gz"}
         if action == "create_panel":
             return {
                 "db": "work/purecn/out/purecn.panel_of_normals.rds",
@@ -347,7 +346,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 self.config.purecn.enrichment_kit_name,
                 self.config.purecn.genome_name,
             ),
-            "coverage": "work/purecn/log/purecn.{library_name,.+-DNA[0-9]+-WES[0-9]+}",
+            "coverage": "work/purecn/log/{library_name}",
             "create_panel": "work/purecn/log/purecn.panel_of_normals",
         }
         assert action in self.actions
@@ -843,6 +842,10 @@ class PanelOfNormalsWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         self.register_module("ngs_mapping")
+        # When tool=purecn, the genomicsDB produced by an upstream mutect2 PON task is a
+        # tracked Snakemake input; register it so paths are resolved relative to that task.
+        if self.config.tool == "purecn":
+            self.register_module("panel_of_normals")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

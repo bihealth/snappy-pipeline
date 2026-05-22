@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
@@ -73,9 +73,6 @@ class PureCn(SnappyModel):
     recommended by PureCN author
     """
 
-    path_genomicsDB: str
-    """Mutect2 genomicsDB created during panel_of_normals"""
-
     genome_name: Annotated[
         GenomeName | Literal["unknown"],
         EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
@@ -98,6 +95,13 @@ class PureCn(SnappyModel):
 
 class PanelOfNormalsDependsOn(SnappyModel):
     ngs_mapping: str = "ngs_mapping"
+
+    panel_of_normals: str = ""
+    """
+    Required when ``tool: purecn``.
+    Must name the upstream ``panel_of_normals`` task that was run with ``tool: mutect2``
+    to produce the Mutect2 genomicsDB used by PureCN's NormalDB.R step.
+    """
 
 
 class PanelOfNormals(SnappyStepModel):
@@ -136,3 +140,21 @@ class PanelOfNormals(SnappyStepModel):
     access: Access = Access()
 
     purecn: PureCn | None = None
+
+    @model_validator(mode="after")
+    def validate_purecn_dependencies(self) -> "PanelOfNormals":
+        """Enforce the explicit dependency: purecn requires a prior mutect2 panel-of-normals task.
+
+        The purecn PON build needs the Mutect2 genomicsDB produced by a preceding
+        ``panel_of_normals`` task with ``tool: mutect2``.  This dependency must be
+        expressed via ``depends_on.panel_of_normals`` so that Snakemake can track the
+        genomicsDB tar.gz as a proper input file rather than a bare config path.
+        """
+        if self.tool == Tool.purecn:
+            if not self.depends_on.panel_of_normals:
+                raise ValueError(
+                    "depends_on.panel_of_normals must be set when tool='purecn'; "
+                    "name the upstream panel_of_normals task that ran with tool='mutect2' "
+                    "to produce the Mutect2 genomicsDB required by PureCN"
+                )
+        return self

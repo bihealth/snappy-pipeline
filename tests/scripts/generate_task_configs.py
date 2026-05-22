@@ -413,11 +413,9 @@ def bootstrap_step_config(
                 "path_bait_regions"
             ) in ("", "AUTO"):
                 cfg["purecn"]["path_bait_regions"] = _guess_reference_from_static_data(base_config)
-            if not isinstance(cfg["purecn"].get("path_genomicsDB"), str) or cfg["purecn"].get(
-                "path_genomicsDB"
-            ) in ("", "AUTO"):
-                cfg["purecn"]["path_genomicsDB"] = _guess_reference_from_static_data(base_config)
             cfg["purecn"]["path_normals_list"] = ""
+            # path_genomicsDB removed: the genomicsDB is now a tracked Snakemake input derived
+            # from depends_on.panel_of_normals, not a bare config path.
 
     if step_name == "somatic_gene_fusion_calling":
         tool = cfg.get("tool") or "arriba"
