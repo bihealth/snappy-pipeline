@@ -58,7 +58,7 @@ Changelog = "https://github.com/bihealth/snappy-pipeline/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
-    "pytest >=8.2.2,<9",
+    "pytest >=8.2.2,<10",
     "coverage >=7.5.3,<8",
     "pytest-cov >=5.0.0,<6",
     "pytest-mock >=3.14.0,<4",
@@ -256,6 +256,9 @@ snappy-pipeline = { path = ".", editable = true }
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", env = { PYTHONPATH = "." }, description = "Run tests through pytest" }
 coverage = { cmd = "coverage report && coverage html", description = "Generate code coverage reports" }
+
+[tool.pixi.feature.test.dependencies]
+pytest-xdist = ">=3.8.0,<4"
 
 [tool.pixi.feature.dev.tasks]
 fmt = { cmd = "ruff format .", description = "Apply Ruff code formatter" }
