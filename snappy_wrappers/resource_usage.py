@@ -2,11 +2,10 @@
 """Resource usage definition"""
 
 import typing
+from dataclasses import dataclass
 
-import attr
 
-
-@attr.s(frozen=True, auto_attribs=True)
+@dataclass
 class ResourceUsage:
     """Resource usage specification to be used in ``BaseStepPart.default_resource_usage`` and
     ``BaseStepPart.resource_usage.values()``; as well as in the parallel wrappers classes.
@@ -17,3 +16,12 @@ class ResourceUsage:
     mem: str
     partition: typing.Optional[str] = None
     tmpdir: typing.Optional[str] = None
+
+    def __init__(
+        self, threads: int, runtime: str, mem: str, partition: typing.Optional[str] = None
+    ):
+        self.threads = threads
+        self.runtime = runtime
+        self.mem = mem
+        self.partition = partition
+        self.tmpdir = None
