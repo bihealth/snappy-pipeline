@@ -306,6 +306,14 @@ def _existing_placeholder_file() -> str:
     return str(__file__)
 
 
+def _star_index_fixture_dir() -> str:
+    repo_root = Path(__file__).resolve().parent.parent
+    candidate = repo_root / "snappy_pipeline" / "fixtures" / "star_index"
+    if candidate.exists():
+        return str(candidate)
+    return str(repo_root)
+
+
 def _guess_reference_from_static_data(base_config: dict[str, Any]) -> str:
     static_data = base_config.get("static_data_config", {})
     if isinstance(static_data, dict):
@@ -334,9 +342,28 @@ def bootstrap_step_config(
         cfg.setdefault(tool, {})
         if tool in ("bwa", "bwa_mem2", "minimap2") and isinstance(cfg[tool], dict):
             cfg[tool].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+        elif tool == "star" and isinstance(cfg["star"], dict):
+            cfg["star"].setdefault("path_index", _star_index_fixture_dir())
         elif tool == "mbcs":
             if isinstance(cfg["mbcs"], dict):
                 cfg["mbcs"].setdefault("mapping_tool", "bwa")
+            cfg.setdefault("bwa", {})
+            if isinstance(cfg["bwa"], dict):
+                cfg["bwa"].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+            cfg.setdefault("bqsr", {})
+            if isinstance(cfg["bqsr"], dict):
+                cfg["bqsr"].setdefault(
+                    "common_variants", _guess_reference_from_static_data(base_config)
+                )
+
+    if step_name == "ngs_data_qc":
+        tool = cfg.get("tool") or "fastqc"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
+        if tool == "picard" and isinstance(cfg["picard"], dict):
+            programs = cfg["picard"].get("programs")
+            if not isinstance(programs, list) or not programs:
+                cfg["picard"]["programs"] = ["CollectAlignmentSummaryMetrics"]
 
     if step_name == "somatic_targeted_seq_cnv_calling":
         # HRD requires sequenza; sequenza also produces _dnacopy.seg used by cnv_checking
@@ -378,6 +405,44 @@ def bootstrap_step_config(
                 "germline_resource"
             ) in ("", "AUTO"):
                 cfg["mutect2"]["germline_resource"] = _guess_reference_from_static_data(base_config)
+        elif tool == "cnvkit" and isinstance(cfg["cnvkit"], dict):
+            # Empty target path puts CNVkit into WGS mode and avoids unresolved external target BEDs.
+            cfg["cnvkit"]["path_target"] = ""
+        elif tool == "purecn" and isinstance(cfg["purecn"], dict):
+            if not isinstance(cfg["purecn"].get("path_bait_regions"), str) or cfg["purecn"].get(
+                "path_bait_regions"
+            ) in ("", "AUTO"):
+                cfg["purecn"]["path_bait_regions"] = _guess_reference_from_static_data(base_config)
+            if not isinstance(cfg["purecn"].get("path_genomicsDB"), str) or cfg["purecn"].get(
+                "path_genomicsDB"
+            ) in ("", "AUTO"):
+                cfg["purecn"]["path_genomicsDB"] = _guess_reference_from_static_data(base_config)
+            # Point to an existing file with no matching library names to allow empty-normal dryrun.
+            if not isinstance(cfg["purecn"].get("path_normals_list"), str) or not cfg["purecn"].get(
+                "path_normals_list"
+            ):
+                cfg["purecn"]["path_normals_list"] = _existing_placeholder_file()
+
+    if step_name == "somatic_gene_fusion_calling":
+        tool = cfg.get("tool") or "arriba"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
+        if tool == "arriba" and isinstance(cfg["arriba"], dict):
+            cfg["arriba"].setdefault("path_index", _star_index_fixture_dir())
+
+    if step_name == "somatic_variant_annotation":
+        tool = cfg.get("tool") or "vep"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
+        if tool == "mehari" and isinstance(cfg["mehari"], dict):
+            if not isinstance(cfg["mehari"].get("reference"), str) or cfg["mehari"].get(
+                "reference"
+            ) in ("", "AUTO"):
+                cfg["mehari"]["reference"] = _guess_reference_from_static_data(base_config)
+            if not isinstance(cfg["mehari"].get("transcripts"), list):
+                cfg["mehari"]["transcripts"] = []
+            elif cfg["mehari"].get("transcripts") == ["AUTO"]:
+                cfg["mehari"]["transcripts"] = []
 
     if step_name == "somatic_msi_calling":
         tool = cfg.get("tool") or "mantis_msi2"
@@ -545,7 +610,21 @@ def get_possible_tools(workflow_cls: type) -> list[str]:
     return []
 
 
-def get_default_tool(workflow_cls: type) -> str | None:
+PREFERRED_DEFAULT_TOOLS: dict[str, str] = {
+    # Prefer configs that can dryrun without heavy precomputed models.
+    "somatic_targeted_seq_cnv_calling": "sequenza",
+    "somatic_wgs_cnv_calling": "cnvkit",
+    "sv_calling_targeted": "delly2",
+}
+
+
+def get_default_tool(step_name: str, workflow_cls: type) -> str | None:
+    preferred = PREFERRED_DEFAULT_TOOLS.get(step_name)
+    if preferred:
+        possible = get_possible_tools(workflow_cls)
+        if preferred in possible:
+            return preferred
+
     config_model = getattr(workflow_cls, "config_model_class", None)
     if not config_model:
         return None
@@ -570,7 +649,7 @@ def get_default_tool(workflow_cls: type) -> str | None:
 
 
 def get_default_task_name(step_name: str, workflow_cls: type) -> str:
-    default_tool = get_default_tool(workflow_cls)
+    default_tool = get_default_tool(step_name, workflow_cls)
     if default_tool:
         return f"{step_name}_default"
     return step_name
@@ -588,7 +667,7 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
     tasks: list[dict[str, Any]] = []
     for step_name, cls in workflow_items:
         tools = get_possible_tools(cls)
-        default_tool = get_default_tool(cls)
+        default_tool = get_default_tool(step_name, cls)
 
         if tools:
             for tool_name in tools:
