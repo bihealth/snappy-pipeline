@@ -86,7 +86,6 @@ The default configuration is as follows.
 import os
 from typing import Any
 
-import attr
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
@@ -205,7 +204,9 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             return f"{attempt * 4 * 1024 + 16 * 1024}MB"
 
         if action == "filter_intervals":
-            result = attr.evolve(
+            import dataclasses
+
+            result = dataclasses.replace(
                 result,
                 mem=get_memory,
             )

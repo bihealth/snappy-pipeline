@@ -16,12 +16,3 @@ class ResourceUsage:
     mem: str
     partition: typing.Optional[str] = None
     tmpdir: typing.Optional[str] = None
-
-    def __init__(
-        self, threads: int, runtime: str, mem: str, partition: typing.Optional[str] = None
-    ):
-        self.threads = threads
-        self.runtime = runtime
-        self.mem = mem
-        self.partition = partition
-        self.tmpdir = None

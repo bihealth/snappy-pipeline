@@ -137,10 +137,19 @@ def test_generated_config_task_closure_passes(
         (raw_dir / f"{folder}.R1.fastq.gz").touch()
         (raw_dir / f"{folder}.R2.fastq.gz").touch()
 
+    def to_plain_obj(obj: Any) -> Any:
+        if isinstance(obj, dict):
+            return {str(k): to_plain_obj(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple, set)):
+            return [to_plain_obj(v) for v in obj]
+        elif isinstance(obj, Path):
+            return str(obj)
+        return obj
+
     # Write config.yaml directly in tmp_path (no .snappy_pipeline subfolder!)
     closure_config_path = tmp_path / "config.yaml"
     with closure_config_path.open("wt", encoding="utf-8") as f:
-        yaml.dump(closure_config, f)
+        yaml.dump(to_plain_obj(closure_config), f)
 
     # Run the dryrun command
     cmd = [
