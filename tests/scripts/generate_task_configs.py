@@ -314,6 +314,32 @@ def _star_index_fixture_dir() -> str:
     return str(repo_root)
 
 
+def _cnvkit_targets_bed() -> str:
+    """Return path to cnvkit target regions fixture BED file."""
+    repo_root = Path(__file__).resolve().parent.parent
+    candidate = repo_root / "snappy_pipeline" / "fixtures" / "cnvkit_targets.bed"
+    if candidate.exists():
+        return str(candidate)
+    # Also check test fixture directory
+    candidate2 = repo_root / "tests" / "snappy_pipeline" / "fixtures" / "cnvkit_targets.bed"
+    if candidate2.exists():
+        return str(candidate2)
+    return str(__file__)
+
+
+def _cnvkit_antitargets_bed() -> str:
+    """Return path to cnvkit antitarget regions fixture BED file."""
+    repo_root = Path(__file__).resolve().parent.parent
+    candidate = repo_root / "snappy_pipeline" / "fixtures" / "cnvkit_antitargets.bed"
+    if candidate.exists():
+        return str(candidate)
+    # Also check test fixture directory
+    candidate2 = repo_root / "tests" / "snappy_pipeline" / "fixtures" / "cnvkit_antitargets.bed"
+    if candidate2.exists():
+        return str(candidate2)
+    return str(__file__)
+
+
 def _gcnv_ploidy_model_dir() -> str:
     """Return path to gCNV ploidy model fixture."""
     repo_root = Path(__file__).resolve().parent.parent
@@ -423,6 +449,20 @@ def bootstrap_step_config(
         tool = cfg.get("tool") or "sequenza"
         cfg["tool"] = tool
         cfg.setdefault(tool, {})
+        if tool == "cnvkit" and isinstance(cfg.get("cnvkit"), dict):
+            # Use fixture BED files for target/antitarget regions
+            if cfg["cnvkit"].get("path_target") in (None, "", "AUTO"):
+                cfg["cnvkit"]["path_target"] = _cnvkit_targets_bed()
+            if cfg["cnvkit"].get("path_antitarget") in (None, "", "AUTO"):
+                cfg["cnvkit"]["path_antitarget"] = _cnvkit_antitargets_bed()
+            # path_panel_of_normals is no longer a config field; it comes from depends_on.panel_of_normals
+        elif tool == "purecn" and isinstance(cfg.get("purecn"), dict):
+            # path_panel_of_normals / path_intervals / path_mapping_bias are no longer config fields;
+            # they come from depends_on.panel_of_normals resolved at runtime.
+            if not isinstance(cfg["purecn"].get("path_container"), str) or cfg["purecn"].get(
+                "path_container"
+            ) in ("", "AUTO"):
+                cfg["purecn"]["path_container"] = _existing_placeholder_file()
 
     if step_name == "somatic_wgs_cnv_calling":
         # cnvkit produces _dnacopy.seg expected by somatic_cnv_checking
@@ -864,6 +904,17 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 depends_on["panel_of_normals"] = f"{step_name}_mutect2"
             else:
                 # Remove panel_of_normals dependency for non-purecn tools
+                depends_on.pop("panel_of_normals", None)
+
+        # 4) Special handling for somatic_targeted_seq_cnv_calling:
+        # - For cnvkit: depends_on.panel_of_normals -> panel_of_normals_cnvkit
+        # - For purecn: depends_on.panel_of_normals -> panel_of_normals_purecn
+        # - For sequenza: no panel_of_normals dependency needed
+        if step_name == "somatic_targeted_seq_cnv_calling" and isinstance(task_config, dict):
+            tool_val = task_config.get("tool")
+            if tool_val in ("cnvkit", "purecn"):
+                depends_on["panel_of_normals"] = f"panel_of_normals_{tool_val}"
+            else:
                 depends_on.pop("panel_of_normals", None)
 
         if depends_on:

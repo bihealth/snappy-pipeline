@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Any, Literal
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import Cnvkit
@@ -168,33 +168,7 @@ class PureCn(SnappyModel):
     path_container: Annotated[
         str, Field(examples=["../panel_of_normals/work/containers/out/purecn.simg"])
     ]
-    """
-    A PureCN panel of normals is required,
-    with the container, the intervals & the PON rds file
-    """
-
-    path_intervals: Annotated[
-        str,
-        Field(
-            examples=[
-                "../panel_of_normals/output/purecn/out/<enrichement_kit_name>_<genome_name>.list"
-            ]
-        ),
-    ]
-
-    path_panel_of_normals: Annotated[
-        str,
-        Field(
-            examples=["../panel_of_normals/output/bwa.purecn/out/bwa.purecn.panel_of_normals.rds"]
-        ),
-    ]
-    """Path to the PureCN panel of normal"""
-
-    path_mapping_bias: Annotated[
-        str,
-        Field(examples=["../panel_of_normals/output/bwa.purecn/out/bwa.purecn.mapping_bias.rds"]),
-    ]
-    """Path to the PureCN mapping bias file"""
+    """Path to the PureCN apptainer/singularity container image"""
 
     somatic_variant_caller: str = "mutect2"
     """
@@ -206,6 +180,13 @@ class PureCn(SnappyModel):
 class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     somatic_variants: str = "somatic_variants"
     ngs_mapping: str = "ngs_mapping"
+    panel_of_normals: str = ""
+    """
+    Required when ``tool: cnvkit`` or ``tool: purecn``.
+    Must name the upstream ``panel_of_normals`` task that produced the matching PON
+    (e.g. ``panel_of_normals_cnvkit`` or ``panel_of_normals_purecn``).
+    Snakemake tracks the PON outputs as proper input files via this dependency.
+    """
 
 
 class SomaticTargetedSeqCnvCalling(SnappyStepModel):
@@ -218,3 +199,20 @@ class SomaticTargetedSeqCnvCalling(SnappyStepModel):
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None
     purecn: PureCn | None = None
+
+    @model_validator(mode="after")
+    def validate_panel_of_normals_dependency(self) -> "SomaticTargetedSeqCnvCalling":
+        """Enforce explicit panel-of-normals dependency for cnvkit and purecn.
+
+        Both tools require a pre-built panel of normals.  The dependency must be
+        expressed via ``depends_on.panel_of_normals`` so that Snakemake can track
+        the PON outputs as proper input files rather than bare config paths.
+        """
+        if self.tool in (Tool.cnvkit, Tool.purecn):
+            if not self.depends_on.panel_of_normals:
+                raise ValueError(
+                    f"depends_on.panel_of_normals must be set when tool='{self.tool}'; "
+                    "name the upstream panel_of_normals task that produced the matching PON "
+                    f"(e.g. 'panel_of_normals_{self.tool}')"
+                )
+        return self

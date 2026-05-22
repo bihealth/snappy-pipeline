@@ -408,6 +408,17 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
         variant_calling = self.parent.modules["somatic_variants"]
         yield "vcf", variant_calling(base_path)
+        # PON outputs tracked as Snakemake inputs for proper dependency resolution.
+        pon_module = self.parent.modules["panel_of_normals"]
+        purecn_cfg = self.config.purecn
+        yield "normaldb", pon_module("output/purecn/out/purecn.panel_of_normals.rds")
+        yield "mapping_bias", pon_module("output/purecn/out/purecn.mapping_bias.rds")
+        yield (
+            "intervals",
+            pon_module(
+                f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
+            ),
+        )
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
@@ -416,6 +427,14 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         base_path = os.path.join("output", name_pattern, "out", name_pattern)
         yield "bam", ngs_mapping(base_path + ".bam")
         yield "bai", ngs_mapping(base_path + ".bam.bai")
+        pon_module = self.parent.modules["panel_of_normals"]
+        purecn_cfg = self.config.purecn
+        yield (
+            "intervals",
+            pon_module(
+                f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
+            ),
+        )
 
     def get_output_files(self, action):
         """Return output paths, dependent on rule"""
@@ -448,8 +467,20 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_args_all(self, wildcards):
         mapper = str(self.parent.get_task_config("ngs_mapping").tool)
+        config_dump = self.config.get(self.name).model_dump(by_alias=True)
+        # Inject PON file paths resolved from the panel_of_normals module so that
+        # the wrapper can access them via config["path_*"] as before.
+        pon_module = self.parent.modules["panel_of_normals"]
+        purecn_cfg = self.config.purecn
+        config_dump["path_panel_of_normals"] = pon_module(
+            "output/purecn/out/purecn.panel_of_normals.rds"
+        )
+        config_dump["path_mapping_bias"] = pon_module("output/purecn/out/purecn.mapping_bias.rds")
+        config_dump["path_intervals"] = pon_module(
+            f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
+        )
         return {
-            "config": self.config.get(self.name).model_dump(by_alias=True),
+            "config": config_dump,
             "mapper": mapper,
             "library_name": wildcards.library_name,
         }
@@ -535,10 +566,11 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_input_files_fix(self, wildcards):
         tpl_base = "{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
+        pon_module = self.parent.modules["panel_of_normals"]
         input_files = {
             "target": tpl.format(target="target", **wildcards),
             "antitarget": tpl.format(target="antitarget", **wildcards),
-            "ref": self.cfg.path_panel_of_normals,
+            "ref": pon_module("output/cnvkit/out/cnvkit.panel_of_normals.cnn"),
         }
         return input_files
 
@@ -781,6 +813,8 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         )
         # Initialize sub-workflows
         self.register_module("ngs_mapping")
+        if selected_tool in (Tool.cnvkit, Tool.purecn):
+            self.register_module("panel_of_normals")
         if selected_tool == Tool.purecn:
             self.register_module("somatic_variants", "somatic_variant_calling")
 

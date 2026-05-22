@@ -82,7 +82,7 @@ class ParallelGaktReadBackedPhasingWrapper(ParallelVariantAnnotationBaseWrapper)
                     threads: resource_merge_threads
                     resources:
                         runtime=resource_merge_time,
-                        mem_mb=resource_merge_memory,
+                        mem=resource_merge_memory,
                         partition=resource_merge_partition,
                     params:
                         **{params}

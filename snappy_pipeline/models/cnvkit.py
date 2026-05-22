@@ -189,16 +189,6 @@ class Cnvkit(SnappyModel):
     ]
     """Path to antitarget regions"""
 
-    path_panel_of_normals: Annotated[
-        str,
-        Field(
-            examples=[
-                "../panel_of_normals/output/cnvkit.create_panel/out/cnvkit.panel_of_normals.cnn"
-            ]
-        ),
-    ]
-    """Path to panel of normals (reference)"""
-
     coverage: Coverage = Coverage()
     fix: Fix = Fix()
     segment: Segment = Segment()

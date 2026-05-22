@@ -885,7 +885,7 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 threads: resource_merge_threads
                 resources:
                     runtime=resource_merge_time,
-                    mem_mb=resource_merge_memory,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''
@@ -919,7 +919,7 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 threads: resource_merge_threads
                 resources:
                     runtime=resource_merge_time,
-                    mem_mb=resource_merge_memory,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 log: **{all_log}
                 shell:
@@ -1007,7 +1007,7 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     threads: resource_chunk_threads
                     resources:
                         runtime=resource_chunk_time,
-                        mem_mb=resource_chunk_memory,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1061,7 +1061,7 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     threads: resource_chunk_threads
                     resources:
                         runtime=resource_chunk_time,
-                        mem_mb=resource_chunk_memory,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1116,7 +1116,7 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                     threads: resource_chunk_threads
                     resources:
                         runtime=resource_chunk_time,
-                        mem_mb=resource_chunk_memory,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1170,7 +1170,7 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                     threads: resource_chunk_threads
                     resources:
                         runtime=resource_chunk_time,
-                        mem_mb=resource_chunk_memory,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1395,7 +1395,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 threads: resource_chunk_threads
                 resources:
                     runtime=resource_chunk_time,
-                    mem_mb=resource_chunk_memory,
+                    mem=resource_chunk_memory,
                     partition=resource_chunk_partition,
                 params:
                     **{params}
@@ -1533,7 +1533,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 threads: resource_merge_threads
                 resources:
                     runtime=resource_merge_time,
-                    mem_mb=resource_merge_memory,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''
@@ -1574,7 +1574,7 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 threads: resource_merge_threads
                 resources:
                     runtime=resource_merge_time,
-                    mem_mb=resource_merge_memory,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''
