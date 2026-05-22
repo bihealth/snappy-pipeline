@@ -344,6 +344,14 @@ def bootstrap_step_config(
             cfg[tool].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
         elif tool == "star" and isinstance(cfg["star"], dict):
             cfg["star"].setdefault("path_index", _star_index_fixture_dir())
+            cfg.setdefault("strandedness", {})
+            if isinstance(cfg["strandedness"], dict):
+                cfg["strandedness"].setdefault(
+                    "path_exon_bed",
+                    _guess_reference_from_static_data(base_config).replace(".fa", ".exon.bed"),
+                )
+                cfg["strandedness"].setdefault("strand", -1)
+                cfg["strandedness"].setdefault("threshold", 0.85)
         elif tool == "mbcs":
             if isinstance(cfg["mbcs"], dict):
                 cfg["mbcs"].setdefault("mapping_tool", "bwa")
