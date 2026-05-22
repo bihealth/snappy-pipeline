@@ -32,7 +32,7 @@
 %(line_m)s
 %(line_M)s
 # Use more descriptive name in Slurm.
-#SBATCH --job-name %(step_name)s
+#SBATCH --job-name %(project_name)s
 
 # Enable the official bash strict mode (fail early, fail often)
 set -euo pipefail
@@ -40,8 +40,8 @@ set -euo pipefail
 # Fix the umask.
 umask ug=rwx,o=
 
-# Create jobname from pipeline step name ------------------------------------
-JOBNAME="%(step_name)s"
+# Create jobname from project name ------------------------------------
+JOBNAME="%(project_name)s"
 
 # Create one log directory per Snakemake run --------------------------------
 
@@ -97,11 +97,15 @@ else
 fi
 
 echo "Using conda installation in $CONDA_PATH"
-echo "+ conda activate snappy_dev"
+CONDA_ENV="%(conda)s"
+if [[ -z "${CONDA_ENV}" ]]; then
+    CONDA_ENV="snappy_dev"
+fi
+echo "+ conda activate ${CONDA_ENV}"
 set +euo pipefail
 conda deactivate &>/dev/null || true  # disable any existing
 source $CONDA_PATH/etc/profile.d/conda.sh
-conda activate snappy_dev # enable found
+conda activate "${CONDA_ENV}"
 set -euo pipefail
 
 # Activate bash cmd printing, debug info ------------------------------------
@@ -110,12 +114,18 @@ hostname > $LOGFILE
 date    >> $LOGFILE
 
 # Kick off Snakemake --------------------------------------------------------
+# How to run:
+# - Run locally:     ./pipeline_job.sh --cores N
+# - Submit to SLURM: sbatch pipeline_job.sh
+# Logs can be monitored under slurm_log/
+# Use snkmt for interactive TUI monitoring:
+#   ./pipeline_job.sh --logger snkmt
 
-# The slurm account value cannot be defined on the command line, so the job is dispached without account
-snappy-snake \
+snappy run \
     --profile-snappy-pipeline \
-    --printshellcmds --jobname "snakemake.$JOBNAME.{jobid}" --slurm-logdir $LOGDIR --slurm-keep-successful-logs --slurm-no-account \
-    $* \
+    -- \
+    --printshellcmds \
+    "$@" \
 1>> $LOGFILE 2>&1
 
 # Print date after finishing, for good measure ------------------------------

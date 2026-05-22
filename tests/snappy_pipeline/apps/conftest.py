@@ -24,7 +24,7 @@ def germline_sheet_config_yaml():
           reference:
             path: /path/to/ref.fa
 
-        step_config: {}
+        tasks: []
 
         data_sets:
           first_batch:

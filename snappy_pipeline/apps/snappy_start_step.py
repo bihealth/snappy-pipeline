@@ -15,9 +15,7 @@ from ruamel.yaml.comments import CommentedMap
 
 from .. import __version__
 from .impl.fsmanip import (
-    assume_path_nonexisting,
     backup_file,
-    create_directory,
     create_from_tpl,
     update_file,
 )
@@ -48,7 +46,7 @@ class StartStepApp:
     def __init__(self, step, directory, args):
         #: The step name
         self.step = step
-        #: Directory to create in
+        #: Task name (maps to directory parameter)
         self.directory = directory
         #: Parsed command line arguments
         self.args = args
@@ -57,37 +55,47 @@ class StartStepApp:
         """Actually perform the step."""
         log("")
         log(
-            'Starting step "{step}" in sub-directory "{directory}" of project dir "{project_dir}"',
+            'Starting step "{step}" with task name "{task_name}" in project dir "{project_dir}"',
             args={
                 "step": self.step,
-                "directory": self.directory,
+                "task_name": self.directory,
                 "project_dir": self.args.project_directory,
             },
         )
 
-        dest_dir = os.path.join(self.args.project_directory, self.directory)
-        if not assume_path_nonexisting(dest_dir):
-            return 1  # pragma: nocover
-
-        # Load project-wide configuration and check that the step does not exist yet
-        # (if configured).
+        # Load project-wide configuration
         try:
             config_yaml = self._load_config_yaml()
         except StartStepAppException:
             return 1
 
-        # Setup the step sub directory.
-        self._setup_step_dir(dest_dir, config_yaml)
+        # Check if the task name already exists in the tasks list
+        if "tasks" in config_yaml and isinstance(config_yaml["tasks"], list):
+            for existing_task in config_yaml["tasks"]:
+                if isinstance(existing_task, dict) and existing_task.get("name") == self.directory:
+                    log(
+                        "task with name {task_name} already present in configuration!",
+                        args={"task_name": self.directory},
+                        level=LVL_ERROR,
+                    )
+                    return 1
 
-        # Setup the configuration
+        # Setup the configuration by appending the task
         if self.args.manage_config:
             self._setup_configuration(config_yaml)
+
+        # Ensure pipeline_job.sh is present at project root
+        self._ensure_pipeline_job_sh()
 
         log(
             "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
             level=LVL_IMPORTANT,
         )
-        log("Step {step} created.", args={"step": self.step}, level=LVL_SUCCESS)
+        log(
+            "Task {task_name} for step {step} created.",
+            args={"task_name": self.directory, "step": self.step},
+            level=LVL_SUCCESS,
+        )
 
     def _load_config_yaml(self):
         """Load configuration."""
@@ -95,43 +103,15 @@ class StartStepApp:
         with open(config_filename, "rt") as f:
             yaml = ruamel_yaml.YAML()
             config_yaml = yaml.load(f.read())
-        if (
-            self.args.manage_config
-            and "step_config" in config_yaml
-            and self.step in config_yaml["step_config"]
-        ):
-            log(
-                "configuration for step {step} (/step_config/{step}) already present!",
-                args={"step": self.step},
-                level=LVL_ERROR,
-            )
-            log(
-                (
-                    "please comment out in {path}, re-run start_step, and merge configuration "
-                    "settings manually"
-                ),
-                args={"path": config_filename},
-                level=LVL_ERROR,
-            )
-            raise StartStepAppException("Config already exists")
         return config_yaml
 
-    def _setup_step_dir(self, dest_dir, config_yaml):
-        """Create and setup the step sub directory."""
-        create_directory(dest_dir)
-        create_directory(os.path.join(dest_dir, "slurm_log"))
-
-        create_from_tpl(
-            src_path=os.path.join(os.path.dirname(__file__), "tpls", "step_config.yaml"),
-            dest_path=os.path.join(dest_dir, CONFIG_FILENAME),
-            format_args={"step_name": self.step, "step_version": 1, "config_subdir": CONFIG_SUBDIR},
-            message="Creating step-wide configuration in {path}",
-            message_args={"path": os.path.join(dest_dir, CONFIG_FILENAME)},
-        )
-
+    def _ensure_pipeline_job_sh(self):
+        dest_path = os.path.join(self.args.project_directory, FILENAME_PIPELINE_JOB_SH)
+        if os.path.exists(dest_path):
+            return
         create_from_tpl(
             src_path=os.path.join(os.path.dirname(__file__), "tpls", FILENAME_PIPELINE_JOB_SH),
-            dest_path=os.path.join(dest_dir, FILENAME_PIPELINE_JOB_SH),
+            dest_path=dest_path,
             format_args={
                 "line_m": (
                     "##SBATCH --mail-type ALL" if not self.args.email else "#SBATCH --mail-type ALL"
@@ -143,30 +123,41 @@ class StartStepApp:
                 ),
                 "partition": self.args.partition,
                 "conda": self.args.conda,
-                "step_name": self.step,
+                "step_name": os.path.basename(self.args.project_directory),
             },
-            message="Creating SGE job shell file in {path}",
-            message_args={"path": os.path.join(dest_dir, FILENAME_PIPELINE_JOB_SH)},
+            message="Creating master job shell file in {path}",
+            message_args={"path": dest_path},
         )
 
     def _setup_configuration(self, config_yaml):
         """Setup configuration settings."""
-        # Ensure that a "step_config" setting is present and block style is used for it
-        if "step_config" not in config_yaml:
-            config_yaml["step_config"] = CommentedMap()
-        config_yaml["step_config"].fa.set_block_style()
+        if "tasks" not in config_yaml:
+            config_yaml["tasks"] = []
 
-        # Load default configuration, remove comment lines and lines not marked as required;
-        # preserve comments
+        # Load default configuration, remove comment lines and lines not marked as required
         yaml = ruamel_yaml.YAML()
         default_config_yaml = yaml.load(
             remove_yaml_comment_lines(STEP_TO_MODULE[self.step].DEFAULT_CONFIG)
         )
         only_required = remove_non_required(default_config_yaml)
-        if only_required:
-            config_yaml["step_config"][self.step] = only_required["step_config"][self.step]
 
-        # Create backup of config.yaml file and overwrite with new string, showing diff
+        step_config_block = None
+        if only_required and "step_config" in only_required:
+            step_name_key = self.step
+            if step_name_key in only_required["step_config"]:
+                step_config_block = only_required["step_config"][step_name_key]
+
+        if step_config_block is None:
+            step_config_block = CommentedMap()
+
+        task_block = CommentedMap()
+        task_block["step"] = self.step
+        task_block["name"] = self.directory
+        task_block["config"] = step_config_block
+
+        config_yaml["tasks"].append(task_block)
+
+        # Create backup of config.yaml file and overwrite with new string
         config_filename = os.path.join(self.args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         backup_file(config_filename)
         yaml = ruamel_yaml.YAML()

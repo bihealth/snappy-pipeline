@@ -1,42 +1,41 @@
 # -*- coding: utf-8 -*-
-"""Tests for ``snappy-snake app``"""
+"""Tests for ``snappy run`` subcommand."""
 
 import os.path
-
+from click.testing import CliRunner
 import pytest
 
 import snappy_pipeline.workflows
-from snappy_pipeline.apps import snappy_snake
+from snappy_pipeline.apps import snappy_cli
 from tests.snappy_pipeline.workflows.conftest import patch_module_fs
 
 
 def test_snappy_snake_help(germline_sheet_fake_project_ngs_mapping_fs, mocker):
-    """Check whether the call to ``snappy-snake --help`` works."""
-    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    """Check whether the call to ``snappy run --help`` works."""
     fake_fs = germline_sheet_fake_project_ngs_mapping_fs
-    patch_module_fs("snappy_pipeline.apps.snappy_snake", fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.apps.snappy_cli", fake_fs, mocker)
     patch_module_fs("snappy_pipeline.apps.impl.fsmanip", fake_fs, mocker)
     m = mocker.MagicMock()
-    mocker.patch("snappy_pipeline.apps.snappy_snake.snakemake_main", m)
-    # Run the code under test
-    with pytest.raises(SystemExit) as excinfo:
-        snappy_snake.main(["--help", "--verbose"])
-    assert "0" == str(excinfo.value)
-    # Check assersions
+    mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", m)
+    
+    runner = CliRunner()
+    result = runner.invoke(snappy_cli.main, ["run", "--help"])
+    assert result.exit_code == 0
     m.assert_not_called()
 
 
 def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mocker):
-    """Check whether the call to ``snappy-snake -S`` works."""
-    # Patch out file-system related things in abstract (the crawling link in step is defined there)
+    """Check whether the call to ``snappy run`` works."""
     fake_fs = germline_sheet_fake_project_ngs_mapping_fs
-    patch_module_fs("snappy_pipeline.apps.snappy_snake", fake_fs, mocker)
+    patch_module_fs("snappy_pipeline.apps.snappy_cli", fake_fs, mocker)
     patch_module_fs("snappy_pipeline.apps.impl.fsmanip", fake_fs, mocker)
     m = mocker.MagicMock(return_value=0)
-    mocker.patch("snappy_pipeline.apps.snappy_snake.snakemake_main", m)
-    # Run the code under test
-    assert 0 == snappy_snake.main(["--verbose"])
-    # Check assertions
+    mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", m)
+    
+    runner = CliRunner()
+    result = runner.invoke(snappy_cli.main, ["run", "--verbose"])
+    assert result.exit_code == 0
+    
     p = os.path.realpath(snappy_pipeline.workflows.__path__[0] + "/..")
     m.assert_called_once_with(
         [

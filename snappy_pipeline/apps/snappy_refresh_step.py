@@ -60,34 +60,27 @@ class RefreshStepApp:
         except RefreshStepAppException:
             return 1
 
-        # Re-setup the step sub directory.
-        self._resetup_step_dir(dest_dir, config_yaml)
+        # Re-setup the project directory.
+        self._resetup_step_dir(config_yaml)
 
         log("all done, have a nice day!", level=LVL_SUCCESS)
 
     def _load_config_yaml(self):
         """Load configuration."""
         config_filename = os.path.join(self.args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
+        if not os.path.exists(config_filename):
+            raise RefreshStepAppException(f"Configuration file does not exist at {config_filename}")
         with open(config_filename, "rt") as f:
             yaml = ruamel_yaml.YAML()
             return yaml.load(f.read())
 
-    def _resetup_step_dir(self, dest_dir, config_yaml):
-        """Re-setup the step sub directory."""
-        create_directory(dest_dir, exist_ok=True)
-        create_directory(os.path.join(dest_dir, "slurm_log"), exist_ok=True)
-
-        create_from_tpl(
-            src_path=os.path.join(os.path.dirname(__file__), "tpls", "step_config.yaml"),
-            dest_path=os.path.join(dest_dir, CONFIG_FILENAME),
-            format_args={"step_name": self.step, "step_version": 1, "config_subdir": CONFIG_SUBDIR},
-            message="creating step-wide configuration in {path}",
-            message_args={"path": os.path.join(dest_dir, CONFIG_FILENAME)},
-        )
+    def _resetup_step_dir(self, config_yaml):
+        """Re-setup the project directory."""
+        create_directory(os.path.join(self.args.project_directory, "slurm_log"), exist_ok=True)
 
         create_from_tpl(
             src_path=os.path.join(os.path.dirname(__file__), "tpls", FILENAME_PIPELINE_JOB_SH),
-            dest_path=os.path.join(dest_dir, FILENAME_PIPELINE_JOB_SH),
+            dest_path=os.path.join(self.args.project_directory, FILENAME_PIPELINE_JOB_SH),
             format_args={
                 "line_m": (
                     "##SBATCH --mail-type ALL" if not self.args.email else "#SBATCH --mail-type ALL"
@@ -98,10 +91,13 @@ class RefreshStepApp:
                     else "##SBATCH --mail-user {}".format(self.args.email)
                 ),
                 "partition": self.args.partition,
-                "step_name": self.step,
+                "conda": self.args.conda,
+                "step_name": os.path.basename(self.args.project_directory),
             },
             message="creating SGE job shell file in {path}",
-            message_args={"path": os.path.join(dest_dir, FILENAME_PIPELINE_JOB_SH)},
+            message_args={
+                "path": os.path.join(self.args.project_directory, FILENAME_PIPELINE_JOB_SH)
+            },
         )
 
 
@@ -166,6 +162,14 @@ def main(argv=None):
     )
 
     parser.add_argument("--partition", type=str, help="The partition to run in", default="medium")
+
+    parser.add_argument(
+        "--conda",
+        type=str,
+        nargs="?",
+        default="",
+        help="conda environment to load when submitting job",
+    )
 
     args = parser.parse_args(argv)
     # Flatten ``--step`` and ``-directory`` argument

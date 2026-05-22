@@ -78,7 +78,8 @@ def build_task_closure_config(
 
 def run_dry_run(config_dir: Path) -> tuple[int, str]:
     cmd = [
-        "snappy-snake",
+        "snappy",
+        "run",
         "-d",
         str(config_dir),
         "--",

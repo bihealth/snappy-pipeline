@@ -20,7 +20,12 @@ def _repo_root() -> Path:
 
 
 def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, cwd=cwd, text=True, capture_output=True, check=False)
+    env = os.environ.copy()
+    if "PYTHONPATH" not in env:
+        env["PYTHONPATH"] = str(_repo_root())
+    else:
+        env["PYTHONPATH"] = str(_repo_root()) + os.pathsep + env["PYTHONPATH"]
+    return subprocess.run(cmd, cwd=cwd, text=True, capture_output=True, check=False, env=env)
 
 
 def _tail(text: str, n: int = 40) -> str:

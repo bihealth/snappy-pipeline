@@ -29,3 +29,7 @@ default-resources:
   mem_mb: 5000
   disk_mb: 1000000
   tmpdir: ${HOME}/scratch/tmp
+
+slurm-logdir: "slurm_log"
+slurm-keep-successful-logs: true
+slurm-no-account: true
