@@ -8,6 +8,7 @@ from itertools import chain
 from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 from pyfakefs import fake_filesystem
 
 FORCE_RUN = os.environ.get("FORCE_RUN", "false") == "true"
@@ -46,8 +47,8 @@ def run_workflow(wrapper, test_dir, cmd, tmpdir, check_log=None):
     wrapper_file = "used_wrappers.yaml"
     if os.path.exists(os.path.join(wrapper, wrapper_file)):
         # is meta wrapper
-        with open(os.path.join(wrapper, wrapper_file), "r") as wf:
-            wf = ruamel_yaml.safe_load(wf)
+        with open(os.path.join(wrapper, wrapper_file), "r") as wf_file:
+            wf = yaml.safe_load(wf_file)
             used_wrappers = wf["wrappers"]
     else:
         used_wrappers.append(wrapper)
@@ -71,7 +72,7 @@ def run_workflow(wrapper, test_dir, cmd, tmpdir, check_log=None):
             any(f.startswith(w) for f in DIFF_FILES) for w in chain(used_wrappers, [wrapper])
         )
     ):
-        raise Skipped("wrappers not modified")
+        pytest.skip("wrappers not modified")
 
     testdir = os.path.join(d, "test")
     # pkgdir = os.path.join(d, "pkgs")

@@ -3,7 +3,6 @@
 
 import os.path
 from click.testing import CliRunner
-import pytest
 
 import snappy_pipeline.workflows
 from snappy_pipeline.apps import snappy_cli
