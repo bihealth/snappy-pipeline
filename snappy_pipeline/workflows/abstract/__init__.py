@@ -11,12 +11,12 @@ import tempfile
 import typing
 from collections import OrderedDict
 from collections.abc import MutableMapping
+from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
 from typing import Any, Callable
 
-import attr
 import pydantic
 import ruamel.yaml as ruamel_yaml
 from biomedsheets import io_tsv
@@ -621,7 +621,7 @@ class DataSetInfo:
         return sheet
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclass(frozen=True)
 class DataSearchInfo:
     """Data search information - simplified version of ``DataSetInfo``."""
 
