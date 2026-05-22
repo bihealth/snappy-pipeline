@@ -30,7 +30,7 @@ from snappy_pipeline.workflows.common.sv_calling import (
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.tools.genome_windows import yield_regions
 
-from .model import SvCallingWgs as SvCallingWgsConfigModel
+from .model import SvCallingWgs as SvCallingWgsConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -273,6 +273,8 @@ class Sniffles2StepPart(BaseStepPart):
         infix = "sniffles2.{index_ngs_library}"
         yield "snf", f"work/{infix}/out/{infix}.snf"
 
+    # FIXME: missing get_result_files
+
 
 class SvCallingWgsWorkflow(BaseStep):
     """Perform (germline) WGS SV calling"""
@@ -308,15 +310,22 @@ class SvCallingWgsWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        selected_tool = str(self.config.tool)
-        sub_step_map = {
-            "delly2": Delly2StepPart,
-            "manta": MantaStepPart,
-            "popdel": PopDelStepPart,
-            "gcnv": GcnvWgsStepPart,
-            "melt": MeltStepPart,
-        }
-        selected_sub_step = sub_step_map[selected_tool]
+        selected_tool = self.config.tool
+        match selected_tool:
+            case Tool.delly2:
+                selected_sub_step = Delly2StepPart
+            case Tool.manta:
+                selected_sub_step = MantaStepPart
+            case Tool.popdel:
+                selected_sub_step = PopDelStepPart
+            case Tool.gcnv:
+                selected_sub_step = GcnvWgsStepPart
+            case Tool.melt:
+                selected_sub_step = MeltStepPart
+            # case Tool.sniffles2:
+            #     selected_sub_step = Sniffles2StepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool step class.
         self.register_sub_step_classes((selected_sub_step, WritePedigreeStepPart))
         # Register sub workflows

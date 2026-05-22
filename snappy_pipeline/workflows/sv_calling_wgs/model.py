@@ -13,7 +13,7 @@ class Tool(enum.StrEnum):
     popdel = "popdel"
     gcnv = "gcnv"
     melt = "melt"
-    sniffles2 = "sniffles2"
+    # sniffles2 = "sniffles2"  # exclude for now
 
 
 class Gcnv(SnappyModel):

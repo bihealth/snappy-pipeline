@@ -475,3 +475,6 @@ elif tool == "gcnv":
             tmpdir=wf.get_resource("gcnv", "merge_multikit_families", "tmpdir"),
         wrapper:
             wf.wrapper_path("gcnv/merge_multikit_families")
+
+
+# FIXME: missing sniffles2 rules
