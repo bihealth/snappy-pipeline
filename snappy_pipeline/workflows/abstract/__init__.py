@@ -45,7 +45,7 @@ from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
-from snappy_pipeline.workflows.abstract.protocol import DataSignature
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
@@ -647,6 +647,21 @@ class BaseStep:
     #: DataSignatures this workflow step produces
     produces: list[DataSignature] = []
 
+    def __init_subclass__(cls, **kwargs):
+        """Warn when a ``BaseStep`` subclass does not declare a ``produces`` contract."""
+        super().__init_subclass__(**kwargs)
+        # Only warn for concrete leaf classes that inherit produces=[] from BaseStep
+        own_produces = cls.__dict__.get("produces")
+        if own_produces is None and not cls.produces:
+            import warnings as _warnings
+
+            _warnings.warn(
+                f"Transition Guidance: '{cls.__name__}' should declare a 'produces' list "
+                "for full contract compliance.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
     #: Override with the sheet shortcut class to use
     sheet_shortcut_class: type[ShortcutSampleSheet]
 
@@ -685,6 +700,37 @@ class BaseStep:
 
     #: Override with the Pydantic model class for configuration validation
     config_model_class: type[SnappyStepModel]
+
+    @classmethod
+    def get_output_paths(
+        cls, signature: "DataSignature | None" = None, **kwargs
+    ) -> "dict[str, str]":
+        """Return **local** output paths for *signature*.
+
+        Override in concrete workflow classes to expose this step's outputs to downstream
+        consumers via :meth:`get_upstream_paths`.
+
+        Arguments:
+            signature: The :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature`
+                requested by the consumer.  Implementations should check
+                ``signature.satisfies(...)`` and raise ``ValueError`` for unsupported
+                signatures.
+            **kwargs: Caller-supplied identifiers (e.g. ``library_name``, ``sample_name``)
+                used to parametrise the returned path strings.  Implementations may use
+                ``{library_name}``-style format strings when the identifiers are omitted.
+
+        Returns:
+            A ``dict[str, str]`` mapping logical output key (e.g. ``"bam"``, ``"vcf"``) to a
+            **local** path string (relative to the step's own ``output/`` directory, e.g.
+            ``"output/{library_name}/out/{library_name}.bam"``).
+
+        Raises:
+            NotImplementedError: When the concrete subclass has not overridden this method.
+            ValueError: When *signature* is not supported by this workflow.
+        """
+        raise NotImplementedError(
+            f"'{cls.__name__}' must implement 'get_output_paths' to act as an upstream provider."
+        )
 
     def __init__(
         self,
@@ -991,6 +1037,144 @@ class BaseStep:
             return os.path.join(target_task_name, path).replace("\\", "/")
 
         self.modules[logical_name] = resolve_dependency
+
+    def get_upstream_path(self, logical_name: str, path: str, default_task_name: str = "") -> str:
+        """Resolve *path* into the physical output directory of an upstream task.
+
+        This is the inline alternative to the :meth:`register_module` +
+        ``self.modules[logical_name](path)`` two-step pattern. Step parts can call this
+        directly without first registering the module in ``__init__``:
+
+        .. code-block:: python
+
+            # old pattern (still works, no need to change immediately)
+            self.register_module("ngs_mapping")
+            ngs_mapping = self.parent.modules["ngs_mapping"]
+            bam = ngs_mapping(f"output/{lib}/out/{lib}.bam")
+
+            # new pattern (preferred for new code)
+            bam = self.get_upstream_path("ngs_mapping", f"output/{lib}/out/{lib}.bam")
+
+        Name resolution follows the same rules as :meth:`register_module`:
+
+        1. If ``depends_on`` has an attribute named *logical_name*, use its value as the
+           upstream task name.
+        2. Otherwise fall back to *default_task_name* (or *logical_name* itself when
+           *default_task_name* is empty).
+
+        The task name is prepended to *path*, matching the Snakemake module namespace
+        convention used everywhere in this codebase.
+
+        Arguments:
+            logical_name: The logical dependency name, e.g. ``"ngs_mapping"``.
+            path: The local path within the upstream task, e.g.
+                ``"output/lib/out/lib.bam"``.
+            default_task_name: Fallback task name when *logical_name* is not found in
+                ``depends_on``.  Defaults to *logical_name* itself.
+
+        Returns:
+            The namespaced path, e.g. ``"ngs_mapping/output/lib/out/lib.bam"``.
+        """
+        if not default_task_name:
+            default_task_name = logical_name
+
+        if self.depends_on is not None and hasattr(self.depends_on, logical_name):
+            target_task_name = getattr(self.depends_on, logical_name) or default_task_name
+        else:
+            target_task_name = default_task_name
+
+        if path.startswith("output/") or path.startswith("work/"):
+            return f"{target_task_name}/{path}"
+        return os.path.join(target_task_name, path).replace("\\", "/")
+
+    def get_upstream_paths(
+        self, req_field_name: str, **kwargs
+    ) -> "pydantic.BaseModel | dict[str, str]":
+        """Resolve global output paths from an upstream task using the Consumer-Driven Contract.
+
+        This is the broker method for the semantic retrieval pattern.  The upstream
+        task's workflow class is located via :data:`~snappy_pipeline.workflow_registry.WORKFLOW_REGISTRY`
+        and its :py:meth:`get_output_paths` classmethod is called to produce **local** paths, which
+        are then namespaced with the upstream task name.
+
+        The ``depends_on`` field referenced by *req_field_name* may carry ``typing.Annotated``
+        metadata with:
+
+        * A :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature` – forwarded to
+          :py:meth:`get_output_paths`.
+        * An optional ``pydantic.BaseModel`` subclass – used to wrap the returned paths into a
+          typed object for dot-notation access.
+
+        Example::
+
+            # in a step part's _get_input_files_run method
+            alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=wildcards.library_name
+            )
+            bam = alignments.bam
+            bai = alignments.bai
+
+        Arguments:
+            req_field_name: The field name on ``self.config.depends_on`` that holds the upstream
+                task reference. Must match a key in the ``depends_on`` Pydantic model.
+            **kwargs: Forwarded verbatim to the upstream workflow's
+                :py:meth:`get_output_paths` classmethod (e.g. ``library_name``, ``sample_name``).
+
+        Returns:
+            A ``pydantic.BaseModel`` instance when an expected-schema class is present in the
+            ``Annotated`` metadata, otherwise a plain ``dict[str, str]``.
+
+        Raises:
+            AttributeError: If ``self.config`` has no ``depends_on`` attribute.
+            ValueError: If the upstream task or its workflow class cannot be resolved.
+        """
+        if self.depends_on is None:
+            raise AttributeError(
+                f"Task '{self.task_name}' has no 'depends_on' configuration; "
+                f"cannot resolve upstream field '{req_field_name}'."
+            )
+
+        target_task_name = getattr(self.depends_on, req_field_name)
+        if not target_task_name:
+            raise ValueError(
+                f"Task '{self.task_name}': depends_on.{req_field_name} is empty or unset."
+            )
+
+        # Find the task entry to determine the step type
+        target_task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
+        step_type = target_task.step if target_task else target_task_name
+
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        upstream_cls = WORKFLOW_REGISTRY.get(step_type)
+        if upstream_cls is None:
+            raise ValueError(
+                f"Workflow class for step '{step_type}' (resolved from depends_on.{req_field_name}"
+                f" = '{target_task_name}') not found in WORKFLOW_REGISTRY."
+            )
+
+        # Extract DataSignature and optional expected-schema from Annotated metadata
+        field_info = self.config.depends_on.model_fields.get(req_field_name)
+        required_sig: DataSignature | None = None
+        expected_schema: type[pydantic.BaseModel] | None = None
+        if field_info is not None:
+            for meta in field_info.metadata:
+                if isinstance(meta, DataSignature):
+                    required_sig = meta
+                elif isinstance(meta, ExpectedPathSchema):
+                    expected_schema = meta.schema
+                elif isinstance(meta, type) and issubclass(meta, pydantic.BaseModel):
+                    expected_schema = meta
+
+        # Delegate path construction to the upstream workflow classmethod
+        local_paths = upstream_cls.get_output_paths(signature=required_sig, **kwargs)
+
+        # Prepend upstream task name for Snakemake global namespace
+        global_paths = {k: f"{target_task_name}/{v}" for k, v in local_paths.items()}
+
+        if expected_schema is not None:
+            return expected_schema(**global_paths)
+        return global_paths
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards

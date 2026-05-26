@@ -5,6 +5,8 @@ from pydantic import Field
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.annotation import Mehari, Vep
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class Tool(enum.StrEnum):
@@ -13,7 +15,11 @@ class Tool(enum.StrEnum):
 
 
 class SomaticVariantAnnotationDependsOn(SnappyModel):
-    somatic_variant: str = "somatic_variant"
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variant"
 
 
 class SomaticVariantAnnotation(SnappyStepModel):

@@ -3,9 +3,16 @@ import os
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from snappy_pipeline.models import SizeString, SnappyModel, SnappyStepModel, ToggleModel
+
+
+class ExpectedAlignments(BaseModel):
+    """Consumer-driven contract: expected output keys from an ngs_mapping upstream task."""
+
+    bam: str
+    bai: str
 
 
 class DnaMapper(StrEnum):

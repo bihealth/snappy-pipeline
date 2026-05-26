@@ -174,6 +174,19 @@ class VariantAnnotationWorkflow(BaseStep):
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local annotated VCF output paths for a germline-variants signature."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"}))
+        ):
+            raise ValueError(f"VariantAnnotationWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+        }
+
+    @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG

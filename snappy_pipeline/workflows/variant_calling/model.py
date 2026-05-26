@@ -1,9 +1,18 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedGermlineVariants(BaseModel):
+    """Consumer-driven contract: expected output keys from a variant_calling upstream task."""
+
+    vcf: str
+    vcf_tbi: str
 
 
 class BafFileGeneration(ToggleModel):
@@ -72,7 +81,11 @@ class Gatk4HcGvcf(SnappyModel):
 
 
 class VariantCallingDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
 
 class VariantCalling(SnappyStepModel):

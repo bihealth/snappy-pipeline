@@ -978,6 +978,26 @@ class VariantCallingWorkflow(BaseStep):
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local VCF output paths for a germline-variants signature.
+
+        Arguments:
+            signature: Expected to satisfy
+                ``DataSignature(DataType.VARIANTS, frozenset({"germline"}))``.
+            **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
+                the ``{library_name}`` wildcard placeholder.
+        """
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"germline"}))
+        ):
+            raise ValueError(f"VariantCallingWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+        }
+
+    @classmethod
     def default_config_yaml(cls) -> str:
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG

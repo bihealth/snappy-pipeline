@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from pydantic import BaseModel
+
 
 class DataType(StrEnum):
     RAW = "raw"
@@ -40,3 +42,10 @@ class DataSignature:
             elif req not in self.tags:
                 return False
         return True
+
+
+@dataclass(frozen=True)
+class ExpectedPathSchema:
+    """Annotated metadata wrapper for expected upstream output-path schema."""
+
+    schema: type[BaseModel]

@@ -444,6 +444,28 @@ class SomaticVariantCallingWorkflow(BaseStep):
     }
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local VCF output paths for a somatic-variants signature.
+
+        Arguments:
+            signature: Expected to satisfy
+                ``DataSignature(DataType.VARIANTS, frozenset({"somatic"}))``.
+            **kwargs: Accepts ``library_name`` (tumor library) for concrete path rendering;
+                falls back to ``{library_name}`` wildcard placeholder.
+        """
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"somatic"}))
+        ):
+            raise ValueError(
+                f"SomaticVariantCallingWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+        }
+
+    @classmethod
     def default_config_yaml(cls):
         return DEFAULT_CONFIG
 

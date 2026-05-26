@@ -1,11 +1,20 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedSomaticVariants(BaseModel):
+    """Consumer-driven contract: expected output keys from a somatic_variant_calling upstream task."""
+
+    vcf: str
+    vcf_tbi: str
 
 
 class Tool(enum.StrEnum):
@@ -58,7 +67,11 @@ class Mutect2(Parallel, GATK):
 
 
 class SomaticVariantCallingDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
 
 class SomaticVariantCalling(SnappyStepModel):
