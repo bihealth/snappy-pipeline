@@ -350,6 +350,16 @@ class RepeatExpansionWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local repeat expansion output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"germline", "repeats"}))
+        ):
+            raise ValueError(f"RepeatExpansionWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"vcf": f"output/{lib}/out/{lib}.vcf"}
+
     @listify
     def _all_donors(self, include_background=True):
         """Return list of all donors in sample sheet."""

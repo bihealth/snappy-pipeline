@@ -1,12 +1,20 @@
 import enum
 from typing import Annotated, Literal
 
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedPonPaths(BaseModel):
+    """Consumer-driven contract for panel-of-normals provider outputs."""
+
+    done: str
 
 
 class Tool(enum.StrEnum):
@@ -94,9 +102,17 @@ class PureCn(SnappyModel):
 
 
 class PanelOfNormalsDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    panel_of_normals: str = ""
+    panel_of_normals: Annotated[
+        str,
+        DataSignature(DataType.MODELS, frozenset({"pon"})),
+        ExpectedPathSchema(ExpectedPonPaths),
+    ] = ""
     """
     Required when ``tool: purecn``.
     Must name the upstream ``panel_of_normals`` task that was run with ``tool: mutect2``

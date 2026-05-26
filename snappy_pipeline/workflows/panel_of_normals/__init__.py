@@ -820,6 +820,16 @@ class PanelOfNormalsWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local panel-of-normals output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.MODELS, frozenset({"pon"}))
+        ):
+            raise ValueError(f"PanelOfNormalsWorkflow does not support signature: {signature}")
+        tool = kwargs.get("tool", "{tool}")
+        return {"done": f"output/{tool}/out/.done"}
+
     def __init__(
         self,
         workflow,

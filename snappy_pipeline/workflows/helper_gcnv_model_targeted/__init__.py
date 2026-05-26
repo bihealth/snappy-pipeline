@@ -186,6 +186,21 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local helper gCNV model output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.MODELS, frozenset({"gcnv"}))
+        ):
+            raise ValueError(
+                f"HelperBuildTargetSeqGcnvModelWorkflow does not support signature: {signature}"
+            )
+        kit = kwargs.get("library_kit", "{library_kit}")
+        return {
+            "ploidy_done": f"output/gcnv_contig_ploidy.{kit}/out/gcnv_contig_ploidy.{kit}/.done",
+            "calls_done": f"output/gcnv_call_cnvs.{kit}.{{shard}}/out/gcnv_call_cnvs.{kit}.{{shard}}/.done",
+        }
+
     def __init__(
         self,
         workflow,

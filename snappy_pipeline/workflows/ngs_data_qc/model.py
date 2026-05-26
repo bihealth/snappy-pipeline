@@ -4,6 +4,9 @@ from typing import Annotated
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -75,8 +78,16 @@ class Fastqc(SnappyModel):
 
 
 class NgsDataQcDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
-    link_in: str | None = None
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    link_in: Annotated[
+        str | None,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = None
     """Optional: name of the ``link_in`` task to use as the preprocessed FASTQ source."""
 
 

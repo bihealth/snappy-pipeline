@@ -231,6 +231,21 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local helper gCNV WGS model output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.MODELS, frozenset({"gcnv"}))
+        ):
+            raise ValueError(
+                f"HelperBuildWgsGcnvModelWorkflow does not support signature: {signature}"
+            )
+        _ = kwargs
+        return {
+            "ploidy_done": "output/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done",
+            "calls_done": "output/gcnv_call_cnvs.default.{shard}/out/gcnv_call_cnvs.default.{shard}/.done",
+        }
+
     def __init__(
         self,
         workflow,

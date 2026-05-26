@@ -34,6 +34,7 @@ Example task config
 from biomedsheets.shortcuts import GenericSampleSheet
 
 from snappy_pipeline.workflows.abstract import BaseStep
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import LinkIn
 
@@ -47,8 +48,16 @@ class LinkInWorkflow(BaseStep):
     """
 
     name = "link_in"
+    produces = [DataSignature(DataType.RAW)]
     sheet_shortcut_class = GenericSampleSheet
     config_model_class = LinkIn
+
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return link_in payload contract for external FASTQ source paths."""
+        if signature is not None and not signature.satisfies(DataSignature(DataType.RAW)):
+            raise ValueError(f"LinkInWorkflow does not support signature: {signature}")
+        return {"path": kwargs.get("path", "")}
 
     def get_result_files(self):
         """No output files — this step only carries configuration."""

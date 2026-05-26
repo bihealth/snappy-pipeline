@@ -1,11 +1,20 @@
 from __future__ import annotations
 
 import enum
-from typing import Any, TypedDict
+from typing import Annotated, Any, TypedDict
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+
+
+class ExpectedCopyNumberCalls(BaseModel):
+    """Consumer-driven contract for copy-number provider outputs used by cBioPortal export."""
+
+    done: str
 
 
 class MappingTool(enum.StrEnum):
@@ -96,9 +105,21 @@ class ExtraInfos(TypedDict):
 
 
 class CbioportalExportDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
-    copy_number: str = "copy_number"
-    somatic_variant: str = "somatic_variant"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    copy_number: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
+        ExpectedPathSchema(ExpectedCopyNumberCalls),
+    ] = "copy_number"
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variant"
 
 
 class CbioportalExport(SnappyStepModel):

@@ -774,6 +774,18 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local somatic targeted CNV output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))
+        ):
+            raise ValueError(
+                f"SomaticTargetedSeqCnvCallingWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/{lib}/out/.done"}
+
     def __init__(
         self,
         workflow,

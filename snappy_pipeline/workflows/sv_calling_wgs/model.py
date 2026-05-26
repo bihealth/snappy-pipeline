@@ -5,6 +5,8 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.gcnv import PrecomputedModelEntry
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -115,7 +117,11 @@ class Sniffles2(SnappyModel):
 
 
 class SvCallingWgsDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
 
 class SvCallingWgs(SnappyStepModel):

@@ -730,6 +730,19 @@ class cbioportalExportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local cBioPortal export output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))
+        ):
+            raise ValueError(f"cbioportalExportWorkflow does not support signature: {signature}")
+        _ = kwargs
+        return {
+            "meta_study": "output/upload/meta_study.txt",
+            "clinical_patient": "output/upload/data_clinical_patient.txt",
+        }
+
     def __init__(
         self,
         workflow,

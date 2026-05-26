@@ -5,6 +5,10 @@ from pydantic import ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import Cnvkit
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.panel_of_normals.model import ExpectedPonPaths
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class Tool(enum.StrEnum):
@@ -178,9 +182,21 @@ class PureCn(SnappyModel):
 
 
 class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
-    somatic_variants: str = "somatic_variants"
-    ngs_mapping: str = "ngs_mapping"
-    panel_of_normals: str = ""
+    somatic_variants: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variants"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    panel_of_normals: Annotated[
+        str,
+        DataSignature(DataType.MODELS, frozenset({"pon"})),
+        ExpectedPathSchema(ExpectedPonPaths),
+    ] = ""
     """
     Required when ``tool: cnvkit`` or ``tool: purecn``.
     Must name the upstream ``panel_of_normals`` task that produced the matching PON
