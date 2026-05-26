@@ -193,6 +193,22 @@ class IgvSessionGenerationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local IGV session output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.EXPORTS, frozenset({"igv"}))
+        ):
+            raise ValueError(
+                f"IgvSessionGenerationWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        token = kwargs.get("token", "")
+        if token:
+            token = token + "."
+        prefix = f"output/{token}{lib}/out/{token}{lib}"
+        return {"xml": f"{prefix}.igv_session.xml"}
+
     def __init__(
         self,
         workflow,

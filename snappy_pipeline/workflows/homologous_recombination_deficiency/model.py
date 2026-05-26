@@ -4,6 +4,13 @@ from typing import Annotated
 from pydantic import Field
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+
+
+class ExpectedSomaticCnvCalls(SnappyModel):
+    """Consumer-driven contract: expected output keys from somatic CNV caller steps."""
+
+    vcf: str
 
 
 class Tool(enum.StrEnum):
@@ -26,7 +33,11 @@ class ScarHRD(SnappyModel):
 
 
 class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
-    cnv_calling: str = "somatic_targeted_seq_cnv_calling"
+    cnv_calling: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
+        ExpectedPathSchema(ExpectedSomaticCnvCalls),
+    ] = "somatic_targeted_seq_cnv_calling"
 
 
 class HomologousRecombinationDeficiency(SnappyStepModel):

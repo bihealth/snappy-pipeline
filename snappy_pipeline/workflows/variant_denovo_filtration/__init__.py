@@ -458,6 +458,19 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local de-novo filtration output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"germline", "denovo"}))
+        ):
+            raise ValueError(
+                f"VariantDeNovoFiltrationWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        prefix = f"output/de_novos_hard.{lib}/out/de_novos_hard.{lib}"
+        return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
+
     def __init__(
         self,
         workflow,

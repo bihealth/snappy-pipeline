@@ -312,6 +312,16 @@ class HlaTypingWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local HLA typing output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.TABULAR, frozenset({"hla"}))
+        ):
+            raise ValueError(f"HlaTypingWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/{lib}/out/.done"}
+
     def __init__(self, *args, task_name: str, **kwargs):
         super().__init__(*args, task_name=task_name, **kwargs)
         sub_steps = [LinkInStepPart, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]

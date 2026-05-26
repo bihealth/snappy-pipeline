@@ -189,6 +189,18 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local HRD output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.TABULAR, frozenset({"hrd"}))
+        ):
+            raise ValueError(
+                f"HomologousRecombinationDeficiencyWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"json": f"output/scarHRD.{lib}/out/scarHRD.{lib}.json"}
+
     def __init__(
         self,
         workflow,

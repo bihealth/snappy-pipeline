@@ -201,6 +201,16 @@ class SomaticMsiCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local MSI calling output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.TABULAR, frozenset({"msi"}))
+        ):
+            raise ValueError(f"SomaticMsiCallingWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"results": f"output/{lib}/out/{lib}.results.txt"}
+
     def __init__(
         self,
         workflow,

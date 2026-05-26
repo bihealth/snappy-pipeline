@@ -1,13 +1,36 @@
+from typing import Annotated
+
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
+from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
+from snappy_pipeline.workflows.variant_phasing.model import ExpectedPhasedVariants
 
 
 class IgvSessionGenerationDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
-    variant_phasing: str = ""
-    variant_annotation: str = ""
-    variant_calling: str = ""
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    variant_phasing: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"})),
+        ExpectedPathSchema(ExpectedPhasedVariants),
+    ] = ""
+    variant_annotation: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
+        ExpectedPathSchema(ExpectedAnnotatedGermlineVariants),
+    ] = ""
+    variant_calling: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline"})),
+        ExpectedPathSchema(ExpectedGermlineVariants),
+    ] = ""
 
 
 class IgvSessionGeneration(SnappyStepModel):

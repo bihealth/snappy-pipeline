@@ -4,6 +4,14 @@ from typing import Annotated
 from pydantic import Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedSomaticCnvCalls(SnappyModel):
+    """Consumer-driven contract: expected output keys from somatic CNV caller steps."""
+
+    vcf: str
 
 
 class CnvAssayType(enum.StrEnum):
@@ -12,8 +20,16 @@ class CnvAssayType(enum.StrEnum):
 
 
 class SomaticCnvCheckingDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
-    cnv_calling: str = "cnv_calling"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    cnv_calling: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
+        ExpectedPathSchema(ExpectedSomaticCnvCalls),
+    ] = "cnv_calling"
 
 
 class SomaticCnvChecking(SnappyStepModel):

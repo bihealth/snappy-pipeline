@@ -381,6 +381,18 @@ class VariantPhasingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local phased-variant output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))
+        ):
+            raise ValueError(f"VariantPhasingWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        phasing = kwargs.get("phasing", "{phasing}")
+        prefix = f"output/jannovar_annotate_vcf.{phasing}.{lib}/out/jannovar_annotate_vcf.{phasing}.{lib}"
+        return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
+
     def __init__(
         self,
         workflow,
