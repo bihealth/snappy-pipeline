@@ -200,8 +200,9 @@ class ExpansionHunterStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        bam_tpl = ngs_mapping("output/{library_name}/out/{library_name}.bam")
+        bam_tpl = self.parent.get_upstream_local_path(
+            "ngs_mapping", "output/{library_name}/out/{library_name}.bam"
+        )
         bam = bam_tpl.format(**wildcards)
         return {
             "bam": bam,
@@ -342,8 +343,7 @@ class RepeatExpansionWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
-        # Register sub workflows
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @classmethod
     def default_config_yaml(cls):
@@ -353,10 +353,7 @@ class RepeatExpansionWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local repeat expansion output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline", "repeats"}))
-        ):
-            raise ValueError(f"RepeatExpansionWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"vcf": f"output/{lib}/out/{lib}.vcf"}
 

@@ -168,9 +168,11 @@ class PicardStepPart(BaseStepPart):
         if "CollectHsMetrics" in self.config.picard.programs:
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = f"{wildcards.library_name}"
-        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
+        yield (
+            "bam",
+            self.parent.get_upstream_local_path("ngs_mapping", f"output/{infix}/out/{infix}.bam"),
+        )
 
     @dictify
     def get_output_files(self, action):
@@ -315,8 +317,7 @@ class NgsDataQcWorkflow(BaseStep):
         self.register_sub_step_classes(
             (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
-        if self.config.tool == "picard":
-            self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):

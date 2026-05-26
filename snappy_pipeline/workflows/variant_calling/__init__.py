@@ -415,7 +415,6 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
 
         if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
@@ -433,7 +432,11 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
                 if not donor.dna_ngs_library:
                     continue  # skip
                 infix = donor.dna_ngs_library.name
-                bams.append(ngs_mapping(f"output/{infix}/out/{infix}.bam"))
+                bams.append(
+                    self.parent.get_upstream_local_path(
+                        "ngs_mapping", f"output/{infix}/out/{infix}.bam"
+                    )
+                )
             yield "bam", bams
 
     def get_output_files(self, action) -> SnakemakeDict:
@@ -590,8 +593,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         yield "dbsnp", self.w_config.static_data_config.dbsnp.path
         infix = wildcards.library_name
         bam_path = f"output/{infix}/out/{infix}.bam"
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        yield "bam", ngs_mapping(bam_path)
+        yield "bam", self.parent.get_upstream_local_path("ngs_mapping", bam_path)
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
@@ -1037,8 +1039,7 @@ class VariantCallingWorkflow(BaseStep):
                 BafFileGenerationStepPart,
             )
         )
-        # Register sub workflows
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

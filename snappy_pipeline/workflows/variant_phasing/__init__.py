@@ -217,13 +217,15 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
             # Get name of real index
             real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
             # Annotated variant file from variant_annotation step.
-            variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 input_path = (
                     "output/jannovar_annotate_vcf.{real_index}/out/"
                     "jannovar_annotate_vcf.{real_index}"
                 ).format(real_index=real_index.dna_ngs_library.name, **wildcards)
-                yield key, variant_annotation(input_path) + ext
+                yield (
+                    key,
+                    self.parent.get_upstream_local_path("variant_annotation", input_path) + ext,
+                )
             yield "reference", self.w_config.static_data_config.reference.path
 
         assert action == "run", "Unsupported actions"
@@ -265,7 +267,6 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         """Helper function used in subclass input_function"""
         donor = self.ngs_library_to_donor[wildcards.index_library]
         tpl = "output/{index_library}/out/{index_library}{ext}"
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             vals = {"ext": ext}
             # Note that we only perform phasing for pedigree members we have both parents, so
@@ -282,7 +283,10 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
                     tpl.format(index_library=donor.father.dna_ngs_library.name, **vals),
                     tpl.format(index_library=donor.mother.dna_ngs_library.name, **vals),
                 ]
-                yield key, list(map(ngs_mapping, files))
+                yield (
+                    key,
+                    [self.parent.get_upstream_local_path("ngs_mapping", path) for path in files],
+                )
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -327,13 +331,15 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
             # BAM files from ngs_mapping step.
             yield from self._yield_bams(wildcards)
             # Annotated variant file from variant_annotation step.
-            variant_annotation = self.parent.modules["variant_annotation"]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 output_path = (
                     "output/jannovar_annotate_vcf.{real_index}/out/"
                     "jannovar_annotate_vcf.{real_index}"
                 ).format(real_index=real_index.dna_ngs_library.name, **wildcards)
-                yield key, variant_annotation(output_path) + ext
+                yield (
+                    key,
+                    self.parent.get_upstream_local_path("variant_annotation", output_path) + ext,
+                )
 
         assert action == "run", "Unsupported actions"
         return input_function
@@ -384,10 +390,7 @@ class VariantPhasingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local phased-variant output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))
-        ):
-            raise ValueError(f"VariantPhasingWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         phasing = kwargs.get("phasing", "{phasing}")
         prefix = f"output/jannovar_annotate_vcf.{phasing}.{lib}/out/jannovar_annotate_vcf.{phasing}.{lib}"
@@ -423,9 +426,7 @@ class VariantPhasingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Register sub workflows
-        self.register_module("variant_annotation")
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
 
     @listify

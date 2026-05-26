@@ -97,8 +97,7 @@ class SvCallingTargetedWorkflow(BaseStep):
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool's step part.
         self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
-        # Register sub workflows
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @dictify
     def _build_ngs_library_to_kit(self):
@@ -130,10 +129,7 @@ class SvCallingTargetedWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local targeted SV output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))
-        ):
-            raise ValueError(f"SvCallingTargetedWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 

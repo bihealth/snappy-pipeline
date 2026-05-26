@@ -192,12 +192,10 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
             )
             yield "ped", real_path
             # BAM and BAI file of the offspring
-            ngs_mapping = self.parent.modules["ngs_mapping"]
             path_bam = ("output/{index_library}/out/{index_library}.bam").format(**wildcards)
-            yield "bam", ngs_mapping(path_bam)
-            yield "bai", ngs_mapping(path_bam + ".bai")
+            yield "bam", self.parent.get_upstream_local_path("ngs_mapping", path_bam)
+            yield "bai", self.parent.get_upstream_local_path("ngs_mapping", path_bam + ".bai")
             # Input file comes from previous step.
-            prev_step = self.parent.modules[self.previous_step]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 name_pattern = self.name_pattern.replace(r",[^\.]+", "").replace("de_novos.", "")
                 if self.previous_step != "variant_phasing":
@@ -205,7 +203,7 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
                 input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
                     real_index=real_index.dna_ngs_library.name, **wildcards
                 )
-                yield key, prev_step(input_path) + ext
+                yield key, self.parent.get_upstream_local_path(self.previous_step, input_path) + ext
 
         return input_function
 
@@ -461,12 +459,7 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local de-novo filtration output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline", "denovo"}))
-        ):
-            raise ValueError(
-                f"VariantDeNovoFiltrationWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         prefix = f"output/de_novos_hard.{lib}/out/de_novos_hard.{lib}"
         return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
@@ -491,15 +484,12 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
             if getattr(self.config.depends_on, prev, None):
                 self.previous_step = prev
-                self.register_module(prev)
                 break
         else:
             raise Exception("No previous step given!")  # pragma: no cover
-        self.register_module("ngs_mapping")
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",

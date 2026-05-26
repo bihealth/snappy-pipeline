@@ -105,9 +105,11 @@ class PopDelStepPart(
     @dictify
     def _get_input_files_profile(self, wildcards):
         """Return input files for "call" action"""
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = wildcards.library_name
-        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
+        yield (
+            "bam",
+            self.parent.get_upstream_local_path("ngs_mapping", f"output/{infix}/out/{infix}.bam"),
+        )
 
     @dictify
     def _get_output_files_profile(self):
@@ -249,9 +251,11 @@ class Sniffles2StepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         infix = wildcards.library_name
-        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
+        yield (
+            "bam",
+            self.parent.get_upstream_local_path("ngs_mapping", f"output/{infix}/out/{infix}.bam"),
+        )
 
     @dictify
     def _get_output_files_bam_to_snf(self):
@@ -293,10 +297,7 @@ class SvCallingWgsWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local WGS SV output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))
-        ):
-            raise ValueError(f"SvCallingWgsWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 
@@ -338,8 +339,7 @@ class SvCallingWgsWorkflow(BaseStep):
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool step class.
         self.register_sub_step_classes((selected_sub_step, WritePedigreeStepPart))
-        # Register sub workflows
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def all_donors(self, include_background=True):

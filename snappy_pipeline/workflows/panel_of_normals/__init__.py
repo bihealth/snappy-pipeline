@@ -255,7 +255,6 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         if self.name != self.config.tool:
             return {}
         self._validate_action(action)
-        self.ngs_mapping = self.parent.modules["ngs_mapping"]
         if action == "prepare":
             return {
                 "container": "work/containers/out/purecn.simg",
@@ -277,7 +276,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             ),
         )
         tpl = "output/{library_name}/out/{library_name}.bam"
-        yield "bam", self.ngs_mapping(tpl.format(**wildcards))
+        yield "bam", self.parent.get_upstream_local_path("ngs_mapping", tpl.format(**wildcards))
 
     @dictify
     def _get_input_files_create(self, wildcards):
@@ -285,9 +284,9 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         tpl = "work/purecn/out/{library_name}_coverage_loess.txt.gz"
         yield "normals", [tpl.format(library_name=lib) for lib in self.normal_libraries]
         # The Mutect2 genomicsDB is the output of the upstream panel_of_normals (mutect2) task;
-        # resolve it through the registered module so Snakemake tracks it as a real dependency.
-        pon_module = self.parent.modules["panel_of_normals"]
-        yield "genomicsdb", pon_module("work/mutect2/out/mutect2.genomicsDB.tar.gz")
+        # resolve it via upstream() so Snakemake tracks it as a real dependency.
+        pon = self.parent.upstream("panel_of_normals")
+        yield "genomicsdb", pon("work/mutect2/out/mutect2.genomicsDB.tar.gz")
 
     def get_output_files(self, action):
         if self.name != self.config.tool:
@@ -397,8 +396,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
-        # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         tpl = "output/{normal_library}/out/{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         scatteritem_base_path = "work/{normal_library}/par/scatter/{scatteritem}.region.bed"
@@ -614,8 +612,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             if self.config.cnvkit.path_annotation:
                 input_files["annotate"] = self.config.cnvkit.path_annotation
             return input_files
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         tpl = "output/{normal_library}/out/{normal_library}.bam"
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         bams = [ngs_mapping(tpl.format(normal_library=x)) for x in self.normal_libraries]
         bais = [x + ".bai" for x in bams]
         input_files = {
@@ -642,7 +640,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         """Helper wrapper function for computing coverage"""
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         tpl = "output/{normal_library}/out/{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         return {
@@ -850,12 +848,6 @@ class PanelOfNormalsWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping")
-        # When tool=purecn, the genomicsDB produced by an upstream mutect2 PON task is a
-        # tracked Snakemake input; register it so paths are resolved relative to that task.
-        if self.config.tool == "purecn":
-            self.register_module("panel_of_normals")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

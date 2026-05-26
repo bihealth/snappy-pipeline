@@ -219,7 +219,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_annotate_seqvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        variant_calling = self.parent.modules["variant_calling"]
         seqvar_caller = str(self.parent.get_task_config("variant_calling").tool)
 
         path = (
@@ -228,9 +227,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
         vcfs = [
-            variant_calling(path).format(
-                seqvar_caller=seqvar_caller,
-                index_ngs_library=wildcards.index_ngs_library,
+            self.parent.get_upstream_local_path(
+                "variant_calling",
+                path.format(
+                    seqvar_caller=seqvar_caller,
+                    index_ngs_library=wildcards.index_ngs_library,
+                ),
             )
         ]
         yield "vcf", vcfs
@@ -291,7 +293,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
         if self.parent.config.depends_on.sv_calling_targeted:
-            sv_calling = self.parent.modules["sv_calling_targeted"]
+            sv_dep = "sv_calling_targeted"
             sv_callers = [str(self.parent.get_task_config("sv_calling_targeted").tool)]
             skip_libraries = {
                 sv_caller: getattr(
@@ -300,7 +302,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 for sv_caller in sv_callers
             }
         elif self.parent.config.depends_on.sv_calling_wgs:
-            sv_calling = self.parent.modules["sv_calling_wgs"]
+            sv_dep = "sv_calling_wgs"
             sv_callers = [str(self.parent.get_task_config("sv_calling_wgs").tool)]
             skip_libraries = {
                 sv_caller: getattr(
@@ -342,9 +344,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                     continue
 
             vcfs.append(
-                sv_calling(path).format(
-                    sv_caller=sv_caller,
-                    index_ngs_library=wildcards.index_ngs_library,
+                self.parent.get_upstream_local_path(
+                    sv_dep,
+                    path.format(
+                        sv_caller=sv_caller,
+                        index_ngs_library=wildcards.index_ngs_library,
+                    ),
                 )
             )
         yield "vcf", vcfs
@@ -377,9 +382,9 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
         for donor in pedigree.donors:
@@ -497,14 +502,6 @@ class VarfishExportWorkflow(BaseStep):
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))
-
-        # Register sub workflows
-        self.register_module("variant_calling")
-        if self.config.depends_on.sv_calling_targeted:
-            self.register_module("sv_calling_targeted")
-        if self.config.depends_on.sv_calling_wgs:
-            self.register_module("sv_calling_wgs")
-        self.register_module("ngs_mapping")
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
 

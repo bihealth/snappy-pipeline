@@ -60,9 +60,8 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         tpl = os.path.join("output", base_name, "out", base_name)
 
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_path = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
-            yield key, variant_path(tpl + ext)
+            yield key, self.parent.get_upstream_local_path("somatic_variant", tpl + ext)
 
     @dictify
     def get_output_files(self, action):
@@ -135,12 +134,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local TMB output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.TABULAR, frozenset({"tmb"}))
-        ):
-            raise ValueError(
-                f"TumorMutationalBurdenCalculationWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/tmb.{lib}/out/tmb.{lib}.tsv"}
 
@@ -169,9 +163,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Register sub workflows
         config = self.config
-        self.register_module("somatic_variant", str(config.somatic_variant_step))
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))

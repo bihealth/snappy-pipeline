@@ -102,11 +102,14 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         """Return path to pedigree input file"""
         self._validate_action(action)
         token = f"{self._variant_tool}.{{library_name}}"
-        variant_calling = self.parent.modules["variant_calling"]
         return {
             "reference": self.w_config.static_data_config.reference.path,
-            "vcf": variant_calling(f"output/{token}/out/{token}.vcf.gz"),
-            "vcf_tbi": variant_calling(f"output/{token}/out/{token}.vcf.gz.tbi"),
+            "vcf": self.parent.get_upstream_local_path(
+                "variant_calling", f"output/{token}/out/{token}.vcf.gz"
+            ),
+            "vcf_tbi": self.parent.get_upstream_local_path(
+                "variant_calling", f"output/{token}/out/{token}.vcf.gz.tbi"
+            ),
         }
 
     @dictify
@@ -176,10 +179,7 @@ class VariantAnnotationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local annotated VCF output paths for a germline-variants signature."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"}))
-        ):
-            raise ValueError(f"VariantAnnotationWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
@@ -213,9 +213,7 @@ class VariantAnnotationWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))
-        # Register sub workflows
-        self.register_module("ngs_mapping")
-        self.register_module("variant_calling")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

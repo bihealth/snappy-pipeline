@@ -146,8 +146,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         @dictify
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflows
-            ngs_mapping = self.parent.modules["ngs_mapping"]
+            ngs_mapping = self.parent.upstream("ngs_mapping")
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = "output/{normal_library}/out/{normal_library}".format(
@@ -260,7 +259,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_input_files_coverage(self, wildcards, **kwargs):
         """Return input files that "cnvetti coverage" needs"""
         _ = kwargs
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         # Yield input BAM and BAI file
         bam_tpl = "output/{library_name}/out/{library_name}{ext}"
         for ext in (".bam", ".bam.bai"):
@@ -463,13 +462,12 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
-        input_files = {
+        return {
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
         }
-        return input_files
 
     @staticmethod
     def _get_input_files_fix(wildcards):
@@ -832,10 +830,6 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Register sub workflows
-        self.register_module("ngs_mapping")
-        self.register_module("somatic_variant_calling")
-        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
 
     @listify
     def get_result_files(self):

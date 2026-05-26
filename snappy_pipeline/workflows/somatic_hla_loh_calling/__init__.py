@@ -66,9 +66,6 @@ class LohhlaStepPart(BaseStepPart):
 
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            hla_typing = self.parent.modules["hla_typing"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = "output/{normal_library}/out/{normal_library}".format(
@@ -80,11 +77,19 @@ class LohhlaStepPart(BaseStepPart):
             )
 
             return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-                "hla": hla_typing(hla),
+                "normal_bam": self.parent.get_upstream_local_path(
+                    "ngs_mapping", normal_base_path + ".bam"
+                ),
+                "normal_bai": self.parent.get_upstream_local_path(
+                    "ngs_mapping", normal_base_path + ".bam.bai"
+                ),
+                "tumor_bam": self.parent.get_upstream_local_path(
+                    "ngs_mapping", tumor_base_path + ".bam"
+                ),
+                "tumor_bai": self.parent.get_upstream_local_path(
+                    "ngs_mapping", tumor_base_path + ".bam.bai"
+                ),
+                "hla": self.parent.get_upstream_local_path("hla_typing", hla),
             }
 
         return input_function
@@ -140,12 +145,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local HLA LOH output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.TABULAR, frozenset({"hla_loh"}))
-        ):
-            raise ValueError(
-                f"SomaticHlaLohCallingWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/{lib}.done"}
 
@@ -171,9 +171,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping")
-        self.register_module("hla_typing")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):

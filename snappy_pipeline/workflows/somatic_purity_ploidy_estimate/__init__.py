@@ -84,7 +84,7 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating BAF file for the tumor."""
 
         def func(wildcards):
-            ngs_mapping = self.parent.modules["ngs_mapping"]
+            ngs_mapping = self.parent.upstream("ngs_mapping")
             base_path = ("output/{tumor_library_name}/out/{tumor_library_name}").format(**wildcards)
             return {
                 "bam": ngs_mapping(base_path + ".bam"),
@@ -97,7 +97,7 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating BAF file for the normal."""
 
         def func(wildcards):
-            ngs_mapping = self.parent.modules["ngs_mapping"]
+            ngs_mapping = self.parent.upstream("ngs_mapping")
             base_path = ("output/{normal_library_name}/out/{normal_library_name}").format(
                 **wildcards
             )
@@ -120,11 +120,14 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating CNV file from copywriter for tumor."""
 
         def func(wildcards):
-            wgs_cnv_calling = self.parent.modules["somatic_targeted_seq_cnv_calling"]
             base_path = (
                 "work/copywriter.{tumor_library_name}/out/copywriter.{tumor_library_name}"
             ).format(**wildcards)
-            return {"bins": wgs_cnv_calling(base_path + "_bins.txt")}
+            return {
+                "bins": self.parent.get_upstream_local_path(
+                    "somatic_targeted_seq_cnv_calling", base_path + "_bins.txt"
+                )
+            }
 
         return func
 
@@ -133,7 +136,6 @@ class AscatStepPart(BaseStepPart):
 
         def func(wildcards):
             tumor_library = None
-            wgs_cnv_calling = self.parent.modules["somatic_targeted_seq_cnv_calling"]
             # look up tumor to normal
             for k, v in self.tumor_ngs_library_to_sample_pair.items():
                 if v.normal_sample.dna_ngs_library.name == wildcards["normal_library_name"]:
@@ -142,7 +144,11 @@ class AscatStepPart(BaseStepPart):
             base_path = (
                 "work/copywriter.{tumor_library_name}/out/copywriter.{tumor_library_name}"
             ).format(tumor_library_name=tumor_library, **wildcards)
-            return {"bins": wgs_cnv_calling(base_path + "_bins.txt")}
+            return {
+                "bins": self.parent.get_upstream_local_path(
+                    "somatic_targeted_seq_cnv_calling", base_path + "_bins.txt"
+                )
+            }
 
         return func
 
@@ -368,12 +374,6 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
             **kwargs,
         )
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping")
-        if self.depends_on.get("somatic_targeted_seq_cnv_calling"):
-            self.register_module(
-                "somatic_targeted_seq_cnv_calling",
-            )
 
     @listify
     def get_result_files(self):

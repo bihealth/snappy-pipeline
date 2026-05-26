@@ -51,9 +51,8 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
         tpl = self._name_template(self.config)
         tpl = os.path.join("output", tpl, "out", tpl)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        somatic_variant_calling = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
-            yield key, somatic_variant_calling(tpl + ext)
+            yield key, self.parent.get_upstream_local_path("somatic_variant", tpl + ext)
 
     @dictify
     def get_output_files(self, action):
@@ -183,12 +182,7 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local annotated VCF output paths for a somatic-variants signature."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"somatic", "annotated"}))
-        ):
-            raise ValueError(
-                f"SomaticVariantAnnotationWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
@@ -222,10 +216,6 @@ class SomaticVariantAnnotationWorkflow(BaseStep):
         self.register_sub_step_classes(
             (VepAnnotateSomaticVcfStepPart, MehariAnnotateSomaticVcfStepPart, LinkOutStepPart)
         )
-        if self.config.is_filtered:
-            self.register_module("somatic_variant", "somatic_variant_filtration")
-        else:
-            self.register_module("somatic_variant", "somatic_variant_calling")
 
     @listify
     def get_result_files(self):

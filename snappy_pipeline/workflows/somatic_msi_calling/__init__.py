@@ -115,8 +115,6 @@ class Mantis2StepPart(BaseStepPart):
 
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
             normal_base_path = "output/{normal_library}/out/{normal_library}".format(
@@ -124,10 +122,18 @@ class Mantis2StepPart(BaseStepPart):
             )
             tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
             return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+                "normal_bam": self.parent.get_upstream_local_path(
+                    "ngs_mapping", normal_base_path + ".bam"
+                ),
+                "normal_bai": self.parent.get_upstream_local_path(
+                    "ngs_mapping", normal_base_path + ".bam.bai"
+                ),
+                "tumor_bam": self.parent.get_upstream_local_path(
+                    "ngs_mapping", tumor_base_path + ".bam"
+                ),
+                "tumor_bai": self.parent.get_upstream_local_path(
+                    "ngs_mapping", tumor_base_path + ".bam.bai"
+                ),
                 "reference": self.w_config.static_data_config.reference.path,
                 "loci_bed": self.config.loci_bed,
             }
@@ -204,10 +210,7 @@ class SomaticMsiCallingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local MSI calling output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.TABULAR, frozenset({"msi"}))
-        ):
-            raise ValueError(f"SomaticMsiCallingWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"results": f"output/{lib}/out/{lib}.results.txt"}
 
@@ -233,8 +236,7 @@ class SomaticMsiCallingWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Mantis2StepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):

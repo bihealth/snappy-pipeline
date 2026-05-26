@@ -227,7 +227,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_input_files_coverage(self):
         @dictify
         def input_function(wildcards):
-            ngs_mapping = self.parent.modules["ngs_mapping"]
+            ngs_mapping = self.parent.upstream("ngs_mapping")
             tumor_library = self._resolve_library_name(wildcards.library_name)
             normal_base_path = "output/{normal_library}/out/{normal_library}".format(
                 normal_library=self.get_normal_lib_name(wildcards), **wildcards
@@ -401,37 +401,36 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 name_pattern + "_coverage_loess.txt.gz",
             ).format(**wildcards),
         )
+        pon = self.parent.upstream("panel_of_normals")
         name_pattern = "{library_name}".format(
             caller=self.config.purecn.somatic_variant_caller,
             **wildcards,
         )
         base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
-        variant_calling = self.parent.modules["somatic_variants"]
-        yield "vcf", variant_calling(base_path)
+        yield "vcf", self.parent.get_upstream_local_path("somatic_variants", base_path)
         # PON outputs tracked as Snakemake inputs for proper dependency resolution.
-        pon_module = self.parent.modules["panel_of_normals"]
         purecn_cfg = self.config.purecn
-        yield "normaldb", pon_module("output/purecn/out/purecn.panel_of_normals.rds")
-        yield "mapping_bias", pon_module("output/purecn/out/purecn.mapping_bias.rds")
+        yield "normaldb", pon("output/purecn/out/purecn.panel_of_normals.rds")
+        yield "mapping_bias", pon("output/purecn/out/purecn.mapping_bias.rds")
         yield (
             "intervals",
-            pon_module(
+            pon(
                 f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
             ),
         )
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        pon = self.parent.upstream("panel_of_normals")
         name_pattern = "{library_name}".format(**wildcards)
         base_path = os.path.join("output", name_pattern, "out", name_pattern)
         yield "bam", ngs_mapping(base_path + ".bam")
         yield "bai", ngs_mapping(base_path + ".bam.bai")
-        pon_module = self.parent.modules["panel_of_normals"]
         purecn_cfg = self.config.purecn
         yield (
             "intervals",
-            pon_module(
+            pon(
                 f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
             ),
         )
@@ -468,15 +467,13 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_args_all(self, wildcards):
         mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         config_dump = self.config.get(self.name).model_dump(by_alias=True)
-        # Inject PON file paths resolved from the panel_of_normals module so that
+        # Inject PON file paths resolved from the panel_of_normals dependency so that
         # the wrapper can access them via config["path_*"] as before.
-        pon_module = self.parent.modules["panel_of_normals"]
+        pon = self.parent.upstream("panel_of_normals")
         purecn_cfg = self.config.purecn
-        config_dump["path_panel_of_normals"] = pon_module(
-            "output/purecn/out/purecn.panel_of_normals.rds"
-        )
-        config_dump["path_mapping_bias"] = pon_module("output/purecn/out/purecn.mapping_bias.rds")
-        config_dump["path_intervals"] = pon_module(
+        config_dump["path_panel_of_normals"] = pon("output/purecn/out/purecn.panel_of_normals.rds")
+        config_dump["path_mapping_bias"] = pon("output/purecn/out/purecn.mapping_bias.rds")
+        config_dump["path_intervals"] = pon(
             f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
         )
         return {
@@ -552,27 +549,26 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
-        input_files = {
+        return {
             "bam": ngs_mapping(base_path + ".bam"),
             "bai": ngs_mapping(base_path + ".bam.bai"),
             "reference": self.w_config.static_data_config.reference.path,
             "target": self.config.cnvkit.path_target,
             "antitarget": self.config.cnvkit.path_antitarget,
         }
-        return input_files
 
     def _get_input_files_fix(self, wildcards):
         tpl_base = "{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
-        pon_module = self.parent.modules["panel_of_normals"]
-        input_files = {
+        return {
             "target": tpl.format(target="target", **wildcards),
             "antitarget": tpl.format(target="antitarget", **wildcards),
-            "ref": pon_module("output/cnvkit/out/cnvkit.panel_of_normals.cnn"),
+            "ref": self.parent.get_upstream_local_path(
+                "panel_of_normals", "output/cnvkit/out/cnvkit.panel_of_normals.cnn"
+            ),
         }
-        return input_files
 
     def _get_input_files_segment(self, wildcards):
         cnr_pattern = "work/{library_name}/out/{library_name}.cnr"
@@ -823,12 +819,6 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping")
-        if selected_tool in (Tool.cnvkit, Tool.purecn):
-            self.register_module("panel_of_normals")
-        if selected_tool == Tool.purecn:
-            self.register_module("somatic_variants", "somatic_variant_calling")
 
     @listify
     def get_result_files(self):

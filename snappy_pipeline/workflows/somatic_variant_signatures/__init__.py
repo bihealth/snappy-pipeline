@@ -96,9 +96,8 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         name_pattern = self.name_prefix + self.name_postfix
         tpl = os.path.join("output", name_pattern, "out", name_pattern)
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.modules["somatic_variant"]
         for key, ext in key_ext.items():
-            yield key, variant_calling(tpl + ext)
+            yield key, self.parent.get_upstream_local_path("somatic_variant", tpl + ext)
 
     @dictify
     def get_output_files(self, action):
@@ -182,12 +181,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local signature output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.TABULAR, frozenset({"signatures"}))
-        ):
-            raise ValueError(
-                f"SomaticVariantSignaturesWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/deconstruct_sigs.{lib}/out/deconstruct_sigs.{lib}.tsv"}
 
@@ -216,9 +210,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Register sub workflows
         config = self.config
-        self.register_module("somatic_variant")
 
         self.config = config
 

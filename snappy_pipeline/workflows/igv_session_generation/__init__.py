@@ -95,18 +95,18 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         # TODO: For instance, given pedigree (P001, P002, P003) it will return three runtime the
         # TODO: same value: '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        return ngs_mapping("output/{index_library}/out/{index_library}.bam".format(**wildcards))
+        return self.parent.get_upstream_local_path(
+            "ngs_mapping", "output/{index_library}/out/{index_library}.bam".format(**wildcards)
+        )
 
     def _get_path_vcf(self, wildcards, real_index):
-        prev_step = self.parent.modules[self.previous_step]
         name_pattern = "{prev_token}.{real_index_library}"
         input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
             real_index_library=real_index.dna_ngs_library.name,
             **wildcards,
         )
-        return prev_step(input_path + ".vcf.gz")
+        return self.parent.get_upstream_local_path(self.previous_step, input_path + ".vcf.gz")
 
     def get_input_files(self, action):
         # Validate action
@@ -196,12 +196,7 @@ class IgvSessionGenerationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local IGV session output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.EXPORTS, frozenset({"igv"}))
-        ):
-            raise ValueError(
-                f"IgvSessionGenerationWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         token = kwargs.get("token", "")
         if token:
@@ -229,15 +224,12 @@ class IgvSessionGenerationWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
             if getattr(self.config.depends_on, prev, None):
                 self.previous_step = prev
-                self.register_module(prev)
                 break
         else:
             raise Exception("No previous step given!")  # pragma: no cover
-        self.register_module("ngs_mapping")
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",

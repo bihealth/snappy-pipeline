@@ -249,11 +249,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         """Return input vcf for each output maf"""
         # Validate action
         self._validate_action(action)
-        somatic_variant = self.parent.modules["somatic_variant"]
-        tpl = somatic_variant(
-            os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
-        )
-        yield "vcf", tpl
+        tpl = os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
+        yield "vcf", self.parent.get_upstream_local_path("somatic_variant", tpl)
 
     @dictify
     def get_log_file(self, action):
@@ -364,11 +361,13 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "{tumor_library}"
-        copy_number = self.parent.modules["copy_number"]
         yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
-            copy_number(os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg")),
+            self.parent.get_upstream_local_path(
+                "copy_number",
+                os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg"),
+            ),
         )
 
     @dictify
@@ -501,10 +500,23 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
             + self.config.copy_number_alteration.copy_number_tool
             + ".{library_name}"
         )
-        copy_number = self.parent.modules["copy_number"]
-        self.input_tpl = copy_number(
-            os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg")
-        )
+        self._seg_name_pattern = name_pattern
+
+    @dictify
+    def get_input_files(self, action):
+        """Return path of input files for merging"""
+        self._validate_action(action)
+        for lib in self._yield_libraries():
+            local_path = os.path.join(
+                "output",
+                self._seg_name_pattern,
+                "out",
+                self._seg_name_pattern + "_dnacopy.seg",
+            ).format(library_name=lib.name)
+            yield (
+                lib.test_sample.bio_sample.name,
+                self.parent.get_upstream_local_path("copy_number", local_path),
+            )
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -542,10 +554,23 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         super().__init__(parent)
 
         name_pattern = self.config.expression.expression_tool + ".{library_name}"
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        self.input_tpl = ngs_mapping(
-            os.path.join("output", name_pattern, "out", name_pattern + ".GeneCounts.tab")
-        )
+        self._expr_name_pattern = name_pattern
+
+    @dictify
+    def get_input_files(self, action):
+        """Return path of input files for merging"""
+        self._validate_action(action)
+        for lib in self._yield_libraries():
+            local_path = os.path.join(
+                "output",
+                self._expr_name_pattern,
+                "out",
+                self._expr_name_pattern + ".GeneCounts.tab",
+            ).format(library_name=lib.name)
+            yield (
+                lib.test_sample.bio_sample.name,
+                self.parent.get_upstream_local_path("ngs_mapping", local_path),
+            )
 
     def get_args(self, action):
         # Validate action
@@ -776,18 +801,6 @@ class cbioportalExportWorkflow(BaseStep):
         if self.config.vcf2maf.ncbi_build in ("mm9", "mm10", "GRCm37", "GRCm38", "GRCm39"):
             translated = "mouse"
         self.config.study.reference_genome = translated
-
-        # Initialize sub-workflows first so step-parts can resolve module paths at init time.
-        self.register_module("somatic_variant", str(self.config.somatic_variant_step))
-        if self.config.copy_number_alteration.copy_number_tool in (
-            "cnvkit",
-            "purecn",
-            "sequenza",
-        ):
-            self.register_module("copy_number", "somatic_targeted_seq_cnv_calling")
-        else:
-            self.register_module("copy_number", "somatic_wgs_cnv_calling")
-        self.register_module("ngs_mapping", "ngs_mapping")
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

@@ -103,9 +103,8 @@ class PeddyStepPart(BaseStepPart):
             f"{self.variant_tool}.{{index_ngs_library}}"
         )
         key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.modules["variant_calling"]
         for key, ext in key_ext.items():
-            yield key, variant_calling(tpl + ext)
+            yield key, self.parent.get_upstream_local_path("variant_calling", tpl + ext)
 
     @dictify
     def get_output_files(self, action):
@@ -168,10 +167,7 @@ class VariantCheckingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local variant-checking output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.QC, frozenset({"pedigree_check"}))
-        ):
-            raise ValueError(f"VariantCheckingWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"ped_check": f"output/{lib}/out/{lib}.ped_check.csv"}
 
@@ -197,8 +193,7 @@ class VariantCheckingWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))
-        # Register sub workflows
-        self.register_module("variant_calling")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
 
     @listify

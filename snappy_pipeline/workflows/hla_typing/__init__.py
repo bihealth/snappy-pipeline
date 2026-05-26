@@ -246,7 +246,9 @@ class ArcasHlaStepPart(BaseStepPart):
             tpl = "output/{library_name}/out/{library_name}.bam"
             yield (
                 "bam",
-                self.parent.modules["ngs_mapping"](tpl.format(mapper=self.mapper, **wildcards)),
+                self.parent.get_upstream_local_path(
+                    "ngs_mapping", tpl.format(mapper=self.mapper, **wildcards)
+                ),
             )
 
         assert action == "run"
@@ -331,8 +333,7 @@ class HlaTypingWorkflow(BaseStep):
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
-        # Register sub workflows
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):

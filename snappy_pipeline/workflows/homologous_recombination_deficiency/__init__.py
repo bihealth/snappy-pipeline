@@ -106,12 +106,16 @@ class ScarHRDStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        self.cnv_calling = self.parent.modules["cnv_calling"]
         aligner_tool = str(self.parent.get_task_config("ngs_mapping").tool)
         cnv_tool = str(self.parent.get_task_config("cnv_calling").tool)
         base_name = f"{aligner_tool}.{cnv_tool}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
-        yield "seqz", self.cnv_calling(f"output/{base_name}/out/{base_name}.seqz.gz")
+        yield (
+            "seqz",
+            self.parent.get_upstream_local_path(
+                "cnv_calling", f"output/{base_name}/out/{base_name}.seqz.gz"
+            ),
+        )
 
     def get_output_files(self, action):
         if action == "install":
@@ -223,8 +227,6 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module("cnv_calling")
 
     @listify
     def get_result_files(self):

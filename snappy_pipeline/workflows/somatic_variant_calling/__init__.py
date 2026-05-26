@@ -88,7 +88,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
 
         input_files = {
@@ -231,7 +231,6 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
 
     def _get_input_files_run(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
         scatteritem_base_path = (
             "work/{tumor_library}/out/{tumor_library}/mutect2par/scatter/{scatteritem}".format(
@@ -239,6 +238,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             )
         )
 
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
@@ -303,7 +303,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return input_files
 
     def _get_input_files_pileup_normal(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         base_path = "output/{normal_library}/out/{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
@@ -315,7 +315,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def _get_input_files_pileup_tumor(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),
@@ -453,12 +453,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
             **kwargs: Accepts ``library_name`` (tumor library) for concrete path rendering;
                 falls back to ``{library_name}`` wildcard placeholder.
         """
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"somatic"}))
-        ):
-            raise ValueError(
-                f"SomaticVariantCallingWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
@@ -496,7 +491,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        self.register_module("ngs_mapping", "ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
         if tool == "mutect2":
             if self.config.mutect2.contamination.enabled:
                 actions = self.sub_steps["mutect2"].actions

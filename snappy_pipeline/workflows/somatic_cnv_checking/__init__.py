@@ -114,10 +114,6 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
     name = "pileup"
     actions = ("normal", "tumor")
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.ngs_mapping = self.parent.modules["ngs_mapping"]
-
     def get_input_files(self, action):
         # Validate action
         self._validate_action(action)
@@ -125,8 +121,8 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         def input_function_normal(wildcards):
             base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
             return {
-                "bam": self.ngs_mapping(base_path + ".bam"),
-                "bai": self.ngs_mapping(base_path + ".bam.bai"),
+                "bam": self.parent.get_upstream_local_path("ngs_mapping", base_path + ".bam"),
+                "bai": self.parent.get_upstream_local_path("ngs_mapping", base_path + ".bam.bai"),
             }
 
         def input_function_tumor(wildcards):
@@ -138,8 +134,8 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
                 "locii_tbi": "work/{normal_library}/out/{normal_library}.normal.vcf.gz.tbi".format(
                     normal_library=self.parent.tumor_to_normal[wildcards.library_name], **wildcards
                 ),
-                "bam": self.ngs_mapping(base_path + ".bam"),
-                "bai": self.ngs_mapping(base_path + ".bam.bai"),
+                "bam": self.parent.get_upstream_local_path("ngs_mapping", base_path + ".bam"),
+                "bai": self.parent.get_upstream_local_path("ngs_mapping", base_path + ".bam.bai"),
             }
 
         if action == "normal":
@@ -205,9 +201,10 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
             tpl = os.path.join("work", name_pattern, "out", name_pattern + ".tumor.vcf.gz")
             filenames["tumor"] = tpl.format(**wildcards)
             filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
-            cnv_calling = self.parent.modules["cnv_calling"]
             base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
-            filenames["cnv"] = cnv_calling(base_path + "_dnacopy.seg")
+            filenames["cnv"] = self.parent.get_upstream_local_path(
+                "cnv_calling", base_path + "_dnacopy.seg"
+            )
             return filenames
 
         return input_function
@@ -347,11 +344,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        self.register_module("ngs_mapping")
-        self.has_cnv_calling = False
-        if self.depends_on.get("cnv_calling"):
-            self.register_module("cnv_calling")
-            self.has_cnv_calling = True
+        self.has_cnv_calling = bool(self.config.depends_on.cnv_calling)
         # Register sub step classes so the sub steps are available
         sub_steps = [SomaticCnvCheckingPileupStepPart]
         if self.has_cnv_calling:

@@ -273,8 +273,7 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
                 BuildGcnvWgsModelStepPart,
             )
         )
-        # Register sub workflows
-        self.register_module("ngs_mapping")
+        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):
