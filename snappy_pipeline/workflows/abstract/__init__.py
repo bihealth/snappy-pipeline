@@ -301,10 +301,6 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            if "ngs_mapping" not in self.parent.modules:
-                return  # early exit
-            # Get shortcut to NGS mapping sub workflow
-            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -321,7 +317,7 @@ class WritePedigreeStepPart(BaseStepPart):
                     ext=".bam",
                     **wildcards,
                 )
-                yield ngs_mapping(path)
+                yield self.parent.get_upstream_local_path("ngs_mapping", path)
 
         return get_input_files
 
@@ -632,6 +628,18 @@ class DataSearchInfo:
     mixed_se_pe: bool
 
 
+@dataclass(frozen=True)
+class ResolvedDependency:
+    """Normalized dependency resolution result for one ``depends_on`` field."""
+
+    field_name: str
+    task_name: str
+    step_name: str
+    workflow_cls: type["BaseStep"]
+    signature: DataSignature | None
+    expected_schema: type[pydantic.BaseModel] | None
+
+
 class BaseStep:
     """Base class for the pipeline steps
 
@@ -732,6 +740,19 @@ class BaseStep:
             f"'{cls.__name__}' must implement 'get_output_paths' to act as an upstream provider."
         )
 
+    @classmethod
+    def supports_signature(cls, required: DataSignature | None) -> bool:
+        """Return whether ``required`` is produced by this workflow class."""
+        if required is None:
+            return True
+        return any(provided.satisfies(required) for provided in cls.produces)
+
+    @classmethod
+    def require_signature(cls, required: DataSignature | None) -> None:
+        """Raise ``ValueError`` when ``required`` is unsupported by this workflow class."""
+        if not cls.supports_signature(required):
+            raise ValueError(f"{cls.__name__} does not support signature: {required}")
+
     def __init__(
         self,
         workflow: Workflow,
@@ -748,7 +769,6 @@ class BaseStep:
         self.work_dir = work_dir
         self.previous_steps = tuple(previous_steps or [])
         self.workflow = workflow
-        self.modules = {}
 
         try:
             from snappy_pipeline.workflow_model import ConfigModel
@@ -1003,110 +1023,97 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def get_upstream_dir(self, requirement: DataSignature) -> str:
-        """
-        Resolves the physical output directory for a required dependency
-        based on the 'depends_on' configuration mapping.
-        """
-        upstream_task_name = (
-            getattr(self.depends_on, requirement.type.value, None)
-            if self.depends_on is not None
-            else None
+    def resolve_dependency(self, field_name: str) -> ResolvedDependency:
+        """Resolve one typed ``depends_on`` field into a normalized dependency object."""
+        if self.depends_on is None:
+            raise AttributeError(
+                f"Task '{self.task_name}' has no 'depends_on' configuration; "
+                f"cannot resolve upstream field '{field_name}'."
+            )
+
+        model_fields = type(self.depends_on).model_fields
+        field_info = model_fields.get(field_name)
+        if field_info is None:
+            raise ValueError(
+                f"Task '{self.task_name}' has no depends_on field named '{field_name}'."
+            )
+
+        target_task_name = getattr(self.depends_on, field_name)
+        if not target_task_name:
+            raise ValueError(f"Task '{self.task_name}': depends_on.{field_name} is empty or unset.")
+
+        target_task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
+        if target_task is None:
+            raise ValueError(
+                f"Task '{self.task_name}': upstream task '{target_task_name}' from "
+                f"depends_on.{field_name} was not found in configuration."
+            )
+        step_name = target_task.step
+
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        workflow_cls = WORKFLOW_REGISTRY.get(step_name)
+        if workflow_cls is None:
+            raise ValueError(
+                f"Workflow class for step '{step_name}' (from depends_on.{field_name}="
+                f"'{target_task_name}') not found in WORKFLOW_REGISTRY."
+            )
+
+        required_sig: DataSignature | None = None
+        expected_schema: type[pydantic.BaseModel] | None = None
+        for meta in field_info.metadata:
+            if isinstance(meta, DataSignature):
+                required_sig = meta
+            elif isinstance(meta, ExpectedPathSchema):
+                expected_schema = meta.schema
+            elif isinstance(meta, type) and issubclass(meta, pydantic.BaseModel):
+                expected_schema = meta
+
+        return ResolvedDependency(
+            field_name=field_name,
+            task_name=target_task_name,
+            step_name=step_name,
+            workflow_cls=workflow_cls,
+            signature=required_sig,
+            expected_schema=expected_schema,
         )
 
-        if not upstream_task_name:
-            if self.consumes.get(requirement, True):
-                raise ValueError(
-                    f"Task '{self.task_name}' requires '{requirement.type.value}', "
-                    f"but no upstream task was provided in 'depends_on'."
-                )
-            return ""  # Optional dependency not provided
+    def get_upstream_local_path(self, field_name: str, local_path: str) -> str:
+        """Return a namespaced upstream path for ``local_path`` using ``depends_on.<field_name>``."""
+        dependency = self.resolve_dependency(field_name)
+        if local_path.startswith("output/") or local_path.startswith("work/"):
+            return f"{dependency.task_name}/{local_path}"
+        return os.path.join(dependency.task_name, local_path).replace("\\", "/")
 
-        upstream_instance = self.parent.get_workflow_instance(upstream_task_name)
-        if not any(p.satisfies(requirement) for p in upstream_instance.produces):
-            raise TypeError("Upstream task does not satisfy required DataSignature")
+    def upstream(self, field_name: str) -> "Callable[[str], str]":
+        """Return a path-namespacing callable for ``depends_on.<field_name>``.
 
-        return f"output/{upstream_task_name}"
+        The returned callable accepts a single local path string and returns the
+        globally namespaced version (i.e. prefixed with the upstream task name),
+        exactly like the old ``self.modules["x"]`` API but without requiring
+        ``register_module`` or Snakemake sub-workflow registration.
 
-    def register_module(self, logical_name: str, default_module_name: str = ""):
-        """
-        Registers a dependency mapping for Snakemake 9.
-        Paths are resolved using the explicit depends_on configuration.
+        Usage::
 
-        Arguments:
-            logical_name: The logical name of the step depended on, e.g. "ngs_mapping" or "variant_calling"
-            default_module_name: The default step to use if depends_on isn't specified explicitly,
-                e.g., "somatic_variant_calling"
-                (meaning that `depends_on: variant_calling: "somatic_variant_calling"` reads as "the variant_calling task is done by the task named somatic_variant_calling")
-        """
-        if not default_module_name:
-            default_module_name = logical_name
-
-        if self.depends_on is not None and hasattr(self.depends_on, logical_name):
-            # Empty values in optional dependencies are treated as "not mapped".
-            target_task_name = getattr(self.depends_on, logical_name) or default_module_name
-        else:
-            target_task_name = default_module_name
-
-        if logical_name in self.modules:
-            raise ValueError(f"Dependency {logical_name} already registered!")
-
-        def resolve_dependency(path):
-            # because replace_prefix only acts on intra-module files.
-            if path.startswith("output/") or path.startswith("work/"):
-                return f"{target_task_name}/" + path
-            return os.path.join(target_task_name, path).replace("\\", "/")
-
-        self.modules[logical_name] = resolve_dependency
-
-    def get_upstream_path(self, logical_name: str, path: str, default_task_name: str = "") -> str:
-        """Resolve *path* into the physical output directory of an upstream task.
-
-        This is the inline alternative to the :meth:`register_module` +
-        ``self.modules[logical_name](path)`` two-step pattern. Step parts can call this
-        directly without first registering the module in ``__init__``:
-
-        .. code-block:: python
-
-            # old pattern (still works, no need to change immediately)
-            self.register_module("ngs_mapping")
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            bam = ngs_mapping(f"output/{lib}/out/{lib}.bam")
-
-            # new pattern (preferred for new code)
-            bam = self.get_upstream_path("ngs_mapping", f"output/{lib}/out/{lib}.bam")
-
-        Name resolution follows the same rules as :meth:`register_module`:
-
-        1. If ``depends_on`` has an attribute named *logical_name*, use its value as the
-           upstream task name.
-        2. Otherwise fall back to *default_task_name* (or *logical_name* itself when
-           *default_task_name* is empty).
-
-        The task name is prepended to *path*, matching the Snakemake module namespace
-        convention used everywhere in this codebase.
+            ngs = self.parent.upstream("ngs_mapping")
+            bam = ngs(f"output/{lib}/out/{lib}.bam")
+            bai = ngs(f"output/{lib}/out/{lib}.bam.bai")
 
         Arguments:
-            logical_name: The logical dependency name, e.g. ``"ngs_mapping"``.
-            path: The local path within the upstream task, e.g.
-                ``"output/lib/out/lib.bam"``.
-            default_task_name: Fallback task name when *logical_name* is not found in
-                ``depends_on``.  Defaults to *logical_name* itself.
+            field_name: The ``depends_on`` field name identifying the upstream task.
 
         Returns:
-            The namespaced path, e.g. ``"ngs_mapping/output/lib/out/lib.bam"``.
+            A ``str -> str`` callable that prepends the resolved task name.
         """
-        if not default_task_name:
-            default_task_name = logical_name
+        # Resolve once — cheap after the first call thanks to how resolve_dependency works.
+        dep = self.resolve_dependency(field_name)
 
-        if self.depends_on is not None and hasattr(self.depends_on, logical_name):
-            target_task_name = getattr(self.depends_on, logical_name) or default_task_name
-        else:
-            target_task_name = default_task_name
+        def _prefix(local_path: str) -> str:
+            if local_path.startswith("output/") or local_path.startswith("work/"):
+                return f"{dep.task_name}/{local_path}"
+            return os.path.join(dep.task_name, local_path).replace("\\", "/")
 
-        if path.startswith("output/") or path.startswith("work/"):
-            return f"{target_task_name}/{path}"
-        return os.path.join(target_task_name, path).replace("\\", "/")
+        return _prefix
 
     def get_upstream_paths(
         self, req_field_name: str, **kwargs
@@ -1149,52 +1156,18 @@ class BaseStep:
             AttributeError: If ``self.config`` has no ``depends_on`` attribute.
             ValueError: If the upstream task or its workflow class cannot be resolved.
         """
-        if self.depends_on is None:
-            raise AttributeError(
-                f"Task '{self.task_name}' has no 'depends_on' configuration; "
-                f"cannot resolve upstream field '{req_field_name}'."
-            )
+        dependency = self.resolve_dependency(req_field_name)
 
-        target_task_name = getattr(self.depends_on, req_field_name)
-        if not target_task_name:
-            raise ValueError(
-                f"Task '{self.task_name}': depends_on.{req_field_name} is empty or unset."
-            )
+        # Delegate path construction to the upstream workflow classmethod.
+        local_paths = dependency.workflow_cls.get_output_paths(
+            signature=dependency.signature, **kwargs
+        )
 
-        # Find the task entry to determine the step type
-        target_task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
-        step_type = target_task.step if target_task else target_task_name
+        # Prepend upstream task name for Snakemake global namespace.
+        global_paths = {k: f"{dependency.task_name}/{v}" for k, v in local_paths.items()}
 
-        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-
-        upstream_cls = WORKFLOW_REGISTRY.get(step_type)
-        if upstream_cls is None:
-            raise ValueError(
-                f"Workflow class for step '{step_type}' (resolved from depends_on.{req_field_name}"
-                f" = '{target_task_name}') not found in WORKFLOW_REGISTRY."
-            )
-
-        # Extract DataSignature and optional expected-schema from Annotated metadata
-        field_info = self.config.depends_on.model_fields.get(req_field_name)
-        required_sig: DataSignature | None = None
-        expected_schema: type[pydantic.BaseModel] | None = None
-        if field_info is not None:
-            for meta in field_info.metadata:
-                if isinstance(meta, DataSignature):
-                    required_sig = meta
-                elif isinstance(meta, ExpectedPathSchema):
-                    expected_schema = meta.schema
-                elif isinstance(meta, type) and issubclass(meta, pydantic.BaseModel):
-                    expected_schema = meta
-
-        # Delegate path construction to the upstream workflow classmethod
-        local_paths = upstream_cls.get_output_paths(signature=required_sig, **kwargs)
-
-        # Prepend upstream task name for Snakemake global namespace
-        global_paths = {k: f"{target_task_name}/{v}" for k, v in local_paths.items()}
-
-        if expected_schema is not None:
-            return expected_schema(**global_paths)
+        if dependency.expected_schema is not None:
+            return dependency.expected_schema(**global_paths)
         return global_paths
 
     def get_args(self, sub_step, action):
