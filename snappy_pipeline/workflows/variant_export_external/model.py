@@ -3,6 +3,15 @@ from typing import Annotated
 from pydantic import DirectoryPath, Field, FilePath
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+
+
+class VariantExportExternalDependsOn(SnappyModel):
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+    ] = ""
+    """Optional upstream link_in task providing the external VCF/BAM search path."""
 
 
 class TargetCoverageReport(SnappyModel):
@@ -15,6 +24,10 @@ class TargetCoverageReport(SnappyModel):
 
 
 class VariantExportExternal(SnappyStepModel):
+    depends_on: VariantExportExternalDependsOn = Field(
+        default_factory=VariantExportExternalDependsOn
+    )
+
     external_tool: str = "dragen"
     """external tool name."""
 

@@ -356,6 +356,11 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
     Class contains method to write pedigree file for primary DNA sample given the index
     NGS library name.It will create pedigree information based sole on sample name,
     example 'P001' instead of 'P001-N1-DNA1-WGS1'.
+
+    Used by export-external workflows that operate on externally-provided data, so they
+    have no upstream ``ngs_mapping`` dependency.  Overrides ``get_input_files`` to return
+    an empty list — the pedigree is derived solely from the sample sheet and needs no
+    BAM-file ordering constraint.
     """
 
     #: Step name
@@ -363,6 +368,11 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
 
     def __init__(self, *args, **kwargs):
         WritePedigreeStepPart.__init__(self, *args, **kwargs)
+
+    def get_input_files(self, action):
+        """Return empty input list — pedigree writing only needs sample-sheet data."""
+        self._validate_action(action=action)
+        return []
 
     def run(self, wildcards, output):
         """Write out the pedigree information
