@@ -5,6 +5,8 @@ from pydantic import Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -67,8 +69,16 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
     ] = "ngs_mapping"
 
     # Optional external/in-pipeline FASTQ source for salmon mode.
-    link_in: Annotated[str, DataSignature(DataType.RAW)] = ""
-    adapter_trimming: Annotated[str, DataSignature(DataType.RAW, frozenset({"trimmed"}))] = ""
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    adapter_trimming: Annotated[
+        str,
+        DataSignature(DataType.RAW, frozenset({"trimmed"})),
+        ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
 
 
 class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):

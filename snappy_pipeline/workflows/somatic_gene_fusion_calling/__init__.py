@@ -492,6 +492,18 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
     }
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local fusion-calling output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))
+        ):
+            raise ValueError(
+                f"SomaticGeneFusionCallingWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/{lib}/out/.done"}
+
+    @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific
         one

@@ -6,7 +6,9 @@ from typing import Annotated
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from snappy_pipeline.models import SizeString, SnappyModel, SnappyStepModel, ToggleModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 
 
 class ExpectedAlignments(BaseModel):
@@ -18,10 +20,18 @@ class ExpectedAlignments(BaseModel):
 
 class NgsMappingDependsOn(SnappyModel):
     # External FASTQ source. Usually points to a dedicated link_in task.
-    link_in: Annotated[str, DataSignature(DataType.RAW)] = ""
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
 
     # Optional in-pipeline FASTQ source, e.g. adapter_trimming output.
-    adapter_trimming: Annotated[str, DataSignature(DataType.RAW, frozenset({"trimmed"}))] = ""
+    adapter_trimming: Annotated[
+        str,
+        DataSignature(DataType.RAW, frozenset({"trimmed"})),
+        ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
 
 
 class DnaMapper(StrEnum):

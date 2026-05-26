@@ -503,6 +503,16 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local expression output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(DataSignature(DataType.EXPRESSION)):
+            raise ValueError(
+                f"GeneExpressionQuantificationWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"tsv": f"output/{lib}/out/{lib}.tsv"}
+
+    @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG

@@ -1,10 +1,11 @@
 from enum import IntEnum, StrEnum
 
-from pydantic import Field, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 
 
 class Tool(StrEnum):
@@ -876,7 +877,17 @@ class Bbduk(SnappyModel):
 
 class AdapterTrimmingDependsOn(SnappyModel):
     # External FASTQ source. Usually points to a dedicated link_in task.
-    link_in: Annotated[str, DataSignature(DataType.RAW)] = ""
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+
+
+class ExpectedTrimmedRawFastq(BaseModel):
+    """Consumer-driven contract for adapter_trimming raw FASTQ outputs."""
+
+    fastq_dir: str
 
 
 class AdapterTrimming(SnappyStepModel):

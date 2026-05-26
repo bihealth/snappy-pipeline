@@ -1,4 +1,12 @@
+from pydantic import BaseModel
+
 from snappy_pipeline.models import SnappyStepModel
+
+
+class ExpectedLinkedRawFastq(BaseModel):
+    """Consumer-driven contract for link_in raw FASTQ provider paths."""
+
+    path: str
 
 
 class LinkIn(SnappyStepModel):

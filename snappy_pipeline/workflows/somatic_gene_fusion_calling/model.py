@@ -5,7 +5,9 @@ from typing import Annotated
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 
 
 class Tool(enum.StrEnum):
@@ -98,8 +100,16 @@ class Arriba(SnappyModel):
 
 class SomaticGeneFusionCallingDependsOn(SnappyModel):
     # Optional external/in-pipeline FASTQ source.
-    link_in: Annotated[str, DataSignature(DataType.RAW)] = ""
-    adapter_trimming: Annotated[str, DataSignature(DataType.RAW, frozenset({"trimmed"}))] = ""
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    adapter_trimming: Annotated[
+        str,
+        DataSignature(DataType.RAW, frozenset({"trimmed"})),
+        ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
 
 
 class SomaticGeneFusionCalling(SnappyStepModel):

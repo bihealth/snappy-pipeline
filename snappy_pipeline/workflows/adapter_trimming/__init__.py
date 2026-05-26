@@ -197,6 +197,15 @@ class AdapterTrimmingWorkflow(BaseStep):
     sheet_shortcut_class = GenericSampleSheet
     config_model_class = AdapterTrimmingConfigModel
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local output paths for trimmed/raw FASTQ consumption."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.RAW, frozenset())
+        ):
+            raise ValueError(f"AdapterTrimmingWorkflow does not support signature: {signature}")
+        return {"fastq_dir": "output"}
+
     def __init__(self, *args, task_name: str, **kwargs):
         super().__init__(*args, task_name=task_name, **kwargs)
         self.register_sub_step_classes(
