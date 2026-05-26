@@ -112,6 +112,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
 from .model import VariantFiltration as VariantFiltrationConfigModel
@@ -245,13 +246,13 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
                     "work/write_pedigree.{index_library}/out/{index_library}.ped"
                 ).format(**wildcards),
             )
-            variant_annotation = self.parent.modules["variant_annotation"]
-            for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                output_path = (
-                    "output/jannovar_annotate_vcf.{index_library}/out/"
-                    "jannovar_annotate_vcf.{index_library}"
-                ).format(**wildcards)
-                yield key, variant_annotation(output_path) + ext
+            annotated: ExpectedAnnotatedGermlineVariants = self.parent.get_upstream_paths(
+                "variant_annotation", library_name=wildcards.index_library
+            )
+            yield "vcf", annotated.vcf
+            yield "vcf_tbi", annotated.vcf_tbi
+            yield "vcf_md5", annotated.vcf + ".md5"
+            yield "vcf_tbi_md5", annotated.vcf_tbi + ".md5"
 
         return input_function
 
@@ -433,6 +434,21 @@ class VariantFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local filtered germline VCF output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"germline", "filtered"}))
+        ):
+            raise ValueError(f"VariantFiltrationWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/jannovar_annotate_vcf.filtered.{lib}.{{filters}}/out/"
+            f"jannovar_annotate_vcf.filtered.{lib}.{{filters}}.vcf.gz",
+            "vcf_tbi": f"output/jannovar_annotate_vcf.filtered.{lib}.{{filters}}/out/"
+            f"jannovar_annotate_vcf.filtered.{lib}.{{filters}}.vcf.gz.tbi",
+        }
+
     def __init__(
         self,
         workflow,
@@ -466,9 +482,7 @@ class VariantFiltrationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Register sub workflows
-        self.register_module("variant_annotation")
-        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
+        # Inputs are resolved via get_upstream_paths() in step parts.
 
     @listify
     def get_result_files(self):

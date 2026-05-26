@@ -3,6 +3,9 @@ from typing import Annotated, Literal, Self, TypedDict
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class Ebfilter(SnappyModel):
@@ -109,8 +112,16 @@ class Filter(TypedDict, total=False):
 
 
 class SomaticVariantFiltrationDependsOn(SnappyModel):
-    somatic_variant: str = "somatic_variant"
-    ngs_mapping: str = "ngs_mapping"
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = ""
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
 
 class SomaticVariantFiltration(SnappyStepModel):
@@ -155,4 +166,12 @@ class SomaticVariantFiltration(SnappyStepModel):
             raise ValueError("Only one ebfilter is allowed")
         if num_dkfz > 1:
             raise ValueError("Only one dkfz is allowed")
+        return self
+
+    @model_validator(mode="after")
+    def set_default_somatic_variant_dependency(self):
+        if not self.depends_on.somatic_variant:
+            self.depends_on.somatic_variant = (
+                "somatic_variant_annotation" if self.has_annotation else "somatic_variant_calling"
+            )
         return self

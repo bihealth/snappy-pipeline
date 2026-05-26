@@ -10,6 +10,7 @@ from snakemake.io import expand
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.gene_expression_quantification.model import ExpectedExpression
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import GeneExpressionReport as GeneExpressionReportConfigModel
@@ -56,8 +57,6 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
         # Validate action
         self._validate_action(action)
 
-        gene_expression = self.parent.modules["gene_expression_quantification"]
-
         for sheet in filter(is_not_background, self.parent.sheets):
             for donor in sheet.bio_entities.values():
                 for biosample in donor.bio_samples.values():
@@ -67,11 +66,10 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                 # if there is more than one lib, cbioportal cannot use it
                                 if lib.extra_infos["libraryType"] == "mRNA_seq":
                                     rna_library = lib.name
-                                    exp_tpl = "output/{library_name}/out/{library_name}.tsv".format(
-                                        library_name=rna_library
+                                    expression: ExpectedExpression = self.parent.get_upstream_paths(
+                                        "gene_expression_quantification", library_name=rna_library
                                     )
-                                    exp_file = gene_expression(exp_tpl)
-                                    yield exp_file
+                                    yield expression.tsv
 
     @dictify
     def get_output_files(self, action):
@@ -155,6 +153,18 @@ class GeneExpressionReportWorkflow(BaseStep):
     }
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local gene-expression report output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.TABULAR, frozenset({"expression_report"}))
+        ):
+            raise ValueError(
+                f"GeneExpressionReportWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"tsv": f"output/{lib}/out/{lib}.tsv"}
+
+    @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
@@ -189,8 +199,7 @@ class GeneExpressionReportWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize dependency module via depends_on routing.
-        self.register_module("gene_expression_quantification", "gene_expression_quantification")
+        # Inputs are resolved via get_upstream_paths() in step parts.
 
     @listify
     def get_result_files(self):

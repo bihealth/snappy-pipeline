@@ -1,19 +1,38 @@
+from typing import Annotated
+
 from pydantic import Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 
 class VarfishExportDependsOn(SnappyModel):
-    ngs_mapping: str = "ngs_mapping"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
     """Used output of ngs_mapping is alignment quality control data"""
 
-    variant_calling: str = "variant_calling"
+    variant_calling: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline"})),
+        ExpectedPathSchema(ExpectedGermlineVariants),
+    ] = "variant_calling"
     """Used output of variant_calling is variant calls"""
 
-    sv_calling_targeted: str = ""
+    sv_calling_targeted: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})),
+    ] = ""
     """Used output of targeted SV calling is variant calls"""
 
-    sv_calling_wgs: str = ""
+    sv_calling_wgs: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})),
+    ] = ""
     """Used output of WGS SV calling is variant calls"""
 
 

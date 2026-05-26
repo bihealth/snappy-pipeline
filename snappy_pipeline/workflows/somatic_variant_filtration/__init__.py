@@ -19,6 +19,8 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 from .model import Ebfilter as EbfilterConfig
 from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigModel
@@ -80,9 +82,10 @@ class OneFilterStepPart(SomaticVariantFiltrationStepPart):
                 os.path.join("work", name_pattern, "out", name_pattern + f".{prev}_{n}.vcf.gz"),
             )
         else:
-            somatic_variant = self.parent.modules["somatic_variant"]
-            base_path = os.path.join("output", name_pattern, "out", name_pattern)
-            yield "vcf", somatic_variant(base_path.format(**wildcards) + ".vcf.gz")
+            somatic_variant: ExpectedSomaticVariants = self.parent.get_upstream_paths(
+                "somatic_variant", library_name=name_pattern
+            )
+            yield "vcf", somatic_variant.vcf
 
     @dictify
     def get_output_files(self, action):
@@ -149,14 +152,16 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
 
         yield "reference", self.w_config.static_data_config.reference.path
 
-        ngs_mapping = self.parent.modules["ngs_mapping"]
         name_pattern = "{tumor_library}".format(**wildcards)
-        base_path = os.path.join("output", name_pattern, "out", name_pattern)
-        yield "bam", ngs_mapping(base_path + ".bam")
+        tumor_alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=name_pattern
+        )
+        yield "bam", tumor_alignments.bam
         if normal_library := self.tumor_to_normal_library.get(wildcards["tumor_library"], None):
-            name_pattern = "{normal_library}".format(normal_library=normal_library, **wildcards)
-            base_path = os.path.join("output", name_pattern, "out", name_pattern)
-            yield "normal", ngs_mapping(base_path + ".bam")
+            normal_alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=normal_library
+            )
+            yield "normal", normal_alignments.bam
 
 
 class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
@@ -222,10 +227,11 @@ class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
         random.seed(cfg.shuffle_seed)
         lib_count = cfg["panel_of_normals_size"]
         random.shuffle(libraries)
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        tpl = "output/{normal_library}/out/{normal_library}"
         for library in libraries[:lib_count]:
-            yield ngs_mapping(tpl.format(normal_library=library, **wildcards) + ".bam")
+            alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=library
+            )
+            yield alignments.bam
 
 
 class OneFilterBcftoolsStepPart(OneFilterStepPart):
@@ -326,6 +332,21 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
     }
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local filtered-variant output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.VARIANTS, frozenset({"somatic", "filtered"}))
+        ):
+            raise ValueError(
+                f"SomaticVariantFiltrationWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+        }
+
+    @classmethod
     def default_config_yaml(cls):
         return DEFAULT_CONFIG
 
@@ -361,13 +382,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        self.register_module(
-            "somatic_variant",
-            "somatic_variant_annotation"
-            if self.config.has_annotation
-            else "somatic_variant_calling",
-        )
-        self.register_module("ngs_mapping")
+        # Inputs are resolved via get_upstream_paths() in step parts.
 
     @listify
     def get_result_files(self):

@@ -460,6 +460,20 @@ class VarfishExportWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local VarFish export output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.EXPORTS, frozenset({"varfish"}))
+        ):
+            raise ValueError(f"VarfishExportWorkflow does not support signature: {signature}")
+        lib = kwargs.get("library_name", "{library_name}")
+        prefix = f"output/varfish_export.{lib}/out/mehari_annotate_seqvars.{lib}"
+        return {
+            "gts": f"{prefix}.gts.tsv.gz",
+            "db_infos": f"{prefix}.db-infos.tsv.gz",
+        }
+
     def __init__(
         self,
         workflow,

@@ -51,6 +51,12 @@ class Stats(SnappyModel):
     pass
 
 
+class ExpectedExpression(SnappyModel):
+    """Consumer-driven contract: expected output keys from gene_expression_quantification."""
+
+    tsv: str
+
+
 class Tool(enum.StrEnum):
     strandedness = "strandedness"
     featurecounts = "featurecounts"

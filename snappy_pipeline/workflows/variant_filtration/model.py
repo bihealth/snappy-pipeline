@@ -4,6 +4,8 @@ from typing import Annotated
 from pydantic import AfterValidator, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
 
 
 class Threshold(SnappyModel):
@@ -98,7 +100,11 @@ FILTER_COMBINATION_EXAMPLES = [
 
 
 class VariantFiltrationDependsOn(SnappyModel):
-    variant_annotation: str = "variant_annotation"
+    variant_annotation: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
+        ExpectedPathSchema(ExpectedAnnotatedGermlineVariants),
+    ] = "variant_annotation"
 
 
 class VariantFiltration(SnappyStepModel):

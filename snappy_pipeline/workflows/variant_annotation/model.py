@@ -26,6 +26,13 @@ class VepCustom(Vep):
     more_flags: str = "--af_gnomade --af_gnomadg"
 
 
+class ExpectedAnnotatedGermlineVariants(SnappyModel):
+    """Consumer-driven contract: expected output keys from variant_annotation."""
+
+    vcf: str
+    vcf_tbi: str
+
+
 class VariantAnnotationDependsOn(SnappyModel):
     variant_calling: Annotated[
         str,
