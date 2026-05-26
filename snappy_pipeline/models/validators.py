@@ -22,17 +22,29 @@ class ToolMixin(BaseModel):
 
 
 def validate_ngs_mapping_or_link():
-    def path_ngs_mapping_or_path_link_in(instance):
-        if not instance.path_ngs_mapping and not instance.path_link_in:
-            raise ValueError("Either path_ngs_mapping or path_link_in must be set")
+    def validate_depends_on_inputs(instance):
+        depends_on = getattr(instance, "depends_on", None)
+        if depends_on is None:
+            raise ValueError("depends_on configuration is required")
+
+        path_ngs_mapping = getattr(depends_on, "ngs_mapping", "")
+        path_link_in = getattr(depends_on, "link_in", "") or getattr(
+            depends_on, "adapter_trimming", ""
+        )
+
+        if not path_ngs_mapping and not path_link_in:
+            raise ValueError(
+                "Either depends_on.ngs_mapping or a raw provider dependency "
+                "(depends_on.link_in/depends_on.adapter_trimming) must be set"
+            )
         return instance
 
-    return pydantic.model_validator(mode="after")(path_ngs_mapping_or_path_link_in)
+    return pydantic.model_validator(mode="after")(validate_depends_on_inputs)
 
 
 class NgsMappingMixin(BaseModel):
     """
-    A mixin for validating that not both `path_ngs_mapping` and `path_link_in` are set.
+    Validate contract-based upstream mapping/raw-provider dependencies.
     """
 
     _validate_ngs_mapping_or_link = validate_ngs_mapping_or_link()
