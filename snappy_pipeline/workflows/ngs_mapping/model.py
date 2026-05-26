@@ -6,6 +6,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from snappy_pipeline.models import SizeString, SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 
 class ExpectedAlignments(BaseModel):
@@ -13,6 +14,14 @@ class ExpectedAlignments(BaseModel):
 
     bam: str
     bai: str
+
+
+class NgsMappingDependsOn(SnappyModel):
+    # External FASTQ source. Usually points to a dedicated link_in task.
+    link_in: Annotated[str, DataSignature(DataType.RAW)] = ""
+
+    # Optional in-pipeline FASTQ source, e.g. adapter_trimming output.
+    adapter_trimming: Annotated[str, DataSignature(DataType.RAW, frozenset({"trimmed"}))] = ""
 
 
 class DnaMapper(StrEnum):
@@ -294,6 +303,8 @@ class Mbcs(SnappyModel):
 
 
 class NgsMapping(SnappyStepModel):
+    depends_on: NgsMappingDependsOn = Field(default_factory=NgsMappingDependsOn)
+
     tool: Tool
     """Aligner to use for the NGS library"""
 

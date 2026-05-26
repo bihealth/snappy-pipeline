@@ -858,26 +858,47 @@ class BaseStep:
         return wf_class.config_model_class.model_validate(task.config)
 
     def get_preprocessed_path(self) -> str:
-        """Return the external preprocessed FASTQ directory declared by an upstream ``link_in`` task.
+        """Return a preprocessed FASTQ directory from configured RAW dependencies.
 
-        Workflows that need to link in pre-processed FASTQs from outside the pipeline (instead of
-        crawling ``data_sets`` search paths) should declare a ``link_in`` dependency:
+        Resolution order:
 
-        .. code-block:: yaml
+        1. The ``link_in`` dependency, if configured, using its explicit ``path`` value.
+        2. Any other configured ``depends_on`` field annotated with ``DataSignature(DataType.RAW)``,
+           interpreted as an in-pipeline task that exposes FASTQs under
+           ``<upstream_task_name>/output`` (e.g. ``adapter_trimming``).
 
-            depends_on:
-              link_in: my_link_in_task
-
-        This method resolves that dependency via the standard ``get_task_config("link_in")``
-        mechanism and returns the ``path`` field of the upstream :class:`LinkIn` config.
-
-        Returns an empty string if no ``link_in`` dependency is configured.
+        Returns an empty string if no matching RAW provider dependency is configured.
         """
-        try:
-            upstream_config = self.get_task_config("link_in")
-            return getattr(upstream_config, "path", "") or ""
-        except Exception:
+        if self.depends_on is None:
             return ""
+
+        # Prefer explicit external path from link_in, if available.
+        link_in_task_name = getattr(self.depends_on, "link_in", "")
+        if link_in_task_name:
+            try:
+                upstream_config = self.get_task_config("link_in")
+                explicit_path = getattr(upstream_config, "path", "") or ""
+                if explicit_path:
+                    return explicit_path
+            except Exception:
+                pass
+
+        # Fallback: any configured RAW dependency task with standard output layout.
+        for field_name, field_info in type(self.depends_on).model_fields.items():
+            dep_task_name = getattr(self.depends_on, field_name, "")
+            if not dep_task_name:
+                continue
+            is_raw_dep = any(
+                isinstance(meta, DataSignature) and meta.type.value == "raw"
+                for meta in field_info.metadata
+            )
+            if not is_raw_dep:
+                continue
+            if field_name == "link_in":
+                continue
+            return f"{dep_task_name}/output"
+
+        return ""
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""

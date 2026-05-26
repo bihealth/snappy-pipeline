@@ -1,6 +1,11 @@
 import enum
+from typing import Annotated
+
+from pydantic import Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Strand(enum.IntEnum):
@@ -54,8 +59,22 @@ class Tool(enum.StrEnum):
     stats = "stats"
 
 
+class GeneExpressionQuantificationDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+
+    # Optional external/in-pipeline FASTQ source for salmon mode.
+    link_in: Annotated[str, DataSignature(DataType.RAW)] = ""
+    adapter_trimming: Annotated[str, DataSignature(DataType.RAW, frozenset({"trimmed"}))] = ""
+
+
 class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+    depends_on: GeneExpressionQuantificationDependsOn = Field(
+        default_factory=GeneExpressionQuantificationDependsOn
+    )
 
     tool: Tool  # TODO: add default = [Tool.salmon]
 

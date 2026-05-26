@@ -66,6 +66,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
 
@@ -244,15 +245,13 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         return getattr(self, f"_get_input_files_{action}")
 
     def _get_input_files_run(self, wildcards: Wildcards):
-        """Helper wrapper function"""
-        # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        # Get names of primary libraries of the selected cancer bio sample and the
-        # corresponding primary normal sample
-        base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
+        """Resolve alignment inputs through the typed upstream contract broker."""
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
+        )
         return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
+            "bam": alignments.bam,
+            "bai": alignments.bai,
         }
 
     def get_output_files(self, action):
@@ -542,8 +541,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping")
+        # Inputs are resolved via get_upstream_paths() in step parts.
 
     def get_strandedness_file(self, action):
         _ = action

@@ -4,6 +4,7 @@ from pydantic import Field, PositiveInt
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 
 class Tool(StrEnum):
@@ -873,7 +874,14 @@ class Bbduk(SnappyModel):
     """
 
 
+class AdapterTrimmingDependsOn(SnappyModel):
+    # External FASTQ source. Usually points to a dedicated link_in task.
+    link_in: Annotated[str, DataSignature(DataType.RAW)] = ""
+
+
 class AdapterTrimming(SnappyStepModel):
+    depends_on: AdapterTrimmingDependsOn = Field(default_factory=AdapterTrimmingDependsOn)
+
     tool: Annotated[Tool, EnumField(Tool, default=Tool.FASTP)]
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None
