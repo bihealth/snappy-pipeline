@@ -64,7 +64,7 @@ for task in tasks:
         name: t_name
         snakefile: f"workflows/{t_step}/Snakefile"
         config: config | {"__task_name__": t_name}
-        replace_prefix:{"output/": f"{t_name}/output/", "work/": f"{t_name}/work/"}
+        replace_prefix: {"output/": f"{t_name}/output/", "work/": f"{t_name}/work/"}
 
     use rule * from t_name as alias*
 

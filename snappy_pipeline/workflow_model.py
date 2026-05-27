@@ -3,11 +3,16 @@ from typing import Any, TypedDict
 
 from pydantic import ConfigDict, Field
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ResolvablePath
 
 
 class PathModel(SnappyModel):
-    path: str = ""
+    """
+    A simple model holding a single resolvable path field.
+    Uses ResolvablePath which ensures relative paths are resolved to absolute ones.
+    """
+
+    path: ResolvablePath = ""
 
 
 class StaticDataConfig(SnappyModel):

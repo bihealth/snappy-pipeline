@@ -1,5 +1,0 @@
-pipeline_step:
-  name: somatic_variant_annotation
-  version: 1
-
-$ref: 'file://../.snappy_pipeline/config.yaml'

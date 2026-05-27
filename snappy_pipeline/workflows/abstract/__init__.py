@@ -801,7 +801,10 @@ class BaseStep:
         print(f"\n[DEBUG] Initializing step '{self.step_name}' for task '{self.task_name}'")
 
         # Validate from mapping input explicitly to ensure nested coercion is applied consistently.
-        self.config = self.config_model_class.model_validate(self.task.config)
+        # Pass config_lookup_paths as validation context for path resolution.
+        self.config = self.config_model_class.model_validate(
+            self.task.config, context={"config_lookup_paths": config_lookup_paths}
+        )
         self.depends_on = getattr(self.config, "depends_on", None)
 
         self.config_lookup_paths = list(config_lookup_paths)

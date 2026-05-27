@@ -3,9 +3,16 @@ import os
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import SizeString, SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.models import (
+    SizeString,
+    SnappyModel,
+    SnappyStepModel,
+    ToggleModel,
+    ResolvablePathPrefix,
+    ResolvablePath,
+)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
 from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
@@ -97,7 +104,7 @@ class TargetCoverageReportEntry(SnappyModel):
 
     pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
 
-    path: Annotated[str, Field(examples=["path/to/targets.bed"])]
+    path: ResolvablePath = Field(examples=["path/to/targets.bed"])
 
 
 class TargetCoverageReport(ToggleModel):
@@ -119,7 +126,9 @@ class BwaMode(StrEnum):
 
 
 class BwaMapper(SnappyModel):
-    path_index: str
+    path_index: ResolvablePathPrefix
+    """Path prefix for BWA index files (e.g., "path/to/GRCh38" without ".amb" extension)"""
+
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -136,11 +145,11 @@ class BwaMapper(SnappyModel):
 
 
 class Bwa(BwaMapper):
-    @field_validator("path_index")
-    @classmethod
-    def validate_bwa_path_index(cls, v):
+    @model_validator(mode="after")
+    def validate_bwa_path_index(self):
         import logging
 
+        v = self.path_index
         extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
         prefix, ext = os.path.splitext(v)
         if ext:
@@ -154,15 +163,16 @@ class Bwa(BwaMapper):
             alt_sidecar = os.path.splitext(prefix)[0] + extension
             if not (os.path.exists(sidecar) or os.path.exists(alt_sidecar)):
                 logging.warning(f"missing BWA index sidecar file: {sidecar} (or {alt_sidecar})")
-        return prefix
+        self.path_index = prefix
+        return self
 
 
 class BwaMem2(BwaMapper):
-    @field_validator("path_index")
-    @classmethod
-    def validate_bwa_mem2_path_index(cls, v):
+    @model_validator(mode="after")
+    def validate_bwa_mem2_path_index(self):
         import logging
 
+        v = self.path_index
         extensions = {".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"}
         prefix, ext = os.path.splitext(v)
         if ext:
@@ -178,7 +188,8 @@ class BwaMem2(BwaMapper):
                 logging.warning(
                     f"missing BWA-MEM2 index sidecar file: {sidecar} (or {alt_sidecar})"
                 )
-        return prefix
+        self.path_index = prefix
+        return self
 
 
 class BarcodeTool(StrEnum):
@@ -186,7 +197,7 @@ class BarcodeTool(StrEnum):
 
 
 class Bqsr(SnappyModel):
-    common_variants: str
+    common_variants: ResolvablePath
     """Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)"""
 
 

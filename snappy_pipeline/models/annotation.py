@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from snappy_pipeline.models import SnappyModel
+from snappy_pipeline.models import SnappyModel, ResolvablePath, ResolvablePathList
 
 
 class VepTxFlag(enum.StrEnum):
@@ -13,7 +13,7 @@ class VepTxFlag(enum.StrEnum):
 
 
 class Vep(SnappyModel):
-    cache_dir: str = ""
+    cache_dir: ResolvablePath = ""
     """Defaults to $HOME/.vep Not a good idea on the cluster"""
 
     species: str = "homo_sapiens"
@@ -52,16 +52,16 @@ class Mehari(SnappyModel):
     assembly: str = "GRCh38"
     """Assembly to use"""
 
-    reference: str
+    reference: ResolvablePath
     """Reference genome FASTA file (with accompanying index)"""
 
-    transcripts: list[str] = Field(default_factory=list, min_length=1)
+    transcripts: ResolvablePathList = Field(default_factory=list, min_length=1)
     """Transcript database(s) containing the transcript information."""
 
-    frequencies: str | None = None
+    frequencies: ResolvablePath | None = None
     """Frequency database."""
 
-    clinvar: str | None = None
+    clinvar: ResolvablePath | None = None
     """ClinVar database."""
 
     report_most_severe_consequence_by: Literal["gene", "transcript", "allele"] | None = None
