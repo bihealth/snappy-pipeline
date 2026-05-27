@@ -782,12 +782,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic WGS CNV output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))
-        ):
-            raise ValueError(
-                f"SomaticWgsCnvCallingWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 

@@ -65,6 +65,7 @@ from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerato
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import GetResultFilesMixin, VariantCallingWorkflow
+from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 from .model import VariantAnnotation as VariantAnnotationConfigModel
 
@@ -102,14 +103,13 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
         """Return path to pedigree input file"""
         self._validate_action(action)
         token = f"{self._variant_tool}.{{library_name}}"
+        calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
+            "variant_calling", library_name=token
+        )
         return {
             "reference": self.w_config.static_data_config.reference.path,
-            "vcf": self.parent.get_upstream_local_path(
-                "variant_calling", f"output/{token}/out/{token}.vcf.gz"
-            ),
-            "vcf_tbi": self.parent.get_upstream_local_path(
-                "variant_calling", f"output/{token}/out/{token}.vcf.gz.tbi"
-            ),
+            "vcf": calling.vcf,
+            "vcf_tbi": calling.vcf_tbi,
         }
 
     @dictify
@@ -213,7 +213,6 @@ class VariantAnnotationWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

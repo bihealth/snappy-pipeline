@@ -171,7 +171,7 @@ class PicardStepPart(BaseStepPart):
         infix = f"{wildcards.library_name}"
         yield (
             "bam",
-            self.parent.get_upstream_local_path("ngs_mapping", f"output/{infix}/out/{infix}.bam"),
+            self.parent.upstream("ngs_mapping")(f"output/{infix}/out/{infix}.bam"),
         )
 
     @dictify
@@ -290,8 +290,7 @@ class NgsDataQcWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local NGS QC output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(DataSignature(DataType.QC)):
-            raise ValueError(f"NgsDataQcWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/report/fastqc/.done"}
 
@@ -317,7 +316,6 @@ class NgsDataQcWorkflow(BaseStep):
         self.register_sub_step_classes(
             (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):

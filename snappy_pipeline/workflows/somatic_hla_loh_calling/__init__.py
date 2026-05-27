@@ -32,6 +32,8 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
 
 from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
 
@@ -66,30 +68,23 @@ class LohhlaStepPart(BaseStepPart):
 
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
-                normal_library=self.get_normal_lib_name(wildcards), **wildcards
+            normal_lib = self.get_normal_lib_name(wildcards)
+            tumor_lib = wildcards.tumor_library
+            normal: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=normal_lib
             )
-            tumor_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-            hla = "output/{normal_library}/out/{normal_library}.txt".format(
-                normal_library=self.get_normal_lib_name(wildcards)
+            tumor: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=tumor_lib
             )
-
+            hla_typing: ExpectedHlaTyping = self.parent.get_upstream_paths(
+                "hla_typing", library_name=normal_lib
+            )
             return {
-                "normal_bam": self.parent.get_upstream_local_path(
-                    "ngs_mapping", normal_base_path + ".bam"
-                ),
-                "normal_bai": self.parent.get_upstream_local_path(
-                    "ngs_mapping", normal_base_path + ".bam.bai"
-                ),
-                "tumor_bam": self.parent.get_upstream_local_path(
-                    "ngs_mapping", tumor_base_path + ".bam"
-                ),
-                "tumor_bai": self.parent.get_upstream_local_path(
-                    "ngs_mapping", tumor_base_path + ".bam.bai"
-                ),
-                "hla": self.parent.get_upstream_local_path("hla_typing", hla),
+                "normal_bam": normal.bam,
+                "normal_bai": normal.bai,
+                "tumor_bam": tumor.bam,
+                "tumor_bai": tumor.bai,
+                "hla": hla_typing.txt,
             }
 
         return input_function
@@ -171,7 +166,6 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart, LinkOutStepPart))
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):

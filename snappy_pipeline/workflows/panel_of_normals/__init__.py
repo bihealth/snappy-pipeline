@@ -160,6 +160,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
 
@@ -275,8 +276,10 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 self.config.purecn.genome_name,
             ),
         )
-        tpl = "output/{library_name}/out/{library_name}.bam"
-        yield "bam", self.parent.get_upstream_local_path("ngs_mapping", tpl.format(**wildcards))
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
 
     @dictify
     def _get_input_files_create(self, wildcards):
@@ -821,10 +824,7 @@ class PanelOfNormalsWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local panel-of-normals output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.MODELS, frozenset({"pon"}))
-        ):
-            raise ValueError(f"PanelOfNormalsWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         tool = kwargs.get("tool", "{tool}")
         return {"done": f"output/{tool}/out/.done"}
 

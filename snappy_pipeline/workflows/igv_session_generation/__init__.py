@@ -95,8 +95,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         # TODO: For instance, given pedigree (P001, P002, P003) it will return three runtime the
         # TODO: same value: '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
-        return self.parent.get_upstream_local_path(
-            "ngs_mapping", "output/{index_library}/out/{index_library}.bam".format(**wildcards)
+        return self.parent.upstream("ngs_mapping")(
+            "output/{index_library}/out/{index_library}.bam".format(**wildcards)
         )
 
     def _get_path_vcf(self, wildcards, real_index):
@@ -106,7 +106,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             real_index_library=real_index.dna_ngs_library.name,
             **wildcards,
         )
-        return self.parent.get_upstream_local_path(self.previous_step, input_path + ".vcf.gz")
+        return self.parent.upstream(self.previous_step)(input_path + ".vcf.gz")
 
     def get_input_files(self, action):
         # Validate action

@@ -107,6 +107,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
@@ -192,9 +193,11 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
             )
             yield "ped", real_path
             # BAM and BAI file of the offspring
-            path_bam = ("output/{index_library}/out/{index_library}.bam").format(**wildcards)
-            yield "bam", self.parent.get_upstream_local_path("ngs_mapping", path_bam)
-            yield "bai", self.parent.get_upstream_local_path("ngs_mapping", path_bam + ".bai")
+            _aln: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=wildcards.index_library
+            )
+            yield "bam", _aln.bam
+            yield "bai", _aln.bai
             # Input file comes from previous step.
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 name_pattern = self.name_pattern.replace(r",[^\.]+", "").replace("de_novos.", "")
@@ -203,7 +206,7 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
                 input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
                     real_index=real_index.dna_ngs_library.name, **wildcards
                 )
-                yield key, self.parent.get_upstream_local_path(self.previous_step, input_path) + ext
+                yield key, self.parent.upstream(self.previous_step)(input_path) + ext
 
         return input_function
 

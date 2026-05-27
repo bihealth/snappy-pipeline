@@ -134,6 +134,8 @@ def run(wrapper_args, snakemake_args):
     config_args = ["--config"]
     if wrapper_args.task:
         config_args.append(f"task={wrapper_args.task}")
+    if wrapper_args.all_tasks:
+        config_args.append("all_tasks=True")
     if wrapper_args.verbose:
         config_args.append("dump_orchestrator=True")
 
@@ -167,7 +169,7 @@ def main(argv=None):
         snakemake_args = []
 
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [--version] [-v] [-d directory] [--profile-snappy-pipeline] --task TASK [--] [snakemake arguments]",
+        usage="%(prog)s [--version] [-v] [-d directory] [--profile-snappy-pipeline] [--task TASK] [--all-tasks] [--] [snakemake arguments]",
         allow_abbrev=False,
     )
 
@@ -188,6 +190,15 @@ def main(argv=None):
         default=None,
         help="The specific task name from config.yaml to run",
     )
+    parser.add_argument(
+        "--all-tasks",
+        action="store_true",
+        default=False,
+        help=(
+            "Target all tasks (not just leaf tasks). "
+            "By default only leaf tasks (tasks not depended on by any other task) are targeted."
+        ),
+    )
 
     # Only parse the arguments meant for snappy
     wrapper_args = parser.parse_args(snappy_args_list)
@@ -196,7 +207,10 @@ def main(argv=None):
     setup_logging(wrapper_args)
 
     if not wrapper_args.task:
-        logging.info("No specific --task provided. Will target all tasks.")
+        if wrapper_args.all_tasks:
+            logging.info("No specific --task provided. Targeting all tasks (--all-tasks).")
+        else:
+            logging.info("No specific --task provided. Targeting leaf tasks only (default).")
 
     return run(wrapper_args, snakemake_args)
 

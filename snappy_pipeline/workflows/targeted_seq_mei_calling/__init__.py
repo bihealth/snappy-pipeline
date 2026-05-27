@@ -93,6 +93,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
 
@@ -183,8 +184,10 @@ class ScrambleStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        bam_tpl = "output/{library_name}/out/{library_name}.bam"
-        yield self.parent.get_upstream_local_path("ngs_mapping", bam_tpl.format(**wildcards))
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
+        )
+        yield alignments.bam
 
     @staticmethod
     @listify
@@ -318,7 +321,6 @@ class MeiWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @classmethod
     def default_config_yaml(cls):

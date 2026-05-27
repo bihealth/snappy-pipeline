@@ -246,9 +246,7 @@ class ArcasHlaStepPart(BaseStepPart):
             tpl = "output/{library_name}/out/{library_name}.bam"
             yield (
                 "bam",
-                self.parent.get_upstream_local_path(
-                    "ngs_mapping", tpl.format(mapper=self.mapper, **wildcards)
-                ),
+                self.parent.upstream("ngs_mapping")(tpl.format(mapper=self.mapper, **wildcards)),
             )
 
         assert action == "run"
@@ -317,12 +315,12 @@ class HlaTypingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local HLA typing output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.TABULAR, frozenset({"hla"}))
-        ):
-            raise ValueError(f"HlaTypingWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"output/{lib}/out/.done"}
+        return {
+            "txt": f"output/{lib}/out/{lib}.txt",
+            "done": f"output/{lib}/out/.done",
+        }
 
     def __init__(self, *args, task_name: str, **kwargs):
         super().__init__(*args, task_name=task_name, **kwargs)
@@ -333,7 +331,6 @@ class HlaTypingWorkflow(BaseStep):
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self):

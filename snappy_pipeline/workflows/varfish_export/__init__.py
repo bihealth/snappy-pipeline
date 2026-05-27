@@ -227,12 +227,11 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
         vcfs = [
-            self.parent.get_upstream_local_path(
-                "variant_calling",
+            self.parent.upstream("variant_calling")(
                 path.format(
                     seqvar_caller=seqvar_caller,
                     index_ngs_library=wildcards.index_ngs_library,
-                ),
+                )
             )
         ]
         yield "vcf", vcfs
@@ -344,12 +343,11 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                     continue
 
             vcfs.append(
-                self.parent.get_upstream_local_path(
-                    sv_dep,
+                self.parent.upstream(sv_dep)(
                     path.format(
                         sv_caller=sv_caller,
                         index_ngs_library=wildcards.index_ngs_library,
-                    ),
+                    )
                 )
             )
         yield "vcf", vcfs
@@ -468,10 +466,7 @@ class VarfishExportWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local VarFish export output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.EXPORTS, frozenset({"varfish"}))
-        ):
-            raise ValueError(f"VarfishExportWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         prefix = f"output/varfish_export.{lib}/out/mehari_annotate_seqvars.{lib}"
         return {

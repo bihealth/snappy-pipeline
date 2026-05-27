@@ -469,13 +469,27 @@ def task_list(project_directory):
     default=None,
     help="The specific task name from config.yaml to run",
 )
+@click.option(
+    "--all-tasks",
+    "all_tasks",
+    is_flag=True,
+    default=False,
+    help=(
+        "Target all tasks, not just leaf tasks. "
+        "By default only leaf tasks (tasks not depended on by any other task) are targeted."
+    ),
+)
 @click.option("-v", "--verbose", is_flag=True, help="Increase verbosity level")
 @click.pass_context
-def run(ctx, directory, profile_snappy_pipeline, task_name, verbose):
+def run(ctx, directory, profile_snappy_pipeline, task_name, all_tasks, verbose):
     """Run snappy pipeline workflows."""
     setup_logging(verbose)
-    if not task_name:
-        logging.info("No specific --task provided. Will target all tasks / default targets.")
+    if task_name:
+        logging.info("Targeting single task: %s", task_name)
+    elif all_tasks:
+        logging.info("Targeting all tasks (--all-tasks flag set).")
+    else:
+        logging.info("No specific --task provided. Targeting leaf tasks only (default).")
 
     snakemake_args = list(ctx.args)
 
@@ -494,6 +508,8 @@ def run(ctx, directory, profile_snappy_pipeline, task_name, verbose):
     config_args = ["--config"]
     if task_name:
         config_args.append(f"task={task_name}")
+    if all_tasks:
+        config_args.append("all_tasks=True")
     if verbose:
         config_args.append("dump_orchestrator=True")
 

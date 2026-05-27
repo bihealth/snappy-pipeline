@@ -1421,13 +1421,7 @@ class NgsMappingWorkflow(BaseStep):
             **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
                 the ``{library_name}`` wildcard placeholder.
         """
-        from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.ALIGNMENTS, frozenset())
-        ):
-            raise ValueError(f"NgsMappingWorkflow does not support signature: {signature}")
-
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "bam": f"output/{lib}/out/{lib}.bam",

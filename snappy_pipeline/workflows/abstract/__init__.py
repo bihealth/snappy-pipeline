@@ -317,7 +317,7 @@ class WritePedigreeStepPart(BaseStepPart):
                     ext=".bam",
                     **wildcards,
                 )
-                yield self.parent.get_upstream_local_path("ngs_mapping", path)
+                yield self.parent.upstream("ngs_mapping")(path)
 
         return get_input_files
 
@@ -666,18 +666,13 @@ class BaseStep:
     produces: list[DataSignature] = []
 
     def __init_subclass__(cls, **kwargs):
-        """Warn when a ``BaseStep`` subclass does not declare a ``produces`` contract."""
+        """Enforce that every ``BaseStep`` subclass declares a ``produces`` contract."""
         super().__init_subclass__(**kwargs)
-        # Only warn for concrete leaf classes that inherit produces=[] from BaseStep
+        # Only check concrete leaf classes that inherit produces=[] from BaseStep
         own_produces = cls.__dict__.get("produces")
         if own_produces is None and not cls.produces:
-            import warnings as _warnings
-
-            _warnings.warn(
-                f"Transition Guidance: '{cls.__name__}' should declare a 'produces' list "
-                "for full contract compliance.",
-                DeprecationWarning,
-                stacklevel=2,
+            raise TypeError(
+                f"'{cls.__name__}' must declare a 'produces' list for contract compliance."
             )
 
     #: Override with the sheet shortcut class to use
@@ -1088,20 +1083,11 @@ class BaseStep:
             expected_schema=expected_schema,
         )
 
-    def get_upstream_local_path(self, field_name: str, local_path: str) -> str:
-        """Return a namespaced upstream path for ``local_path`` using ``depends_on.<field_name>``."""
-        dependency = self.resolve_dependency(field_name)
-        if local_path.startswith("output/") or local_path.startswith("work/"):
-            return f"{dependency.task_name}/{local_path}"
-        return os.path.join(dependency.task_name, local_path).replace("\\", "/")
-
     def upstream(self, field_name: str) -> "Callable[[str], str]":
         """Return a path-namespacing callable for ``depends_on.<field_name>``.
 
         The returned callable accepts a single local path string and returns the
-        globally namespaced version (i.e. prefixed with the upstream task name),
-        exactly like the old ``self.modules["x"]`` API but without requiring
-        ``register_module`` or Snakemake sub-workflow registration.
+        globally namespaced version (i.e. prefixed with the upstream task name).
 
         Usage::
 

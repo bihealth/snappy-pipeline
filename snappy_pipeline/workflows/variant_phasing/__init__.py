@@ -224,7 +224,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
                 ).format(real_index=real_index.dna_ngs_library.name, **wildcards)
                 yield (
                     key,
-                    self.parent.get_upstream_local_path("variant_annotation", input_path) + ext,
+                    self.parent.upstream("variant_annotation")(input_path) + ext,
                 )
             yield "reference", self.w_config.static_data_config.reference.path
 
@@ -266,27 +266,24 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
     def _yield_bams(self, wildcards):
         """Helper function used in subclass input_function"""
         donor = self.ngs_library_to_donor[wildcards.index_library]
-        tpl = "output/{index_library}/out/{index_library}{ext}"
-        for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
-            vals = {"ext": ext}
-            # Note that we only perform phasing for pedigree members we have both parents, so
-            # the following works.
-            if (
-                donor.dna_ngs_library
-                and donor.father
-                and donor.father.dna_ngs_library
-                and donor.mother
-                and donor.mother.dna_ngs_library
-            ):
-                files = [
-                    tpl.format(index_library=donor.dna_ngs_library.name, **vals),
-                    tpl.format(index_library=donor.father.dna_ngs_library.name, **vals),
-                    tpl.format(index_library=donor.mother.dna_ngs_library.name, **vals),
-                ]
-                yield (
-                    key,
-                    [self.parent.get_upstream_local_path("ngs_mapping", path) for path in files],
-                )
+        if not (
+            donor.dna_ngs_library
+            and donor.father
+            and donor.father.dna_ngs_library
+            and donor.mother
+            and donor.mother.dna_ngs_library
+        ):
+            return
+        trio_libs = [
+            donor.dna_ngs_library.name,
+            donor.father.dna_ngs_library.name,
+            donor.mother.dna_ngs_library.name,
+        ]
+        trio_aln = [
+            self.parent.get_upstream_paths("ngs_mapping", library_name=lib) for lib in trio_libs
+        ]
+        yield "bam", [al.bam for al in trio_aln]
+        yield "bai", [al.bai for al in trio_aln]
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -338,7 +335,7 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
                 ).format(real_index=real_index.dna_ngs_library.name, **wildcards)
                 yield (
                     key,
-                    self.parent.get_upstream_local_path("variant_annotation", output_path) + ext,
+                    self.parent.upstream("variant_annotation")(output_path) + ext,
                 )
 
         assert action == "run", "Unsupported actions"
@@ -426,7 +423,7 @@ class VariantPhasingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
+
         # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
 
     @listify

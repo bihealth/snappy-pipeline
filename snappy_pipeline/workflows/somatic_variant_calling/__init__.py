@@ -491,7 +491,7 @@ class SomaticVariantCallingWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
+
         if tool == "mutect2":
             if self.config.mutect2.contamination.enabled:
                 actions = self.sub_steps["mutect2"].actions

@@ -250,7 +250,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         tpl = os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
-        yield "vcf", self.parent.get_upstream_local_path("somatic_variant", tpl)
+        yield "vcf", self.parent.upstream("somatic_variant")(tpl)
 
     @dictify
     def get_log_file(self, action):
@@ -364,9 +364,8 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
-            self.parent.get_upstream_local_path(
-                "copy_number",
-                os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg"),
+            self.parent.upstream("copy_number")(
+                os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg")
             ),
         )
 
@@ -515,7 +514,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
             ).format(library_name=lib.name)
             yield (
                 lib.test_sample.bio_sample.name,
-                self.parent.get_upstream_local_path("copy_number", local_path),
+                self.parent.upstream("copy_number")(local_path),
             )
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -569,7 +568,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             ).format(library_name=lib.name)
             yield (
                 lib.test_sample.bio_sample.name,
-                self.parent.get_upstream_local_path("ngs_mapping", local_path),
+                self.parent.upstream("ngs_mapping")(local_path),
             )
 
     def get_args(self, action):
@@ -758,10 +757,7 @@ class cbioportalExportWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local cBioPortal export output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))
-        ):
-            raise ValueError(f"cbioportalExportWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         _ = kwargs
         return {
             "meta_study": "output/upload/meta_study.txt",

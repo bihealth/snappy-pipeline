@@ -28,6 +28,7 @@ class ArcasHla(SnappyModel):
 class ExpectedHlaTyping(SnappyModel):
     """Consumer-driven contract: expected output keys from hla_typing."""
 
+    txt: str
     done: str
 
 

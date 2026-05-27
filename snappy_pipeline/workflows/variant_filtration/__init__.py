@@ -437,10 +437,7 @@ class VariantFiltrationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local filtered germline VCF output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline", "filtered"}))
-        ):
-            raise ValueError(f"VariantFiltrationWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/jannovar_annotate_vcf.filtered.{lib}.{{filters}}/out/"

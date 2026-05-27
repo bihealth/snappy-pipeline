@@ -112,9 +112,7 @@ class ScarHRDStepPart(BaseStepPart):
         yield "done", "work/R_packages/out/scarHRD.done"
         yield (
             "seqz",
-            self.parent.get_upstream_local_path(
-                "cnv_calling", f"output/{base_name}/out/{base_name}.seqz.gz"
-            ),
+            self.parent.upstream("cnv_calling")(f"output/{base_name}/out/{base_name}.seqz.gz"),
         )
 
     def get_output_files(self, action):
@@ -196,12 +194,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local HRD output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.TABULAR, frozenset({"hrd"}))
-        ):
-            raise ValueError(
-                f"HomologousRecombinationDeficiencyWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"json": f"output/scarHRD.{lib}/out/scarHRD.{lib}.json"}
 

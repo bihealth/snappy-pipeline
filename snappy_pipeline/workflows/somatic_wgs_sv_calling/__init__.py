@@ -411,10 +411,7 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic WGS SV output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"somatic", "sv"}))
-        ):
-            raise ValueError(f"SomaticWgsSvCallingWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
 

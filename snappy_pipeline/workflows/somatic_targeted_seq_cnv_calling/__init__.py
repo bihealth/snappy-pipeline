@@ -407,7 +407,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             **wildcards,
         )
         base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
-        yield "vcf", self.parent.get_upstream_local_path("somatic_variants", base_path)
+        yield "vcf", self.parent.upstream("somatic_variants")(base_path)
         # PON outputs tracked as Snakemake inputs for proper dependency resolution.
         purecn_cfg = self.config.purecn
         yield "normaldb", pon("output/purecn/out/purecn.panel_of_normals.rds")
@@ -565,8 +565,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return {
             "target": tpl.format(target="target", **wildcards),
             "antitarget": tpl.format(target="antitarget", **wildcards),
-            "ref": self.parent.get_upstream_local_path(
-                "panel_of_normals", "output/cnvkit/out/cnvkit.panel_of_normals.cnn"
+            "ref": self.parent.upstream("panel_of_normals")(
+                "output/cnvkit/out/cnvkit.panel_of_normals.cnn"
             ),
         }
 
@@ -773,12 +773,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic targeted CNV output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))
-        ):
-            raise ValueError(
-                f"SomaticTargetedSeqCnvCallingWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 

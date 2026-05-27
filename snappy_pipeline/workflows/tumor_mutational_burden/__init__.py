@@ -15,6 +15,7 @@ from snappy_pipeline.workflows.somatic_variant_annotation import (
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
 
 from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
@@ -55,13 +56,11 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def get_input_files(self, action):
         self._validate_action(action)
 
-        base_name = "{tumor_library}"
-
-        tpl = os.path.join("output", base_name, "out", base_name)
-
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        for key, ext in key_ext.items():
-            yield key, self.parent.get_upstream_local_path("somatic_variant", tpl + ext)
+        variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
+            "somatic_variant", library_name="{tumor_library}"
+        )
+        yield "vcf", variants.vcf
+        yield "vcf_tbi", variants.vcf_tbi
 
     @dictify
     def get_output_files(self, action):

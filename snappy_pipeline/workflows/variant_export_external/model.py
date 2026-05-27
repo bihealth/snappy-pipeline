@@ -3,13 +3,15 @@ from typing import Annotated
 from pydantic import DirectoryPath, Field, FilePath
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 
 
 class VariantExportExternalDependsOn(SnappyModel):
     link_in: Annotated[
         str,
         DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
     ] = ""
     """Optional upstream link_in task providing the external VCF/BAM search path."""
 

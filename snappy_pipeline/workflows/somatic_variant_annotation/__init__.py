@@ -12,6 +12,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
 
@@ -48,11 +49,12 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
     @dictify
     def get_input_files(self, action):
         self._validate_action(action)
-        tpl = self._name_template(self.config)
-        tpl = os.path.join("output", tpl, "out", tpl)
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        for key, ext in key_ext.items():
-            yield key, self.parent.get_upstream_local_path("somatic_variant", tpl + ext)
+        lib = self._name_template(self.config)
+        variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
+            "somatic_variant", library_name=lib
+        )
+        yield "vcf", variants.vcf
+        yield "vcf_tbi", variants.vcf_tbi
 
     @dictify
     def get_output_files(self, action):

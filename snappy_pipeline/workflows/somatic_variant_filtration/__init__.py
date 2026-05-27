@@ -334,12 +334,7 @@ class SomaticVariantFiltrationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local filtered-variant output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"somatic", "filtered"}))
-        ):
-            raise ValueError(
-                f"SomaticVariantFiltrationWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",

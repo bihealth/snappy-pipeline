@@ -28,6 +28,7 @@ from snappy_pipeline.workflows.common.sv_calling import (
     SvCallingGetResultFilesMixin,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 from .model import SvCallingWgs as SvCallingWgsConfigModel, Tool
@@ -108,7 +109,7 @@ class PopDelStepPart(
         infix = wildcards.library_name
         yield (
             "bam",
-            self.parent.get_upstream_local_path("ngs_mapping", f"output/{infix}/out/{infix}.bam"),
+            self.parent.upstream("ngs_mapping")(f"output/{infix}/out/{infix}.bam"),
         )
 
     @dictify
@@ -251,11 +252,10 @@ class Sniffles2StepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
-        infix = wildcards.library_name
-        yield (
-            "bam",
-            self.parent.get_upstream_local_path("ngs_mapping", f"output/{infix}/out/{infix}.bam"),
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
         )
+        yield "bam", alignments.bam
 
     @dictify
     def _get_output_files_bam_to_snf(self):
@@ -339,7 +339,6 @@ class SvCallingWgsWorkflow(BaseStep):
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool step class.
         self.register_sub_step_classes((selected_sub_step, WritePedigreeStepPart))
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def all_donors(self, include_background=True):

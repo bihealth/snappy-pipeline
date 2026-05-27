@@ -271,6 +271,7 @@ from snappy_pipeline.workflows.abstract.common import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import VariantCalling as VariantCallingConfigModel
 
@@ -432,11 +433,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
                 if not donor.dna_ngs_library:
                     continue  # skip
                 infix = donor.dna_ngs_library.name
-                bams.append(
-                    self.parent.get_upstream_local_path(
-                        "ngs_mapping", f"output/{infix}/out/{infix}.bam"
-                    )
-                )
+                bams.append(self.parent.upstream("ngs_mapping")(f"output/{infix}/out/{infix}.bam"))
             yield "bam", bams
 
     def get_output_files(self, action) -> SnakemakeDict:
@@ -592,8 +589,10 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         yield "reference", self.w_config.static_data_config.reference.path
         yield "dbsnp", self.w_config.static_data_config.dbsnp.path
         infix = wildcards.library_name
-        bam_path = f"output/{infix}/out/{infix}.bam"
-        yield "bam", self.parent.get_upstream_local_path("ngs_mapping", bam_path)
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=infix
+        )
+        yield "bam", alignments.bam
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
@@ -989,10 +988,7 @@ class VariantCallingWorkflow(BaseStep):
             **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
                 the ``{library_name}`` wildcard placeholder.
         """
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.VARIANTS, frozenset({"germline"}))
-        ):
-            raise ValueError(f"VariantCallingWorkflow does not support signature: {signature}")
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
@@ -1039,7 +1035,6 @@ class VariantCallingWorkflow(BaseStep):
                 BafFileGenerationStepPart,
             )
         )
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:

@@ -64,6 +64,7 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
+from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 from .model import VariantChecking as VariantCheckingConfigModel
 
@@ -98,13 +99,12 @@ class PeddyStepPart(BaseStepPart):
         self._validate_action(action)
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        tpl = (
-            f"output/{self.variant_tool}.{{index_ngs_library}}/out/"
-            f"{self.variant_tool}.{{index_ngs_library}}"
+        calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
+            "variant_calling",
+            library_name=f"{self.variant_tool}.{{index_ngs_library}}",
         )
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        for key, ext in key_ext.items():
-            yield key, self.parent.get_upstream_local_path("variant_calling", tpl + ext)
+        yield "vcf", calling.vcf
+        yield "vcf_tbi", calling.vcf_tbi
 
     @dictify
     def get_output_files(self, action):
@@ -193,7 +193,7 @@ class VariantCheckingWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
+
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
 
     @listify

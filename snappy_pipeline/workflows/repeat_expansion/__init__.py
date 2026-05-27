@@ -89,6 +89,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
     AnnotateExpansionHunter,
 )
@@ -200,13 +201,12 @@ class ExpansionHunterStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        bam_tpl = self.parent.get_upstream_local_path(
-            "ngs_mapping", "output/{library_name}/out/{library_name}.bam"
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
         )
-        bam = bam_tpl.format(**wildcards)
         return {
-            "bam": bam,
-            "bai": bam + ".bai",
+            "bam": alignments.bam,
+            "bai": alignments.bai,
             "reference": self.w_config.static_data_config.reference.path,
             "repeat_catalog": self.config.repeat_catalog,
         }
@@ -343,7 +343,6 @@ class RepeatExpansionWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @classmethod
     def default_config_yaml(cls):

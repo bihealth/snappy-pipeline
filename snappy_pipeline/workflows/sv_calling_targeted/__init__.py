@@ -97,7 +97,6 @@ class SvCallingTargetedWorkflow(BaseStep):
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool's step part.
         self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
-        # Inputs resolve upstream paths via get_upstream_local_path/get_upstream_paths.
 
     @dictify
     def _build_ngs_library_to_kit(self):

@@ -25,6 +25,7 @@ from snappy_pipeline.workflows.somatic_variant_annotation import (
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
@@ -94,10 +95,11 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = self.name_prefix + self.name_postfix
-        tpl = os.path.join("output", name_pattern, "out", name_pattern)
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        for key, ext in key_ext.items():
-            yield key, self.parent.get_upstream_local_path("somatic_variant", tpl + ext)
+        variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
+            "somatic_variant", library_name=name_pattern
+        )
+        yield "vcf", variants.vcf
+        yield "vcf_tbi", variants.vcf_tbi
 
     @dictify
     def get_output_files(self, action):

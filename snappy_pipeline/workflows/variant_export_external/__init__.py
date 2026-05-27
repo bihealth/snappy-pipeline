@@ -545,12 +545,7 @@ class VariantExportExternalWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local external-export output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.EXPORTS, frozenset({"external"}))
-        ):
-            raise ValueError(
-                f"VariantExportExternalWorkflow does not support signature: {signature}"
-            )
+        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         prefix = f"output/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
         return {
