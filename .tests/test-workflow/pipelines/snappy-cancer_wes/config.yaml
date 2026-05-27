@@ -1,0 +1,79 @@
+static_data_config:
+  reference:
+    path: ../../resources/refs/subregion.fa
+
+tasks:
+  - step: ngs_mapping
+    name: mapping
+    config:
+      tool: bwa
+      bwa:
+        path_index: ../../resources/refs/subregion
+        mask_duplicates: false
+        memory_bam_sort: 2G
+        num_threads_bam_sort: 2
+        num_threads_bam_view: 2
+        num_threads_align: 2
+      ngs_chew_fingerprint:
+        enabled: false
+      target_coverage_report:
+        path_target_interval_list_mapping:
+        - name: MedExome_hg19_empirical_targets
+          pattern: MedExome
+          path: resources/Exome-MedExome.chr12.bed
+
+  - step: somatic_variant_calling
+    name: variant_calling
+    config:
+      depends_on:
+        ngs_mapping: mapping
+      tool: mutect2
+      mutect2:
+        extra_arguments: []
+        num_jobs: 5
+        contamination: {}
+
+  - step: somatic_variant_annotation
+    name: annotation
+    config:
+      depends_on:
+        somatic_variant: variant_calling
+      tool: "mehari"
+      mehari:
+        transcripts:
+          - ../../resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst
+        assembly: GRCh37
+        reference: ../../resources/refs/subregion.fa
+
+  - step: somatic_variant_filtration
+    name: filtration
+    config:
+      depends_on:
+        somatic_variant: annotation
+        ngs_mapping: mapping
+      filter_list:
+      - dkfz: {}
+      - bcftools:
+          exclude: "FORMAT/DP[1]<=50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.025"
+
+  - step: somatic_variant_filtration
+    name: filtration_AGAIN
+    config:
+      depends_on:
+        somatic_variant: filtration
+      filter_list:
+      - vembrane:
+          tag_mode: "exclude"
+          expressions:
+            q30: "QUAL < 30"
+
+
+data_sets:
+  trbc:
+    file: samplesheet.tsv
+    search_patterns:
+    - {left: '*.R1.fastq.gz', right: '*.R2.fastq.gz'}
+    search_paths:
+    - raw
+    type: matched_cancer
+    naming_scheme: only_secondary_id

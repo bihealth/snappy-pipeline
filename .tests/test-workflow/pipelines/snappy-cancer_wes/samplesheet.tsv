@@ -1,0 +1,15 @@
+[Metadata]
+schema	cancer_matched
+schema_version	v1
+title	TRCB
+description	Public cancer dataset https://www.nature.com/articles/sdata201610
+
+[Custom Fields]
+key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
+extractionType	bioSample	extraction type	string	0	0	0	0	0
+libraryKit	ngsLibrary	exome enrichment kit	string	0	0	0	0	0
+
+[Data]
+patientName	sampleName	isTumor	extractionType	libraryType	folderName	libraryKit
+case001subregion	N1	N	DNA	WES	case001subregion-N1-DNA1-WES1	MedExome
+case001subregion	T1	Y	DNA	WES	case001subregion-T1-DNA1-WES1	MedExome
