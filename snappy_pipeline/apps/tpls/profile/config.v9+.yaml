@@ -1,6 +1,10 @@
 executor: slurm
 jobs: 250
 
+# Write structured run logs to an SQLite database (viewable with `snkmt`).
+# Requires: snakemake-logger-plugin-snkmt
+logger: snkmt
+
 restart-times: 3
 max-jobs-per-second: 1
 max-status-checks-per-second: 10

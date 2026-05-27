@@ -44,10 +44,10 @@ dependencies = [
     "jinja2 >=3.1.4,<4",
     # Parsing of ISA-tab.
     "altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8",
-    # REST API client for VarFish Server
-    "varfish-cli >=0.6.3",
     # Validation for models, mainly used for configuration validation
     "pydantic >=2.9.0,<3"
+    # Note: varfish-cli is used as an *external CLI tool* by pipeline users, not imported
+    # as a Python library here. Install it separately.
 ]
 
 [project.urls]
@@ -232,12 +232,12 @@ samtools = "1.20.*"
 conda = ">=25,<26"
 snakemake = ">=9.19.0,<10"
 snakemake-executor-plugin-slurm = ">=2,<3"
+snakemake-logger-plugin-snkmt = ">=0.1.6"
 
 # PREVENT CONFLICTS: Force Conda to pick older versions of these
 # dependencies so that uv doesn't block the PyPI/Git package installations.
 jsonschema = "<4.5"
 tabulate = "<0.10"
-typer = "<0.13"
 docutils = "<0.21"
 
 [tool.pixi.environments]
