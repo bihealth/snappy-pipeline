@@ -239,6 +239,7 @@ snakemake-logger-plugin-snkmt = ">=0.1.6"
 jsonschema = "<4.5"
 tabulate = "<0.10"
 docutils = "<0.21"
+click = ">=8.4.0,<9"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
