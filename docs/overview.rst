@@ -240,7 +240,43 @@ Further, a project-wide ``README.md`` file is setup in which you can place docum
     #
     static_data_config:
 
+Path Resolution for Static Data and Configuration Files
+========================================================
+
+Relative paths in ``static_data_config`` (e.g., ``reference.path``, ``cosmic.path``) and in task-level
+configuration paths (e.g., ``ngs_mapping.bwa.path_index``, ``somatic_variant_annotation.mehari.transcripts``)
+are resolved relative to the **config file's directory** at validation time.
+
+**Examples:**
+
+If your ``config.yaml`` is located at ``/home/user/projects/cancer_wes/.snappy_pipeline/config.yaml``,
+and you specify:
+
+.. code-block:: yaml
+
+    static_data_config:
+      reference:
+        path: ../../data/refs/GRCh38.fa
+
+The path will be resolved to: ``/home/user/projects/data/refs/GRCh38.fa``
+
+Similarly, in task configuration:
+
+.. code-block:: yaml
+
+    tasks:
+      - step: ngs_mapping
+        name: mapping
+        config:
+          tool: bwa
+          bwa:
+            path_index: ../../data/indexes/bwa/GRCh38
+
+**Absolute paths are supported** and will not be modified. Use absolute paths for external data
+that should not move relative to your config file.
+
 Working Directories for Step Instances
+
 ======================================
 
 Next, we create the different step instances that we want to use using ``snappy-start-step``.
