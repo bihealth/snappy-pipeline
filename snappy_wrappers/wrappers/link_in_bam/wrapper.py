@@ -3,6 +3,8 @@
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Oliver Stolpe <oliver.stolpe@bih-charite.de>"
 
 shell.executable("/bin/bash")
@@ -13,28 +15,9 @@ input = args["input"]
 if not input:
     raise Exception("No bam found")
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d
 
 # Link in bam files with the proper file name scheme
@@ -72,21 +55,5 @@ cp {__real_file__} $(dirname {snakemake.log.log})/wrapper.py
 
 # Logging: Save a permanent copy of the environment file used
 cp $(dirname {__file__})/environment.yaml $(dirname {snakemake.log.log})/environment_wrapper.yaml
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-sleep 1s  # try to wait for log file flush
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

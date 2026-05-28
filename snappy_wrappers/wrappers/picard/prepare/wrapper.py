@@ -6,12 +6,14 @@ import re
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
 reference = args["reference"]
-reference = re.sub("\.fa(sta)?(\.b?gz)?$", ".dict", reference)
+reference = re.sub(r"\.fa(sta)?(\.b?gz)?$", ".dict", reference)
 assert os.path.exists(reference), "Missing dict of reference fasta"
 
 baits = args["path_to_baits"]
@@ -19,7 +21,7 @@ targets = args.get("path_to_targets", "")
 
 shell.executable("/bin/bash")
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
@@ -30,27 +32,6 @@ then
     echo "Can't find picard jar"
     exit -1
 fi
-
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Setup auto-cleaned tmpdir
-export tmpdir=$(mktemp -d)
-trap "rm -rf $tmpdir" EXIT
 
 # Can't pipe to BedToIntervalList (https://github.com/broadinstitute/picard/issues/1890)
 bed_to_interval_list() {{
@@ -97,9 +78,3 @@ fi
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
