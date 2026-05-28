@@ -123,7 +123,7 @@ packages = ["snappy_pipeline", "snappy_wrappers"]
 # ==============================================================================
 
 [tool.coverage.run]
-omit = ["snappy_pipeline/_version.py", "snappy_pipeline/Snakefile", "snappy_wrappers/wrappers/*/wrapper.py"]
+omit = ["snappy_pipeline/_version.py", "snappy_pipeline/Snakefile", "snappy_pipeline/workflows/*/Snakefile", "snappy_wrappers/wrappers/*/wrapper.py"]
 relative_files = true
 
 [tool.coverage.report]
