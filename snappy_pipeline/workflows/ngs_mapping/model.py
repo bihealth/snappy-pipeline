@@ -362,12 +362,6 @@ class NgsMapping(SnappyStepModel):
     """
 
     @model_validator(mode="after")
-    def ensure_tool_is_configured(self):
-        if not getattr(self, self.tool):
-            raise ValueError(f"Tool {self.tool} not configured")
-        return self
-
-    @model_validator(mode="after")
     def check_mbcs_prerequisites(self):
         if self.mbcs:
             tool = self.mbcs.mapping_tool
