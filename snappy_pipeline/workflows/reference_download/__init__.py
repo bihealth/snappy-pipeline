@@ -24,11 +24,25 @@ class _ReferenceDownloadStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
-        output_fasta = self.parent.get_output_fasta_path()
+        output_fasta = self.config.path_output_fasta or "output/reference_download/out/reference.fa"
         work_fasta = "work/reference_download/out/reference.fa"
         yield "fasta", work_fasta
         yield "fasta_md5", work_fasta + ".md5"
         yield "output_links", [output_fasta, output_fasta + ".md5"]
+
+    def _base_args(self) -> dict:
+        source_cfg = getattr(self.config, self.name)
+        return {
+            "source": self.name,
+            "url": source_cfg.url,
+            "species": source_cfg.species,
+            "build": source_cfg.build,
+            "assembly": source_cfg.assembly,
+            "version": source_cfg.version,
+            "contigs": source_cfg.contigs,
+            "contigs_regex": source_cfg.contigs_regex,
+            "molecule": source_cfg.molecule,
+        }
 
     @dictify
     def _get_log_file(self, action):
@@ -44,15 +58,7 @@ class _ReferenceDownloadStepPart(BaseStepPart):
     @dictify
     def get_args(self, action):
         self._validate_action(action)
-        source_cfg = getattr(self.config, self.name)
-        yield "source", self.name
-        yield "url", source_cfg.url
-        yield "species", source_cfg.species
-        yield "build", source_cfg.build
-        yield "assembly", source_cfg.assembly
-        yield "version", source_cfg.version
-        yield "contigs", source_cfg.contigs
-        yield "contigs_regex", source_cfg.contigs_regex
+        yield from self._base_args().items()
 
 
 class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
@@ -61,10 +67,14 @@ class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
 
     @dictify
     def get_args(self, action):
-        yield from super().get_args(action).items()
+        self._validate_action(action)
+        yield from self._base_args().items()
         cfg = self.config.ensembl
         yield "subset", cfg.subset
         yield "file_name", cfg.file_name
+        yield "datatype", cfg.datatype
+        yield "chromosome", cfg.chromosome
+        yield "branch", cfg.branch
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -77,7 +87,8 @@ class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
 
     @dictify
     def get_args(self, action):
-        yield from super().get_args(action).items()
+        self._validate_action(action)
+        yield from self._base_args().items()
         cfg = self.config.refseq
         yield "assembly_accession", cfg.assembly_accession
         yield "assembly_name", cfg.assembly_name
@@ -94,7 +105,8 @@ class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
 
     @dictify
     def get_args(self, action):
-        yield from super().get_args(action).items()
+        self._validate_action(action)
+        yield from self._base_args().items()
         cfg = self.config.ucsc
         yield "db", cfg.db
         yield "file_name", cfg.file_name
@@ -109,8 +121,14 @@ class ReferenceDownloadWorkflow(BaseStep):
     consumes = {}
     produces = [
         DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "dna"})),
+        DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "rna"})),
+        DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "protein"})),
         DataSignature(DataType.RAW, frozenset({"refseq", "reference", "dna"})),
+        DataSignature(DataType.RAW, frozenset({"refseq", "reference", "rna"})),
+        DataSignature(DataType.RAW, frozenset({"refseq", "reference", "protein"})),
         DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "dna"})),
+        DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "rna"})),
+        DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "protein"})),
     ]
 
     sheet_shortcut_class = GenericSampleSheet
@@ -161,4 +179,3 @@ class ReferenceDownloadWorkflow(BaseStep):
     def get_result_files(self):
         yield self.get_output_fasta_path()
         yield self.get_output_fasta_path() + ".md5"
-

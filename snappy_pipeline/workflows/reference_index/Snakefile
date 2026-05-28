@@ -23,7 +23,7 @@ rule reference_index_all:
 
 rule reference_index_common_run:
     input:
-        unpack(wf.get_input_files("common", "run")),
+        **wf.get_input_files("common", "run"),
     output:
         **wf.get_output_files("common", "run"),
     log:
@@ -46,7 +46,7 @@ if tool == "bwa":
 
     rule reference_index_bwa_run:
         input:
-            unpack(wf.get_input_files("bwa", "run")),
+            **wf.get_input_files("bwa", "run"),
         output:
             **wf.get_output_files("bwa", "run"),
         log:
@@ -67,7 +67,7 @@ elif tool == "bwa_mem2":
 
     rule reference_index_bwa_mem2_run:
         input:
-            unpack(wf.get_input_files("bwa_mem2", "run")),
+            **wf.get_input_files("bwa_mem2", "run"),
         output:
             **wf.get_output_files("bwa_mem2", "run"),
         log:
@@ -88,7 +88,7 @@ elif tool == "minimap2":
 
     rule reference_index_minimap2_run:
         input:
-            unpack(wf.get_input_files("minimap2", "run")),
+            **wf.get_input_files("minimap2", "run"),
         output:
             **wf.get_output_files("minimap2", "run"),
         log:
@@ -109,7 +109,7 @@ elif tool == "star":
 
     rule reference_index_star_run:
         input:
-            unpack(wf.get_input_files("star", "run")),
+            **wf.get_input_files("star", "run"),
         output:
             **wf.get_output_files("star", "run"),
         log:
