@@ -4,7 +4,7 @@
 import tempfile
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -21,21 +21,8 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
     # cf. https://bitbucket.org/snakemake/snakemake/issues/878
     print("\n".join(input_), file=tmpf)
     tmpf.flush()
-    # Actually run the script.
-    shell(
+    ShellWrapper(snakemake).run(
         r"""
-    # -----------------------------------------------------------------------------
-    # Redirect stderr to log file by default and enable printing executed commands
-    exec &> >(tee -a "{snakemake.log.log}")
-    set -x
-    # -----------------------------------------------------------------------------
-    export TMPDIR=$(mktemp -d)
-    trap "rm -rf $TMPDIR" EXIT
-
-    # Write out information about conda installation
-    conda list > {snakemake.log.conda_list}
-    conda info > {snakemake.log.conda_info}
-
     # Method checks if VCF contains sample
     check_vcf() {{
         # Variables
@@ -100,17 +87,5 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
         tabix -f {snakemake.output.vcf}
     fi
 
-    pushd $(dirname {snakemake.output.vcf})
-    md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf_md5})
-    md5sum $(basename {snakemake.output.vcf_tbi}) > $(basename {snakemake.output.vcf_tbi_md5})
     """
     )
-
-# Compute MD5 sums of logs
-shell(
-    r"""
-md5sum {snakemake.log.log} > {snakemake.log.log_md5}
-md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
-"""
-)
