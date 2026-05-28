@@ -3,6 +3,8 @@
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Till Hartmann <till.hartmann@bih-charite.de>"
 
 output = snakemake.output
@@ -24,7 +26,7 @@ else:
     orientation = ""
     output_orientation = ""
 
-shell(r"""
+ShellWrapper(snakemake).run(r"""
 set -x
 
 # Concatenate vcfs & index result ----------------------

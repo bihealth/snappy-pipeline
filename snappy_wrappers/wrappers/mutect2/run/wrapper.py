@@ -3,6 +3,8 @@
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.input.reference
@@ -58,38 +60,17 @@ extra_arguments = " ".join(args.get("extra_arguments", []))
 
 shell.executable("/bin/bash")
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
 # export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
-# Also pipe everything to log file
-if [[ -n "{log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{log.log}" && mkdir -p $(dirname {log.log})
-        exec &> >(tee -a "{log.log}" >&2)
-    else
-        rm -f "{log.log}" && mkdir -p $(dirname {log.log})
-        echo "No tty, logging disabled" >"{log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{log.conda_list}
-conda info >{log.conda_info}
-md5sum {log.conda_list} >{log.conda_list_md5}
-md5sum {log.conda_info} >{log.conda_info_md5}
-
-# Setup auto-cleaned tmpdir
-export tmpdir=$(mktemp -d)
-trap "rm -rf $tmpdir" EXIT
-
-out_base=$tmpdir/$(basename {vcf_output} .vcf.gz)
+out_base=$TMPDIR/$(basename {vcf_output} .vcf.gz)
 
 gatk {java_options} Mutect2 \
-    --tmp-dir $tmpdir \
+    --tmp-dir $TMPDIR \
     --reference {reference} \
     {input_params} \
     --output $out_base.vcf \
@@ -107,7 +88,7 @@ rm -f $out_base.vcf.idx
 bgzip $out_base.vcf
 tabix -f $out_base.vcf.gz
 
-pushd $tmpdir
+pushd $TMPDIR
 for f in $out_base.*; do
     md5sum $f >$f.md5
 done
@@ -117,9 +98,3 @@ mv $out_base.* $(dirname {vcf_output})
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {log.log} >{log.log_md5}
-"""
-)
