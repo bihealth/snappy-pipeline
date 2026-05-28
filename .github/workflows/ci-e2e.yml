@@ -31,6 +31,7 @@ jobs:
         with:
           environments: default
           cache: true
+          frozen: true
 
       - name: Test workflow (local FASTQs) - Dryrun
         run: >
@@ -56,6 +57,7 @@ jobs:
         with:
           environments: default
           cache: true
+          frozen: true
 
       - name: Test workflow (local FASTQs)
         run: >
