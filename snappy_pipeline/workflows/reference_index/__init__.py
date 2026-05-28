@@ -48,6 +48,7 @@ class BuildReferenceCommonStepPart(BaseStepPart):
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
+            ("script", ".script"),
         ):
             yield key, prefix + ext
 
@@ -92,6 +93,7 @@ class _IndexToolStepPart(BaseStepPart):
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
             ("conda_list", ".conda_list.txt"),
+            ("script", ".script"),
         ):
             yield key, prefix + ext
 

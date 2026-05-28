@@ -15,6 +15,9 @@ __email__ = "eric.blanc@bih-charite.de"
 
 class SnappyWrapper(metaclass=ABCMeta):
     header = r"""
+        #!/usr/bin/env bash
+        set -euo pipefail
+
         # Pipe everything to log file
         if [[ -n "{snakemake.log.log}" ]]; then
             if [[ "$(set +e; tty; set -e)" != "" ]]; then
@@ -57,7 +60,7 @@ class SnappyWrapper(metaclass=ABCMeta):
 
         for fn in {snakemake.output}
         do
-            if ! [[ $fn =~ \.md5$ ]]
+            if [[ -f "$fn" ]] && ! [[ $fn =~ \.md5$ ]]
             then
                 compute_md5 $fn
             fi
@@ -75,8 +78,9 @@ class SnappyWrapper(metaclass=ABCMeta):
     output_links = r"""
         for path in {snakemake.output.output_links}; do
           dst=$path
-          src=work/${{dst#output/}}
-          ln -sr $src $dst
+          src=${{dst/\/output\//\/work\/}}
+          mkdir -p "$(dirname "$dst")"
+          ln -snrf "$src" "$dst"
         done
     """
 
@@ -94,8 +98,25 @@ class SnappyWrapper(metaclass=ABCMeta):
             raise AttributeError("snakemake.log.conda_list is not defined")
         if not getattr(self._snakemake.log, "conda_info", None):
             raise AttributeError("snakemake.log.conda_info is not defined")
-        if not getattr(self._snakemake.log, "script", None):
-            raise AttributeError("snakemake.log.script is not defined")
+
+    def _create_output_links(self) -> None:
+        r"""Create output/ symlinks pointing into work/ for all entries in output_links.
+
+        Replaces the first ``/output/`` path component with ``/work/`` to
+        locate the real file produced in the work directory, then creates a
+        relative symlink at the output path.  Pure-Python implementation avoids
+        the double-format issue that arises when the bash pattern
+        ``${dst/\/output\//\/work\/}`` is processed first by Python's
+        ``.format()`` and then again by Snakemake's ``shell()``.
+        """
+        for dst in self._snakemake.output.output_links:
+            src = dst.replace("/output/", "/work/", 1)
+            dst_dir = os.path.dirname(dst)
+            if dst_dir:
+                os.makedirs(dst_dir, exist_ok=True)
+            if os.path.lexists(dst):
+                os.remove(dst)
+            os.symlink(os.path.relpath(src, dst_dir or "."), dst)
 
     @abstractmethod
     def run(self, cmd: str) -> None:
@@ -121,7 +142,7 @@ class SnappyWrapper(metaclass=ABCMeta):
                     "\n".join(
                         (
                             SnappyWrapper.header.format(snakemake=self._snakemake),
-                            cmd,
+                            cmd.format(snakemake=self._snakemake),
                             SnappyWrapper.footer.format(snakemake=self._snakemake),
                         )
                     )
@@ -146,10 +167,15 @@ class SnappyWrapper(metaclass=ABCMeta):
             self._with_output_links
             and getattr(self._snakemake.output, "output_links", None) is not None
         ):
-            shell(SnappyWrapper.output_links.format(snakemake=self._snakemake))
+            self._create_output_links()
 
 
 class ShellWrapper(SnappyWrapper):
+    def _check_snakemake_attributes(self):
+        super()._check_snakemake_attributes()
+        if not getattr(self._snakemake.log, "script", None):
+            raise AttributeError("snakemake.log.script is not defined")
+
     def _run_bash(self, cmd: str) -> None:
         self._run(cmd, self._snakemake.log.script)
         shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
@@ -159,6 +185,11 @@ class ShellWrapper(SnappyWrapper):
 
 
 class RWrapper(SnappyWrapper):
+    def _check_snakemake_attributes(self):
+        super()._check_snakemake_attributes()
+        if not getattr(self._snakemake.log, "script", None):
+            raise AttributeError("snakemake.log.script is not defined")
+
     def _run_R(self, cmd: str) -> None:
         with open(self._snakemake.log.script, "wt") as f:
             print(cmd, file=f)
