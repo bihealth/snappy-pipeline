@@ -1,0 +1,33 @@
+static_data_config:
+  reference:
+    path: ../../resources/refs/chrMT.fa
+
+tasks:
+  - step: reference_download
+    name: download_chrmt
+    config:
+      source: ensembl
+      ensembl:
+        species: homo_sapiens
+        build: GRCh38
+        assembly: primary_assembly
+        version: "113"
+        datatype: dna
+        chromosome:
+          - MT
+        subset: primary_assembly
+
+  - step: reference_index
+    name: index_minimap2
+    config:
+      depends_on:
+        reference_download: download_chrmt
+      tool: minimap2
+      minimap2:
+        extra_args: []
+
+data_sets:
+  reference:
+    file: samplesheet.tsv
+    type: matched_cancer
+
