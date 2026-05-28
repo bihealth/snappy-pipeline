@@ -3,7 +3,7 @@
 
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -17,20 +17,10 @@ has_annotation = args["has_annotation"]
 
 missense_re = args["missense_re"] if has_annotation else ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log.log}")
-set -x
-# -----------------------------------------------------------------------------
-
 # Ensure locale is set to C, such that the printf %f calls work correctly
 export LC_ALL=C
-
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
 
 bed_file={target_regions}
 bed_file_name=$(basename $bed_file)
@@ -94,16 +84,5 @@ else
 EOF
 fi
 
-pushd $(dirname {snakemake.output.json})
-md5sum $(basename {snakemake.output.json}) > $(basename {snakemake.output.json_md5})
-"""
-)
-
-# Compute MD5 sums of logs
-shell(
-    r"""
-md5sum {snakemake.log.log} > {snakemake.log.log_md5}
-md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
 """
 )

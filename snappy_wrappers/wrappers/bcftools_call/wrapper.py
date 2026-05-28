@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -34,7 +34,7 @@ max_indel_depth = args["max_indel_depth"]
 window_length = args["window_length"]
 num_threads = args["num_threads"]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
@@ -73,7 +73,7 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Create binning of the reference into windows of roughly the same size.
 gatk PreprocessIntervals \
-    --reference {ref_path} \
+    --reference {reference_path} \
     --bin-length {window_length} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
@@ -159,24 +159,7 @@ tabix {snakemake.output.vcf}
 
 # Compute MD5 sums on output files
 compute-md5 {snakemake.output.vcf} {snakemake.output.vcf_md5}
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
 compute-md5 {snakemake.output.vcf_tbi} {snakemake.output.vcf_tbi_md5}
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-{DEF_HELPER_FUNCS}
-
-sleep 1s  # try to wait for log file flush
-compute-md5 {snakemake.log.log} {snakemake.log.log_md5}
-"""
-)
