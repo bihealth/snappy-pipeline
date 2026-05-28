@@ -19,7 +19,8 @@ defaults:
     shell: bash
 
 jobs:
-  Dryrun_Tests:
+  dryrun:
+    name: Dry-run all pipeline configs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,20 +34,18 @@ jobs:
           cache: true
           frozen: true
 
-      - name: Test workflow (local FASTQs) - Dryrun
-        run: >
-          pixi run snakemake
-          --directory .tests/test-workflow
-          --snakefile .tests/test-workflow/workflow/Snakefile
-          --configfile .tests/test-workflow/config/config.yaml
-          --software-deployment-method conda
-          --show-failed-logs
-          -j 2
-          --dryrun
+      - name: Dry-run each pipeline
+        run: |
+          set -euo pipefail
+          for pipeline_dir in .tests/test-workflow/pipelines/*/; do
+            echo "==> Dry-run: ${pipeline_dir}"
+            (cd "${pipeline_dir}" && pixi run snappy run -n -- --cores 1)
+          done
 
-  Tests:
+  run:
+    name: Run all pipeline configs
     runs-on: ubuntu-latest
-    needs: Dryrun_Tests
+    needs: dryrun
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,12 +58,10 @@ jobs:
           cache: true
           frozen: true
 
-      - name: Test workflow (local FASTQs)
-        run: >
-          pixi run snakemake
-          --directory .tests/test-workflow
-          --snakefile .tests/test-workflow/workflow/Snakefile
-          --configfile .tests/test-workflow/config/config.yaml
-          --software-deployment-method conda
-          --show-failed-logs
-          -j 2
+      - name: Run each pipeline
+        run: |
+          set -euo pipefail
+          for pipeline_dir in .tests/test-workflow/pipelines/*/; do
+            echo "==> Running: ${pipeline_dir}"
+            (cd "${pipeline_dir}" && pixi run snappy run -- --cores 1 --software-deployment-method conda --show-failed-logs)
+          done
