@@ -20,7 +20,7 @@ target_all_tasks = config.get("all_tasks", False)
 # Optional dependencies with default value "" are excluded from the depended-on set.
 depended_on_task_names = set()
 for _task in tasks:
-    for _dep_value in (_task.get("depends_on") or {}).values():
+    for _dep_value in (_task.get("config", {}).get("depends_on") or {}).values():
         if _dep_value:  # skip empty-string optional deps
             depended_on_task_names.add(_dep_value)
 
