@@ -34,11 +34,22 @@ jobs:
           cache: true
           frozen: true
 
+      - name: Pull LFS test fixtures
+        run: |
+          git lfs pull --include=".tests/test-workflow/pipelines/**,.tests/test-workflow/resources/**"
+
       - name: Dry-run each pipeline
         run: |
           set -euo pipefail
-          for pipeline_dir in .tests/test-workflow/pipelines/*/; do
-            echo "==> Dry-run: ${pipeline_dir}"
+          shopt -s nullglob
+          configs=(.tests/test-workflow/pipelines/*/config.yaml)
+          if [ ${#configs[@]} -eq 0 ]; then
+            echo "No pipeline configs found in .tests/test-workflow/pipelines"
+            exit 1
+          fi
+          for config_path in "${configs[@]}"; do
+            pipeline_dir="$(dirname "${config_path}")"
+            echo "==> Dry-run: ${config_path}"
             (cd "${pipeline_dir}" && pixi run snappy run -n -- --cores 1)
           done
 
@@ -58,10 +69,21 @@ jobs:
           cache: true
           frozen: true
 
+      - name: Pull LFS test fixtures
+        run: |
+          git lfs pull --include=".tests/test-workflow/pipelines/**,.tests/test-workflow/resources/**"
+
       - name: Run each pipeline
         run: |
           set -euo pipefail
-          for pipeline_dir in .tests/test-workflow/pipelines/*/; do
-            echo "==> Running: ${pipeline_dir}"
+          shopt -s nullglob
+          configs=(.tests/test-workflow/pipelines/*/config.yaml)
+          if [ ${#configs[@]} -eq 0 ]; then
+            echo "No pipeline configs found in .tests/test-workflow/pipelines"
+            exit 1
+          fi
+          for config_path in "${configs[@]}"; do
+            pipeline_dir="$(dirname "${config_path}")"
+            echo "==> Running: ${config_path}"
             (cd "${pipeline_dir}" && pixi run snappy run -- --cores 1 --software-deployment-method conda --show-failed-logs)
           done
