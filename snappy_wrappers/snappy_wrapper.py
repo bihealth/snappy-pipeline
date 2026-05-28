@@ -8,6 +8,7 @@ import textwrap
 from abc import ABCMeta, abstractmethod
 
 from snakemake.shell import shell
+from snakemake.utils import format as snakemake_format
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
@@ -141,9 +142,17 @@ class SnappyWrapper(metaclass=ABCMeta):
                 textwrap.dedent(
                     "\n".join(
                         (
-                            SnappyWrapper.header.format(snakemake=self._snakemake),
-                            cmd.format(snakemake=self._snakemake),
-                            SnappyWrapper.footer.format(snakemake=self._snakemake),
+                            snakemake_format(
+                                SnappyWrapper.header,
+                                stepout=4,
+                                snakemake=self._snakemake,
+                            ),
+                            snakemake_format(cmd, stepout=4, snakemake=self._snakemake),
+                            snakemake_format(
+                                SnappyWrapper.footer,
+                                stepout=4,
+                                snakemake=self._snakemake,
+                            ),
                         )
                     )
                 ),
