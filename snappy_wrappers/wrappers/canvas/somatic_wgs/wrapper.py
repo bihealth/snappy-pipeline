@@ -3,7 +3,7 @@
 
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -16,31 +16,10 @@ path_reference = args["path_reference"]
 path_genome_folder = args["path_genome_folder"]
 path_filter_bed = args["path_filter_bed"]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
-# Write out information about conda installation --------------------------------------------------
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-
-# Also pipe stderr to log file --------------------------------------------------------------------
-
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR -----------------------------------------------------------------------
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 
 module purge
 module load Canvas/1.11.0  # also loads mono

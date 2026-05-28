@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 from snakemake.shell import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
@@ -44,30 +46,10 @@ structural_variants_param = f"-d {structural_variants}" if structural_variants e
 protein_domains = args["protein_domains"]
 protein_domains_param = f"-p {protein_domains}" if protein_domains else ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR
 
 # Define left and right reads as Bash arrays
@@ -128,9 +110,3 @@ touch {snakemake.output.done}
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
