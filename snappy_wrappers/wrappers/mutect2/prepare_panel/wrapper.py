@@ -3,6 +3,8 @@
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
@@ -18,60 +20,32 @@ if java_options := args.get("java_options", ""):
 
 extra_arguments = " ".join(args.get("extra_arguments", []))
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
 export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Setup auto-cleaned tmpdir
-tmpdir=$(mktemp -d)
-trap "rm -rf $tmpdir" EXIT
-
 vcf=$(basename --suffix=.gz {snakemake.output.vcf})
 
 gatk {java_options} Mutect2 \
-    --tmp-dir ${{tmpdir}} \
+    --tmp-dir $TMPDIR \
     --reference {snakemake.input.reference} \
     --input {snakemake.input.normal_bam} \
     {intervals} \
     --max-mnp-distance 0 \
-    --output $tmpdir/$vcf \
+    --output $TMPDIR/$vcf \
     {extra_arguments}
 
-bgzip $tmpdir/$vcf
-tabix $tmpdir/$vcf.gz
+bgzip $TMPDIR/$vcf
+tabix $TMPDIR/$vcf.gz
 
-pushd $tmpdir
+pushd $TMPDIR
 md5sum $vcf.gz > $vcf.gz.md5
 md5sum $vcf.gz.tbi > $vcf.gz.tbi.md5
 popd
 
-mv $tmpdir/$vcf.gz $tmpdir/$vcf.gz.md5 $tmpdir/$vcf.gz.tbi $tmpdir/$vcf.gz.tbi.md5 $(dirname {snakemake.output.vcf})
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+mv $TMPDIR/$vcf.gz $TMPDIR/$vcf.gz.md5 $TMPDIR/$vcf.gz.tbi $TMPDIR/$vcf.gz.tbi.md5 $(dirname {snakemake.output.vcf})
 """
 )

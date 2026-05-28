@@ -14,6 +14,8 @@
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
@@ -25,70 +27,50 @@ if java_options := args.get("java_options", ""):
 
 extra_arguments = " ".join(args.get("extra_arguments", []))
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
 export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+mkdir -p $TMPDIR/out
+mkdir -p $TMPDIR/vcfs
 
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned tmpdir
-export tmpdir=$(mktemp -d)
-trap "rm -rf ${{tmpdir}}" EXIT
-mkdir -p ${{tmpdir}}/out
-mkdir -p ${{tmpdir}}/vcfs
-
-out_base=${{tmpdir}}/out/$(basename {snakemake.output.vcf} .vcf.gz)
+out_base=$TMPDIR/out/$(basename {snakemake.output.vcf} .vcf.gz)
 mkdir -p $out_base
 
 vcfs=$(echo "{snakemake.input.normals}" | tr ' ' '\n')
 
 # Create a file with the list of contigs & vcf list for GenomicsDBImport
-rm -f ${{tmpdir}}/contigs.txt
+rm -f $TMPDIR/contigs.txt
 cmd=""
 for vcf in ${{vcfs}}
 do
     bcftools view -h ${{vcf}} \
         | grep "^##contig=<" \
         | sed -re "s/.*ID=([^,>]+),length=([^,>]+).*/\1:1-\2/" \
-        >> ${{tmpdir}}/contigs_all.list
+        >> $TMPDIR/contigs_all.list
     cmd="$cmd -V ${{vcf}} "
 done
-sort ${{tmpdir}}/contigs_all.list | uniq > ${{tmpdir}}/contigs.list
+sort $TMPDIR/contigs_all.list | uniq > $TMPDIR/contigs.list
 
 # Create the genomicsdb
-rm -rf ${{tmpdir}}/pon_db
+rm -rf $TMPDIR/pon_db
 gatk {java_options} GenomicsDBImport \
-    --tmp-dir ${{tmpdir}} \
+    --tmp-dir $TMPDIR \
     --reference {snakemake.input.reference} \
-    --genomicsdb-workspace-path ${{tmpdir}}/pon_db \
-    --intervals ${{tmpdir}}/contigs.list \
+    --genomicsdb-workspace-path $TMPDIR/pon_db \
+    --intervals $TMPDIR/contigs.list \
     {extra_arguments} \
     $cmd
 
 # Create the panel of normals vcf
 gatk CreateSomaticPanelOfNormals \
-    --tmp-dir ${{tmpdir}} \
+    --tmp-dir $TMPDIR \
     --reference {snakemake.input.reference} \
     --germline-resource "{snakemake.input.germline_resource}" \
-    --variant gendb://${{tmpdir}}/pon_db \
+    --variant gendb://$TMPDIR/pon_db \
     --output ${{out_base}}.vcf
 
 bgzip ${{out_base}}.vcf
@@ -100,7 +82,7 @@ tabix -f ${{out_base}}.vcf.gz
 #       (https://ceph-users.ceph.narkive.com/th0JxsKR/cephfs-tar-archiving-immediately-after-writing)
 #       The bug is probably triggered because GATK genomicsdb is large is size & can contain 100000s files
 sleep 10
-tar -zcvf {snakemake.output.db} -C ${{tmpdir}} pon_db || true
+tar -zcvf {snakemake.output.db} -C $TMPDIR pon_db || true
 
 # Copy the results to destination & compute checksums
 cp ${{out_base}}.vcf.gz {snakemake.output.vcf}
@@ -119,9 +101,3 @@ popd
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
