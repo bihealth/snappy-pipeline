@@ -21,7 +21,7 @@ conda list > {snakemake.log.conda_list}
 minimap2 -t {snakemake.threads} -d {snakemake.output.mmi} {extra_args} {snakemake.input.reference}
 
 for dst in {snakemake.output.output_links}; do
-  src=work/${dst#output/}
+  src=${{dst/\/output\//\/work\/}}
   mkdir -p "$(dirname "$dst")"
   ln -snrf "$src" "$dst"
 done

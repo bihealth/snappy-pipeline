@@ -37,7 +37,7 @@ STAR \
 touch {snakemake.output.star__done}
 
 for dst in {snakemake.output.output_links}; do
-  src=work/${dst#output/}
+  src=${{dst/\/output\//\/work\/}}
   mkdir -p "$(dirname "$dst")"
   ln -snrf "$src" "$dst"
 done

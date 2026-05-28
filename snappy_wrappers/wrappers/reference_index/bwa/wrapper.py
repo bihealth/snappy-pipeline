@@ -21,7 +21,7 @@ conda list > {snakemake.log.conda_list}
 bwa index -a {algorithm} -p work/reference_index/out/reference {snakemake.input.reference}
 
 for dst in {snakemake.output.output_links}; do
-  src=work/${dst#output/}
+  src=${{dst/\/output\//\/work\/}}
   mkdir -p "$(dirname "$dst")"
   ln -snrf "$src" "$dst"
 done

@@ -22,7 +22,7 @@ md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
 md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
 
 for dst in {snakemake.output.output_links}; do
-  src=work/${dst#output/}
+  src=${{dst/\/output\//\/work\/}}
   mkdir -p "$(dirname "$dst")"
   ln -snrf "$src" "$dst"
 done

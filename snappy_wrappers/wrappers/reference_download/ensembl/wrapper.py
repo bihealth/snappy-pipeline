@@ -102,7 +102,8 @@ def _resolve_ensembl_prefix(params: dict) -> str:
         branch = params["branch"].strip("/") + "/"
 
     spec = build if release > 75 else f"{build}.{release}"
-    species_cap = "_".join(p.capitalize() for p in species.split("_"))
+    # Ensembl FASTA files use Genus capitalized and remaining parts lowercase.
+    species_cap = species.capitalize()
     base_url = "https://ftp.ensembl.org/pub"
     return f"{base_url}/{branch}release-{release}/fasta/{species}/{datatype}/{species_cap}.{spec}"
 
