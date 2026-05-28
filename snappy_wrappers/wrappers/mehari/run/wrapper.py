@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Mehari variant annotation (v0.42.0+)"""
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Till Hartmann"
 __email__ = "till.hartmann@bih-charite.de"
@@ -51,25 +51,9 @@ freq_arg = f"--frequencies {freq_db}" if freq_db else ""
 clinvar_db = snakemake.input.get("clinvar", "")
 clinvar_arg = f"--clinvar {clinvar_db}" if clinvar_db else ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
-md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
 
 # Run Mehari annotation
 mehari annotate seqvars \
@@ -83,20 +67,5 @@ mehari annotate seqvars \
 
 # Index the resulting VCF
 tabix {snakemake.output.vcf}
-
-# Compute MD5 sums for outputs
-pushd $(dirname {snakemake.output.vcf})
-f=$(basename {snakemake.output.vcf})
-md5sum $f > $f.md5
-md5sum $f.tbi > $f.tbi.md5
-popd
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-sleep 1s  # try to wait for log file flush
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )
