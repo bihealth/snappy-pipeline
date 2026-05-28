@@ -171,14 +171,11 @@ class SnappyWrapper(metaclass=ABCMeta):
 
 
 class ShellWrapper(SnappyWrapper):
-    def _check_snakemake_attributes(self):
-        super()._check_snakemake_attributes()
-        if not getattr(self._snakemake.log, "script", None):
-            raise AttributeError("snakemake.log.script is not defined")
-
     def _run_bash(self, cmd: str) -> None:
-        self._run(cmd, self._snakemake.log.script)
-        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
+        script_log = getattr(self._snakemake.log, "script", None)
+        self._run(cmd, script_log)
+        if script_log:
+            shell(SnappyWrapper.md5_log.format(log=script_log))
 
     def run(self, cmd: str) -> None:
         self._run_bash(cmd)
