@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class DataType(StrEnum):
     RAW = "raw"
+    INDEX = "index"
     ALIGNMENTS = "alignments"
     VARIANTS = "variants"
     EXPRESSION = "expression"

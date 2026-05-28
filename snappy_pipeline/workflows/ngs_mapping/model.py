@@ -16,6 +16,7 @@ from snappy_pipeline.models import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
 from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.reference_index.model import ExpectedReferenceIndexFiles
 
 
 class ExpectedAlignments(BaseModel):
@@ -38,6 +39,16 @@ class NgsMappingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW, frozenset({"trimmed"})),
         ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
+
+    # Optional upstream index provider task.
+    reference_index: Annotated[
+        str,
+        DataSignature(
+            DataType.INDEX,
+            frozenset({("bwa", "bwa_mem2", "minimap2", "star"), ("dna", "rna")}),
+        ),
+        ExpectedPathSchema(ExpectedReferenceIndexFiles),
     ] = ""
 
 

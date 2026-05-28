@@ -736,6 +736,7 @@ class BwaStepPart(ReadMappingStepPart):
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_args_run(wildcards)
         parent_args.update(self.config.bwa.model_dump(by_alias=True))
+        parent_args["path_index"] = self.parent.get_index_path("bwa")
         return parent_args
 
 
@@ -757,6 +758,7 @@ class BwaMem2StepPart(ReadMappingStepPart):
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_args_run(wildcards)
         parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True))
+        parent_args["path_index"] = self.parent.get_index_path("bwa_mem2")
         return parent_args
 
 
@@ -862,6 +864,7 @@ class StarStepPart(ReadMappingStepPart):
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_args_run(wildcards)
         parent_args.update(self.config.star.model_dump(by_alias=True))
+        parent_args["path_index"] = self.parent.get_index_path("star")
         parent_args["features"] = self.parent.w_config.static_data_config.features.path
         return parent_args
 
@@ -1009,6 +1012,7 @@ class Minimap2StepPart(ReadMappingStepPart):
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_args_run(wildcards)
         params |= self.config.minimap2.model_dump(by_alias=True)
+        params["path_index"] = self.parent.get_index_path("minimap2")
         params["extra_infos"] = self.parent.ngs_library_to_extra_infos[wildcards.library_name]
         params["library_name"] = wildcards.library_name
         return params
@@ -1486,6 +1490,30 @@ class NgsMappingWorkflow(BaseStep):
                         result.setdefault(library.name, {}).update(test_sample.extra_infos)
                         result.setdefault(library.name, {}).update(library.extra_infos)
         return result
+
+    def get_index_path(self, tool_name: str) -> str:
+        """Resolve mapper index paths with optional reference_index dependency override."""
+        dep_task = getattr(self.config.depends_on, "reference_index", "")
+        if dep_task:
+            index_paths = self.get_upstream_paths("reference_index")
+            key_by_tool = {
+                "bwa": "bwa_index_prefix",
+                "bwa_mem2": "bwa_mem2_index_prefix",
+                "minimap2": "minimap2_index",
+                "star": "star_index_dir",
+            }
+            key = key_by_tool.get(tool_name)
+            path = getattr(index_paths, key, "") if key else ""
+            if path:
+                return path
+
+        cfg = getattr(self.config, tool_name, None)
+        if cfg is None or not getattr(cfg, "path_index", ""):
+            raise InvalidConfiguration(
+                f"No index path configured for ngs_mapping tool '{tool_name}'. "
+                "Set config.<tool>.path_index or configure depends_on.reference_index."
+            )
+        return cfg.path_index
 
     def _build_ngs_library_to_kit(self):
         cov_config = self.get_task_config(self.task_name).target_coverage_report

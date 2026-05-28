@@ -17,6 +17,7 @@ from snappy_pipeline.workflows.link_in import LinkInWorkflow
 from snappy_pipeline.workflows.ngs_data_qc import NgsDataQcWorkflow
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.panel_of_normals import PanelOfNormalsWorkflow
+from snappy_pipeline.workflows.reference_index import ReferenceIndexWorkflow
 from snappy_pipeline.workflows.repeat_expansion import RepeatExpansionWorkflow
 from snappy_pipeline.workflows.somatic_cnv_checking import SomaticCnvCheckingWorkflow
 from snappy_pipeline.workflows.somatic_gene_fusion_calling import SomaticGeneFusionCallingWorkflow
@@ -65,6 +66,7 @@ WORKFLOW_REGISTRY = {
     "ngs_data_qc": NgsDataQcWorkflow,
     "ngs_mapping": NgsMappingWorkflow,
     "panel_of_normals": PanelOfNormalsWorkflow,
+    "reference_index": ReferenceIndexWorkflow,
     "repeat_expansion": RepeatExpansionWorkflow,
     "somatic_cnv_checking": SomaticCnvCheckingWorkflow,
     "somatic_gene_fusion_calling": SomaticGeneFusionCallingWorkflow,
