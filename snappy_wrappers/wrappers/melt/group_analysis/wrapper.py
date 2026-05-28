@@ -1,4 +1,4 @@
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -8,13 +8,8 @@ melt_config = args["config"]
 reference = snakemake.input[0]
 individual = snakemake.input[1]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log.log}")
-set -x
-# -----------------------------------------------------------------------------
 
 JAR={melt_config[jar_file]}
 ME_REFS={melt_config[me_refs_path]}
