@@ -73,7 +73,7 @@ jobs:
           DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Create text report
-        run: pixi run -e test coverage report
+        run: pixi run -e test coverage
 
       - name: Coveralls
         uses: AndreMiras/coveralls-python-action@develop
