@@ -3,6 +3,8 @@
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
@@ -14,31 +16,9 @@ if w >= 0:
 
 shell.executable("/bin/bash")
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write out information about conda installation --------------------------------------------------
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-
-# Also pipe stderr to log file --------------------------------------------------------------------
-
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR -----------------------------------------------------------------------
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 
 # write out configuration -------------------------------------------------------------------------
 export output_prefix=$(basename {snakemake.output.ratio} .ratio.txt)
@@ -125,10 +105,6 @@ pushd $output_dir
 for suffix in bam_control.cpn bam_CNVs bam_info.txt bam_ratio.BedGraph bam_ratio.txt bam_sample.cpn bam_subclones.txt; do
     new_suffix=$(echo ${{suffix}} | sed 's/bam_//')
     mv *.${{suffix}} $output_prefix.${{new_suffix}}
-done
-
-for f in *; do
-    test -f $f && md5sum $f >$f.md5
 done
 popd
 
