@@ -401,6 +401,12 @@ def bootstrap_step_config(
 ) -> dict[str, Any]:
     cfg = copy.deepcopy(step_config)
 
+    if step_name == "reference_index":
+        tool = cfg.get("tool") or "bwa"
+        cfg["tool"] = tool
+        if tool == "star":
+            cfg["reference_molecule"] = "rna"
+
     if step_name == "ngs_mapping":
         tool = cfg.get("tool") or "bwa"
         cfg["tool"] = tool
