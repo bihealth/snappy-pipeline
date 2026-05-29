@@ -1,33 +1,19 @@
 # -*- coding: utf-8 -*-
 """Wrapper code for GATK PhaseByTransmission"""
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.prefix("set -euo pipefail; ")
-
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
-# Create auto-cleaned temporary directory
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
 which tabix
 which bcftools
 which gatk_nonfree
@@ -58,10 +44,5 @@ gatk_nonfree \
     --reference_sequence {snakemake.input.reference}
 
 tabix -f {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf})
-md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
-popd
 """
 )

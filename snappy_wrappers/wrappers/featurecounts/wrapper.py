@@ -1,33 +1,19 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for FeatureCounts: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
-shell.executable("/bin/bash")
-
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -euo pipefail
-set -x
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
 
 strand={args[strand]}
 
@@ -53,9 +39,5 @@ samtools view -h -F 260 -q 255 $bam \
     --verbose \
     -o feature_counts.tsv
 popd
-cp $TMPDIR/feature_counts.tsv {snakemake.output.tsv}
-cp $TMPDIR/feature_counts.tsv.summary {snakemake.output.summary}
-md5sum {snakemake.output.tsv} > {snakemake.output.tsv_md5}
-md5sum {snakemake.output.summary} > {snakemake.output.summary_md5}
 """
 )

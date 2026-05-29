@@ -3,35 +3,17 @@
 
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.executable("/bin/bash")
-
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
 # -------------------------------------------------------------------------------------------------
 # Create VCF file from spots
 #
@@ -93,11 +75,5 @@ bcftools annotate \
     {{ print $1, $2, $3, log($4) / log(2); }}
     ' \
 >> {snakemake.output.txt}
-
-# -------------------------------------------------------------------------------------------------
-# Build MD5 sum
-#
-pushd $(dirname {snakemake.output.txt}) &&
-    md5sum $(basename {snakemake.output.txt}) >$(basename {snakemake.output.txt}).md5
 """
 )

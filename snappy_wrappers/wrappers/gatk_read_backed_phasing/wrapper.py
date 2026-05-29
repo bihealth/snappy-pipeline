@@ -1,38 +1,24 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running GATK ReadBackedPhasing in parallel, genome is split into windows"""
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.executable("/bin/bash")
-
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # Hack: get back bin directory of base/root environment.
 export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
 
 # Allow this number of variant per 10k window.
 PER10K=100
-
-# Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
-# Create auto-cleaned temporary directory
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 
 # Build list of intervals with <1% variants -------------------------------------------------------
 
@@ -148,9 +134,5 @@ bcftools \
     -o {snakemake.output.vcf}
 
 tabix -f {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf}) && \
-    md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \
-    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 """
 )
