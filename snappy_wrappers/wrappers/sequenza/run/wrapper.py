@@ -2,6 +2,7 @@
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers.  These run in an "inner" snakemake process which uses its
@@ -9,11 +10,14 @@ import sys
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snakemake import shell  # noqa: E402
+from snappy_wrappers.snappy_wrapper import ShellWrapper  # noqa: E402
 
 from snappy_wrappers.tools.genome_windows import yield_contigs  # noqa: E402
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
 
@@ -44,29 +48,8 @@ f.close()
 args_extract = config_to_r(dict(args["extra_args_extract"]))
 args_fit = config_to_r(dict(args["extra_args_fit"]))
 
-shell.executable("/bin/bash")
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
 export R_LIBS_USER=$(dirname {snakemake.input.packages})
 export VROOM_CONNECTION_SIZE=2000000000
 
@@ -117,9 +100,3 @@ touch {snakemake.output.done}
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)

@@ -35,11 +35,3 @@ tabix {snakemake.output.vcf}
 tar -zcvf {snakemake.output.log} {snakemake.input.logs}
 """
 )
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
