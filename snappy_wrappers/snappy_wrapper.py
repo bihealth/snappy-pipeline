@@ -132,8 +132,8 @@ class SnappyWrapper(metaclass=ABCMeta):
         This allows R scripts to be saved in the log directory, rather than the uninformative
         shell script starting R.
 
-        : param cmd: The command string (after snakemake input/output/params expansion)
-        : param filename: the path where to save the script
+        :param cmd: The command string (after snakemake input/output/params expansion)
+        :param filename: the path where to save the script
         """
         with tempfile.NamedTemporaryFile(mode="wt", delete_on_close=False) as f:
             tempfilename = f.name
