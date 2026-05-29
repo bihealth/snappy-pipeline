@@ -94,8 +94,6 @@ colnames(dnacopy) <- col_names
 write.table(dnacopy, file="{snakemake.output.seg}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
 __EOF
 
-pushd $(dirname {snakemake.output.seg}) ; f=$(basename {snakemake.output.seg}) ; md5sum $f > $f.md5 ; popd
-pushd $(dirname {snakemake.output.done}) ; fns=$(ls) ; for f in $fns ; do md5sum $f > $f.md5 ; done ; popd
 touch {snakemake.output.done}
 """
 )

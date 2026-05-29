@@ -1,7 +1,11 @@
 import pathlib
 import sys
+from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 # We will first call the GATK tool.  However, there are issues with the reliability of the contig
 # ploidy calls.  This causes an exception in the  JointGermlineCNVSegmentation further downstream.
@@ -35,7 +39,7 @@ paths_tsv = " ".join(snakemake.input.tsv)
 # else:
 #    par_args = ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"

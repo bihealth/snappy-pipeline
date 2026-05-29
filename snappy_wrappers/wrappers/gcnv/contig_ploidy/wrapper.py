@@ -1,6 +1,10 @@
 import pathlib
+from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 # We will first call the GATK tool.  However, there are issues with the reliability of the contig
 # ploidy calls.  This causes an exception in the  JointGermlineCNVSegmentation further downstream.
@@ -34,7 +38,7 @@ if par_intervals:
 else:
     par_args = ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" ERR EXIT
