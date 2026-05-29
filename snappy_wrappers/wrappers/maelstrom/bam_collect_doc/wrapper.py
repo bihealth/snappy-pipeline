@@ -27,9 +27,6 @@ find $(dirname $(dirname {snakemake.output.vcf}))
 pushd $(dirname {snakemake.output.vcf})
 tabix -f $(basename {snakemake.output.vcf})
 
-md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf_md5})
-md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi_md5})
-
 # Convert coverage to bigWig file
 
 bcftools query -f '%CHROM\t%POS[\t%CV]\n' $(basename {snakemake.output.vcf}) \
@@ -48,7 +45,6 @@ cut -f 1-2 {snakemake.input.reference}.fai \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/out_cov.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.cov_bw})
-md5sum $(basename {snakemake.output.cov_bw}) >$(basename {snakemake.output.cov_bw_md5})
 
 # Convert mapping quality to bigWig file
 
@@ -68,17 +64,8 @@ cut -f 1-2 {snakemake.input.reference}.fai \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/out_mq.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.mq_bw})
-md5sum $(basename {snakemake.output.mq_bw}) >$(basename {snakemake.output.mq_bw_md5})
 
 popd
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
 """
 )
 

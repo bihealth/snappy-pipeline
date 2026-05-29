@@ -85,18 +85,10 @@ OptiTypePipeline.py \
     --$seq_type \
     --outdir $TMPDIR/out.tmp
 
-pushd $TMPDIR/out.tmp/*
-for f in *; do
-    test -f $f && md5sum $f >$f.md5
-done
-popd
-
 # move files to the output directory
 prefix=$(basename $(ls $TMPDIR/out.tmp | head -n 1))
 mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_coverage_plot.pdf {snakemake.output.cov_pdf}
-mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_coverage_plot.pdf.md5 {snakemake.output.cov_pdf}.md5
 mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_result.tsv {snakemake.output.tsv}
-mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_result.tsv.md5 {snakemake.output.tsv}.md5
 
 # create final .txt file
 tail -n +2 {snakemake.output.tsv} \

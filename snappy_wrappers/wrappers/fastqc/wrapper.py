@@ -27,9 +27,5 @@ fastqc \
 pushd $outdir
 pwd
 ls -lh
-for path in $(echo {snakemake.output} | tr ' ' '\n' | grep -v '.md5$' | tail -n +2); do
-    fname=$(basename $path)
-    md5sum $fname > $path.md5
-done
 """
 )

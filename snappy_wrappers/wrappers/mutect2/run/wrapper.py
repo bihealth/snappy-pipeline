@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MuTect 2: Snakemake wrapper.py"""
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -58,8 +56,6 @@ if java_options := args.get("java_options", ""):
 
 extra_arguments = " ".join(args.get("extra_arguments", []))
 
-shell.executable("/bin/bash")
-
 ShellWrapper(snakemake).run(
     r"""
 set -x
@@ -88,11 +84,6 @@ rm -f $out_base.vcf.idx
 bgzip $out_base.vcf
 tabix -f $out_base.vcf.gz
 
-pushd $TMPDIR
-for f in $out_base.*; do
-    md5sum $f >$f.md5
-done
-popd
 
 mv $out_base.* $(dirname {vcf_output})
 """

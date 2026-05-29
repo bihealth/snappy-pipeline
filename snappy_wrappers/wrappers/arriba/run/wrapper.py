@@ -3,8 +3,6 @@
 
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
@@ -12,7 +10,6 @@ if TYPE_CHECKING:
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-shell.executable("/bin/bash")
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
@@ -83,14 +80,8 @@ STAR \
     {protein_domains_param}
 
 cp $TMPDIR/fusions.tsv {snakemake.output.fusions}
-pushd $(dirname {snakemake.output.fusions})
-md5sum $(basename {snakemake.output.fusions}) > $(basename {snakemake.output.fusions}).md5
-popd
 
 gzip -c $TMPDIR/fusions.discarded.tsv > {snakemake.output.discarded}
-pushd $(dirname {snakemake.output.discarded})
-md5sum $(basename {snakemake.output.discarded}) > $(basename {snakemake.output.discarded}).md5
-popd
 
 log_dir=$(dirname {snakemake.log.log})
 star_logs=$(echo "Log.out Log.std.out Log.final.out SJ.out.tab" | tr ' ' '\n')
@@ -98,13 +89,6 @@ for star_log in $star_logs
 do
     cp $TMPDIR/$star_log $log_dir/$star_log
 done
-
-pushd $log_dir
-for star_log in $star_logs
-do
-    md5sum $star_log > $star_log.md5
-done
-popd
 
 touch {snakemake.output.done}
 """

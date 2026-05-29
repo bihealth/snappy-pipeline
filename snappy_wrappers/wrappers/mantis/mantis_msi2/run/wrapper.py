@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MANTIS: Snakemake wrapper.py"""
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Clemens Messerschmidt"
 
 args = getattr(snakemake.params, "args", {})
-
-shell.executable("/bin/bash")
 
 
 ShellWrapper(snakemake).run(
@@ -37,11 +33,6 @@ mantis-msi2 \
     --threads 1 \
     -o $TMPDIR/out/$(basename {snakemake.output.result})
 
-pushd $TMPDIR/out
-for f in *; do
-    md5sum $f > $f.md5
-done
-popd
 
 mv $TMPDIR/out/* $(dirname {snakemake.output.result})
 """

@@ -4,8 +4,6 @@
 import os
 import re
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
@@ -18,8 +16,6 @@ assert os.path.exists(reference), "Missing dict of reference fasta"
 
 baits = args["path_to_baits"]
 targets = args.get("path_to_targets", "")
-
-shell.executable("/bin/bash")
 
 ShellWrapper(snakemake).run(
     r"""
@@ -54,26 +50,13 @@ bed_to_interval_list() {{
         -SD {reference}
 }}
 
-md5() {{
-    fn=$1
-    d=$(dirname $fn)
-    f=$(basename $fn)
-    pushd $d 1> /dev/null 2>&1
-    checksum=$(md5sum $f)
-    popd 1> /dev/null 2>&1
-    echo $checksum
-}}
-
 bed_to_interval_list {baits} > {snakemake.output.baits}
-md5 {snakemake.output.baits} > {snakemake.output.baits}.md5
 
 if [[ -n "{targets}" ]]
 then
     bed_to_interval_list {targets} > {snakemake.output.targets}
-    md5 {snakemake.output.targets} > {snakemake.output.targets}.md5
 else
     ln -rs {snakemake.output.baits} {snakemake.output.targets}
-    ln -rs {snakemake.output.baits}.md5 {snakemake.output.targets}.md5
 fi
 """
 )

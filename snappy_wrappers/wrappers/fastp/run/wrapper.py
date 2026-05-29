@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for fastp: Snakemake wrapper.py"""
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
 
@@ -174,23 +171,6 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
             echo --overrepresentation_analysis
         fi)
 
-    fns="$out $failed"
-    if [[ $paired -eq 1 ]]; then
-        fns="$unpaired $fns $out2 $unpaired2"
-    fi
-    fns=$(echo "$fns" | tr ' ' '\n')
-    for fn in $fns ; do
-        pushd $(dirname $fn)
-        md5sum $fn > $fn.md5
-        popd
-    done
-
-    pushd $TMPDIR/report/$report
-    fns=$(ls)
-    for fn in $fns ; do
-        md5sum $fn > $fn.md5
-    done
-    popd
 
 done
 

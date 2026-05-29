@@ -12,13 +12,9 @@
 #     These rare occurences can be fixed by manually removing the
 #     multiple variants.
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
 
@@ -84,17 +80,6 @@ tar -zcvf {snakemake.output.db} -C $TMPDIR pon_db || true
 # Copy the results to destination & compute checksums
 cp ${{out_base}}.vcf.gz {snakemake.output.vcf}
 cp ${{out_base}}.vcf.gz.tbi {snakemake.output.vcf}.tbi
-
-pushd $(dirname {snakemake.output.vcf})
-f=$(basename {snakemake.output.vcf})
-md5sum $f > $f.md5
-md5sum $f.tbi > $f.tbi.md5
-popd
-
-pushd $(dirname {snakemake.output.db})
-f=$(basename {snakemake.output.db})
-md5sum $f > $f.md5
-popd
 """
 )
 

@@ -21,9 +21,5 @@ ngs-chew fingerprint \
     --output-aafs \
     --output-fingerprint {snakemake.output.npz} \
     --input-bam {snakemake.input.bam}
-
-pushd $(dirname {snakemake.output.npz})
-md5sum $(basename {snakemake.output.npz}) >$(basename {snakemake.output.npz_md5})
-popd
 """
 )

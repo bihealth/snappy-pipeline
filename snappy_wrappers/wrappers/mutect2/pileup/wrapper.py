@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for GetPileupSummaries: Snakemake wrapper.py"""
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -16,8 +14,6 @@ if java_options := args.get("java_options", None):
     java_options = f"--java-options '{java_options}'"
 
 extra_arguments = " ".join(args.get("extra_arguments", []))
-
-shell.executable("/bin/bash")
 
 ShellWrapper(snakemake).run(
     r"""
@@ -36,11 +32,6 @@ gatk {java_options} GetPileupSummaries \
     --output $out_base.pileup \
     {extra_arguments}
 
-pushd $TMPDIR && \
-    for f in $out_base.*; do \
-        md5sum $f >$f.md5; \
-    done && \
-    popd
 
 mv $out_base.* $(dirname {snakemake.output.pileup})
 """

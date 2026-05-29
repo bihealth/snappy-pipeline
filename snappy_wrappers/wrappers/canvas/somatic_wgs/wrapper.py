@@ -35,10 +35,5 @@ mono $EBROOTCANVAS/Canvas.exe Somatic-WGS \
     --sample-name={args[cancer_library]}
 
 tabix -f {snakemake.output.vcf}
-pushd $(dirname {snakemake.output.vcf})
-
-for f in *.vcf.gz *.vcf.gz.tbi; do
-    md5sum $f >$f.md5
-done
 """
 )

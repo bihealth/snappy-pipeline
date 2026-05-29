@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MuTect 2: Snakemake wrapper.py"""
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -15,8 +13,6 @@ if normal:
     normal_param = f"--matched-normal {normal}"
 else:
     normal_param = ""
-
-shell.executable("/bin/bash")
 
 ShellWrapper(snakemake).run(
     r"""
@@ -32,11 +28,6 @@ gatk --java-options '-Xms4000m -Xmx8000m' CalculateContamination \
     --tumor-segmentation ${{out_base}}.segments.tbl \
     --output ${{out_base}}.contamination.tbl
 
-pushd $tmpdir && \
-    for f in $out_base.*; do \
-        md5sum $f >$f.md5; \
-    done && \
-    popd
 
 mv $out_base.* $(dirname {snakemake.output.table})
 """

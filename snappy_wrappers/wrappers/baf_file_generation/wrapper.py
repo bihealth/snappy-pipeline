@@ -42,8 +42,5 @@ cut -f 1-2 {reference_index_path} \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/tmp.wig $TMPDIR/chrom.sizes {snakemake.output.bw}
-pushd $(dirname {snakemake.output.bw})
-md5sum $(basename {snakemake.output.bw}) >$(basename {snakemake.output.bw_md5})
-popd
 """
 )

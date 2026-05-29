@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MuTect 2: Snakemake wrapper.py"""
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
 
@@ -41,11 +37,6 @@ gatk {java_options} Mutect2 \
 bgzip $TMPDIR/$vcf
 tabix $TMPDIR/$vcf.gz
 
-pushd $TMPDIR
-md5sum $vcf.gz > $vcf.gz.md5
-md5sum $vcf.gz.tbi > $vcf.gz.tbi.md5
-popd
-
-mv $TMPDIR/$vcf.gz $TMPDIR/$vcf.gz.md5 $TMPDIR/$vcf.gz.tbi $TMPDIR/$vcf.gz.tbi.md5 $(dirname {snakemake.output.vcf})
+mv $TMPDIR/$vcf.gz $TMPDIR/$vcf.gz.tbi $(dirname {snakemake.output.vcf})
 """
 )

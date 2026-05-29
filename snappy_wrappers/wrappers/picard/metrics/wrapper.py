@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for picard metrics collection: Snakemake wrapper.py"""
 
-from snakemake import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
@@ -31,8 +29,6 @@ collect_multiple_metrics = " ".join(
 prefix = args.get("prefix", "")
 
 name = args.get("bait_name", "null")
-
-shell.executable("/bin/bash")
 
 ShellWrapper(snakemake).run(
     r"""
@@ -124,12 +120,6 @@ then
         -CHART $d/{prefix}CollectWgsMetricsWithNonZeroCoverage.pdf \
         -R {reference}
 fi
-
-pushd $d
-for f in $(ls *.txt) ; do
-    md5sum $f >$f.md5
-done
-popd
 """
 )
 

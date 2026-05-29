@@ -49,12 +49,4 @@ then
     gatk LearnReadOrientationModel {orientation} -O {output_orientation}
 fi
 
-# Compute md5 sums -----------------------------------------------
-pushd $(dirname {output.vcf})
-for f in *; do
-if [[ -f "$f" ]] && [[ $f != *.md5 ]]; then
-md5sum $f > $f.md5;
-fi;
-done
-popd
 """)

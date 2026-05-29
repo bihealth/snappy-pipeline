@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for calculating tumor mutation burde with bcftools"""
 
+import hashlib
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -15,6 +16,15 @@ args = getattr(snakemake.params, "args", {})
 target_regions = args["target_regions"]
 has_annotation = args["has_annotation"]
 
+
+def _file_md5(path: str) -> str:
+    with open(path, "rb") as inputf:
+        return hashlib.md5(inputf.read()).hexdigest()
+
+
+bed_md5 = _file_md5(target_regions)
+vcf_md5 = _file_md5(str(snakemake.input.vcf))
+
 missense_re = args["missense_re"] if has_annotation else ""
 
 ShellWrapper(snakemake).run(
@@ -24,10 +34,8 @@ export LC_ALL=C
 
 bed_file={target_regions}
 bed_file_name=$(basename $bed_file)
-bed_md5=$(md5sum $bed_file | awk '{{print $1}}')
 
 name_vcf=$(basename {snakemake.input.vcf})
-vcf_md5=$(md5sum {snakemake.input.vcf} | awk '{{print $1}}')
 
 # Avoids script failing with gzip error status
 cmd=zcat
@@ -55,9 +63,9 @@ then
 {{
     "Library_name": "{snakemake.wildcards.tumor_library}",
     "VCF_file": "$name_vcf",
-    "VCF_md5": "$vcf_md5",
+    "VCF_md5": "{vcf_md5}",
     "BED_file": "$bed_file_name",
-    "BED_md5": "$bed_md5",
+    "BED_md5": "{bed_md5}",
     "TMB": $TMB,
     "missense_TMB": $missense_TMB,
     "Number_variants": $number_variants,
@@ -72,9 +80,9 @@ else
 {{
     "Library_name": "{snakemake.wildcards.tumor_library}",
     "VCF_file": "$name_vcf",
-    "VCF_md5": "$vcf_md5",
+    "VCF_md5": "{vcf_md5}",
     "BED_file": "$bed_file_name",
-    "BED_md5": "$bed_md5",
+    "BED_md5": "{bed_md5}",
     "TMB": $TMB,
     "Number_variants": $number_variants,
     "Number_snvs": $number_snvs,

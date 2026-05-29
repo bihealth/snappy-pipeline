@@ -43,9 +43,5 @@ ln -sr results/variants/candidateSV.vcf.gz \
     $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz
 ln -sr results/variants/candidateSV.vcf.gz.tbi \
     $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz.tbi
-
-for f in results.tar.gz *.vcf.gz *.tbi; do
-    md5sum $f >$f.md5
-done
 """
 )

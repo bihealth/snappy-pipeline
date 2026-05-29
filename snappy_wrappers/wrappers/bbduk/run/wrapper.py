@@ -3,8 +3,6 @@
 
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
@@ -12,7 +10,6 @@ if TYPE_CHECKING:
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-shell.executable("/bin/bash")
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
@@ -218,23 +215,6 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         loglogk={config[loglogk]}                     \
         loglogbuckets={config[loglogbuckets]}
 
-    fns="$out $outm"
-    if [[ $paired -eq 1 ]]; then
-        fns="$fns $out2 $outm2"
-    fi
-    fns=$(echo "$fns" | tr ' ' '\n')
-    for fn in $fns ; do
-        pushd $(dirname $fn)
-        md5sum $fn > $fn.md5
-        popd
-    done
-
-    pushd $TMPDIR/report/$report
-    fns=$(ls)
-    for fn in $fns ; do
-        md5sum $fn > $fn.md5
-    done
-    popd
 done
 
 d=$(dirname {snakemake.output.out_done})
