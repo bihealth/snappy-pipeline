@@ -3,15 +3,14 @@
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-# Prelude -----------------------------------------------------------------------------------------
-
-shell.executable("/bin/bash")
-shell.prefix("set -eu -o pipefail -x; ")
 
 # Get path to this file's (wrapper.py) directory.
 base_dir = os.path.dirname(os.path.realpath(__file__))
@@ -20,6 +19,7 @@ args = getattr(snakemake.params, "args", {})
 
 # Short-circuit in case of performing no filtration
 if args["filter_mode"] == "whole_genome":
+    from snakemake.shell import shell
     shell(
         r"""
     # Regions set to "whole_genome", just link out the data.
@@ -39,10 +39,8 @@ if args["filter_mode"] == "whole_genome":
 else:
     path_bed = args["filter_config"][args["filter_mode"]]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
 # Load library with helper functions.
 source {base_dir}/../../wgs_sv_filtration/funcs.sh
 
@@ -50,20 +48,12 @@ if [[ "{args[filter_mode]}" != whole_genome ]]; then
     bedtools intersect -u -header -wa -a {snakemake.input.vcf} -b {path_bed} \
     | bcftools norm --remove-duplicates \
     | bcftools sort -o {snakemake.output.vcf} -O z
+    tabix -f {snakemake.output.vcf}
 else  # else, "all"
-    link=1
     ln -sr {snakemake.input.vcf} {snakemake.output.vcf}
     ln -sr {snakemake.input.vcf_md5} {snakemake.output.vcf_md5}
     ln -sr {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
     ln -sr {snakemake.input.vcf_tbi_md5} {snakemake.output.vcf_tbi_md5}
-fi
-
-if [[ "${{link-0}}" -ne 1 ]]; then
-    tabix -f {snakemake.output.vcf}
-
-    pushd $(dirname {snakemake.output.vcf})
-    md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 fi
 """
 )
