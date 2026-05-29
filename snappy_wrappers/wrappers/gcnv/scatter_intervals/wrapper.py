@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 # Filter interval list file from gCNV model input
 interval_list = [path for path in snakemake.input if str(path).endswith(".interval_list")]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
 
 set -euo pipefail
 

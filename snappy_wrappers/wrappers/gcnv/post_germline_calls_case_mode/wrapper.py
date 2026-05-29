@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
 
 paths_calls = " ".join(snakemake.input.calls)
 paths_models = " ".join(args["model"])
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
@@ -60,11 +65,5 @@ bgzip ${{itv_vcf%.gz}}
 tabix -f $itv_vcf
 bgzip ${{seg_vcf%.gz}}
 tabix -f $seg_vcf
-
-for x in $itv_vcf $itv_vcf.tbi $seg_vcf $seg_vcf.tbi {snakemake.output.ratio_tsv}; do
-    pushd $(dirname $x)
-    md5sum $(basename $x) >$(basename $x).md5
-    popd
-done
 """
 )
