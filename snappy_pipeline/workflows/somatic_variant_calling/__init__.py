@@ -416,7 +416,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         if action != "gather":
             if action == "run":
-                postfix = ".{{scatteritem}}"
+                postfix = ".{scatteritem}"
             else:
                 postfix = "." + action
 
