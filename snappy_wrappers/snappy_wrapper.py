@@ -198,7 +198,7 @@ class RWrapper(SnappyWrapper):
 
     def _run_R(self, cmd: str) -> None:
         with open(self._snakemake.log.script, "wt") as f:
-            print(cmd, file=f)
+            print(snakemake_format(cmd, stepout=4, snakemake=self._snakemake), file=f)
         shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
         self._run(f"Rscript --vanilla {self._snakemake.log.script}", None)
 

@@ -1,34 +1,16 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for LOHHLA: Snakemake wrapper.py"""
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Clemens Messerschmidt"
 
-shell.executable("/bin/bash")
-
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Also pipe everything to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec &> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+# Setup subdirectories in the automatically created TMPDIR
 mkdir -p $TMPDIR/out
-
 mkdir -p $TMPDIR/bams
+
 # need to link bams into the same directory
 ln -sr {snakemake.input.normal_bam} -t $TMPDIR/bams
 ln -sr {snakemake.input.normal_bai} -t $TMPDIR/bams

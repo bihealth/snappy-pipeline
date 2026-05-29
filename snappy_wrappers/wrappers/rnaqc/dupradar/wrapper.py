@@ -1,34 +1,14 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for FeatureCounts: Snakemake wrapper.py"""
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-shell.executable("/bin/bash")
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -euo pipefail
-set -x
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
 # ----------------------------------------------------------------------------
 # Inititalisation: paired & strandedness decisions
 # ----------------------------------------------------------------------------
@@ -52,11 +32,11 @@ fi
 # dupradar
 # ----------------------------------------------------------------------------
 
-mkdir ${{TMPDIR}}/dupradar
+mkdir $TMPDIR/dupradar
 
 # Write helper script and call R
 #
-cat << __EOF > ${{TMPDIR}}/dupradar/run_dupradar.R
+cat << __EOF > $TMPDIR/dupradar/run_dupradar.R
 library(dupRadar)
 
 args = commandArgs(trailingOnly=TRUE)
@@ -80,20 +60,19 @@ else
     paired_cmd="TRUE"
 fi
 
-snake_log=${{PWD}}/$(dirname {snakemake.log})
+snake_log=${PWD}/$(dirname {snakemake.log.log})
 
-pushd ${{TMPDIR}}/dupradar
+pushd $TMPDIR/dupradar
 Rscript --vanilla run_dupradar.R \
     "{snakemake.input.bam}" \
     results.tsv \
     {snakemake.input.dupradar_path_annotation_gtf} \
-    ${{strand}} \
-    ${{paired_cmd}} \
+    ${strand} \
+    ${paired_cmd} \
     {args[num_threads]} \
     "."
 popd
 
-mv ${{TMPDIR}}/dupradar/results.tsv {snakemake.output.dupradar}
-md5sum {snakemake.output.dupradar} > {snakemake.output.dupradar_md5}
+mv $TMPDIR/dupradar/results.tsv {snakemake.output.dupradar}
 """
 )
