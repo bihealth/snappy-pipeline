@@ -1,36 +1,20 @@
 """CUBI+Snakemake wrapper code for applying the filter list."""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -euo pipefail
-
-set -x
-
 # "Local" TMPDIR as the scripts try to do "rename" across file sests otherwise
 export TMPDIR=$(dirname $(dirname {snakemake.output.vcf}))/tmp
 mkdir -p $TMPDIR
 trap "rm -rf $TMPDIR" EXIT KILL TERM INT HUP
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
 
 ln -sr {snakemake.input.vcf} {snakemake.output.full}
 ln -sr {snakemake.input.vcf}.tbi {snakemake.output.full}.tbi
@@ -49,15 +33,8 @@ bcftools view --include "$filter" -O z -o {snakemake.output.vcf} {snakemake.inpu
 tabix {snakemake.output.vcf}
 
 tar -zcvf {snakemake.output.log} {snakemake.input.logs}
-
-pushd $(dirname {snakemake.output.vcf}) && \
-    md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \
-    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5 && \
-    popd
-pushd $(dirname {snakemake.output.log}) && \
-    md5sum $(basename {snakemake.output.log}) >$(basename {snakemake.output.log}).md5 && \
-    popd
 """
+)
 )
 
 # Compute MD5 sums of logs.
