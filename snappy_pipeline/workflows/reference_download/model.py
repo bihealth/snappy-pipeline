@@ -1,6 +1,8 @@
+import warnings
 from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, model_validator
+from pydantic import AnyUrl, BaseModel, BeforeValidator, TypeAdapter, model_validator
 
 from snappy_pipeline.models import ResolvablePath, SnappyModel, SnappyStepModel
 
@@ -31,8 +33,17 @@ class EnsemblDataType(StrEnum):
     pep = "pep"
 
 
+def validate_url_or_empty(v: str) -> str:
+    """Validate that the string is either empty or a syntactically valid URL."""
+    if not v:
+        return ""
+
+    ta = TypeAdapter(AnyUrl)
+    return str(ta.validate_python(v))
+
+
 class DownloadCommon(SnappyModel):
-    url: str = ""
+    url: Annotated[str, BeforeValidator(validate_url_or_empty)] = ""
     """Optional explicit URL override. When set, source-specific URL construction is skipped."""
 
     species: str = "homo_sapiens"
@@ -56,6 +67,23 @@ class DownloadCommon(SnappyModel):
     molecule: Molecule = Molecule.dna
     """Molecule class of the downloaded reference payload."""
 
+    @model_validator(mode="after")
+    def validate_url_exclusivity(self) -> "DownloadCommon":
+        """Warn the user if they provided source-specific parameters while url is set."""
+        if self.url:
+            # Downstream processing filters (molecule, contigs, etc.) are still allowed
+            allowed_with_url = {"url", "molecule", "contigs", "contigs_regex"}
+            conflicting_fields = self.model_fields_set - allowed_with_url
+
+            if conflicting_fields:
+                warnings.warn(
+                    f"A custom 'url' is specified ('{self.url}'), which overrides standard construction. "
+                    f"The following configuration parameters will be ignored: {', '.join(sorted(conflicting_fields))}",
+                    UserWarning,
+                    stacklevel=2,
+                )
+        return self
+
 
 class Ensembl(DownloadCommon):
     version: str = "113"
@@ -66,7 +94,11 @@ class Ensembl(DownloadCommon):
     branch: str = ""
 
     @model_validator(mode="after")
-    def validate_datatype_molecule(self):
+    def validate_datatype_molecule(self) -> "Ensembl":
+        # Skip subclass-specific validation rules if a custom URL override is used
+        if self.url:
+            return self
+
         if self.datatype == EnsemblDataType.dna and self.molecule != Molecule.dna:
             raise ValueError("Ensembl datatype 'dna' requires molecule='dna'")
         if (

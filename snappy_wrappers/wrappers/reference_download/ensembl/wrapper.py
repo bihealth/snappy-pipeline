@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import tempfile
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -31,6 +33,10 @@ def _run_conda_cmd(cmd: list[str], path_out: str) -> None:
 
 
 def _url_exists(url: str) -> bool:
+    parsed = urlparse(url)
+    if parsed.scheme == "file":
+        local_path = url2pathname(parsed.path)
+        return os.path.exists(local_path)
     cmd = ["curl", "--location", "--head", "--silent", "--show-error", "--fail", url]
     return subprocess.run(cmd, check=False).returncode == 0
 
@@ -43,6 +49,13 @@ def _download_with_curl(url: str, path_out: str) -> str:
     for candidate in candidates:
         if not _url_exists(candidate):
             continue
+
+        parsed = urlparse(candidate)
+        if parsed.scheme == "file":
+            local_path = url2pathname(parsed.path)
+            shutil.copy(local_path, path_out)
+            return candidate
+
         cmd = [
             "curl",
             "--location",
@@ -62,7 +75,7 @@ def _download_with_curl(url: str, path_out: str) -> str:
 
     candidate_list = "\n".join(f"- {u}" for u in candidates)
     raise RuntimeError(
-        "Unable to download reference from Ensembl using curl. Tried:\n"
+        "Unable to download/copy reference from Ensembl. Tried:\n"
         f"{candidate_list}\n"
         "Check species/build/release/datatype and server availability."
     )
@@ -157,38 +170,59 @@ def main() -> None:
 
     os.makedirs(os.path.dirname(str(snakemake.output.fasta)), exist_ok=True)
     with tempfile.TemporaryDirectory() as tmpdir:
-        prefix_or_url = _resolve_ensembl_prefix(params)
-        suffixes = _suffixes_for_datatype(params)
-
         path_raw = os.path.join(tmpdir, "raw.fa")
         downloaded_urls = []
         success = False
 
-        with open(path_raw, "wt") as out_raw:
-            for suffix in suffixes:
-                url = prefix_or_url if params.get("url") else f"{prefix_or_url}.{suffix}"
-                path_dl = os.path.join(
-                    tmpdir, f"download_{len(downloaded_urls)}.fa.gz" if url.endswith(".gz") else "download.fa"
-                )
-                try:
-                    used_url = _download_with_curl(url, path_dl)
-                except RuntimeError:
-                    if chromosomes:
-                        raise
-                    continue
-
+        if params.get("url"):
+            # Single processing path for explicit URL overrides (e.g., local files)
+            url = params["url"]
+            path_dl = os.path.join(
+                tmpdir, "download.fa.gz" if url.endswith(".gz") else "download.fa"
+            )
+            try:
+                used_url = _download_with_curl(url, path_dl)
                 success = True
                 downloaded_urls.append(used_url)
-
                 if path_dl.endswith(".gz"):
-                    with gzip.open(path_dl, "rt") as fin:
-                        shutil.copyfileobj(fin, out_raw)
+                    with gzip.open(path_dl, "rt") as fin, open(path_raw, "wt") as fout:
+                        shutil.copyfileobj(fin, fout)
                 else:
-                    with open(path_dl, "rt") as fin:
-                        shutil.copyfileobj(fin, out_raw)
+                    shutil.copy(path_dl, path_raw)
+            except Exception as e:
+                raise RuntimeError(f"Unable to copy or download custom URL: {url}. Error: {e}")
+        else:
+            # Construction-based loop
+            prefix_or_url = _resolve_ensembl_prefix(params)
+            suffixes = _suffixes_for_datatype(params)
+            with open(path_raw, "wt") as out_raw:
+                for suffix in suffixes:
+                    url = f"{prefix_or_url}.{suffix}"
+                    path_dl = os.path.join(
+                        tmpdir,
+                        f"download_{len(downloaded_urls)}.fa.gz"
+                        if url.endswith(".gz")
+                        else "download.fa",
+                    )
+                    try:
+                        used_url = _download_with_curl(url, path_dl)
+                    except RuntimeError:
+                        if chromosomes:
+                            raise
+                        continue
 
-                if not chromosomes:
-                    break
+                    success = True
+                    downloaded_urls.append(used_url)
+
+                    if path_dl.endswith(".gz"):
+                        with gzip.open(path_dl, "rt") as fin:
+                            shutil.copyfileobj(fin, out_raw)
+                    else:
+                        with open(path_dl, "rt") as fin:
+                            shutil.copyfileobj(fin, out_raw)
+
+                    if not chromosomes:
+                        break
 
         if not success:
             raise RuntimeError(

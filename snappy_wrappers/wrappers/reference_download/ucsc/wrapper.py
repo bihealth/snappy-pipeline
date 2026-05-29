@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import tempfile
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
@@ -31,6 +33,14 @@ def _run_conda_cmd(cmd: list[str], path_out: str) -> None:
 
 
 def _download(url: str, path_out: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme == "file":
+        local_path = url2pathname(parsed.path)
+        if not os.path.exists(local_path):
+            raise FileNotFoundError(f"Local file not found: {local_path}")
+        shutil.copy(local_path, path_out)
+        return
+
     cmd = [
         "curl",
         "--location",
@@ -129,4 +139,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
