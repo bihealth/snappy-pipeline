@@ -1,4 +1,5 @@
 """Abstract wrapper classes as utilities for snappy specific wrappers."""
+# Note that this file tries to target a baseline of python 3.8, so outdated wrappers don't crash
 
 import os
 import shutil
@@ -6,6 +7,7 @@ import stat
 import tempfile
 import textwrap
 from abc import ABCMeta, abstractmethod
+from typing import Optional
 
 from snakemake.shell import shell
 from snakemake.utils import format as snakemake_format
@@ -90,7 +92,7 @@ class SnappyWrapper(metaclass=ABCMeta):
         self._with_output_links = with_output_links
         self._check_snakemake_attributes()
 
-    def _check_snakemake_attributes(self):
+    def _check_snakemake_attributes(self) -> None:
         if not getattr(self._snakemake, "log", None):
             raise AttributeError("snakemake.log is not defined")
         if not getattr(self._snakemake.log, "log", None):
@@ -123,7 +125,7 @@ class SnappyWrapper(metaclass=ABCMeta):
     def run(self, cmd: str) -> None:
         pass
 
-    def _run(self, cmd: str, filename: str | None) -> None:
+    def _run(self, cmd: str, filename: Optional[str]) -> None:
         """
         Creates a temp file for the script, executes it & computes the md5 sum of the log
 
@@ -135,33 +137,37 @@ class SnappyWrapper(metaclass=ABCMeta):
         :param cmd: The command string (after snakemake input/output/params expansion)
         :param filename: the path where to save the script
         """
-        with tempfile.NamedTemporaryFile(mode="wt", delete_on_close=False) as f:
-            tempfilename = f.name
+        tempfilename = None
+        try:
+            # delete=False is safe on all Python versions.
+            # It ensures the file is not unlinked upon closing the context manager.
+            with tempfile.NamedTemporaryFile(mode="wt", delete=False) as f:
+                tempfilename = f.name
 
-            print(
-                textwrap.dedent(
-                    "\n".join(
-                        (
-                            snakemake_format(
-                                SnappyWrapper.header,
-                                stepout=4,
-                                snakemake=self._snakemake,
-                            ),
-                            snakemake_format(cmd, stepout=4, snakemake=self._snakemake),
-                            snakemake_format(
-                                SnappyWrapper.footer,
-                                stepout=4,
-                                snakemake=self._snakemake,
-                            ),
+                print(
+                    textwrap.dedent(
+                        "\n".join(
+                            (
+                                snakemake_format(
+                                    SnappyWrapper.header,
+                                    stepout=4,
+                                    snakemake=self._snakemake,
+                                ),
+                                snakemake_format(cmd, stepout=4, snakemake=self._snakemake),
+                                snakemake_format(
+                                    SnappyWrapper.footer,
+                                    stepout=4,
+                                    snakemake=self._snakemake,
+                                ),
+                            )
                         )
-                    )
-                ),
-                file=f,
-            )
+                    ),
+                    file=f,
+                )
+                f.flush()
+                # Exiting the 'with' context manager safely closes the file.
 
-            f.flush()
-            f.close()
-
+            # Since the file is closed, we can reliably adjust permissions, copy, and run it.
             current_permissions = stat.S_IMODE(os.lstat(tempfilename).st_mode)
             os.chmod(tempfilename, current_permissions | stat.S_IXUSR)
 
@@ -169,6 +175,14 @@ class SnappyWrapper(metaclass=ABCMeta):
                 shutil.copy(tempfilename, filename)
 
             shell(tempfilename)
+
+        finally:
+            # Manually clean up the file on exit, regardless of exceptions
+            if tempfilename is not None:
+                try:
+                    os.unlink(tempfilename)
+                except OSError:
+                    pass
 
         shell(SnappyWrapper.md5_log.format(log=str(self._snakemake.log.log)))
 
@@ -191,7 +205,7 @@ class ShellWrapper(SnappyWrapper):
 
 
 class RWrapper(SnappyWrapper):
-    def _check_snakemake_attributes(self):
+    def _check_snakemake_attributes(self) -> None:
         super()._check_snakemake_attributes()
         if not getattr(self._snakemake.log, "script", None):
             raise AttributeError("snakemake.log.script is not defined")
