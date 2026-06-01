@@ -884,8 +884,8 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''
@@ -918,8 +918,8 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 output: **{all_output}
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 log: **{all_log}
                 shell:
@@ -1006,8 +1006,8 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1060,8 +1060,8 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1115,8 +1115,8 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1169,8 +1169,8 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1394,8 +1394,8 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     **{log}
                 threads: resource_chunk_threads
                 resources:
-                    time=resource_chunk_time,
-                    memory=resource_chunk_memory,
+                    runtime=resource_chunk_time,
+                    mem=resource_chunk_memory,
                     partition=resource_chunk_partition,
                 params:
                     **{params}
@@ -1532,8 +1532,8 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 output: **{chunk_output}
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''
@@ -1573,8 +1573,8 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 log: "{log.log}.merge.log"
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''

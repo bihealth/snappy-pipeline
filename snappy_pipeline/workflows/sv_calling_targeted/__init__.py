@@ -10,13 +10,14 @@ from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
-from .model import SvCallingTargeted as SvCallingTargetedConfigModel
+from .model import SvCallingTargeted as SvCallingTargetedConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -25,9 +26,6 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 #: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
-
-#: Available SV callers
-SV_CALLERS = ("gcnv", "delly2", "manta", "melt")
 
 #: Minimum number of samples per kit to apply gCNV calling criteria to be analyzed
 GCNV_MIN_KIT_SAMPLES = 10
@@ -50,39 +48,59 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     #: Workflow name
     name = "sv_calling_targeted"
+    config_model_class = SvCallingTargetedConfigModel
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
 
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SvCallingTargetedConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
-        # Build mapping from NGS library name to kit
-        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                WritePedigreeStepPart,
-                GcnvTargetedStepPart,
-                Delly2StepPart,
-                MantaStepPart,
-                MeltStepPart,
-            )
-        )
-        # Register sub workflows
-        self.register_module("ngs_mapping", self.config["path_ngs_mapping"])
-        # Build dictionary with sample count per library kit
-        _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+        selected_tool = self.config.tool
+        # gCNV-specific shortcuts must be initialized BEFORE registering sub-step classes
+        # so that GcnvTargetedStepPart.__init__ can access them.
+        if selected_tool == Tool.gcnv:
+            self.ngs_library_to_kit = self._build_ngs_library_to_kit()
+            _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+        else:
+            self.ngs_library_to_kit = {}
+            self.library_kit_counts_dict = {}
+
+        match selected_tool:
+            case Tool.gcnv:
+                selected_sub_step = GcnvTargetedStepPart
+            case Tool.delly2:
+                selected_sub_step = Delly2StepPart
+            case Tool.manta:
+                selected_sub_step = MantaStepPart
+            case Tool.melt:
+                selected_sub_step = MeltStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
+        # Register only the selected tool's step part.
+        self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        config = self.w_config.step_config["sv_calling_targeted"].gcnv
+        config = self.get_task_config("sv_calling_targeted").gcnv
         if not config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.all_donors():
@@ -106,6 +124,13 @@ class SvCallingTargetedWorkflow(BaseStep):
         :return: Returns default config YAML, to be overwritten by project-specific one.
         """
         return DEFAULT_CONFIG
+
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local targeted SV output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/{lib}/out/.done"}
 
     def get_library_count(self, library_kit):
         """Get library count.

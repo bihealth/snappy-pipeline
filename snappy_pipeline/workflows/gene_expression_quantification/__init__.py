@@ -23,12 +23,11 @@ for prior mapping.
 Step Output
 ===========
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
-``mapper`` that the library has been aligned with, and the tool ``tool``, the
-pipeline step will create a directory ``output/{mapper}.{tool}.{lib_name}-{lib_pk}/out``
+For each RNA NGS library with name ``lib_name``/key ``lib_pk``, the
+pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting TSV files.
 
-- ``{mapper}.{tool}.{lib_name}-{lib_pk}.tsv``
+- ``{lib_name}-{lib_pk}.tsv``
 
 =====================
 Default Configuration
@@ -51,7 +50,8 @@ import os
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
-from snakemake.io import Wildcards, expand
+from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -64,7 +64,9 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
 
@@ -130,19 +132,16 @@ class SalmonStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/salmon.{{library_name}}/out/salmon.{{library_name}}{ext}"
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
-        if (
-            self.config.salmon.path_transcript_to_gene is not None
-            and self.config.salmon.path_transcript_to_gene != ""
-        ):
+        if self.config.salmon and self.config.salmon.path_transcript_to_gene:
             self.extensions["gene_sf"] = ".gene.sf"
             self.extensions["gene_sf_md5"] = ".gene.sf.md5"
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config.path_link_in,
+            preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
     @classmethod
@@ -156,6 +155,9 @@ class SalmonStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         assert action == "run"
+        tool = self.config.tool
+        if self.name != tool:
+            return {}
         for k, v in self.extensions.items():
             yield k, self.base_path_out.format(ext=v)
 
@@ -163,7 +165,10 @@ class SalmonStepPart(BaseStepPart):
     def _get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
-        prefix = "work/salmon.{library_name}/log/salmon.{library_name}"
+        tool = self.config.tool
+        if self.name != tool:
+            return {}
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -201,12 +206,15 @@ class SalmonStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.parent.get_preprocessed_path():
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
-            yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            path = task_prefix + path
+            yield path
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -230,33 +238,32 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{tool}.{{library_name}}/out/{{mapper}}.{tool}.{{library_name}}{ext}"
-        )
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
 
     def get_input_files(self, action):
         assert action == "run", "Unsupported actions"
         return getattr(self, f"_get_input_files_{action}")
 
     def _get_input_files_run(self, wildcards: Wildcards):
-        """Helper wrapper function"""
-        # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        # Get names of primary libraries of the selected cancer bio sample and the
-        # corresponding primary normal sample
-        base_path = "output/{mapper}.{library_name}/out/{mapper}.{library_name}".format(**wildcards)
+        """Resolve alignment inputs through the typed upstream contract broker."""
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
+        )
         return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
+            "bam": alignments.bam,
+            "bai": alignments.bai,
         }
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
         assert action == "run"
+        tool = self.config.tool
+        if self.name != tool:
+            return {}
         return dict(
             zip(
                 EXTENSIONS[self.name].keys(),
-                expand(self.base_path_out, tool=[self.name], ext=EXTENSIONS[self.name].values()),
+                expand(self.base_path_out, ext=EXTENSIONS[self.name].values()),
             )
         )
 
@@ -268,11 +275,10 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
-        prefix = (
-            "work/{{mapper}}.{tool}.{{library_name}}/log/{{mapper}}.{tool}.{{library_name}}".format(
-                tool=self.__class__.name
-            )
-        )
+        tool = self.config.tool
+        if self.name != tool:
+            return {}
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -349,10 +355,12 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 
     def get_strandedness_file(self, action):
         _ = action
-        return expand(self.base_path_out, tool=[self.name], ext=[".decision"])
+        return expand(self.base_path_out, ext=[".decision"])
 
     def get_args(self, action: str):
         self._validate_action(action)
+        if self.config.tool != self.name:
+            return super().get_args(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
             config = self.config.strandedness.model_dump(by_alias=True) | {
@@ -396,9 +404,14 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
 
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards)
+        if self.config.tool != self.name:
+            return
         yield "dupradar_path_annotation_gtf", self.config.dupradar.dupradar_path_annotation_gtf
 
     def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        if self.config.tool != self.name:
+            return super().get_args(action)
         return super().get_args(action) | {
             "num_threads": self.config.dupradar.num_threads,
         }
@@ -429,6 +442,8 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
 
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards)
+        if self.config.tool != self.name:
+            return
         yield "reference", self.w_config.static_data_config.reference.path
         yield "rnaseqc_path_annotation_gtf", self.config.rnaseqc.rnaseqc_path_annotation_gtf
 
@@ -479,23 +494,48 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     #: Workflow name
     name = "gene_expression_quantification"
 
+    config_model_class = GeneExpressionQuantificationConfigModel
+
+    consumes = {DataSignature(DataType.RAW, frozenset({"rna"})): True}
+    produces = [DataSignature(DataType.EXPRESSION, frozenset({"rna"}))]
+
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
+
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local expression output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(DataSignature(DataType.EXPRESSION)):
+            raise ValueError(
+                f"GeneExpressionQuantificationWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"tsv": f"output/{lib}/out/{lib}.tsv"}
 
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=GeneExpressionQuantificationConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -511,8 +551,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        # Inputs are resolved via get_upstream_paths() in step parts.
 
     def get_strandedness_file(self, action):
         _ = action
@@ -524,48 +563,41 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
+        tool = self.config.tool
+        name_pattern = "{ngs_library.name}"
 
         # Salmon special case
-        salmon_name_pattern = "salmon.{ngs_library.name}"
+        salmon_name_pattern = "{ngs_library.name}"
         salmon_exts = EXTENSIONS["salmon"]
-        if self.w_config.step_config[
-            "gene_expression_quantification"
-        ].salmon.path_transcript_to_gene:
+        if self.config.salmon and self.config.salmon.path_transcript_to_gene:
             salmon_exts["gene_sf"] = ".gene.sf"
             salmon_exts["gene_sf_md5"] = ".gene.sf.md5"
 
         # TODO: too many ifs, use shortcut?
         # if fixed, please do the same for somatic_gene_fusion_calling
         all_fns = []
-        for tool in self.config.tools:
-            for sheet in filter(is_not_background, self.shortcut_sheets):
-                for ngs_library in sheet.all_ngs_libraries:
-                    extraction_type = ngs_library.test_sample.extra_infos.get(
-                        "extractionType", "DNA"
-                    )
-                    if extraction_type.lower() == "rna":
-                        if tool == "salmon":
-                            fns = expand(
-                                os.path.join(
-                                    "output",
-                                    salmon_name_pattern,
-                                    "out",
-                                    salmon_name_pattern + "{ext}",
-                                ),
-                                ngs_library=ngs_library,
-                                ext=salmon_exts.values(),
-                            )
-                            all_fns.extend(fns)
-                        else:
-                            fns = expand(
-                                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                                ngs_library=ngs_library,
-                                mapper=self.w_config.step_config["ngs_mapping"].tools.rna,
-                                # tool=set(self.config['tools']),
-                                tool=tool,
-                                ext=EXTENSIONS[tool].values(),
-                            )
-                            all_fns.extend(fns)
+        for sheet in filter(is_not_background, self.shortcut_sheets):
+            for ngs_library in sheet.all_ngs_libraries:
+                extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
+                if extraction_type.lower() == "rna":
+                    if tool == "salmon":
+                        fns = expand(
+                            os.path.join(
+                                "output",
+                                salmon_name_pattern,
+                                "out",
+                                salmon_name_pattern + "{ext}",
+                            ),
+                            ngs_library=ngs_library,
+                            ext=salmon_exts.values(),
+                        )
+                        all_fns.extend(fns)
+                    else:
+                        fns = expand(
+                            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+                            ngs_library=ngs_library,
+                            ext=EXTENSIONS[tool].values(),
+                        )
+                        all_fns.extend(fns)
 
         return all_fns

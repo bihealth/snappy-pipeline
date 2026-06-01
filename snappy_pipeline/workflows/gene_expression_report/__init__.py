@@ -9,6 +9,8 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.gene_expression_quantification.model import ExpectedExpression
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import GeneExpressionReport as GeneExpressionReportConfigModel
@@ -30,9 +32,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{{tool}}.{{ngs_library}}/out/{{mapper}}.{{tool}}.{{ngs_library}}{ext}"
-        )
+        self.base_path_out = "work/{{ngs_library}}/out/{{ngs_library}}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -42,10 +42,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
 
     def get_log_file(self, action):
         _ = action
-        return (
-            "work/{{mapper}}.{tool}.{{ngs_library}}/log/"
-            "snakemake.gene_expression_quantification.log"
-        ).format(tool=self.__class__.name)
+        return "work/{ngs_library}/log/snakemake.gene_expression_quantification.log"
 
 
 class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
@@ -60,8 +57,6 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
         # Validate action
         self._validate_action(action)
 
-        gene_expression = self.parent.modules["gene_expression_quantification"]
-
         for sheet in filter(is_not_background, self.parent.sheets):
             for donor in sheet.bio_entities.values():
                 for biosample in donor.bio_samples.values():
@@ -71,16 +66,10 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                 # if there is more than one lib, cbioportal cannot use it
                                 if lib.extra_infos["libraryType"] == "mRNA_seq":
                                     rna_library = lib.name
-                                    exp_tpl = (
-                                        "output/{mapper}.{tool}.{library_name}/out/"
-                                        "{mapper}.{tool}.{library_name}.tsv"
-                                    ).format(
-                                        tool="featurecounts",
-                                        mapper="star",
-                                        library_name=rna_library,
+                                    expression: ExpectedExpression = self.parent.get_upstream_paths(
+                                        "gene_expression_quantification", library_name=rna_library
                                     )
-                                    exp_file = gene_expression(exp_tpl)
-                                    yield exp_file
+                                    yield expression.tsv
 
     @dictify
     def get_output_files(self, action):
@@ -114,6 +103,12 @@ class GeneExpressionReportComputeSignatures(GeneExpressionReportStepPart):
     #: Step name
     name = "compute_signatures"
 
+    @dictify
+    def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+        yield "tsv", self.base_path_out.format(ext=".tsv")
+
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
         # Validate action
@@ -127,6 +122,12 @@ class GeneExpressionReportPlotGeneDistribution(GeneExpressionReportStepPart):
     #: Step name
     name = "plot_expression_distribution"
 
+    @dictify
+    def get_input_files(self, action):
+        # Validate action
+        self._validate_action(action)
+        yield "tsv", self.base_path_out.format(ext=".tsv")
+
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
         # Validate action
@@ -139,6 +140,10 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     #: Workflow name
     name = "gene_expression_report"
+    consumes = {DataSignature(DataType.EXPRESSION, frozenset({"rna"})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"expression_report"}))]
+
+    config_model_class = GeneExpressionReportConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -148,19 +153,41 @@ class GeneExpressionReportWorkflow(BaseStep):
     }
 
     @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local gene-expression report output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.TABULAR, frozenset({"expression_report"}))
+        ):
+            raise ValueError(
+                f"GeneExpressionReportWorkflow does not support signature: {signature}"
+            )
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"tsv": f"output/{lib}/out/{lib}.tsv"}
+
+    @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=GeneExpressionReportConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -172,15 +199,11 @@ class GeneExpressionReportWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Initialize sub-workflows
-        if self.config.path_gene_expression_quantification:
-            self.register_module(
-                "gene_expression_quantification", self.config.path_gene_expression_quantification
-            )
+        # Inputs are resolved via get_upstream_paths() in step parts.
 
     @listify
     def get_result_files(self):
-        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
+        name_pattern = "{ngs_library.name}"
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for donor in sheet.donors:
                 for bio_sample in donor.bio_samples.values():
@@ -193,7 +216,5 @@ class GeneExpressionReportWorkflow(BaseStep):
                         yield from expand(
                             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
                             ngs_library=ngs_library,
-                            mapper=self.w_config.step_config["ngs_mapping"].tools.rna,
-                            tool="featurecounts",
                             ext=exts,
                         )

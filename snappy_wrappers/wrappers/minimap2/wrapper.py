@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Minimap2."""
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
@@ -12,34 +17,9 @@ args = getattr(snakemake.params, "args", {})
 seq_platform = args["extra_infos"]["seqPlatform"]
 library_kit = args["extra_infos"]["libraryKit"]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write out information about conda and save a copy of the wrapper with picked variables
-# as well as the environment.yaml file.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-cp {__real_file__} {snakemake.log.wrapper}
-md5sum {snakemake.log.wrapper} >{snakemake.log.wrapper_md5}
-cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
-md5sum {snakemake.log.env_yaml} >{snakemake.log.env_yaml_md5}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
 if [[ "{library_kit}" == "PacBio HiFi" ]]; then
@@ -94,12 +74,6 @@ cp $out_bam /tmp
 
 samtools index $out_bam
 
-# Compute MD5 sums
-pushd $(dirname $out_bam)
-md5sum $(basename $out_bam) >$(basename $out_bam).md5
-md5sum $(basename $out_bam).bai >$(basename $out_bam).bai.md5
-popd
-
 # QC Report ---------------------------------------------------------------------------------------
 
 # gather statistics from BAM file
@@ -107,26 +81,5 @@ popd
 samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
 samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
-
-# Build MD5 files for the reports
-md5sum {snakemake.output.report_bamstats_txt} > {snakemake.output.report_bamstats_txt_md5}
-md5sum {snakemake.output.report_flagstats_txt} >{snakemake.output.report_flagstats_txt_md5}
-md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstats_txt_md5}
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-sleep 1s  # try to wait for log file flush
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

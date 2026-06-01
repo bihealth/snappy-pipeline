@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 paths_tsv = " ".join(snakemake.input.tsv)
 
 print("snakemake.input =", vars(snakemake.input))
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 set -euo pipefail

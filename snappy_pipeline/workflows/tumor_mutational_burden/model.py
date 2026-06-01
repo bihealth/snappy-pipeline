@@ -3,7 +3,9 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class SomaticVariantStep(enum.StrEnum):
@@ -12,26 +14,24 @@ class SomaticVariantStep(enum.StrEnum):
     FILTER = "somatic_variant_filtration"
 
 
+class TumorMutationalBurdenDependsOn(SnappyModel):
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variant"
+
+
 class TumorMutationalBurden(SnappyStepModel):
+    depends_on: TumorMutationalBurdenDependsOn = Field(
+        default_factory=TumorMutationalBurdenDependsOn
+    )
+
     has_annotation: bool = False
     """Needed for building filenames only"""
 
-    path_somatic_variant: Annotated[
-        str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
-    ]
-    """Path to variant (directory of vcf files)"""
-
     somatic_variant_step: SomaticVariantStep = SomaticVariantStep.FILTER
     """Which pipeline step is used to compute signatures"""
-
-    tools_ngs_mapping: list[str] = []
-    """default to those configured for ngs_mapping"""
-
-    tools_somatic_variant_calling: list[str] = []
-    """default to those configured for somatic_variant_calling"""
-
-    tools_somatic_variant_annotation: list[str] = []
-    """default to those configured for somatic_variant_annotation"""
 
     has_annotation: bool = True
     """Has the inpyut vcf been annotated"""

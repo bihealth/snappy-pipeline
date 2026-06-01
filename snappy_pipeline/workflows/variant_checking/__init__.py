@@ -61,8 +61,10 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
+from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 from .model import VariantChecking as VariantCheckingConfigModel
 
@@ -86,10 +88,9 @@ class PeddyStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/.done"
-        self.log_path = (
-            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/log/snakemake.filter.log"
-        )
+        self.variant_tool = str(self.parent.get_task_config("variant_calling").tool)
+        self.base_path_out = "work/{index_ngs_library}/out/.done"
+        self.log_path = "work/{index_ngs_library}/log/snakemake.filter.log"
 
     @dictify
     def get_input_files(self, action):
@@ -98,24 +99,19 @@ class PeddyStepPart(BaseStepPart):
         self._validate_action(action)
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        tpl = (
-            "output/{mapper}.{var_caller}.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.{index_ngs_library}"
+        calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
+            "variant_calling",
+            library_name=f"{self.variant_tool}.{{index_ngs_library}}",
         )
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.modules["variant_calling"]
-        for key, ext in key_ext.items():
-            yield key, variant_calling(tpl + ext)
+        yield "vcf", calling.vcf
+        yield "vcf_tbi", calling.vcf_tbi
 
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
         # Validate action
         self._validate_action(action)
-        prefix = (
-            "work/{mapper}.{var_caller}.peddy.{index_ngs_library}/out/"
-            "{mapper}.{var_caller}.peddy.{index_ngs_library}"
-        )
+        prefix = "work/{index_ngs_library}/out/{index_ngs_library}"
         key_ext = {
             "background_pca": ".background_pca.json",
             "het_check": ".het_check.csv",
@@ -156,6 +152,9 @@ class VariantCheckingWorkflow(BaseStep):
 
     #: Workflow name
     name = "variant_checking"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
+    produces = [DataSignature(DataType.QC, frozenset({"pedigree_check"}))]
+    config_model_class = VariantCheckingConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -165,25 +164,37 @@ class VariantCheckingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local variant-checking output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"ped_check": f"output/{lib}/out/{lib}.ped_check.csv"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantCheckingConfigModel,
             previous_steps=(VariantCallingWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))
-        # Register sub workflows
-        self.register_module("variant_calling", self.config.path_variant_calling)
+
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools
-        if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
 
     @listify
     def get_result_files(self):
@@ -202,7 +213,5 @@ class VariantCheckingWorkflow(BaseStep):
                 for path in self.sub_steps["peddy"].get_output_files("run").values():
                     yield from expand(
                         path,
-                        mapper=self.config.tools_ngs_mapping,
-                        var_caller=self.config.tools_variant_calling,
                         index_ngs_library=[pedigree.index.dna_ngs_library.name],
                     )

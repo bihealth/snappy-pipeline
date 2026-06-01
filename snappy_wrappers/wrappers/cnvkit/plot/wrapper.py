@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for cnvkit.py plot"""
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
@@ -19,37 +19,9 @@ scatters = [
     )
 ]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
 set -x
-
-# -----------------------------------------------------------------------------
-
-md5()
-{{
-    d=$(dirname $1)
-    f=$(basename $1)
-    pushd $d
-    md5sum $f > $f.md5
-    popd
-}}
 
 # -----------------------------------------------------------------------------
 
@@ -69,7 +41,6 @@ then
 else
     touch {snakemake.output.diagram}
 fi
-md5 {snakemake.output.diagram}
 
 if [[ -n "{snakemake.output.scatter}" ]]
 then
@@ -81,7 +52,6 @@ then
 else
     touch {snakemake.output.scatter}
 fi
-md5 {snakemake.output.scatter}
 
 for scatter in {scatters}
 do
@@ -97,14 +67,7 @@ do
     else
         touch $scatter
     fi
-    md5 $scatter
 done
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)

@@ -1,36 +1,19 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for deconstructSigs"""
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import RWrapper
 
 __author__ = "Clemens Messerschmidt"
 
-shell(
+RWrapper(snakemake).run(
     r"""
-set -x
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
-cat <<"EOF" >$TMPDIR/deconstructSigs.R
 library(tidyverse)
 library(deconstructSigs)
 
 mutsigtable <- read_delim("{snakemake.input.tsv}",
-"\t", escape_double = FALSE, col_names = FALSE,
-col_types = cols(X2 = col_character()),
-trim_ws = TRUE)
+  "\t", escape_double = FALSE, col_names = FALSE,
+  col_types = cols(X2 = col_character()),
+  trim_ws = TRUE)
 
 colnames(mutsigtable) = c("Sample", "chr", "pos", "ref", "alt")
 
@@ -53,11 +36,5 @@ write_tsv(sigs, path = "{snakemake.output.tsv}")
 pdf("{snakemake.output.pdf}", 7, 7)
 plotSignatures(output.sigs)
 dev.off()
-EOF
-
-Rscript --vanilla $TMPDIR/deconstructSigs.R
-
-md5sum {snakemake.output.tsv} > {snakemake.output.tsv}.md5
-md5sum {snakemake.output.pdf} > {snakemake.output.pdf}.md5
 """
 )

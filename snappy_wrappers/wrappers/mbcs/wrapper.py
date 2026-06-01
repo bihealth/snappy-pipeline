@@ -4,8 +4,12 @@
 import os
 import sys
 import tempfile
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 # The following is required for being able to import snappy_wrappers modules
 # inside wrappers.  These run in an "inner" snakemake process which uses its
@@ -16,8 +20,6 @@ sys.path.insert(0, base_dir)
 from snappy_wrappers.wrapper_parallel import run_snakemake  # noqa: E402
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
-
-shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
 
@@ -221,14 +223,12 @@ if len(pairs.keys()) > 1:
     )
     rule = generic_rule.format(
         rule="merge",
-        input="bams = [{}]".format(
-            ", ".join(['"mapped/{}.bam"'.format(name) for name in pairs.keys()])
-        ),
+        input="bams = [{}]".format(", ".join([f'"mapped/{name}.bam"' for name in pairs.keys()])),
         output=f'bam = "{out}"',
         cmds=cmd,
         threads="1",
         mem="16000M",
-        time="4:00:00",
+        runtime="4:00:00",
     )
     snakefile.append(rule)
 in_ = out
@@ -343,20 +343,9 @@ run_snakemake(
 os.chdir(pwd)
 
 # Finish: write stats, logs & links -------------------------------------------
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write out information about conda and save a copy of the wrapper with picked variables
-# as well as the environment.yaml file.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-cp {__real_file__} {snakemake.log.wrapper}
-md5sum {snakemake.log.wrapper} >{snakemake.log.wrapper_md5}
-cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
-md5sum {snakemake.log.env_yaml} >{snakemake.log.env_yaml_md5}
 
 # Concatenate all log files into main log
 jobid=$(ls {tempdir}/slurm_log)
@@ -370,16 +359,9 @@ do
     echo "# ==============================================================" >> {snakemake.log.log}
     cat $fn >> {snakemake.log.log}
 done
-md5sum {snakemake.log.log} > {snakemake.log.log_md5}
 
 # Copy BQSR table just in case (not on output)
 mv {tempdir}/bqsr.tbl $(dirname {snakemake.output.bam})
-
-# Build MD5 files
-pushd $(dirname {snakemake.output.bam})
-md5sum $(basename {snakemake.output.bam}) > $(basename {snakemake.output.bam}).md5
-md5sum $(basename {snakemake.output.bam_bai}) > $(basename {snakemake.output.bam_bai}).md5
-popd
 
 # QC Report ---------------------------------------------------------------------------------------
 
@@ -389,18 +371,6 @@ samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt
 samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
 
-# Build MD5 files for the reports
-md5sum {snakemake.output.report_bamstats_txt} > {snakemake.output.report_bamstats_txt_md5}
-md5sum {snakemake.output.report_flagstats_txt} >{snakemake.output.report_flagstats_txt_md5}
-md5sum {snakemake.output.report_idxstats_txt} > {snakemake.output.report_idxstats_txt_md5}
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
 
 rm -rf {tempdir}
 """

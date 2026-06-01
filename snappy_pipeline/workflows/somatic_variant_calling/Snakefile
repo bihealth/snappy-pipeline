@@ -27,23 +27,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticVariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_ngs_mapping", "../ngs_mapping")
-
-
-if not "ngs_mapping_all" in set(map(lambda r: r.name, workflow.rules)):
-
-    use rule * from ngs_mapping
-
-
 # Rules =======================================================================
 
 
@@ -53,9 +36,9 @@ localrules:
 
 
 rule somatic_variant_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,21 +59,21 @@ rule somatic_variant_calling_link_out_run:
 
 # Run MuTect 2 ----------------------------------------------------------------
 
-if wf.w_config.step_config["somatic_variant_calling"].mutect2.contamination.enabled:
+if wf.get_task_config("somatic_variant_calling").mutect2.contamination.enabled:
 
     rule somatic_variant_calling_mutect2_pileup_normal:
         input:
             unpack(wf.get_input_files("mutect2", "pileup_normal")),
         output:
             **wf.get_output_files("mutect2", "pileup_normal"),
+        log:
+            **wf.get_log_file("mutect2", "pileup_normal"),
         threads: wf.get_resource("mutect2", "pileup_normal", "threads")
         resources:
             runtime=wf.get_resource("mutect2", "pileup_normal", "runtime"),
             mem=wf.get_resource("mutect2", "pileup_normal", "mem"),
             partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
             tmpdir=wf.get_resource("mutect2", "pileup_normal", "tmpdir"),
-        log:
-            **wf.get_log_file("mutect2", "pileup_normal"),
         params:
             args=wf.get_args("mutect2", "pileup_normal"),
         wrapper:
@@ -101,14 +84,14 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.contamination.enab
             unpack(wf.get_input_files("mutect2", "pileup_tumor")),
         output:
             **wf.get_output_files("mutect2", "pileup_tumor"),
+        log:
+            **wf.get_log_file("mutect2", "pileup_tumor"),
         threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
         resources:
             runtime=wf.get_resource("mutect2", "pileup_tumor", "runtime"),
             mem=wf.get_resource("mutect2", "pileup_tumor", "mem"),
             partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
             tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
-        log:
-            **wf.get_log_file("mutect2", "pileup_tumor"),
         params:
             args=wf.get_args("mutect2", "pileup_tumor"),
         wrapper:
@@ -119,14 +102,14 @@ if wf.w_config.step_config["somatic_variant_calling"].mutect2.contamination.enab
             unpack(wf.get_input_files("mutect2", "contamination")),
         output:
             **wf.get_output_files("mutect2", "contamination"),
+        log:
+            **wf.get_log_file("mutect2", "contamination"),
         threads: wf.get_resource("mutect2", "contamination", "threads")
         resources:
             runtime=wf.get_resource("mutect2", "contamination", "runtime"),
             mem=wf.get_resource("mutect2", "contamination", "mem"),
             partition=wf.get_resource("mutect2", "contamination", "partition"),
             tmpdir=wf.get_resource("mutect2", "contamination", "tmpdir"),
-        log:
-            **wf.get_log_file("mutect2", "contamination"),
         wrapper:
             wf.wrapper_path("mutect2/contamination")
 
@@ -136,21 +119,21 @@ scattergather:
 
 
 rule somatic_variant_calling_mutect2_scatter:
-    localrule: True
     input:
         unpack(wf.get_input_files("mutect2", "scatter")),
     output:
         **wf.get_output_files("mutect2", "scatter"),
-    params:
-        args=wf.get_args("mutect2", "scatter"),
+    log:
+        **wf.get_log_file("mutect2", "scatter"),
+    localrule: True
+    threads: 1
     resources:
         runtime=wf.get_resource("mutect2", "scatter", "runtime"),
         mem=wf.get_resource("mutect2", "scatter", "mem"),
         partition=wf.get_resource("mutect2", "scatter", "partition"),
         tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
-    threads: 1
-    log:
-        **wf.get_log_file("mutect2", "scatter"),
+    params:
+        args=wf.get_args("mutect2", "scatter"),
     wrapper:
         wf.wrapper_path("split_regions")
 
@@ -160,14 +143,14 @@ rule somatic_variant_calling_mutect2_run:
         unpack(wf.get_input_files("mutect2", "run")),
     output:
         **wf.get_output_files("mutect2", "run"),
+    log:
+        **wf.get_log_file("mutect2", "run"),
+    threads: wf.get_resource("mutect2", "run", "threads")
     resources:
         runtime=wf.get_resource("mutect2", "run", "runtime"),
         mem=wf.get_resource("mutect2", "run", "mem"),
         partition=wf.get_resource("mutect2", "run", "partition"),
         tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
-    threads: wf.get_resource("mutect2", "run", "threads")
-    log:
-        **wf.get_log_file("mutect2", "run"),
     params:
         args=wf.get_args("mutect2", "run"),
     wrapper:
@@ -179,14 +162,14 @@ rule somatic_variant_calling_mutect2_gather:
         unpack(wf.get_input_files("mutect2", "gather")),
     output:
         **wf.get_output_files("mutect2", "gather"),
+    log:
+        **wf.get_log_file("mutect2", "gather"),
+    threads: 1
     resources:
         runtime=wf.get_resource("mutect2", "gather", "runtime"),
         mem=wf.get_resource("mutect2", "gather", "mem"),
         partition=wf.get_resource("mutect2", "gather", "partition"),
         tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
-    threads: 1
-    log:
-        **wf.get_log_file("mutect2", "gather"),
     wrapper:
         wf.wrapper_path("mutect2/gather")
 
@@ -196,14 +179,14 @@ rule somatic_variant_calling_mutect2_filter:
         unpack(wf.get_input_files("mutect2", "filter")),
     output:
         **wf.get_output_files("mutect2", "filter"),
+    log:
+        **wf.get_log_file("mutect2", "filter"),
     threads: wf.get_resource("mutect2", "filter", "threads")
     resources:
         runtime=wf.get_resource("mutect2", "filter", "runtime"),
         mem=wf.get_resource("mutect2", "filter", "mem"),
         partition=wf.get_resource("mutect2", "filter", "partition"),
         tmpdir=wf.get_resource("mutect2", "filter", "tmpdir"),
-    log:
-        **wf.get_log_file("mutect2", "filter"),
     params:
         args=wf.get_args("mutect2", "filter"),
     wrapper:

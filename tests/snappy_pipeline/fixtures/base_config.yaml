@@ -1,0 +1,13 @@
+static_data_config:
+  reference:
+    path: ../../../.tests/test-workflow/resources/refs/subregion.fa
+
+data_sets:
+  trbc:
+    file: samplesheet.tsv
+    search_patterns:
+    - {left: '*.R1.fastq.gz', right: '*.R2.fastq.gz'}
+    search_paths:
+    - raw
+    type: matched_cancer
+    naming_scheme: only_secondary_id

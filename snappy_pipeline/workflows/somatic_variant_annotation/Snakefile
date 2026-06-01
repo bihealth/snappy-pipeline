@@ -24,35 +24,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticVariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_ngs_mapping", "../ngs_mapping")
-
-
-if not "ngs_mapping_all" in set(map(lambda r: r.name, workflow.rules)):
-
-    use rule * from ngs_mapping
-
-
-module somatic_variant_calling:
-    snakefile:
-        "../somatic_variant_calling/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_somatic_variant", "../somatic_variant_calling")
-
-
-use rule * from somatic_variant_calling
-
-
 # Rules =======================================================================
 
 
@@ -62,9 +33,9 @@ localrules:
 
 
 rule somatic_variant_annotation_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,6 +62,8 @@ rule somatic_variant_annotation_vep:
         **wf.get_input_files("vep", "run"),
     output:
         **wf.get_output_files("vep", "run"),
+    log:
+        **wf.get_log_file("vep", "run"),
     threads: wf.get_resource("vep", "run", "threads")
     resources:
         runtime=wf.get_resource("vep", "run", "runtime"),
@@ -99,8 +72,6 @@ rule somatic_variant_annotation_vep:
         tmpdir=wf.get_resource("vep", "run", "tmpdir"),
     params:
         args=wf.get_args("vep", "run"),
-    log:
-        **wf.get_log_file("vep", "run"),
     wrapper:
         wf.wrapper_path("vep/run")
 
@@ -113,15 +84,15 @@ rule somatic_variant_annotation_mehari:
         **wf.get_input_files("mehari", "run"),
     output:
         **wf.get_output_files("mehari", "run"),
+    log:
+        **wf.get_log_file("mehari", "run"),
     threads: wf.get_resource("mehari", "run", "threads")
     resources:
-        time=wf.get_resource("mehari", "run", "time"),
-        memory=wf.get_resource("mehari", "run", "memory"),
+        runtime=wf.get_resource("mehari", "run", "runtime"),
+        mem=wf.get_resource("mehari", "run", "mem"),
         partition=wf.get_resource("mehari", "run", "partition"),
         tmpdir=wf.get_resource("mehari", "run", "tmpdir"),
     params:
         args=wf.get_args("mehari", "run"),
-    log:
-        **wf.get_log_file("mehari", "run"),
     wrapper:
         wf.wrapper_path("mehari/run")

@@ -1,12 +1,18 @@
+import hashlib
 import math
 import os
 import re
 import shutil
 import tempfile
+from typing import TYPE_CHECKING
 
 import tabix
 import vcfpy
 from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
 
@@ -20,26 +26,9 @@ if "excluded_regions" in args and args["excluded_regions"]:
     variants.append(f"bcftools view --targets-file ^{args['excluded_regions']}")
 variants = " \\\n    | ".join(variants)
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
 
 {variants} \
     | bgzip \
@@ -248,21 +237,16 @@ with open(snakemake.output.tsv, "wt") as f:
         )
         print("\t".join(map(str, values)), file=f)
 
-shell(
-    r"""
-tabix {snakemake.output.vcf}
+shell("tabix {snakemake.output.vcf}")
 
-md5() {{
-    filename=$1
-    fn=$(basename $filename)
-    pushd $(dirname $filename) 1> /dev/null 2>&1
-    rslt=$(md5sum $fn)
-    popd 1> /dev/null 2>&1
-    echo "$rslt"
-}}
 
-md5 {snakemake.output.vcf} > {snakemake.output.vcf_md5}
-md5 {snakemake.output.tbi} > {snakemake.output.tbi_md5}
-md5 {snakemake.output.tsv} > {snakemake.output.tsv_md5}
-"""
-)
+def _write_md5(in_path: str, out_path: str) -> None:
+    with open(in_path, "rb") as inputf:
+        digest = hashlib.md5(inputf.read()).hexdigest()
+    with open(out_path, "wt") as outputf:
+        print(f"{digest}  {os.path.basename(in_path)}", file=outputf)
+
+
+_write_md5(str(snakemake.output.vcf), str(snakemake.output.vcf_md5))
+_write_md5(str(snakemake.output.tbi), str(snakemake.output.tbi_md5))
+_write_md5(str(snakemake.output.tsv), str(snakemake.output.tsv_md5))

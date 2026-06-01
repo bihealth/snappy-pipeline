@@ -1,0 +1,127 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline reference_index step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.reference_index import ReferenceIndexWorkflow
+
+
+configfile: "config.yaml"
+
+
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+wf = ReferenceIndexWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+
+rule reference_index_all:
+    default_target: True
+    input:
+        wf.get_result_files(),
+
+
+rule reference_index_common_run:
+    input:
+        **wf.get_input_files("common", "run"),
+    output:
+        **wf.get_output_files("common", "run"),
+    log:
+        **wf.get_log_file("common", "run"),
+    cache: "omit-software"
+    threads: wf.get_resource("common", "run", "threads")
+    resources:
+        runtime=wf.get_resource("common", "run", "runtime"),
+        mem=wf.get_resource("common", "run", "mem"),
+        partition=wf.get_resource("common", "run", "partition"),
+        tmpdir=wf.get_resource("common", "run", "tmpdir"),
+    params:
+        args=wf.get_args("common", "run"),
+    wrapper:
+        wf.wrapper_path("reference_index/common")
+
+
+tool = str(wf.config.tool)
+if tool == "bwa":
+
+    rule reference_index_bwa_run:
+        input:
+            **wf.get_input_files("bwa", "run"),
+        output:
+            **wf.get_output_files("bwa", "run"),
+        log:
+            **wf.get_log_file("bwa", "run"),
+        cache: "omit-software"
+        threads: wf.get_resource("bwa", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bwa", "run", "runtime"),
+            mem=wf.get_resource("bwa", "run", "mem"),
+            partition=wf.get_resource("bwa", "run", "partition"),
+            tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bwa", "run"),
+        wrapper:
+            wf.wrapper_path("reference_index/bwa")
+
+elif tool == "bwa_mem2":
+
+    rule reference_index_bwa_mem2_run:
+        input:
+            **wf.get_input_files("bwa_mem2", "run"),
+        output:
+            **wf.get_output_files("bwa_mem2", "run"),
+        log:
+            **wf.get_log_file("bwa_mem2", "run"),
+        cache: "omit-software"
+        threads: wf.get_resource("bwa_mem2", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
+            mem=wf.get_resource("bwa_mem2", "run", "mem"),
+            partition=wf.get_resource("bwa_mem2", "run", "partition"),
+            tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bwa_mem2", "run"),
+        wrapper:
+            wf.wrapper_path("reference_index/bwa_mem2")
+
+elif tool == "minimap2":
+
+    rule reference_index_minimap2_run:
+        input:
+            **wf.get_input_files("minimap2", "run"),
+        output:
+            **wf.get_output_files("minimap2", "run"),
+        log:
+            **wf.get_log_file("minimap2", "run"),
+        cache: "omit-software"
+        threads: wf.get_resource("minimap2", "run", "threads")
+        resources:
+            runtime=wf.get_resource("minimap2", "run", "runtime"),
+            mem=wf.get_resource("minimap2", "run", "mem"),
+            partition=wf.get_resource("minimap2", "run", "partition"),
+            tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
+        params:
+            args=wf.get_args("minimap2", "run"),
+        wrapper:
+            wf.wrapper_path("reference_index/minimap2")
+
+elif tool == "star":
+
+    rule reference_index_star_run:
+        input:
+            **wf.get_input_files("star", "run"),
+        output:
+            **wf.get_output_files("star", "run"),
+        log:
+            **wf.get_log_file("star", "run"),
+        cache: "omit-software"
+        threads: wf.get_resource("star", "run", "threads")
+        resources:
+            runtime=wf.get_resource("star", "run", "runtime"),
+            mem=wf.get_resource("star", "run", "mem"),
+            partition=wf.get_resource("star", "run", "partition"),
+            tmpdir=wf.get_resource("star", "run", "tmpdir"),
+        params:
+            args=wf.get_args("star", "run"),
+        wrapper:
+            wf.wrapper_path("reference_index/star")

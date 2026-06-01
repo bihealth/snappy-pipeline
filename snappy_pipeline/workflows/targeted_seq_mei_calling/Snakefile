@@ -6,7 +6,6 @@ import os
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.targeted_seq_mei_calling import MeiWorkflow
 
-
 # Configuration ===============================================================
 
 
@@ -21,21 +20,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = MeiWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_ngs_mapping", "../ngs_mapping")
-
-
-use rule * from ngs_mapping
-
-
 # Rules =======================================================================
 
 
@@ -45,9 +29,9 @@ localrules:
 
 
 rule targeted_seq_mei_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,14 +53,14 @@ rule mobile_element_insertion_scramble_cluster:
         wf.get_input_files("scramble", "cluster"),
     output:
         **wf.get_output_files("scramble", "cluster"),
+    log:
+        wf.get_log_file("scramble", "cluster"),
     threads: wf.get_resource("scramble", "cluster", "threads")
     resources:
         runtime=wf.get_resource("scramble", "cluster", "runtime"),
         mem=wf.get_resource("scramble", "cluster", "mem"),
         partition=wf.get_resource("scramble", "cluster", "partition"),
         tmpdir=wf.get_resource("scramble", "cluster", "tmpdir"),
-    log:
-        wf.get_log_file("scramble", "cluster"),
     wrapper:
         wf.wrapper_path("scramble/cluster")
 
@@ -86,6 +70,8 @@ rule mobile_element_insertion_scramble_analysis:
         wf.get_input_files("scramble", "analysis"),
     output:
         **wf.get_output_files("scramble", "analysis"),
+    log:
+        wf.get_log_file("scramble", "analysis"),
     threads: wf.get_resource("scramble", "analysis", "threads")
     resources:
         runtime=wf.get_resource("scramble", "analysis", "runtime"),
@@ -94,7 +80,5 @@ rule mobile_element_insertion_scramble_analysis:
         tmpdir=wf.get_resource("scramble", "analysis", "tmpdir"),
     params:
         args=wf.get_args("scramble", "analysis"),
-    log:
-        wf.get_log_file("scramble", "analysis"),
     wrapper:
         wf.wrapper_path("scramble/analysis")

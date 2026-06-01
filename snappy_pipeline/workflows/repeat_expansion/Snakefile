@@ -6,7 +6,6 @@ import os
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.repeat_expansion import RepeatExpansionWorkflow
 
-
 # Configuration ===============================================================
 
 
@@ -21,21 +20,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = RepeatExpansionWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_ngs_mapping", "../ngs_mapping")
-
-
-use rule * from ngs_mapping
-
-
 # Rules =======================================================================
 
 
@@ -45,9 +29,9 @@ localrules:
 
 
 rule repeat_expansion_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,9 +50,13 @@ rule repeat_expansion_link_out_run:
 
 rule repeat_expansion_run_expansionhunter:
     input:
-        wf.get_input_files("expansionhunter", "run"),
+        unpack(wf.get_input_files("expansionhunter", "run")),
     output:
         **wf.get_output_files("expansionhunter", "run"),
+    log:
+        wf.get_log_file("expansionhunter", "run"),
+    wildcard_constraints:
+        library_name=r"(?!annotated\.).+",
     threads: wf.get_resource("expansionhunter", "run", "threads")
     resources:
         runtime=wf.get_resource("expansionhunter", "run", "runtime"),
@@ -77,8 +65,6 @@ rule repeat_expansion_run_expansionhunter:
         tmpdir=wf.get_resource("expansionhunter", "run", "tmpdir"),
     params:
         args=wf.get_args("expansionhunter", "run"),
-    log:
-        wf.get_log_file("expansionhunter", "run"),
     wrapper:
         wf.wrapper_path("expansionhunter")
 

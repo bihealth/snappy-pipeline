@@ -4,6 +4,8 @@ from typing import Annotated
 from pydantic import AfterValidator, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
 
 
 class Threshold(SnappyModel):
@@ -25,9 +27,9 @@ class Frequencies(SnappyModel):
 
 
 class ScoreThreshold(SnappyModel):
-    require_coding: bool
-    require_gerpp_gt2: bool
-    min_cadd: int | None
+    require_coding: bool = False
+    require_gerpp_gt2: bool = False
+    min_cadd: int | None = None
 
 
 def check_combination(s: str) -> str:
@@ -97,14 +99,16 @@ FILTER_COMBINATION_EXAMPLES = [
 ]
 
 
+class VariantFiltrationDependsOn(SnappyModel):
+    variant_annotation: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
+        ExpectedPathSchema(ExpectedAnnotatedGermlineVariants),
+    ] = "variant_annotation"
+
+
 class VariantFiltration(SnappyStepModel):
-    path_variant_annotation: str = "../variant_annotation"
-
-    tools_ngs_mapping: list[str] = []
-    """defaults to ngs_mapping tool"""
-
-    tools_variant_calling: list[str] = []
-    """defaults to variant_annotation tool"""
+    depends_on: VariantFiltrationDependsOn = Field(default_factory=VariantFiltrationDependsOn)
 
     thresholds: dict[str, Threshold] = {
         "conservative": Threshold(

@@ -17,6 +17,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 from snappy_pipeline.workflows.somatic_variant_annotation import (
     SomaticVariantAnnotationWorkflow,
@@ -24,6 +25,7 @@ from snappy_pipeline.workflows.somatic_variant_annotation import (
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
@@ -43,12 +45,8 @@ class SignaturesStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.name_prefix = "{mapper}.{var_caller}"
+        self.name_prefix = "filtered." if self.config.is_filtered else ""
         self.name_postfix = "{tumor_library}"
-        if self.config.has_annotation:
-            self.name_prefix += ".{anno_caller}"
-        if self.config.is_filtered:
-            self.name_prefix += ".filtered"
 
         # Build shortcut from cancer bio sample name to matched cancre sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
@@ -65,7 +63,7 @@ class SignaturesStepPart(BaseStepPart):
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = self.name_prefix + f".{self.name}." + self.name_postfix
+        name_pattern = self.name_prefix + f"{self.name}." + self.name_postfix
         return os.path.join("work", name_pattern, "log", name_pattern + ".log")
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -96,19 +94,19 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         """Return path to input file"""
         # Validate action
         self._validate_action(action)
-        name_pattern = self.name_prefix + "." + self.name_postfix
-        tpl = os.path.join("output", name_pattern, "out", name_pattern)
-        key_ext = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
-        variant_calling = self.parent.modules["somatic_variant"]
-        for key, ext in key_ext.items():
-            yield key, variant_calling(tpl + ext)
+        name_pattern = self.name_prefix + self.name_postfix
+        variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
+            "somatic_variant", library_name=name_pattern
+        )
+        yield "vcf", variants.vcf
+        yield "vcf_tbi", variants.vcf_tbi
 
     @dictify
     def get_output_files(self, action):
         """Return output files to tabulate vcf"""
         # Validate action
         self._validate_action(action)
-        name_pattern = self.name_prefix + ".tabulate_vcf." + self.name_postfix
+        name_pattern = self.name_prefix + "tabulate_vcf." + self.name_postfix
         yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
 
     def get_args(self, action):
@@ -147,7 +145,7 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         """Return input files to deconstruct signatures"""
         # Validate action
         self._validate_action(action)
-        name_pattern = self.name_prefix + ".tabulate_vcf." + self.name_postfix
+        name_pattern = self.name_prefix + "tabulate_vcf." + self.name_postfix
         yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
 
     @dictify
@@ -155,7 +153,7 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         """Return output files to deconstruct signatures"""
         # Validate action
         self._validate_action(action)
-        name_pattern = self.name_prefix + ".deconstruct_sigs." + self.name_postfix
+        name_pattern = self.name_prefix + "deconstruct_sigs." + self.name_postfix
         yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
         yield "pdf", os.path.join("work", name_pattern, "out", name_pattern + ".pdf")
 
@@ -165,6 +163,8 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_variant_signatures"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"signatures"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -173,59 +173,46 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
+    config_model_class = SomaticVariantSignaturesConfigModel
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local signature output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"tsv": f"output/deconstruct_sigs.{lib}/out/deconstruct_sigs.{lib}.tsv"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticVariantSignaturesConfigModel,
             previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
                 SomaticVariantFiltrationWorkflow,
                 NgsMappingWorkflow,
             ),
+            task_name=task_name,
+            **kwargs,
         )
-        # Register sub workflows
         config = self.config
-        self.register_module(
-            config.somatic_variant_step, config.path_somatic_variant, "somatic_variant"
-        )
-        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-
-        tools = set(self.w_config.step_config["ngs_mapping"].tools.dna)
-        if not config.tools_ngs_mapping:
-            config.tools_ngs_mapping = tools
-        else:
-            config.tools_ngs_mapping = set(config.tools_ngs_mapping) & tools
-        assert len(config.tools_ngs_mapping) > 0, "No valid ngs mapping tool"
-
-        tools = set(self.w_config.step_config["somatic_variant_calling"].tools)
-        if not config.tools_somatic_variant_calling:
-            config.tools_somatic_variant_calling = tools
-        else:
-            config.tools_somatic_variant_calling = set(config.tools_somatic_variant_calling) & tools
-        assert len(config.tools_somatic_variant_calling) > 0, (
-            "No valid somatic variant calling tool"
-        )
-
-        if config.has_annotation:
-            tools = set(self.w_config.step_config["somatic_variant_annotation"].tools)
-            if not config.tools_somatic_variant_annotation:
-                config.tools_somatic_variant_annotation = tools
-            config.tools_somatic_variant_annotation = (
-                set(config.tools_somatic_variant_annotation) & tools
-            )
-            assert len(config.tools_somatic_variant_annotation) > 0, (
-                "No valid somatic variant annotation tool"
-            )
 
         self.config = config
 
@@ -238,21 +225,13 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for workflow"""
         config = self.config
-        name_pattern = "{mapper}.{caller}"
-        if config.has_annotation:
-            name_pattern += ".{anno_caller}"
         if config.is_filtered:
-            name_pattern += ".filtered.deconstruct_sigs.{tumor_library.name}"
+            name_pattern = "filtered.deconstruct_sigs.{tumor_library.name}"
         else:
-            name_pattern += ".deconstruct_sigs.{tumor_library.name}"
-
-        anno_callers = config.tools_somatic_variant_annotation if config.has_annotation else []
+            name_pattern = "deconstruct_sigs.{tumor_library.name}"
 
         yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + ".tsv"),
-            mapper=config.tools_ngs_mapping,
-            caller=config.tools_somatic_variant_calling,
-            anno_caller=anno_callers,
+            os.path.join("output", name_pattern, "out", name_pattern + ".tsv")
         )
 
     def _yield_result_files_matched(self, tpl, **kwargs):
@@ -274,5 +253,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
                 yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )

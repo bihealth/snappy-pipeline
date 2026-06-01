@@ -25,47 +25,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticVariantFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        "../ngs_mapping"
-
-
-module somatic_variant_calling:
-    snakefile:
-        "../somatic_variant_calling/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_somatic_variant", "../somatic_variant_calling")
-
-
-module somatic_variant_annotation:
-    snakefile:
-        "../somatic_variant_annotation/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_somatic_variant", "../somatic_variant_annotation")
-
-
-if not "ngs_mapping_all" in set(map(lambda r: r.name, workflow.rules)):
-
-    use rule * from ngs_mapping
-
-
-if wf.config["has_annotation"]:
-
-    use rule * from somatic_variant_annotation
-
-else:
-
-    use rule * from somatic_variant_calling
-
-
 # Rules =======================================================================
 
 
@@ -77,9 +36,9 @@ localrules:
 
 
 rule somatic_variant_filtration_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,16 +82,16 @@ rule one_dkfz:
         unpack(wf.get_input_files("one_dkfz", "run")),
     output:
         **wf.get_output_files("one_dkfz", "run"),
-    params:
-        args=wf.get_args("one_dkfz", "run"),
+    log:
+        **wf.get_log_file("one_dkfz", "run"),
     threads: wf.get_resource("one_dkfz", "run", "threads")
     resources:
         runtime=wf.get_resource("one_dkfz", "run", "runtime"),
         mem=wf.get_resource("one_dkfz", "run", "mem"),
         partition=wf.get_resource("one_dkfz", "run", "partition"),
         tmpdir=wf.get_resource("one_dkfz", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("one_dkfz", "run"),
+    params:
+        args=wf.get_args("one_dkfz", "run"),
     wrapper:
         wf.wrapper_path("dkfz_bias_filter")
 
@@ -142,16 +101,16 @@ rule one_ebfilter:
         unpack(wf.get_input_files("one_ebfilter", "run")),
     output:
         **wf.get_output_files("one_ebfilter", "run"),
-    params:
-        args=wf.get_args("one_ebfilter", "run"),
+    log:
+        **wf.get_log_file("one_ebfilter", "run"),
     threads: wf.get_resource("one_ebfilter", "run", "threads")
     resources:
         runtime=wf.get_resource("one_ebfilter", "run", "runtime"),
         mem=wf.get_resource("one_ebfilter", "run", "mem"),
         partition=wf.get_resource("one_ebfilter", "run", "partition"),
         tmpdir=wf.get_resource("one_ebfilter", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("one_ebfilter", "run"),
+    params:
+        args=wf.get_args("one_ebfilter", "run"),
     wrapper:
         wf.wrapper_path("eb_filter")
 
@@ -161,16 +120,16 @@ rule one_bcftools:
         unpack(wf.get_input_files("one_bcftools", "run")),
     output:
         **wf.get_output_files("one_bcftools", "run"),
-    params:
-        args=wf.get_args("one_bcftools", "run"),
+    log:
+        **wf.get_log_file("one_bcftools", "run"),
     threads: wf.get_resource("one_bcftools", "run", "threads")
     resources:
         runtime=wf.get_resource("one_bcftools", "run", "runtime"),
         mem=wf.get_resource("one_bcftools", "run", "mem"),
         partition=wf.get_resource("one_bcftools", "run", "partition"),
         tmpdir=wf.get_resource("one_bcftools", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("one_bcftools", "run"),
+    params:
+        args=wf.get_args("one_bcftools", "run"),
     wrapper:
         wf.wrapper_path("bcftools/filter")
 
@@ -180,16 +139,16 @@ rule one_vembrane:
         unpack(wf.get_input_files("one_vembrane", "run")),
     output:
         **wf.get_output_files("one_vembrane", "run"),
-    params:
-        args=wf.get_args("one_vembrane", "run"),
-    threads: wf.get_resource("one_vembrane", "run", "threads")
-    resources:
-        time=wf.get_resource("one_vembrane", "run", "time"),
-        memory=wf.get_resource("one_vembrane", "run", "memory"),
-        partition=wf.get_resource("one_vembrane", "run", "partition"),
-        tmpdir=wf.get_resource("one_vembrane", "run", "tmpdir"),
     log:
         **wf.get_log_file("one_vembrane", "run"),
+    threads: wf.get_resource("one_vembrane", "run", "threads")
+    resources:
+        runtime=wf.get_resource("one_vembrane", "run", "runtime"),
+        mem=wf.get_resource("one_vembrane", "run", "mem"),
+        partition=wf.get_resource("one_vembrane", "run", "partition"),
+        tmpdir=wf.get_resource("one_vembrane", "run", "tmpdir"),
+    params:
+        args=wf.get_args("one_vembrane", "run"),
     wrapper:
         wf.wrapper_path("vembrane/tag")
 
@@ -199,16 +158,16 @@ rule one_regions:
         unpack(wf.get_input_files("one_regions", "run")),
     output:
         **wf.get_output_files("one_regions", "run"),
-    params:
-        args=wf.get_args("one_regions", "run"),
+    log:
+        **wf.get_log_file("one_regions", "run"),
     threads: wf.get_resource("one_regions", "run", "threads")
     resources:
         runtime=wf.get_resource("one_regions", "run", "runtime"),
         mem=wf.get_resource("one_regions", "run", "mem"),
         partition=wf.get_resource("one_regions", "run", "partition"),
         tmpdir=wf.get_resource("one_regions", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("one_regions", "run"),
+    params:
+        args=wf.get_args("one_regions", "run"),
     wrapper:
         wf.wrapper_path("bcftools/regions")
 
@@ -218,32 +177,34 @@ rule one_protected:
         unpack(wf.get_input_files("one_protected", "run")),
     output:
         **wf.get_output_files("one_protected", "run"),
-    params:
-        args=wf.get_args("one_protected", "run"),
+    log:
+        **wf.get_log_file("one_protected", "run"),
     threads: wf.get_resource("one_protected", "run", "threads")
     resources:
         runtime=wf.get_resource("one_protected", "run", "runtime"),
         mem=wf.get_resource("one_protected", "run", "mem"),
         partition=wf.get_resource("one_protected", "run", "partition"),
         tmpdir=wf.get_resource("one_protected", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("one_protected", "run"),
+    params:
+        args=wf.get_args("one_protected", "run"),
     wrapper:
         wf.wrapper_path("bcftools/protected")
 
 
-rule last_filter:
-    input:
-        **wf.get_input_files("last_filter", "run"),
-    output:
-        **wf.get_output_files("last_filter", "run"),
-    threads: wf.get_resource("last_filter", "run", "threads")
-    resources:
-        runtime=wf.get_resource("last_filter", "run", "runtime"),
-        mem=wf.get_resource("last_filter", "run", "mem"),
-        partition=wf.get_resource("last_filter", "run", "partition"),
-        tmpdir=wf.get_resource("last_filter", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("last_filter", "run"),
-    wrapper:
-        wf.wrapper_path("somatic_variant_filtration/apply_all_filters")
+if wf.config.filter_list:
+
+    rule last_filter:
+        input:
+            **wf.get_input_files("last_filter", "run"),
+        output:
+            **wf.get_output_files("last_filter", "run"),
+        log:
+            **wf.get_log_file("last_filter", "run"),
+        threads: wf.get_resource("last_filter", "run", "threads")
+        resources:
+            runtime=wf.get_resource("last_filter", "run", "runtime"),
+            mem=wf.get_resource("last_filter", "run", "mem"),
+            partition=wf.get_resource("last_filter", "run", "partition"),
+            tmpdir=wf.get_resource("last_filter", "run", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("somatic_variant_filtration/apply_all_filters")

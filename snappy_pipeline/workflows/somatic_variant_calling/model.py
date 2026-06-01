@@ -1,11 +1,20 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, ToggleModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedSomaticVariants(BaseModel):
+    """Consumer-driven contract: expected output keys from a somatic_variant_calling upstream task."""
+
+    vcf: str
+    vcf_tbi: str
 
 
 class Tool(enum.StrEnum):
@@ -57,11 +66,22 @@ class Mutect2(Parallel, GATK):
     """Whether to call variants in paired, tumor_only, or automatic mode."""
 
 
-class SomaticVariantCalling(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [], min_length=1)]
-    """List of tools"""
+class SomaticVariantCallingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    path_ngs_mapping: str = "../ngs_mapping"
+
+class SomaticVariantCalling(SnappyStepModel):
+    depends_on: SomaticVariantCallingDependsOn = Field(
+        default_factory=SomaticVariantCallingDependsOn
+    )
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.mutect2)]
+    """Tool to use for somatic variant calling"""
+
     """Path to ngs_mapping"""
 
     ignore_chroms: Annotated[

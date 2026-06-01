@@ -4,7 +4,8 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import is_not_background
-from snakemake.io import Wildcards, touch
+from snakemake.io import touch
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
@@ -90,8 +91,8 @@ class MeltStepPart(
 
     @dictify
     def _get_input_files_preprocess(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        infix = f"{wildcards.library_name}"
         yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
         yield "bai", ngs_mapping(f"output/{infix}/out/{infix}.bam.bai")
         yield "reference", self.w_config.static_data_config.reference.path
@@ -100,7 +101,7 @@ class MeltStepPart(
     def _get_output_files_preprocess(self):
         # Note that mapper is not part of the output BAM file as MELT infers sample file from BAM
         # file name instead of using sample name from BAM header.
-        prefix = "work/{mapper}.melt_preprocess.{library_name}/out/{library_name}"
+        prefix = "work/melt_preprocess.{library_name}/out/{library_name}"
         yield "orig_bam", f"{prefix}.bam"
         yield "orig_bai", f"{prefix}.bam.bai"
         yield "disc_bam", f"{prefix}.bam.disc"
@@ -109,24 +110,24 @@ class MeltStepPart(
 
     @dictify
     def _get_log_file_preprocess(self):
-        yield from self._get_log_file_with_infix("{mapper}.melt_preprocess.{library_name}").items()
+        yield from self._get_log_file_with_infix("melt_preprocess.{library_name}").items()
 
     @dictify
     def _get_input_files_indiv_analysis(self, wildcards):
-        infix = f"{wildcards.mapper}.melt_preprocess.{wildcards.library_name}"
+        infix = f"melt_preprocess.{wildcards.library_name}"
         yield "orig_bam", f"work/{infix}/out/{wildcards.library_name}.bam"
         yield "disc_bam", f"work/{infix}/out/{wildcards.library_name}.bam.disc"
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_indiv_analysis(self):
-        infix = "{mapper}.melt_indiv_analysis.{library_name}.{me_type}"
+        infix = "melt_indiv_analysis.{library_name}.{me_type}"
         yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
 
     @dictify
     def _get_log_file_indiv_analysis(self):
         yield from self._get_log_file_with_infix(
-            "{mapper}.melt_indiv_analysis.{library_name}.{me_type}", suffix="_{library_name}"
+            "melt_indiv_analysis.{library_name}.{me_type}", suffix="_{library_name}"
         ).items()
 
     @listify
@@ -135,12 +136,12 @@ class MeltStepPart(
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
         for member in pedigree.donors:
             if member.dna_ngs_library:
-                infix = f"{wildcards.mapper}.melt_indiv_analysis.{member.dna_ngs_library.name}.{wildcards.me_type}"
+                infix = f"melt_indiv_analysis.{member.dna_ngs_library.name}.{wildcards.me_type}"
                 yield f"work/{infix}/out/.done.{member.dna_ngs_library.name}"
 
     @dictify
     def _get_output_files_group_analysis(self):
-        infix = "{mapper}.melt_group_analysis.{index_library_name}.{me_type}"
+        infix = "melt_group_analysis.{index_library_name}.{me_type}"
         yield "done", touch(f"work/{infix}/out/.done")
         exts = (
             "bed.list",
@@ -155,38 +156,38 @@ class MeltStepPart(
     @dictify
     def _get_log_file_group_analysis(self):
         yield from self._get_log_file_with_infix(
-            "{mapper}.melt_group_analysis.{index_library_name}.{me_type}"
+            "melt_group_analysis.{index_library_name}.{me_type}"
         ).items()
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
-        infix_done = f"{wildcards.mapper}.melt_group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
+        infix_done = f"melt_group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
         yield "done", f"work/{infix_done}/out/.done".format(**wildcards)
-        infix_bam = f"{wildcards.mapper}.melt_preprocess.{wildcards.library_name}"
+        infix_bam = f"melt_preprocess.{wildcards.library_name}"
         yield "bam", f"work/{infix_bam}/out/{wildcards.library_name}.bam"
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_genotype(self):
-        infix = "{mapper}.melt_genotype.{index_library_name}.{me_type}"
+        infix = "melt_genotype.{index_library_name}.{me_type}"
         yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
         yield "_more", [f"work/{infix}/out/{{library_name}}.{{me_type}}.tsv"]
 
     @dictify
     def _get_log_file_genotype(self):
         yield from self._get_log_file_with_infix(
-            "{mapper}.melt_genotype.{index_library_name}.{me_type}", suffix="_{library_name}"
+            "melt_genotype.{index_library_name}.{me_type}", suffix="_{library_name}"
         ).items()
 
     @dictify
     def _get_input_files_make_vcf(self, wildcards):
-        infix = f"{wildcards.mapper}.melt_group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
+        infix = f"melt_group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
         yield "group_analysis", f"work/{infix}/out/.done"
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
         paths = []
         for member in pedigree.donors:
             if member.dna_ngs_library:
-                infix = f"{wildcards.mapper}.melt_genotype.{wildcards.index_library_name}.{wildcards.me_type}"
+                infix = f"melt_genotype.{wildcards.index_library_name}.{wildcards.me_type}"
                 paths.append(f"work/{infix}/out/.done.{member.dna_ngs_library.name}")
         yield "genotype", paths
         yield "reference", self.w_config.static_data_config.reference.path
@@ -194,12 +195,12 @@ class MeltStepPart(
     @dictify
     def _get_log_file_make_vcf(self):
         yield from self._get_log_file_with_infix(
-            "{mapper}.melt_make_vcf.{index_library_name}.{me_type}"
+            "melt_make_vcf.{index_library_name}.{me_type}"
         ).items()
 
     @dictify
     def _get_output_files_make_vcf(self):
-        infix = "{mapper}.melt_make_vcf.{index_library_name}.{me_type}"
+        infix = "melt_make_vcf.{index_library_name}.{me_type}"
         yield "list_txt", f"work/{infix}/out/list.txt"
         yield "done", touch(f"work/{infix}/out/.done")
         yield "vcf", f"work/{infix}/out/{infix}.final_comp.vcf.gz"
@@ -209,13 +210,13 @@ class MeltStepPart(
     def _get_input_files_merge_vcf(self, wildcards):
         vcfs = []
         for me_type in self.config.melt.me_types:
-            infix = f"{wildcards.mapper}.melt_make_vcf.{wildcards.library_name}.{me_type}"
+            infix = f"melt_make_vcf.{wildcards.library_name}.{me_type}"
             vcfs.append(f"work/{infix}/out/{infix}.final_comp.vcf.gz")
         yield "vcf", vcfs
 
     @dictify
     def _get_output_files_merge_vcf(self):
-        infix = "{mapper}.melt.{library_name}"
+        infix = "melt.{library_name}"
         work_files = {
             "vcf": f"work/{infix}/out/{infix}.vcf.gz",
             "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
@@ -233,7 +234,7 @@ class MeltStepPart(
 
     @dictify
     def _get_log_file_merge_vcf(self):
-        yield from self._get_log_file_with_infix("{mapper}.melt.{library_name}").items()
+        yield from self._get_log_file_with_infix("melt.{library_name}").items()
 
     def get_args(self, action: str):
         self._validate_action(action)

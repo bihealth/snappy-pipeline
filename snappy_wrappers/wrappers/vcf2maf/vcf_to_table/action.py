@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class Action(Enum):
+class Action(IntEnum):
     ERROR = 0
     STOP = 1
     SKIP = 2

@@ -3,6 +3,17 @@ from typing import Annotated
 from pydantic import DirectoryPath, Field, FilePath
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+
+
+class VariantExportExternalDependsOn(SnappyModel):
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    """Optional upstream link_in task providing the external VCF/BAM search path."""
 
 
 class TargetCoverageReport(SnappyModel):
@@ -15,10 +26,14 @@ class TargetCoverageReport(SnappyModel):
 
 
 class VariantExportExternal(SnappyStepModel):
+    depends_on: VariantExportExternalDependsOn = Field(
+        default_factory=VariantExportExternalDependsOn
+    )
+
     external_tool: str = "dragen"
     """external tool name."""
 
-    bam_available_flag: bool
+    bam_available_flag: bool = False
     """BAM QC only possible if BAM files are present."""
 
     merge_vcf_flag: bool = False

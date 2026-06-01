@@ -1,7 +1,12 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from pydantic import Field
+
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -20,13 +25,33 @@ class ArcasHla(SnappyModel):
     mapper: str = "star"
 
 
-class HlaTyping(SnappyStepModel, validators.ToolsMixin, validators.NgsMappingMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+class ExpectedHlaTyping(SnappyModel):
+    """Consumer-driven contract: expected output keys from hla_typing."""
 
-    path_link_in: str = ""
+    txt: str
+    done: str
+
+
+class HlaTypingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    """Optional: name of the ``link_in`` task to use as the preprocessed FASTQ source."""
+
+
+class HlaTyping(SnappyStepModel):
     """Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.optitype], min_length=1)]
+    depends_on: HlaTypingDependsOn = Field(default_factory=HlaTypingDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.optitype)]
 
     optitype: Optitype = Optitype()
 

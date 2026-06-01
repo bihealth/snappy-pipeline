@@ -25,33 +25,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticHlaLohCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-
-
-module ngs_mapping:
-    snakefile:
-        "../ngs_mapping/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_ngs_mapping", "../ngs_mapping")
-
-
-use rule * from ngs_mapping
-
-
-module hla_typing:
-    snakefile:
-        "../hla_typing/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        wf.config.get("path_hla_typing", "../hla_typing")
-
-
-use rule * from hla_typing
-
-
 # Rules =======================================================================
 
 
@@ -61,9 +34,9 @@ localrules:
 
 
 rule somatic_hla_loh_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,13 +61,13 @@ rule somatic_hla_loh_calling_lohhla:
         unpack(wf.get_input_files("lohhla", "run")),
     output:
         **wf.get_output_files("lohhla", "run"),
+    log:
+        **wf.get_log_file("lohhla", "run"),
     threads: wf.get_resource("lohhla", "run", "threads")
     resources:
         runtime=wf.get_resource("lohhla", "run", "runtime"),
         mem=wf.get_resource("lohhla", "run", "mem"),
         partition=wf.get_resource("lohhla", "run", "partition"),
         tmpdir=wf.get_resource("lohhla", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("lohhla", "run"),
     wrapper:
         wf.wrapper_path("lohhla")

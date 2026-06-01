@@ -1,49 +1,23 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for infer_experiment: Snakemake wrapper.py"""
 
-import os
+import hashlib
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
-shell.executable("/bin/bash")
-
 args = getattr(snakemake.params, "args", {})
 config = args["config"]
+with open(config["path_exon_bed"], "rb") as inputf:
+    bed_file_md5 = hashlib.md5(inputf.read()).hexdigest()
 
-out_link_dir = (
-    os.path.dirname(snakemake.output.output) if "output" in snakemake.output.keys() else ""
-)
-log_link_dir = os.path.dirname(snakemake.output.log) if "log" in snakemake.output.keys() else ""
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -euo pipefail
-set -x
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
 # ----- Run rseqc to infer strandedness
 infer_experiment.py \
     -r "{config[path_exon_bed]}" \
@@ -91,12 +65,11 @@ then
 fi
 
 # ----- Write outputs
-md5=$(cat {config[path_exon_bed]} | md5sum | sed -e "s/ .*//")
 cat << __EOF > {snakemake.output.decision}
 {{
     "library_name": "{args[library_name]}",
     "bed_path": "{config[path_exon_bed]}",
-    "bed_file_md5": "$md5",
+    "bed_file_md5": "{bed_file_md5}",
     "bam_path": "{snakemake.input.bam}",
     "strand_from_user": "{config[strand]},
     "strand_from_infer": "$decision",
@@ -108,32 +81,6 @@ cat << __EOF > {snakemake.output.decision}
     "decision": "$decision"
 }}
 __EOF
-
-pushd $(dirname {snakemake.output.decision})
-md5sum $(basename {snakemake.output.decision}) > $(basename {snakemake.output.decision}).md5
-md5sum $(basename {snakemake.output.tsv}) > $(basename {snakemake.output.tsv}).md5
-popd
-
-if [[ -n "{out_link_dir}" ]];
-then
-    ln -sr {snakemake.output.decision} {out_link_dir}/.
-    ln -sr {snakemake.output.decision}.md5 {out_link_dir}/.
-fi
-if [[ -n "{log_link_dir}" ]];
-then
-    ln -sr {snakemake.log.log} {log_link_dir}/.
-    ln -sr {snakemake.log.log}.md5 {log_link_dir}/.
-    ln -sr {snakemake.log.conda_list} {log_link_dir}/.
-    ln -sr {snakemake.log.conda_list}.md5 {log_link_dir}/.
-    ln -sr {snakemake.log.conda_info} {log_link_dir}/.
-    ln -sr {snakemake.log.conda_info}.md5 {log_link_dir}/.
-fi
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)

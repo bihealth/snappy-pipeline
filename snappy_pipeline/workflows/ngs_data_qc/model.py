@@ -3,7 +3,10 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -50,8 +53,6 @@ class PicardProgram(enum.StrEnum):
 
 
 class Picard(SnappyModel):
-    path_ngs_mapping: str = "../ngs_mapping"
-
     path_to_baits: str = ""
     """Required when CollectHsMetrics is among the programs"""
 
@@ -76,11 +77,26 @@ class Fastqc(SnappyModel):
     pass
 
 
-class NgsDataQc(SnappyStepModel, validators.ToolsMixin):
-    path_link_in: str = ""
+class NgsDataQcDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    link_in: Annotated[
+        str | None,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = None
+    """Optional: name of the ``link_in`` task to use as the preprocessed FASTQ source."""
+
+
+class NgsDataQc(SnappyStepModel):
     """Override data set configuration search paths for FASTQ files"""
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.fastqc, Tool.picard], min_length=1)]
+    depends_on: NgsDataQcDependsOn = Field(default_factory=NgsDataQcDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.fastqc)]
 
     picard: Picard | None = None
 

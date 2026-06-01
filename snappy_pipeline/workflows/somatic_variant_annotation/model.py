@@ -3,8 +3,10 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.annotation import Mehari, Vep
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class Tool(enum.StrEnum):
@@ -12,19 +14,23 @@ class Tool(enum.StrEnum):
     mehari = "mehari"
 
 
-class SomaticVariantAnnotation(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
+class SomaticVariantAnnotationDependsOn(SnappyModel):
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variant"
 
-    path_somatic_variant: Annotated[str, Field(examples=["../somatic_variant_calling"])]
+
+class SomaticVariantAnnotation(SnappyStepModel):
+    depends_on: SomaticVariantAnnotationDependsOn = Field(
+        default_factory=SomaticVariantAnnotationDependsOn
+    )
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.vep)]
 
     is_filtered: bool = False
     """Has the vcf been already filtered"""
-
-    tools_ngs_mapping: list[str] = []
-    """default to those configured for ngs_mapping"""
-
-    tools_somatic_variant_calling: list[str] = []
-    """default to those configured for somatic_variant_calling"""
 
     vep: Vep | None = None
 

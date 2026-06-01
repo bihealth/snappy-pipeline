@@ -22,24 +22,23 @@ result of the ``ngs_mapping`` step.
 Step Output
 ===========
 
-For all samples, MEI identification will be performed on the primary DNA NGS libraries separately
-for each configured read mapper and mobile element identification tool. The name of the primary DNA
-NGS library will be used as an identification token in the output file.
+For all samples, MEI identification will be performed on primary DNA NGS libraries. The name
+of the primary DNA NGS library is used as the output identification token.
 
-For each read mapper, MEI tool, and sample the following files will be generated:
+For each sample the following files will be generated:
 
-- ``{mapper}.{mei_tool}.{lib_name}.vcf.gz``
-- ``{mapper}.{mei_tool}.{lib_name}.vcf.gz.md5``
+- ``{lib_name}.vcf.gz``
+- ``{lib_name}.vcf.gz.md5``
 
 For example, it might look as follows for the example from above:
 
 ::
 
     output/
-    +-- bwa.scramble.P001-N1-DNA1-WES1
+    +-- P001-N1-DNA1-WES1
     |   `-- out
-    |       |-- bwa.scramble.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.scramble.P001-N1-DNA1-WES1.vcf.gz.md5
+    |       |-- P001-N1-DNA1-WES1.vcf.gz
+    |       |-- P001-N1-DNA1-WES1.vcf.gz.md5
     [...]
 
 
@@ -92,7 +91,9 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
 
@@ -155,9 +156,9 @@ class ScrambleStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action=action)
         # Set log
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "{library_name}"
         if action == "annotate":
-            name_pattern_annotated = "{mapper}.scramble_annotated.{library_name}"
+            name_pattern_annotated = "{library_name}.annotated"
             return "work/{name_pattern}/log/{name_pattern}.log".format(
                 name_pattern=name_pattern_annotated
             )
@@ -183,9 +184,10 @@ class ScrambleStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        bam_tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
-        yield ngs_mapping(bam_tpl.format(**wildcards))
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
+        )
+        yield alignments.bam
 
     @staticmethod
     @listify
@@ -195,7 +197,7 @@ class ScrambleStepPart(BaseStepPart):
         :param wildcards: Snakemake rule wildcards.
         :type wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "{library_name}"
         base_name_out = "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
             name_pattern=name_pattern, ext="txt"
         )
@@ -205,7 +207,7 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_cluster():
         """Yield output files' patterns for scramble cluster call."""
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "{library_name}"
         ext = "txt"
         yield (
             ext,
@@ -218,7 +220,7 @@ class ScrambleStepPart(BaseStepPart):
     @dictify
     def _get_output_files_analysis():
         """Yield output files' patterns for scramble call."""
-        name_pattern = "{mapper}.scramble.{library_name}"
+        name_pattern = "{library_name}"
         ext_dict = {
             "txt": "_MEIs.txt",
             "txt_md5": "_MEIs.txt.md5",
@@ -290,29 +292,47 @@ class MeiWorkflow(BaseStep):
 
     #: Workflow name
     name = "targeted_seq_mei_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "mei"}))]
+    config_model_class = TargetedSeqMeiCallingConfigModel
 
     #: Sample sheet shortcut class
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=TargetedSeqMeiCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
-        # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
+
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local MEI calling output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
 
     @listify
     def _all_donors(self, include_background=True):
@@ -332,12 +352,9 @@ class MeiWorkflow(BaseStep):
         detection workflow.
         """
         # Initialise variable
-        tools = ("scramble",)
-        name_pattern = "{mapper}.{tool}.{donor.dna_ngs_library.name}"
+        name_pattern = "{donor.dna_ngs_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-            tool=tools,
             ext=EXT_VALUES,
         )
 

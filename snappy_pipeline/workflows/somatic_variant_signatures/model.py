@@ -3,7 +3,9 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class SomaticVariantStep(enum.StrEnum):
@@ -12,20 +14,21 @@ class SomaticVariantStep(enum.StrEnum):
     FILTER = "somatic_variant_filtration"
 
 
+class SomaticVariantSignaturesDependsOn(SnappyModel):
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variant"
+
+
 class SomaticVariantSignatures(SnappyStepModel):
-    path_somatic_variant: Annotated[str, Field(examples=["../somatic_variant_calling"])]
+    depends_on: SomaticVariantSignaturesDependsOn = Field(
+        default_factory=SomaticVariantSignaturesDependsOn
+    )
 
     somatic_variant_step: SomaticVariantStep = SomaticVariantStep.CALL
     """Which pipeline step is used to compute signatures"""
-
-    tools_ngs_mapping: list[str] = []
-    """default to those configured for ngs_mapping"""
-
-    tools_somatic_variant_calling: list[str] = []
-    """default to those configured for somatic_variant_calling"""
-
-    tools_somatic_variant_annotation: list[str] = []
-    """default to those configured for somatic_variant_annotation"""
 
     has_annotation: bool = False
     """Needed for building filenames only"""

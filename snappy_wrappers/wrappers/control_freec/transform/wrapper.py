@@ -5,6 +5,8 @@ import os
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
@@ -13,31 +15,9 @@ rscript = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "snappy-convert-control_freec.R"
 )
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write out information about conda installation --------------------------------------------------
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-
-# Also pipe stderr to log file --------------------------------------------------------------------
-
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR -----------------------------------------------------------------------
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 
 R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     control_freec_write_files( \
@@ -52,10 +32,6 @@ R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     tx_obj={args[tx_obj]}, \
     bs_obj={args[bs_obj]})"
 
-for f in {snakemake.output.log2} {snakemake.output.call} {snakemake.output.segments} \
-    {snakemake.output.cns} {snakemake.output.cnr}; do
-    md5sum $f >$f.md5
-done
 
 """
 )

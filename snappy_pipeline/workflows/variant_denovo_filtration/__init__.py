@@ -30,19 +30,19 @@ Step Output
 
 For all children with both parents present, variant *de novo* annotation will be attempted on
 the primary DNA NGS library of that child.  The name of this library will be used as the
-identification token in the output file and file name.  For each read mapper, variant caller,
-and pedigree, the following files will be generated:
+identification token in the output file and file name.
+For each pedigree, the following files will be generated:
 
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz.tbi``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz.md5``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos.{lib_name}.vcf.gz.tbi.md5``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz.tbi``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz.md5``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.vcf.gz.tbi.md5``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.summary.txt``
-- ``{mapper}.{var_caller}.{annotation}.{phasing}.de_novos_hard.{lib_name}.summary.txt.md5``
+- ``de_novos.{lib_name}.vcf.gz.tbi``
+- ``de_novos.{lib_name}.vcf.gz``
+- ``de_novos.{lib_name}.vcf.gz.md5``
+- ``de_novos.{lib_name}.vcf.gz.tbi.md5``
+- ``de_novos_hard.{lib_name}.vcf.gz``
+- ``de_novos_hard.{lib_name}.vcf.gz.tbi``
+- ``de_novos_hard.{lib_name}.vcf.gz.md5``
+- ``de_novos_hard.{lib_name}.vcf.gz.tbi.md5``
+- ``de_novos_hard.{lib_name}.summary.txt``
+- ``de_novos_hard.{lib_name}.summary.txt.md5``
 
 The the ``annotation`` and ``phasing`` will only be persent when the input is read from the
 ``variant_annotation`` or ``variant_phasing`` steps, respectively.
@@ -94,7 +94,8 @@ from collections import OrderedDict
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import Wildcards, expand
+from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -104,7 +105,9 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
@@ -168,9 +171,7 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.name_pattern = r"{mapper}.{caller}.%sde_novos.{index_library,[^\.]+}" % (
-            self.prev_token,
-        )
+        self.name_pattern = r"%sde_novos.{index_library,[^\.]+}" % (self.prev_token,)
         self.base_path_out = os.path.join(
             "work", self.name_pattern, "out", self.name_pattern.replace(r",[^\.]+", "")
         )
@@ -192,14 +193,12 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
             )
             yield "ped", real_path
             # BAM and BAI file of the offspring
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            path_bam = ("output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam").format(
-                **wildcards
+            _aln: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=wildcards.index_library
             )
-            yield "bam", ngs_mapping(path_bam)
-            yield "bai", ngs_mapping(path_bam + ".bai")
+            yield "bam", _aln.bam
+            yield "bai", _aln.bai
             # Input file comes from previous step.
-            prev_step = self.parent.modules[self.previous_step]
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 name_pattern = self.name_pattern.replace(r",[^\.]+", "").replace("de_novos.", "")
                 if self.previous_step != "variant_phasing":
@@ -207,7 +206,7 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
                 input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
                     real_index=real_index.dna_ngs_library.name, **wildcards
                 )
-                yield key, prev_step(input_path) + ext
+                yield key, self.parent.upstream(self.previous_step)(input_path) + ext
 
         return input_function
 
@@ -260,9 +259,7 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.name_pattern = r"{mapper}.{caller}.%sde_novos_hard.{index_library,[^\.]+}" % (
-            self.prev_token,
-        )
+        self.name_pattern = r"%sde_novos_hard.{index_library,[^\.]+}" % (self.prev_token,)
         self.base_path_out = os.path.join(
             "work", self.name_pattern, "out", self.name_pattern.replace(r",[^\.]+", "")
         )
@@ -317,7 +314,7 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.name_pattern = "{mapper}.{caller}.summarize_counts"
+        self.name_pattern = "summarize_counts"
         self.base_path_out = os.path.join("work", self.name_pattern, "out", self.name_pattern)
         self.path_log = os.path.join("work", self.name_pattern, "log", self.name_pattern + ".log")
 
@@ -326,9 +323,7 @@ class SummarizeCountsStepPart(FilterDeNovosBaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        name_pattern = "{{mapper}}.{{caller}}.%sde_novos_hard.{index_library.name}" % (
-            self.prev_token,
-        )
+        name_pattern = "%sde_novos_hard.{index_library.name}" % (self.prev_token,)
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
                 for donor in pedigree.donors:
@@ -369,7 +364,7 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
         self._validate_action(action)
 
         result = {"gatk3_hc": [], "gatk_ug": []}
-        name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
+        name_pattern = "%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
@@ -384,7 +379,7 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
                         for caller in result.keys():
                             result[caller].append(
                                 tpl.format(
-                                    mapper="{mapper}",
+                                    mapper="",
                                     caller=caller,
                                     index_library=donor.dna_ngs_library.name,
                                 )
@@ -395,13 +390,13 @@ class CollectMsdnStepPart(FilterDeNovosBaseStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        yield "txt", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt"
-        yield "txt_md5", "work/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo.txt.md5"
+        yield "txt", "work/multisite_de_novo/out/multisite_de_novo.txt"
+        yield "txt_md5", "work/multisite_de_novo/out/multisite_de_novo.txt.md5"
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return "work/{mapper}.multisite_de_novo/log/{mapper}.multisite_de_novo.log"
+        return "work/multisite_de_novo/log/multisite_de_novo.log"
 
 
 class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
@@ -415,7 +410,7 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library}" % (self.prev_token,)
+        name_pattern = "%sde_novos_hard.{index_library}" % (self.prev_token,)
         tpl = "work/" + name_pattern + "/out/" + name_pattern + ".summary.txt"
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
@@ -427,27 +422,24 @@ class SummarizeDeNovoCountsStepPart(FilterDeNovosBaseStepPart):
                     elif not donor.mother or not donor.mother.dna_ngs_library:
                         continue
                     else:
-                        for caller in self.config.tools_variant_calling:
-                            yield tpl.format(
-                                mapper="{mapper}",
-                                caller=caller,
-                                index_library=donor.dna_ngs_library.name,
-                            )
+                        yield tpl.format(
+                            index_library=donor.dna_ngs_library.name,
+                        )
 
     @dictify
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        yield "txt", "work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt"
+        yield "txt", "work/denovo_count_summary/out/denovo_count_summary.txt"
         yield (
             "txt_md5",
-            ("work/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary.txt.md5"),
+            ("work/denovo_count_summary/out/denovo_count_summary.txt.md5"),
         )
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return "work/{mapper}.denovo_count_summary/log/{mapper}.denovo_count_summary.log"
+        return "work/denovo_count_summary/log/denovo_count_summary.log"
 
 
 class VariantDeNovoFiltrationWorkflow(BaseStep):
@@ -455,6 +447,9 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
 
     #: Workflow name
     name = "variant_denovo_filtration"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "denovo"}))]
+    config_model_class = VariantDenovoFiltrationConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -464,25 +459,40 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local de-novo filtration output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        prefix = f"output/de_novos_hard.{lib}/out/de_novos_hard.{lib}"
+        return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantDenovoFiltrationConfigModel,
             previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
-        # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
-            if cfg := self.config.get(f"path_{prev}"):
+            if getattr(self.config.depends_on, prev, None):
                 self.previous_step = prev
-                self.register_module(prev, cfg)
                 break
         else:
-            raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+            raise Exception("No previous step given!")  # pragma: no cover
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
@@ -501,35 +511,26 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             )
         )
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
-        if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
 
     @listify
     def get_result_files(self):
         """Return list of result files for the variant de novo filtration workflow."""
         # Hard-filtered results
-        name_pattern = "{mapper}.{caller}.%sde_novos_hard.{index_library.name}" % (self.prev_token,)
+        name_pattern = "%sde_novos_hard.{index_library.name}" % (self.prev_token,)
         ext_values = list(itertools.chain(EXT_VALUES, (".summary.txt", ".summary.txt.md5")))
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            caller=self.config.tools_variant_calling,
             ext=ext_values,
         )
         # Summarise counts
         yield from expand(
-            "output/{mapper}.denovo_count_summary/out/{mapper}.denovo_count_summary{ext}",
-            mapper=self.config.tools_ngs_mapping,
-            caller=self.config.tools_variant_calling,
+            "output/denovo_count_summary/out/denovo_count_summary{ext}",
             ext=(".txt", ".txt.md5"),
         )
         # Collect MSDN statistics
-        if self.w_config.step_config["variant_denovo_filtration"].collect_msdn:
+        if self.get_task_config("variant_denovo_filtration").collect_msdn:
             yield from expand(
-                "output/{mapper}.multisite_de_novo/out/{mapper}.multisite_de_novo{ext}",
-                mapper=self.config.tools_ngs_mapping,
+                "output/multisite_de_novo/out/multisite_de_novo{ext}",
                 ext=(".txt", ".txt.md5"),
             )
 
@@ -557,16 +558,11 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
                         elif not donor.mother or not donor.mother.dna_ngs_library:
                             continue
                         else:
-                            yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
+                            yield from expand(
+                                tpl,
+                                index_library=[donor.dna_ngs_library],
+                                **kwargs,
+                            )
 
     def check_config(self):
-        if not self.config.tools_ngs_mapping:
-            self.ensure_w_config(
-                ("step_config", "ngs_mapping", "tools", "dna"),
-                "Either define tools_ngs_mapping or provide a configuration for ngs_mapping",
-            )
-        if not self.config.tools_variant_calling:
-            self.ensure_w_config(
-                ("step_config", "variant_calling", "tools"),
-                "Either define tools_variant_calling or provide a configuration for variant_calling",
-            )
+        pass

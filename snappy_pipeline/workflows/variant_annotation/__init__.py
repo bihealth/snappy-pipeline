@@ -62,8 +62,10 @@ from biomedsheets.shortcuts import GermlineCaseSheet
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import SnakemakeListItemsGenerator
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_calling import GetResultFilesMixin, VariantCallingWorkflow
+from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 from .model import VariantAnnotation as VariantAnnotationConfigModel
 
@@ -93,22 +95,28 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    @property
+    def _variant_tool(self) -> str:
+        return str(self.parent.get_task_config("variant_calling").tool)
+
     def get_input_files(self, action):
         """Return path to pedigree input file"""
         self._validate_action(action)
-        token = "{mapper}.{var_caller}.{library_name}"
-        variant_calling = self.parent.modules["variant_calling"]
+        token = f"{self._variant_tool}.{{library_name}}"
+        calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
+            "variant_calling", library_name=token
+        )
         return {
             "reference": self.w_config.static_data_config.reference.path,
-            "vcf": variant_calling(f"output/{token}/out/{token}.vcf.gz"),
-            "vcf_tbi": variant_calling(f"output/{token}/out/{token}.vcf.gz.tbi"),
+            "vcf": calling.vcf,
+            "vcf_tbi": calling.vcf_tbi,
         }
 
     @dictify
     def get_output_files(self, action):
         """Return output files for the filtration"""
         self._validate_action(action)
-        token = "{mapper}.{var_caller}.vep.{library_name}"
+        token = "{library_name}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -126,15 +134,15 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
 
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
-        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+        return {"config": getattr(self.config, self.name).model_dump(by_alias=True)}
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.w_config.step_config["variant_calling"].tools}
+        return {}
 
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        token = "{mapper}.{var_caller}.vep.{library_name}"
+        token = "{library_name}"
         prefix = f"work/{token}/log/{token}"
         key_ext = (
             ("log", ".log"),
@@ -149,7 +157,7 @@ class VepStepPart(GetResultFilesMixin, BaseStepPart):
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
-        num_threads = self.config[self.name].num_threads
+        num_threads = getattr(self.config, self.name).num_threads
         return ResourceUsage(
             threads=num_threads,
             runtime="1d",
@@ -161,35 +169,54 @@ class VariantAnnotationWorkflow(BaseStep):
     """Perform germline variant annotation"""
 
     name = "variant_annotation"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline", ("snv", "indel")})): True}
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "annotated"}))
+    ]
+    config_model_class = VariantAnnotationConfigModel
     sheet_shortcut_class = GermlineCaseSheet
+
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local annotated VCF output paths for a germline-variants signature."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+        }
 
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantAnnotationConfigModel,
             previous_steps=(VariantCallingWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((VepStepPart,))
-        # Register sub workflows
-        self.register_module(
-            "ngs_mapping", self.w_config.step_config["variant_calling"].path_ngs_mapping
-        )
-        self.register_module("variant_calling", self.config.path_variant_calling)
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config.tools:
-            yield from self.sub_steps[tool].get_result_files()
+        yield from self.sub_steps[self.config.tool].get_result_files()
 
     def check_config(self):
         """Check that the path to the NGS mapping is present"""

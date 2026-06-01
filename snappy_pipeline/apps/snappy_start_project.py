@@ -33,20 +33,23 @@ def run(args):
         return 1
 
     # Create project directory and subdirectory for configuration files
-    paths = (args.project_directory, os.path.join(args.project_directory, CONFIG_SUBDIR))
+    paths = [args.project_directory]
+    if CONFIG_SUBDIR:
+        paths.append(os.path.join(args.project_directory, CONFIG_SUBDIR))
     for path in paths:
         create_directory(path)
 
     # Create config file in subdirectory based on template
+    config_dest_path = os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
     create_from_tpl(
         src_path=os.path.join(os.path.dirname(__file__), "tpls", "project_config.yaml"),
-        dest_path=os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME),
+        dest_path=config_dest_path,
         format_args={
             "created_at": datetime.datetime.now().isoformat(),
             "project_name": (args.project_name or os.path.basename(args.project_directory)),
         },
         message="Creating project-wide configuration in {path}",
-        message_args={"path": os.path.join(args.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)},
+        message_args={"path": config_dest_path},
     )
 
     # Create readme file in subdirectory based on template
@@ -61,12 +64,32 @@ def run(args):
         message_args={"path": os.path.join(args.project_directory, README_FILENAME)},
     )
 
+    # Create master job shell file in project directory based on template
+    dest_path = os.path.join(args.project_directory, "pipeline_job.sh")
+    create_from_tpl(
+        src_path=os.path.join(os.path.dirname(__file__), "tpls", "pipeline_job.sh"),
+        dest_path=dest_path,
+        format_args={
+            "line_m": ("##SBATCH --mail-type ALL" if not args.email else "#SBATCH --mail-type ALL"),
+            "line_M": (
+                "##SBATCH --mail-user your.name@mdc-berlin.de"
+                if not args.email
+                else "##SBATCH --mail-user {}".format(args.email)
+            ),
+            "partition": args.partition,
+            "conda": args.conda,
+            "step_name": (args.project_name or os.path.basename(args.project_directory)),
+        },
+        message="Creating master job shell file in {path}",
+        message_args={"path": dest_path},
+    )
+
     # Create additional steps if any was provided
     for step in args.steps:
         run_start_step(step=step, directory=step, args=args)
 
     log(
-        "\nDo not forget to review .snappy_pipeline/config.yaml and to fill out README.md!\n",
+        "\nDo not forget to review config.yaml and to fill out README.md!\n",
         level=LVL_IMPORTANT,
     )
     log("All done, have a nice day!", level=LVL_SUCCESS)

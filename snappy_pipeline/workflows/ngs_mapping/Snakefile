@@ -32,9 +32,9 @@ localrules:
 
 
 rule ngs_mapping_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,6 +61,8 @@ rule ngs_mapping_external_run:
         wf.get_input_files("external", "run"),
     output:
         **wf.get_output_files("external", "run"),
+    log:
+        **wf.get_log_file("external", "run"),
     threads: wf.get_resource("external", "run", "threads")
     resources:
         runtime=wf.get_resource("external", "run", "runtime"),
@@ -69,8 +71,6 @@ rule ngs_mapping_external_run:
         tmpdir=wf.get_resource("external", "run", "tmpdir"),
     params:
         args=wf.get_args("external", "run"),
-    log:
-        **wf.get_log_file("external", "run"),
     wrapper:
         wf.wrapper_path("link_in_bam")
 
@@ -83,6 +83,8 @@ rule ngs_mapping_bwa_run:
         wf.get_input_files("bwa", "run"),
     output:
         **wf.get_output_files("bwa", "run"),
+    log:
+        **wf.get_log_file("bwa", "run"),
     threads: wf.get_resource("bwa", "run", "threads")
     resources:
         runtime=wf.get_resource("bwa", "run", "runtime"),
@@ -91,8 +93,6 @@ rule ngs_mapping_bwa_run:
         tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
     params:
         args=wf.get_args("bwa", "run"),
-    log:
-        **wf.get_log_file("bwa", "run"),
     wrapper:
         wf.wrapper_path("bwa")
 
@@ -105,6 +105,8 @@ rule ngs_mapping_bwa_mem2_run:
         wf.get_input_files("bwa_mem2", "run"),
     output:
         **wf.get_output_files("bwa_mem2", "run"),
+    log:
+        **wf.get_log_file("bwa_mem2", "run"),
     threads: wf.get_resource("bwa_mem2", "run", "threads")
     resources:
         runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
@@ -113,8 +115,6 @@ rule ngs_mapping_bwa_mem2_run:
         tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
     params:
         args=wf.get_args("bwa_mem2", "run"),
-    log:
-        **wf.get_log_file("bwa_mem2", "run"),
     wrapper:
         wf.wrapper_path("bwa_mem2")
 
@@ -127,6 +127,8 @@ rule ngs_mapping_mbcs_run:
         wf.get_input_files("mbcs", "run"),
     output:
         **wf.get_output_files("mbcs", "run"),
+    log:
+        **wf.get_log_file("mbcs", "run"),
     threads: wf.get_resource("mbcs", "run", "threads")
     resources:
         runtime=wf.get_resource("mbcs", "run", "runtime"),
@@ -135,8 +137,6 @@ rule ngs_mapping_mbcs_run:
         tmpdir=wf.get_resource("mbcs", "run", "tmpdir"),
     params:
         args=wf.get_args("mbcs", "run"),
-    log:
-        **wf.get_log_file("mbcs", "run"),
     wrapper:
         wf.wrapper_path("mbcs")
 
@@ -149,6 +149,8 @@ rule ngs_mapping_star_run:
         wf.get_input_files("star", "run"),
     output:
         **wf.get_output_files("star", "run"),
+    log:
+        **wf.get_log_file("star", "run"),
     threads: wf.get_resource("star", "run", "threads")
     resources:
         runtime=wf.get_resource("star", "run", "runtime"),
@@ -157,8 +159,6 @@ rule ngs_mapping_star_run:
         tmpdir=wf.get_resource("star", "run", "tmpdir"),
     params:
         args=wf.get_args("star", "run"),
-    log:
-        **wf.get_log_file("star", "run"),
     wrapper:
         wf.wrapper_path("star")
 
@@ -171,16 +171,16 @@ rule ngs_mapping_minimap2_run:
         wf.get_input_files("minimap2", "run"),
     output:
         **wf.get_output_files("minimap2", "run"),
-    params:
-        args=wf.get_args("minimap2", "run"),
+    log:
+        **wf.get_log_file("minimap2", "run"),
     threads: wf.get_resource("minimap2", "run", "threads")
     resources:
         runtime=wf.get_resource("minimap2", "run", "runtime"),
         mem=wf.get_resource("minimap2", "run", "mem"),
         partition=wf.get_resource("minimap2", "run", "partition"),
         tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("minimap2", "run"),
+    params:
+        args=wf.get_args("minimap2", "run"),
     wrapper:
         wf.wrapper_path("minimap2")
 
@@ -195,14 +195,14 @@ rule ngs_mapping_target_coverage_report_run:
         unpack(wf.get_input_files("target_coverage_report", "run")),
     output:
         **wf.get_output_files("target_coverage_report", "run"),
+    log:
+        **wf.get_log_file("target_coverage_report", "run"),
     threads: wf.get_resource("target_coverage_report", "run", "threads")
     resources:
         runtime=wf.get_resource("target_coverage_report", "run", "runtime"),
         mem=wf.get_resource("target_coverage_report", "run", "mem"),
         partition=wf.get_resource("target_coverage_report", "run", "partition"),
         tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("target_coverage_report", "run"),
     wrapper:
         wf.wrapper_path("alfred/qc")
 
@@ -215,16 +215,16 @@ rule ngs_mapping_bam_collect_doc_run:
         **wf.get_input_files("bam_collect_doc", "run")(),
     output:
         **wf.get_output_files("bam_collect_doc", "run"),
-    params:
-        args=wf.get_args("bam_collect_doc", "run"),
+    log:
+        **wf.get_log_file("bam_collect_doc", "run"),
     threads: wf.get_resource("bam_collect_doc", "run", "threads")
     resources:
         runtime=wf.get_resource("bam_collect_doc", "run", "runtime"),
         mem=wf.get_resource("bam_collect_doc", "run", "mem"),
         partition=wf.get_resource("bam_collect_doc", "run", "partition"),
         tmpdir=wf.get_resource("bam_collect_doc", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("bam_collect_doc", "run"),
+    params:
+        args=wf.get_args("bam_collect_doc", "run"),
     wrapper:
         wf.wrapper_path("maelstrom/bam_collect_doc")
 
@@ -237,16 +237,16 @@ rule ngs_mapping_ngs_chew_fingerprint:
         **wf.get_input_files("ngs_chew", "fingerprint")(),
     output:
         **wf.get_output_files("ngs_chew", "fingerprint"),
-    params:
-        args=wf.get_args("ngs_chew", "fingerprint"),
+    log:
+        **wf.get_log_file("ngs_chew", "fingerprint"),
     threads: wf.get_resource("ngs_chew", "fingerprint", "threads")
     resources:
         runtime=wf.get_resource("ngs_chew", "fingerprint", "runtime"),
         mem=wf.get_resource("ngs_chew", "fingerprint", "mem"),
         partition=wf.get_resource("ngs_chew", "fingerprint", "partition"),
         tmpdir=wf.get_resource("ngs_chew", "fingerprint", "tmpdir"),
-    log:
-        **wf.get_log_file("ngs_chew", "fingerprint"),
+    params:
+        args=wf.get_args("ngs_chew", "fingerprint"),
     wrapper:
         wf.wrapper_path("ngs_chew/fingerprint")
 
@@ -259,16 +259,16 @@ rule ngs_mapping_infer_strandedness:
         **wf.get_input_files("strandedness", "infer"),
     output:
         **wf.get_output_files("strandedness", "infer"),
-    params:
-        args=wf.get_args("strandedness", "infer"),
+    log:
+        **wf.get_log_file("strandedness", "infer"),
     threads: wf.get_resource("strandedness", "infer", "threads")
     resources:
         runtime=wf.get_resource("strandedness", "infer", "runtime"),
         mem=wf.get_resource("strandedness", "infer", "mem"),
         partition=wf.get_resource("strandedness", "infer", "partition"),
         tmpdir=wf.get_resource("strandedness", "infer", "tmpdir"),
-    log:
-        **wf.get_log_file("strandedness", "infer"),
+    params:
+        args=wf.get_args("strandedness", "infer"),
     wrapper:
         wf.wrapper_path("rseqc")
 
@@ -281,10 +281,12 @@ rule ngs_mapping_counts_with_strand:
         **wf.get_input_files("strandedness", "counts"),
     output:
         **wf.get_output_files("strandedness", "counts"),
+    params:
+        tool=wf.config.tool,
     shell:
         r"""
             set -x
-            if [[ "{wildcards[mapper]}" == "star" ]]
+            if [[ "{params.tool}" == "star" ]]
             then
                 strand=$(grep -E '^ *"decision": "[012]"$' {input.decision} | sed -re 's/.*"([012])"$/\1/')
                 column=$(($strand + 2))

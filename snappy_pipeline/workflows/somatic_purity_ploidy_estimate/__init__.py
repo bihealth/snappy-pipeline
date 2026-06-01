@@ -16,10 +16,12 @@ from collections import OrderedDict
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import Wildcards, touch
+from snakemake.io import touch
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
 
 from .model import SomaticPurityPloidyEstimate as SomaticPurityPloidyEstimateConfigModel
@@ -82,10 +84,8 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating BAF file for the tumor."""
 
         def func(wildcards):
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            base_path = (
-                "output/{mapper}.{tumor_library_name}/out/{mapper}.{tumor_library_name}"
-            ).format(**wildcards)
+            ngs_mapping = self.parent.upstream("ngs_mapping")
+            base_path = ("output/{tumor_library_name}/out/{tumor_library_name}").format(**wildcards)
             return {
                 "bam": ngs_mapping(base_path + ".bam"),
                 "bai": ngs_mapping(base_path + ".bam.bai"),
@@ -97,10 +97,10 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating BAF file for the normal."""
 
         def func(wildcards):
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            base_path = (
-                "output/{mapper}.{normal_library_name}/out/{mapper}.{normal_library_name}"
-            ).format(**wildcards)
+            ngs_mapping = self.parent.upstream("ngs_mapping")
+            base_path = ("output/{normal_library_name}/out/{normal_library_name}").format(
+                **wildcards
+            )
             return {
                 "bam": ngs_mapping(base_path + ".bam"),
                 "bai": ngs_mapping(base_path + ".bam.bai"),
@@ -120,12 +120,14 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating CNV file from copywriter for tumor."""
 
         def func(wildcards):
-            wgs_cnv_calling = self.parent.modules["somatic_targeted_seq_cnv_calling"]
             base_path = (
-                "work/{mapper}.copywriter.{tumor_library_name}/"
-                "out/{mapper}.copywriter.{tumor_library_name}"
+                "work/copywriter.{tumor_library_name}/out/copywriter.{tumor_library_name}"
             ).format(**wildcards)
-            return {"bins": wgs_cnv_calling(base_path + "_bins.txt")}
+            return {
+                "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
+                    base_path + "_bins.txt"
+                )
+            }
 
         return func
 
@@ -134,17 +136,19 @@ class AscatStepPart(BaseStepPart):
 
         def func(wildcards):
             tumor_library = None
-            wgs_cnv_calling = self.parent.modules["somatic_targeted_seq_cnv_calling"]
             # look up tumor to normal
             for k, v in self.tumor_ngs_library_to_sample_pair.items():
                 if v.normal_sample.dna_ngs_library.name == wildcards["normal_library_name"]:
                     tumor_library = k
                     # break
             base_path = (
-                "work/{mapper}.copywriter.{tumor_library_name}/"
-                "out/{mapper}.copywriter.{tumor_library_name}"
+                "work/copywriter.{tumor_library_name}/out/copywriter.{tumor_library_name}"
             ).format(tumor_library_name=tumor_library, **wildcards)
-            return {"bins": wgs_cnv_calling(base_path + "_bins.txt")}
+            return {
+                "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
+                    base_path + "_bins.txt"
+                )
+            }
 
         return func
 
@@ -155,20 +159,20 @@ class AscatStepPart(BaseStepPart):
         def func(wildcards):
             result = {
                 "baf_tumor": (
-                    "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/out/"
-                    "{mapper}.ascat_baf_tumor.{tumor_library_name}.txt"
+                    "work/ascat_baf_tumor.{tumor_library_name}/out/"
+                    "ascat_baf_tumor.{tumor_library_name}.txt"
                 ),
                 "baf_normal": (
-                    "work/{mapper}.ascat_baf_normal.{normal_library_name}/out/"
-                    "{mapper}.ascat_baf_normal.{normal_library_name}.txt"
+                    "work/ascat_baf_normal.{normal_library_name}/out/"
+                    "ascat_baf_normal.{normal_library_name}.txt"
                 ),
                 "cnv_tumor": (
-                    "work/{mapper}.ascat_cnv_tumor.{tumor_library_name}/out/"
-                    "{mapper}.ascat_cnv_tumor.{tumor_library_name}.txt"
+                    "work/ascat_cnv_tumor.{tumor_library_name}/out/"
+                    "ascat_cnv_tumor.{tumor_library_name}.txt"
                 ),
                 "cnv_normal": (
-                    "work/{mapper}.ascat_cnv_normal.{normal_library_name}/out/"
-                    "{mapper}.ascat_cnv_normal.{normal_library_name}.txt"
+                    "work/ascat_cnv_normal.{normal_library_name}/out/"
+                    "ascat_cnv_normal.{normal_library_name}.txt"
                 ),
             }
             normal_library_name = self.get_normal_lib_name(wildcards)
@@ -188,7 +192,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating BAF file for the tumor."""
         return {
             "txt": (
-                "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/out/{mapper}."
+                "work/ascat_baf_tumor.{tumor_library_name}/out/"
                 "ascat_baf_tumor.{tumor_library_name}.txt"
             )
         }
@@ -198,7 +202,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating BAF file for the normal."""
         return {
             "txt": (
-                "work/{mapper}.ascat_baf_normal.{normal_library_name}/out/{mapper}."
+                "work/ascat_baf_normal.{normal_library_name}/out/"
                 "ascat_baf_normal.{normal_library_name}.txt"
             )
         }
@@ -208,7 +212,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating BAF file for the tumor."""
         return {
             "txt": (
-                "work/{mapper}.ascat_cnv_tumor.{tumor_library_name}/out/{mapper}."
+                "work/ascat_cnv_tumor.{tumor_library_name}/out/"
                 "ascat_cnv_tumor.{tumor_library_name}.txt"
             )
         }
@@ -218,7 +222,7 @@ class AscatStepPart(BaseStepPart):
         """Return output files for generating CNV file for the normal."""
         return {
             "txt": (
-                "work/{mapper}.ascat_cnv_normal.{normal_library_name}/out/{mapper}."
+                "work/ascat_cnv_normal.{normal_library_name}/out/"
                 "ascat_cnv_normal.{normal_library_name}.txt"
             )
         }
@@ -226,12 +230,10 @@ class AscatStepPart(BaseStepPart):
     @dictify
     def _get_output_files_run_ascat(self):
         """Return output files for actually running ASCAT."""
-        yield "done", touch("work/{mapper}.ascat.{tumor_library_name}/out/.done")
+        yield "done", touch("work/ascat.{tumor_library_name}/out/.done")
         infixes = ("goodness_of_fit", "ploidy", "segments", "segments_raw")
         for infix in infixes:
-            path = (
-                "work/{mapper}.ascat.{tumor_library_name}/out/{tumor_library_name}_%s.txt"
-            ) % infix
+            path = ("work/ascat.{tumor_library_name}/out/{tumor_library_name}_%s.txt") % infix
             yield infix, path
 
     def get_args(self, action):
@@ -279,25 +281,22 @@ class AscatStepPart(BaseStepPart):
         self._validate_action(action)
         log_dict = {
             "baf_tumor": (
-                "work/{mapper}.ascat_baf_tumor.{tumor_library_name}/log/"
-                "{mapper}.ascat_baf_tumor.{tumor_library_name}.log"
+                "work/ascat_baf_tumor.{tumor_library_name}/log/"
+                "ascat_baf_tumor.{tumor_library_name}.log"
             ),
             "baf_normal": (
-                "work/{mapper}.ascat_baf_normal.{normal_library_name}/log/"
-                "{mapper}.ascat_baf_normal.{normal_library_name}.log"
+                "work/ascat_baf_normal.{normal_library_name}/log/"
+                "ascat_baf_normal.{normal_library_name}.log"
             ),
             "cnv_tumor": (
-                "work/{mapper}.ascat_cnv_tumor.{tumor_library_name}/log/"
-                "{mapper}.ascat_cnv_tumor.{tumor_library_name}.log"
+                "work/ascat_cnv_tumor.{tumor_library_name}/log/"
+                "ascat_cnv_tumor.{tumor_library_name}.log"
             ),
             "cnv_normal": (
-                "work/{mapper}.ascat_cnv_normal.{normal_library_name}/log/"
-                "{mapper}.ascat_cnv_normal.{normal_library_name}.log"
+                "work/ascat_cnv_normal.{normal_library_name}/log/"
+                "ascat_cnv_normal.{normal_library_name}.log"
             ),
-            "run_ascat": (
-                "work/{mapper}.ascat.{tumor_library_name}/log/"
-                "{mapper}.ascat.{tumor_library_name}.log"
-            ),
+            "run_ascat": ("work/ascat.{tumor_library_name}/log/ascat.{tumor_library_name}.log"),
         }
         return {"log": log_dict[action]}
 
@@ -323,6 +322,10 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_purity_ploidy_estimate"
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"purity_ploidy"}))]
+
+    config_model_class = SomaticPurityPloidyEstimateConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -338,24 +341,34 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local purity/ploidy output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/ascat.{lib}/out/.done"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticPurityPloidyEstimateConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
-        if self.config.tool_cnv_calling == "copywriter":
-            self.register_module(
-                "somatic_targeted_seq_cnv_calling",
-                self.config.path_somatic_targeted_seq_cnv_calling,
-            )
 
     @listify
     def get_result_files(self):
@@ -364,23 +377,18 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        name_pattern = "{mapper}.{tool}.{ngs_library.name}"
-        for tool in self.config.tools:
-            for sheet in self.shortcut_sheets:
-                for donor in sheet.donors:
-                    # Skip all donors that do not have a non-tumor bio sample, estimation only
-                    # implemented for matched samples at the moment.
-                    has_normal = any(not s.is_tumor for s in donor.bio_samples.values())
-                    if not has_normal:
+        name_pattern = "ascat.{ngs_library.name}"
+        for sheet in self.shortcut_sheets:
+            for donor in sheet.donors:
+                # Skip all donors that do not have a non-tumor bio sample, estimation only
+                # implemented for matched samples at the moment.
+                has_normal = any(not s.is_tumor for s in donor.bio_samples.values())
+                if not has_normal:
+                    continue
+                for bio_sample in donor.bio_samples.values():
+                    if not bio_sample.is_tumor:
                         continue
-                    for bio_sample in donor.bio_samples.values():
-                        if not bio_sample.is_tumor:
-                            continue
-                        for _test_sample in bio_sample.test_samples.values():
-                            ngs_library = bio_sample.dna_ngs_library
-                            name_pattern_value = name_pattern.format(
-                                mapper=self.config.tool_ngs_mapping,
-                                tool=tool,
-                                ngs_library=ngs_library,
-                            )
-                            yield os.path.join("output", name_pattern_value, "out", ".done")
+                    for _test_sample in bio_sample.test_samples.values():
+                        ngs_library = bio_sample.dna_ngs_library
+                        name_pattern_value = name_pattern.format(ngs_library=ngs_library)
+                        yield os.path.join("output", name_pattern_value, "out", ".done")

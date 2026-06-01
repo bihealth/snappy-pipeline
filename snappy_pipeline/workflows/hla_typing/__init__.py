@@ -17,22 +17,22 @@ See :ref:`ngs_mapping_step_input` for more information.
 Step Output
 ===========
 
-HLA typing will be performed for all NGS libraries in all sample sheets.  For each combination
-of HLA typer and library, a directory ``{hla_typer}.{lib_name}-{lib_pk}/out`` will be created.
+HLA typing will be performed for all NGS libraries in all sample sheets. For each
+library, a directory ``{lib_name}-{lib_pk}/out`` will be created.
 Therein, the following files will be created:
 
-- ``{hla_typer}.{lib_name}-{lib_pk}.txt``
-- ``{hla_typer}.{lib_name}-{lib_pk}.txt.md5``
+- ``{lib_name}-{lib_pk}.txt``
+- ``{lib_name}-{lib_pk}.txt.md5``
 
 For example, it might look as follows for the example from above:
 
 ::
 
     output/
-    +-- optitype.P001-N1-DNA1-WES1-4
+    +-- P001-N1-DNA1-WES1-4
     |   `-- out
-    |       |-- optitype.P001-N1-DNA1-WES1-4.txt
-    |       `-- optitype.P001-N1-DNA1-WES1-4.txt.md5
+    |       |-- P001-N1-DNA1-WES1-4.txt
+    |       `-- P001-N1-DNA1-WES1-4.txt.md5
     [...]
 
 =====================
@@ -71,6 +71,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import HlaTyping as HlaTypingConfigModel
 
@@ -102,14 +103,15 @@ class OptiTypeStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/optitype.{{library_name}}/out/optitype.{{library_name}}{ext}"
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
+        self.preprocessed_path = self.parent.get_preprocessed_path()
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config.path_link_in,
+            preprocessed_path=self.preprocessed_path,
         )
 
     @staticmethod
@@ -127,6 +129,8 @@ class OptiTypeStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext)
         # add additional optitype output files
@@ -138,7 +142,9 @@ class OptiTypeStepPart(BaseStepPart):
         """Return dict of log files."""
         self._validate_action(action)
 
-        prefix = "work/{name}.{{library_name}}/log/{name}.{{library_name}}".format(name=self.name)
+        if self.name != str(self.config.tool):
+            return {}
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -177,12 +183,15 @@ class OptiTypeStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.preprocessed_path:
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
-            yield os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
+            path = task_prefix + path
+            yield path
 
     def _get_seq_type(self, wildcards):
         """Return sequence type for the library name in wildcards"""
@@ -225,9 +234,7 @@ class ArcasHlaStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.mapper = self.config.arcashla.mapper
-        self.base_path_out = (
-            "work/{mapper}.arcashla.{{library_name}}/out/{mapper}.arcashla.{{library_name}}{ext}"
-        )
+        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
 
     def get_input_files(self, action):
@@ -236,10 +243,10 @@ class ArcasHlaStepPart(BaseStepPart):
         @dictify
         def input_function(wildcards):
             yield "ref_done", "work/arcashla.prepare_reference/out/.done"
-            tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}.bam"
+            tpl = "output/{library_name}/out/{library_name}.bam"
             yield (
                 "bam",
-                self.parent.modules["ngs_mapping"](tpl.format(mapper=self.mapper, **wildcards)),
+                self.parent.upstream("ngs_mapping")(tpl.format(mapper=self.mapper, **wildcards)),
             )
 
         assert action == "run"
@@ -249,17 +256,19 @@ class ArcasHlaStepPart(BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         assert action == "run"
+        if self.name != str(self.config.tool):
+            return {}
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext, mapper=self.config.arcashla.mapper)
 
     def get_output_prefix(self):
-        return "%s." % self.config.arcashla.mapper
+        return ""
 
     @staticmethod
     def get_log_file(action):
         """Return path to log file"""
         _ = action
-        return "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
+        return "work/{library_name}/log/snakemake.hla_typing.log"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -287,9 +296,14 @@ class HlaTypingWorkflow(BaseStep):
 
     #: Step name
     name = "hla_typing"
+    consumes = {DataSignature(DataType.RAW): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"hla"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
+
+    #: config_model_class
+    config_model_class = HlaTypingConfigModel
 
     @classmethod
     def default_config_yaml(cls):
@@ -298,8 +312,18 @@ class HlaTypingWorkflow(BaseStep):
         """
         return DEFAULT_CONFIG
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs, config_model_class=HlaTypingConfigModel)
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local HLA typing output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "txt": f"output/{lib}/out/{lib}.txt",
+            "done": f"output/{lib}/out/.done",
+        }
+
+    def __init__(self, *args, task_name: str, **kwargs):
+        super().__init__(*args, task_name=task_name, **kwargs)
         sub_steps = [LinkInStepPart, LinkOutStepPart, OptiTypeStepPart, ArcasHlaStepPart]
         self.register_sub_step_classes(tuple(sub_steps))
         #: Mapping from library name to library object
@@ -307,8 +331,6 @@ class HlaTypingWorkflow(BaseStep):
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
                 self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
-        # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -319,7 +341,7 @@ class HlaTypingWorkflow(BaseStep):
         """
         from os.path import join
 
-        name_pattern = "{prefix}{hla_typer}.{ngs_library.name}"
+        name_pattern = "{ngs_library.name}"
         yield from self._yield_result_files(
             join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
@@ -330,18 +352,16 @@ class HlaTypingWorkflow(BaseStep):
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""
+        tool = str(self.config.tool)
         for sheet in self.shortcut_sheets:
             for ngs_library in sheet.all_ngs_libraries:
-                for tool in self.config.tools:
-                    supported = self.sub_steps[tool].supported_extraction_types
-                    extraction_type = ngs_library.test_sample.extra_infos.get(
-                        "extractionType", "DNA"
-                    ).lower()
-                    if extraction_type in supported:
-                        yield from expand(
-                            tpl,
-                            prefix=self.sub_steps[tool].get_output_prefix(),
-                            hla_typer=[tool],
-                            ngs_library=[ngs_library],
-                            **kwargs,
-                        )
+                supported = self.sub_steps[tool].supported_extraction_types
+                extraction_type = ngs_library.test_sample.extra_infos.get(
+                    "extractionType", "DNA"
+                ).lower()
+                if extraction_type in supported:
+                    yield from expand(
+                        tpl,
+                        ngs_library=[ngs_library],
+                        **kwargs,
+                    )

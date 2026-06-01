@@ -5,26 +5,17 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.gcnv import PrecomputedModelEntry
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
-class DnaTool(enum.StrEnum):
+class Tool(enum.StrEnum):
     delly2 = "delly2"
     manta = "manta"
     popdel = "popdel"
     gcnv = "gcnv"
     melt = "melt"
-
-
-class DnaLongTool(enum.StrEnum):
-    sniffles2 = "sniffles2"
-    # These seem to be unused:
-    # sniffles = "sniffles"
-    # pb_honey_spots = "pb_honey_spots"
-
-
-class Tools(SnappyModel):
-    dna: Annotated[list[DnaTool], EnumField(DnaTool, [DnaTool.delly2])]
-    dna_long: Annotated[list[DnaLongTool], EnumField(DnaLongTool, [])]
+    # sniffles2 = "sniffles2"  # exclude for now
 
 
 class Gcnv(SnappyModel):
@@ -125,10 +116,18 @@ class Sniffles2(SnappyModel):
     """
 
 
-class SvCallingWgs(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+class SvCallingWgsDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    tools: Tools
+
+class SvCallingWgs(SnappyStepModel):
+    depends_on: SvCallingWgsDependsOn = Field(default_factory=SvCallingWgsDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.delly2)]
 
     delly2: Delly2 | None = None
 
@@ -146,9 +145,6 @@ class SvCallingWgs(SnappyStepModel):
 
     @model_validator(mode="after")
     def ensure_tools_are_configured(self):
-        for data_type in ("dna", "dna_long"):
-            tool_list = getattr(self.tools, data_type)
-            for tool in tool_list:
-                if not getattr(self, tool):
-                    raise ValueError(f"Tool {tool} not configured")
+        if not getattr(self, self.tool):
+            raise ValueError(f"Tool {self.tool} not configured")
         return self

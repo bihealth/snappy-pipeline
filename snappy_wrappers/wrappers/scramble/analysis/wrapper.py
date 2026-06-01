@@ -1,10 +1,12 @@
 """CUBI+Snakemake wrapper code for scramble (analysis): Snakemake wrapper.py"""
 
 import os
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
-shell.executable("/bin/bash")
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
 
@@ -19,21 +21,8 @@ mei_ref_argument = ""
 if args["mei_refs"]:
     mei_ref_argument = "--mei-refs " + str(args["mei_refs"])
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
 # Create out dir
 mkdir -p $(dirname {snakemake.output.txt})
 
@@ -51,15 +40,5 @@ scramble.sh  {mei_ref_argument} \
 # Post-process VCF
 bgzip --stdout {snakemake.output.vcf} > {snakemake.output.vcf_gz}
 tabix {snakemake.output.vcf_gz}
-"""
-)
-
-# Compute MD5 sums of log and MEI output
-shell(
-    r"""
-md5sum {snakemake.log} > {snakemake.log}.md5
-md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
-md5sum {snakemake.output.vcf_gz} > {snakemake.output.vcf_gz_md5}
-md5sum {snakemake.output.vcf_tbi} > {snakemake.output.vcf_tbi_md5}
 """
 )

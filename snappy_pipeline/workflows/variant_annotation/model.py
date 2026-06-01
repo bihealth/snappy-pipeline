@@ -3,8 +3,10 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.annotation import Vep
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 
 class Tool(enum.StrEnum):
@@ -24,12 +26,24 @@ class VepCustom(Vep):
     more_flags: str = "--af_gnomade --af_gnomadg"
 
 
-class VariantAnnotation(SnappyStepModel, validators.ToolsMixin):
-    path_variant_calling: Annotated[str, Field(examples=["../variant_calling"])] = (
-        "../variant_calling"
-    )
-    """Path to variant calling"""
+class ExpectedAnnotatedGermlineVariants(SnappyModel):
+    """Consumer-driven contract: expected output keys from variant_annotation."""
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
+    vcf: str
+    vcf_tbi: str
+
+
+class VariantAnnotationDependsOn(SnappyModel):
+    variant_calling: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline"})),
+        ExpectedPathSchema(ExpectedGermlineVariants),
+    ] = "variant_calling"
+
+
+class VariantAnnotation(SnappyStepModel):
+    depends_on: VariantAnnotationDependsOn = Field(default_factory=VariantAnnotationDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.vep)]
 
     vep: VepCustom | None = None

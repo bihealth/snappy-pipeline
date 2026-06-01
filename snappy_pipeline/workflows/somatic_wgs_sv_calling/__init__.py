@@ -16,15 +16,14 @@ The variant annotation step uses Snakemake sub workflows for using the result of
 Step Output
 ===========
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk`` and each read mapper
-``mapper`` that the library has been aligned with, and the variant caller ``var_caller``, the
-pipeline step will create a directory ``output/{mapper}.{var_caller}.{lib_name}-{lib_pk}/out``
+For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk``
+the pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
 with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
 
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{mapper}.{var_caller}.{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi``
+- ``{lib_name}-{lib_pk}.vcf.gz.md5``
+- ``{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
 
 For example, it might look as follows for the example from above:
 
@@ -87,6 +86,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SomaticWgsSvCalling as SomaticWgsSvCallingConfigModel
@@ -118,10 +118,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{cancer_library}}/out/"
-            "{{mapper}}.{var_caller}.{{cancer_library}}{ext}"
-        )
+        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
         # Build shortcut from cancer bio sample name to matched tumor sample
         self.cancer_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -136,16 +133,11 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
 
     def _get_input_files_run(self, wildcards):
         """Helper wrapper function"""
-        # Get shorcut to Snakemake sub workflow
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        # Get names of primary libraries of the selected cancer bio sample and the
-        # corresponding primary normal sample
-        normal_base_path = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        normal_base_path = "output/{normal_library}/out/{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
-        cancer_base_path = (
-            "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}"
-        ).format(**wildcards)
+        cancer_base_path = "output/{cancer_library}/out/{cancer_library}".format(**wildcards)
         return {
             "normal_bam": ngs_mapping(normal_base_path + ".bam"),
             "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
@@ -164,17 +156,12 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
         """
         # Validate action
         self._validate_action(action)
-        return dict(
-            zip(EXT_NAMES, expand(self.base_path_out, var_caller=[self.name], ext=EXT_VALUES))
-        )
+        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
 
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return (
-            "work/{{mapper}}.{var_caller}.{{cancer_library}}/log/"
-            "snakemake.somatic_wgs_sv_calling.log"
-        ).format(var_caller=self.__class__.name)
+        return ("work/{{cancer_library}}/log/snakemake.somatic_wgs_sv_calling.log").format()
 
 
 class MantaStepPart(SomaticWgsSvCallingStepPart):
@@ -218,21 +205,18 @@ class Delly2StepPart(BaseStepPart):
 
     #: Directory infixes
     dir_infixes = {
-        "call": "{mapper}.delly2.call.{cancer_library}.{sv_type}",
-        "filter_normal": "{mapper}.delly2.filter_normal.{cancer_library}.{sv_type}",
-        "merge_calls": "{mapper}.delly2.merge_calls.{sv_type}",
-        "genotype": "{mapper}.delly2.genotype.{library_name}.{sv_type}",
-        "merge_genotypes": "{mapper}.delly2.merge_genotypes.{cancer_library}.{sv_type}",
-        "filter_controls": "{mapper}.delly2.filter_controls.{cancer_library}.{sv_type}",
-        "final_vcf": "{mapper}.delly2.{cancer_library}.{sv_type}",
+        "call": "delly2.call.{cancer_library}.{sv_type}",
+        "filter_normal": "delly2.filter_normal.{cancer_library}.{sv_type}",
+        "merge_calls": "delly2.merge_calls.{sv_type}",
+        "genotype": "delly2.genotype.{library_name}.{sv_type}",
+        "merge_genotypes": "delly2.merge_genotypes.{cancer_library}.{sv_type}",
+        "filter_controls": "delly2.filter_controls.{cancer_library}.{sv_type}",
+        "final_vcf": "delly2.{cancer_library}.{sv_type}",
     }
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{cancer_library}}/out/"
-            "{{mapper}}.{var_caller}.{{cancer_library}}{ext}"
-        )
+        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
         # Build shortcut from cancer bio sample name to matched tumor sample
         self.cancer_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -262,15 +246,15 @@ class Delly2StepPart(BaseStepPart):
     @dictify
     def _get_input_files_call(self, wildcards):
         """Return input files for "call" action: bams for matched T/N pair"""
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        normal_tpl = "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}{ext}"
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        normal_tpl = "output/{normal_library}/out/{normal_library}{ext}"
         norm_lib = self.get_normal_lib_name(wildcards)
         for name, ext in {"normal_bam": ".bam", "normal_bai": ".bam.bai"}.items():
             yield (
                 name,
                 ngs_mapping(normal_tpl.format(ext=ext, normal_library=norm_lib, **wildcards)),
             )
-        tumor_tpl = "output/{mapper}.{cancer_library}/out/{mapper}.{cancer_library}{ext}"
+        tumor_tpl = "output/{cancer_library}/out/{cancer_library}{ext}"
         for name, ext in {"tumor_bam": ".bam", "tumor_bai": ".bam.bai"}.items():
             yield name, ngs_mapping(tumor_tpl.format(ext=ext, **wildcards))
         # create description of samples that went into this bcf
@@ -309,8 +293,8 @@ class Delly2StepPart(BaseStepPart):
         infix = self.dir_infixes["merge_calls"]
         yield "bcf", os.path.join("work", infix, "out", infix + ".bcf").format(**wildcards)
         # BAM files : we want to individually process each tumor and each normal bam
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        tpl = "output/{library_name}/out/{library_name}{ext}"
         for name, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield name, ngs_mapping(tpl.format(ext=ext, **wildcards))
 
@@ -407,6 +391,10 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_wgs_sv_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "sv"}))]
+
+    config_model_class = SomaticWgsSvCallingConfigModel
 
     #: Default biomedsheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -420,20 +408,35 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local somatic WGS SV output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticWgsSvCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Delly2StepPart, MantaStepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
@@ -441,11 +444,9 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "{mapper}.{caller}.{cancer_library.name}"
+        name_pattern = "{cancer_library.name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-            caller=self.config.tools,
             ext=EXT_VALUES,
         )
 
@@ -466,7 +467,9 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
                     )  # pragma: no cover
                     continue  # pragma: no cover
                 yield from expand(
-                    tpl, cancer_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )
 
     def check_config(self):

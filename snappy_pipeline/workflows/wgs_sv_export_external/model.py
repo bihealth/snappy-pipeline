@@ -2,10 +2,23 @@ from typing import Annotated
 
 from pydantic import DirectoryPath, Field, FilePath
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+
+
+class WgsSvExportExternalDependsOn(SnappyModel):
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    """Optional upstream link_in task providing the external VCF search path."""
 
 
 class WgsSvExportExternal(SnappyStepModel):
+    depends_on: WgsSvExportExternalDependsOn = Field(default_factory=WgsSvExportExternalDependsOn)
+
     tool_ngs_mapping: str | None = None
     """used to create output file prefix."""
 

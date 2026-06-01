@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MuTect 2: Snakemake wrapper.py"""
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -25,36 +25,12 @@ if java_options := args.get("java_options", ""):
 
 extra_arguments = " ".join(args.get("extra_arguments", []))
 
-shell.executable("/bin/bash")
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
 # export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
-
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Setup auto-cleaned tmpdir
-export tmpdir=$(mktemp -d)
-trap "rm -rf $tmpdir" EXIT
 
 # Workaround problem with bcftools merging inserting missing values (.) in MPOS
 zcat {snakemake.input.raw} \
@@ -67,7 +43,7 @@ zcat {snakemake.input.raw} \
             print $0;
         }}
     }}' \
-    > $tmpdir/in.vcf
+    > $TMPDIR/in.vcf
 
 # Filter calls
 gatk {java_options} FilterMutectCalls \
@@ -75,25 +51,25 @@ gatk {java_options} FilterMutectCalls \
     {segments} {table} \
     --ob-priors {snakemake.input.orientation} \
     --stats {snakemake.input.stats} \
-    --variant $tmpdir/in.vcf \
-    --output $tmpdir/out.vcf \
+    --variant $TMPDIR/in.vcf \
+    --output $TMPDIR/out.vcf \
     {extra_arguments}
 
 # Extract sample names
-grep -E '^##tumor_sample=' $tmpdir/out.vcf | sed -e 's/^##tumor_sample=//' > $tmpdir/tumor.lst
+grep -E '^##tumor_sample=' $TMPDIR/out.vcf | sed -e 's/^##tumor_sample=//' > $TMPDIR/tumor.lst
 
 # Extract normal sample(s), if present
-if grep -q '^##normal_sample=' "$tmpdir/out.vcf"; then
-    grep -E '^##normal_sample=' "$tmpdir/out.vcf" | sed -e 's/^##normal_sample=//' > "$tmpdir/normal.lst"
+if grep -q '^##normal_sample=' "$TMPDIR/out.vcf"; then
+    grep -E '^##normal_sample=' "$TMPDIR/out.vcf" | sed -e 's/^##normal_sample=//' > "$TMPDIR/normal.lst"
 else
     # No normal sample (tumor-only mode) → create empty file
-    > "$tmpdir/normal.lst"
+    > "$TMPDIR/normal.lst"
 fi
 
 
 # Validate
-num_tumor=$(wc -l < $tmpdir/tumor.lst)
-num_normal=$(wc -l < $tmpdir/normal.lst)
+num_tumor=$(wc -l < $TMPDIR/tumor.lst)
+num_normal=$(wc -l < $TMPDIR/normal.lst)
 
 
 if [[ $num_tumor -gt 1 ]]; then
@@ -109,15 +85,15 @@ fi
 
 # Tumor–Normal case
 if [[ $num_normal -eq 1 ]]; then
-    cat $tmpdir/normal.lst $tmpdir/tumor.lst > $tmpdir/samples.lst
-    bcftools view --samples-file $tmpdir/samples.lst \
+    cat $TMPDIR/normal.lst $TMPDIR/tumor.lst > $TMPDIR/samples.lst
+    bcftools view --samples-file $TMPDIR/samples.lst \
         --output-type z \
         --output {snakemake.output.full_vcf} \
-        $tmpdir/out.vcf
+        $TMPDIR/out.vcf
 
 elif [[ $num_normal -eq 0 && $num_tumor -eq 1 ]]; then
     # Tumor-only case
-    bgzip -c $tmpdir/out.vcf > {snakemake.output.full_vcf}
+    bgzip -c $TMPDIR/out.vcf > {snakemake.output.full_vcf}
 fi
 
 
@@ -126,23 +102,6 @@ tabix {snakemake.output.full_vcf}
 # Keep only PASS variants in main output
 bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.output.full_vcf}
 tabix -f {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf})
-fn=$(basename {snakemake.output.vcf})
-md5sum $fn > $fn.md5
-fn=$(basename {snakemake.output.vcf_tbi})
-md5sum $fn > $fn.md5
-fn=$(basename {snakemake.output.full_vcf})
-md5sum $fn > $fn.md5
-fn=$(basename {snakemake.output.full_vcf_tbi})
-md5sum $fn > $fn.md5
-popd
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)

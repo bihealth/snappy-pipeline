@@ -98,7 +98,8 @@ import sys
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import Wildcards, expand
+from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -109,7 +110,9 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
 from .model import VariantFiltration as VariantFiltrationConfigModel
@@ -212,7 +215,7 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}"
     )
 
@@ -243,13 +246,13 @@ class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
                     "work/write_pedigree.{index_library}/out/{index_library}.ped"
                 ).format(**wildcards),
             )
-            variant_annotation = self.parent.modules["variant_annotation"]
-            for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                output_path = (
-                    "output/{mapper}.{caller}.jannovar_annotate_vcf.{index_library}/out/"
-                    "{mapper}.{caller}.jannovar_annotate_vcf.{index_library}"
-                ).format(**wildcards)
-                yield key, variant_annotation(output_path) + ext
+            annotated: ExpectedAnnotatedGermlineVariants = self.parent.get_upstream_paths(
+                "variant_annotation", library_name=wildcards.index_library
+            )
+            yield "vcf", annotated.vcf
+            yield "vcf_tbi", annotated.vcf_tbi
+            yield "vcf_md5", annotated.vcf + ".md5"
+            yield "vcf_tbi_md5", annotated.vcf_tbi + ".md5"
 
         return input_function
 
@@ -262,7 +265,7 @@ class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersVariantsStepPart
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
     )
 
@@ -290,7 +293,7 @@ class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBa
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}"
     )
 
@@ -321,7 +324,7 @@ class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}"
     )
 
@@ -352,7 +355,7 @@ class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase)
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}"
     )
@@ -384,7 +387,7 @@ class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase
 
     #: File name pattern
     name_pattern = (
-        r"{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
+        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
         r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
         r"{scores,[^\.]+}.{het_comp,[^\.]+}"
     )
@@ -413,6 +416,15 @@ class VariantFiltrationWorkflow(BaseStep):
 
     #: Workflow name
     name = "variant_filtration"
+    consumes = {
+        DataSignature(
+            DataType.VARIANTS, frozenset({"germline", ("snv", "indel"), "annotated"})
+        ): True
+    }
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "filtered"}))
+    ]
+    config_model_class = VariantFiltrationConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -422,15 +434,37 @@ class VariantFiltrationWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local filtered germline VCF output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/jannovar_annotate_vcf.filtered.{lib}.{{filters}}/out/"
+            f"jannovar_annotate_vcf.filtered.{lib}.{{filters}}.vcf.gz",
+            "vcf_tbi": f"output/jannovar_annotate_vcf.filtered.{lib}.{{filters}}/out/"
+            f"jannovar_annotate_vcf.filtered.{lib}.{{filters}}.vcf.gz.tbi",
+        }
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantFiltrationConfigModel,
             previous_steps=(VariantAnnotationWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -445,25 +479,15 @@ class VariantFiltrationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Register sub workflows
-        self.register_module("variant_annotation", self.config.path_variant_annotation)
-        # Copy over "tools" setting from somatic_variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
-        if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
+        # Inputs are resolved via get_upstream_paths() in step parts.
 
     @listify
     def get_result_files(self):
         """Return list of result files for the variant filtration workflow."""
         # Generate output paths without extracting individuals.
-        name_pattern = (
-            "{mapper}.{caller}.jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
-        )
+        name_pattern = "jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            caller=self.config.tools_variant_calling,
             ext=EXT_VALUES,
         )
 

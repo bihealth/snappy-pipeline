@@ -25,23 +25,6 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 wf = SomaticVariantSignaturesWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
-# Modules =====================================================================
-cfg = wf.w_config["step_config"]["somatic_variant_signatures"]
-sub_workflow = "somatic_variant_filtration" if cfg["is_filtered"] else "somatic_variant_calling"
-
-
-module somatic_variant:
-    snakefile:
-        f"../{sub_workflow}/Snakefile"
-    config:
-        wf.w_config
-    prefix:
-        cfg("path_somatic_variant", os.path.join("..", sub_workflow))
-
-
-use rule * from somatic_variant
-
-
 # Rules =======================================================================
 
 
@@ -51,9 +34,9 @@ localrules:
 
 
 rule somatic_variant_signatures_all:
+    default_target: True
     input:
         wf.get_result_files(),
-    default_target: True
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,16 +63,16 @@ rule somatic_variant_signatures_tabulate_vcf:
         **(wf.get_input_files("tabulate_vcf", "run")),
     output:
         **wf.get_output_files("tabulate_vcf", "run"),
-    params:
-        args=wf.get_args("tabulate_vcf", "run"),
+    log:
+        wf.get_log_file("tabulate_vcf", "run"),
     threads: wf.get_resource("tabulate_vcf", "run", "threads")
     resources:
         runtime=wf.get_resource("tabulate_vcf", "run", "runtime"),
         mem=wf.get_resource("tabulate_vcf", "run", "mem"),
         partition=wf.get_resource("tabulate_vcf", "run", "partition"),
         tmpdir=wf.get_resource("tabulate_vcf", "run", "tmpdir"),
-    log:
-        wf.get_log_file("tabulate_vcf", "run"),
+    params:
+        args=wf.get_args("tabulate_vcf", "run"),
     wrapper:
         wf.wrapper_path("signatures/tabulate_vcf")
 
@@ -102,13 +85,13 @@ rule somatic_variant_signatures_deconstructsigs:
         **(wf.get_input_files("deconstruct_sigs", "run")),
     output:
         **wf.get_output_files("deconstruct_sigs", "run"),
+    log:
+        wf.get_log_file("deconstruct_sigs", "run"),
     threads: wf.get_resource("deconstruct_sigs", "run", "threads")
     resources:
         runtime=wf.get_resource("deconstruct_sigs", "run", "runtime"),
         mem=wf.get_resource("deconstruct_sigs", "run", "mem"),
         partition=wf.get_resource("deconstruct_sigs", "run", "partition"),
         tmpdir=wf.get_resource("deconstruct_sigs", "run", "tmpdir"),
-    log:
-        wf.get_log_file("deconstruct_sigs", "run"),
     wrapper:
         wf.wrapper_path("signatures/deconstruct_sigs")

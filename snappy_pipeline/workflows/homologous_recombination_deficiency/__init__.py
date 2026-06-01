@@ -37,9 +37,9 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.seqz.gz``
-    - ``{mapper}.{caller}.scarHRD.{lib_name}-{lib_pk}.json``
+- ``scarHRD.{lib_name}-{lib_pk}/out/``
+    - ``scarHRD.{lib_name}-{lib_pk}.seqz.gz``
+    - ``scarHRD.{lib_name}-{lib_pk}.json``
 
 =====================
 Default Configuration
@@ -71,6 +71,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
@@ -105,18 +106,22 @@ class ScarHRDStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        self.cnv_calling = self.parent.modules["cnv_calling"]
-        base_name = f"{wildcards.mapper}.{wildcards.caller}.{wildcards.library_name}"
+        aligner_tool = str(self.parent.get_task_config("ngs_mapping").tool)
+        cnv_tool = str(self.parent.get_task_config("cnv_calling").tool)
+        base_name = f"{aligner_tool}.{cnv_tool}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
-        yield "seqz", self.cnv_calling(f"output/{base_name}/out/{base_name}.seqz.gz")
+        yield (
+            "seqz",
+            self.parent.upstream("cnv_calling")(f"output/{base_name}/out/{base_name}.seqz.gz"),
+        )
 
     def get_output_files(self, action):
         if action == "install":
             return {"done": "work/R_packages/out/scarHRD.done"}
         elif action == "run":
             return {
-                "scarHRD": "work/{mapper}.{caller}.scarHRD.{library_name}/out/{mapper}.{caller}.scarHRD.{library_name}.json",
-                "scarHRD_md5": "work/{mapper}.{caller}.scarHRD.{library_name}/out/{mapper}.{caller}.scarHRD.{library_name}.json.md5",
+                "scarHRD": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json",
+                "scarHRD_md5": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json.md5",
             }
         else:
             raise UnsupportedActionException(
@@ -137,7 +142,7 @@ class ScarHRDStepPart(BaseStepPart):
         if action == "install":
             prefix = "work/R_packages/log/scarHRD"
         elif action == "run":
-            prefix = "work/{mapper}.{caller}.scarHRD.{library_name}/log/{mapper}.{caller}.scarHRD.{library_name}"
+            prefix = "work/scarHRD.{library_name}/log/scarHRD.{library_name}"
         else:
             raise UnsupportedActionException(
                 "Action '{action}' is not supported. Valid options: {valid}".format(
@@ -170,6 +175,13 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     #: Step name
     name = "homologous_recombination_deficiency"
+    consumes = {
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): False,
+    }
+    produces = [DataSignature(DataType.TABULAR, frozenset({"hrd"}))]
+
+    config_model_class = HomologousRecombinationDeficiencyConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -179,27 +191,41 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local HRD output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"json": f"output/scarHRD.{lib}/out/scarHRD.{lib}.json"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=HomologousRecombinationDeficiencyConfigModel,
             previous_steps=(SomaticTargetedSeqCnvCallingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module(
-            "somatic_targeted_seq_cnv_calling", self.config.path_cnv_calling, "cnv_calling"
-        )
 
     @listify
     def get_result_files(self):
         """Return list of result files for the homologous recombination deficiency step"""
         tool_actions = {"scarHRD": ("run",)}
+        tool = str(self.config.tool)
         for sheet in filter(is_not_background, self.shortcut_sheets):
             for sample_pair in sheet.all_sample_pairs:
                 if (
@@ -212,24 +238,21 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                     )
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
-                for tool in self.config.tools:
-                    for action in tool_actions[tool]:
-                        try:
-                            tpls = self.sub_steps[tool].get_output_files(action).values()
-                        except AttributeError:
-                            tpls = self.sub_steps[tool].get_output_files(action)
-                        tpls = list(tpls)
-                        tpls += list(self.sub_steps[tool].get_log_file(action).values())
-                        for tpl in tpls:
-                            filenames = expand(
-                                tpl,
-                                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-                                caller=["sequenza"],
-                                library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
-                            )
-                            for f in filenames:
-                                if ".tmp." not in f and not f.endswith(".done"):
-                                    yield f.replace("work/", "output/")
+                for action in tool_actions[tool]:
+                    try:
+                        tpls = self.sub_steps[tool].get_output_files(action).values()
+                    except AttributeError:
+                        tpls = self.sub_steps[tool].get_output_files(action)
+                    tpls = list(tpls)
+                    tpls += list(self.sub_steps[tool].get_log_file(action).values())
+                    for tpl in tpls:
+                        filenames = expand(
+                            tpl,
+                            library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
+                        )
+                        for f in filenames:
+                            if ".tmp." not in f and not f.endswith(".done"):
+                                yield f.replace("work/", "output/")
 
     def check_config(self):
         """Check that the necessary globalc onfiguration is present"""
@@ -237,4 +260,4 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA file not configured but required",
         )
-        assert "sequenza" in self.w_config.step_config["somatic_targeted_seq_cnv_calling"].tools
+        assert self.get_task_config("somatic_targeted_seq_cnv_calling").tool == "sequenza"

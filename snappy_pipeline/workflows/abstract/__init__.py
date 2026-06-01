@@ -11,12 +11,12 @@ import tempfile
 import typing
 from collections import OrderedDict
 from collections.abc import MutableMapping
+from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
 from typing import Any, Callable
 
-import attr
 import pydantic
 import ruamel.yaml as ruamel_yaml
 from biomedsheets import io_tsv
@@ -31,7 +31,8 @@ from biomedsheets.shortcuts import (
     write_pedigrees_to_ped,
 )
 from snakemake.api import Workflow
-from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
+from snakemake.io import touch
+from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
     MissingConfiguration,
@@ -44,6 +45,7 @@ from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
@@ -299,10 +301,6 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            if "ngs_mapping" not in self.parent.modules:
-                return  # early exit
-            # Get shortcut to NGS mapping sub workflow
-            ngs_mapping = self.parent.modules["ngs_mapping"]
             # Get names of primary libraries of the selected pedigree.  The pedigree is selected
             # by the primary DNA NGS library of the index.
             pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
@@ -311,18 +309,15 @@ class WritePedigreeStepPart(BaseStepPart):
                 donor_names = list(sorted(d.name for d in pedigree.donors))
                 print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
                 return
-            mappers = self.w_config.step_config["ngs_mapping"].tools.dna
-            tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
+            tpl = "output/{library_name}/out/{library_name}{ext}"
             for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
                 library_name = donor.dna_ngs_library.name
-                for mapper in mappers:
-                    path = tpl.format(
-                        library_name=library_name,
-                        mapper=mapper,
-                        ext=".bam",
-                        **wildcards,
-                    )
-                    yield ngs_mapping(path)
+                path = tpl.format(
+                    library_name=library_name,
+                    ext=".bam",
+                    **wildcards,
+                )
+                yield self.parent.upstream("ngs_mapping")(path)
 
         return get_input_files
 
@@ -361,6 +356,11 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
     Class contains method to write pedigree file for primary DNA sample given the index
     NGS library name.It will create pedigree information based sole on sample name,
     example 'P001' instead of 'P001-N1-DNA1-WGS1'.
+
+    Used by export-external workflows that operate on externally-provided data, so they
+    have no upstream ``ngs_mapping`` dependency.  Overrides ``get_input_files`` to return
+    an empty list — the pedigree is derived solely from the sample sheet and needs no
+    BAM-file ordering constraint.
     """
 
     #: Step name
@@ -368,6 +368,11 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
 
     def __init__(self, *args, **kwargs):
         WritePedigreeStepPart.__init__(self, *args, **kwargs)
+
+    def get_input_files(self, action):
+        """Return empty input list — pedigree writing only needs sample-sheet data."""
+        self._validate_action(action=action)
+        return []
 
     def run(self, wildcards, output):
         """Write out the pedigree information
@@ -406,15 +411,19 @@ class LinkOutStepPart(BaseStepPart):
     def get_input_files(self, action):
         """Return input file pattern"""
 
+        if not self.disable_patterns:
+            return self.base_path_in
+
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+
         def input_function(wildcards):
             """Helper wrapper function"""
             result = self.base_path_in.format(**wildcards)
             for pattern in self.disable_patterns:
                 if fnmatch(result, pattern):
                     raise ValueError("Blocking match...")
-            return result
+            return task_prefix + result
 
-        assert action == "run", "Unsupported action"
         return input_function
 
     def get_output_files(self, action):
@@ -425,15 +434,14 @@ class LinkOutStepPart(BaseStepPart):
     def get_shell_cmd(self, action, wildcards):
         """Return call for linking out"""
         assert action == "run", "Unsupported action"
-        tpl = "test -h {out} || ln -sr {in_} {out}"
-        in_ = self.base_path_in.replace("{", "{wildcards.")
-        out = self.base_path_out.replace("{", "{wildcards.")
-        return tpl.format(in_=in_, out=out)
+        return "test -h {output[0]} || ln -sr {input[0]} {output[0]}"
 
     def run_locally(self, action, wildcards):
         assert action == "run", "Unsupported action"
-        path_out = f"output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
-        path_in = f"work/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        # Prepend the task prefix to the paths
+        path_out = task_prefix + f"output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        path_in = task_prefix + f"work/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
         if not os.path.islink(path_out):
             target = os.path.relpath(path_in, start=os.path.dirname(path_out))
             os.symlink(target, path_out)
@@ -619,7 +627,7 @@ class DataSetInfo:
         return sheet
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclass(frozen=True)
 class DataSearchInfo:
     """Data search information - simplified version of ``DataSetInfo``."""
 
@@ -630,6 +638,18 @@ class DataSearchInfo:
     mixed_se_pe: bool
 
 
+@dataclass(frozen=True)
+class ResolvedDependency:
+    """Normalized dependency resolution result for one ``depends_on`` field."""
+
+    field_name: str
+    task_name: str
+    step_name: str
+    workflow_cls: type["BaseStep"]
+    signature: DataSignature | None
+    expected_schema: type[pydantic.BaseModel] | None
+
+
 class BaseStep:
     """Base class for the pipeline steps
 
@@ -638,6 +658,22 @@ class BaseStep:
 
     #: Override with step name
     name: str
+
+    #: DataSignatures this workflow step consumes
+    consumes: dict[DataSignature, bool] = {}
+
+    #: DataSignatures this workflow step produces
+    produces: list[DataSignature] = []
+
+    def __init_subclass__(cls, **kwargs):
+        """Enforce that every ``BaseStep`` subclass declares a ``produces`` contract."""
+        super().__init_subclass__(**kwargs)
+        # Only check concrete leaf classes that inherit produces=[] from BaseStep
+        own_produces = cls.__dict__.get("produces")
+        if own_produces is None and not cls.produces:
+            raise TypeError(
+                f"'{cls.__name__}' must declare a 'produces' list for contract compliance."
+            )
 
     #: Override with the sheet shortcut class to use
     sheet_shortcut_class: type[ShortcutSampleSheet]
@@ -675,7 +711,54 @@ class BaseStep:
         """
         return ""  # pragma: no cover
 
-    def __init__[C: SnappyStepModel](
+    #: Override with the Pydantic model class for configuration validation
+    config_model_class: type[SnappyStepModel]
+
+    @classmethod
+    def get_output_paths(
+        cls, signature: "DataSignature | None" = None, **kwargs
+    ) -> "dict[str, str]":
+        """Return **local** output paths for *signature*.
+
+        Override in concrete workflow classes to expose this step's outputs to downstream
+        consumers via :meth:`get_upstream_paths`.
+
+        Arguments:
+            signature: The :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature`
+                requested by the consumer.  Implementations should check
+                ``signature.satisfies(...)`` and raise ``ValueError`` for unsupported
+                signatures.
+            **kwargs: Caller-supplied identifiers (e.g. ``library_name``, ``sample_name``)
+                used to parametrise the returned path strings.  Implementations may use
+                ``{library_name}``-style format strings when the identifiers are omitted.
+
+        Returns:
+            A ``dict[str, str]`` mapping logical output key (e.g. ``"bam"``, ``"vcf"``) to a
+            **local** path string (relative to the step's own ``output/`` directory, e.g.
+            ``"output/{library_name}/out/{library_name}.bam"``).
+
+        Raises:
+            NotImplementedError: When the concrete subclass has not overridden this method.
+            ValueError: When *signature* is not supported by this workflow.
+        """
+        raise NotImplementedError(
+            f"'{cls.__name__}' must implement 'get_output_paths' to act as an upstream provider."
+        )
+
+    @classmethod
+    def supports_signature(cls, required: DataSignature | None) -> bool:
+        """Return whether ``required`` is produced by this workflow class."""
+        if required is None:
+            return True
+        return any(provided.satisfies(required) for provided in cls.produces)
+
+    @classmethod
+    def require_signature(cls, required: DataSignature | None) -> None:
+        """Raise ``ValueError`` when ``required`` is unsupported by this workflow class."""
+        if not cls.supports_signature(required):
+            raise ValueError(f"{cls.__name__} does not support signature: {required}")
+
+    def __init__(
         self,
         workflow: Workflow,
         config: MutableMapping[str, Any],
@@ -683,59 +766,52 @@ class BaseStep:
         config_paths: tuple[str, ...],
         work_dir: str,
         *,
-        config_model_class: type[C],
+        task_name: str | None = None,
         previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
-        self.name = self.__class__.name
-        #: Tuple with absolute paths to configuration files read
+        self.step_name = self.__class__.name
         self.config_paths = config_paths
-        #: Pydantic model class for configuration validation
-        self.config_model_class = config_model_class
-        #: Absolute path to directory of where to perform work
         self.work_dir = work_dir
-        #: Classes of previously executed steps, used for merging their default configuration as
-        #: well.
         self.previous_steps = tuple(previous_steps or [])
-        #: Snakefile "workflow" object
         self.workflow = workflow
-        self.modules = {}
-        #: Setup logger for the step
-        self.logger = logging.getLogger(self.name)
-        #: Merge default configuration with true configuration
-        workflow_config = config
-        local_config = workflow_config["step_config"].get(self.name, OrderedDict())
-        self.logger.info(local_config)
 
-        # #: Validate workflow step configuration using its accompanying pydantic model
-        # #: available through self.config_model_class (mandatory keyword arg for BaseStep)
-        # try:
-        #     self.config: C = validate_config(local_config, self.config_model_class)
-        #     # Also update the workflow config, just in case
-        #     workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
-        # except pydantic.ValidationError as ve:
-        #     self.logger.error(f"{self.name} failed validation:\n{local_config}")
-        #     raise ve
-
-        #: Validate complete workflow configuration using SnappyPipeline's ConfigModel
-        #: This includes static_data_config, step_config and data_sets
         try:
-            # local import of ConfigModel to avoid circular import
             from snappy_pipeline.workflow_model import ConfigModel
 
-            self.w_config: ConfigModel = ConfigModel(**workflow_config)
-            self.config: C = self.w_config.step_config[self.name]
+            self.w_config: ConfigModel = ConfigModel(**config)
         except pydantic.ValidationError as ve:
-            self.logger.error(f"Workflow configuration failed validation:\n{workflow_config}")
             raise ve
 
-        #: Paths with configuration paths, important for later retrieving sample sheet files
+        # 1. Look up the task name injected by the orchestrator
+        req_task_name = config.get("__task_name__") or task_name or self.step_name
+        self.task = next((t for t in self.w_config.tasks if t.name == req_task_name), None)
+
+        # 2. If the task doesn't match our step type (i.e. we are a submodule being
+        # blindly initialized by a parent's boilerplate Snakefile), ignore it and
+        # grab the actual config for our step type.
+        if not self.task or self.task.step != self.step_name:
+            self.task = next((t for t in self.w_config.tasks if t.step == self.step_name), None)
+
+        if not self.task:
+            raise ValueError(f"No task configuration found for step '{self.step_name}'.")
+
+        self.task_name = self.task.name
+        self.logger = logging.getLogger(self.task_name)
+
+        print(f"\n[DEBUG] Initializing step '{self.step_name}' for task '{self.task_name}'")
+
+        # Validate from mapping input explicitly to ensure nested coercion is applied consistently.
+        # Pass config_lookup_paths as validation context for path resolution.
+        self.config = self.config_model_class.model_validate(
+            self.task.config, context={"config_lookup_paths": config_lookup_paths}
+        )
+        self.depends_on = getattr(self.config, "depends_on", None)
+
         self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps: dict[str, BaseStepPart] = {}
         self.data_set_infos = list(self._load_data_set_infos())
-
-        #: Shortcut to the BioMed SampleSheet objects
         self.sheets = [info.sheet for info in self.data_set_infos]
-        #: Shortcut BioMed SampleSheet keyword arguments
+
         sheet_kwargs_list = [
             merge_kwargs(
                 first_kwargs=self.sheet_shortcut_kwargs,
@@ -743,7 +819,7 @@ class BaseStep:
             )
             for info in self.data_set_infos
         ]
-        #: Shortcut sheets
+
         self.shortcut_sheets = []
         klass = self.__class__.sheet_shortcut_class
         for sheet, kwargs in zip(self.sheets, sheet_kwargs_list):
@@ -752,26 +828,105 @@ class BaseStep:
             self.shortcut_sheets.append(
                 klass(sheet, *(self.__class__.sheet_shortcut_args or []), **kwargs)
             )
-        # Setup onstart/onerror/onsuccess hooks
-        self._setup_hooks()
 
-        # Even though we already validated via pydantic, we still call check_config here, as
-        # some of the checks done in substep check_config are not covered by the pydantic models yet
-        # and some of the checks actually influence program logic/flow
+        self._setup_hooks()
         self._check_config()
 
         config_string = self.config.model_dump_yaml(by_alias=True)
-        self.logger.debug(f"Configuration for step {self.name}\n{config_string}")
 
-        config_string = self.w_config.model_dump_yaml(by_alias=True)
-        self.logger.debug(f"Configuration for workflow\n{config_string}")
-
-        # Update snakemake.config (which `config` is a reference to)
-        # with the validated configuration.
-        # All fields with default values are explicitly defined.
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
-        self.logger.debug(f"Snakemake config\n{config}")
+
+    def get_task_config(self, name: str) -> SnappyStepModel:
+        """Retrieve the typed configuration model of an upstream task based on dependency resolution."""
+
+        # If the requested name matches this instance's step type or task name, return own config.
+        if name == self.name or name == getattr(self, "task_name", ""):
+            return self.config
+
+        # Resolve via config-model typed dependency mapping, then literal name as fallback.
+        dep_target = getattr(self.depends_on, name, None) if self.depends_on is not None else None
+        if dep_target is None and self.depends_on is not None:
+            # Check if any resolved dependency task has a step that matches `name`
+            for dep_field, dep_val in self.depends_on.model_dump().items():
+                if isinstance(dep_val, str) and dep_val:
+                    t = next((tk for tk in self.w_config.tasks if tk.name == dep_val), None)
+                    if t and t.step == name:
+                        dep_target = dep_val
+                        break
+        target_task_name = dep_target or name
+
+        # Find the task in the global config
+        task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
+
+        if not task:
+            matching_steps = [t for t in self.w_config.tasks if t.step == target_task_name]
+            if len(matching_steps) == 1:
+                task = matching_steps[0]
+            elif len(matching_steps) > 1:
+                raise ValueError(
+                    f"Ambiguous dependency: '{target_task_name}' matches multiple tasks by step type. "
+                    f"Please explicitly map it in the 'depends_on' block for task '{self.task_name}'."
+                )
+
+        if not task:
+            raise ValueError(
+                f"Task '{target_task_name}' (resolved from '{name}') not found in configuration."
+            )
+
+        # Instantiate and return its strictly typed config model
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        wf_class = WORKFLOW_REGISTRY.get(task.step)
+        if not wf_class:
+            raise ValueError(
+                f"Workflow class for step '{task.step}' not found in WORKFLOW_REGISTRY."
+            )
+
+        return wf_class.config_model_class.model_validate(task.config)
+
+    def get_preprocessed_path(self) -> str:
+        """Return a preprocessed FASTQ directory from configured RAW dependencies.
+
+        Resolution order:
+
+        1. The ``link_in`` dependency, if configured, using its explicit ``path`` value.
+        2. Any other configured ``depends_on`` field annotated with ``DataSignature(DataType.RAW)``,
+           interpreted as an in-pipeline task that exposes FASTQs under
+           ``<upstream_task_name>/output`` (e.g. ``adapter_trimming``).
+
+        Returns an empty string if no matching RAW provider dependency is configured.
+        """
+        if self.depends_on is None:
+            return ""
+
+        # Prefer explicit external path from link_in, if available.
+        link_in_task_name = getattr(self.depends_on, "link_in", "")
+        if link_in_task_name:
+            try:
+                upstream_config = self.get_task_config("link_in")
+                explicit_path = getattr(upstream_config, "path", "") or ""
+                if explicit_path:
+                    return explicit_path
+            except Exception:
+                pass
+
+        # Fallback: any configured RAW dependency task with standard output layout.
+        for field_name, field_info in type(self.depends_on).model_fields.items():
+            dep_task_name = getattr(self.depends_on, field_name, "")
+            if not dep_task_name:
+                continue
+            is_raw_dep = any(
+                isinstance(meta, DataSignature) and meta.type.value == "raw"
+                for meta in field_info.metadata
+            )
+            if not is_raw_dep:
+                continue
+            if field_name == "link_in":
+                continue
+            return f"{dep_task_name}/output"
+
+        return ""
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
@@ -876,33 +1031,143 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_module(self, step_name: str, prefix: os.PathLike, module_name: str | None = None):
+    def resolve_dependency(self, field_name: str) -> ResolvedDependency:
+        """Resolve one typed ``depends_on`` field into a normalized dependency object."""
+        if self.depends_on is None:
+            raise AttributeError(
+                f"Task '{self.task_name}' has no 'depends_on' configuration; "
+                f"cannot resolve upstream field '{field_name}'."
+            )
+
+        model_fields = type(self.depends_on).model_fields
+        field_info = model_fields.get(field_name)
+        if field_info is None:
+            raise ValueError(
+                f"Task '{self.task_name}' has no depends_on field named '{field_name}'."
+            )
+
+        target_task_name = getattr(self.depends_on, field_name)
+        if not target_task_name:
+            raise ValueError(f"Task '{self.task_name}': depends_on.{field_name} is empty or unset.")
+
+        target_task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
+        if target_task is None:
+            raise ValueError(
+                f"Task '{self.task_name}': upstream task '{target_task_name}' from "
+                f"depends_on.{field_name} was not found in configuration."
+            )
+        step_name = target_task.step
+
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        workflow_cls = WORKFLOW_REGISTRY.get(step_name)
+        if workflow_cls is None:
+            raise ValueError(
+                f"Workflow class for step '{step_name}' (from depends_on.{field_name}="
+                f"'{target_task_name}') not found in WORKFLOW_REGISTRY."
+            )
+
+        required_sig: DataSignature | None = None
+        expected_schema: type[pydantic.BaseModel] | None = None
+        for meta in field_info.metadata:
+            if isinstance(meta, DataSignature):
+                required_sig = meta
+            elif isinstance(meta, ExpectedPathSchema):
+                expected_schema = meta.schema
+            elif isinstance(meta, type) and issubclass(meta, pydantic.BaseModel):
+                expected_schema = meta
+
+        return ResolvedDependency(
+            field_name=field_name,
+            task_name=target_task_name,
+            step_name=step_name,
+            workflow_cls=workflow_cls,
+            signature=required_sig,
+            expected_schema=expected_schema,
+        )
+
+    def upstream(self, field_name: str) -> "Callable[[str], str]":
+        """Return a path-namespacing callable for ``depends_on.<field_name>``.
+
+        The returned callable accepts a single local path string and returns the
+        globally namespaced version (i.e. prefixed with the upstream task name).
+
+        Usage::
+
+            ngs = self.parent.upstream("ngs_mapping")
+            bam = ngs(f"output/{lib}/out/{lib}.bam")
+            bai = ngs(f"output/{lib}/out/{lib}.bam.bai")
+
+        Arguments:
+            field_name: The ``depends_on`` field name identifying the upstream task.
+
+        Returns:
+            A ``str -> str`` callable that prepends the resolved task name.
         """
-        Register workflow with given pipeline ``step_name``, using the given ``prefix``.
-        This requires importing the respective workflow in the Snakefile
-        (since the module API is not intended to be used programmatically).
-        For example:
+        # Resolve once — cheap after the first call thanks to how resolve_dependency works.
+        dep = self.resolve_dependency(field_name)
 
-        ```
-        module ngs_mapping:
-            snakefile:
-                "../ngs_mapping/Snakefile"
-            config:
-                wf.w_config
-            prefix:
-                wf.w_config["step_config"]["your_workflow"].get("path_ngs_mapping", "../ngs_mapping")
+        def _prefix(local_path: str) -> str:
+            if local_path.startswith("output/") or local_path.startswith("work/"):
+                return f"{dep.task_name}/{local_path}"
+            return os.path.join(dep.task_name, local_path).replace("\\", "/")
 
+        return _prefix
 
-        use rule * from ngs_mapping
-        ```
+    def get_upstream_paths(
+        self, req_field_name: str, **kwargs
+    ) -> "pydantic.BaseModel | dict[str, str]":
+        """Resolve global output paths from an upstream task using the Consumer-Driven Contract.
 
-        Optionally, the module name can be given separate from ``step_name`` (the default)
-        value for it.
+        This is the broker method for the semantic retrieval pattern.  The upstream
+        task's workflow class is located via :data:`~snappy_pipeline.workflow_registry.WORKFLOW_REGISTRY`
+        and its :py:meth:`get_output_paths` classmethod is called to produce **local** paths, which
+        are then namespaced with the upstream task name.
+
+        The ``depends_on`` field referenced by *req_field_name* may carry ``typing.Annotated``
+        metadata with:
+
+        * A :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature` – forwarded to
+          :py:meth:`get_output_paths`.
+        * An optional ``pydantic.BaseModel`` subclass – used to wrap the returned paths into a
+          typed object for dot-notation access.
+
+        Example::
+
+            # in a step part's _get_input_files_run method
+            alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=wildcards.library_name
+            )
+            bam = alignments.bam
+            bai = alignments.bai
+
+        Arguments:
+            req_field_name: The field name on ``self.config.depends_on`` that holds the upstream
+                task reference. Must match a key in the ``depends_on`` Pydantic model.
+            **kwargs: Forwarded verbatim to the upstream workflow's
+                :py:meth:`get_output_paths` classmethod (e.g. ``library_name``, ``sample_name``).
+
+        Returns:
+            A ``pydantic.BaseModel`` instance when an expected-schema class is present in the
+            ``Annotated`` metadata, otherwise a plain ``dict[str, str]``.
+
+        Raises:
+            AttributeError: If ``self.config`` has no ``depends_on`` attribute.
+            ValueError: If the upstream task or its workflow class cannot be resolved.
         """
-        module_name = module_name or step_name
-        if module_name in self.modules:
-            raise ValueError("Sub workflow {} already registered!".format(module_name))
-        self.modules[module_name] = lambda path: os.path.join(prefix, path)
+        dependency = self.resolve_dependency(req_field_name)
+
+        # Delegate path construction to the upstream workflow classmethod.
+        local_paths = dependency.workflow_cls.get_output_paths(
+            signature=dependency.signature, **kwargs
+        )
+
+        # Prepend upstream task name for Snakemake global namespace.
+        global_paths = {k: f"{dependency.task_name}/{v}" for k, v in local_paths.items()}
+
+        if dependency.expected_schema is not None:
+            return dependency.expected_schema(**global_paths)
+        return global_paths
 
     def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards
@@ -916,7 +1181,22 @@ class BaseStep:
 
         Delegates to the sub step object's get_input_files function
         """
-        return self._get_sub_step(sub_step).get_input_files(action)
+        input_files = self._get_sub_step(sub_step).get_input_files(action)
+        if callable(input_files):
+
+            def input_wrapper(*args, **kwargs):
+                try:
+                    return input_files(*args, **kwargs)
+                except TypeError as e:
+                    if kwargs and "unexpected keyword argument" in str(e):
+                        if args:
+                            return input_files(*args)
+                        if "wildcards" in kwargs:
+                            return input_files(kwargs["wildcards"])
+                    raise
+
+            return input_wrapper
+        return input_files
 
     def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
@@ -1248,14 +1528,7 @@ class LinkInStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_pattern_out = "work/input_links/{library_name}/.done"
-
-        # The key 'path_link_in' is only defined for pipelines that could used preprocessed
-        # FASTQ files. That doesn't make sense for pipelines that are using externally generated
-        # data already.
-        try:
-            preprocessed_path = self.config.path_link_in
-        except AttributeError:
-            preprocessed_path = ""
+        self.preprocessed_path = self.parent.get_preprocessed_path()
 
         # Path generator.
         self.path_gen = LinkInPathGenerator(
@@ -1263,7 +1536,7 @@ class LinkInStepPart(BaseStepPart):
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
             cache_file_name=".snappy_path_cache",
-            preprocessed_path=preprocessed_path,
+            preprocessed_path=self.preprocessed_path,
         )
 
     def get_input_files(self, action):
@@ -1275,17 +1548,14 @@ class LinkInStepPart(BaseStepPart):
         return touch(self.base_pattern_out)
 
     def get_shell_cmd(self, action, wildcards):
-        """Return call for linking in the files
-
-        The files are linked, keeping their relative paths to the item matching the "folderName"
-        intact.
-        """
+        """Return call for linking in the files"""
         assert action == "run", "Unsupported action"
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.preprocessed_path:
             folder_name = wildcards.library_name
         # Perform the command generation
         lines = []
@@ -1318,18 +1588,16 @@ class LinkInStepPart(BaseStepPart):
         return "\n".join(lines)
 
     def run_locally(self, action, wildcards):
-        """Links fastq files
-
-        The files are linked, keeping their relative paths to the item matching the "folderName"
-        intact.
-        """
+        """Links fastq files"""
         assert action == "run", "Unsupported action"
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
-        # Get folder name of first library candidate
+
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
+
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.preprocessed_path:
             folder_name = wildcards.library_name
+
         filenames = self._create_all_symlinks(self.path_gen, folder_name, out_path)
         if not filenames:
             msg = "Found no files to link in for {}".format(dict(**wildcards))
@@ -1391,14 +1659,15 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
         intact.
         """
         self._validate_action(action)
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         # Define path generator
         path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_search_infos,
             self.parent.config_lookup_paths,
         )
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Perform the command generation
         lines = []
         tpl = (
@@ -1438,14 +1707,15 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
         intact.
         """
         self._validate_action(action)
+        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
         # Define path generator
         path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_search_infos,
             self.parent.config_lookup_paths,
         )
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         filenames = self._create_all_symlinks(
             path_generator=path_gen,
             folder_name=wildcards.library_name,

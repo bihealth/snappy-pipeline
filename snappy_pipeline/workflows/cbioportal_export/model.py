@@ -1,11 +1,20 @@
 from __future__ import annotations
 
 import enum
-from typing import Any, TypedDict
+from typing import Annotated, Any, TypedDict
 
-from pydantic import ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+
+
+class ExpectedCopyNumberCalls(BaseModel):
+    """Consumer-driven contract for copy-number provider outputs used by cBioPortal export."""
+
+    done: str
 
 
 class MappingTool(enum.StrEnum):
@@ -52,7 +61,6 @@ class GenomeName(enum.StrEnum):
 
 
 class Expression(ToggleModel):
-    path_ngs_mapping: str = "../ngs_mapping"
     """When missing, no expression data is uploaded to cBioPortal"""
 
     expression_tool: ExpressionTool = ExpressionTool.STAR
@@ -64,15 +72,13 @@ class SomaticVariantStep(enum.StrEnum):
 
 
 class CNA(ToggleModel):
-    path_copy_number: str | None = None
     """When missing, no CNV data uploaded to portal. Access WES & WGS steps"""
 
     copy_number_tool: CopyNumberTool = CopyNumberTool.CNVKIT
 
     @model_validator(mode="after")
     def ensure_path_set_when_enabled(self):
-        if self.enabled and not self.path_copy_number:
-            raise ValueError("Copy number path must be set when copy_number_alteration is enabled")
+        # Dependency wiring is resolved via depends_on/task modules.
         return self
 
 
@@ -98,12 +104,31 @@ class ExtraInfos(TypedDict):
     column: str
 
 
+class CbioportalExportDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    copy_number: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
+        ExpectedPathSchema(ExpectedCopyNumberCalls),
+    ] = "copy_number"
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variant"
+
+
 class CbioportalExport(SnappyStepModel):
+    depends_on: CbioportalExportDependsOn = Field(default_factory=CbioportalExportDependsOn)
+
     model_config = ConfigDict(
         extra="forbid",
     )
 
-    path_somatic_variant: str
     """Annotation is mandatory, but filtration is optional, can happen before or after annotation"""
 
     mapping_tool: MappingTool = MappingTool.BWA

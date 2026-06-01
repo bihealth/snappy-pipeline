@@ -1,7 +1,11 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from pydantic import Field
+
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -18,9 +22,18 @@ class Delly2(SnappyModel):
     max_threads: int = 16
 
 
-class SomaticWgsSvCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.manta], min_length=1)]
+class SomaticWgsSvCallingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+
+
+class SomaticWgsSvCalling(SnappyStepModel):
+    depends_on: SomaticWgsSvCallingDependsOn = Field(default_factory=SomaticWgsSvCallingDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.manta)]
 
     manta: Manta | None = None
 

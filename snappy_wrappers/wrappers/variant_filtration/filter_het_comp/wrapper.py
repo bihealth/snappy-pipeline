@@ -3,14 +3,18 @@
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Prelude -----------------------------------------------------------------------------------------
 
-shell.executable("/bin/bash")
 shell.prefix("set -eu -o pipefail -x; ")
 
 # Get path to this file's (wrapper.py) directory.
@@ -34,7 +38,7 @@ if args["filter_mode"] == "passthrough":
 
 # Actual Filtration -------------------------------------------------------------------------------
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
@@ -161,9 +165,5 @@ bcftools concat -a -O z -o {snakemake.output.vcf} \
 $TMPDIR/par1.SNV.ARHC.vcf.gz $TMPDIR/par2.SNV.ARHC.vcf.gz
 
 tabix -f {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf})
-md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 """
 )

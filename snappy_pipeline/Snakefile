@@ -1,0 +1,74 @@
+import os
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+from snappy_pipeline import expand_ref
+
+configfile: "config.yaml"
+
+config, config_lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+tasks = config.get("tasks", [])
+all_target_files = []
+
+# Targeting mode:
+#   config["task"]      — single named task (highest priority)
+#   config["all_tasks"] — target all tasks explicitly
+#   default             — target only leaf tasks (tasks not depended on by any other task)
+target_task = config.get("task")
+target_all_tasks = config.get("all_tasks", False)
+
+# Compute leaf tasks: tasks whose names are not referenced as a dependency by any other task.
+# Optional dependencies with default value "" are excluded from the depended-on set.
+depended_on_task_names = set()
+for _task in tasks:
+    for _dep_value in (_task.get("config", {}).get("depends_on") or {}).values():
+        if _dep_value:  # skip empty-string optional deps
+            depended_on_task_names.add(_dep_value)
+
+leaf_task_names = {t["name"] for t in tasks} - depended_on_task_names
+
+if target_task:
+    _mode_desc = f"single task '{target_task}'"
+elif target_all_tasks:
+    _mode_desc = "all tasks (--all-tasks flag set)"
+else:
+    _mode_desc = f"leaf tasks only: {sorted(leaf_task_names)}"
+
+print(f"[snappy] Targeting {_mode_desc}", flush=True)
+
+for task in tasks:
+    task_name = task["name"]
+    step_type = task["step"]
+
+    wf_instance = WORKFLOW_REGISTRY[step_type](
+        workflow, config, config_lookup_paths, config_paths, os.getcwd(), task_name=task_name
+    )
+
+    if target_task is not None:
+        should_target = target_task == task_name
+    elif target_all_tasks:
+        should_target = True
+    else:
+        should_target = task_name in leaf_task_names
+
+    if should_target:
+        for f in wf_instance.get_result_files():
+            if not f.endswith((".md5", ".tbi", ".txt")):
+                all_target_files.append(os.path.join(task_name, f))
+
+for task in tasks:
+    t_name = task["name"]
+    t_step = task["step"]
+    alias = t_name + "_"
+
+    module:
+        name: t_name
+        snakefile: f"workflows/{t_step}/Snakefile"
+        config: config | {"__task_name__": t_name}
+        replace_prefix: {"output/": f"{t_name}/output/", "work/": f"{t_name}/work/"}
+
+    use rule * from t_name as alias*
+
+rule all:
+    input:
+        all_target_files
+    default_target: True

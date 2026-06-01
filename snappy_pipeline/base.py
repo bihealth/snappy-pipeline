@@ -58,15 +58,28 @@ def expand_ref(
     - paths containing included config files
     - config files included
     """
-    lookup_paths = lookup_paths or [os.getcwd(), str(Path(os.getcwd()).parent / ".snappy_pipeline")]
+    lookup_paths = lookup_paths or [os.getcwd(), str(Path(os.getcwd()).parent)]
     resolver = RefResolver(lookup_paths=lookup_paths, dict_class=dict_class)
+
+    # Helper to recursively strip None values that crash RefResolver
+    def _strip_nones(data):
+        if isinstance(data, dict):
+            return {k: _strip_nones(v) for k, v in data.items() if v is not None}
+        elif isinstance(data, list):
+            return [_strip_nones(v) for v in data if v is not None]
+        return data
+
     # In case of submodules, the dict_data can be a pydantic model
     # To work with the ref_resolver, we convert it to a dict first, excluding None values
     # which ref_resolver does not support
     if isinstance(dict_data, pydantic.BaseModel):
         dict_data = dict_data.model_dump(by_alias=True, exclude_none=True)
+    else:
+        dict_data = _strip_nones(dict_data)
+
     # Perform resolution
     resolved = resolver.resolve("file://" + config_path, dict_data)
+
     # Collect paths of all included configuration files, important for
     # data set importing later on
     lookup_paths = list(lookup_paths)  # copy!

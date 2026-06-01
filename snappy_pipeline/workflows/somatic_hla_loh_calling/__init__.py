@@ -30,7 +30,10 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
 
 from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
 
@@ -51,10 +54,7 @@ class LohhlaStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{{hla_caller}}.lohhla.{{tumor_library}}/out/"
-            "{{mapper}}.{{hla_caller}}.lohhla.{{tumor_library}}{ext}"
-        )
+        self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
@@ -68,29 +68,23 @@ class LohhlaStepPart(BaseStepPart):
 
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.modules["ngs_mapping"]
-            hla_typing = self.parent.modules["hla_typing"]
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
+            normal_lib = self.get_normal_lib_name(wildcards)
+            tumor_lib = wildcards.tumor_library
+            normal: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=normal_lib
             )
-            tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-            ).format(**wildcards)
-            hla = "output/optitype.{normal_library}/out/optitype.{normal_library}.txt".format(
-                normal_library=self.get_normal_lib_name(wildcards)
+            tumor: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=tumor_lib
             )
-
+            hla_typing: ExpectedHlaTyping = self.parent.get_upstream_paths(
+                "hla_typing", library_name=normal_lib
+            )
             return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
-                "hla": hla_typing(hla),
+                "normal_bam": normal.bam,
+                "normal_bai": normal.bai,
+                "tumor_bam": tumor.bam,
+                "tumor_bai": tumor.bai,
+                "hla": hla_typing.txt,
             }
 
         return input_function
@@ -104,16 +98,13 @@ class LohhlaStepPart(BaseStepPart):
         """Return output files from LOHHLA"""
         # Validate action
         self._validate_action(action)
-        return {"done": expand(self.base_path_out, ext=".done")}
+        return {"done": self.base_path_out.replace("{ext}", ".done")}
 
     @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
         _ = action
-        prefix = (
-            "work/{mapper}.{hla_caller}.lohhla.{tumor_library}/log/"
-            "{mapper}.{hla_caller}.lohhla.{tumor_library}"
-        )
+        prefix = "work/{tumor_library}/log/{tumor_library}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -129,6 +120,10 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_hla_loh_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"hla_loh"}))]
+
+    config_model_class = SomaticHlaLohCallingConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -142,21 +137,35 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local HLA LOH output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/{lib}/out/{lib}.done"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticHlaLohCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
-        self.register_module("hla_typing", self.config.path_hla_typing)
 
     @listify
     def get_result_files(self):
@@ -164,15 +173,13 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        name_pattern = "{mapper}.optitype.lohhla.{tumor_library.name}"
+        name_pattern = "{tumor_library.name}"
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             ext=".done",
         )
         yield from self._yield_result_files_matched(
             os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
             ext=(
                 ".log",
                 ".log.md5",
@@ -202,5 +209,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
                     print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
                     continue
                 yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
+                    tpl,
+                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
+                    **kwargs,
                 )

@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Manta in somatic variant calling mode on WGS data"""
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log}")
-set -x
-# -----------------------------------------------------------------------------
 
 basedir=$(dirname $(dirname {snakemake.output.vcf}))
 workdir=$basedir/work
@@ -43,9 +43,5 @@ ln -sr results/variants/candidateSV.vcf.gz \
     $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz
 ln -sr results/variants/candidateSV.vcf.gz.tbi \
     $(basename {snakemake.output.vcf} .vcf.gz).candidates.vcf.gz.tbi
-
-for f in results.tar.gz *.vcf.gz *.tbi; do
-    md5sum $f >$f.md5
-done
 """
 )

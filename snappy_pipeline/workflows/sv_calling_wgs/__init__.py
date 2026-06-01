@@ -5,7 +5,7 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -18,6 +18,7 @@ from snappy_pipeline.workflows.abstract.common import (
     ForwardResourceUsageMixin,
     ForwardSnakemakeFilesMixin,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
@@ -27,17 +28,12 @@ from snappy_pipeline.workflows.common.sv_calling import (
     SvCallingGetResultFilesMixin,
 )
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_wrappers.tools.genome_windows import yield_regions
 
-from .model import SvCallingWgs as SvCallingWgsConfigModel
+from .model import SvCallingWgs as SvCallingWgsConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-#: Available (short) DNA WGS SV callers
-DNA_WGS_SV_CALLERS = ("delly2", "manta", "popdel", "melt", "gcnv")
-
-#: Available (long) DNA WGS SV callers
-LONG_DNA_WGS_SV_CALLERS = ("pb_honey_spots", "sniffles", "sniffles2")
 
 #: Default configuration for the sv_calling_wgs step
 DEFAULT_CONFIG = SvCallingWgsConfigModel.default_config_yaml_string()
@@ -110,13 +106,15 @@ class PopDelStepPart(
     @dictify
     def _get_input_files_profile(self, wildcards):
         """Return input files for "call" action"""
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
-        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
+        infix = wildcards.library_name
+        yield (
+            "bam",
+            self.parent.upstream("ngs_mapping")(f"output/{infix}/out/{infix}.bam"),
+        )
 
     @dictify
     def _get_output_files_profile(self):
-        infix = "{mapper}.popdel_profile.{library_name}"
+        infix = "popdel_profile.{library_name}"
         yield "profile", f"work/{infix}/out/{infix}.profile"
         yield "profile_md5", f"work/{infix}/out/{infix}.profile.md5"
 
@@ -124,7 +122,7 @@ class PopDelStepPart(
     def _get_input_files_call(self, wildcards):
         paths = []
         for donor in self._donors_with_dna_ngs_library():
-            infix = f"{wildcards.mapper}.popdel_profile.{donor.dna_ngs_library.name}"
+            infix = f"popdel_profile.{donor.dna_ngs_library.name}"
             paths.append(f"work/{infix}/out/{infix}.profile")
         yield "profile", paths
 
@@ -144,7 +142,7 @@ class PopDelStepPart(
         yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_call(self):
-        return "{mapper}.popdel_call.{chrom}-{begin}-{end}"
+        return "popdel_call.{chrom}-{begin}-{end}"
 
     @dictify
     def _get_input_files_concat_calls(self, wildcards):
@@ -161,7 +159,7 @@ class PopDelStepPart(
                 if r.begin == 0:
                     r.begin = 1
                 chrom = escape_dots_dashes(r.chrom)
-                infix = f"{wildcards.mapper}.popdel_call.{chrom}-{r.begin}-{r.end}"
+                infix = f"popdel_call.{chrom}-{r.begin}-{r.end}"
                 vcfs.append(f"work/{infix}/out/{infix}.vcf.gz")
         yield "vcf", vcfs
 
@@ -180,16 +178,16 @@ class PopDelStepPart(
         yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_concat_calls(self):
-        return "{mapper}.popdel_concat_calls"
+        return "popdel_concat_calls"
 
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
-        infix = f"{wildcards.mapper}.popdel_concat_calls"
+        infix = "popdel_concat_calls"
         yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
 
     @dictify
     def _get_output_files_reorder_vcf(self):
-        infix = "{mapper}.popdel.{library_name}"
+        infix = "popdel.{library_name}"
         work_files = {}
         work_files["vcf"] = f"work/{infix}/out/{infix}.vcf.gz"
         work_files["vcf_md5"] = f"work/{infix}/out/{infix}.vcf.gz.md5"
@@ -245,8 +243,7 @@ class Sniffles2StepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{mapper}.sniffles2.{index_ngs_library}/out/"
-            "{mapper}.sniffles2.{index_ngs_library}{ext}"
+            "work/sniffles2.{index_ngs_library}/out/sniffles2.{index_ngs_library}{ext}"
         )
         # Build shortcut from index library name to pedigree
         self.index_ngs_library_to_pedigree = {}
@@ -255,13 +252,14 @@ class Sniffles2StepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
-        ngs_mapping = self.parent.modules["ngs_mapping"]
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
-        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
 
     @dictify
     def _get_output_files_bam_to_snf(self):
-        infix = "{mapper}.sniffles2_bam_to_snf.{library_name}"
+        infix = "sniffles2_bam_to_snf.{library_name}"
         yield "snf", f"work/{infix}/out/{infix}.snf"
 
     @dictify
@@ -270,20 +268,25 @@ class Sniffles2StepPart(BaseStepPart):
         snfs = []
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                infix = f"{wildcards.mapper}.sniffles2_bam_to_snf.{donor.dna_ngs_library.name}.snf"
+                infix = f"sniffles2_bam_to_snf.{donor.dna_ngs_library.name}"
                 snfs.append(f"work/{infix}/out/{infix}.snf")
         yield "snf", snfs
 
     @dictify
     def _get_output_files_snf_to_vcf(self):
-        infix = "{mapper}.sniffles2.{index_ngs_library}"
+        infix = "sniffles2.{index_ngs_library}"
         yield "snf", f"work/{infix}/out/{infix}.snf"
+
+    # FIXME: missing get_result_files
 
 
 class SvCallingWgsWorkflow(BaseStep):
     """Perform (germline) WGS SV calling"""
 
     name = "sv_calling_wgs"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
+    config_model_class = SvCallingWgsConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
@@ -291,30 +294,51 @@ class SvCallingWgsWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local WGS SV output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/{lib}/out/.done"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SvCallingWgsConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                Delly2StepPart,
-                MantaStepPart,
-                PopDelStepPart,
-                GcnvWgsStepPart,
-                MeltStepPart,
-                # Sniffles2StepPart,
-                WritePedigreeStepPart,
-            )
-        )
-        # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
+        selected_tool = self.config.tool
+        match selected_tool:
+            case Tool.delly2:
+                selected_sub_step = Delly2StepPart
+            case Tool.manta:
+                selected_sub_step = MantaStepPart
+            case Tool.popdel:
+                selected_sub_step = PopDelStepPart
+            case Tool.gcnv:
+                selected_sub_step = GcnvWgsStepPart
+            case Tool.melt:
+                selected_sub_step = MeltStepPart
+            # case Tool.sniffles2:
+            #     selected_sub_step = Sniffles2StepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
+        # Register only the selected tool step class.
+        self.register_sub_step_classes((selected_sub_step, WritePedigreeStepPart))
 
     @listify
     def all_donors(self, include_background=True):

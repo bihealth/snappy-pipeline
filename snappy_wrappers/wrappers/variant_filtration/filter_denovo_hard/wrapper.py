@@ -11,9 +11,12 @@ We simply keep these annotations and do a post-filtration later.
 isort:skip_file
 """
 
-from snakemake.shell import shell
-import os
-import sys
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
 
@@ -26,11 +29,8 @@ if args["bad_region_expressions"]:
         )
     ).replace("$sample_index", args["index_library"])
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-set -euo pipefail
-
 samples="{args[index_library]}"
 samples+=",{args[father]}"
 samples+=",{args[mother]}"
@@ -59,14 +59,5 @@ bcftools query \
     {snakemake.output.vcf} \
 | {{ grep '^[1-9]' || true; }} \
 >> {snakemake.output.summary}
-
-# Create Checksum Files ----------------------------------------------------------------------------
-
-pushd $(dirname {snakemake.output.vcf})
-
-md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
-
-md5sum $(basename {snakemake.output.summary}) >$(basename {snakemake.output.summary}).md5
 """
 )

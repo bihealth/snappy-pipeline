@@ -3,6 +3,9 @@ from typing import Annotated
 from pydantic import Field
 
 from snappy_pipeline.models import KeepTmpdir, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
 
 
 class GatkReadBackedPhasing(SnappyModel):
@@ -51,18 +54,28 @@ class GatkPhaseByTransmission(SnappyModel):
     """use 1e-6 when interested in phasing de novos"""
 
 
+class ExpectedPhasedVariants(SnappyModel):
+    """Consumer-driven contract: expected output keys from variant_phasing."""
+
+    vcf: str
+    vcf_tbi: str
+
+
+class VariantPhasingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    variant_annotation: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
+        ExpectedPathSchema(ExpectedAnnotatedGermlineVariants),
+    ] = "variant_annotation"
+
+
 class VariantPhasing(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
-
-    path_variant_annotation: Annotated[str, Field(examples=["../variant_annotation"])] = (
-        "../variant_annotation"
-    )
-
-    tools_ngs_mapping: list[str] = []
-    """expected tools for ngs mapping"""
-
-    tools_variant_calling: list[str] = []
-    """expected tools for variant calling"""
+    depends_on: VariantPhasingDependsOn = Field(default_factory=VariantPhasingDependsOn)
 
     phasings: list[str] = ["gatk_phasing_both"]
 

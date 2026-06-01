@@ -3,14 +3,18 @@
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Prelude -----------------------------------------------------------------------------------------
 
-shell.executable("/bin/bash")
 shell.prefix("set -eu -o pipefail -x; ")
 
 # Get path to this file's (wrapper.py) directory.
@@ -40,7 +44,7 @@ if args["filter_mode"] == "all_scores":
 else:
     scores = args["filter_config"][args["filter_mode"]]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
@@ -87,12 +91,7 @@ else
         {snakemake.input.vcf}
 fi
 
-# Build index and MD5 sum files.
-
+# Build index file.
 tabix -f {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf})
-md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 """
 )

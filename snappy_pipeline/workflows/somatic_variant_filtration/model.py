@@ -3,6 +3,9 @@ from typing import Annotated, Literal, Self, TypedDict
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class Ebfilter(SnappyModel):
@@ -108,22 +111,23 @@ class Filter(TypedDict, total=False):
     protected: Protected
 
 
+class SomaticVariantFiltrationDependsOn(SnappyModel):
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = ""
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+
+
 class SomaticVariantFiltration(SnappyStepModel):
-    path_somatic_variant: Annotated[
-        str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
-    ] = "../somatic_variant"
-
-    path_ngs_mapping: str = "../ngs_mapping"
-    """Needed for dkfz & ebfilter"""
-
-    tools_ngs_mapping: list[str] = []
-    """Default: use those defined in ngs_mapping step"""
-
-    tools_somatic_variant_calling: list[str] = []
-    """Default: use those defined in somatic_variant_calling step"""
-
-    tools_somatic_variant_annotation: list[str] = []
-    """Default: use those defined in somatic_variant_annotation step"""
+    depends_on: SomaticVariantFiltrationDependsOn = Field(
+        default_factory=SomaticVariantFiltrationDependsOn
+    )
 
     has_annotation: bool = True
 
@@ -162,4 +166,12 @@ class SomaticVariantFiltration(SnappyStepModel):
             raise ValueError("Only one ebfilter is allowed")
         if num_dkfz > 1:
             raise ValueError("Only one dkfz is allowed")
+        return self
+
+    @model_validator(mode="after")
+    def set_default_somatic_variant_dependency(self):
+        if not self.depends_on.somatic_variant:
+            self.depends_on.somatic_variant = (
+                "somatic_variant_annotation" if self.has_annotation else "somatic_variant_calling"
+            )
         return self

@@ -83,7 +83,9 @@ The versioning allows the pipeline step to check whether there are incompatibili
 .. note:: **Debugging configuration errors**
 
     The configuration for a complete pipeline can be long, and copy/paste errors can creep in.
-    When facing errors in configuration, it is advisable to 
+    When facing errors in configuration, it is advisable to
 
-    - Use absolute paths for files not part of the workflow (panel of normal files are **NOT** part the of workflow), and
-    - Use the ``snappy-snake --verbose``, which prints the step configuration (and all the dependend workflows) as ``snappy`` has understood it.
+    - Use relative paths for static data (``static_data_config``) and workflow configuration paths;
+      they will be resolved relative to the config file's directory. Alternatively, use absolute paths
+      for external data that should not move relative to your config file.
+    - Use the ``snappy run --verbose``, which prints the step configuration (and all the dependent workflows) as ``snappy`` has understood it.

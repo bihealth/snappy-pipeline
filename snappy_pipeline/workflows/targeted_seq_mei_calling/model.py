@@ -3,7 +3,9 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -30,9 +32,19 @@ class Scramble(SnappyModel):
     """minimum fraction of clipped length for calling polyA tail."""
 
 
-class TargetedSeqMeiCalling(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+class TargetedSeqMeiCallingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scramble], min_length=1)]
+
+class TargetedSeqMeiCalling(SnappyStepModel):
+    depends_on: TargetedSeqMeiCallingDependsOn = Field(
+        default_factory=TargetedSeqMeiCallingDependsOn
+    )
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.scramble)]
 
     scramble: Scramble | None = None

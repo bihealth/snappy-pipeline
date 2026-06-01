@@ -82,6 +82,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import WgsSvExportExternal as WgsSvExportExternalConfigModel
 
@@ -299,11 +300,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         mapper = self.config.tool_ngs_mapping
         caller = self.config.tool_sv_calling_wgs
         if mapper and caller:
-            return f"{mapper}.{caller}."
+            return ""
         elif mapper or caller:
             mapper = mapper or ""
             caller = caller or ""
-            return f"{mapper}{caller}."
+            return ""
         else:
             return ""
 
@@ -313,6 +314,9 @@ class WgsSvExportExternalWorkflow(BaseStep):
 
     #: Workflow name
     name = "wgs_sv_export_external"
+    consumes = {DataSignature(DataType.VARIANTS): True}
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    config_model_class = WgsSvExportExternalConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -322,15 +326,36 @@ class WgsSvExportExternalWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local external WGS SV export output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        prefix = f"output/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
+        return {
+            "gts": f"{prefix}.gts.tsv.gz",
+            "db_infos": f"{prefix}.db-infos.tsv.gz",
+        }
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=WgsSvExportExternalConfigModel,
             previous_steps=(),
+            task_name=task_name,
+            **kwargs,
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())
@@ -391,4 +416,8 @@ class WgsSvExportExternalWorkflow(BaseStep):
                         file=sys.stderr,
                     )
                     continue  # pragma: no cover
-                yield from expand(tpl, index_library=[pedigree.index.dna_ngs_library], **kwargs)
+                yield from expand(
+                    tpl,
+                    index_library=[pedigree.index.dna_ngs_library],
+                    **kwargs,
+                )

@@ -3,17 +3,27 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
     mantis_msi2 = "mantis_msi2"
 
 
-class SomaticMsiCalling(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+class SomaticMsiCallingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mantis_msi2], min_length=1)]
+
+class SomaticMsiCalling(SnappyStepModel):
+    depends_on: SomaticMsiCallingDependsOn = Field(default_factory=SomaticMsiCallingDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.mantis_msi2)]
 
     loci_bed: Annotated[
         str,

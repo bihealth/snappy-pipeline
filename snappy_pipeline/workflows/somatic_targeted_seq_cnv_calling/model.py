@@ -1,10 +1,14 @@
 import enum
 from typing import Annotated, Any, Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import Cnvkit
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.panel_of_normals.model import ExpectedPonPaths
+from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
 
 class Tool(enum.StrEnum):
@@ -36,6 +40,8 @@ class SequenzaExtractExtraArgs(SnappyModel):
 
 
 class SequenzaFitExtraArgs(SnappyModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     N_ratio_filter: int = Field(10, alias="N.ratio.filter")
     N_BAF_filter: int = Field(1, alias="N.BAF.filter")
     segment_filter: int = Field(3000000, alias="segment.filter")
@@ -96,7 +102,9 @@ class Sequenza(SnappyModel):
     assembly: str = "hg19"
     """Must be hg38 for GRCh38. See copynumber for complete list (augmented with hg38)"""
 
-    extra_args: SequenzaExtraArgs | dict[str, Any] = {}
+    extra_args: Annotated[SequenzaExtraArgs | dict[str, Any], Field(union_mode="left_to_right")] = (
+        SequenzaExtraArgs()
+    )
     """Extra arguments for sequenza bam2seqz"""
 
     ignore_chroms: list[str] = [
@@ -111,10 +119,14 @@ class Sequenza(SnappyModel):
     ]
     """patterns of chromosome names to ignore"""
 
-    extra_args_extract: SequenzaExtractExtraArgs | dict[str, Any] = SequenzaExtractExtraArgs()
+    extra_args_extract: Annotated[
+        SequenzaExtractExtraArgs | dict[str, Any], Field(union_mode="left_to_right")
+    ] = SequenzaExtractExtraArgs()
     """Valid arguments: see ?sequenza::sequenza.extract in R"""
 
-    extra_args_fit: SequenzaFitExtraArgs | dict[str, Any] = SequenzaFitExtraArgs()
+    extra_args_fit: Annotated[
+        SequenzaFitExtraArgs | dict[str, Any], Field(union_mode="left_to_right")
+    ] = SequenzaFitExtraArgs()
     """Valid arguments: see ?sequenza::sequenza.fit in R"""
 
 
@@ -160,33 +172,7 @@ class PureCn(SnappyModel):
     path_container: Annotated[
         str, Field(examples=["../panel_of_normals/work/containers/out/purecn.simg"])
     ]
-    """
-    A PureCN panel of normals is required,
-    with the container, the intervals & the PON rds file
-    """
-
-    path_intervals: Annotated[
-        str,
-        Field(
-            examples=[
-                "../panel_of_normals/output/purecn/out/<enrichement_kit_name>_<genome_name>.list"
-            ]
-        ),
-    ]
-
-    path_panel_of_normals: Annotated[
-        str,
-        Field(
-            examples=["../panel_of_normals/output/bwa.purecn/out/bwa.purecn.panel_of_normals.rds"]
-        ),
-    ]
-    """Path to the PureCN panel of normal"""
-
-    path_mapping_bias: Annotated[
-        str,
-        Field(examples=["../panel_of_normals/output/bwa.purecn/out/bwa.purecn.mapping_bias.rds"]),
-    ]
-    """Path to the PureCN mapping bias file"""
+    """Path to the PureCN apptainer/singularity container image"""
 
     somatic_variant_caller: str = "mutect2"
     """
@@ -194,13 +180,55 @@ class PureCn(SnappyModel):
     Mutect2 must be called with "--genotype-germline-sites true --genotype-pon-sites true
     """
 
-    path_somatic_variants: Annotated[str, Field(examples=["../somatic_variant_calling_for_purecn"])]
+
+class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
+    somatic_variants: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variants"
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    panel_of_normals: Annotated[
+        str,
+        DataSignature(DataType.MODELS, frozenset({"pon"})),
+        ExpectedPathSchema(ExpectedPonPaths),
+    ] = ""
+    """
+    Required when ``tool: cnvkit`` or ``tool: purecn``.
+    Must name the upstream ``panel_of_normals`` task that produced the matching PON
+    (e.g. ``panel_of_normals_cnvkit`` or ``panel_of_normals_purecn``).
+    Snakemake tracks the PON outputs as proper input files via this dependency.
+    """
 
 
-class SomaticTargetedSeqCnvCalling(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.cnvkit], min_length=1)]
-    path_ngs_mapping: str = "../ngs_mapping"
+class SomaticTargetedSeqCnvCalling(SnappyStepModel):
+    depends_on: SomaticTargetedSeqCnvCallingDependsOn = Field(
+        default_factory=SomaticTargetedSeqCnvCallingDependsOn
+    )
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvkit)]
 
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None
     purecn: PureCn | None = None
+
+    @model_validator(mode="after")
+    def validate_panel_of_normals_dependency(self) -> "SomaticTargetedSeqCnvCalling":
+        """Enforce explicit panel-of-normals dependency for cnvkit and purecn.
+
+        Both tools require a pre-built panel of normals.  The dependency must be
+        expressed via ``depends_on.panel_of_normals`` so that Snakemake can track
+        the PON outputs as proper input files rather than bare config paths.
+        """
+        if self.tool in (Tool.cnvkit, Tool.purecn):
+            if not self.depends_on.panel_of_normals:
+                raise ValueError(
+                    f"depends_on.panel_of_normals must be set when tool='{self.tool}'; "
+                    "name the upstream panel_of_normals task that produced the matching PON "
+                    f"(e.g. 'panel_of_normals_{self.tool}')"
+                )
+        return self

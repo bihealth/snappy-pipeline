@@ -86,12 +86,12 @@ The default configuration is as follows.
 import os
 from typing import Any
 
-import attr
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_wrappers.resource_usage import ResourceUsage
@@ -130,14 +130,12 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         path_pattern = (
             "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
         )
-        name_pattern = "{mapper}.gcnv_scatter_intervals.default"
+        name_pattern = "gcnv_scatter_intervals.default"
         yield "interval_list_shard", path_pattern.format(name_pattern=name_pattern)
         ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
-            path_pattern = "{mapper}.gcnv_coverage.{library_name}".format(
-                mapper=wildcards.mapper, library_name=lib
-            )
+            path_pattern = "gcnv_coverage.{library_name}".format(library_name=lib)
             tsvs.append(
                 "work/{name_pattern}/out/{name_pattern}.{ext}".format(
                     name_pattern=path_pattern, ext=ext
@@ -145,7 +143,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             )
         yield ext, tsvs
         ext = "ploidy"
-        path_pattern = "{mapper}.gcnv_contig_ploidy.default".format(**wildcards)
+        path_pattern = "gcnv_contig_ploidy.default".format(**wildcards)
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
         key = "intervals"
         path_pattern = "gcnv_annotate_gc.default"
@@ -167,9 +165,7 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
+        name_pattern = "gcnv_call_cnvs.{library_kit}".format(library_kit=library_kit, **wildcards)
         yield (
             "calls",
             [
@@ -180,13 +176,13 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             ],
         )
         ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+        name_pattern = "gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
     def get_args(self, action: str) -> dict[str, Any]:
-        gcnv_config = self.w_config.step_config["helper_gcnv_model_wgs"].gcnv
+        gcnv_config = self.parent.get_task_config("helper_gcnv_model_wgs").gcnv
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_par_intervals": gcnv_config.path_par_intervals,
@@ -208,7 +204,9 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             return f"{attempt * 4 * 1024 + 16 * 1024}MB"
 
         if action == "filter_intervals":
-            result = attr.evolve(
+            import dataclasses
+
+            result = dataclasses.replace(
                 result,
                 mem=get_memory,
             )
@@ -221,6 +219,9 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "helper_gcnv_model_wgs"
+    config_model_class = HelperGcnvModelWgsConfigModel
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
@@ -230,15 +231,40 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
         """Return default config YAML, to be overwritten by project-specific one"""
         return DEFAULT_CONFIG
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local helper gCNV WGS model output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.MODELS, frozenset({"gcnv"}))
+        ):
+            raise ValueError(
+                f"HelperBuildWgsGcnvModelWorkflow does not support signature: {signature}"
+            )
+        _ = kwargs
+        return {
+            "ploidy_done": "output/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done",
+            "calls_done": "output/gcnv_call_cnvs.default.{shard}/out/gcnv_call_cnvs.default.{shard}/.done",
+        }
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=HelperGcnvModelWgsConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -247,8 +273,6 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
                 BuildGcnvWgsModelStepPart,
             )
         )
-        # Register sub workflows
-        self.register_module("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
