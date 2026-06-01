@@ -18,6 +18,12 @@ from .model import SomaticVariantFiltration as SomaticVariantFiltrationConfigMod
 from .model import Ebfilter as EbfilterConfig
 
 
+class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
+    name = "one_dkfz"
+    filter_name = "dkfz"
+    resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
+
+
 class OneFilterEbfilterStepPart(OneFilterWithBamStepPart):
     name = "one_ebfilter"
     filter_name = "ebfilter"
@@ -103,6 +109,8 @@ class SomaticVariantFiltrationWorkflow(AnyVariantFiltrationWorkflow):
 
         # Register sub step classes so the sub steps are available
         sub_steps = list(map(lambda x: x.__class__, self.sub_steps.values()))
-        self.register_sub_step_classes(sub_steps + [OneFilterEbfilterStepPart])
+        self.register_sub_step_classes(
+            sub_steps + [OneFilterDkfzStepPart, OneFilterEbfilterStepPart]
+        )
 
         self.tumor_to_normal_mapping = tumor_to_normal_mapping(self.table)

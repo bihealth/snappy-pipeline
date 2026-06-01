@@ -1,13 +1,9 @@
-from typing import Annotated, Self, TypedDict
+from typing import Annotated, Self, TypedDict, Literal
 
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.any_variant_calling.model import VariantOrigin
-
-
-class Dkfz(SnappyModel):
-    pass
 
 
 class Bcftools(SnappyModel):
@@ -61,6 +57,26 @@ class Regions(SnappyModel):
         return {}
 
 
+class Vembrane(SnappyModel):
+    expressions: dict[str, str] = Field(
+        examples=[
+            {
+                "silent": 'ANN["Consequence"] == ["synonymous_variant"]',
+                "poor_support": '(FORMAT["DP"][SAMPLES[1]] <50) or (FORMAT["AD"][SAMPLES[1]][1] < 5) or (FORMAT["AD"][SAMPLES[1]][1]/(FORMAT["AD"][SAMPLES[1]][0] + FORMAT["AD"][SAMPLES[1]][1]) < 0.05)',
+            }
+        ]
+    )
+    """The `vembrane tag` [tag=expression]s to use."""
+
+    tag_mode: Literal["exclude", "include"]
+    """
+    Determines how the expression is interpreted.
+    """
+
+    extra_args: str = ""
+    """Extra arguments to pass to vembrane tag."""
+
+
 class Protected(SnappyModel):
     path_bed: str
     """Bed file of regions that should not be filtered out at all."""
@@ -73,8 +89,8 @@ class Protected(SnappyModel):
 
 class Filter(TypedDict, total=False):
     bcftools: Bcftools
-    dkfz: Dkfz
     regions: Regions
+    vembrane: Vembrane
     protected: Protected
 
 
@@ -108,13 +124,6 @@ class AnyVariantFiltration(SnappyStepModel):
     filter_list: list[Filter] = []
     """
     Available filters
-    dkfz: {}                                         # Not parametrisable
-    ebfilter:
-      ebfilter_threshold: 2.4
-      shuffle_seed: 1
-      panel_of_normals_size: 25
-      min_mapq: 20
-      min_baseq: 15
     bcftools:
       include: ""                                   # Expression to be used in bcftools view --include
       exclude: ""                                   # Expression to be used in bcftools view --exclude
@@ -123,18 +132,3 @@ class AnyVariantFiltration(SnappyStepModel):
     protected:
       path_bed: REQUIRED                            # Bed file of regions that should not be filtered out at all.
     """
-
-    @model_validator(mode="after")
-    def ensure_filter_list_is_configured_correctly(self):
-        # check ebfilter and dkfz are only used at most once
-        num_ebfilter = num_dkfz = 0
-        for f in self.filter_list:
-            if "ebfilter" in f:
-                num_ebfilter += 1
-            if "dkfz" in f:
-                num_dkfz += 1
-        if num_ebfilter > 1:
-            raise ValueError("Only one ebfilter is allowed")
-        if num_dkfz > 1:
-            raise ValueError("Only one dkfz is allowed")
-        return self

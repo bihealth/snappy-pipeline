@@ -4,25 +4,6 @@
 # Flexible Somatic Variant Filtration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-rule one_dkfz:
-    input:
-        unpack(wf.get_input_files("one_dkfz", "run")),
-    output:
-        **wf.get_output_files("one_dkfz", "run"),
-    params:
-        args=wf.get_args("one_dkfz", "run"),
-    threads: wf.get_resource("one_dkfz", "run", "threads")
-    resources:
-        time=wf.get_resource("one_dkfz", "run", "time"),
-        memory=wf.get_resource("one_dkfz", "run", "memory"),
-        partition=wf.get_resource("one_dkfz", "run", "partition"),
-        tmpdir=wf.get_resource("one_dkfz", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("one_dkfz", "run"),
-    wrapper:
-        wf.wrapper_path("dkfz_bias_filter")
-
-
 rule one_bcftools:
     input:
         unpack(wf.get_input_files("one_bcftools", "run")),

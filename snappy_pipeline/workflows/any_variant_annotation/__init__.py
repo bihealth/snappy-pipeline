@@ -88,8 +88,9 @@ Currently, no reports are generated.
 """
 
 import os
+from typing import Any
 
-from snakemake.io import expand
+from snakemake.io import expand, Wildcards
 
 from biomedsheets.shortcuts import GenericSampleSheet
 
@@ -246,8 +247,12 @@ class VepAnnotateVcfStepPart(AnnotateVcfStepPart):
     def get_args(self, action):
         """Return arguments to pass down."""
         self._validate_action(action)
-        if action == "plugins":
-            return self.config.get(self.name).get("plugins", [])
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_plugins(self, wildcards: Wildcards) -> list[dict[str, Any]]:
+        return list(map(dict, self.config.get(self.name).get("plugins", [])))
+
+    def _get_args_run(self, wildcards: Wildcards) -> dict[str, dict[str, Any]]:
         vep_config = dict(self.config.get(self.name).model_dump(by_alias=True))
         vep_config["plugins"] = [plugin["name"] for plugin in vep_config["plugins"]]
         vep_config["plugins_dir"] = "work/vep_plugins/out"
@@ -267,6 +272,52 @@ class VepAnnotateVcfStepPart(AnnotateVcfStepPart):
             threads=self.config.vep.num_threads,
             time="24:00:00",  # 24 hours
             memory=f"{16 * 1024 * 1}M",
+        )
+
+
+class MehariAnnotateVcfStepPart(AnnotateVcfStepPart):
+    """Annotate VCF file from germline or somatic calling using mehari"""
+
+    #: Step name
+    name = "mehari"
+
+    #: Annotator name to construct output paths
+    annotator = "mehari"
+
+    #: Class available actions
+    actions = ("run",)
+
+    @dictify
+    def get_input_files(self, action: str):
+        input_files = super().get_input_files(action)
+        for k, v in input_files.items():
+            yield k, v
+
+        yield "reference", self.w_config.static_data_config.reference.path
+
+        if self.config.mehari.transcripts:
+            yield "transcripts", self.config.mehari.transcripts
+        if self.config.mehari.frequencies:
+            yield "frequencies", self.config.mehari.frequencies
+        if self.config.mehari.clinvar:
+            yield "clinvar", self.config.mehari.clinvar
+
+    def get_args(self, action):
+        """Return arguments to pass down."""
+        self._validate_action(action)
+
+        def args_function(wildcards):
+            return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+        return args_function
+
+    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
+        """Get Resource Usage"""
+        self._validate_action(action)
+        return ResourceUsage(
+            threads=self.config.mehari.threads,
+            time="00:20:00",
+            memory="8G",
         )
 
 
@@ -329,7 +380,9 @@ class AnyVariantAnnotationWorkflow(BaseStep):
             previous_steps=(previous_step,),
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((VepAnnotateVcfStepPart, LinkOutStepPart))
+        self.register_sub_step_classes(
+            (MehariAnnotateVcfStepPart, VepAnnotateVcfStepPart, LinkOutStepPart)
+        )
 
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"]["tools"]["dna"]

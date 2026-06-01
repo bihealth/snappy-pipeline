@@ -5,6 +5,7 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
+from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.somatic_variant_annotation import SomaticVariantAnnotationWorkflow
 
@@ -149,6 +150,7 @@ def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
 
 def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={})
     expected = {
         "config": {
             "cache_dir": "/path/to/dir/cache",

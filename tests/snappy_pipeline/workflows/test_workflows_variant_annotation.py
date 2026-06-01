@@ -151,6 +151,8 @@ def test_vep_run_step_part_get_args(variant_annotation_workflow):
                 "rank",
                 "length",
             ],
+            "plugins_dir": "",
+            "plugins": [],
             "output_options": ["everything"],
             "species": "homo_sapiens",
             "assembly": "GRCh37",

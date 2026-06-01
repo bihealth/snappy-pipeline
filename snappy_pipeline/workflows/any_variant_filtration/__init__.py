@@ -291,12 +291,6 @@ class OneFilterWithBamStepPart(OneFilterStepPart):
         yield "bam", ngs_mapping(base_path + ".bam")
 
 
-class OneFilterDkfzStepPart(OneFilterWithBamStepPart):
-    name = "one_dkfz"
-    filter_name = "dkfz"
-    resource_usage = {"run": ResourceUsage(threads=1, time="12:00:00", memory=f"{3 * 1024}M")}
-
-
 class OneFilterBcftoolsStepPart(OneFilterStepPart):
     name = "one_bcftools"
     filter_name = "bcftools"
@@ -305,6 +299,11 @@ class OneFilterBcftoolsStepPart(OneFilterStepPart):
 class OneFilterRegionsStepPart(OneFilterStepPart):
     name = "one_regions"
     filter_name = "regions"
+
+
+class OneFilterVembraneStepPart(OneFilterStepPart):
+    name = "one_vembrane"
+    filter_name = "vembrane"
 
 
 class OneFilterProtectedStepPart(OneFilterStepPart):
@@ -447,9 +446,9 @@ class AnyVariantFiltrationWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
-                OneFilterDkfzStepPart,
                 OneFilterBcftoolsStepPart,
                 OneFilterRegionsStepPart,
+                OneFilterVembraneStepPart,
                 OneFilterProtectedStepPart,
                 LastFilterStepPart,
                 LinkOutStepPart,
