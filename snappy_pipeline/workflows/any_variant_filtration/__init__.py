@@ -499,7 +499,12 @@ class AnyVariantFiltrationWorkflow(BaseStep):
         if not self.config.tools_ngs_mapping:
             self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"]["tools"]["dna"]
 
-        if not self.config.has_annotation:
+        if self.config.has_annotation:
+            if not self.config.tools_variant_annotation:
+                self.config.tools_variant_annotation = self.w_config.step_config[
+                    f"{self.config.variant_origin}_variant_annotation"
+                ]["tools"]
+        else:
             self.config.tools_variant_annotation = []
 
         self.table = filter_table_by_modality(sample_sheets(self.sheets), modality="dna")
