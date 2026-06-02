@@ -182,6 +182,8 @@ rule gene_expression_quantification_featurecounts_run:
         decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("featurecounts", "run"),
+    params:
+        args=wf.get_args("featurecounts", "run"),
     threads: wf.get_resource("featurecounts", "run", "threads")
     resources:
         time=wf.get_resource("featurecounts", "run", "time"),
