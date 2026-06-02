@@ -136,6 +136,12 @@ def test_featurecounts_step_part_get_log_file(gene_expression_quantification_wor
     assert actual == expected
 
 
+def test_featurecounts_step_part_get_args(gene_expression_quantification_workflow):
+    """Tests FeatureCountsStepPart.get_args()"""
+    expected = {"strand": -1}
+    actual = gene_expression_quantification_workflow.get_args("featurecounts", "run")
+    assert actual == expected
+
 def test_featurecounts_step_part_get_resource(gene_expression_quantification_workflow):
     """Tests FeatureCountsStepPart.get_resource()"""
     # Define expected

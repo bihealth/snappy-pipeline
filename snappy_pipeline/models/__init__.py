@@ -58,6 +58,7 @@ class SnappyModel(BaseModel):
         use_attribute_docstrings=True,
         use_enum_values=True,
         validate_default=True,
+        populate_by_name=True,
     )
 
     def get(self, key: str, default: typing.Any = None) -> typing.Any:

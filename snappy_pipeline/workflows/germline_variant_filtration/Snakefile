@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline somatic_variant_annotation step Snakefile"""
+"""CUBI Pipeline germline_variant_filtration step Snakefile"""
 
 import os
 
 from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.somatic_variant_annotation import (
-    SomaticVariantAnnotationWorkflow,
+from snappy_pipeline.workflows.germline_variant_filtration import (
+    GermlineVariantFiltrationWorkflow,
 )
 
-__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 
 # Configuration ===============================================================
@@ -22,8 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = SomaticVariantAnnotationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.config["tools"]
+wf = GermlineVariantFiltrationWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
 
 # Rules =======================================================================
@@ -31,7 +30,7 @@ tools = wf.config["tools"]
 
 localrules:
     # Linking files from work/ to output/ should be done locally
-    any_variant_annotation_link_out_run,
+    any_variant_filtration_link_out_run,
 
 
 rule all:
@@ -44,7 +43,7 @@ rule all:
 # Generic linking out ---------------------------------------------------------
 
 
-rule any_variant_annotation_link_out_run:
+rule any_variant_filtration_link_out_run:
     input:
         wf.get_input_files("link_out", "run"),
     output:
@@ -53,4 +52,4 @@ rule any_variant_annotation_link_out_run:
         shell(wf.get_shell_cmd("link_out", "run", wildcards))
 
 
-include: "../any_variant_annotation/Snakefile"
+include: "../any_variant_filtration/Snakefile"
