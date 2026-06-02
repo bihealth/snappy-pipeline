@@ -414,7 +414,7 @@ class LinkOutStepPart(BaseStepPart):
         if not self.disable_patterns:
             return self.base_path_in
 
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
 
         def input_function(wildcards):
             """Helper wrapper function"""
@@ -438,7 +438,7 @@ class LinkOutStepPart(BaseStepPart):
 
     def run_locally(self, action, wildcards):
         assert action == "run", "Unsupported action"
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
         # Prepend the task prefix to the paths
         path_out = task_prefix + f"output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
         path_in = task_prefix + f"work/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
@@ -837,6 +837,22 @@ class BaseStep:
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
 
+    @staticmethod
+    def task_root(task_name: str) -> str:
+        """Return canonical namespace root for one task."""
+        return f"tasks/{task_name}"
+
+    @classmethod
+    def namespaced_path(cls, task_name: str, local_path: str) -> str:
+        """Return ``local_path`` namespaced below ``tasks/<task_name>/``."""
+        return os.path.join(cls.task_root(task_name), local_path).replace("\\", "/")
+
+    def task_path_prefix(self) -> str:
+        """Return canonical task prefix for this workflow instance."""
+        if getattr(self, "task_name", ""):
+            return f"{self.task_root(self.task_name)}/"
+        return ""
+
     def get_task_config(self, name: str) -> SnappyStepModel:
         """Retrieve the typed configuration model of an upstream task based on dependency resolution."""
 
@@ -893,7 +909,7 @@ class BaseStep:
         1. The ``link_in`` dependency, if configured, using its explicit ``path`` value.
         2. Any other configured ``depends_on`` field annotated with ``DataSignature(DataType.RAW)``,
            interpreted as an in-pipeline task that exposes FASTQs under
-           ``<upstream_task_name>/output`` (e.g. ``adapter_trimming``).
+           ``tasks/<upstream_task_name>/output`` (e.g. ``adapter_trimming``).
 
         Returns an empty string if no matching RAW provider dependency is configured.
         """
@@ -924,7 +940,7 @@ class BaseStep:
                 continue
             if field_name == "link_in":
                 continue
-            return f"{dep_task_name}/output"
+            return self.namespaced_path(dep_task_name, "output")
 
         return ""
 
@@ -1109,8 +1125,8 @@ class BaseStep:
 
         def _prefix(local_path: str) -> str:
             if local_path.startswith("output/") or local_path.startswith("work/"):
-                return f"{dep.task_name}/{local_path}"
-            return os.path.join(dep.task_name, local_path).replace("\\", "/")
+                return self.namespaced_path(dep.task_name, local_path)
+            return self.namespaced_path(dep.task_name, local_path)
 
         return _prefix
 
@@ -1163,7 +1179,9 @@ class BaseStep:
         )
 
         # Prepend upstream task name for Snakemake global namespace.
-        global_paths = {k: f"{dependency.task_name}/{v}" for k, v in local_paths.items()}
+        global_paths = {
+            k: self.namespaced_path(dependency.task_name, v) for k, v in local_paths.items()
+        }
 
         if dependency.expected_schema is not None:
             return dependency.expected_schema(**global_paths)
@@ -1550,7 +1568,7 @@ class LinkInStepPart(BaseStepPart):
     def get_shell_cmd(self, action, wildcards):
         """Return call for linking in the files"""
         assert action == "run", "Unsupported action"
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
         # Get base out path with the task prefix prepended
         out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
@@ -1591,7 +1609,7 @@ class LinkInStepPart(BaseStepPart):
         """Links fastq files"""
         assert action == "run", "Unsupported action"
 
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
         out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
 
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
@@ -1659,7 +1677,7 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
         intact.
         """
         self._validate_action(action)
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
         # Define path generator
         path_gen = LinkInPathGenerator(
             self.parent.work_dir,
@@ -1707,7 +1725,7 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
         intact.
         """
         self._validate_action(action)
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
         # Define path generator
         path_gen = LinkInPathGenerator(
             self.parent.work_dir,

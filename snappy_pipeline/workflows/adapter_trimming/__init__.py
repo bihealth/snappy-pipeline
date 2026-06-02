@@ -106,7 +106,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
         return args_function
 
     def _collect_reads(self, wildcards, folder_name, prefix):
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
 
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         path_info = {}

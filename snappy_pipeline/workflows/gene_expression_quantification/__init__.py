@@ -206,7 +206,7 @@ class SalmonStepPart(BaseStepPart):
 
         Yields paths to right reads if prefix=='right-'
         """
-        task_prefix = f"{self.parent.task_name}/" if getattr(self.parent, "task_name", "") else ""
+        task_prefix = self.parent.task_path_prefix()
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
         if self.parent.get_preprocessed_path():
             folder_name = library_name

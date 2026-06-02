@@ -10,13 +10,16 @@ Each pipeline step is implemented as a `Snakemake <https://snakemake.bitbucket.o
 File System Layout
 ==================
 
-The overall layout for a pipeline step instance is as follows::
+The overall layout for task instances in a multi-task project is as follows::
 
     working_dir_name/
-    +-- [input/]
-    +-- work/
-    +-- output/
+    +-- tasks/
+    |   `-- <task_name>/
+    |       +-- work/
+    |       +-- output/
     `-- config.yaml
+
+Each configured task is namespaced below ``tasks/<task_name>/``.
 
 Directory ``input/``
 --------------------
