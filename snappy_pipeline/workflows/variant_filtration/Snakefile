@@ -6,7 +6,7 @@ import os
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
 # Configuration ===============================================================

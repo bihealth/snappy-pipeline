@@ -57,7 +57,7 @@ class Vembrane(SnappyModel):
                     '(FORMAT["AD"][SAMPLES[1]][0] + FORMAT["AD"][SAMPLES[1]][1]) < 0.05)'
                 ),
             }
-        ]
+        ],
     )
     mode: Literal["tag", "filter"] = "tag"
     """``tag`` uses ``vembrane tag``; ``filter`` uses ``vembrane filter``."""

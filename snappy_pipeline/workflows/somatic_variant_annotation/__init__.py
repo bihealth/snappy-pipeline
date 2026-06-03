@@ -4,6 +4,7 @@
 import os
 import sys
 from collections import OrderedDict
+from typing import cast
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -12,9 +13,11 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
-from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
 
-from .model import SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel
+from .model import (
+    ExpectedVariantVcf,
+    SomaticVariantAnnotation as SomaticVariantAnnotationConfigModel,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -50,8 +53,9 @@ class AnnotateSomaticVcfStepPart(BaseStepPart):
     def get_input_files(self, action):
         self._validate_action(action)
         lib = self._name_template(self.config)
-        variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
-            "somatic_variant", library_name=lib
+        variants = cast(
+            ExpectedVariantVcf,
+            self.parent.get_upstream_paths("variant", library_name=lib),
         )
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi
@@ -169,7 +173,7 @@ class MehariAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
 
 class SomaticVariantAnnotationWorkflow(BaseStep):
     name = "somatic_variant_annotation"
-    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True}
+    consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "annotated"}))
     ]

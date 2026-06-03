@@ -26,11 +26,12 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
-from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
+from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
 
 __author__ = "Clemens Messerschmidt"
+
 
 # Default configuration variant_signatures
 DEFAULT_CONFIG = SomaticVariantSignaturesConfigModel.default_config_yaml_string()
@@ -206,7 +207,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
             previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
-                SomaticVariantFiltrationWorkflow,
+                VariantFiltrationWorkflow,
                 NgsMappingWorkflow,
             ),
             task_name=task_name,

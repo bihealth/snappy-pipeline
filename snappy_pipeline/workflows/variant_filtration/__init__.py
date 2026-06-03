@@ -1,103 +1,28 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``variant_filtration`` step
+"""Implementation of the unified ``variant_filtration`` step.
 
-This step takes annotated variants as the input from ``variant_annotation`` and performs various
-filtration and postprocessing operations:
+One task = one filter tool.  Chain multiple tasks via ``depends_on.variant``
+to build a sequential filter pipeline.
 
-1. filter to high-confidence variants
-    1. apply quality filter sets
-    2. filter for consistency between different callers
-2. filter to compatible mode of inheritance
-3. filter by population/cohort frequency, remove polymorphisms
-4. filter by region
-5. filter by scores (e.g., conservation)
-6. filter for het. comp. inheritance or keep all
-
-# ::
-
-#     1
-#     stringent
-#     loose
-
-#     2
-#     $qual.denovo
-#     $qual.dom
-#     $qual.rec_hom
-
-#     3
-#     $qual.denovo.denov_freq
-#     $qual.dom.dom_freq
-#     $qual.dom.rec_freq
-#     $qual.rec_hom.rec_freq
-
-#     4
-#     $qual.denovo.denov_freq.$region
-#     $qual.dom.dom_freq.$region
-#     $qual.dom.rec_freq.$region
-#     $qual.rec_hom.rec_freq.$region
-
-#     5
-#     $qual.denovo.denov_freq.$region.$scores
-#     $qual.dom.dom_freq.$region.$scores
-#     $qual.dom.rec_freq.$region.$scores
-#     $qual.rec_hom.rec_freq.$region.$scores
-
-#     6
-#     $qual.denovo.denov_freq.$region.keep_all
-#     $qual.dom.dom_freq.$region.keep_all
-#     $qual.dom.rec_freq.$region.$scores.same_gene
-#     $qual.dom.rec_freq.$region.$scores.same_tad
-#     $qual.dom.rec_freq.$region.$scores.itv_500bp
-#     $qual.rec_hom.rec_freq.$region.keep_all
-
-================
-Filtration Steps
-================
-
-The combinations of the filters is given in the configuration setting ``filter_combinations``
-as dot-separated values, e.g., ``AA.BB.CC``.
-
-==========
-Step Input
-==========
-
-TODO
-
-===========
-Step Output
-===========
-
-TODO
-
-====================
-Global Configuration
-====================
-
-TODO
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_variant_filtration.rst
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
+Supported tools
+---------------
+bcftools    – expression-based filter tagging
+vembrane    – expression-based tagging or filtering via mode switch
+regions     – region/BED-based filter tagging
+dkfz        – DKFZ bias filter (requires aligned BAMs, cancer sheet)
+ebfilter    – EBFilter (requires aligned BAMs, cancer sheet)
 """
 
-# TODO: the implementation is super ugly and needs some refinement...
-
 import os
-import os.path
+import random
 import sys
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import (
+    CancerCaseSheet,
+    CancerCaseSheetOptions,
+    GenericSampleSheet,
+)
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 

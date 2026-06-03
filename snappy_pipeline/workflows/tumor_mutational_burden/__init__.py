@@ -16,7 +16,7 @@ from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
-from snappy_pipeline.workflows.somatic_variant_filtration import SomaticVariantFiltrationWorkflow
+from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 
 from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
 
@@ -156,7 +156,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             previous_steps=(
                 SomaticVariantCallingWorkflow,
                 SomaticVariantAnnotationWorkflow,
-                SomaticVariantFiltrationWorkflow,
+                VariantFiltrationWorkflow,
                 NgsMappingWorkflow,
             ),
             task_name=task_name,
