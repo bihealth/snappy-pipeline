@@ -105,345 +105,335 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    InputFilesStepPartMixin,
     LinkOutStepPart,
     ResourceUsage,
-    WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
-from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
-from .model import VariantFiltration as VariantFiltrationConfigModel
+from .model import (
+    Ebfilter as EbfilterConfig,
+    VariantFiltration as VariantFiltrationConfigModel,
+)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Extensions of files to create as main payload
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-
-#: Names of the files to create for the extension
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
-#: Default configuration for the somatic_variant_calling step
 DEFAULT_CONFIG = VariantFiltrationConfigModel.default_config_yaml_string()
 
+# Path template helpers
+_WORK_PREFIX = os.path.join("work", "{library_name}")
+_OUT_PREFIX = os.path.join(_WORK_PREFIX, "out", "{library_name}")
+_LOG_PREFIX = os.path.join(_WORK_PREFIX, "log", "{library_name}")
 
-class FiltersVariantsStepPartBase(BaseStepPart):
-    """Base class for the different filters."""
 
-    #: Step name
-    name = None
+# ---------------------------------------------------------------------------
+# Base step part
+# ---------------------------------------------------------------------------
 
-    #: File name pattern
-    name_pattern = None
 
-    #: Class available actions
+class VariantFiltrationStepPart(BaseStepPart):
+    """Base class for all variant filtration tool step parts.
+
+    All concrete tool step parts use ``name = "filter"`` because only one is
+    ever registered per workflow task instance.
+    """
+
+    name = "filter"
     actions = ("run",)
+    resource_usage = {
+        "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
+    }
 
-    #: Wildcard pattern name (must be set by derived class)
-    filter_mode = None
-
-    #: Model attribute name (must be set by derived class)
-    filter_config = None
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        assert self.name_pattern is not None, "Set into class..."
-        name_pattern = self.name_pattern
-        self.base_path_out = os.path.join(
-            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + "{ext}"
-        )
-        self.path_log = os.path.join(
-            "work", name_pattern, "out", name_pattern.replace(r",[^\.]+", "") + ".log"
-        )
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
+    def get_input_files(self, action):
         self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="1d",  # 1 day
-            mem=f"{int(3.75 * 1024 * 2)}MB",
-        )
+        return self._get_input_files_run
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        lib = wildcards.library_name
+        variant = self.parent.get_upstream_paths("variant", library_name=lib)
+        # Accept both typed schema and plain dict
+        if isinstance(variant, dict):
+            yield "vcf", variant["vcf"]
+            yield "vcf_tbi", variant["vcf_tbi"]
+        else:
+            yield "vcf", variant.vcf
+            yield "vcf_tbi", variant.vcf_tbi
 
     @dictify
     def get_output_files(self, action):
-        # Validate action
         self._validate_action(action)
-        for key, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield key, self.base_path_out.replace("{ext}", ext)
+        for name, ext in zip(EXT_NAMES, EXT_VALUES):
+            yield name, _OUT_PREFIX + ext
 
+    @dictify
     def get_log_file(self, action):
-        # Validate action
         self._validate_action(action)
-        return self.path_log
+        for key, ext in (
+            ("log", ".log"),
+            ("log_md5", ".log.md5"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_info_md5", ".conda_info.txt.md5"),
+            ("conda_list", ".conda_list.txt"),
+            ("conda_list_md5", ".conda_list.txt.md5"),
+        ):
+            yield key, _LOG_PREFIX + ext
 
     def get_args(self, action):
-        # Validate action
         self._validate_action(action)
+        return self._get_args
 
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            assert self.filter_mode is not None, (
-                f"'filter_mode' must be defined for sub-step '{self.name}"
-            )
-            params = {
-                "index_library": wildcards.index_library,
-                "filter_mode": getattr(wildcards, self.filter_mode),
-            }
-            if self.filter_config:
-                params["filter_config"] = getattr(self.config, self.filter_config).model_dump(
-                    by_alias=True
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        cfg = getattr(self.config, self.config.tool)
+        params: dict[str, Any] = {
+            # Keep wrapper naming stable and task-scoped for chaining.
+            "filter_name": getattr(self, "filter_name", self.parent.task_name or self.config.tool),
+        }
+        if cfg is not None:
+            params.update(cfg.model_dump(by_alias=True))
+        return params
+
+
+# ---------------------------------------------------------------------------
+# BAM-aware base (dkfz / ebfilter)
+# ---------------------------------------------------------------------------
+
+
+class _BamAwareStepPart(VariantFiltrationStepPart):
+    """Mixin that adds tumor (and optionally normal) BAM inputs."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        # Build tumor→normal mapping from cancer sheets (if present).
+        self._tumor_to_normal: dict[str, str] = {}
+        for info, raw_sheet in zip(self.parent.data_set_infos, self.parent.sheets):
+            if info.is_background or info.sheet_type != "matched_cancer":
+                continue
+            try:
+                csheet = CancerCaseSheet(
+                    raw_sheet,
+                    options=CancerCaseSheetOptions(
+                        allow_missing_normal=True, allow_missing_tumor=False
+                    ),
                 )
-            return params
+                for pair in csheet.all_sample_pairs:
+                    t_lib = pair.tumor_sample.dna_ngs_library
+                    n_lib = pair.normal_sample.dna_ngs_library if pair.normal_sample else None
+                    if t_lib and n_lib:
+                        self._tumor_to_normal[t_lib.name] = n_lib.name
+            except Exception as exc:
+                print(
+                    f"WARNING: could not build tumor/normal mapping: {exc}",
+                    file=sys.stderr,
+                )
 
-        return args_fn
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+
+        yield "reference", self.w_config.static_data_config.reference.path
+
+        lib = wildcards.library_name
+        tumor_aln: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=lib
+        )
+        if isinstance(tumor_aln, dict):
+            yield "bam", tumor_aln["bam"]
+        else:
+            yield "bam", tumor_aln.bam
+
+        normal_lib = self._tumor_to_normal.get(lib)
+        if normal_lib:
+            normal_aln: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=normal_lib
+            )
+            if isinstance(normal_aln, dict):
+                yield "normal", normal_aln["bam"]
+            else:
+                yield "normal", normal_aln.bam
 
 
-class FilterQualityStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
-    """Apply the configured filters."""
+# ---------------------------------------------------------------------------
+# Concrete tool step parts
+# ---------------------------------------------------------------------------
 
-    #: Step name
-    name = "filter_quality"
 
-    #: File name pattern
-    name_pattern = (
-        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
-        r"{thresholds,[^\.]+}"
-    )
+class BcftoolsStepPart(VariantFiltrationStepPart):
+    """bcftools expression filter."""
 
-    #: Pointer to the previous executed step, class ``FiltersVariantsStepPartBase``
-    prev_class = FiltersVariantsStepPartBase
+    filter_name = "bcftools"
 
-    #: Types of output files by extension
-    ext_names = EXT_NAMES
 
-    #: Output file extensions
-    ext_values = EXT_VALUES
+class VembraneStepPart(VariantFiltrationStepPart):
+    """Unified vembrane tag/filter step."""
 
-    #: Wildcards name for filter_quality
-    filter_mode = "thresholds"
+    filter_name = "vembrane"
 
-    #: Model name for filter_quality
-    filter_config = "thresholds"
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        cfg = self.config.vembrane
+        if cfg is None:
+            raise ValueError("vembrane configuration is required")
+        params: dict[str, Any] = {"mode": cfg.mode, "extra_args": cfg.extra_args}
+        if cfg.mode == "tag":
+            params["expressions"] = cfg.expressions
+        else:
+            params.update(
+                {
+                    "expression": cfg.expression,
+                    "aux": cfg.aux,
+                    "context": cfg.context,
+                    "context_files": cfg.context_files,
+                    "ontology": cfg.ontology,
+                }
+            )
+        return params
+
+
+class RegionsStepPart(VariantFiltrationStepPart):
+    """Region/BED-based filter via bcftools."""
+
+    filter_name = "regions"
+
+
+class DkfzStepPart(_BamAwareStepPart):
+    """DKFZ bias filter."""
+
+    filter_name = "dkfz"
+
+    resource_usage = {
+        "run": ResourceUsage(threads=1, runtime="12h", mem=f"{3 * 1024}MB"),
+    }
+
+
+class EbfilterStepPart(_BamAwareStepPart):
+    """EBFilter."""
+
+    filter_name = "ebfilter"
+
+    actions = ("run", "write_panel")
+    resource_usage = {
+        "run": ResourceUsage(threads=1, runtime="24h", mem=f"{2 * 1024}MB"),
+        "write_panel": ResourceUsage(threads=1, runtime="1h", mem=f"{2 * 1024}MB"),
+    }
 
     def get_input_files(self, action):
-        # Validate action
         self._validate_action(action)
+        if action == "write_panel":
+            return {}
+        return self._get_input_files_run
 
-        @dictify
-        def input_function(wildcards):
-            yield (
-                "ped",
-                os.path.realpath(
-                    "work/write_pedigree.{index_library}/out/{index_library}.ped"
-                ).format(**wildcards),
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        cfg: EbfilterConfig = self.config.ebfilter
+        panel_file = cfg.path_panel_of_normals_sample_list
+        if not panel_file:
+            panel_file = self._get_output_files_write_panel()["txt"]
+        yield "txt", panel_file
+
+    def _get_output_files_write_panel(self):
+        return {"txt": "work/eb_filter.panel_of_normals/out/eb_filter.panel_of_normals.txt"}
+
+    def get_output_files(self, action):
+        self._validate_action(action)
+        if action == "write_panel":
+            return self._get_output_files_write_panel()
+        return super().get_output_files(action)
+
+    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+        return super()._get_args(wildcards) | {
+            "has_annotation": getattr(self.config, "has_annotation", True),
+        }
+
+    def write_panel_of_normals_file(self, wildcards):
+        out_path = self._get_output_files_write_panel()["txt"]
+        with open(out_path, "wt") as fh:
+            for bam in self._get_panel_of_normal_bams(wildcards):
+                print(bam, file=fh)
+
+    @listify
+    def _get_panel_of_normal_bams(self, wildcards):
+        libraries = []
+        for info, raw_sheet in zip(self.parent.data_set_infos, self.parent.sheets):
+            if info.sheet_type != "matched_cancer":
+                continue
+            try:
+                csheet = CancerCaseSheet(
+                    raw_sheet,
+                    options=CancerCaseSheetOptions(
+                        allow_missing_normal=True, allow_missing_tumor=False
+                    ),
+                )
+                for donor in csheet.donors:
+                    for bio_sample in donor.bio_samples.values():
+                        if not bio_sample.extra_infos.get("isTumor", True):
+                            if bio_sample.dna_ngs_library:
+                                libraries.append(bio_sample.dna_ngs_library.name)
+            except Exception:
+                pass
+
+        libraries.sort()
+        cfg: EbfilterConfig = self.config.ebfilter
+        random.seed(cfg.shuffle_seed)
+        random.shuffle(libraries)
+        for lib_name in libraries[: cfg.panel_of_normals_size]:
+            aln: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=lib_name
             )
-            annotated: ExpectedAnnotatedGermlineVariants = self.parent.get_upstream_paths(
-                "variant_annotation", library_name=wildcards.index_library
-            )
-            yield "vcf", annotated.vcf
-            yield "vcf_tbi", annotated.vcf_tbi
-            yield "vcf_md5", annotated.vcf + ".md5"
-            yield "vcf_tbi_md5", annotated.vcf_tbi + ".md5"
-
-        return input_function
+            if isinstance(aln, dict):
+                yield aln["bam"]
+            else:
+                yield aln.bam
 
 
-class FilterInheritanceStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
-    """Apply the configured filters."""
+# ---------------------------------------------------------------------------
+# Map tool name → step part class
+# ---------------------------------------------------------------------------
 
-    #: Step name
-    name = "filter_inheritance"
-
-    #: File name pattern
-    name_pattern = (
-        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
-        r"{thresholds,[^\.]+}.{inheritance,[^\.]+}"
-    )
-
-    #: Pointer to the previous executed step, class ``FilterQualityStepPart``
-    prev_class = FilterQualityStepPart
-
-    #: Include pedigree file flag (True)
-    include_ped_file = True
-
-    #: Types of output files by extension
-    ext_names = EXT_NAMES
-
-    #: Output file extensions
-    ext_values = EXT_VALUES
-
-    #: Wildcards name for filter_inheritance
-    filter_mode = "inheritance"
+_TOOL_STEP_PART: dict[str, type[VariantFiltrationStepPart]] = {
+    "bcftools": BcftoolsStepPart,
+    "vembrane": VembraneStepPart,
+    "regions": RegionsStepPart,
+    "dkfz": DkfzStepPart,
+    "ebfilter": EbfilterStepPart,
+}
 
 
-class FilterFrequencyStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
-    """Apply the configured filters."""
-
-    #: Step name
-    name = "filter_frequency"
-
-    #: File name pattern
-    name_pattern = (
-        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
-        r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}"
-    )
-
-    #: Pointer to the previous executed step, class ``FilterInheritanceStepPart``
-    prev_class = FilterInheritanceStepPart
-
-    #: Include pedigree file flag (True)
-    include_ped_file = True
-
-    #: Types of output files by extension
-    ext_names = EXT_NAMES
-
-    #: Output file extensions
-    ext_values = EXT_VALUES
-
-    #: Wildcards name for filter_frequency
-    filter_mode = "frequency"
-
-    #: Model name for filter_frequency
-    filter_config = "frequencies"
-
-
-class FilterRegionsStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
-    """Apply the configured filters."""
-
-    #: Step name
-    name = "filter_regions"
-
-    #: File name pattern
-    name_pattern = (
-        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
-        r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}"
-    )
-
-    #: Pointer to the previous executed step, class ``FilterFrequencyStepPart``
-    prev_class = FilterFrequencyStepPart
-
-    #: Include pedigree file flag (True)
-    include_ped_file = True
-
-    #: Types of output files by extension
-    ext_names = EXT_NAMES
-
-    #: Output file extensions
-    ext_values = EXT_VALUES
-
-    #: Wildcards name for filter_regions
-    filter_mode = "regions"
-
-    #: Model name for filter_regions
-    filter_config = "region_beds"
-
-
-class FilterScoresStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
-    """Apply the configured filters."""
-
-    #: Step name
-    name = "filter_scores"
-
-    #: File name pattern
-    name_pattern = (
-        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
-        r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
-        r"{scores,[^\.]+}"
-    )
-
-    #: Pointer to the previous executed step, class ``FilterRegionsStepPart``
-    prev_class = FilterRegionsStepPart
-
-    #: Include pedigree file flag (True)
-    include_ped_file = True
-
-    #: Types of output files by extension
-    ext_names = EXT_NAMES
-
-    #: Output file extensions
-    ext_values = EXT_VALUES
-
-    #: Wildcards name for filter_scores
-    filter_mode = "scores"
-
-    #: Model name for filter_scores
-    filter_config = "score_thresholds"
-
-
-class FilterHetCompStepPart(InputFilesStepPartMixin, FiltersVariantsStepPartBase):
-    """Apply the configured filters."""
-
-    #: Step name
-    name = "filter_het_comp"
-
-    #: File name pattern
-    name_pattern = (
-        r"jannovar_annotate_vcf.filtered.{index_library,[^\.]+}."
-        r"{thresholds,[^\.]+}.{inheritance,[^\.]+}.{frequency,[^\.]+}.{regions,[^\.]+}."
-        r"{scores,[^\.]+}.{het_comp,[^\.]+}"
-    )
-
-    #: Pointer to the previous executed step, class ``FilterScoresStepPart``
-    prev_class = FilterScoresStepPart
-
-    #: Include pedigree file flag (True)
-    include_ped_file = True
-
-    #: Types of output files by extension
-    ext_names = EXT_NAMES
-
-    #: Output file extensions
-    ext_values = EXT_VALUES
-
-    #: Wildcards name for filter_het_comp
-    filter_mode = "het_comp"
-
-    #: Model name for filter_scores
-    filter_config = "region_beds"
+# ---------------------------------------------------------------------------
+# Workflow
+# ---------------------------------------------------------------------------
 
 
 class VariantFiltrationWorkflow(BaseStep):
-    """Perform germline variant annotation"""
+    """Unified variant filtration – applies a single configurable filter tool to any VCF input.
 
-    #: Workflow name
+    Supports somatic-specific tools (dkfz, ebfilter) as well as generic tools
+    (bcftools, vembrane, regions). Use multiple tasks with
+    ``depends_on.variant`` to compose a sequential filter pipeline.
+    """
+
     name = "variant_filtration"
-    consumes = {
-        DataSignature(
-            DataType.VARIANTS, frozenset({"germline", ("snv", "indel"), "annotated"})
-        ): True
-    }
-    produces = [
-        DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "filtered"}))
-    ]
-    config_model_class = VariantFiltrationConfigModel
+    consumes = {DataSignature(DataType.VARIANTS): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"filtered"}))]
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = GermlineCaseSheet
+    config_model_class = VariantFiltrationConfigModel
+    sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
     def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
         return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
-        """Return local filtered germline VCF output paths for downstream consumers."""
+        """Return local filtered-variant output paths for downstream consumers."""
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
-            "vcf": f"output/jannovar_annotate_vcf.filtered.{lib}.{{filters}}/out/"
-            f"jannovar_annotate_vcf.filtered.{lib}.{{filters}}.vcf.gz",
-            "vcf_tbi": f"output/jannovar_annotate_vcf.filtered.{lib}.{{filters}}/out/"
-            f"jannovar_annotate_vcf.filtered.{lib}.{{filters}}.vcf.gz.tbi",
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
         }
 
     def __init__(
@@ -462,50 +452,67 @@ class VariantFiltrationWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            previous_steps=(VariantAnnotationWorkflow, NgsMappingWorkflow),
+            previous_steps=(),
             task_name=task_name,
             **kwargs,
         )
-        # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                WritePedigreeStepPart,
-                FilterQualityStepPart,
-                FilterInheritanceStepPart,
-                FilterFrequencyStepPart,
-                FilterRegionsStepPart,
-                FilterScoresStepPart,
-                FilterHetCompStepPart,
-                LinkOutStepPart,
-            )
-        )
-        # Inputs are resolved via get_upstream_paths() in step parts.
+        tool_cls = _TOOL_STEP_PART[self.config.tool]
+        self.register_sub_step_classes((tool_cls, LinkOutStepPart))
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the variant filtration workflow."""
-        # Generate output paths without extracting individuals.
-        name_pattern = "jannovar_annotate_vcf.filtered.{index_library.name}.{filters}"
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            ext=EXT_VALUES,
-        )
+        for lib_name in self._iter_library_names():
+            yield from expand(
+                os.path.join("output", "{library_name}", "out", "{library_name}{ext}"),
+                library_name=[lib_name],
+                ext=EXT_VALUES,
+            )
 
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
+    # ------------------------------------------------------------------
+    # Library-name enumeration (sheet-type-aware)
+    # ------------------------------------------------------------------
 
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                if not pedigree.index:
-                    msg = "INFO: pedigree without index (names: {})"
-                    print(msg.format(pedigree), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl,
-                    index_library=[pedigree.index.dna_ngs_library],
-                    filters=self.config.filter_combinations,
-                    **kwargs,
-                )
+    @listify
+    def _iter_library_names(self):
+        """Yield relevant DNA library names from all non-background data sets."""
+        for info, raw_sheet, shortcut_sheet in zip(
+            self.data_set_infos, self.sheets, self.shortcut_sheets
+        ):
+            if info.is_background:
+                continue
+            if info.sheet_type == "matched_cancer":
+                yield from self._cancer_library_names(raw_sheet)
+            else:
+                yield from self._generic_library_names(shortcut_sheet)
+
+    @staticmethod
+    def _cancer_library_names(raw_sheet):
+        """Yield tumor DNA library names from a matched-cancer sheet."""
+        try:
+            csheet = CancerCaseSheet(
+                raw_sheet,
+                options=CancerCaseSheetOptions(
+                    allow_missing_normal=True, allow_missing_tumor=False
+                ),
+            )
+            for donor in csheet.donors:
+                for bio_sample in donor.bio_samples.values():
+                    if not bio_sample.extra_infos.get("isTumor", False):
+                        continue
+                    for ts in bio_sample.test_samples.values():
+                        if ts.extra_infos.get("extractionType", "").lower() == "dna":
+                            for lib in ts.ngs_libraries.values():
+                                yield lib.name
+        except Exception as exc:
+            print(
+                f"WARNING: could not enumerate cancer library names: {exc}",
+                file=sys.stderr,
+            )
+
+    @staticmethod
+    def _generic_library_names(shortcut_sheet):
+        """Yield all DNA library names from a generic/germline sheet."""
+        for lib in shortcut_sheet.all_ngs_libraries:
+            ext = lib.test_sample.extra_infos.get("extractionType", "DNA")
+            if ext.lower() == "dna":
+                yield lib.name

@@ -1,186 +1,178 @@
-import re
-from typing import Annotated
+"""Pydantic models for the unified ``variant_filtration`` step."""
 
-from pydantic import AfterValidator, Field, model_validator
+from typing import Annotated, Literal, Self
+
+from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
-class Threshold(SnappyModel):
-    min_gq: int
-    min_dp_het: int
-    min_dp_hom: int
-    include_expressions: list[str]
+class ExpectedVariantVcf(BaseModel):
+    vcf: str
+    vcf_tbi: str
 
 
-class Frequencies(SnappyModel):
-    af_dominant: float = 0.001
-    """AF (allele frequency) values"""
+class Bcftools(SnappyModel):
+    include: str = ""
+    exclude: str = ""
 
-    af_recessive: float = 0.01
-    """AF (allele frequency) values"""
-
-    ac_dominant: int = 3
-    """AC (allele count in gnomAD) values"""
-
-
-class ScoreThreshold(SnappyModel):
-    require_coding: bool = False
-    require_gerpp_gt2: bool = False
-    min_cadd: int | None = None
+    @model_validator(mode="after")
+    def ensure_exactly_one(self) -> Self:
+        if not self.include and not self.exclude:
+            raise ValueError("Either 'include' or 'exclude' must be set for bcftools")
+        if self.include and self.exclude:
+            raise ValueError("Only one of 'include' or 'exclude' may be set for bcftools")
+        return self
 
 
-def check_combination(s: str) -> str:
-    """
-    A very simple validator that checks if the string has 5 dots.
-    The actual validation is done in the model validator, because the sets of valid pattern strings
-    can only be known at that point.
-    """
-    if s.count(".") != 5:
-        raise ValueError(
-            f"Invalid combination: {s}, has to have 6 parts separated by dots"
-            "({thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp})"
-        )
-    return s
+class Regions(SnappyModel):
+    include: str = ""
+    exclude: str = ""
+    path_bed: Annotated[str, Field(deprecated="Use 'exclude' instead")] = ""
+
+    @model_validator(mode="after")
+    def ensure_exactly_one(self) -> Self:
+        n = sum(bool(v) for v in (self.include, self.exclude, self.path_bed))
+        if n == 0:
+            raise ValueError("One of 'include', 'exclude', or 'path_bed' must be set for regions")
+        if n > 1:
+            raise ValueError(
+                "Only one of 'include', 'exclude', or 'path_bed' may be set for regions"
+            )
+        return self
 
 
-FilterCombination = Annotated[str, AfterValidator(check_combination)]
+class Vembrane(SnappyModel):
+    expressions: dict[str, str] = Field(
+        default_factory=dict,
+        examples=[
+            {
+                "silent": 'ANN["Consequence"] == ["synonymous_variant"]',
+                "poor_support": (
+                    '(FORMAT["DP"][SAMPLES[1]] < 50) or '
+                    '(FORMAT["AD"][SAMPLES[1]][1] < 5) or '
+                    '(FORMAT["AD"][SAMPLES[1]][1] / '
+                    '(FORMAT["AD"][SAMPLES[1]][0] + FORMAT["AD"][SAMPLES[1]][1]) < 0.05)'
+                ),
+            }
+        ]
+    )
+    mode: Literal["tag", "filter"] = "tag"
+    """``tag`` uses ``vembrane tag``; ``filter`` uses ``vembrane filter``."""
 
-FILTER_COMBINATION_EXAMPLES = [
-    "conservative.de_novo.dominant_freq.lifted_enhancers.all_scores.passthrough",
-    "conservative.de_novo.dominant_freq.lifted_enhancers.conserved.passthrough",
-    "conservative.de_novo.dominant_freq.limb_tads.all_scores.passthrough",
-    "conservative.de_novo.dominant_freq.limb_tads.coding.passthrough",
-    "conservative.de_novo.dominant_freq.limb_tads.conserved.passthrough",
-    "conservative.de_novo.dominant_freq.vista_enhancers.all_scores.passthrough",
-    "conservative.de_novo.dominant_freq.vista_enhancers.conserved.passthrough",
-    "conservative.de_novo.dominant_freq.whole_genome.all_scores.passthrough",
-    "conservative.de_novo.dominant_freq.whole_genome.coding.passthrough",
-    "conservative.de_novo.dominant_freq.whole_genome.conserved.passthrough",
-    "conservative.dominant.dominant_freq.lifted_enhancers.all_scores.passthrough",
-    "conservative.dominant.dominant_freq.lifted_enhancers.conserved.passthrough",
-    "conservative.dominant.dominant_freq.limb_tads.all_scores.passthrough",
-    "conservative.dominant.dominant_freq.limb_tads.coding.passthrough",
-    "conservative.dominant.dominant_freq.limb_tads.conserved.passthrough",
-    "conservative.dominant.dominant_freq.vista_enhancers.all_scores.passthrough",
-    "conservative.dominant.dominant_freq.vista_enhancers.conserved.passthrough",
-    "conservative.dominant.dominant_freq.whole_genome.all_scores.passthrough",
-    "conservative.dominant.dominant_freq.whole_genome.coding.passthrough",
-    "conservative.dominant.dominant_freq.whole_genome.conserved.passthrough",
-    "conservative.dominant.recessive_freq.lifted_enhancers.all_scores.intervals500",
-    "conservative.dominant.recessive_freq.lifted_enhancers.conserved.intervals500",
-    "conservative.dominant.recessive_freq.lifted_enhancers.conserved.tads",
-    "conservative.dominant.recessive_freq.limb_tads.all_scores.intervals500",
-    "conservative.dominant.recessive_freq.limb_tads.coding.gene",
-    "conservative.dominant.recessive_freq.limb_tads.conserved.intervals500",
-    "conservative.dominant.recessive_freq.limb_tads.conserved.tads",
-    "conservative.dominant.recessive_freq.vista_enhancers.all_scores.intervals500",
-    "conservative.dominant.recessive_freq.vista_enhancers.conserved.intervals500",
-    "conservative.dominant.recessive_freq.vista_enhancers.conserved.tads",
-    "conservative.dominant.recessive_freq.whole_genome.all_scores.intervals500",
-    "conservative.dominant.recessive_freq.whole_genome.coding.gene",
-    "conservative.dominant.recessive_freq.whole_genome.conserved.intervals500",
-    "conservative.dominant.recessive_freq.whole_genome.conserved.tads",
-    "conservative.recessive_hom.recessive_freq.lifted_enhancers.all_scores.passthrough",
-    "conservative.recessive_hom.recessive_freq.lifted_enhancers.conserved.passthrough",
-    "conservative.recessive_hom.recessive_freq.limb_tads.all_scores.passthrough",
-    "conservative.recessive_hom.recessive_freq.limb_tads.coding.passthrough",
-    "conservative.recessive_hom.recessive_freq.limb_tads.conserved.passthrough",
-    "conservative.recessive_hom.recessive_freq.vista_enhancers.all_scores.passthrough",
-    "conservative.recessive_hom.recessive_freq.vista_enhancers.conserved.passthrough",
-    "conservative.recessive_hom.recessive_freq.whole_genome.all_scores.passthrough",
-    "conservative.recessive_hom.recessive_freq.whole_genome.coding.passthrough",
-    "conservative.recessive_hom.recessive_freq.whole_genome.conserved.passthrough",
-    # The following are for input to variant_combination.
-    "conservative.dominant.recessive_freq.whole_genome.coding.passthrough",
-    "conservative.dominant.recessive_freq.whole_genome.conserved.passthrough",
+    expression: str = ""
+    """Single expression used in ``filter`` mode."""
+
+    aux: dict[str, str] = {}
+    """Mapping for ``--aux NAME=PATH`` files."""
+
+    context: list[str] = []
+    """Python statements for ``--context``."""
+
+    context_files: list[str] = []
+    """Paths for ``--context-file`` scripts."""
+
+    ontology: str = ""
+    """Optional ontology file passed via ``--ontology``."""
+
+    extra_args: str = ""
+
+    @model_validator(mode="after")
+    def ensure_mode_specific_fields(self) -> Self:
+        if self.mode == "tag":
+            if not self.expressions:
+                raise ValueError("tag mode requires 'expressions'")
+            if self.expression:
+                raise ValueError("tag mode does not use 'expression'")
+        else:
+            if not self.expression:
+                raise ValueError("filter mode requires 'expression'")
+            if self.expressions:
+                raise ValueError("filter mode does not use 'expressions'")
+        return self
+
+
+class Dkfz(SnappyModel):
+    """DKFZ bias filter – no configurable parameters."""
+
+
+class Ebfilter(SnappyModel):
+    ebfilter_threshold: float = 2.4
+    shuffle_seed: int = 1
+    panel_of_normals_size: int = 25
+    min_mapq: int = 20
+    min_baseq: int = 15
+    path_panel_of_normals_sample_list: str = ""
+
+
+class RemoveTags(SnappyModel):
+    tags: list[str]
+    """FILTER tags to remove corresponding records from the VCF."""
+
+    backend: Literal["bcftools", "vembrane"] = "bcftools"
+    """Backend used for removing records tagged in ``FILTER``."""
+
+    @model_validator(mode="after")
+    def ensure_tags(self) -> Self:
+        cleaned = [t for t in self.tags if t]
+        if not cleaned:
+            raise ValueError("tags must contain at least one non-empty tag")
+        self.tags = cleaned
+        return self
+
+
+ToolLiteral = Literal[
+    "bcftools",
+    "vembrane",
+    "regions",
+    "dkfz",
+    "ebfilter",
 ]
+
+_BAM_TOOLS: frozenset[str] = frozenset({"dkfz", "ebfilter"})
 
 
 class VariantFiltrationDependsOn(SnappyModel):
-    variant_annotation: Annotated[
+    variant: Annotated[
         str,
-        DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
-        ExpectedPathSchema(ExpectedAnnotatedGermlineVariants),
-    ] = "variant_annotation"
+        DataSignature(DataType.VARIANTS),
+        ExpectedPathSchema(ExpectedVariantVcf),
+    ]
+
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = ""
 
 
 class VariantFiltration(SnappyStepModel):
     depends_on: VariantFiltrationDependsOn = Field(default_factory=VariantFiltrationDependsOn)
 
-    thresholds: dict[str, Threshold] = {
-        "conservative": Threshold(
-            **dict(
-                min_gq=40,
-                min_dp_het=10,
-                min_dp_hom=5,
-                include_expressions=["'MEDGEN_COHORT_INCONSISTENT_AC=0'"],
-            )
-        ),
-        "relaxed": Threshold(
-            **dict(
-                min_gq=20,
-                min_dp_het=6,
-                min_dp_hom=3,
-                include_expressions=["'MEDGEN_COHORT_INCONSISTENT_AC=0'"],
-            )
-        ),
-    }
-    """quality filter sets, "keep_all" implicitly defined"""
+    tool: ToolLiteral
+    """One task = one tool. Vembrane supports both ``tag`` and ``filter`` modes."""
 
-    frequencies: Frequencies = Frequencies()
-
-    region_beds: Annotated[
-        dict[str, str],
-        Field(
-            examples=[
-                {
-                    "all_tads": "/fast/projects/medgen_genomes/static_data/GRCh37/hESC_hg19_allTads.bed",
-                    "all_genes": "/fast/projects/medgen_genomes/static_data/GRCh37/gene_bed/ENSEMBL_v75.bed.gz",
-                    "limb_tads": "/fast/projects/medgen_genomes/static_data/GRCh37/newlimb_tads.bed",
-                    "lifted_enhancers": "/fast/projects/medgen_genomes/static_data/GRCh37/all_but_onlyMB.bed",
-                    "vista_enhancers": "/fast/projects/medgen_genomes/static_data/GRCh37/vista_limb_enhancers.bed",
-                }
-            ]
-        ),
-    ] = {}
-    """regions to filter to, "whole_genome" implicitly defined"""
-
-    score_thresholds: dict[str, ScoreThreshold] = {
-        "coding": ScoreThreshold(
-            **dict(require_coding=True, require_gerpp_gt2=False, min_cadd=None)
-        ),
-        "conservative": ScoreThreshold(
-            **dict(require_coding=False, require_gerpp_gt2=False, min_cadd=0)
-        ),
-        "conserved": ScoreThreshold(
-            **dict(require_coding=False, require_gerpp_gt2=True, min_cadd=None)
-        ),
-    }
-
-    filter_combinations: Annotated[
-        list[FilterCombination], Field(examples=FILTER_COMBINATION_EXAMPLES)
-    ] = []
-    """dot-separated {thresholds}.{inherit}.{freq}.{region}.{score}.{het_comp}"""
+    bcftools: Bcftools | None = None
+    vembrane: Vembrane | None = None
+    regions: Regions | None = None
+    dkfz: Dkfz = Field(default_factory=Dkfz)
+    ebfilter: Ebfilter | None = None
 
     @model_validator(mode="after")
-    def ensure_filter_combinations_are_valid(self):
-        thresholds: set[str] = set(self.thresholds.keys())
-        inherit: set[str] = {"de_novo", "dominant", "recessive_hom"}
-        freq: set[str] = {"dominant_freq", "recessive_freq"}
-        region: set[str] = set(self.region_beds.keys()) | {"whole_genome"}
-        score: set[str] = set(self.score_thresholds.keys()) | {"all_scores"}
-        het_comp: set[str] = {"passthrough", "intervals500", "tads", "gene"}
-        pattern: str = r".".join(
-            f"({'|'.join(p)})" for p in [thresholds, inherit, freq, region, score, het_comp]
-        )
-        pattern: re.Pattern[str] = re.compile(pattern)
-        for combination in self.filter_combinations:
-            if pattern.fullmatch(combination) is None:
+    def validate_config(self) -> Self:
+        if not self.depends_on.variant:
+            raise ValueError("depends_on.variant must be set")
+
+        if self.tool != "dkfz":
+            tool_cfg = getattr(self, self.tool, None)
+            if tool_cfg is None:
                 raise ValueError(
-                    f"Invalid combination: {combination}, must match pattern {pattern.pattern}"
+                    f"Configuration block '{self.tool}:' must be provided when tool is '{self.tool}'"
                 )
+
+        if self.tool in _BAM_TOOLS and not self.depends_on.ngs_mapping:
+            raise ValueError(f"depends_on.ngs_mapping is required when tool is '{self.tool}'")
 
         return self
