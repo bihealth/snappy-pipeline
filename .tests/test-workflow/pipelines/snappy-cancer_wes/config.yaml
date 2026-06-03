@@ -18,9 +18,9 @@ tasks:
         enabled: false
       target_coverage_report:
         path_target_interval_list_mapping:
-        - name: MedExome_hg19_empirical_targets
-          pattern: MedExome
-          path: resources/Exome-MedExome.chr12.bed
+          - name: MedExome_hg19_empirical_targets
+            pattern: MedExome
+            path: resources/Exome-MedExome.chr12.bed
 
   - step: somatic_variant_calling
     name: variant_calling
@@ -29,9 +29,9 @@ tasks:
         ngs_mapping: mapping
       tool: mutect2
       mutect2:
-        extra_arguments: []
+        extra_arguments: [ ]
         num_jobs: 5
-        contamination: {}
+        contamination: { }
 
   - step: somatic_variant_annotation
     name: annotation
@@ -45,35 +45,53 @@ tasks:
         assembly: GRCh37
         reference: ../../resources/refs/subregion.fa
 
-  - step: somatic_variant_filtration
-    name: filtration
+  - name: filtration_dkfz
+    step: variant_filtration
     config:
+      tool: dkfz
       depends_on:
-        somatic_variant: annotation
+        variant: annotation
         ngs_mapping: mapping
-      filter_list:
-      - dkfz: {}
-      - bcftools:
-          exclude: "FORMAT/DP[1]<=50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.025"
 
-  - step: somatic_variant_filtration
-    name: filtration_AGAIN
+  - name: filtration_AGAIN
+    step: variant_filtration
     config:
+      tool: bcftools
       depends_on:
-        somatic_variant: filtration
-      filter_list:
-      - vembrane:
-          tag_mode: "exclude"
-          expressions:
-            q30: "QUAL < 30"
+        variant: filtration_dkfz
+      bcftools:
+        # Tags low support events, but does not remove records yet.
+        exclude: "FORMAT/DP[1]<=50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.025"
+
+  - name: tag_complex
+    step: variant_filtration
+    config:
+      tool: vembrane
+      depends_on:
+        variant: filtration_AGAIN
+      vembrane:
+        mode: tag
+        expressions:
+          modifier: 'ANN["Annotation_Impact"] == "MODIFIER"'
+          moderate: 'ANN["Annotation_Impact"] == "MODERATE"'
+
+  - name: filtration_final
+    step: variant_filtration
+    config:
+      tool: vembrane
+      depends_on:
+        variant: tag_complex
+      vembrane:
+        mode: filter
+        expression: '"modifier" not in FILTER'
 
 
 data_sets:
   trbc:
     file: samplesheet.tsv
     search_patterns:
-    - {left: '*.R1.fastq.gz', right: '*.R2.fastq.gz'}
+      - { left: '*.R1.fastq.gz', right: '*.R2.fastq.gz' }
     search_paths:
-    - raw
+      - raw
     type: matched_cancer
     naming_scheme: only_secondary_id
