@@ -30,7 +30,7 @@ class CreateProteome(SnappyStepModel):
     tool_ngs_mapping: ToolNgsMapping = ToolNgsMapping.BWA
 
     variant_type: InputVariantType = InputVariantType.CALLING
-    path_variant: str = "../germlinec_variant_calling"
+    path_variant: str = "../germline_variant_calling"
     tool_variant_calling: ToolVariantCalling = ToolVariantCalling.GATK4_HC
     tool_variant_annotation: ToolVariantAnnotation | None = None
     is_filtered: bool = False
