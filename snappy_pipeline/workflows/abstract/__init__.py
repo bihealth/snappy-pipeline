@@ -798,8 +798,6 @@ class BaseStep:
         self.task_name = self.task.name
         self.logger = logging.getLogger(self.task_name)
 
-        print(f"\n[DEBUG] Initializing step '{self.step_name}' for task '{self.task_name}'")
-
         # Validate from mapping input explicitly to ensure nested coercion is applied consistently.
         # Pass config_lookup_paths as validation context for path resolution.
         self.config = self.config_model_class.model_validate(
