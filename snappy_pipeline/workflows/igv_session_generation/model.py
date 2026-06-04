@@ -5,7 +5,7 @@ from pydantic import Field, model_validator
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedVariants
 from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 from snappy_pipeline.workflows.variant_phasing.model import ExpectedPhasedVariants
 
@@ -24,7 +24,7 @@ class IgvSessionGenerationDependsOn(SnappyModel):
     variant_annotation: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
-        ExpectedPathSchema(ExpectedAnnotatedGermlineVariants),
+        ExpectedPathSchema(ExpectedAnnotatedVariants),
     ] = ""
     variant_calling: Annotated[
         str,

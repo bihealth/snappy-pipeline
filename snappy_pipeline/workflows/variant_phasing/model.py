@@ -5,7 +5,7 @@ from pydantic import Field
 from snappy_pipeline.models import KeepTmpdir, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedGermlineVariants
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedVariants
 
 
 class GatkReadBackedPhasing(SnappyModel):
@@ -70,7 +70,7 @@ class VariantPhasingDependsOn(SnappyModel):
     variant_annotation: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
-        ExpectedPathSchema(ExpectedAnnotatedGermlineVariants),
+        ExpectedPathSchema(ExpectedAnnotatedVariants),
     ] = "variant_annotation"
 
 

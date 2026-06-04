@@ -11,7 +11,7 @@ args = getattr(snakemake.params, "args", {})
 mode = args.get("mode", "tag")
 
 ShellWrapper(snakemake).run(
-    f"""
+    r"""
 set -euo pipefail
 
 set -x
@@ -42,6 +42,6 @@ if [[ "{mode}" == "filter" ]]; then
 fi
 
 bgzip ${{out%.gz}}
-tabix -f {{snakemake.output.vcf}}
-"""
+tabix -f {snakemake.output.vcf}
+""".replace("{mode}", mode)
 )

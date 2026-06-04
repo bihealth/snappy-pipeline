@@ -543,7 +543,7 @@ def bootstrap_step_config(
         if tool == "arriba" and isinstance(cfg["arriba"], dict):
             cfg["arriba"].setdefault("path_index", _star_index_fixture_dir())
 
-    if step_name == "somatic_variant_annotation":
+    if step_name in ("somatic_variant_annotation", "variant_annotation"):
         tool = cfg.get("tool") or "vep"
         cfg["tool"] = tool
         cfg.setdefault(tool, {})
