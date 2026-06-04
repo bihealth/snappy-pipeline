@@ -21,7 +21,7 @@ import pydantic
 import ruamel.yaml as ruamel_yaml
 
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.workflows.abstract.protocol import DataSignature
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 
 yaml = ruamel_yaml.YAML()
 yaml.default_flow_style = False
@@ -689,6 +689,7 @@ def find_producer_for_requirement(
     requirement: DataSignature,
     workflow_items: list[tuple[str, type]],
     consumer_step: str,
+    expected_schema: type[pydantic.BaseModel] | None = None,
 ) -> str | None:
     candidates: list[str] = []
     for step_name, cls in workflow_items:
@@ -696,6 +697,16 @@ def find_producer_for_requirement(
             continue
         produces = getattr(cls, "produces", []) or []
         if any(sig.satisfies(requirement) for sig in produces):
+            if expected_schema is not None:
+                try:
+                    out_paths = cls.get_output_paths(signature=requirement)
+                    if isinstance(out_paths, dict):
+                        if not all(
+                            field_name in out_paths for field_name in expected_schema.model_fields
+                        ):
+                            continue
+                except Exception:
+                    continue
             candidates.append(step_name)
 
     if not candidates:
@@ -920,7 +931,23 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 selected_req = required_reqs[0]
             if selected_req is None:
                 continue
-            producer = find_producer_for_requirement(selected_req, workflow_items, step_name)
+            expected_schema = None
+            config_model = getattr(cls, "config_model_class", None)
+            if config_model:
+                dep_field = config_model.model_fields.get("depends_on")
+                if dep_field is not None:
+                    dep_model = dep_field.annotation
+                    field_info = dep_model.model_fields.get(logical_name)
+                    if field_info is not None:
+                        for item in getattr(field_info, "metadata", []):
+                            if isinstance(item, ExpectedPathSchema):
+                                expected_schema = item.schema
+                            elif isinstance(item, type) and issubclass(item, pydantic.BaseModel):
+                                expected_schema = item
+
+            producer = find_producer_for_requirement(
+                selected_req, workflow_items, step_name, expected_schema=expected_schema
+            )
             if producer and producer != step_name:
                 depends_on[logical_name] = step_to_default_task[producer]
 
