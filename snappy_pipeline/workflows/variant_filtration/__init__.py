@@ -18,11 +18,7 @@ import random
 import sys
 from typing import Any
 
-from biomedsheets.shortcuts import (
-    CancerCaseSheet,
-    CancerCaseSheetOptions,
-    GenericSampleSheet,
-)
+from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -32,6 +28,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
+    iter_library_names,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -399,73 +396,11 @@ class VariantFiltrationWorkflow(BaseStep):
 
     @listify
     def _iter_library_names(self):
-        """Yield relevant DNA library names from all non-background data sets."""
-        for info, raw_sheet, shortcut_sheet in zip(
-            self.data_set_infos, self.sheets, self.shortcut_sheets
-        ):
-            if info.is_background:
-                continue
-            if info.sheet_type == "matched_cancer":
-                upstream_step = self.resolve_dependency("variant").step_name
-                if upstream_step == "somatic_variant_calling":
-                    yield from self._cancer_library_names(raw_sheet)
-                else:
-                    yield from self._normal_library_names(raw_sheet)
-            else:
-                yield from self._generic_library_names(shortcut_sheet)
-
-    @staticmethod
-    def _cancer_library_names(raw_sheet):
-        """Yield tumor DNA library names from a matched-cancer sheet."""
-        try:
-            csheet = CancerCaseSheet(
-                raw_sheet,
-                options=CancerCaseSheetOptions(
-                    allow_missing_normal=True, allow_missing_tumor=False
-                ),
-            )
-            for donor in csheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    if not bio_sample.extra_infos.get("isTumor", False):
-                        continue
-                    for ts in bio_sample.test_samples.values():
-                        if ts.extra_infos.get("extractionType", "").lower() == "dna":
-                            for lib in ts.ngs_libraries.values():
-                                yield lib.name
-        except Exception as exc:
-            print(
-                f"WARNING: could not enumerate cancer library names: {exc}",
-                file=sys.stderr,
-            )
-
-    @staticmethod
-    def _normal_library_names(raw_sheet):
-        """Yield normal DNA library names from a matched-cancer sheet."""
-        try:
-            csheet = CancerCaseSheet(
-                raw_sheet,
-                options=CancerCaseSheetOptions(
-                    allow_missing_normal=True, allow_missing_tumor=False
-                ),
-            )
-            for donor in csheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    if bio_sample.extra_infos.get("isTumor", False):
-                        continue
-                    for ts in bio_sample.test_samples.values():
-                        if ts.extra_infos.get("extractionType", "").lower() == "dna":
-                            for lib in ts.ngs_libraries.values():
-                                yield lib.name
-        except Exception as exc:
-            print(
-                f"WARNING: could not enumerate normal library names: {exc}",
-                file=sys.stderr,
-            )
-
-    @staticmethod
-    def _generic_library_names(shortcut_sheet):
-        """Yield all DNA library names from a generic/germline sheet."""
-        for lib in shortcut_sheet.all_ngs_libraries:
-            ext = lib.test_sample.extra_infos.get("extractionType", "DNA")
-            if ext.lower() == "dna":
-                yield lib.name
+        """Yield relevant library names driven by samplesheet type and library_selection."""
+        selection = getattr(self.config, "library_selection", None)
+        yield from iter_library_names(
+            self.data_set_infos,
+            self.sheets,
+            self.shortcut_sheets,
+            selection,
+        )

@@ -460,3 +460,15 @@ class ToggleModel(SnappyModel):
 
     def __init__(self, enabled: bool = False, **kwargs):
         super().__init__(enabled=enabled, **kwargs)
+
+
+# Re-export for convenience so callers can do:
+#   from snappy_pipeline.models import LibrarySelectionMixin
+from snappy_pipeline.models.selection import LibrarySelectionMixin  # noqa: E402
+
+__all__ = [
+    "LibrarySelectionMixin",
+    "SnappyModel",
+    "SnappyStepModel",
+    "ToggleModel",
+]

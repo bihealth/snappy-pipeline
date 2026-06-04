@@ -1350,6 +1350,277 @@ class BaseStep:
         )
 
 
+# ---------------------------------------------------------------------------
+# Library DataFrame helpers (used by variant_annotation, variant_filtration, …)
+# ---------------------------------------------------------------------------
+
+#: Default pandas query expressions applied when library_selection is None.
+_LIBRARY_SELECTION_DEFAULTS: dict[str, str] = {
+    "cancer": "role == 'tumor' and extraction_type == 'dna'",
+    "germline": "extraction_type == 'dna'",
+}
+
+
+def build_library_dataframe(
+    data_set_infos,
+    sheets,
+    shortcut_sheets,
+):
+    """Build a tidy pandas DataFrame with one row per NGS library.
+
+    The shortcut sheet objects (CancerCaseSheet, GermlineCaseSheet, …) are
+    used directly as the data source so that information already computed by
+    biomedsheets (primary pairs, pedigree roles, affected status, sex, …) is
+    re-used rather than re-derived.
+
+    Parameters
+    ----------
+    data_set_infos:
+        Iterable of :class:`DataSetInfo` objects (``self.data_set_infos``).
+    sheets:
+        Corresponding raw biomedsheets ``sheet`` objects (``self.sheets``).
+    shortcut_sheets:
+        Corresponding shortcut sheet objects (``self.shortcut_sheets``).
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per NGS library.  Columns:
+
+        * ``library_name`` — NGS library identifier
+        * ``extraction_type`` — ``"dna"``, ``"rna"``, … (always lower-cased)
+        * ``kind`` — ``"cancer"`` or ``"germline"``
+        * ``role`` — ``"tumor"`` / ``"normal"`` / ``"index"`` / ``"father"``
+          / ``"mother"`` / ``"affected"`` / ``"unaffected"``
+        * ``is_primary`` — ``True`` for primary tumor (cancer) or pedigree
+          index (germline); ``False`` otherwise
+        * ``sex`` — ``"male"``, ``"female"``, or ``"unknown"``
+        * ``donor_name`` — patient / family identifier
+        * ``sample_name`` — bio-sample name
+    """
+    import pandas as pd
+    from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
+
+    rows: list[dict] = []
+
+    for info, _raw_sheet, shortcut_sheet in zip(data_set_infos, sheets, shortcut_sheets):
+        if info.is_background:
+            continue
+
+        sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
+
+        # ── matched_cancer ───────────────────────────────────────────────────
+        if sheet_type == "matched_cancer":
+            try:
+                csheet = CancerCaseSheet(
+                    _raw_sheet,
+                    options=CancerCaseSheetOptions(
+                        allow_missing_normal=True, allow_missing_tumor=True
+                    ),
+                )
+            except Exception as exc:
+                print(
+                    f"WARNING: could not build cancer library DataFrame: {exc}",
+                    file=sys.stderr,
+                )
+                continue
+
+            # Collect library names that belong to the primary tumor per donor
+            # (first tumor in primary_sample_pairs).
+            primary_tumor_lib_names: set[str] = set()
+            for pair in csheet.primary_sample_pairs:
+                if pair and pair.tumor_sample and pair.tumor_sample.dna_ngs_library:
+                    primary_tumor_lib_names.add(pair.tumor_sample.dna_ngs_library.name)
+                if pair and pair.tumor_sample and pair.tumor_sample.rna_ngs_library:
+                    primary_tumor_lib_names.add(pair.tumor_sample.rna_ngs_library.name)
+
+            for donor in csheet.donors:
+                donor_name = donor.name
+                for bio_sample in donor.bio_samples.values():
+                    is_tumor = bio_sample.extra_infos.get("isTumor", False)
+                    role = "tumor" if is_tumor else "normal"
+                    sample_name = bio_sample.name
+                    for ts in bio_sample.test_samples.values():
+                        ext = ts.extra_infos.get("extractionType", "unknown").lower()
+                        for lib in ts.ngs_libraries.values():
+                            is_primary = lib.name in primary_tumor_lib_names if is_tumor else True
+                            rows.append(
+                                {
+                                    "library_name": lib.name,
+                                    "extraction_type": ext,
+                                    "kind": "cancer",
+                                    "role": role,
+                                    "is_primary": is_primary,
+                                    "sex": "unknown",
+                                    "donor_name": donor_name,
+                                    "sample_name": sample_name,
+                                }
+                            )
+
+        # ── germline_variants (and generic) ──────────────────────────────────
+        else:
+            # Derive role and pedigree-level attributes from the shortcut sheet
+            # if it exposes them (GermlineCaseSheet); fall back gracefully for
+            # plain GenericSampleSheet.
+            index_lib_names: set[str] = set()
+            father_lib_names: set[str] = set()
+            mother_lib_names: set[str] = set()
+            lib_sex: dict[str, str] = {}
+
+            if hasattr(shortcut_sheet, "pedigrees"):
+                for ped in shortcut_sheet.pedigrees:
+                    # Index / proband
+                    if ped.index and ped.index.dna_ngs_library:
+                        index_lib_names.add(ped.index.dna_ngs_library.name)
+
+                    # Build sets of PKs referenced as father / mother by children
+                    pk_is_father: set = {
+                        d.father_pk for d in ped.donors if getattr(d, "father_pk", None)
+                    }
+                    pk_is_mother: set = {
+                        d.mother_pk for d in ped.donors if getattr(d, "mother_pk", None)
+                    }
+
+                    for d in ped.donors:
+                        lib = getattr(d, "dna_ngs_library", None)
+                        if lib is None:
+                            continue
+                        pk = getattr(d, "pk", None)
+                        sex_raw = (
+                            d.extra_infos.get("sex", "unknown")
+                            if hasattr(d, "extra_infos")
+                            else "unknown"
+                        )
+                        lib_sex[lib.name] = sex_raw if sex_raw in ("male", "female") else "unknown"
+                        if pk in pk_is_father:
+                            father_lib_names.add(lib.name)
+                        elif pk in pk_is_mother:
+                            mother_lib_names.add(lib.name)
+
+            for lib in shortcut_sheet.all_ngs_libraries:
+                ts = lib.test_sample
+                bs = getattr(ts, "bio_sample", None)
+                bio_entity = getattr(bs, "bio_entity", None)
+                ext = ts.extra_infos.get("extractionType", "unknown").lower()
+                lib_name = lib.name
+                donor_name = getattr(bio_entity, "name", "")
+                sample_name = getattr(bs, "name", "")
+                is_affected = ts.extra_infos.get("isAffected", None)
+                sex = lib_sex.get(lib_name, "unknown")
+
+                if lib_name in index_lib_names:
+                    role = "index"
+                    is_primary = True
+                elif lib_name in father_lib_names:
+                    role = "father"
+                    is_primary = False
+                elif lib_name in mother_lib_names:
+                    role = "mother"
+                    is_primary = False
+                elif is_affected is True:
+                    role = "affected"
+                    is_primary = False
+                elif is_affected is False:
+                    role = "unaffected"
+                    is_primary = False
+                else:
+                    role = "index"  # singleton / unknown → treat as index
+                    is_primary = True
+
+                rows.append(
+                    {
+                        "library_name": lib_name,
+                        "extraction_type": ext,
+                        "kind": "germline",
+                        "role": role,
+                        "is_primary": is_primary,
+                        "sex": sex,
+                        "donor_name": donor_name,
+                        "sample_name": sample_name,
+                    }
+                )
+
+    _COLS = [
+        "library_name",
+        "extraction_type",
+        "kind",
+        "role",
+        "is_primary",
+        "sex",
+        "donor_name",
+        "sample_name",
+    ]
+    return pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
+
+
+def apply_library_selection(
+    df,
+    selection: str | None,
+    kind: str,
+):
+    """Filter *df* using *selection* or the per-*kind* default.
+
+    Parameters
+    ----------
+    df:
+        Library DataFrame produced by :func:`build_library_dataframe`.
+    selection:
+        A pandas ``DataFrame.query()`` expression, or ``None`` to use the
+        default for *kind*.
+    kind:
+        Sheet kind (``"cancer"`` or ``"germline"``); used only when
+        *selection* is ``None``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered subset of *df*.
+    """
+    if df.empty:
+        return df
+    expr = selection if selection is not None else _LIBRARY_SELECTION_DEFAULTS.get(kind, "")
+    if not expr:
+        return df
+    try:
+        return df.query(expr)
+    except Exception as exc:
+        raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
+
+
+def iter_library_names(
+    data_set_infos,
+    sheets,
+    shortcut_sheets,
+    selection: str | None,
+) -> typing.Iterator[str]:
+    """Yield distinct library names after applying *selection*.
+
+    Convenience wrapper around :func:`build_library_dataframe` +
+    :func:`apply_library_selection`.  Skips background datasets automatically.
+    Iterates per-dataset so the per-kind default is applied correctly when a
+    config contains mixed sheet types.
+
+    Parameters
+    ----------
+    data_set_infos, sheets, shortcut_sheets:
+        As returned by ``BaseStep`` initialisation.
+    selection:
+        ``library_selection`` value from the step config (may be ``None``).
+    """
+    seen: set[str] = set()
+    for info, raw_sheet, shortcut_sheet in zip(data_set_infos, sheets, shortcut_sheets):
+        if info.is_background:
+            continue
+        sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
+        kind = "cancer" if sheet_type == "matched_cancer" else "germline"
+        df = build_library_dataframe([info], [raw_sheet], [shortcut_sheet])
+        filtered = apply_library_selection(df, selection, kind)
+        for lib_name in filtered["library_name"].tolist():
+            if lib_name not in seen:
+                seen.add(lib_name)
+                yield lib_name
+
+
 class LinkInPathGenerator:
     """Helper class for generating paths to link in"""
 
