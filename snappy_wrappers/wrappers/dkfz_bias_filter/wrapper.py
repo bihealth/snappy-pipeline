@@ -8,9 +8,10 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
+mode = args.get("mode", "tag")
 
 ShellWrapper(snakemake).run(
-    r"""
+    f"""
 set -euo pipefail
 
 set -x
@@ -35,7 +36,12 @@ if [[ ! -s ${{out%.gz}} ]]; then
     > ${{out%.gz}}
 fi
 
+if [[ "{mode}" == "filter" ]]; then
+    bcftools filter --exclude 'FILTER ~ "bPcr" || FILTER ~ "bSeq"' -O v -o ${{out%.gz}}.filtered ${{out%.gz}}
+    mv ${{out%.gz}}.filtered ${{out%.gz}}
+fi
+
 bgzip ${{out%.gz}}
-tabix -f {snakemake.output.vcf}
+tabix -f {{snakemake.output.vcf}}
 """
 )

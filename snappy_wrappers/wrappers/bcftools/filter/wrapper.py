@@ -9,19 +9,29 @@ if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
-filter_name = args["filter_name"]
+filter_name = args.get("filter_name", "bcftools")
+mode = args.get("mode", "tag")
 expression = (
     '--include "{}"'.format(args["include"])
     if args.get("include", None)
     else '--exclude "{}"'.format(args["exclude"])
 )
 
-ShellWrapper(snakemake).run(
-    r"""
+if mode == "tag":
+    cmd = r"""
 bcftools filter --soft-filter {filter_name} --mode + \
     {expression} \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.vcf}
 tabix {snakemake.output.vcf}
 """
-)
+else:
+    cmd = r"""
+bcftools filter \
+    {expression} \
+    -O z -o {snakemake.output.vcf} \
+    {snakemake.input.vcf}
+tabix {snakemake.output.vcf}
+"""
+
+ShellWrapper(snakemake).run(cmd)

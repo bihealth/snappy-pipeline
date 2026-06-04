@@ -17,6 +17,7 @@ class ExpectedVariantVcf(BaseModel):
 class Bcftools(SnappyModel):
     include: str = ""
     exclude: str = ""
+    mode: Literal["tag", "filter"] = "tag"
 
     @model_validator(mode="after")
     def ensure_exactly_one(self) -> Self:
@@ -31,6 +32,7 @@ class Regions(SnappyModel):
     include: str = ""
     exclude: str = ""
     path_bed: Annotated[str, Field(deprecated="Use 'exclude' instead")] = ""
+    mode: Literal["tag", "filter"] = "tag"
 
     @model_validator(mode="after")
     def ensure_exactly_one(self) -> Self:
@@ -95,7 +97,9 @@ class Vembrane(SnappyModel):
 
 
 class Dkfz(SnappyModel):
-    """DKFZ bias filter – no configurable parameters."""
+    """DKFZ bias filter."""
+
+    mode: Literal["tag", "filter"] = "tag"
 
 
 class Ebfilter(SnappyModel):
@@ -105,22 +109,7 @@ class Ebfilter(SnappyModel):
     min_mapq: int = 20
     min_baseq: int = 15
     path_panel_of_normals_sample_list: str = ""
-
-
-class RemoveTags(SnappyModel):
-    tags: list[str]
-    """FILTER tags to remove corresponding records from the VCF."""
-
-    backend: Literal["bcftools", "vembrane"] = "bcftools"
-    """Backend used for removing records tagged in ``FILTER``."""
-
-    @model_validator(mode="after")
-    def ensure_tags(self) -> Self:
-        cleaned = [t for t in self.tags if t]
-        if not cleaned:
-            raise ValueError("tags must contain at least one non-empty tag")
-        self.tags = cleaned
-        return self
+    mode: Literal["tag", "filter"] = "tag"
 
 
 ToolLiteral = Literal[
@@ -149,7 +138,7 @@ class VariantFiltrationDependsOn(SnappyModel):
 
 
 class VariantFiltration(SnappyStepModel):
-    depends_on: VariantFiltrationDependsOn = Field(default_factory=VariantFiltrationDependsOn)
+    depends_on: VariantFiltrationDependsOn
 
     tool: ToolLiteral
     """One task = one tool. Vembrane supports both ``tag`` and ``filter`` modes."""

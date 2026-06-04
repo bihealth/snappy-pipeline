@@ -282,9 +282,16 @@ def get_dep_defaults(workflow_cls: type) -> dict[str, str | None]:
         return {}
 
     dep_model = dep_field.annotation
-    dep_instance = dep_model()
-    dep_dict = dep_instance.model_dump()
-    return {k: v for k, v in dep_dict.items()}
+    dep_dict = {}
+    from pydantic_core import PydanticUndefined
+
+    for name, field in getattr(dep_model, "model_fields", {}).items():
+        val = field.default
+        if val is PydanticUndefined:
+            dep_dict[name] = ""
+        else:
+            dep_dict[name] = val
+    return dep_dict
 
 
 def _guess_bwa_index_from_reference(base_config: dict[str, Any]) -> str:
@@ -603,6 +610,22 @@ def bootstrap_step_config(
                 "rec_rate": 1e-8,
             },
         )
+
+    if step_name == "variant_filtration":
+        tool = cfg.get("tool") or "bcftools"
+        cfg["tool"] = tool
+        if tool == "bcftools":
+            cfg.setdefault("bcftools", {})
+            if isinstance(cfg["bcftools"], dict):
+                cfg["bcftools"].setdefault("exclude", "FILTER ~ 'low_depth'")
+        elif tool == "regions":
+            cfg.setdefault("regions", {})
+            if isinstance(cfg["regions"], dict):
+                cfg["regions"].setdefault("exclude", "FILTER ~ 'low_depth'")
+        elif tool == "vembrane":
+            cfg.setdefault("vembrane", {})
+            if isinstance(cfg["vembrane"], dict):
+                cfg["vembrane"].setdefault("expressions", {"some_filter": "True"})
 
     return cfg
 

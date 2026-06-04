@@ -9,6 +9,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"] if "filter_name" in args else ""
+mode = args.get("mode", "tag")
 has_annotation = str(args["has_annotation"] if "has_annotation" in args else False)
 
 if "interval" in args:
@@ -81,15 +82,23 @@ if [[ $lines -gt 0 ]]; then
         {snakemake.input.bam} \
         {snakemake.input.txt} \
         $TMPDIR/after_running_eb_filter.vcf
-    if [[ -n "{filter_name}" ]]
+    if [[ "{mode}" == "tag" ]]
     then
-        bcftools filter --soft-filter {filter_name} --mode + \
+        if [[ -n "{filter_name}" ]]
+        then
+            bcftools filter --soft-filter {filter_name} --mode + \
+                --exclude "INFO/EB < {args[ebfilter_threshold]}" \
+                -O z -o $TMPDIR/after_eb_filter.vcf.gz \
+                $TMPDIR/after_running_eb_filter.vcf
+        else
+            mv $TMPDIR/after_running_eb_filter.vcf $TMPDIR/after_eb_filter.vcf
+            bgzip $TMPDIR/after_eb_filter.vcf
+        fi
+    else
+        bcftools filter \
             --exclude "INFO/EB < {args[ebfilter_threshold]}" \
             -O z -o $TMPDIR/after_eb_filter.vcf.gz \
             $TMPDIR/after_running_eb_filter.vcf
-    else
-        mv $TMPDIR/after_running_eb_filter.vcf $TMPDIR/after_eb_filter.vcf
-        bgzip $TMPDIR/after_eb_filter.vcf
     fi
 else
     mv $TMPDIR/for_eb_filter.vcf.gz $TMPDIR/after_eb_filter.vcf.gz
