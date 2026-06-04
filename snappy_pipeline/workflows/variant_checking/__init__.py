@@ -101,7 +101,7 @@ class PeddyStepPart(BaseStepPart):
 
         calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
             "variant_calling",
-            library_name=f"{self.variant_tool}.{{index_ngs_library}}",
+            library_name="{index_ngs_library}",
         )
         yield "vcf", calling.vcf
         yield "vcf_tbi", calling.vcf_tbi

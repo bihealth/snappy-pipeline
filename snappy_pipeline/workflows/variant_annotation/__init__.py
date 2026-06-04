@@ -204,7 +204,11 @@ class VariantAnnotationWorkflow(BaseStep):
             if info.is_background:
                 continue
             if info.sheet_type == "matched_cancer":
-                yield from self._cancer_library_names(raw_sheet)
+                upstream_step = self.resolve_dependency("variant").step_name
+                if upstream_step == "somatic_variant_calling":
+                    yield from self._cancer_library_names(raw_sheet)
+                else:
+                    yield from self._normal_library_names(raw_sheet)
             else:
                 yield from self._generic_library_names(shortcut_sheet)
 
@@ -237,6 +241,38 @@ class VariantAnnotationWorkflow(BaseStep):
         except Exception as exc:
             print(
                 f"WARNING: could not enumerate cancer library names: {exc}",
+                file=sys.stderr,
+            )
+
+    @staticmethod
+    def _normal_library_names(raw_sheet):
+        """Yield normal DNA library names from a matched-cancer sheet."""
+        try:
+            csheet = CancerCaseSheet(
+                raw_sheet,
+                options=CancerCaseSheetOptions(
+                    allow_missing_normal=True,
+                    allow_missing_tumor=False,
+                ),
+            )
+            for donor in csheet.donors:
+                for bio_sample in donor.bio_samples.values():
+                    if bio_sample.extra_infos.get("isTumor", False):
+                        continue
+                    for test_sample in bio_sample.test_samples.values():
+                        extraction_type = test_sample.extra_infos.get("extractionType", "unknown")
+                        if extraction_type.lower() != "dna":
+                            if extraction_type == "unknown":
+                                print(
+                                    f"INFO: sample {test_sample.name} has missing extraction type, ignored",
+                                    file=sys.stderr,
+                                )
+                            continue
+                        for ngs_library in test_sample.ngs_libraries.values():
+                            yield ngs_library.name
+        except Exception as exc:
+            print(
+                f"WARNING: could not enumerate normal library names: {exc}",
                 file=sys.stderr,
             )
 
