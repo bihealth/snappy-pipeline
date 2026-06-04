@@ -9,13 +9,11 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
-from snappy_pipeline.workflows.somatic_variant_annotation import (
-    SomaticVariantAnnotationWorkflow,
-)
 from snappy_pipeline.workflows.somatic_variant_calling import (
     SomaticVariantCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 
 from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
@@ -155,7 +153,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             workdir,
             previous_steps=(
                 SomaticVariantCallingWorkflow,
-                SomaticVariantAnnotationWorkflow,
+                VariantAnnotationWorkflow,
                 VariantFiltrationWorkflow,
                 NgsMappingWorkflow,
             ),

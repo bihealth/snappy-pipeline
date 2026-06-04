@@ -32,8 +32,9 @@ class SomaticVariantCallingTool(enum.StrEnum):
     MUTECT2 = "mutect2"
 
 
-class SomaticVariantAnnotationTool(enum.StrEnum):
+class VariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
+    MEHARI = "mehari"
 
 
 class CopyNumberTool(enum.StrEnum):
@@ -139,7 +140,7 @@ class CbioportalExport(SnappyStepModel):
     somatic_variant_step: SomaticVariantStep = SomaticVariantStep.FILTER
     """Which pipeline step is used to compute signatures"""
 
-    somatic_variant_annotation_tool: SomaticVariantAnnotationTool = SomaticVariantAnnotationTool.VEP
+    somatic_variant_annotation_tool: VariantAnnotationTool = VariantAnnotationTool.VEP
 
     is_filtered: bool = True
     """Is the vcf post-filtered"""

@@ -51,7 +51,7 @@ Project Info
 
     somatic_ngs
     panel_of_normals
-    somatic_variant_filtration
+    variant_filtration
     somatic_cnv
     cbioportal_export
 
@@ -71,9 +71,7 @@ Project Info
     step/somatic_gene_fusion_calling
     step/somatic_purity_ploidy_estimate
     step/somatic_targeted_seq_cnv_calling
-    step/somatic_variant_annotation
     step/somatic_variant_calling
-    step/somatic_variant_filtration
     step/somatic_wgs_cnv_calling
     step/somatic_wgs_sv_calling
     step/sv_calling_targeted
