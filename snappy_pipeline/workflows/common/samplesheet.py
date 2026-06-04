@@ -89,8 +89,10 @@ def tumor_to_normal_mapping(table: pd.DataFrame) -> dict[str, str]:
         "Multiple normals for at least one donor"
     )
     tumors = table[table["isTumor"]]
-    tumor_normal_map = tumors[["ngs_library", "bio_entity"]].merge(
-        normals[["ngs_library", "bio_entity"]], on="bio_entity"
+    tumor_normal_map = (
+        tumors[["ngs_library", "bio_entity"]]
+        .merge(normals[["ngs_library", "bio_entity"]], on="bio_entity", how="left")
+        .convert_dtypes()
     )
     return pd.Series(
         tumor_normal_map.ngs_library_y.values, index=tumor_normal_map.ngs_library_x.values

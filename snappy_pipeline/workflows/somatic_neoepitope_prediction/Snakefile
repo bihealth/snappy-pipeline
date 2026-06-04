@@ -338,7 +338,7 @@ if "pvacsplice" in wf.config["tools"]:
                     if m:
                         line = (
                             m.group(1)
-                            + 'gene id "'
+                            + 'gene_id "'
                             + m.group(2)
                             + m.group(3)
                             + '"'
