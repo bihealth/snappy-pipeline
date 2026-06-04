@@ -219,22 +219,11 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_annotate_seqvars(self, wildcards):
         yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-        seqvar_caller = str(self.parent.get_task_config("variant_calling").tool)
-
-        path = (
-            "output/{seqvar_caller}.{index_ngs_library}/out/"
-            "{seqvar_caller}.{index_ngs_library}.vcf.gz"
+        calling = self.parent.get_upstream_paths(
+            "variant_calling",
+            library_name=wildcards.index_ngs_library,
         )
-
-        vcfs = [
-            self.parent.upstream("variant_calling")(
-                path.format(
-                    seqvar_caller=seqvar_caller,
-                    index_ngs_library=wildcards.index_ngs_library,
-                )
-            )
-        ]
-        yield "vcf", vcfs
+        yield "vcf", [calling.vcf]
 
     @dictify
     def _get_output_files_annotate_seqvars(self):

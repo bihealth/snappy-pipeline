@@ -880,7 +880,12 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
         # 1) Use typed depends_on defaults first (if available).
         dep_defaults = get_dep_defaults(cls)
         for logical_name, default_target in dep_defaults.items():
-            if (
+            if logical_name == "variant":
+                if step_name == "variant_annotation":
+                    depends_on["variant"] = step_to_default_task["variant_calling"]
+                elif step_name == "variant_filtration":
+                    depends_on["variant"] = step_to_default_task["variant_annotation"]
+            elif (
                 isinstance(default_target, str)
                 and default_target
                 and default_target in all_steps
