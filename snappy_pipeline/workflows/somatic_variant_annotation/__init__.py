@@ -173,7 +173,7 @@ class MehariAnnotateSomaticVcfStepPart(AnnotateSomaticVcfStepPart):
 
 class SomaticVariantAnnotationWorkflow(BaseStep):
     name = "somatic_variant_annotation"
-    consumes = {DataSignature(DataType.VARIANTS): True}
+    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic"})): True}
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "annotated"}))
     ]

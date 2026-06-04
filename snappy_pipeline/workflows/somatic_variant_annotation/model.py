@@ -21,7 +21,7 @@ class ExpectedVariantVcf(BaseModel):
 class SomaticVariantAnnotationDependsOn(SnappyModel):
     variant: Annotated[
         str,
-        DataSignature(DataType.VARIANTS),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
         ExpectedPathSchema(ExpectedVariantVcf),
     ] = Field(default="", validation_alias=AliasChoices("variant", "somatic_variant"))
 
