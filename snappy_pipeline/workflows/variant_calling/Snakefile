@@ -26,6 +26,10 @@ tool = str(wf.config.tool)
 # Rules =======================================================================
 
 
+wildcard_constraints:
+    library_name="[^/.]+",
+
+
 localrules:
     # Writing pedigrees should be done locally as well
     variant_calling_write_pedigree_run,
