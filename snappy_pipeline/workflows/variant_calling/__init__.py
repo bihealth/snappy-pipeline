@@ -377,7 +377,7 @@ class VariantCallingGetLogFileMixin:
     def get_log_file(self, action) -> SnakemakeDictItemsGenerator:
         """Return dict of log files in the "log" directory."""
         _ = action
-        token = f"{self.name}.{{library_name}}"
+        token = "{library_name}"
         prefix = f"work/{token}/log/{token}.{self.name}_{action}"
         key_ext = (
             ("log", ".log"),
@@ -442,7 +442,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        token = f"{self.name}.{{library_name}}"
+        token = "{library_name}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -648,7 +648,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
-        infix = "gatk4_hc_gvcf.{library_name}"
+        infix = "{library_name}"
         result = {
             "gvcf": f"work/{infix}/out/{infix}.g.vcf.gz",
             "gvcf_md5": f"work/{infix}/out/{infix}.g.vcf.gz.md5",
@@ -691,7 +691,7 @@ class ReportGetLogFileMixin:
         """Return dict of log files in the "log" directory."""
         self._validate_action(action)
         assert self.report_per_donor is not None
-        token = f"{self.parent.config.tool}.{{index_library_name}}"
+        token = "{index_library_name}"
         prefix = f"work/{token}/log/{token}.{{donor_library_name}}.{self.name}_{action}"
         if not self.report_per_donor:
             prefix = prefix.replace("{donor_library_name}.", "")
