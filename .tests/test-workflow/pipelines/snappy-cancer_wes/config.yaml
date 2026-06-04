@@ -3,8 +3,8 @@ static_data_config:
     path: ../../resources/refs/subregion.fa
 
 tasks:
-  - step: ngs_mapping
-    name: mapping
+  - name: mapping
+    step: ngs_mapping
     config:
       tool: bwa
       bwa:
@@ -22,8 +22,8 @@ tasks:
             pattern: MedExome
             path: resources/Exome-MedExome.chr12.bed
 
-  - step: somatic_variant_calling
-    name: variant_calling
+  - name: variant_calling
+    step: somatic_variant_calling
     config:
       depends_on:
         ngs_mapping: mapping
@@ -33,11 +33,11 @@ tasks:
         num_jobs: 5
         contamination: { }
 
-  - step: somatic_variant_annotation
-    name: annotation
+  - name: annotation
+    step: variant_annotation
     config:
       depends_on:
-        somatic_variant: variant_calling
+        variant: variant_calling
       tool: "mehari"
       mehari:
         transcripts:
