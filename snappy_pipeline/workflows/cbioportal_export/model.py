@@ -25,11 +25,12 @@ class SomaticVariantCallingTool(enum.StrEnum):
 
 class SomaticVariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
+    MEHARI = "mehari"
 
 
 class CopyNumberTool(enum.StrEnum):
     CNVKIT = "cnvkit"
-
+    SEQUENZA = "sequenza"
     CONTROL_FREEC = "Control_FREEC"
     """unsupported"""
 
@@ -115,6 +116,7 @@ class CbioportalExport(SnappyStepModel):
     """Which pipeline step is used to compute signatures"""
 
     somatic_variant_annotation_tool: SomaticVariantAnnotationTool = SomaticVariantAnnotationTool.VEP
+    """mehari is currently unsupported (no support for mehari in vcf2table)"""
 
     is_filtered: bool = True
     """Is the vcf post-filtered"""

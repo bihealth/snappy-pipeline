@@ -2,7 +2,7 @@
 """Utility code for snappy_wrappers"""
 
 import os
-import re
+import json
 import subprocess
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -83,7 +83,9 @@ def install_R_package(
         case _:
             raise ValueError("Unknown repository '{repository}'")
     R_script = [
-        f".libPaths(c(.libPaths(), '{dest}'))",
+        ".libPaths(c('{conda_prefix}', '{dest}'))".format(
+            conda_prefix=os.path.join(os.getenv("CONDA_PREFIX"), "lib", "R", "library"), dest=dest
+        ),
         install_cmd,
         f"status <- try(find.package('{name}', lib.loc='{dest}', quiet=FALSE, verbose=TRUE))",
         "status <- ifelse(is(status, 'try-error'), 1, 0)",
@@ -104,4 +106,3 @@ def install_R_packages(dest: str, filename: str):
             url=package.get("url", None),
         )
         status.check_returncode()
-
