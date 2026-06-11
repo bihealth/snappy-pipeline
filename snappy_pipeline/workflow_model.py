@@ -73,6 +73,7 @@ class SearchPattern(TypedDict):
 class DataSetType(enum.StrEnum):
     MATCHED_CANCER = "matched_cancer"
     GERMLINE_VARIANTS = "germline_variants"
+    GENERIC = "generic"
 
 
 class NamingScheme(enum.StrEnum):
