@@ -116,7 +116,7 @@ class CbioportalExport(SnappyStepModel):
     """Which pipeline step is used to compute signatures"""
 
     somatic_variant_annotation_tool: SomaticVariantAnnotationTool = SomaticVariantAnnotationTool.VEP
-    """mehari is currently unsupported (no support for mehari in vcf2table)"""
+    """select somatic variant annotation tool"""
 
     is_filtered: bool = True
     """Is the vcf post-filtered"""
@@ -165,4 +165,10 @@ class CbioportalExport(SnappyStepModel):
                 raise ValueError(
                     "When the input step is 'somatic_variant_filtration', the filtration status must be set to 'True'"
                 )
+        return self
+
+    @model_validator(mode="after")
+    def block_mehari_annotation_tool(self):
+        if self.somatic_variant_annotation_tool == SomaticVariantAnnotationTool.MEHARI:
+            raise ValueError("mehari is currently unsupported (no support for mehari in vcf2table)")
         return self
