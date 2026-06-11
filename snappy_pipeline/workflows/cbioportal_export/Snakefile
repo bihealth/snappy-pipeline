@@ -189,7 +189,7 @@ if step_config["copy_number_alteration"]["enabled"]:
         output:
             wf.get_output_files("cbioportal_segment", "run"),
         params:
-            action_type="segment",
+            args=wf.get_args("cbioportal_segment", "run"),
         threads: wf.get_resource("cbioportal_segment", "run", "threads")
         resources:
             time=wf.get_resource("cbioportal_segment", "run", "time"),

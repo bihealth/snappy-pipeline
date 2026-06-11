@@ -33,7 +33,7 @@ strand={args[strand]}
 
 if [ ${{strand}} -eq -1 ]
 then
-    strand=$(cat {snakemake.input.decision})
+    strand=$(jq -r '[.decision][0]' {snakemake.input.decision})
 fi
 
 # only use primary alignments to prevent featurecounts from re-sorting the bam on disk
