@@ -189,6 +189,11 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
                 if self._is_pedigree_good(pedigree):
+                    # verify that the pedigree has at least one active (non-skipped) SV caller
+                    if require_consistent_pedigree_kits:
+                        if not self._get_active_sv_callers(pedigree, emit_warnings=True):
+                            continue
+
                     index = pedigree.index.dna_ngs_library.name
                     donors = [
                         donor.dna_ngs_library.name
@@ -291,29 +296,15 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
         if self.parent.config.path_sv_calling_targeted:
             sv_calling = self.parent.sub_workflows["sv_calling_targeted"]
-            sv_callers = self.parent.config.tools_sv_calling_targeted
-            skip_libraries = {
-                sv_caller: getattr(
-                    self.parent.w_config.step_config["sv_calling_targeted"], sv_caller
-                ).skip_libraries
-                for sv_caller in sv_callers
-            }
         elif self.parent.config.path_sv_calling_wgs:
             sv_calling = self.parent.sub_workflows["sv_calling_wgs"]
-            sv_callers = self.parent.config.tools_sv_calling_wgs.dna
-            skip_libraries = {
-                sv_caller: getattr(
-                    self.parent.w_config.step_config["sv_calling_wgs"], sv_caller
-                ).skip_libraries
-                for sv_caller in sv_callers
-            }
         else:
             raise RuntimeError("Neither targeted nor WGS SV calling configured")
 
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        library_names = [
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        ]
+
+        # warnings were already emitted during the DAG generation phase in _get_index_ngs_libraries
+        active_callers = self._get_active_sv_callers(pedigree, emit_warnings=False)
 
         path = (
             "output/{mapper}.{sv_caller}.{index_ngs_library}/"
@@ -321,31 +312,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
         vcfs = []
-        for sv_caller in sv_callers:
-            if any(map(skip_libraries[sv_caller].__contains__, library_names)):
-                msg = (
-                    f"Found libraries to skip in family {library_names}.  All samples will be skipped "
-                    f"for {sv_caller}."
-                )
-                warnings.warn(SkipLibraryWarning(msg))
-                continue
-
-            if sv_caller == "gcnv":
-                library_kits = [
-                    self.parent.ngs_library_to_kit.get(library_name, "__default__")
-                    for library_name in library_names
-                ]
-                if len(set(library_kits)) != 1:
-                    names_kits = list(zip(library_names, library_kits))
-                    msg = (
-                        "Found inconsistent library kits (more than one kit!) for pedigree with "
-                        f"index {wildcards.index_ngs_library}.  The library name/kit pairs are "
-                        f"{names_kits}.  This pedigree will be SKIPPED for gcnv export (as it was "
-                        "skipped for gcnv calls)."
-                    )
-                    warnings.warn(InconsistentLibraryKitsWarning(msg))
-                    continue
-
+        for sv_caller in active_callers:
             vcfs.append(
                 sv_calling(path).format(
                     mapper=wildcards.mapper,
@@ -454,6 +421,61 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                     donor.dna_ngs_library.name
                 )
         return library_name_to_file_identifier
+
+    def _get_active_sv_callers(
+        self, pedigree: Pedigree, emit_warnings: bool = False
+    ) -> typing.List[str]:
+        """Determine which SV callers are active for a pedigree after filtering out
+        skipped libraries and checking kit consistency.
+        """
+        if self.parent.config.path_sv_calling_targeted:
+            sv_callers = self.parent.config.tools_sv_calling_targeted
+            step_key = "sv_calling_targeted"
+        elif self.parent.config.path_sv_calling_wgs:
+            sv_callers = self.parent.config.tools_sv_calling_wgs.dna
+            step_key = "sv_calling_wgs"
+        else:
+            return []
+
+        library_names = [
+            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+        ]
+
+        active_callers = []
+        for sv_caller in sv_callers:
+            # check skipped libraries
+            skip_libs = getattr(
+                self.parent.w_config.step_config[step_key], sv_caller
+            ).skip_libraries
+            if any(map(skip_libs.__contains__, library_names)):
+                if emit_warnings:
+                    msg = (
+                        f"Found libraries to skip in family {library_names}. All samples will be "
+                        f"skipped for {sv_caller}."
+                    )
+                    warnings.warn(SkipLibraryWarning(msg))
+                continue
+
+            # check GCNV kit consistency
+            if sv_caller == "gcnv":
+                library_kits = [
+                    self.parent.ngs_library_to_kit.get(library_name, "__default__")
+                    for library_name in library_names
+                ]
+                if len(set(library_kits)) != 1:
+                    if emit_warnings:
+                        names_kits = list(zip(library_names, library_kits))
+                        msg = (
+                            "Found inconsistent library kits (more than one kit!) for pedigree with "
+                            f"index {pedigree.index.dna_ngs_library.name}. The library name/kit pairs are "
+                            f"{names_kits}. This pedigree will be SKIPPED for gcnv export (as it was "
+                            "skipped for gcnv calls)."
+                        )
+                        warnings.warn(InconsistentLibraryKitsWarning(msg))
+                    continue
+
+            active_callers.append(sv_caller)
+        return active_callers
 
 
 class VarfishExportWorkflow(BaseStep):
