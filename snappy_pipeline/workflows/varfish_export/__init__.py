@@ -153,7 +153,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         if action == "annotate_seqvars":
             raw_path_tpls = self._get_output_files_annotate_seqvars().values()
         elif action == "annotate_strucvars":
-            # Only annotate_seqvars SVs if path to step for calling them is configured.
+            # Only annotate_strucvars SVs if path to step for calling them is configured.
             if (
                 not self.parent.config.path_sv_calling_targeted
                 and not self.parent.config.path_sv_calling_wgs
@@ -162,18 +162,26 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             raw_path_tpls = self._get_output_files_annotate_strucvars().values()
         elif action == "bam_qc":
             raw_path_tpls = self._get_output_files_bam_qc().values()
+
         # Filter the templates to the paths in the output directory.
         path_tpls = [tpl for tpl in flatten(raw_path_tpls) if tpl.startswith("output/")]
 
-        # Create concrete paths for all pedigrees in the sample sheet.
-        index_ngs_libraries = self._get_index_ngs_libraries(
-            require_consistent_pedigree_kits=(
-                bool(self.parent.config.path_sv_calling_targeted)
-                and (action == "annotate_strucvars")
-            )
-        )
+        # Get all valid pedigrees
+        index_ngs_libraries = self._get_index_ngs_libraries()
+        valid_libraries = list(index_ngs_libraries.keys())
+
+        # Explicitly filter out libraries if we are annotating strucvars
+        if action == "annotate_strucvars":
+            valid_libraries = []
+            for index in index_ngs_libraries.keys():
+                pedigree = self.index_ngs_library_to_pedigree[index]
+                # if no active SV callers remain (all skipped), the pedigree is dropped
+                if self._get_active_sv_callers(pedigree, emit_warnings=True):
+                    valid_libraries.append(index)
+
+        # create concrete paths only for the non-skipped libraries
         kwargs = {
-            "index_ngs_library": list(index_ngs_libraries.keys()),
+            "index_ngs_library": valid_libraries,
             "mapper": [self.parent.config.tools_ngs_mapping[0]],
         }
         for path_tpl in path_tpls:
@@ -181,7 +189,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_index_ngs_libraries(
-        self, *, require_consistent_pedigree_kits: bool = False
+        self,
     ) -> typing.Generator[typing.Tuple[str, typing.List[str]], None, None]:
         """Return ``dict`` that maps the index DNA library name to a list of all pedigree
         member's DNA library names.
@@ -189,11 +197,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             for pedigree in sheet.cohort.pedigrees:
                 if self._is_pedigree_good(pedigree):
-                    # verify that the pedigree has at least one active (non-skipped) SV caller
-                    if require_consistent_pedigree_kits:
-                        if not self._get_active_sv_callers(pedigree, emit_warnings=True):
-                            continue
-
                     index = pedigree.index.dna_ngs_library.name
                     donors = [
                         donor.dna_ngs_library.name
