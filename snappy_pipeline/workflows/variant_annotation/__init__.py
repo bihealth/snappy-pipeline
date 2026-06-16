@@ -6,7 +6,6 @@ somatic or germline VCF inputs with either VEP or Mehari.
 """
 
 import os
-import sys
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand

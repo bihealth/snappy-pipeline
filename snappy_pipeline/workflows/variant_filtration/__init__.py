@@ -19,6 +19,7 @@ import sys
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
+from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 

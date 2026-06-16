@@ -189,11 +189,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.name_pattern = None
-        if self.config.is_filtered:
-            self.name_pattern = "filtered.{tumor_library}"
-        else:
-            self.name_pattern = "{tumor_library}"
+        self.name_pattern = "{tumor_library}"
 
         # Build shortcut from cancer bio sample name to matched cancer sample
         donors = {}
@@ -278,7 +274,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
                 "normal_sample": self._get_normal_lib_name(wildcards),
                 "tumor_id": self._get_tumor_bio_sample(wildcards),
                 "normal_id": self._get_normal_bio_sample(wildcards),
-                "somatic_variant_annotation_tool": self.config.somatic_variant_annotation_tool,
+                "somatic_variant_annotation_tool": self.config.vcf2maf.annotation_tool,
                 "ncbi_build": self.config.vcf2maf.ncbi_build,
                 "Center": self.config.vcf2maf.Center,
             }
@@ -332,18 +328,9 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = ""
-        if self.config.is_filtered:
-            name_pattern += "filtered.{{library_name}}"
-        else:
-            name_pattern += "{{library_name}}"
+        name_pattern = "{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
-        self.input_tpl = tpl.format(
-            mapper=self.config.mapping_tool,
-            caller=self.config.somatic_variant_calling_tool,
-            annotator=self.config.somatic_variant_annotation_tool,
-            ext=".maf",
-        )
+        self.input_tpl = tpl.format(ext=".maf")
 
 
 class cbioportalCns2CnaStepPart(BaseStepPart):
@@ -429,12 +416,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = (
-            self.config.mapping_tool
-            + "."
-            + self.config.copy_number_alteration.copy_number_tool
-            + ".{library_name}"
-        )
+        name_pattern = "{library_name}"
         self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
     def get_args(self, action):
@@ -493,12 +475,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = (
-            self.config.mapping_tool
-            + "."
-            + self.config.copy_number_alteration.copy_number_tool
-            + ".{library_name}"
-        )
+        name_pattern = "{library_name}"
         self._seg_name_pattern = name_pattern
 
     @dictify
