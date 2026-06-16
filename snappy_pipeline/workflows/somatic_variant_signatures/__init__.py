@@ -19,7 +19,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
-from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
 

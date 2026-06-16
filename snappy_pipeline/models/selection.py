@@ -81,3 +81,9 @@ class LibrarySelectionMixin(SnappyModel):
     * ``"cancer"``   →  ``"role == 'tumor' and extraction_type == 'dna'"``
     * ``"germline"`` →  ``"extraction_type == 'dna'"``
     """  # noqa: E501
+
+    group_by: str | None = None
+    """Optional shortcut for grouping semantics ("library", "cohort").
+    Tools can use this configuration to automatically map their input/output logic to
+    the specified granularity.
+    """

@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
 class ExpectedCopyNumberCalls(BaseModel):

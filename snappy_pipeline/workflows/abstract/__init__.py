@@ -24,12 +24,7 @@ from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
-from biomedsheets.shortcuts import (
-    ShortcutSampleSheet,
-    donor_has_dna_ngs_library,
-    write_pedigree_to_ped,
-    write_pedigrees_to_ped,
-)
+from biomedsheets.shortcuts import ShortcutSampleSheet
 from snakemake.api import Workflow
 from snakemake.io import touch
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
@@ -44,7 +39,6 @@ from snappy_pipeline.base import (
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 from snappy_wrappers.resource_usage import ResourceUsage
 
@@ -267,29 +261,7 @@ class WritePedigreeStepPart(BaseStepPart):
         super().__init__(parent)
         #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            if require_dna_ngs_library:
-                for name, pedigree in sheet.index_ngs_library_to_pedigree.items():
-                    pedigree = pedigree.with_filtered_donors(donor_has_dna_ngs_library)
-                    if only_trios:
-                        in_trio = set()
-                        for donor in pedigree.donors:
-                            if donor.father and donor.mother:
-                                in_trio |= {
-                                    donor.name,
-                                    donor.father.name,
-                                    donor.mother.name,
-                                }
-                        if not any((donor.name in in_trio for donor in pedigree.donors)):
-                            continue  # ignore empty pedigree post filtration
-                        pedigree = pedigree.with_filtered_donors(
-                            lambda donor: donor.name in in_trio
-                        )
-                    self.index_ngs_library_to_pedigree[name] = pedigree
-            else:
-                self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+        self.only_trios = only_trios
 
     def get_input_files(self, action):
         """Returns function returning input files.
@@ -301,19 +273,28 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            # Get names of primary libraries of the selected pedigree.  The pedigree is selected
-            # by the primary DNA NGS library of the index.
-            pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-            if not pedigree.index or not pedigree.index.dna_ngs_library:
-                msg = "INFO: pedigree without index (names: {})"  # pragma: no cover
-                donor_names = list(sorted(d.name for d in pedigree.donors))
-                print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
+            df = self.parent.build_library_dataframe()
+            if df.empty:
                 return
+
+            # Cancer cases: do not generate pedigree logic for now
+            if df["kind"].eq("cancer").all():
+                return
+
+            if wildcards.index_ngs_library == "whole_cohort":
+                df_cohort = df[df["kind"] == "germline"]
+            else:
+                df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
+
+            if self.require_dna_ngs_library:
+                df_cohort = df_cohort[df_cohort["extraction_type"] == "dna"]
+
+            # TODO only_trios not fully implemented via pandas yet, fall back to writing all
+
             tpl = "output/{library_name}/out/{library_name}{ext}"
-            for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-                library_name = donor.dna_ngs_library.name
+            for _, row in df_cohort.iterrows():
                 path = tpl.format(
-                    library_name=library_name,
+                    library_name=row["library_name"],
                     ext=".bam",
                     **wildcards,
                 )
@@ -325,30 +306,47 @@ class WritePedigreeStepPart(BaseStepPart):
         self._validate_action(action=action)
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-    # @listify
     def get_result_files(self):
-        # tpl = self.get_output_files("run")
-        # for sheet in getattr(self.parent, "shortcut_sheets", []):
-        #     for index_ngs_library in sheet.index_ngs_library_to_pedigree.keys():
-        #         yield tpl.format(index_ngs_library=index_ngs_library)
         return []
 
     def run(self, wildcards: Wildcards, output: OutputFiles):
-        """Write out the pedigree information
+        """Write out the pedigree information"""
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            with open(str(output), "w") as f:
+                f.write("")
+            return
 
-        :param wildcards: Snakemake wildcards associated with rule (unused).
-        :type wildcards: snakemake.io.Wildcards
+        # Skip for cancer completely
+        if df["kind"].eq("cancer").all():
+            with open(str(output), "w") as f:
+                f.write("")
+            return
 
-        :param output: Snakemake output associated with rule.
-        :type output: snakemake.io.Namedlist
-        """
         if wildcards.index_ngs_library == "whole_cohort":
-            write_pedigrees_to_ped(self.index_ngs_library_to_pedigree.values(), str(output))
+            df_cohort = df[df["kind"] == "germline"]
         else:
-            write_pedigree_to_ped(
-                self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
-                str(output),
-            )
+            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
+
+        with open(str(output), "w") as f:
+            for _, row in df_cohort.iterrows():
+                # Sex encoding: 'male' -> 1, 'female' -> 2, else 0
+                sex_str = str(row["sex"]).lower()
+                sex = "1" if sex_str == "male" else ("2" if sex_str == "female" else "0")
+
+                print(
+                    "\t".join(
+                        [
+                            row["cohort_name"],
+                            row["donor_name"],
+                            row["father_name"],
+                            row["mother_name"],
+                            sex,
+                            str(row["disease_state"]),
+                        ]
+                    ),
+                    file=f,
+                )
 
 
 class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
@@ -375,18 +373,42 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
         return []
 
     def run(self, wildcards, output):
-        """Write out the pedigree information
+        """Write out the pedigree information"""
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            with open(str(output), "a") as f:
+                f.write("")
+            return
 
-        :param wildcards: Snakemake wildcards associated with rule (unused).
-        :type wildcards: snakemake.io.Wildcards
+        if df["kind"].eq("cancer").all():
+            with open(str(output), "a") as f:
+                f.write("")
+            return
 
-        :param output: Snakemake output associated with rule.
-        :type output: snakemake.io.Namedlist
-        """
-        append_pedigree_to_ped(
-            pedigree=self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
-            output_path=str(output),
-        )
+        if wildcards.index_ngs_library == "whole_cohort":
+            df_cohort = df[df["kind"] == "germline"]
+        else:
+            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
+
+        with open(str(output), "a") as f:
+            for _, row in df_cohort.iterrows():
+                sex_str = str(row["sex"]).lower()
+                sex = "1" if sex_str == "male" else ("2" if sex_str == "female" else "0")
+                print(
+                    "\t".join(
+                        [
+                            row["cohort_name"],
+                            row["sample_name"],
+                            row[
+                                "father_name"
+                            ],  # Should technically be mapped to sample_name for consistency if needed, but keeping as is for now
+                            row["mother_name"],
+                            sex,
+                            str(row["disease_state"]),
+                        ]
+                    ),
+                    file=f,
+                )
 
 
 class LinkOutStepPart(BaseStepPart):
@@ -975,6 +997,14 @@ class BaseStep:
         self.workflow.onerror(on_error)
         self.workflow.onsuccess(on_success)
 
+    def build_library_dataframe(self):
+        """Convenience method to build the unified library dataframe for this workflow."""
+        return build_library_dataframe(
+            self.data_set_infos,
+            self.sheets,
+            self.shortcut_sheets,
+        )
+
     def _check_config(self):
         """Internal method, checks step and sub step configurations"""
         self.check_config()
@@ -1454,6 +1484,10 @@ def build_library_dataframe(
                                     "sex": "unknown",
                                     "donor_name": donor_name,
                                     "sample_name": sample_name,
+                                    "cohort_name": donor_name,
+                                    "father_name": "0",
+                                    "mother_name": "0",
+                                    "disease_state": 0,
                                 }
                             )
 
@@ -1466,8 +1500,20 @@ def build_library_dataframe(
             father_lib_names: set[str] = set()
             mother_lib_names: set[str] = set()
             lib_sex: dict[str, str] = {}
+            lib_cohort: dict[str, str] = {}
+            lib_father: dict[str, str] = {}
+            lib_mother: dict[str, str] = {}
+            lib_disease: dict[str, int] = {}
 
             if hasattr(shortcut_sheet, "pedigrees"):
+                # First pass: map donor PKs to their DNA library names
+                pk_to_lib = {}
+                for ped in shortcut_sheet.pedigrees:
+                    for d in ped.donors:
+                        lib = getattr(d, "dna_ngs_library", None)
+                        if lib:
+                            pk_to_lib[getattr(d, "pk", None)] = lib.name
+
                 for ped in shortcut_sheet.pedigrees:
                     # Index / proband
                     if ped.index and ped.index.dna_ngs_library:
@@ -1492,10 +1538,30 @@ def build_library_dataframe(
                             else "unknown"
                         )
                         lib_sex[lib.name] = sex_raw if sex_raw in ("male", "female") else "unknown"
+                        lib_cohort[lib.name] = (
+                            ped.index.dna_ngs_library.name
+                            if ped.index and ped.index.dna_ngs_library
+                            else "unknown"
+                        )
                         if pk in pk_is_father:
                             father_lib_names.add(lib.name)
                         elif pk in pk_is_mother:
                             mother_lib_names.add(lib.name)
+
+                        father_pk = getattr(d, "father_pk", None)
+                        mother_pk = getattr(d, "mother_pk", None)
+                        lib_father[lib.name] = pk_to_lib.get(father_pk, "0")
+                        lib_mother[lib.name] = pk_to_lib.get(mother_pk, "0")
+
+                        is_affected = (
+                            d.extra_infos.get("isAffected") if hasattr(d, "extra_infos") else None
+                        )
+                        if is_affected is True or str(is_affected).lower() == "affected":
+                            lib_disease[lib.name] = 2
+                        elif is_affected is False or str(is_affected).lower() == "unaffected":
+                            lib_disease[lib.name] = 1
+                        else:
+                            lib_disease[lib.name] = 0
 
             for lib in shortcut_sheet.all_ngs_libraries:
                 ts = lib.test_sample
@@ -1537,6 +1603,10 @@ def build_library_dataframe(
                         "sex": sex,
                         "donor_name": donor_name,
                         "sample_name": sample_name,
+                        "cohort_name": lib_cohort.get(lib_name, donor_name),
+                        "father_name": lib_father.get(lib_name, "0"),
+                        "mother_name": lib_mother.get(lib_name, "0"),
+                        "disease_state": lib_disease.get(lib_name, 0),
                     }
                 )
 
@@ -1549,6 +1619,10 @@ def build_library_dataframe(
         "sex",
         "donor_name",
         "sample_name",
+        "cohort_name",
+        "father_name",
+        "mother_name",
+        "disease_state",
     ]
     return pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
 

@@ -13,7 +13,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
 

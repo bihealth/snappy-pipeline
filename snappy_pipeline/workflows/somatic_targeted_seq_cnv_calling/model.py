@@ -8,7 +8,7 @@ from snappy_pipeline.models.cnvkit import Cnvkit
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.panel_of_normals.model import ExpectedPonPaths
-from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
 class Tool(enum.StrEnum):

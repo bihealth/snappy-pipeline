@@ -23,7 +23,7 @@ tasks:
             path: resources/Exome-MedExome.chr12.bed
 
   - name: variant_calling
-    step: somatic_variant_calling
+    step: variant_calling
     config:
       depends_on:
         ngs_mapping: mapping

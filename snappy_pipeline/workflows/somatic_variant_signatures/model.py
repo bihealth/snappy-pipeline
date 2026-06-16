@@ -4,7 +4,7 @@ from pydantic import Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.somatic_variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
 class SomaticVariantSignaturesDependsOn(SnappyModel):

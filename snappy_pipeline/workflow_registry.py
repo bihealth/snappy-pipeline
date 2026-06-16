@@ -30,7 +30,6 @@ from snappy_pipeline.workflows.somatic_purity_ploidy_estimate import (
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
-from snappy_pipeline.workflows.somatic_variant_calling import SomaticVariantCallingWorkflow
 from snappy_pipeline.workflows.somatic_variant_signatures import SomaticVariantSignaturesWorkflow
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 from snappy_pipeline.workflows.somatic_wgs_sv_calling import SomaticWgsSvCallingWorkflow
@@ -74,7 +73,6 @@ WORKFLOW_REGISTRY = {
     "somatic_msi_calling": SomaticMsiCallingWorkflow,
     "somatic_purity_ploidy_estimate": SomaticPurityPloidyEstimateWorkflow,
     "somatic_targeted_seq_cnv_calling": SomaticTargetedSeqCnvCallingWorkflow,
-    "somatic_variant_calling": SomaticVariantCallingWorkflow,
     "somatic_variant_signatures": SomaticVariantSignaturesWorkflow,
     "somatic_wgs_cnv_calling": SomaticWgsCnvCallingWorkflow,
     "somatic_wgs_sv_calling": SomaticWgsSvCallingWorkflow,
