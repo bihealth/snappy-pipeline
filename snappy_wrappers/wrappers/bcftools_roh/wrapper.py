@@ -16,7 +16,7 @@ if path_af_file := getattr(snakemake.input, "path_af_file", ""):
 
 ignore_homref = "--ignore-homref" if args.get("ignore_homref", False) else ""
 skip_indels = "--skip-indels" if args.get("skip_indels", False) else ""
-rec_rate = f"--rec_rate {args['rec_rate']}" if args.get("rec_rate", 0.0) > 0.0 else ""
+rec_rate = f"--rec-rate {args['rec_rate']}" if args.get("rec_rate", 0.0) > 0.0 else ""
 
 DEF_HELPER_FUNCS = r"""
 compute-md5()
