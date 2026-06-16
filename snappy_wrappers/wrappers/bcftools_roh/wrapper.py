@@ -14,7 +14,7 @@ if path_targets := getattr(snakemake.input, "path_targets", ""):
 if path_af_file := getattr(snakemake.input, "path_af_file", ""):
     path_af_file = f"--AF-file {path_af_file}"
 
-ignore_hormef = "--ignore-homref" if args.get("ignore_homref", False) else ""
+ignore_homref = "--ignore-homref" if args.get("ignore_homref", False) else ""
 skip_indels = "--skip-indels" if args.get("skip_indels", False) else ""
 rec_rate = f"--rec_rate {args['rec_rate']}" if args.get("rec_rate", 0.0) > 0.0 else ""
 
