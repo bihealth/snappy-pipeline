@@ -97,10 +97,13 @@ class Algorithm(enum.StrEnum):
     BigMHC_EL = "BigMHC_EL"
     BigMHC_IM = "BigMHC_IM"
     DeepImmuno = "DeepImmuno"
+    ImmunoScope_IM = "ImmunoScope_IM"
     MHCflurry = "MHCflurry"
     MHCflurryEL = "MHCflurryEL"
     MHCnuggetsI = "MHCnuggetsI"
     MHCnuggetsII = "MHCnuggetsII"
+    MixMHC2pred = "MixMHC2pred"
+    MixMHCpred = "MixMHCpred"
     NNalign = "NNalign"
     NetMHC = "NetMHC"
     NetMHCIIpan = "NetMHCIIpan"
@@ -108,6 +111,7 @@ class Algorithm(enum.StrEnum):
     NetMHCcons = "NetMHCcons"
     NetMHCpan = "NetMHCpan"
     NetMHCpanEL = "NetMHCpanEL"
+    PRIME = "PRIME"
     PickPocket = "PickPocket"
     SMM = "SMM"
     SMMPMBEC = "SMMPMBEC"
@@ -131,7 +135,10 @@ class TopScoreMetric(enum.StrEnum):
 
 
 class TopScoreMetric2(enum.StrEnum):
-    PERCENTILE = "percentile"
+    COMBINED_PERCENTILE = "combined_percentile"
+    BINDING_PERCENTILE = "binding_percentile"
+    IMMUNOGENICITY_PERCENTILE = "immunogenicity_percentile"
+    PRESENTATION_PERCENTILE = "presentation_percentile"
     IC50 = "ic50"
 
 
@@ -223,15 +230,22 @@ class PVACtools(SnappyModel):
     class_i_epitope_length: list[int] = [8, 9, 10, 11]
     class_ii_epitope_length: list[int] = []
 
+    use_normalized_percentiles: bool = False
+
     binding_threshold: int = 500
-    percentile_threshold: float | None = 1.0
+    binding_percentile_threshold: float = 2.0
+    presentation_percentile_threshold: float = 2.0
+    immunogenicity_percentile_threshold: float = 2.0
     percentile_threshold_strategy: PercentageThresholdStrategy = (
         PercentageThresholdStrategy.CONSERVATIVE
     )
     allele_specific_binding_thresholds: bool = False
 
     top_score_metric: TopScoreMetric = TopScoreMetric.MEDIAN
-    top_score_metric2: TopScoreMetric2 = TopScoreMetric2.PERCENTILE
+    top_score_metric2: list[TopScoreMetric2] = [
+        TopScoreMetric2.IC50,
+        TopScoreMetric2.COMBINED_PERCENTILE,
+    ]
 
     net_chop: NetChop = NetChop()
     netmhc_stab: NetMHCStab = NetMHCStab()
@@ -267,17 +281,23 @@ class PVACseq(PVACtools):
     trna_vaf: float = 0.25
     minimum_fold_change: float = 0.0
 
-    transcript_prioritization_strategy: TranscriptPrioritizationStrategy = (
-        TranscriptPrioritizationStrategy.MANE_SELECT
-    )
-    maximum_transcript_support_level: int | None = None
-    biotypes: list[str] = []
+    transcript_prioritization_strategy: list[TranscriptPrioritizationStrategy] = [
+        TranscriptPrioritizationStrategy.CANONICAL,
+        TranscriptPrioritizationStrategy.MANE_SELECT,
+        TranscriptPrioritizationStrategy.TSL,
+    ]
+    maximum_transcript_support_level: int = 1
+    biotypes: list[str] = ["protein_coding"]
     allow_incomplete_transcript: bool = False
 
     allele_specific_anchors: bool = False
     anchor_contribution_threshold: float = 0.8
 
     downstream_sequence_length: int = 1000
+
+    run_ml_predictions: bool = False
+    ml_threshold_accept: float = 0.55
+    ml_threshold_reject: float = 0.3
 
 
 class PVACfuse(PVACtools):
@@ -299,11 +319,13 @@ class PVACsplice(PVACtools):
     tdna_vaf: float = 0.1
     trna_vaf: float = 0.25
 
-    transcript_prioritization_strategy: TranscriptPrioritizationStrategy = (
-        TranscriptPrioritizationStrategy.MANE_SELECT
-    )
-    maximum_transcript_support_level: int | None = None
-    biotypes: list[str] = []
+    transcript_prioritization_strategy: list[TranscriptPrioritizationStrategy] = [
+        TranscriptPrioritizationStrategy.CANONICAL,
+        TranscriptPrioritizationStrategy.MANE_SELECT,
+        TranscriptPrioritizationStrategy.TSL,
+    ]
+    maximum_transcript_support_level: int = 1
+    biotypes: list[str] = ["protein_coding"]
     allow_incomplete_transcript: bool = False
 
     junction_score: int = 10

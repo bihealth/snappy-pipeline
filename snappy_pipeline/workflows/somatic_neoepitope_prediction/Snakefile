@@ -59,7 +59,8 @@ if (
         output:
             **wf.get_output_files("pvactools", "install"),
         params:
-            container="docker://griffithlab/pvactools",
+            container="docker://griffithlab/pvactools:7.0.1",
+            extra_args="--ignore-proot",
         resources:
             time=wf.get_resource("pvactools", "install", "time"),
             memory=wf.get_resource("pvactools", "install", "memory"),
@@ -68,7 +69,7 @@ if (
             wf.get_log_file("pvactools", "install"),
         shell:
             r"""
-                apptainer pull --name {output} {params.container}
+                apptainer build {params.extra_args} {output} {params.container}
             """
 
 

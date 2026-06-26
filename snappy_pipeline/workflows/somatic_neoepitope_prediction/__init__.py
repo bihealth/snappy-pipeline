@@ -127,7 +127,7 @@ class PvacToolsStepPart(BaseStepPart):
     require_rna: bool = False
 
     default_resource_usage = {
-        "install": ResourceUsage(threads=1, time="03:59:59", memory="6G"),
+        "install": ResourceUsage(threads=1, time="03:59:59", memory="64G"),
         "normalize": ResourceUsage(threads=1, time="01:00:00", memory="4G"),
         "normalize_full": ResourceUsage(threads=1, time="01:00:00", memory="4G"),
     }
@@ -507,12 +507,6 @@ class PvacSeqStepPart(PvacToolsStepPart):
         if isinstance(algorithms, list):
             algorithms = " ".join(algorithms)
 
-        if args["percentile_threshold"] is None:
-            del args["percentile_threshold"]
-            del args["percentile_threshold_strategy"]
-        else:
-            del args["binding_threshold"]
-
         if args["maximum_transcript_support_level"] is None:
             del args["maximum_transcript_support_level"]
 
@@ -605,12 +599,6 @@ class PvacFuseStepPart(PvacToolsStepPart):
         algorithms = args.pop("algorithms")
         if isinstance(algorithms, list):
             algorithms = " ".join(algorithms)
-
-        if args["percentile_threshold"] is None:
-            del args["percentile_threshold"]
-            del args["percentile_threshold_strategy"]
-        else:
-            del args["binding_threshold"]
 
         args = self._extra_args_lists(args)
         extra_args = " ".join(sorted(list(self._extra_args_flags(args))))
@@ -769,12 +757,6 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         algorithms = args.pop("algorithms")
         if isinstance(algorithms, list):
             algorithms = " ".join(algorithms)
-
-        if args["percentile_threshold"] is None:
-            del args["percentile_threshold"]
-            del args["percentile_threshold_strategy"]
-        else:
-            del args["binding_threshold"]
 
         if args["maximum_transcript_support_level"] is None:
             del args["maximum_transcript_support_level"]
