@@ -687,6 +687,7 @@ class BaseStep:
         self.workflow = workflow
         #: Setup logger for the step
         self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.INFO if workflow.verbose else logging.WARN)
         #: Merge default configuration with true configuration
         workflow_config = config
         local_config = workflow_config["step_config"].get(self.name, OrderedDict())
