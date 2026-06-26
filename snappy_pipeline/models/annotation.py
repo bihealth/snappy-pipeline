@@ -42,7 +42,7 @@ class Vep(SnappyModel):
 
     assembly: str = "GRCh38"
 
-    cache_version: str = "102"
+    cache_version: str = "115"
     """WARNING- this must match the wrapper's vep version!"""
 
     tx_flag: VepTxFlag = VepTxFlag.gencode_basic
