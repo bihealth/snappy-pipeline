@@ -100,7 +100,7 @@ if "arcashla" in tools["rna"]:
         output:
             done="work/arcashla.prepare_reference/out/.done",
         params:
-            reference_version="3.46.0",  # See https://github.com/RabadanLab/arcasHLA/pull/132
+            reference_version="3.24.0",  # See https://github.com/RabadanLab/arcasHLA/pull/132
         log:
             "work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
         wrapper:
