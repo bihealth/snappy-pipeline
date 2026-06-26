@@ -614,12 +614,17 @@ def test_somatic_neoepitope_prediction_pvacseq_pvacseq_step_part_get_args(
         "exclude_bind": ["container", "alleles", "filtered"],
         "extra_args": (
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
-            "--anchor-contribution-threshold 0.8 --class-ii-epitope-length '10,11' "
+            "--anchor-contribution-threshold 0.8 --binding-percentile-threshold 2.0 "
+            "--binding-threshold 500 --biotypes 'protein_coding' --class-ii-epitope-length '10,11' "
             "--downstream-sequence-length 1000 --expn-val 1.0 --fasta-size 200 "
-            "--minimum-fold-change 0.0 --netmhciipan-version '4.1' --normal-cov 25 --normal-vaf 0.02 "
-            "--percentile-threshold 1.0 --percentile-threshold-strategy 'conservative' "
-            "--tdna-cov 25 --tdna-vaf 0.1 --top-score-metric 'median' --top-score-metric2 'percentile' "
-            "--transcript-prioritization-strategy 'mane_select' --trna-cov 2 --trna-vaf 0.25"
+            "--immunogenicity-percentile-threshold 2.0 --maximum-transcript-support-level 1 "
+            "--minimum-fold-change 0.0 --ml-threshold-accept 0.55 --ml-threshold-reject 0.3 "
+            "--netmhciipan-version '4.1' --normal-cov 25 --normal-vaf 0.02 "
+            "--percentile-threshold-strategy 'conservative' --presentation-percentile-threshold 2.0 "
+            "--tdna-cov 25 --tdna-vaf 0.1 --top-score-metric 'median' "
+            "--top-score-metric2 'ic50,combined_percentile' "
+            "--transcript-prioritization-strategy 'canonical,mane_select,tsl' --trna-cov 2 "
+            "--trna-vaf 0.25"
         )
     }
     actual = somatic_neoepitope_prediction_workflow.get_args("pvacseq", "pvacseq")(wildcards, input)
@@ -680,10 +685,11 @@ def test_somatic_neoepitope_prediction_pvacfuse_pvacfuse_step_part_get_args(
         "exclude_bind": ["container", "alleles", "filtered"],
         "extra_args": (
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
+            "--binding-percentile-threshold 2.0 --binding-threshold 500 "
             "--class-i-epitope-length '8,9,10,11' --downstream-sequence-length 1000 --expn-val 1.0 "
-            "--fasta-size 200 --netmhciipan-version '4.1' --percentile-threshold 1.0 "
-            "--percentile-threshold-strategy 'conservative' --read-support 5 "
-            "--top-score-metric 'median' --top-score-metric2 'percentile'"
+            "--fasta-size 200 --immunogenicity-percentile-threshold 2.0 --netmhciipan-version '4.1' "
+            "--percentile-threshold-strategy 'conservative' --presentation-percentile-threshold 2.0 "
+            "--read-support 5 --top-score-metric 'median' --top-score-metric2 'ic50,combined_percentile'"
        )
     }
     actual = somatic_neoepitope_prediction_workflow.get_args("pvacfuse", "pvacfuse")(wildcards, input)
@@ -813,13 +819,16 @@ def test_somatic_neoepitope_prediction_pvacsplice_pvacsplice_step_part_get_args(
         "exclude_bind": ["container", "alleles", "filtered"],
         "extra_args": (
             "--aggregate-inclusion-binding-threshold 5000 --aggregate-inclusion-count-limit 25 "
-            "--anchor-types 'A,D,NDA' --class-i-epitope-length '8,9,10,11' --class-ii-epitope-length '10,11' "
-            "--expn-val 1.0 --fasta-size 200 --junction-score 10 --netmhciipan-version '4.1' "
-            "--normal-cov 25 --normal-vaf 0.02 --percentile-threshold 1.0 "
-            "--percentile-threshold-strategy 'conservative' --tdna-cov 25 --tdna-vaf 0.1 "
-            "--top-score-metric 'median' --top-score-metric2 'percentile' "
-            "--transcript-prioritization-strategy 'mane_select' --trna-cov 2 --trna-vaf 0.25 "
-            "--variant-distance 100"
+            "--anchor-types 'A,D,NDA' --binding-percentile-threshold 2.0 --binding-threshold 500 "
+            "--biotypes 'protein_coding' --class-i-epitope-length '8,9,10,11' "
+            "--class-ii-epitope-length '10,11' --expn-val 1.0 --fasta-size 200 "
+            "--immunogenicity-percentile-threshold 2.0 --junction-score 10 "
+            "--maximum-transcript-support-level 1 --netmhciipan-version '4.1' --normal-cov 25 "
+            "--normal-vaf 0.02 --percentile-threshold-strategy 'conservative' "
+            "--presentation-percentile-threshold 2.0 --tdna-cov 25 --tdna-vaf 0.1 "
+            "--top-score-metric 'median' --top-score-metric2 'ic50,combined_percentile' "
+            "--transcript-prioritization-strategy 'canonical,mane_select,tsl' --trna-cov 2 "
+            "--trna-vaf 0.25 --variant-distance 100"
         )
     }
     actual = somatic_neoepitope_prediction_workflow.get_args("pvacsplice", "pvacsplice")(wildcards, input)

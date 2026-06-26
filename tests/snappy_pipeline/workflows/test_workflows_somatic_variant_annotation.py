@@ -163,7 +163,7 @@ def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
             "cache_dir": "/path/to/dir/cache",
             "species": "homo_sapiens",
             "assembly": "GRCh38",
-            "cache_version": "102",
+            "cache_version": "115",
             "tx_flag": "gencode_basic",
             "output_options": ["everything"],
             "buffer_size": 1000,
