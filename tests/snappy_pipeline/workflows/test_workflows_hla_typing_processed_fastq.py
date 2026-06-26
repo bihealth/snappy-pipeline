@@ -9,6 +9,7 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow
 
+from .common import get_expected_log_files_dict
 from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -28,11 +29,12 @@ def minimal_config():
         step_config:
           hla_typing:
             path_link_in: /preprocess
-            tools: [optitype, arcashla]
+            tools:
+              dna: [optitype]
+              rna: [optitype]
             optitype:
               max_reads: 5000
-            arcashla:
-              mapper: star
+
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -86,6 +88,8 @@ def test_optitype_step_part_get_output_files(hla_typing_workflow):
         "tsv": "work/optitype.{library_name}/out/optitype.{library_name}_result.tsv",
         "txt": "work/optitype.{library_name}/out/optitype.{library_name}.txt",
         "txt_md5": "work/optitype.{library_name}/out/optitype.{library_name}.txt.md5",
+        "json": "work/optitype.{library_name}/out/optitype.{library_name}.json",
+        "json_md5": "work/optitype.{library_name}/out/optitype.{library_name}.json.md5",
     }
     actual = hla_typing_workflow.get_output_files("optitype", "run")
     assert actual == expected
@@ -117,6 +121,10 @@ def test_optitype_step_part_get_args_input(hla_typing_workflow):
         "seq_type": "dna",
         "num_mapping_threads": 4,
         "max_reads": 5000,
+        "use_discordant": "false",
+        "yara_error_rate": 5,
+        "yara_strata_rate": 0,
+        "yara_sensitivity": "high",
     }
     actual = hla_typing_workflow.get_args("optitype", "run")(wildcards)
     assert actual == expected
@@ -124,14 +132,7 @@ def test_optitype_step_part_get_args_input(hla_typing_workflow):
 
 def test_optitype_step_part_get_log_file(hla_typing_workflow):
     """Tests OptiTypeStepPart.get_log_file()"""
-    expected = {
-        "conda_info": "work/optitype.{library_name}/log/optitype.{library_name}.conda_info.txt",
-        "conda_info_md5": "work/optitype.{library_name}/log/optitype.{library_name}.conda_info.txt.md5",
-        "conda_list": "work/optitype.{library_name}/log/optitype.{library_name}.conda_list.txt",
-        "conda_list_md5": "work/optitype.{library_name}/log/optitype.{library_name}.conda_list.txt.md5",
-        "log": "work/optitype.{library_name}/log/optitype.{library_name}.log",
-        "log_md5": "work/optitype.{library_name}/log/optitype.{library_name}.log.md5",
-    }
+    expected = get_expected_log_files_dict(base_out="work/optitype.{library_name}/log/optitype.{library_name}")
     actual = hla_typing_workflow.get_log_file("optitype", "run")
     assert actual == expected
 
@@ -147,54 +148,13 @@ def test_optitype_step_part_get_resource_usage(hla_typing_workflow):
         assert actual == expected, msg_error
 
 
-# Tests for ArcasHlaStepPart ----------------------------------------------------------------------
-
-
-def test_arcashla_step_part_get_input_files(hla_typing_workflow):
-    """Tests ArcasHlaStepPart.get_input_files()"""
-    wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
-    expected_keys = ("ref_done", "bam")
-    expected_ref = "work/arcashla.prepare_reference/out/.done"
-    actual = hla_typing_workflow.get_input_files("arcashla", "run")(wildcards)
-    assert all([key in expected_keys for key in actual])
-    assert actual.get("ref_done") == expected_ref
-
-
-def test_arcashla_step_part_get_output_files(hla_typing_workflow):
-    """Tests ArcasHlaStepPart.get_output_files()"""
-    expected = {
-        "txt": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.txt",
-        "txt_md5": "work/star.arcashla.{library_name}/out/star.arcashla.{library_name}.txt.md5",
-    }
-    actual = hla_typing_workflow.get_output_files("arcashla", "run")
-    assert actual == expected
-
-
-def test_arcashla_step_part_get_log_file(hla_typing_workflow):
-    """Tests ArcasHlaStepPart.get_log_file()"""
-    expected = "work/arcashla.{library_name}/log/snakemake.hla_typing.log"
-    actual = hla_typing_workflow.get_log_file("arcashla", "run")
-    assert actual == expected
-
-
-def test_arcashla_step_part_get_resource_usage(hla_typing_workflow):
-    """Tests ArcasHlaStepPart.get_resource_usage()"""
-    # Define expected
-    expected_dict = {"threads": 4, "time": "60:00:00", "memory": "15000M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = hla_typing_workflow.get_resource("arcashla", "run", resource)()
-        assert actual == expected, msg_error
-
-
 # Tests for HlaTypingWorkflow ---------------------------------------------------------------------
 
 
 def test_hla_typing_workflow(hla_typing_workflow):
     """Tests simple functionality of the workflow."""
     # Check created sub steps
-    expected = ["arcashla", "link_in", "link_out", "optitype"]
+    expected = ["arcashla", "hla_la", "link_in", "link_out", "optitype"]
     actual = list(sorted(hla_typing_workflow.sub_steps.keys()))
     assert actual == expected
 
@@ -213,14 +173,14 @@ def test_hla_typing_workflow(hla_typing_workflow):
     }
 
     expected = []
-    tools = [("star.arcashla", rna_samples), ("optitype", dna_samples | rna_samples)]
+    tools = [("optitype", dna_samples | rna_samples),]
     expected += [
         "output/{tool}.{sample}/out/{tool}.{sample}.{ext}{chksum}".format(
             tool=tool, sample=sample, ext=ext, chksum=chksum
         )
         for tool, samples in tools
         for sample in samples
-        for ext in ("txt",)
+        for ext in ("txt", "json")
         for chksum in ("", ".md5")
     ]
     expected += [

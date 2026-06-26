@@ -359,8 +359,8 @@ def test_cbioportal_vcf2maf_step_part_get_input_files(cbioportal_export_workflow
     """Tests cbioportalVcf2MafStepPart.get_input_files()"""
     expected = {
         "vcf": (
-            "/SOM_VAR_FILTRATION/output/{mapper}.{caller}.{annotator}.filtered.{tumor_library}/out/"
-            "{mapper}.{caller}.{annotator}.filtered.{tumor_library}.vcf.gz"
+            "/SOM_VAR_FILTRATION/output/bwa.mutect2.vep.filtered.{tumor_library}/out/"
+            "bwa.mutect2.vep.filtered.{tumor_library}.vcf.gz"
         )
     }
     actual = cbioportal_export_workflow.get_input_files("cbioportal_vcf2maf", "run")
@@ -372,8 +372,8 @@ def test_cbioportal_vcf2maf_step_part_get_output_files(cbioportal_export_workflo
     # Define expected
     expected = {
         "maf": (
-            "work/maf/{mapper}.{caller}.{annotator}.filtered.{tumor_library}/out/"
-            "{mapper}.{caller}.{annotator}.filtered.{tumor_library}.maf"
+            "work/maf/bwa.mutect2.vep.filtered.{tumor_library}/out/"
+            "bwa.mutect2.vep.filtered.{tumor_library}.maf"
         )
     }
     # Get actual
@@ -385,8 +385,8 @@ def test_cbioportal_vcf2maf_step_part_get_log_file(cbioportal_export_workflow):
     """Tests cbioportalVcf2MafStepPart.get_log_file()"""
     # Define expected
     base_name_out = (
-        "work/maf/{mapper}.{caller}.{annotator}.filtered.{tumor_library}/log/"
-        "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
+        "work/maf/bwa.mutect2.vep.filtered.{tumor_library}/log/"
+        "bwa.mutect2.vep.filtered.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_name_out, extended=False)
     # Get actual

@@ -58,7 +58,9 @@ yara_indexer -o $TMPDIR/yara_index/$refname $TMPDIR/yara_index/$refname
 
 yara_mapper \
     -t {args[num_mapping_threads]} \
-    --error-rate 5 \
+    --error-rate {args[yara_error_rate]} \
+    --strata-rate {args[yara_strata_rate]} \
+    --sensitivity {args[yara_sensitivity]} \
     --output-format sam \
     $TMPDIR/yara_index/$refname \
     <(zcat --force {reads_left}) \
@@ -68,7 +70,9 @@ yara_mapper \
 if [[ $paired -eq 1 ]]; then
     yara_mapper \
         -t {args[num_mapping_threads]} \
-        --error-rate 5 \
+        --error-rate {args[yara_error_rate]} \
+        --strata-rate {args[yara_strata_rate]} \
+        --sensitivity {args[yara_sensitivity]} \
         --output-format sam \
         $TMPDIR/yara_index/$refname \
         <(zcat --force {reads_right}) \
@@ -96,7 +100,7 @@ threads=1
 [behavior]
 deletebam=true
 unpaired_weight=0
-use_discordant=false
+use_discordant={args[use_discordant]}
 EOF
 
 mkdir -p $TMPDIR/out.tmp
@@ -127,6 +131,23 @@ tail -n +2 {snakemake.output.tsv} \
     | sort \
     > {snakemake.output.txt}
 md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
+
+# create final .json file
+echo "{{" > {snakemake.output.json}
+tail -n +2 {snakemake.output.tsv} | head -n 1 \
+    | cut -f 2-3 \
+    | sed -re $"s/^(A\*[0-9]+:[0-9]+)\t(A\*[0-9]+:[0-9]+)/    \"A\": [\"\1\", \"\2\"],/" \
+    >> {snakemake.output.json}
+tail -n +2 {snakemake.output.tsv} | head -n 1 \
+    | cut -f 4-5 \
+    | sed -re $"s/^(B\*[0-9]+:[0-9]+)\t(B\*[0-9]+:[0-9]+)/    \"B\": [\"\1\", \"\2\"],/" \
+    >> {snakemake.output.json}
+tail -n +2 {snakemake.output.tsv} | head -n 1 \
+    | cut -f 6-7 \
+    | sed -re $"s/^(C\*[0-9]+:[0-9]+)\t(C\*[0-9]+:[0-9]+)/    \"C\": [\"\1\", \"\2\"]/" \
+    >> {snakemake.output.json}
+echo "}}" >> {snakemake.output.json}
+md5sum {snakemake.output.json} > {snakemake.output.json_md5}
 """
 )
 

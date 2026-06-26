@@ -3,5 +3,5 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - ensembl-vep==109.3
+  - ensembl-vep==115.2
   - gxx_linux-64

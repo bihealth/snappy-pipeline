@@ -191,9 +191,14 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         super().__init__(parent)
         self.name_pattern = None
         if self.config.is_filtered:
-            self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{tumor_library}"
+            self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{{tumor_library}}"
         else:
-            self.name_pattern = "{mapper}.{caller}.{annotator}.{tumor_library}"
+            self.name_pattern = "{mapper}.{caller}.{annotator}.{{tumor_library}}"
+        self.name_pattern = self.name_pattern.format(
+            mapper=self.config.mapping_tool,
+            caller=self.config.somatic_variant_calling_tool,
+            annotator=self.config.somatic_variant_annotation_tool,
+        )
 
         # Build shortcut from cancer bio sample name to matched cancer sample
         donors = {}

@@ -46,10 +46,13 @@ def minimal_config():
           somatic_variant_annotation:
             path_somatic_variant: ../somatic_variant_calling
             tools: ["vep"]
+            is_filtered: false
             vep:
               cache_dir: /path/to/dir/cache
 
           somatic_variant_filtration:
+            path_somatic_variant: ../somatic_variant_annotation
+            has_annotation: true
             filter_list:
             - dkfz: {}
 

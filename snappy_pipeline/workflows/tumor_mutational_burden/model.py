@@ -14,9 +14,6 @@ class SomaticVariantStep(enum.StrEnum):
 
 
 class TumorMutationalBurden(SnappyStepModel):
-    has_annotation: bool = False
-    """Needed for building filenames only"""
-
     path_somatic_variant: Annotated[
         str, Field(examples=["../somatic_variant_annotation", "../somatic_variant_calling"])
     ]

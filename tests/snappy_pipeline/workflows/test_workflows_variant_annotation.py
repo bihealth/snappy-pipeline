@@ -155,6 +155,8 @@ def test_vep_run_step_part_get_args(variant_annotation_workflow):
             "species": "homo_sapiens",
             "assembly": "GRCh37",
             "tx_flag": "gencode_basic",
+            "plugins": [],
+            "plugins_dir": "",
         },
     }
     # Get actual

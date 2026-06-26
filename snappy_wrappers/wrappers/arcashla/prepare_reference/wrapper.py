@@ -7,8 +7,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-ARCAS_HLA_REFERENCE_VERSION = "3.24.0"
-
 shell(
     r"""
 set -x
@@ -27,7 +25,8 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
-arcasHLA reference --version {ARCAS_HLA_REFERENCE_VERSION} --verbose
+arcasHLA reference --version {snakemake.params.reference_version} --verbose
 
+touch {snakemake.output.done}
 """
 )

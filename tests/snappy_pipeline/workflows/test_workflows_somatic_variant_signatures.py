@@ -40,11 +40,14 @@ def minimal_config():
             tools: [vep]
             tools_somatic_variant_calling: ['mutect2']
             path_somatic_variant: ../SOMATIC_VARIANT_CALLING
+            is_filtered: false
             vep:
               cache_dir: /path/to/vep/cache
 
           somatic_variant_filtration:
             tools_somatic_variant_calling: ['mutect2']
+            path_somatic_variant: ../somatic_variant_annotation
+            has_annotation: true
             filter_list:
               - dkfz: {}
 

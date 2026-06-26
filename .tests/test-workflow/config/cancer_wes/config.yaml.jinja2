@@ -35,6 +35,7 @@ step_config:
   somatic_variant_annotation:
     path_somatic_variant: ../somatic_variant_calling  # REQUIRED
     tools: ["mehari"]
+    is_filtered: false
     mehari:
       transcripts: [{{ params["transcripts"] }}]
       reference: {{ params["reference"] }}
@@ -44,6 +45,7 @@ step_config:
   somatic_variant_filtration:
     path_somatic_variant: ../somatic_variant_annotation
     path_ngs_mapping: ../ngs_mapping
+    has_annotation: true
     filter_list:
     - dkfz: {}
     - bcftools:
