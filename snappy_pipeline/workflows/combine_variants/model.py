@@ -41,12 +41,14 @@ class CombineVariants(SnappyStepModel):
     tool_somatic_variant_calling: ToolSomaticVariantCalling = ToolSomaticVariantCalling.MUTECT2
     tool_somatic_variant_annotation: ToolVariantAnnotation | None = None
     is_somatic_variant_filtered: bool = False
+    use_all_transcripts_for_somatic_annotations: bool = False
 
     germline_variant_type: InputVariantType = InputVariantType.CALLING
     path_germline_variant: str = "../germline_variant_calling"
     tool_germline_variant_calling: ToolGermlineVariantCalling = ToolGermlineVariantCalling.GATK4_HC
     tool_germline_variant_annotation: ToolVariantAnnotation | None = None
     is_germline_variant_filtered: bool = False
+    use_all_transcripts_for_germline_annotations: bool = False
 
     rename_combined: RenameCombine | None = None
 
@@ -88,4 +90,27 @@ class CombineVariants(SnappyStepModel):
                     raise ValueError(
                         "When the somatic variant type is 'filtration', 'is_somatic_variant_filtered' must be true"
                     )
+        return self
+
+    def ensure_annotation_enabled_for_use_all_transcript(self):
+        if self.use_all_transcripts_for_germline_annotations:
+            if (
+                self.germline_variant_type != InputVariantType.ANNOTATION
+                or not self.tool_germline_variant_annotation
+            ):
+                raise ValueError(
+                    "Using all germline transcripts can only be done if "
+                    "the germline annotation tool is set and if "
+                    "the germline variant type is 'annotation'"
+                )
+        if self.use_all_transcripts_for_somatic_annotations:
+            if (
+                self.somatic_variant_type != InputVariantType.ANNOTATION
+                or not self.tool_somatic_variant_annotation
+            ):
+                raise ValueError(
+                    "Using all somatic transcripts can only be done if "
+                    "the somatic annotation tool is set and if "
+                    "the somatic variant type is 'annotation'"
+                )
         return self

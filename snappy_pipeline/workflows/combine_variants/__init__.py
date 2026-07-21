@@ -115,11 +115,17 @@ class CombineVariantsStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards: Wildcards):
         yield "reference", self.w_config.static_data_config.reference.path
 
-        vcf = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.somatic_tpl)
+        vcf = "output/{tpl}/out/{tpl}.{full}vcf.gz".format(
+            tpl=self.somatic_tpl,
+            full="full." if self.config.use_all_transcripts_for_somatic_annotations else "",
+        )
         somatic_variant = self.parent.sub_workflows["somatic_variant"]
         yield "somatic_vcf", somatic_variant(vcf.format(tumor_library=wildcards.tumor_library))
 
-        vcf = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.germline_tpl)
+        vcf = "output/{tpl}/out/{tpl}.{full}vcf.gz".format(
+            tpl=self.germline_tpl,
+            full="full." if self.config.use_all_transcripts_for_germline_annotations else "",
+        )
         germline_variant = self.parent.sub_workflows["germline_variant"]
         yield (
             "germline_vcf",

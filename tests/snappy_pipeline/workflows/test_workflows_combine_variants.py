@@ -66,6 +66,7 @@ def minimal_config():
             somatic_variant_type: annotation
             path_somatic_variant: SOMATIC_VARIANT_ANNOTATION
             tool_somatic_variant_annotation: vep
+            use_all_transcripts_for_somatic_annotations: true
             germline_variant_type: filtration
             path_germline_variant: GERMLINE_VARIANT_FILTRATION
             is_germline_variant_filtered: true
@@ -122,8 +123,9 @@ def test_combine_step_part_get_input_files_run(combine_variants_workflow):
     """Tests CombineVariantsStepPart.get_input_files()"""
     wildcards: Wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
     base_out = "{dir}/output/bwa.{caller}.{library}/out/bwa.{caller}.{library}.vcf.gz"
+    base_out_full = "{dir}/output/bwa.{caller}.{library}/out/bwa.{caller}.{library}.full.vcf.gz"
     expected = {
-        "somatic_vcf": base_out.format(dir="SOMATIC_VARIANT_ANNOTATION", caller="mutect2.vep", library="P001-T1-DNA1-WGS1"),
+        "somatic_vcf": base_out_full.format(dir="SOMATIC_VARIANT_ANNOTATION", caller="mutect2.vep", library="P001-T1-DNA1-WGS1"),
         "germline_vcf": base_out.format(dir="GERMLINE_VARIANT_FILTRATION", caller="gatk4_hc.filtered", library="P001-N1-DNA1-WGS1"),
         "reference": "/path/to/ref.fa"
     }
