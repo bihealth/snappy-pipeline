@@ -6,7 +6,62 @@ pandas ``DataFrame.query()`` string evaluated against the tidy library
 DataFrame built by :func:`snappy_pipeline.workflows.abstract.build_library_dataframe`.
 """
 
+from __future__ import annotations
+
 from snappy_pipeline.models import SnappyModel
+
+
+class RelationshipDefinition(SnappyModel):
+    """Definition of a relationship between rows in the library DataFrame.
+
+    A relationship adds a new column to the DataFrame whose value is looked
+    up from a *related* row.  The ``via`` column is the join key (e.g.
+    ``"donor_name"``), and ``target`` is a pandas ``DataFrame.query()``
+    expression applied to the related rows to select the correct match.
+
+    **Examples**
+
+    .. code-block:: yaml
+
+        # Find the matched normal DNA library for a tumor sample
+        matched_normal_lib:
+          via: donor_name
+          target: "role == 'normal' and extraction_type == 'dna'"
+          column: matched_normal_lib
+
+        # Find the index/proband library for any library in the same cohort
+        index_lib:
+          via: cohort_name
+          target: "role == 'index'"
+          column: index_lib
+
+        # Find all tumor libraries in the same donor (one-to-many)
+        donor_tumor_libs:
+          via: donor_name
+          target: "role == 'tumor'"
+          column: donor_tumor_libs
+          many: true
+    """
+
+    via: str
+    """Column name in the library DataFrame to use as the join key.
+    The related row must have the *same* value in this column as the
+    source row."""
+
+    target: str
+    """Pandas ``DataFrame.query()`` expression applied to the related
+    rows (those sharing the same ``via`` value) to select the desired
+    match."""
+
+    column: str | None = None
+    """Name of the new column to add.  Defaults to the relationship key
+    name in the ``relationships`` dict."""
+
+    many: bool = False
+    """If ``True``, the relationship may match multiple related rows.
+    The column value will be a ``list[str]`` of all matching library
+    names.  If ``False`` (default), only the first match is kept and
+    the column value is a single ``str`` (or ``""`` if no match)."""
 
 
 class LibrarySelectionMixin(SnappyModel):
@@ -86,4 +141,30 @@ class LibrarySelectionMixin(SnappyModel):
     """Optional shortcut for grouping semantics ("library", "cohort").
     Tools can use this configuration to automatically map their input/output logic to
     the specified granularity.
+    """
+
+    relationships: dict[str, RelationshipDefinition] | None = None
+    """Optional relationship definitions that add derived columns to the
+    library DataFrame *before* ``library_selection`` is applied.
+
+    Each relationship adds a new column whose value is looked up from
+    related rows sharing the same ``via`` column value, filtered by
+    ``target``.  This is the mechanism for expressing tumor-normal
+    pairs, pedigree lookups, and other inter-library associations.
+
+    **Examples**
+
+    .. code-block:: yaml
+
+        relationships:
+          matched_normal_lib:
+            via: donor_name
+            target: "role == 'normal' and extraction_type == 'dna'"
+          index_lib:
+            via: cohort_name
+            target: "role == 'index'"
+
+    After resolution, the new columns (``matched_normal_lib``,
+    ``index_lib``) are available for ``library_selection`` queries and
+    can be referenced in Snakemake input functions.
     """

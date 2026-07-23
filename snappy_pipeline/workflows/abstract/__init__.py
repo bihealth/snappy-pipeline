@@ -999,10 +999,12 @@ class BaseStep:
 
     def build_library_dataframe(self):
         """Convenience method to build the unified library dataframe for this workflow."""
+        relationships = getattr(self.config, "relationships", None)
         return build_library_dataframe(
             self.data_set_infos,
             self.sheets,
             self.shortcut_sheets,
+            relationships=relationships,
         )
 
     @property
@@ -1038,23 +1040,27 @@ class BaseStep:
         or individual library names otherwise.
         """
         selection = getattr(self.config, "library_selection", None)
+        relationships = getattr(self.config, "relationships", None)
         return output_entity_names(
             self.data_set_infos,
             self.sheets,
             self.shortcut_sheets,
             selection,
             self.effective_group_by,
+            relationships=relationships,
         )
 
     @property
     def cohort_members(self) -> dict[str, list[str]]:
         """Cohort name -> member library names mapping."""
         selection = getattr(self.config, "library_selection", None)
+        relationships = getattr(self.config, "relationships", None)
         return cohort_members(
             self.data_set_infos,
             self.sheets,
             self.shortcut_sheets,
             selection,
+            relationships=relationships,
         )
 
     def _check_config(self):
@@ -1447,6 +1453,7 @@ def build_library_dataframe(
     data_set_infos,
     sheets,
     shortcut_sheets,
+    relationships=None,
 ):
     """Build a tidy pandas DataFrame with one row per NGS library.
 
@@ -1677,7 +1684,74 @@ def build_library_dataframe(
         "mother_name",
         "disease_state",
     ]
-    return pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
+    df = pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
+    if relationships:
+        df = resolve_relationships(df, relationships)
+    return df
+
+
+def resolve_relationships(df, relationships: dict):
+    """Add relationship columns to the library DataFrame.
+
+    For each relationship definition, a new column is added whose value is
+    looked up from related rows sharing the same ``via`` column value and
+    matching the ``target`` query expression.
+
+    Parameters
+    ----------
+    df:
+        Library DataFrame produced by :func:`build_library_dataframe`.
+    relationships:
+        Dict mapping relationship names to :class:`RelationshipDefinition`
+        instances (or dicts with ``via``, ``target``, ``column``, ``many``
+        keys).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of *df* with additional relationship columns.
+    """
+    if df.empty or not relationships:
+        return df
+
+    result = df.copy()
+
+    for rel_name, rel_def in relationships.items():
+        # Accept both model instances and plain dicts.
+        via = rel_def.via if hasattr(rel_def, "via") else rel_def["via"]
+        target = rel_def.target if hasattr(rel_def, "target") else rel_def["target"]
+        column = (
+            rel_def.column if hasattr(rel_def, "column") else rel_def.get("column")
+        ) or rel_name
+        many = rel_def.many if hasattr(rel_def, "many") else rel_def.get("many", False)
+
+        if via not in result.columns:
+            raise ValueError(
+                f"Relationship {rel_name!r}: join column {via!r} not found in DataFrame. "
+                f"Available columns: {list(result.columns)}"
+            )
+
+        # Build a lookup: for each unique ``via`` value, find matching rows.
+        # We query the full DataFrame for each group so that the target
+        # expression can reference any column.
+        matched: dict[str, list[str]] = {}
+        for via_val, group in result.groupby(via):
+            try:
+                hits = group.query(target)
+            except Exception as exc:
+                raise ValueError(
+                    f"Relationship {rel_name!r}: target query {target!r} failed: {exc}"
+                ) from exc
+            matched[str(via_val)] = hits["library_name"].tolist()
+
+        if many:
+            result[column] = result[via].map(lambda v: matched.get(str(v), []))
+        else:
+            result[column] = result[via].map(
+                lambda v: matched.get(str(v), [""])[0] if matched.get(str(v)) else ""
+            )
+
+    return result
 
 
 def apply_library_selection(
@@ -1720,6 +1794,7 @@ def output_entity_names(
     shortcut_sheets,
     selection: str | None,
     group_by: str | None = None,
+    relationships=None,
 ) -> list[str]:
     """Return output entity names driven by *group_by* and *selection*.
 
@@ -1735,10 +1810,15 @@ def output_entity_names(
     group_by:
         ``"cohort"`` for cohort-level granularity, ``None`` or ``"library"``
         for per-library granularity.
+    relationships:
+        Optional relationship definitions passed to
+        :func:`build_library_dataframe`.
     """
     import pandas as pd
 
-    df = build_library_dataframe(data_set_infos, sheets, shortcut_sheets)
+    df = build_library_dataframe(
+        data_set_infos, sheets, shortcut_sheets, relationships=relationships
+    )
     if df.empty:
         return []
 
@@ -1778,6 +1858,7 @@ def cohort_members(
     sheets,
     shortcut_sheets,
     selection: str | None,
+    relationships=None,
 ) -> dict[str, list[str]]:
     """Return mapping from cohort name to member library names.
 
@@ -1787,8 +1868,13 @@ def cohort_members(
         As returned by ``BaseStep`` initialisation.
     selection:
         ``library_selection`` value from the step config (may be ``None``).
+    relationships:
+        Optional relationship definitions passed to
+        :func:`build_library_dataframe`.
     """
-    df = build_library_dataframe(data_set_infos, sheets, shortcut_sheets)
+    df = build_library_dataframe(
+        data_set_infos, sheets, shortcut_sheets, relationships=relationships
+    )
     if df.empty:
         return {}
 
