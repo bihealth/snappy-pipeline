@@ -1005,6 +1005,58 @@ class BaseStep:
             self.shortcut_sheets,
         )
 
+    @property
+    def effective_group_by(self) -> str | None:
+        """Return the effective ``group_by`` for this workflow.
+
+        Resolution order:
+        1. Explicit ``group_by`` on this task's config.
+        2. Inherited from primary upstream dependency's config.
+        3. ``None`` (per-library default).
+        """
+        own = getattr(self.config, "group_by", None)
+        if own is not None:
+            return own
+        if self.depends_on is not None:
+            for field_name in type(self.depends_on).model_fields:
+                dep_val = getattr(self.depends_on, field_name, "")
+                if dep_val:
+                    try:
+                        upstream_cfg = self.get_task_config(field_name)
+                        upstream_gb = getattr(upstream_cfg, "group_by", None)
+                        if upstream_gb is not None:
+                            return upstream_gb
+                    except Exception:
+                        pass
+        return None
+
+    @property
+    def output_entities(self) -> list[str]:
+        """Output entity names for this workflow, driven by config.
+
+        Returns cohort-level entity names when ``group_by == "cohort"``,
+        or individual library names otherwise.
+        """
+        selection = getattr(self.config, "library_selection", None)
+        return output_entity_names(
+            self.data_set_infos,
+            self.sheets,
+            self.shortcut_sheets,
+            selection,
+            self.effective_group_by,
+        )
+
+    @property
+    def cohort_members(self) -> dict[str, list[str]]:
+        """Cohort name -> member library names mapping."""
+        selection = getattr(self.config, "library_selection", None)
+        return cohort_members(
+            self.data_set_infos,
+            self.sheets,
+            self.shortcut_sheets,
+            selection,
+        )
+
     def _check_config(self):
         """Internal method, checks step and sub step configurations"""
         self.check_config()
@@ -1563,7 +1615,8 @@ def build_library_dataframe(
                         else:
                             lib_disease[lib.name] = 0
 
-            for lib in shortcut_sheet.all_ngs_libraries:
+            all_ngs_libs = getattr(shortcut_sheet, "all_ngs_libraries", None) or []
+            for lib in all_ngs_libs:
                 ts = lib.test_sample
                 bs = getattr(ts, "bio_sample", None)
                 bio_entity = getattr(bs, "bio_entity", None)
@@ -1661,18 +1714,72 @@ def apply_library_selection(
         raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
 
 
-def iter_library_names(
+def output_entity_names(
     data_set_infos,
     sheets,
     shortcut_sheets,
     selection: str | None,
-) -> typing.Iterator[str]:
-    """Yield distinct library names after applying *selection*.
+    group_by: str | None = None,
+) -> list[str]:
+    """Return output entity names driven by *group_by* and *selection*.
 
-    Convenience wrapper around :func:`build_library_dataframe` +
-    :func:`apply_library_selection`.  Skips background datasets automatically.
-    Iterates per-dataset so the per-kind default is applied correctly when a
-    config contains mixed sheet types.
+    When ``group_by == "cohort"``, returns one primary library name per
+    cohort (pedigree).  Otherwise returns individual library names.
+
+    Parameters
+    ----------
+    data_set_infos, sheets, shortcut_sheets:
+        As returned by ``BaseStep`` initialisation.
+    selection:
+        ``library_selection`` value from the step config (may be ``None``).
+    group_by:
+        ``"cohort"`` for cohort-level granularity, ``None`` or ``"library"``
+        for per-library granularity.
+    """
+    import pandas as pd
+
+    df = build_library_dataframe(data_set_infos, sheets, shortcut_sheets)
+    if df.empty:
+        return []
+
+    # Apply per-kind defaults when no explicit selection is given.
+    if selection is not None:
+        df = apply_library_selection(df, selection, "germline")
+    else:
+        rows = []
+        for kind in ("cancer", "germline"):
+            subset = df[df["kind"] == kind]
+            default = _LIBRARY_SELECTION_DEFAULTS.get(kind, "")
+            if default:
+                subset = subset.query(default)
+            rows.append(subset)
+        df = pd.concat(rows) if rows else df.iloc[0:0]
+
+    if df.empty:
+        return []
+
+    if group_by == "cohort":
+        # Return primary library name per cohort.
+        entities = []
+        for _, group in df.groupby("cohort_name"):
+            primary = group[group["is_primary"]]
+            if not primary.empty:
+                entities.append(primary.iloc[0]["library_name"])
+            else:
+                entities.append(group.iloc[0]["library_name"])
+        return entities
+    else:
+        # Per-library: return distinct library names.
+        return df["library_name"].unique().tolist()
+
+
+def cohort_members(
+    data_set_infos,
+    sheets,
+    shortcut_sheets,
+    selection: str | None,
+) -> dict[str, list[str]]:
+    """Return mapping from cohort name to member library names.
 
     Parameters
     ----------
@@ -1681,18 +1788,17 @@ def iter_library_names(
     selection:
         ``library_selection`` value from the step config (may be ``None``).
     """
-    seen: set[str] = set()
-    for info, raw_sheet, shortcut_sheet in zip(data_set_infos, sheets, shortcut_sheets):
-        if info.is_background:
-            continue
-        sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
-        kind = "cancer" if sheet_type == "matched_cancer" else "germline"
-        df = build_library_dataframe([info], [raw_sheet], [shortcut_sheet])
-        filtered = apply_library_selection(df, selection, kind)
-        for lib_name in filtered["library_name"].tolist():
-            if lib_name not in seen:
-                seen.add(lib_name)
-                yield lib_name
+    df = build_library_dataframe(data_set_infos, sheets, shortcut_sheets)
+    if df.empty:
+        return {}
+
+    if selection is not None:
+        df = apply_library_selection(df, selection, "germline")
+
+    result: dict[str, list[str]] = {}
+    for cohort_name, group in df.groupby("cohort_name"):
+        result[cohort_name] = group["library_name"].tolist()
+    return result
 
 
 class LinkInPathGenerator:

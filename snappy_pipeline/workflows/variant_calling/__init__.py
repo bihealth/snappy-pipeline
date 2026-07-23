@@ -245,7 +245,6 @@ index-N1-DNA1-WES1/report/jannovar_stats/index-N1-DNA1-WES1.txt
 """
 
 import re
-import typing
 from itertools import chain
 from typing import Any
 
@@ -308,20 +307,26 @@ class GetResultFilesMixin:
         def strip_tpl(tpl):
             return tpl.replace(r",[^\.]+", "")
 
-        index_dna_ngs_libraries = self._get_index_dna_ngs_libraries()
+        group_by = self.parent.effective_group_by
+        members = self.parent.cohort_members if group_by == "cohort" else {}
+
         for action in self.actions:
             output_files = self.get_output_files(action).values()
             result_paths_tpls = [
                 strip_tpl(p) for p in flatten(output_files) if p.startswith("output/")
             ]
             for path_tpl in result_paths_tpls:
-                for index_library_name, member_library_names in index_dna_ngs_libraries.items():
+                for entity_name in self.parent.output_entities:
                     kwargs = {}
                     if "index_library_name" in path_tpl:
-                        kwargs["index_library_name"] = [index_library_name]
-                        kwargs["donor_library_name"] = member_library_names
+                        kwargs["index_library_name"] = [entity_name]
+                        # Find member libs for this cohort's primary library.
+                        for cohort_name, member_libs in members.items():
+                            if entity_name in member_libs:
+                                kwargs["donor_library_name"] = member_libs
+                                break
                     else:
-                        kwargs["library_name"] = [index_library_name]
+                        kwargs["library_name"] = [entity_name]
                     for key, value in self.get_extra_kv_pairs().items():
                         if "{%s}" % key in path_tpl:
                             kwargs[key] = value
@@ -332,36 +337,6 @@ class GetResultFilesMixin:
 
     def get_extra_kv_pairs(self):
         return {}
-
-    @dictify
-    def _get_index_dna_ngs_libraries(
-        self,
-    ) -> typing.Generator[typing.Tuple[str, typing.List[str]], None, None]:
-        """Return ``dict`` that maps the index DNA library name to a list of all pedigree
-        member's DNA library names.
-        """
-        df = self.parent.build_library_dataframe()
-        if df.empty:
-            return
-
-        selection = getattr(self.config, "library_selection", None)
-        if selection:
-            from snappy_pipeline.workflows.abstract import apply_library_selection
-
-            df = apply_library_selection(df, selection, "germline")
-
-        # Group by cohort
-        for cohort_name, group in df.groupby("cohort_name"):
-            # Find the primary library in the cohort
-            primary_libs = group[group["is_primary"]]
-            if not primary_libs.empty:
-                index_lib = primary_libs.iloc[0]["library_name"]
-            else:
-                # Fallback to first library if no primary designated
-                index_lib = group.iloc[0]["library_name"]
-
-            member_libs = group["library_name"].tolist()
-            yield index_lib, member_libs
 
 
 class VariantCallingGetLogFileMixin:
@@ -410,7 +385,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
         if df.empty:
             return
 
-        group_by = getattr(self.config, "group_by", "cohort")
+        group_by = self.parent.effective_group_by or "cohort"
 
         # Determine the target libraries based on the wildcard
         if group_by == "cohort":
@@ -613,7 +588,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         if df.empty:
             return
 
-        group_by = getattr(self.config, "group_by", "cohort")
+        group_by = self.parent.effective_group_by or "cohort"
 
         # Determine the target libraries based on the wildcard
         if group_by == "cohort":
@@ -1051,20 +1026,26 @@ class VariantCallingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        # Rebuild shortcut_sheets to use the appropriate shortcut class based on sheet type
+        # Rebuild shortcut_sheets to use the appropriate shortcut class based on sheet type.
+        # Pedigree kwargs (e.g. join_by_field) must be forwarded so that germline
+        # shortcut sheets can resolve family relationships properly.
         self.shortcut_sheets = []
         for info in self.data_set_infos:
             if info.sheet:
                 if info.sheet_type == "germline_variants":
                     from biomedsheets.shortcuts.germline import GermlineCaseSheet
 
-                    self.shortcut_sheets.append(GermlineCaseSheet(info.sheet))
+                    self.shortcut_sheets.append(
+                        GermlineCaseSheet(info.sheet, **(info.pedigree_field_kwargs or {}))
+                    )
                 elif info.sheet_type in ("matched_cancer", "cancer_matched"):
                     from biomedsheets.shortcuts.cancer import CancerCaseSheet
 
-                    self.shortcut_sheets.append(CancerCaseSheet(info.sheet, "DNA"))
+                    self.shortcut_sheets.append(CancerCaseSheet(info.sheet))
                 else:
-                    self.shortcut_sheets.append(self.sheet_shortcut_class(info.sheet))
+                    self.shortcut_sheets.append(
+                        self.sheet_shortcut_class(info.sheet, **(info.pedigree_field_kwargs or {}))
+                    )
 
         self.register_sub_step_classes(
             (

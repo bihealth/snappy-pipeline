@@ -16,7 +16,6 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
-    iter_library_names,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -166,15 +165,15 @@ class VariantAnnotationWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        for lib_name in self._iter_library_names():
+        for entity_name in self.output_entities:
             yield from expand(
                 os.path.join("output", "{library_name}", "out", "{library_name}{ext}"),
-                library_name=[lib_name],
+                library_name=[entity_name],
                 ext=EXT_VALUES,
             )
             yield from expand(
                 os.path.join("output", "{library_name}", "log", "{library_name}{ext}"),
-                library_name=[lib_name],
+                library_name=[entity_name],
                 ext=(
                     ".log",
                     ".log.md5",
@@ -189,15 +188,4 @@ class VariantAnnotationWorkflow(BaseStep):
         self.ensure_w_config(
             ("static_data_config", "reference", "path"),
             "Path to reference FASTA not configured but required for variant annotation",
-        )
-
-    @listify
-    def _iter_library_names(self):
-        """Yield relevant library names driven by samplesheet type and library_selection."""
-        selection = getattr(self.config, "library_selection", None)
-        yield from iter_library_names(
-            self.data_set_infos,
-            self.sheets,
-            self.shortcut_sheets,
-            selection,
         )
