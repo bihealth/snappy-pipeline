@@ -1792,9 +1792,18 @@ def resolve_relationships(df, relationships: dict):
         if many:
             result[column] = result[via].map(lambda v: matched.get(str(v), []))
         else:
-            result[column] = result[via].map(
-                lambda v: matched.get(str(v), [""])[0] if matched.get(str(v)) else ""
-            )
+
+            def _single_match(via_value):
+                matches = matched.get(str(via_value), [])
+                if len(matches) > 1:
+                    raise ValueError(
+                        f"Relationship {rel_name!r}: expected single match for "
+                        f"via value {via_value!r}, got {len(matches)}: {matches}. "
+                        f"Use 'many: true' if multiple matches are expected."
+                    )
+                return matches[0] if matches else ""
+
+            result[column] = result[via].map(_single_match)
 
     return result
 
