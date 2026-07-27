@@ -1069,6 +1069,17 @@ class BaseStep:
             relationships=relationships,
         )
 
+    def get_cohort_libraries(self, library_name: str) -> list[str]:
+        """Return all library names in the same cohort as *library_name*.
+
+        Returns ``[library_name]`` when the cohort cannot be found or when
+        ``effective_group_by != "cohort"``.
+        """
+        for _cohort_name, members in self.cohort_members.items():
+            if library_name in members:
+                return members
+        return [library_name]
+
     def _check_config(self):
         """Internal method, checks step and sub step configurations"""
         self.check_config()

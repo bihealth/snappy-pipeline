@@ -170,7 +170,7 @@ elif tool == "gatk4_hc_gvcf":
             partition=wf.get_resource("gatk4_hc_gvcf", "discover", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "discover", "tmpdir"),
         params:
-            args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
+            args=wf.get_args("gatk4_hc_gvcf", "discover"),
         wrapper:
             wf.wrapper_path("gatk4_hc/discover")
 

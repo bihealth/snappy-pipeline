@@ -390,8 +390,10 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
         # Determine the target libraries based on the wildcard
         if group_by == "cohort":
-            # Cohort logic
-            df_target = df[df["cohort_name"] == wildcards.library_name]
+            # wildcards.library_name is the index library name; find its cohort
+            df_target = df[
+                df["library_name"].isin(self.parent.get_cohort_libraries(wildcards.library_name))
+            ]
         elif group_by == "library":
             # Per-library logic
             df_target = df[df["library_name"] == wildcards.library_name]
@@ -593,8 +595,10 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
         # Determine the target libraries based on the wildcard
         if group_by == "cohort":
-            # Cohort logic
-            df_target = df[df["cohort_name"] == wildcards.library_name]
+            # wildcards.library_name is the index library name; find its cohort
+            df_target = df[
+                df["library_name"].isin(self.parent.get_cohort_libraries(wildcards.library_name))
+            ]
         elif group_by == "library":
             # Per-library logic
             df_target = df[df["library_name"] == wildcards.library_name]
