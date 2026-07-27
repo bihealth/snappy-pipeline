@@ -57,10 +57,9 @@ Available HRD tools
 
 """
 
-import sys
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
@@ -226,33 +225,22 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         """Return list of result files for the homologous recombination deficiency step"""
         tool_actions = {"scarHRD": ("run",)}
         tool = str(self.config.tool)
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} is missing primary"
-                        "normal or primary cancer NGS library"
+        for library_name in self.output_entities:
+            for action in tool_actions[tool]:
+                try:
+                    tpls = self.sub_steps[tool].get_output_files(action).values()
+                except AttributeError:
+                    tpls = self.sub_steps[tool].get_output_files(action)
+                tpls = list(tpls)
+                tpls += list(self.sub_steps[tool].get_log_file(action).values())
+                for tpl in tpls:
+                    filenames = expand(
+                        tpl,
+                        library_name=[library_name],
                     )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                for action in tool_actions[tool]:
-                    try:
-                        tpls = self.sub_steps[tool].get_output_files(action).values()
-                    except AttributeError:
-                        tpls = self.sub_steps[tool].get_output_files(action)
-                    tpls = list(tpls)
-                    tpls += list(self.sub_steps[tool].get_log_file(action).values())
-                    for tpl in tpls:
-                        filenames = expand(
-                            tpl,
-                            library_name=[sample_pair.tumor_sample.dna_ngs_library.name],
-                        )
-                        for f in filenames:
-                            if ".tmp." not in f and not f.endswith(".done"):
-                                yield f.replace("work/", "output/")
+                    for f in filenames:
+                        if ".tmp." not in f and not f.endswith(".done"):
+                            yield f.replace("work/", "output/")
 
     def check_config(self):
         """Check that the necessary globalc onfiguration is present"""

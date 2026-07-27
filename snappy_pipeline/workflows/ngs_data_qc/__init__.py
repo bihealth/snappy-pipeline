@@ -326,14 +326,14 @@ class NgsDataQcWorkflow(BaseStep):
         """
         if self.config.tool == "fastqc":
             yield from self._yield_result_files(
-                tpl="output/{ngs_library.name}/report/fastqc/.done",
+                tpl="output/{library_name}/report/fastqc/.done",
                 allowed_extraction_types=(
                     "DNA",
                     "RNA",
                 ),
             )
         if self.config.tool == "picard":
-            tpl = "output/{ngs_library.name}/report/picard/{ngs_library.name}.{ext}"
+            tpl = "output/{library_name}/report/picard/{library_name}.{ext}"
             exts = []
             for pgm in self.config.picard.programs:
                 if pgm in MULTIPLE_METRICS.keys():
@@ -351,8 +351,13 @@ class NgsDataQcWorkflow(BaseStep):
 
     def _yield_result_files(self, tpl, allowed_extraction_types, **kwargs):
         """Build output paths from path template and extension list"""
-        for sheet in self.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                extraction_type = ngs_library.test_sample.extra_infos["extractionType"]
-                if extraction_type in allowed_extraction_types:
-                    yield from expand(tpl, ngs_library=[ngs_library], **kwargs)
+        df = self.build_library_dataframe()
+        if df.empty:
+            return
+        for library_name in self.output_entities:
+            row = df[df["library_name"] == library_name]
+            if row.empty:
+                continue
+            extraction_type = row.iloc[0].get("extraction_type", "")
+            if extraction_type in allowed_extraction_types:
+                yield from expand(tpl, library_name=[library_name], **kwargs)

@@ -2,7 +2,6 @@
 """Implementation of the ``gene_expression_report`` step"""
 
 import os
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
 from snakemake.io import expand
@@ -33,12 +32,6 @@ class GeneExpressionReportStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = "work/{{ngs_library}}/out/{{ngs_library}}{ext}"
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
 
     def get_log_file(self, action):
         _ = action
@@ -203,18 +196,19 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        name_pattern = "{ngs_library.name}"
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for donor in sheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    for _test_sample in bio_sample.test_samples.values():
-                        ngs_library = bio_sample.rna_ngs_library
-                        if ngs_library is None:
-                            break
-
-                        exts = EXT_VALUES + (".pdf", ".genes.pdf")
-                        yield from expand(
-                            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                            ngs_library=ngs_library,
-                            ext=exts,
-                        )
+        name_pattern = "{library_name}"
+        df = self.build_library_dataframe()
+        if df.empty:
+            return []
+        for library_name in self.output_entities:
+            row = df[df["library_name"] == library_name]
+            if row.empty:
+                continue
+            extraction_type = row.iloc[0].get("extraction_type", "")
+            if extraction_type.lower() == "rna":
+                exts = EXT_VALUES + (".pdf", ".genes.pdf")
+                yield from expand(
+                    os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+                    library_name=[library_name],
+                    ext=exts,
+                )

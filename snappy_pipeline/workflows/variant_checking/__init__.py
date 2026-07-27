@@ -48,9 +48,7 @@ Reports
 Currently, no reports are generated.
 """
 
-import sys
-
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -202,16 +200,9 @@ class VariantCheckingWorkflow(BaseStep):
         yield from self._yield_peddy_results()
 
     def _yield_peddy_results(self):
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                if not pedigree.index:
-                    msg = "INFO: pedigree without index (names: {})"
-                    print(
-                        msg.format(list(sorted(d.name for d in pedigree.donors))), file=sys.stderr
-                    )
-                    continue
-                for path in self.sub_steps["peddy"].get_output_files("run").values():
-                    yield from expand(
-                        path,
-                        index_ngs_library=[pedigree.index.dna_ngs_library.name],
-                    )
+        for index_library in self.output_entities:
+            for path in self.sub_steps["peddy"].get_output_files("run").values():
+                yield from expand(
+                    path,
+                    index_ngs_library=[index_library],
+                )

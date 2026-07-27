@@ -341,7 +341,7 @@ class HlaTypingWorkflow(BaseStep):
         """
         from os.path import join
 
-        name_pattern = "{ngs_library.name}"
+        name_pattern = "{library_name}"
         yield from self._yield_result_files(
             join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
         )
@@ -353,15 +353,18 @@ class HlaTypingWorkflow(BaseStep):
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""
         tool = str(self.config.tool)
-        for sheet in self.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                supported = self.sub_steps[tool].supported_extraction_types
-                extraction_type = ngs_library.test_sample.extra_infos.get(
-                    "extractionType", "DNA"
-                ).lower()
-                if extraction_type in supported:
-                    yield from expand(
-                        tpl,
-                        ngs_library=[ngs_library],
-                        **kwargs,
-                    )
+        supported = self.sub_steps[tool].supported_extraction_types
+        df = self.build_library_dataframe()
+        if df.empty:
+            return
+        for library_name in self.output_entities:
+            row = df[df["library_name"] == library_name]
+            if row.empty:
+                continue
+            extraction_type = row.iloc[0].get("extraction_type", "").lower()
+            if extraction_type in supported:
+                yield from expand(
+                    tpl,
+                    library_name=[library_name],
+                    **kwargs,
+                )

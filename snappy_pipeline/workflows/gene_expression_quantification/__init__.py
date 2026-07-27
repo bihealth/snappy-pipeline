@@ -49,7 +49,7 @@ Additionally, one can provide a gtf for the mapping between transcripts and gene
 import os
 from typing import Any
 
-from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
+from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -564,40 +564,44 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
         tool = self.config.tool
-        name_pattern = "{ngs_library.name}"
+        name_pattern = "{library_name}"
 
         # Salmon special case
-        salmon_name_pattern = "{ngs_library.name}"
+        salmon_name_pattern = "{library_name}"
         salmon_exts = EXTENSIONS["salmon"]
         if self.config.salmon and self.config.salmon.path_transcript_to_gene:
             salmon_exts["gene_sf"] = ".gene.sf"
             salmon_exts["gene_sf_md5"] = ".gene.sf.md5"
 
-        # TODO: too many ifs, use shortcut?
-        # if fixed, please do the same for somatic_gene_fusion_calling
+        df = self.build_library_dataframe()
+        if df.empty:
+            return []
+
         all_fns = []
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for ngs_library in sheet.all_ngs_libraries:
-                extraction_type = ngs_library.test_sample.extra_infos.get("extractionType", "DNA")
-                if extraction_type.lower() == "rna":
-                    if tool == "salmon":
-                        fns = expand(
-                            os.path.join(
-                                "output",
-                                salmon_name_pattern,
-                                "out",
-                                salmon_name_pattern + "{ext}",
-                            ),
-                            ngs_library=ngs_library,
-                            ext=salmon_exts.values(),
-                        )
-                        all_fns.extend(fns)
-                    else:
-                        fns = expand(
-                            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                            ngs_library=ngs_library,
-                            ext=EXTENSIONS[tool].values(),
-                        )
-                        all_fns.extend(fns)
+        for library_name in self.output_entities:
+            row = df[df["library_name"] == library_name]
+            if row.empty:
+                continue
+            extraction_type = row.iloc[0].get("extraction_type", "")
+            if extraction_type.lower() == "rna":
+                if tool == "salmon":
+                    fns = expand(
+                        os.path.join(
+                            "output",
+                            salmon_name_pattern,
+                            "out",
+                            salmon_name_pattern + "{ext}",
+                        ),
+                        library_name=[library_name],
+                        ext=salmon_exts.values(),
+                    )
+                    all_fns.extend(fns)
+                else:
+                    fns = expand(
+                        os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+                        library_name=[library_name],
+                        ext=EXTENSIONS[tool].values(),
+                    )
+                    all_fns.extend(fns)
 
         return all_fns

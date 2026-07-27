@@ -2,7 +2,6 @@
 """Implementation of the ``adapter_trimming`` step"""
 
 import os
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -208,10 +207,6 @@ class AdapterTrimmingWorkflow(BaseStep):
         self.register_sub_step_classes(
             (BbdukStepPart, FastpStepPart, LinkInStepPart, LinkOutFastqStepPart)
         )
-        self.ngs_library_name_to_ngs_library = OrderedDict()
-        for sheet in self.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
 
     @classmethod
     def default_config_yaml(cls):
@@ -220,11 +215,10 @@ class AdapterTrimmingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         tpls = (
-            "output/{ngs_library_name}/out/.done",
-            "output/{ngs_library_name}/report/.done",
-            "output/{ngs_library_name}/log/.done",
+            "output/{library_name}/out/.done",
+            "output/{library_name}/report/.done",
+            "output/{library_name}/log/.done",
         )
-        for sheet in self.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                for tpl in tpls:
-                    yield tpl.format(ngs_library_name=ngs_library.name)
+        for library_name in self.output_entities:
+            for tpl in tpls:
+                yield tpl.format(library_name=library_name)
