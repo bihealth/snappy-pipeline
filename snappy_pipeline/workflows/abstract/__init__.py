@@ -1003,14 +1003,14 @@ class BaseStep:
 
     def build_library_dataframe(self):
         """Convenience method to build the unified library dataframe for this workflow."""
-        defaults = getattr(type(self), "default_relationships", {})
-        config_rels = getattr(self.config, "relationships", None) or {}
-        merged = {**defaults, **config_rels}
+        default_relationships = getattr(type(self), "default_relationships", {})
+        config_relationships = getattr(self.config, "relationships", None) or {}
+        relationships = {**default_relationships, **config_relationships}
         return build_library_dataframe(
             self.data_set_infos,
             self.sheets,
             self.shortcut_sheets,
-            relationships=merged or None,
+            relationships=relationships or None,
         )
 
     @property
