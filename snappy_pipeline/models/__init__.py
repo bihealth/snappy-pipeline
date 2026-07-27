@@ -206,8 +206,7 @@ class RelationshipDefinition(SnappyModel):
 class SnappyStepModel(SnappyModel, object):
     """A base class for all workflow step configuration models.
 
-    All step models inherit :class:`~snappy_pipeline.models.selection.LibrarySelectionMixin`,
-    giving every step the ``library_selection``, ``group_by``, and ``relationships``
+    Every step gets ``library_selection``, ``group_by``, and ``relationships``
     fields.  Steps that do not use these fields leave them at their defaults
     (``None`` / empty).
     """
@@ -218,8 +217,8 @@ class SnappyStepModel(SnappyModel, object):
 
     The expression is evaluated against the tidy library DataFrame produced
     by :func:`~snappy_pipeline.workflows.abstract.build_library_dataframe`.
-    See :class:`~snappy_pipeline.models.selection.LibrarySelectionMixin`
-    for the full column reference and examples."""
+    See the ``_LIBRARY_SELECTION_DEFAULTS`` dict and column reference in
+    ``build_library_dataframe`` for supported columns."""
 
     group_by: str | None = None
     """Controls output granularity.
@@ -232,7 +231,7 @@ class SnappyStepModel(SnappyModel, object):
     *before* ``library_selection`` is applied.
 
     Each key is the column name; the value is a
-    :class:`~snappy_pipeline.models.selection.RelationshipDefinition`."""
+    :class:`RelationshipDefinition`."""
 
     @model_validator(mode="after")
     def validate_selected_tool_config(self):
@@ -541,12 +540,7 @@ class ToggleModel(SnappyModel):
         super().__init__(enabled=enabled, **kwargs)
 
 
-# Re-export for convenience so callers can do:
-#   from snappy_pipeline.models import LibrarySelectionMixin
-from snappy_pipeline.models.selection import LibrarySelectionMixin  # noqa: E402
-
 __all__ = [
-    "LibrarySelectionMixin",
     "RelationshipDefinition",
     "SnappyModel",
     "SnappyStepModel",
