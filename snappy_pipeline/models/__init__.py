@@ -147,13 +147,92 @@ class SnappyModel(BaseModel):
         return self.model_fields.keys()
 
 
+class RelationshipDefinition(SnappyModel):
+    """Definition of a relationship between rows in the library DataFrame.
+
+    A relationship adds a new column to the DataFrame whose value is looked
+    up from a *related* row.  The ``via`` column is the join key (e.g.
+    ``"donor_name"``), and ``target`` is a pandas ``DataFrame.query()``
+    expression applied to the related rows to select the correct match.
+
+    **Examples**
+
+    .. code-block:: yaml
+
+        # Find the matched normal DNA library for a tumor sample
+        matched_normal_lib:
+          via: donor_name
+          target: "role == 'normal' and extraction_type == 'dna'"
+          column: matched_normal_lib
+
+        # Find the index/proband library for any library in the same cohort
+        index_lib:
+          via: cohort_name
+          target: "role == 'index'"
+          column: index_lib
+
+        # Find all tumor libraries in the same donor (one-to-many)
+        donor_tumor_libs:
+          via: donor_name
+          target: "role == 'tumor'"
+          column: donor_tumor_libs
+          many: true
+    """
+
+    via: str
+    """Column name in the library DataFrame to use as the join key.
+    The related row must have the *same* value in this column as the
+    source row."""
+
+    target: str
+    """Pandas ``DataFrame.query()`` expression applied to the related
+    rows (those sharing the same ``via`` value) to select the desired
+    match."""
+
+    column: str | None = None
+    """Name of the new column to add.  Defaults to the relationship key
+    name in the ``relationships`` dict."""
+
+    many: bool = False
+    """If ``True``, the relationship may match multiple related rows.
+    The column value will be a ``list[str]`` of all matching library
+    names.  If ``False`` (default), only the first match is kept and
+    the column value is a single ``str`` (or ``""`` if no match)."""
+
+
 # This exists to distinguish workflow step_config models from other snappy specific models
 # It also provides a default_config_yaml_string method that includes the step_config section
 # by default.
 class SnappyStepModel(SnappyModel, object):
+    """A base class for all workflow step configuration models.
+
+    All step models inherit :class:`~snappy_pipeline.models.selection.LibrarySelectionMixin`,
+    giving every step the ``library_selection``, ``group_by``, and ``relationships``
+    fields.  Steps that do not use these fields leave them at their defaults
+    (``None`` / empty).
     """
-    A base class for all workflow step configuration models.
-    """
+
+    library_selection: str | None = None
+    """Optional pandas ``DataFrame.query()`` expression to choose which
+    libraries this task processes.
+
+    The expression is evaluated against the tidy library DataFrame produced
+    by :func:`~snappy_pipeline.workflows.abstract.build_library_dataframe`.
+    See :class:`~snappy_pipeline.models.selection.LibrarySelectionMixin`
+    for the full column reference and examples."""
+
+    group_by: str | None = None
+    """Controls output granularity.
+
+    * ``"cohort"`` -- one output per cohort / pedigree / donor.
+    * ``None`` (default) -- one output per library."""
+
+    relationships: dict[str, RelationshipDefinition] | None = None
+    """Named relationships that add derived columns to the library DataFrame
+    *before* ``library_selection`` is applied.
+
+    Each key is the column name; the value is a
+    :class:`~snappy_pipeline.models.selection.RelationshipDefinition`."""
 
     @model_validator(mode="after")
     def validate_selected_tool_config(self):
@@ -468,6 +547,7 @@ from snappy_pipeline.models.selection import LibrarySelectionMixin  # noqa: E402
 
 __all__ = [
     "LibrarySelectionMixin",
+    "RelationshipDefinition",
     "SnappyModel",
     "SnappyStepModel",
     "ToggleModel",

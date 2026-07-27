@@ -4,7 +4,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import LibrarySelectionMixin, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -137,7 +137,7 @@ class VariantFiltrationDependsOn(SnappyModel):
     ] = ""
 
 
-class VariantFiltration(LibrarySelectionMixin, SnappyStepModel):
+class VariantFiltration(SnappyStepModel):
     depends_on: VariantFiltrationDependsOn
 
     tool: ToolLiteral

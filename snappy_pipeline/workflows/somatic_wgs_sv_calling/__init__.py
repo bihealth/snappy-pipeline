@@ -73,10 +73,8 @@ Currently, no reports are generated.
 """
 
 import os
-import sys
-from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -88,6 +86,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticWgsSvCalling as SomaticWgsSvCallingConfigModel
 
@@ -118,13 +117,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
-        # Build shortcut from cancer bio sample name to matched tumor sample
-        self.cancer_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.cancer_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
+        self.base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}{ext}"
 
     def get_input_files(self, action):
         # Validate action
@@ -137,7 +130,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
         normal_base_path = "output/{normal_library}/out/{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
-        cancer_base_path = "output/{cancer_library}/out/{cancer_library}".format(**wildcards)
+        cancer_base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
         return {
             "normal_bam": ngs_mapping(normal_base_path + ".bam"),
             "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
@@ -147,8 +140,11 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.cancer_ngs_library_to_sample_pair[wildcards.cancer_library]
-        return pair.normal_sample.dna_ngs_library.name
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == wildcards.tumor_library]
+        if tumor_df.empty:
+            return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     def get_output_files(self, action):
         """Return output files that all somatic variant calling sub steps must
@@ -161,7 +157,7 @@ class SomaticWgsSvCallingStepPart(BaseStepPart):
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return ("work/{{cancer_library}}/log/snakemake.somatic_wgs_sv_calling.log").format()
+        return ("work/{{tumor_library}}/log/snakemake.somatic_wgs_sv_calling.log").format()
 
 
 class MantaStepPart(SomaticWgsSvCallingStepPart):
@@ -205,29 +201,26 @@ class Delly2StepPart(BaseStepPart):
 
     #: Directory infixes
     dir_infixes = {
-        "call": "delly2.call.{cancer_library}.{sv_type}",
-        "filter_normal": "delly2.filter_normal.{cancer_library}.{sv_type}",
+        "call": "delly2.call.{tumor_library}.{sv_type}",
+        "filter_normal": "delly2.filter_normal.{tumor_library}.{sv_type}",
         "merge_calls": "delly2.merge_calls.{sv_type}",
-        "genotype": "delly2.genotype.{library_name}.{sv_type}",
-        "merge_genotypes": "delly2.merge_genotypes.{cancer_library}.{sv_type}",
-        "filter_controls": "delly2.filter_controls.{cancer_library}.{sv_type}",
-        "final_vcf": "delly2.{cancer_library}.{sv_type}",
+        "genotype": "delly2.genotype.{bam_library}.{sv_type}",
+        "merge_genotypes": "delly2.merge_genotypes.{tumor_library}.{sv_type}",
+        "filter_controls": "delly2.filter_controls.{tumor_library}.{sv_type}",
+        "final_vcf": "delly2.{tumor_library}.{sv_type}",
     }
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
-        # Build shortcut from cancer bio sample name to matched tumor sample
-        self.cancer_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.cancer_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
+        self.base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}{ext}"
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.cancer_ngs_library_to_sample_pair[wildcards.cancer_library]
-        return pair.normal_sample.dna_ngs_library.name
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == wildcards.tumor_library]
+        if tumor_df.empty:
+            return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     def get_input_files(self, action):
         """Return appropriate input function for the given action"""
@@ -254,7 +247,7 @@ class Delly2StepPart(BaseStepPart):
                 name,
                 ngs_mapping(normal_tpl.format(ext=ext, normal_library=norm_lib, **wildcards)),
             )
-        tumor_tpl = "output/{cancer_library}/out/{cancer_library}{ext}"
+        tumor_tpl = "output/{tumor_library}/out/{tumor_library}{ext}"
         for name, ext in {"tumor_bam": ".bam", "tumor_bai": ".bam.bai"}.items():
             yield name, ngs_mapping(tumor_tpl.format(ext=ext, **wildcards))
         # create description of samples that went into this bcf
@@ -264,7 +257,7 @@ class Delly2StepPart(BaseStepPart):
         )
         with open(samples_file_path, "w") as samples_file:
             samples_file.write(
-                "{cancer_library}\ttumor\n{normal_library}\tcontrol\n".format(
+                "{tumor_library}\ttumor\n{normal_library}\tcontrol\n".format(
                     normal_library=self.get_normal_lib_name(wildcards), **wildcards
                 )
             )
@@ -294,7 +287,7 @@ class Delly2StepPart(BaseStepPart):
         yield "bcf", os.path.join("work", infix, "out", infix + ".bcf").format(**wildcards)
         # BAM files : we want to individually process each tumor and each normal bam
         ngs_mapping = self.parent.upstream("ngs_mapping")
-        tpl = "output/{library_name}/out/{library_name}{ext}"
+        tpl = "output/{bam_library}/out/{bam_library}{ext}"
         for name, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
             yield name, ngs_mapping(tpl.format(ext=ext, **wildcards))
 
@@ -304,14 +297,14 @@ class Delly2StepPart(BaseStepPart):
         infix = self.dir_infixes["genotype"]
         tpl = os.path.join("work", infix, "out", infix + ".bcf")
         # return BCF for one tumor
-        yield tpl.format(library_name=wildcards.cancer_library.name, **wildcards)
+        yield tpl.format(bam_library=wildcards.tumor_library.name, **wildcards)
 
         # also create tsv with description of all the samples in this bcf
         infix = self.dir_infixes["merge_genotypes"]
         samples_file_path = os.path.join("work", infix, "out", infix + "samples.tsv")
         with open(samples_file_path, "w") as samples_file:
             # write tumor sample description
-            samples_file.write("{cancer_library}\ttumor\n".format(**wildcards))
+            samples_file.write("{tumor_library}\ttumor\n".format(**wildcards))
 
             # for all normals
             for pair in self._get_primary_pairs():
@@ -403,6 +396,13 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
@@ -440,37 +440,10 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        name_pattern = "{cancer_library.name}"
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            ext=EXT_VALUES,
-        )
-
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list"""
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )  # pragma: no cover
-                    print(
-                        msg.format(sample_pair.tumor_sample.name), file=sys.stderr
-                    )  # pragma: no cover
-                    continue  # pragma: no cover
-                yield from expand(
-                    tpl,
-                    cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
-                    **kwargs,
-                )
+        """Return list of result files for the somatic WGS SV calling workflow"""
+        tpl = os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}")
+        for entity in self.output_entities:
+            yield from expand(tpl, tumor_library=[entity], ext=EXT_VALUES)
 
     def check_config(self):
         """Check that the necessary configuration is available for the step"""

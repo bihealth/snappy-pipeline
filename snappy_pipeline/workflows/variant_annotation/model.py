@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, LibrarySelectionMixin, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.annotation import Mehari, Vep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 
@@ -35,7 +35,7 @@ class VariantAnnotationDependsOn(SnappyModel):
     ]
 
 
-class VariantAnnotation(LibrarySelectionMixin, SnappyStepModel):
+class VariantAnnotation(SnappyStepModel):
     depends_on: VariantAnnotationDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.vep)]

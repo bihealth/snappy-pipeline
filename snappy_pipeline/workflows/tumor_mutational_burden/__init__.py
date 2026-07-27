@@ -1,8 +1,6 @@
 import os
-import sys
-from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -33,21 +31,6 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     name = "tmb_gathering"
 
     actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            # update function of OrderedDict
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
-        # Build mapping from donor name to donor.
-        self.donors = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                self.donors[donor.name] = donor
 
     @dictify
     def get_input_files(self, action):
@@ -161,44 +144,23 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        name_pattern = "tmb.{tumor_library.name}"
-
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            ext=EXT_VALUES,
+        """Return list of result files for the TMB workflow."""
+        log_exts = (
+            ".log",
+            ".log.md5",
+            ".conda_info.txt",
+            ".conda_info.txt.md5",
+            ".conda_list.txt",
+            ".conda_list.txt.md5",
         )
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            ext=(
-                ".log",
-                ".log.md5",
-                ".conda_info.txt",
-                ".conda_info.txt.md5",
-                ".conda_list.txt",
-                ".conda_list.txt.md5",
-            ),
-        )
-
-    def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl,
-                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
-                    **kwargs,
-                )
+        for entity in self.output_entities:
+            yield from expand(
+                os.path.join("output", "{tumor_library}", "out", "tmb.{tumor_library}{ext}"),
+                tumor_library=[entity],
+                ext=EXT_VALUES,
+            )
+            yield from expand(
+                os.path.join("output", "{tumor_library}", "log", "tmb.{tumor_library}{ext}"),
+                tumor_library=[entity],
+                ext=log_exts,
+            )

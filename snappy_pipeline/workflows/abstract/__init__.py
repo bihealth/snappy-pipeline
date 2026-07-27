@@ -37,7 +37,7 @@ from snappy_pipeline.base import (
     print_sample_sheets,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 from snappy_wrappers.resource_usage import ResourceUsage
@@ -687,6 +687,10 @@ class BaseStep:
     #: DataSignatures this workflow step produces
     produces: list[DataSignature] = []
 
+    #: Default relationships merged into ``build_library_dataframe()``.
+    #: Config-level ``relationships`` override these.
+    default_relationships: dict[str, RelationshipDefinition] = {}
+
     def __init_subclass__(cls, **kwargs):
         """Enforce that every ``BaseStep`` subclass declares a ``produces`` contract."""
         super().__init_subclass__(**kwargs)
@@ -999,12 +1003,14 @@ class BaseStep:
 
     def build_library_dataframe(self):
         """Convenience method to build the unified library dataframe for this workflow."""
-        relationships = getattr(self.config, "relationships", None)
+        defaults = getattr(type(self), "default_relationships", {})
+        config_rels = getattr(self.config, "relationships", None) or {}
+        merged = {**defaults, **config_rels}
         return build_library_dataframe(
             self.data_set_infos,
             self.sheets,
             self.shortcut_sheets,
-            relationships=relationships,
+            relationships=merged or None,
         )
 
     @property
@@ -1486,6 +1492,7 @@ def build_library_dataframe(
         * ``sex`` — ``"male"``, ``"female"``, or ``"unknown"``
         * ``donor_name`` — patient / family identifier
         * ``sample_name`` — bio-sample name
+        * ``tissue_type`` — ``"tumor"``, ``"normal"``, or ``"unknown"``
     """
     import pandas as pd
     from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
@@ -1547,6 +1554,7 @@ def build_library_dataframe(
                                     "father_name": "0",
                                     "mother_name": "0",
                                     "disease_state": 0,
+                                    "tissue_type": "tumor" if is_tumor else "normal",
                                 }
                             )
 
@@ -1564,26 +1572,38 @@ def build_library_dataframe(
             lib_mother: dict[str, str] = {}
             lib_disease: dict[str, int] = {}
 
-            if hasattr(shortcut_sheet, "pedigrees"):
+            # Determine the pedigrees list: GermlineCaseSheet stores them
+            # in ``cohort.pedigrees``; GenericSampleSheet doesn't have them.
+            pedigrees = (
+                getattr(shortcut_sheet, "pedigrees", None)
+                or getattr(getattr(shortcut_sheet, "cohort", None), "pedigrees", None)
+                or []
+            )
+
+            if pedigrees:
                 # First pass: map donor PKs to their DNA library names
                 pk_to_lib = {}
-                for ped in shortcut_sheet.pedigrees:
+                for ped in pedigrees:
                     for d in ped.donors:
                         lib = getattr(d, "dna_ngs_library", None)
                         if lib:
                             pk_to_lib[getattr(d, "pk", None)] = lib.name
 
-                for ped in shortcut_sheet.pedigrees:
+                for ped in pedigrees:
                     # Index / proband
                     if ped.index and ped.index.dna_ngs_library:
                         index_lib_names.add(ped.index.dna_ngs_library.name)
 
                     # Build sets of PKs referenced as father / mother by children
                     pk_is_father: set = {
-                        d.father_pk for d in ped.donors if getattr(d, "father_pk", None)
+                        int(d.father_pk)
+                        for d in ped.donors
+                        if getattr(d, "father_pk", None) is not None
                     }
                     pk_is_mother: set = {
-                        d.mother_pk for d in ped.donors if getattr(d, "mother_pk", None)
+                        int(d.mother_pk)
+                        for d in ped.donors
+                        if getattr(d, "mother_pk", None) is not None
                     }
 
                     for d in ped.donors:
@@ -1609,8 +1629,12 @@ def build_library_dataframe(
 
                         father_pk = getattr(d, "father_pk", None)
                         mother_pk = getattr(d, "mother_pk", None)
-                        lib_father[lib.name] = pk_to_lib.get(father_pk, "0")
-                        lib_mother[lib.name] = pk_to_lib.get(mother_pk, "0")
+                        lib_father[lib.name] = pk_to_lib.get(
+                            int(father_pk) if father_pk is not None else None, "0"
+                        )
+                        lib_mother[lib.name] = pk_to_lib.get(
+                            int(mother_pk) if mother_pk is not None else None, "0"
+                        )
 
                         is_affected = (
                             d.extra_infos.get("isAffected") if hasattr(d, "extra_infos") else None
@@ -1623,15 +1647,34 @@ def build_library_dataframe(
                             lib_disease[lib.name] = 0
 
             all_ngs_libs = getattr(shortcut_sheet, "all_ngs_libraries", None) or []
+            if not all_ngs_libs and pedigrees:
+                # Collect NGS libraries from pedigree donors as fallback.
+                all_ngs_libs = []
+                for ped in pedigrees:
+                    for d in ped.donors:
+                        lib = getattr(d, "dna_ngs_library", None)
+                        if lib is not None:
+                            all_ngs_libs.append(lib)
             for lib in all_ngs_libs:
                 ts = lib.test_sample
                 bs = getattr(ts, "bio_sample", None)
                 bio_entity = getattr(bs, "bio_entity", None)
-                ext = ts.extra_infos.get("extractionType", "unknown").lower()
+
+                # Handle both GenericSampleSheet (TestSample has extra_infos)
+                # and GermlineCaseSheet (TestSampleShortcut wraps TestSample).
+                ts_extra = getattr(ts, "extra_infos", None)
+                if ts_extra is None and hasattr(ts, "test_sample"):
+                    ts_extra = getattr(ts.test_sample, "extra_infos", {})
+                else:
+                    ts_extra = ts_extra or {}
+
+                be_extra = getattr(bio_entity, "extra_infos", {}) if bio_entity else {}
+
+                ext = ts_extra.get("extractionType", "unknown").lower()
                 lib_name = lib.name
                 donor_name = getattr(bio_entity, "name", "")
                 sample_name = getattr(bs, "name", "")
-                is_affected = ts.extra_infos.get("isAffected", None)
+                is_affected = be_extra.get("isAffected") or ts_extra.get("isAffected", None)
                 sex = lib_sex.get(lib_name, "unknown")
 
                 if lib_name in index_lib_names:
@@ -1667,6 +1710,7 @@ def build_library_dataframe(
                         "father_name": lib_father.get(lib_name, "0"),
                         "mother_name": lib_mother.get(lib_name, "0"),
                         "disease_state": lib_disease.get(lib_name, 0),
+                        "tissue_type": "unknown",
                     }
                 )
 
@@ -1683,6 +1727,7 @@ def build_library_dataframe(
         "father_name",
         "mother_name",
         "disease_state",
+        "tissue_type",
     ]
     df = pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
     if relationships:

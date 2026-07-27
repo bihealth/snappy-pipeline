@@ -15,11 +15,9 @@ ebfilter    – EBFilter (requires aligned BAMs, cancer sheet)
 
 import os
 import random
-import sys
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -32,6 +30,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.models import RelationshipDefinition
 
 from .model import (
     Ebfilter as EbfilterConfig,
@@ -46,9 +45,9 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 DEFAULT_CONFIG = VariantFiltrationConfigModel.default_config_yaml_string()
 
 # Path template helpers
-_WORK_PREFIX = os.path.join("work", "{library_name}")
-_OUT_PREFIX = os.path.join(_WORK_PREFIX, "out", "{library_name}")
-_LOG_PREFIX = os.path.join(_WORK_PREFIX, "log", "{library_name}")
+_WORK_PREFIX = os.path.join("work", "{tumor_library}")
+_OUT_PREFIX = os.path.join(_WORK_PREFIX, "out", "{tumor_library}")
+_LOG_PREFIX = os.path.join(_WORK_PREFIX, "log", "{tumor_library}")
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +74,7 @@ class VariantFiltrationStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        lib = wildcards.library_name
+        lib = wildcards.tumor_library
         variant = self.parent.get_upstream_paths("variant", library_name=lib)
         # Accept both typed schema and plain dict
         if isinstance(variant, dict):
@@ -129,28 +128,6 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Build tumor→normal mapping from cancer sheets (if present).
-        self._tumor_to_normal: dict[str, str] = {}
-        for info, raw_sheet in zip(self.parent.data_set_infos, self.parent.sheets):
-            if info.is_background or info.sheet_type != "matched_cancer":
-                continue
-            try:
-                csheet = CancerCaseSheet(
-                    raw_sheet,
-                    options=CancerCaseSheetOptions(
-                        allow_missing_normal=True, allow_missing_tumor=False
-                    ),
-                )
-                for pair in csheet.all_sample_pairs:
-                    t_lib = pair.tumor_sample.dna_ngs_library
-                    n_lib = pair.normal_sample.dna_ngs_library if pair.normal_sample else None
-                    if t_lib and n_lib:
-                        self._tumor_to_normal[t_lib.name] = n_lib.name
-            except Exception as exc:
-                print(
-                    f"WARNING: could not build tumor/normal mapping: {exc}",
-                    file=sys.stderr,
-                )
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -158,7 +135,7 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
 
         yield "reference", self.w_config.static_data_config.reference.path
 
-        lib = wildcards.library_name
+        lib = wildcards.tumor_library
         tumor_aln: ExpectedAlignments = self.parent.get_upstream_paths(
             "ngs_mapping", library_name=lib
         )
@@ -167,7 +144,11 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
         else:
             yield "bam", tumor_aln.bam
 
-        normal_lib = self._tumor_to_normal.get(lib)
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == lib]
+        normal_lib = None
+        if not tumor_df.empty:
+            normal_lib = tumor_df.iloc[0].get("matched_normal_lib") or None
         if normal_lib:
             normal_aln: ExpectedAlignments = self.parent.get_upstream_paths(
                 "ngs_mapping", library_name=normal_lib
@@ -278,26 +259,10 @@ class EbfilterStepPart(_BamAwareStepPart):
 
     @listify
     def _get_panel_of_normal_bams(self, wildcards):
-        libraries = []
-        for info, raw_sheet in zip(self.parent.data_set_infos, self.parent.sheets):
-            if info.sheet_type != "matched_cancer":
-                continue
-            try:
-                csheet = CancerCaseSheet(
-                    raw_sheet,
-                    options=CancerCaseSheetOptions(
-                        allow_missing_normal=True, allow_missing_tumor=False
-                    ),
-                )
-                for donor in csheet.donors:
-                    for bio_sample in donor.bio_samples.values():
-                        if not bio_sample.extra_infos.get("isTumor", True):
-                            if bio_sample.dna_ngs_library:
-                                libraries.append(bio_sample.dna_ngs_library.name)
-            except Exception:
-                pass
+        df = self.parent.build_library_dataframe()
+        normal_df = df[(df["role"] == "normal") & (df["extraction_type"] == "dna")]
+        libraries = sorted(normal_df["library_name"].tolist())
 
-        libraries.sort()
         cfg: EbfilterConfig = self.config.ebfilter
         random.seed(cfg.shuffle_seed)
         random.shuffle(libraries)
@@ -344,6 +309,13 @@ class VariantFiltrationWorkflow(BaseStep):
     config_model_class = VariantFiltrationConfigModel
     sheet_shortcut_class = GenericSampleSheet
 
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
+
     @classmethod
     def default_config_yaml(cls):
         return DEFAULT_CONFIG
@@ -352,7 +324,7 @@ class VariantFiltrationWorkflow(BaseStep):
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local filtered-variant output paths for downstream consumers."""
         cls.require_signature(signature)
-        lib = kwargs.get("library_name", "{library_name}")
+        lib = kwargs.get("tumor_library", "{tumor_library}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
             "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
@@ -385,7 +357,7 @@ class VariantFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         for entity_name in self.output_entities:
             yield from expand(
-                os.path.join("output", "{library_name}", "out", "{library_name}{ext}"),
-                library_name=[entity_name],
+                os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                tumor_library=[entity_name],
                 ext=EXT_VALUES,
             )

@@ -22,10 +22,8 @@ A report file.
 """
 
 import os
-import sys
-from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -34,6 +32,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
+from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
 
@@ -55,12 +54,6 @@ class LohhlaStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
 
     def get_input_files(self, action):
         # Validate action
@@ -91,8 +84,11 @@ class LohhlaStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == wildcards.tumor_library]
+        if tumor_df.empty:
+            return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     def get_output_files(self, action):
         """Return output files from LOHHLA"""
@@ -132,6 +128,13 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
@@ -169,47 +172,23 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the somatic hla loh calling workflow.
-
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        name_pattern = "{tumor_library.name}"
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            ext=".done",
+        """Return list of result files for the somatic hla loh calling workflow."""
+        log_exts = (
+            ".log",
+            ".log.md5",
+            ".conda_info.txt",
+            ".conda_info.txt.md5",
+            ".conda_list.txt",
+            ".conda_list.txt.md5",
         )
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            ext=(
-                ".log",
-                ".log.md5",
-                ".conda_info.txt",
-                ".conda_info.txt.md5",
-                ".conda_list.txt",
-                ".conda_list.txt.md5",
-            ),
-        )
-
-    def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl,
-                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
-                    **kwargs,
-                )
+        for entity in self.output_entities:
+            yield from expand(
+                os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                tumor_library=[entity],
+                ext=".done",
+            )
+            yield from expand(
+                os.path.join("output", "{tumor_library}", "log", "{tumor_library}{ext}"),
+                tumor_library=[entity],
+                ext=log_exts,
+            )

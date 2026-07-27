@@ -8,71 +8,17 @@ DataFrame built by :func:`snappy_pipeline.workflows.abstract.build_library_dataf
 
 from __future__ import annotations
 
+from snappy_pipeline.models import RelationshipDefinition  # noqa: F401 (re-export)
 from snappy_pipeline.models import SnappyModel
-
-
-class RelationshipDefinition(SnappyModel):
-    """Definition of a relationship between rows in the library DataFrame.
-
-    A relationship adds a new column to the DataFrame whose value is looked
-    up from a *related* row.  The ``via`` column is the join key (e.g.
-    ``"donor_name"``), and ``target`` is a pandas ``DataFrame.query()``
-    expression applied to the related rows to select the correct match.
-
-    **Examples**
-
-    .. code-block:: yaml
-
-        # Find the matched normal DNA library for a tumor sample
-        matched_normal_lib:
-          via: donor_name
-          target: "role == 'normal' and extraction_type == 'dna'"
-          column: matched_normal_lib
-
-        # Find the index/proband library for any library in the same cohort
-        index_lib:
-          via: cohort_name
-          target: "role == 'index'"
-          column: index_lib
-
-        # Find all tumor libraries in the same donor (one-to-many)
-        donor_tumor_libs:
-          via: donor_name
-          target: "role == 'tumor'"
-          column: donor_tumor_libs
-          many: true
-    """
-
-    via: str
-    """Column name in the library DataFrame to use as the join key.
-    The related row must have the *same* value in this column as the
-    source row."""
-
-    target: str
-    """Pandas ``DataFrame.query()`` expression applied to the related
-    rows (those sharing the same ``via`` value) to select the desired
-    match."""
-
-    column: str | None = None
-    """Name of the new column to add.  Defaults to the relationship key
-    name in the ``relationships`` dict."""
-
-    many: bool = False
-    """If ``True``, the relationship may match multiple related rows.
-    The column value will be a ``list[str]`` of all matching library
-    names.  If ``False`` (default), only the first match is kept and
-    the column value is a single ``str`` (or ``""`` if no match)."""
 
 
 class LibrarySelectionMixin(SnappyModel):
     """Mixin for step models that support selecting a subset of libraries.
 
-    Inherit this *before* ``SnappyStepModel`` so Pydantic sees the field:
-
-    .. code-block:: python
-
-        class MyStep(LibrarySelectionMixin, SnappyStepModel):
-            ...
+    .. deprecated::
+        ``SnappyStepModel`` now includes these fields directly.
+        New code should use ``SnappyStepModel`` without explicitly
+        inheriting ``LibrarySelectionMixin``.
     """
 
     library_selection: str | None = None
@@ -94,6 +40,7 @@ class LibrarySelectionMixin(SnappyModel):
     ``sex``             ``"male"``, ``"female"``, or ``"unknown"``
     ``donor_name``      Patient / family identifier
     ``sample_name``     Bio-sample name
+    ``tissue_type``     ``"tumor"``, ``"normal"``, or ``"unknown"``
     ==================  ========================================================
 
     **Role values**

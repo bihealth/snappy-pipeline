@@ -9,10 +9,8 @@ signature explains as well as a plot.
 """
 
 import os
-import sys
-from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -20,6 +18,7 @@ from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutSt
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
+from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
 
@@ -40,18 +39,6 @@ class SignaturesStepPart(BaseStepPart):
         super().__init__(parent)
 
         self.name_postfix = "{tumor_library}"
-
-        # Build shortcut from cancer bio sample name to matched cancre sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
-        # Build mapping from donor name to donor.
-        self.donors = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                self.donors[donor.name] = donor
 
     def get_log_file(self, action):
         # Validate action
@@ -108,20 +95,23 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         self._validate_action(action)
 
         def args_fn(wildcards):
-            if wildcards.tumor_library not in self.donors:
+            normal = self.get_normal_lib_name(wildcards)
+            if normal:
                 return {
                     "tumor_library": wildcards.tumor_library,
-                    "normal_library": self.get_normal_lib_name(wildcards),
+                    "normal_library": normal,
                 }
-            else:
-                return {}
+            return {}
 
         return args_fn
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == wildcards.tumor_library]
+        if tumor_df.empty:
+            return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
 
 class DeconstructSigsStepPart(SignaturesStepPart):
@@ -164,6 +154,13 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
 
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+    }
+
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
     }
 
     config_model_class = SomaticVariantSignaturesConfigModel
@@ -209,32 +206,10 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for workflow"""
-        name_pattern = "deconstruct_sigs.{tumor_library.name}"
-
-        yield from self._yield_result_files_matched(
-            os.path.join("output", name_pattern, "out", name_pattern + ".tsv")
-        )
-
-    def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched somatic variant callers such as
-        Mutect.
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl,
-                    tumor_library=[sample_pair.tumor_sample.dna_ngs_library],
-                    **kwargs,
-                )
+        for entity in self.output_entities:
+            yield from expand(
+                os.path.join(
+                    "output", "{tumor_library}", "out", "deconstruct_sigs.{tumor_library}.tsv"
+                ),
+                tumor_library=[entity],
+            )

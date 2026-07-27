@@ -57,10 +57,9 @@ Currently, no reports are generated.
 """
 
 import os
-import sys
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -73,6 +72,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     SomaticTargetedSeqCnvCallingWorkflow,
 )
@@ -119,7 +119,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         self._validate_action(action)
 
         def input_function_normal(wildcards):
-            base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
+            base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
             ngs = self.parent.upstream("ngs_mapping")
             return {
                 "bam": ngs(base_path + ".bam"),
@@ -127,14 +127,15 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
             }
 
         def input_function_tumor(wildcards):
-            base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
+            base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
             ngs = self.parent.upstream("ngs_mapping")
+            normal_lib = self.parent._get_normal_lib(wildcards.tumor_library)
             return {
                 "locii": "work/{normal_library}/out/{normal_library}.normal.vcf.gz".format(
-                    normal_library=self.parent.tumor_to_normal[wildcards.library_name], **wildcards
+                    normal_library=normal_lib, **wildcards
                 ),
                 "locii_tbi": "work/{normal_library}/out/{normal_library}.normal.vcf.gz.tbi".format(
-                    normal_library=self.parent.tumor_to_normal[wildcards.library_name], **wildcards
+                    normal_library=normal_lib, **wildcards
                 ),
                 "bam": ngs(base_path + ".bam"),
                 "bai": ngs(base_path + ".bam.bai"),
@@ -151,7 +152,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         """
         # Validate action
         self._validate_action(action)
-        base_path_out = "work/{{library_name}}/out/{{library_name}}.{action}{ext}"
+        base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}.{action}{ext}"
         return dict(zip(EXT_NAMES, expand(base_path_out, action=action, ext=EXT_VALUES)))
 
     def get_args(self, action: str):
@@ -170,7 +171,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        return self._get_log_file("work/{library_name}/log/{library_name}." + action)
+        return self._get_log_file("work/{tumor_library}/log/{tumor_library}." + action)
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         # Validate action
@@ -193,17 +194,17 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         self._validate_action(action)
 
         def input_function(wildcards):
-            normal_library = self.parent.tumor_to_normal[wildcards.library_name]
+            normal_library = self.parent._get_normal_lib(wildcards.tumor_library)
             filenames = {}
             name_pattern = "{normal_library}"
             tpl = os.path.join("work", name_pattern, "out", name_pattern + ".normal.vcf.gz")
             filenames["normal"] = tpl.format(normal_library=normal_library, **wildcards)
             filenames["normal_tbi"] = filenames["normal"] + ".tbi"
-            name_pattern = "{library_name}"
+            name_pattern = "{tumor_library}"
             tpl = os.path.join("work", name_pattern, "out", name_pattern + ".tumor.vcf.gz")
             filenames["tumor"] = tpl.format(**wildcards)
             filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
-            base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
+            base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
             filenames["cnv"] = self.parent.upstream("cnv_calling")(base_path + "_dnacopy.seg")
             return filenames
 
@@ -214,7 +215,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         # Validate action
         self._validate_action(action)
         key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
-        name_pattern = "{library_name}"
+        name_pattern = "{tumor_library}"
         key_ext["tsv"] = ".tsv"
         base_path_out = "work/" + name_pattern + "/out/" + name_pattern
         for key, ext in key_ext.items():
@@ -229,7 +230,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{library_name}"
+        name_pattern = "{tumor_library}"
         return self._get_log_file(os.path.join("work", name_pattern, "log", name_pattern))
 
 
@@ -244,7 +245,7 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
         self._validate_action(action)
 
         def input_function(wildcards):
-            name_pattern = "{library_name}".format(**wildcards)
+            name_pattern = "{tumor_library}".format(**wildcards)
             base_path_out = "work/" + name_pattern + "/out/" + name_pattern
             return {
                 "vcf": base_path_out + ".vcf.gz",
@@ -257,7 +258,7 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{library_name}"
+        name_pattern = "{tumor_library}"
         base_path_out = "work/" + name_pattern + "/report/" + name_pattern
         return {
             "cnv": base_path_out + ".cnv.pdf",
@@ -274,7 +275,7 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
             return {
-                "library_name": wildcards.library_name,
+                "tumor_library": wildcards.tumor_library,
             }
 
         return args_fn
@@ -282,7 +283,7 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{library_name}"
+        name_pattern = "{tumor_library}"
         return self._get_log_file(
             os.path.join("work", name_pattern, "log", name_pattern + ".report")
         )
@@ -305,6 +306,13 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
+
     @classmethod
     def default_config_yaml(cls):
         """Return default config YAML, to be overwritten by project-specific one"""
@@ -314,7 +322,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local CNV checking output paths for downstream consumers."""
         cls.require_signature(signature)
-        lib = kwargs.get("library_name", "{library_name}")
+        lib = kwargs.get("tumor_library", "{tumor_library}")
         return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
 
     def __init__(
@@ -348,64 +356,35 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             sub_steps += [SomaticCnvCheckingCnvStepPart, SomaticCnvCheckingReportStepPart]
         sub_steps.append(LinkOutStepPart)
         self.register_sub_step_classes(tuple(sub_steps))
-        # Assemble normal/tumor pairs
-        self.tumor_to_normal = {}
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                tumor_library = sample_pair.tumor_sample.dna_ngs_library.name
-                normal_library = sample_pair.normal_sample.dna_ngs_library.name
-                self.tumor_to_normal[tumor_library] = normal_library
+
+    def _get_normal_lib(self, tumor_library: str) -> str | None:
+        """Resolve matched normal library for a tumor library via the DataFrame."""
+        df = self.build_library_dataframe()
+        tumor_df = df[df["library_name"] == tumor_library]
+        if tumor_df.empty:
+            return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        # Log files from normal pileups
-        name_pattern = "{library_name}"
-        chksum = ("", ".md5")
-        ext = ("log", "conda_info.txt", "conda_list.txt")
-        yield from expand(
-            os.path.join("output", name_pattern, "log", name_pattern + ".normal.{ext}{chksum}"),
-            library_name=set(self.tumor_to_normal.values()),
-            ext=ext,
-            chksum=chksum,
-        )
-        yield from expand(
-            os.path.join("output", name_pattern, "log", name_pattern + ".tumor.{ext}{chksum}"),
-            library_name=self.tumor_to_normal.keys(),
-            ext=ext,
-            chksum=chksum,
-        )
-        # Main result: vcf & optionally segment table if CNV available
-        ext = {"out": [".vcf.gz", ".vcf.gz.tbi"]}
+        tpl = os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}")
+        ext = list(EXT_VALUES)
         if self.has_cnv_calling:
-            # CNV available
-            name_pattern = "{library_name}"
-            ext["out"] += [".tsv"]
-            ext["report"] = [".cnv.pdf", ".locus.pdf", ".segment.pdf"]
-            ext["log"] = [
-                suffix + "." + e
-                for suffix in ("", ".report")
-                for e in ("log", "conda_info.txt", "conda_list.txt")
-            ]
-        else:
-            name_pattern = "{library_name}"
-        for subdir, exts in ext.items():
-            yield from expand(
-                os.path.join("output", name_pattern, subdir, name_pattern + "{ext}{chksum}"),
-                library_name=self.tumor_to_normal.keys(),
-                ext=exts,
-                chksum=chksum,
-            )
+            ext += [".tsv"]
+        for entity in self.output_entities:
+            yield from expand(tpl, tumor_library=[entity], ext=ext)
+        if self.has_cnv_calling:
+            report_ext = [".cnv.pdf", ".locus.pdf", ".segment.pdf"]
+            report_tpl = os.path.join("output", "{tumor_library}", "report", "{tumor_library}{ext}")
+            for entity in self.output_entities:
+                yield from expand(report_tpl, tumor_library=[entity], ext=report_ext)
+        chksum = ("", ".md5")
+        log_ext = ("log", "conda_info.txt", "conda_list.txt")
+        log_tpl = os.path.join(
+            "output",
+            "{tumor_library}",
+            "log",
+            "{tumor_library}.tumor.{ext}{chksum}",
+        )
+        for entity in self.output_entities:
+            yield from expand(log_tpl, tumor_library=[entity], ext=log_ext, chksum=chksum)

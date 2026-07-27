@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import (
     EnumField,
-    LibrarySelectionMixin,
     SnappyModel,
     SnappyStepModel,
     ToggleModel,
@@ -151,7 +150,7 @@ class VariantCallingDependsOn(SnappyModel):
     ] = "ngs_mapping"
 
 
-class VariantCalling(LibrarySelectionMixin, SnappyStepModel):
+class VariantCalling(SnappyStepModel):
     depends_on: VariantCallingDependsOn = Field(default_factory=VariantCallingDependsOn)
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.gatk4_hc_gvcf)]

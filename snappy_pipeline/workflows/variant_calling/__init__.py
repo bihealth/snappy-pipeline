@@ -268,6 +268,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_calling.model import TumorNormalMode
+from snappy_pipeline.models import RelationshipDefinition
 
 from .model import VariantCalling as VariantCallingConfigModel
 
@@ -984,6 +985,14 @@ class VariantCallingWorkflow(BaseStep):
     config_model_class = VariantCallingConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
+    #: Default relationship for somatic (mutect2) callers: resolve matched normal.
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
+
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
         """Return local VCF output paths for a germline-variants signature.
@@ -1117,9 +1126,12 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         tumor_df = df[df["library_name"] == wildcards.library_name]
         if tumor_df.empty:
             return None
+        # Use relationship column if available (resolved via config relationships).
+        normal_lib = tumor_df.iloc[0].get("matched_normal_lib", "")
+        if normal_lib:
+            return normal_lib
+        # Fallback: find normal libraries for the same donor.
         donor_name = tumor_df.iloc[0]["donor_name"]
-
-        # Find normal libraries for the same donor
         normal_df = df[(df["donor_name"] == donor_name) & (df["role"] == "normal")]
         if not normal_df.empty:
             return normal_df.iloc[0]["library_name"]

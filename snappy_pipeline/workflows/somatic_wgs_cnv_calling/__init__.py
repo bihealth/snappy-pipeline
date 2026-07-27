@@ -73,12 +73,10 @@ Currently, no reports are generated.
 """
 
 import os
-import sys
-from collections import OrderedDict
 from itertools import chain
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -91,6 +89,7 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticWgsCnvCalling as SomaticWgsCnvCallingConfigModel, Tool
 
@@ -122,22 +121,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{{cancer_library}}/out/{{cancer_library}}{ext}"
-        # Build shortcut from cancer bio sample name to matched tumor sample
-        self.cancer_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.cancer_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
-        # Build shortcut from library name to donor.
-        self.donor_to_cancer_ngs_libraries = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            for pair in sheet.all_sample_pairs_by_tumor_dna_ngs_library.values():
-                self.donor_to_cancer_ngs_libraries.setdefault(pair.donor.name, [])
-                if pair.tumor_sample.name not in self.donor_to_cancer_ngs_libraries:
-                    self.donor_to_cancer_ngs_libraries[pair.donor.name].append(
-                        pair.tumor_sample.dna_ngs_library.name
-                    )
+        self.base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}{ext}"
 
     def get_input_files(self, action):
         # Validate action
@@ -152,7 +136,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
             normal_base_path = "output/{normal_library}/out/{normal_library}".format(
                 normal_library=self.get_normal_lib_name(wildcards), **wildcards
             )
-            cancer_base_path = ("output/{cancer_library}/out/{cancer_library}").format(**wildcards)
+            cancer_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
             yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
             yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
             yield "tumor_bam", ngs_mapping(cancer_base_path + ".bam")
@@ -162,8 +146,11 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.cancer_ngs_library_to_sample_pair[wildcards.cancer_library]
-        return pair.normal_sample.dna_ngs_library.name
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == wildcards.tumor_library]
+        if tumor_df.empty:
+            return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     def get_output_files(self, action):
         """Return output files that all somatic variant calling sub steps must
@@ -179,7 +166,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        name_pattern = "{{cancer_library}}".format()
+        name_pattern = "{{tumor_library}}".format()
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         key_ext = (
             ("log", ".log"),
@@ -220,7 +207,7 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
             return self.config.canvas.model_dump(by_alias=True) | {
-                "cancer_library": wildcards.cancer_library
+                "tumor_library": wildcards.tumor_library
             }
 
         return args_fn
@@ -272,11 +259,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         tumor_library = (
             wildcards.library_name
             if hasattr(wildcards, "library_name")
-            else wildcards.cancer_library
+            else wildcards.tumor_library
         )
-        normal_library = self.cancer_ngs_library_to_sample_pair[
-            tumor_library
-        ].normal_sample.dna_ngs_library.name
+        normal_library = self.get_normal_lib_name(wildcards)
         libraries = {"tumor": tumor_library, "normal": normal_library}
         for kind, library_name in libraries.items():
             key = "{}_bcf".format(kind)
@@ -293,7 +278,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         """Return input files that "cnvetti segment" needs"""
         _ = kwargs
         for key, ext in self.bcf_dict.items():
-            name_pattern = "cnvetti_tumor_normal_ratio.{cancer_library}".format(**wildcards)
+            name_pattern = "cnvetti_tumor_normal_ratio.{tumor_library}".format(**wildcards)
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -332,7 +317,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_segment(self):
         for key, ext in self.bcf_dict.items():
-            name_pattern = "{cancer_library}"
+            name_pattern = "{tumor_library}"
             yield (
                 key,
                 "work/{name_pattern}/out/{name_pattern}{ext}".format(
@@ -375,7 +360,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def get_log_file(self, action):
         """Return path to log file"""
         wildcard_name = (
-            "library_name" if action in {"coverage", "tumor_normal_ratio"} else "cancer_library"
+            "library_name" if action in {"coverage", "tumor_normal_ratio"} else "tumor_library"
         )
         name_pattern = f"cnvetti_{action}.{{{{{wildcard_name}}}}}"
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
@@ -738,7 +723,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "org_obj": cfg.convert.org_obj,
             "tx_obj": cfg.convert.tx_obj,
             "bs_obj": cfg.convert.bs_obj,
-            "cancer_library": wildcards.cancer_library,
+            "tumor_library": wildcards.tumor_library,
         }
 
     def _get_args_plot(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -772,6 +757,13 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
 
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
+    }
+
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
     }
 
     @classmethod
@@ -828,126 +820,78 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all bio samples in all sample sheets.
-        """
-        name_pattern = "{cancer_library.name}"
-        tpl = os.path.join("output", name_pattern, "out", name_pattern + "{ext}")
+        """Return list of result files for the NGS mapping workflow"""
         tool = self.config.tool
-        if tool == "cnvetti":
-            yield from self._yield_result_files(
-                tpl,
-                ext=BCF_EXT_VALUES,
-            )
-        elif tool == "control_freec":
-            yield from self._yield_result_files(
-                tpl,
-                ext=[
-                    ".ratio.txt",
-                    ".ratio.txt.md5",
-                    ".gene_log2.txt",
-                    ".gene_call.txt",
-                    ".segments.txt",
-                    ".scatter.png",
-                    ".heatmap.png",
-                    ".diagram.pdf",
-                ],
-            )
-        elif tool == "cnvkit":
-            exts = (".cnr", ".cns", ".bed", "_dnacopy.seg", ".vcf.gz", ".vcf.gz.tbi")
-            yield from self._yield_result_files(
-                tpl,
-                ext=exts,
-            )
-            yield from self._yield_result_files(
-                tpl,
-                ext=[ext + ".md5" for ext in exts],
-            )
-            reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
-            yield from self._yield_report_files(
-                ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
-                [(report, "txt", False) for report in reports],
-            )
-            plots = (
-                ("diagram", "pdf", False),
-                ("heatmap", "pdf", True),
-                ("scatter", "png", True),
-            )
-            yield from self._yield_report_files(
-                ("output/{cancer_library.name}/report/{cancer_library.name}.{ext}"),
-                plots,
-            )
-        else:
-            yield from self._yield_result_files(
-                tpl,
-                ext=EXT_VALUES,
-            )
-        # NOTE: CNVetti plotting outputs are not part of this workflow anymore.
-        # Keep result files limited to payloads that are actually produced by rules.
-
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list"""
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )  # pragma: no cover
-                    print(
-                        msg.format(sample_pair.tumor_sample.name), file=sys.stderr
-                    )  # pragma: no cover
-                    continue  # pragma: no cover
+        for entity in self.output_entities:
+            if tool == "cnvetti":
                 yield from expand(
-                    tpl,
-                    cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
-                    **kwargs,
+                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                    tumor_library=[entity],
+                    ext=BCF_EXT_VALUES,
                 )
-
-    def _yield_report_files(self, tpl, exts, **kwargs):
-        """Build report paths from path template and extension list"""
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )  # pragma: no cover
-                    print(
-                        msg.format(sample_pair.tumor_sample.name), file=sys.stderr
-                    )  # pragma: no cover
-                    continue  # pragma: no cover
-                for plot, ext, chrom in exts:
+            elif tool == "control_freec":
+                yield from expand(
+                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                    tumor_library=[entity],
+                    ext=[
+                        ".ratio.txt",
+                        ".ratio.txt.md5",
+                        ".gene_log2.txt",
+                        ".gene_call.txt",
+                        ".segments.txt",
+                        ".scatter.png",
+                        ".heatmap.png",
+                        ".diagram.pdf",
+                    ],
+                )
+            elif tool == "cnvkit":
+                exts = (".cnr", ".cns", ".bed", "_dnacopy.seg", ".vcf.gz", ".vcf.gz.tbi")
+                yield from expand(
+                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                    tumor_library=[entity],
+                    ext=exts,
+                )
+                yield from expand(
+                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                    tumor_library=[entity],
+                    ext=[ext + ".md5" for ext in exts],
+                )
+                reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+                for report in reports:
                     yield from expand(
-                        tpl,
-                        cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
-                        ext=plot + "." + ext,
-                        **kwargs,
+                        os.path.join(
+                            "output", "{tumor_library}", "report", "{tumor_library}.{ext}"
+                        ),
+                        tumor_library=[entity],
+                        ext=[f"{report}.txt", f"{report}.txt.md5"],
                     )
+                for plot, ext, chrom in (
+                    ("diagram", "pdf", False),
+                    ("heatmap", "pdf", True),
+                    ("scatter", "png", True),
+                ):
                     yield from expand(
-                        tpl,
-                        cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
-                        ext=plot + "." + ext + ".md5",
-                        **kwargs,
+                        os.path.join(
+                            "output", "{tumor_library}", "report", "{tumor_library}.{ext}"
+                        ),
+                        tumor_library=[entity],
+                        ext=[f"{plot}.{ext}", f"{plot}.{ext}.md5"],
                     )
                     if chrom:
                         for c in map(str, chain(range(1, 23), ("X", "Y"))):
                             yield from expand(
-                                tpl,
-                                cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
-                                ext=plot + ".chr" + c + "." + ext,
-                                **kwargs,
+                                os.path.join(
+                                    "output", "{tumor_library}", "report", "{tumor_library}.{ext}"
+                                ),
+                                tumor_library=[entity],
+                                ext=[
+                                    f"{plot}.chr{c}.{ext}",
+                                    f"{plot}.chr{c}.{ext}.md5",
+                                ],
                             )
-                            yield from expand(
-                                tpl,
-                                cancer_library=[sample_pair.tumor_sample.dna_ngs_library],
-                                ext=plot + ".chr" + c + "." + ext + ".md5",
-                                **kwargs,
-                            )
+            else:
+                yield from expand(
+                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                    tumor_library=[entity],
+                    ext=EXT_VALUES,
+                )
