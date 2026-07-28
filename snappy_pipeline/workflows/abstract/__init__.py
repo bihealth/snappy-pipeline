@@ -1019,24 +1019,19 @@ class BaseStep:
 
         Resolution order:
         1. Explicit ``group_by`` on this task's config.
-        2. Inherited from primary upstream dependency's config.
+        2. Inherited transitively from upstream dependencies.
         3. ``None`` (per-library default).
+
+        The walk recurses through the dependency chain so that a
+        filtration step depending on annotation depending on variant_calling
+        with ``group_by: cohort`` correctly inherits ``"cohort"``.
         """
         own = getattr(self.config, "group_by", None)
         if own is not None:
             return own
-        if self.depends_on is not None:
-            for field_name in type(self.depends_on).model_fields:
-                dep_val = getattr(self.depends_on, field_name, "")
-                if dep_val:
-                    try:
-                        upstream_cfg = self.get_task_config(field_name)
-                        upstream_gb = getattr(upstream_cfg, "group_by", None)
-                        if upstream_gb is not None:
-                            return upstream_gb
-                    except Exception:
-                        pass
-        return None
+        return _resolve_upstream_group_by(
+            self.config, self.get_task_config, _visited=frozenset({self.task_name})
+        )
 
     @property
     def output_entities(self) -> list[str]:
@@ -1453,6 +1448,42 @@ class BaseStep:
                 path,
             )
         )
+
+
+# ---------------------------------------------------------------------------
+# Upstream group_by resolution
+# ---------------------------------------------------------------------------
+
+
+def _resolve_upstream_group_by(config, get_task_config, *, _visited: frozenset[str]):
+    """Walk upstream dependencies looking for a non-None ``group_by``.
+
+    This is a standalone function (rather than a method) so that it can
+    recurse through *config* objects without requiring workflow instances.
+
+    ``get_task_config(task_name)`` must return the config model for a
+    task, resolved from the perspective of the **root** workflow.
+    """
+    depends_on = getattr(config, "depends_on", None)
+    if depends_on is None:
+        return None
+    for field_name in type(depends_on).model_fields:
+        dep_val = getattr(depends_on, field_name, "")
+        if not dep_val or dep_val in _visited:
+            continue
+        try:
+            upstream_cfg = get_task_config(dep_val)
+        except Exception:
+            continue
+        upstream_gb = getattr(upstream_cfg, "group_by", None)
+        if upstream_gb is not None:
+            return upstream_gb
+        result = _resolve_upstream_group_by(
+            upstream_cfg, get_task_config, _visited=_visited | {dep_val}
+        )
+        if result is not None:
+            return result
+    return None
 
 
 # ---------------------------------------------------------------------------
