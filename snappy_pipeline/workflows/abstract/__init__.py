@@ -1497,6 +1497,159 @@ _LIBRARY_SELECTION_DEFAULTS: dict[str, str] = {
 }
 
 
+def _derive_pedigree_from_raw_sheet(sheet):
+    """Derive pedigree grouping from raw bio entity relationships.
+
+    Used as fallback when the shortcut sheet lacks pedigree structure
+    (e.g., ``GenericSampleSheet``).  Walks ``sheet.bio_entities`` and
+    uses ``fatherPk``/``motherPk`` (or ``fatherName``/``motherName``)
+    to reconstruct family groupings, identify the index/proband, and
+    assign sex and disease status.
+
+    Returns ``None`` when the sheet contains no usable NGS libraries.
+    Otherwise returns a dict with the same keys that the pedigree
+    branch of :func:`build_library_dataframe` populates.
+    """
+    import collections
+
+    pk_to_lib: dict[int, str] = {}
+    lib_to_be: dict[str, object] = {}
+    name_to_lib: dict[str, str] = {}
+
+    for be in sheet.bio_entities.values():
+        for bs in be.bio_samples.values():
+            for ts in bs.test_samples.values():
+                for lib in ts.ngs_libraries.values():
+                    if not lib.disabled:
+                        pk_to_lib[be.pk] = lib.name
+                        lib_to_be[lib.name] = be
+                        name_to_lib[be.name] = lib.name
+
+    if not pk_to_lib:
+        return None
+
+    # Build parent references for each library.
+    lib_father: dict[str, str] = {}
+    lib_mother: dict[str, str] = {}
+    for lib_name, be in lib_to_be.items():
+        father_ref = be.extra_infos.get("fatherPk")
+        if father_ref is not None:
+            lib_father[lib_name] = pk_to_lib.get(int(father_ref), "0")
+        else:
+            fname = be.extra_infos.get("fatherName", "0")
+            lib_father[lib_name] = name_to_lib.get(fname, "0") if fname and fname != "0" else "0"
+
+        mother_ref = be.extra_infos.get("motherPk")
+        if mother_ref is not None:
+            lib_mother[lib_name] = pk_to_lib.get(int(mother_ref), "0")
+        else:
+            mname = be.extra_infos.get("motherName", "0")
+            lib_mother[lib_name] = name_to_lib.get(mname, "0") if mname and mname != "0" else "0"
+
+    # Union-find to discover families.
+    _uf_parent: dict[str, str] = {}
+
+    def _uf_find(x: str) -> str:
+        while _uf_parent[x] != x:
+            _uf_parent[x] = _uf_parent[_uf_parent[x]]
+            x = _uf_parent[x]
+        return x
+
+    def _uf_union(x: str, y: str) -> None:
+        rx, ry = _uf_find(x), _uf_find(y)
+        if rx != ry:
+            _uf_parent[rx] = ry
+
+    for ln in lib_to_be:
+        _uf_parent[ln] = ln
+
+    for ln in lib_to_be:
+        f = lib_father.get(ln, "0")
+        m = lib_mother.get(ln, "0")
+        if f != "0" and f in _uf_parent:
+            _uf_union(ln, f)
+        if m != "0" and m in _uf_parent:
+            _uf_union(ln, m)
+
+    families: dict[str, list[str]] = collections.defaultdict(list)
+    for ln in lib_to_be:
+        families[_uf_find(ln)].append(ln)
+
+    # Collect PKs of entities that are parents (referenced as father/mother).
+    parent_pks: set[int] = set()
+    for ln, be in lib_to_be.items():
+        fp = be.extra_infos.get("fatherPk")
+        mp = be.extra_infos.get("motherPk")
+        if fp is not None:
+            parent_pks.add(int(fp))
+        if mp is not None:
+            parent_pks.add(int(mp))
+
+    # Per-family: pick index, assign cohort / sex / disease / role.
+    index_lib_names: set[str] = set()
+    father_lib_names: set[str] = set()
+    mother_lib_names: set[str] = set()
+    lib_cohort: dict[str, str] = {}
+    lib_sex: dict[str, str] = {}
+    lib_disease: dict[str, int] = {}
+
+    for members in families.values():
+        # Index is the entity NOT referenced as a parent by anyone.
+        # Prefer the affected one.
+        index: str | None = None
+        for ln in members:
+            be = lib_to_be[ln]
+            if be.pk not in parent_pks:
+                is_affected = be.extra_infos.get("isAffected")
+                if is_affected is True or str(is_affected).lower() == "affected":
+                    index = ln
+                    break
+                if index is None:
+                    index = ln
+        if index is None:
+            index = members[0]
+
+        index_lib_names.add(index)
+
+        for ln in members:
+            be = lib_to_be[ln]
+            lib_cohort[ln] = index
+
+            sex_raw = be.extra_infos.get("sex", "unknown")
+            lib_sex[ln] = sex_raw if sex_raw in ("male", "female") else "unknown"
+
+            is_affected = be.extra_infos.get("isAffected")
+            if is_affected is True or str(is_affected).lower() == "affected":
+                lib_disease[ln] = 2
+            elif is_affected is False or str(is_affected).lower() == "unaffected":
+                lib_disease[ln] = 1
+            else:
+                lib_disease[ln] = 0
+
+            # Identify father / mother roles.
+            lib_pk = be.pk
+            for other_ln, other_be in lib_to_be.items():
+                if other_ln == ln:
+                    continue
+                ofp = other_be.extra_infos.get("fatherPk")
+                omp = other_be.extra_infos.get("motherPk")
+                if ofp is not None and int(ofp) == lib_pk:
+                    father_lib_names.add(ln)
+                if omp is not None and int(omp) == lib_pk:
+                    mother_lib_names.add(ln)
+
+    return {
+        "index_lib_names": index_lib_names,
+        "father_lib_names": father_lib_names,
+        "mother_lib_names": mother_lib_names,
+        "lib_cohort": lib_cohort,
+        "lib_sex": lib_sex,
+        "lib_disease": lib_disease,
+        "lib_father": lib_father,
+        "lib_mother": lib_mother,
+    }
+
+
 def build_library_dataframe(
     data_set_infos,
     sheets,
@@ -1687,6 +1840,19 @@ def build_library_dataframe(
                             lib_disease[lib.name] = 1
                         else:
                             lib_disease[lib.name] = 0
+            else:
+                # Shortcut sheet lacks pedigree structure (e.g. GenericSampleSheet).
+                # Derive family grouping from the raw bio entity relationships.
+                derived = _derive_pedigree_from_raw_sheet(_raw_sheet)
+                if derived:
+                    index_lib_names = derived["index_lib_names"]
+                    father_lib_names = derived["father_lib_names"]
+                    mother_lib_names = derived["mother_lib_names"]
+                    lib_cohort = derived["lib_cohort"]
+                    lib_sex = derived["lib_sex"]
+                    lib_disease = derived["lib_disease"]
+                    lib_father = derived["lib_father"]
+                    lib_mother = derived["lib_mother"]
 
             all_ngs_libs = getattr(shortcut_sheet, "all_ngs_libraries", None) or []
             if not all_ngs_libs and pedigrees:
