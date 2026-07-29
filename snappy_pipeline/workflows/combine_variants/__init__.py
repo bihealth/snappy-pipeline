@@ -31,7 +31,7 @@ _LOG_PREFIX = "work/{tumor_library}/log/{tumor_library}"
 class CombineVariantsStepPart(BaseStepPart):
     name = "combine"
     actions = ("run",)
-    default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="03:59:59")
+    default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
     def get_input_files(self, action: str):
         self._validate_action(action)

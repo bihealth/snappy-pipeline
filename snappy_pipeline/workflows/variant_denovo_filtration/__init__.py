@@ -171,13 +171,8 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.name_pattern = r"%sde_novos.{index_library,[^\.]+}" % (self.prev_token,)
-        self.base_path_out = os.path.join(
-            "work", self.name_pattern, "out", self.name_pattern.replace(r",[^\.]+", "")
-        )
-        self.path_log = os.path.join(
-            "work", self.name_pattern, "log", self.name_pattern.replace(r",[^\.]+", "") + ".log"
-        )
+        self.base_path_out = "work/{index_library}/out/{index_library}"
+        self.path_log = "work/{index_library}/log/filter_denovo.{index_library}.log"
 
     def get_input_files(self, action):
         # Validate action
@@ -185,28 +180,37 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
 
         @dictify
         def input_function(wildcards):
-            # Get name of real index, used when input is not variant_phasing
             real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
-            # Pedigree file required for PhaseByTransmission.
-            real_path = "work/write_pedigree.{real_index}/out/{real_index}.ped".format(
-                real_index=real_index.dna_ngs_library.name, **wildcards
-            )
+            real_path = f"work/write_pedigree.{real_index.dna_ngs_library.name}/out/{real_index.dna_ngs_library.name}.ped"
             yield "ped", real_path
-            # BAM and BAI file of the offspring
+
             _aln: ExpectedAlignments = self.parent.get_upstream_paths(
                 "ngs_mapping", library_name=wildcards.index_library
             )
             yield "bam", _aln.bam
             yield "bai", _aln.bai
-            # Input file comes from previous step.
-            for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                name_pattern = self.name_pattern.replace(r",[^\.]+", "").replace("de_novos.", "")
-                if self.previous_step != "variant_phasing":
-                    name_pattern = name_pattern.replace("{index_library}", "{real_index}")
-                input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
-                    real_index=real_index.dna_ngs_library.name, **wildcards
-                )
-                yield key, self.parent.upstream(self.previous_step)(input_path) + ext
+
+            # Resolve upstream VCF via CDC broker
+            extra_kwargs = {}
+            if self.previous_step == "variant_phasing":
+                phasing_cfg = self.parent.get_task_config("variant_phasing")
+                phasings = getattr(phasing_cfg, "phasings", ["gatk_phasing_both"])
+                token_map = {
+                    "gatk_read_backed_phasing": "gatk_rbp",
+                    "gatk_phase_by_transmission": "gatk_pbt",
+                    "gatk_phasing_both": "gatk_pbt.gatk_rbp",
+                }
+                extra_kwargs["phasing"] = token_map.get(phasings[0], "gatk_pbt.gatk_rbp")
+
+            upstream_vcf = self.parent.get_upstream_paths(
+                self.previous_step,
+                library_name=real_index.dna_ngs_library.name,
+                **extra_kwargs,
+            )
+            yield "vcf", upstream_vcf["vcf"]
+            yield "vcf_tbi", upstream_vcf["vcf_tbi"]
+
+        return input_function
 
         return input_function
 
@@ -259,14 +263,9 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Output and log paths
-        self.name_pattern = r"%sde_novos_hard.{index_library,[^\.]+}" % (self.prev_token,)
-        self.base_path_out = os.path.join(
-            "work", self.name_pattern, "out", self.name_pattern.replace(r",[^\.]+", "")
-        )
-        self.base_path_in = self.base_path_out.replace("de_novos_hard", "de_novos")
-        self.path_log = os.path.join(
-            "work", self.name_pattern, "log", self.name_pattern.replace(r",[^\.]+", "") + ".log"
-        )
+        self.base_path_out = "work/{index_library}/out/{index_library}"
+        self.base_path_in = "work/{index_library}/out/{index_library}"
+        self.path_log = "work/{index_library}/log/filter_denovo_hard.{index_library}.log"
 
     @dictify
     def get_input_files(self, action):
@@ -464,7 +463,7 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
         """Return local de-novo filtration output paths for downstream consumers."""
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"output/de_novos_hard.{lib}/out/de_novos_hard.{lib}"
+        prefix = f"output/{lib}/out/{lib}"
         return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
 
     def __init__(
@@ -516,18 +515,15 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
     def get_result_files(self):
         """Return list of result files for the variant de novo filtration workflow."""
         # Hard-filtered results
-        name_pattern = "%sde_novos_hard.{index_library.name}" % (self.prev_token,)
         ext_values = list(itertools.chain(EXT_VALUES, (".summary.txt", ".summary.txt.md5")))
         yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
+            "output/{index_library.name}/out/{index_library.name}{ext}",
             ext=ext_values,
         )
-        # Summarise counts
         yield from expand(
             "output/denovo_count_summary/out/denovo_count_summary{ext}",
             ext=(".txt", ".txt.md5"),
         )
-        # Collect MSDN statistics
         if self.get_task_config("variant_denovo_filtration").collect_msdn:
             yield from expand(
                 "output/multisite_de_novo/out/multisite_de_novo{ext}",
