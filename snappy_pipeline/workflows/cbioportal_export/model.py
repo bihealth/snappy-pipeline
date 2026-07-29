@@ -28,7 +28,7 @@ class VariantAnnotationTool(enum.StrEnum):
 
 class CopyNumberTool(enum.StrEnum):
     CNVKIT = "cnvkit"
-
+    SEQUENZA = "sequenza"
     CONTROL_FREEC = "Control_FREEC"
     """unsupported"""
 

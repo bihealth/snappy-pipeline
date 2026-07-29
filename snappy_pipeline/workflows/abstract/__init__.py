@@ -800,7 +800,9 @@ class BaseStep:
         self.work_dir = work_dir
         self.previous_steps = tuple(previous_steps or [])
         self.workflow = workflow
-
+        #: Setup logger for the step
+        self.logger = logging.getLogger(self.name)
+        self.logger.setLevel(logging.INFO if workflow.verbose else logging.WARN)
         try:
             from snappy_pipeline.workflow_model import ConfigModel
 

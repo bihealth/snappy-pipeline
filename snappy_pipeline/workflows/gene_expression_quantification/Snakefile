@@ -192,6 +192,8 @@ rule gene_expression_quantification_featurecounts_run:
         mem=wf.get_resource("featurecounts", "run", "mem"),
         partition=wf.get_resource("featurecounts", "run", "partition"),
         tmpdir=wf.get_resource("featurecounts", "run", "tmpdir"),
+    params:
+        args=wf.get_args("featurecounts", "run"),
     wrapper:
         wf.wrapper_path("featurecounts")
 

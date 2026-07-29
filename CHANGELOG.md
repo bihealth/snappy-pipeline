@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/bihealth/snappy-pipeline/compare/v0.5.0...v0.6.0) (2026-06-26)
+
+
+### Features
+
+* Adding somatic neoepitope preparation workflow ([#495](https://github.com/bihealth/snappy-pipeline/issues/495)) ([10b8b43](https://github.com/bihealth/snappy-pipeline/commit/10b8b43a613cefdb6b3c423b1eb02977ef982e3c))
+
+
+### Bug Fixes
+
+* bcftools_roh wrapper typo ([#662](https://github.com/bihealth/snappy-pipeline/issues/662)) ([80a04c3](https://github.com/bihealth/snappy-pipeline/commit/80a04c300e44cb5f6a6bc227cc1678145ea7233b))
+* general across-the-board fixes before tackling neoepitopes integration ([#659](https://github.com/bihealth/snappy-pipeline/issues/659)) ([a16c153](https://github.com/bihealth/snappy-pipeline/commit/a16c15379f650a27fa3d7ea4f41fd9765f582fa6))
+* one more bcftools roh wrapper typo ([#663](https://github.com/bihealth/snappy-pipeline/issues/663)) ([904647f](https://github.com/bihealth/snappy-pipeline/commit/904647f6ccdd36372f74959ff529b0f1dd21323e))
+
 ## [0.5.0](https://github.com/bihealth/snappy-pipeline/compare/v0.4.0...v0.5.0) (2026-04-27)
 
 

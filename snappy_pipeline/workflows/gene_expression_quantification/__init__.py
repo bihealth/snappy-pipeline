@@ -69,6 +69,7 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
+from .model import Salmon as SalmonConfigModel
 
 # Extensions
 EXTENSIONS = {
@@ -114,7 +115,12 @@ EXTENSIONS = {
         "rnaseqc_gaplen_high_md5": ".gapLengthHist_high.txt.md5",
     },
     "stats": {"stats": ".read_alignment_report.tsv", "stats_md5": ".read_alignment_report.tsv.md5"},
-    "salmon": {"transcript_sf": ".transcript.sf", "transcript_sf_md5": ".transcript.sf.md5"},
+    "salmon": {
+        "gene_sf": ".gene.sf",
+        "gene_sf_md5": ".gene.sf.md5",
+        "transcript_sf": ".transcript.sf",
+        "transcript_sf_md5": ".transcript.sf.md5",
+    },
 }
 
 DEFAULT_CONFIG = GeneExpressionQuantificationConfigModel.default_config_yaml_string()
@@ -131,6 +137,7 @@ class SalmonStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.cfg: SalmonConfigModel = self.config.salmon
         self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
@@ -144,12 +151,13 @@ class SalmonStepPart(BaseStepPart):
             preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
-    @classmethod
     @dictify
-    def get_input_files(cls, action):
+    def get_input_files(self, action):
         """Return input files"""
         assert action == "run"
         yield "done", "work/input_links/{library_name}/.done"
+        yield "features", self.w_config.static_data_config.features.path
+        yield "indices", self.cfg.path_index
 
     @dictify
     def get_output_files(self, action):
@@ -162,7 +170,7 @@ class SalmonStepPart(BaseStepPart):
             yield k, self.base_path_out.format(ext=v)
 
     @dictify
-    def _get_log_file(self, action):
+    def get_log_file(self, action):
         """Return mapping of log files."""
         assert action == "run"
         tool = self.config.tool

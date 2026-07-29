@@ -16,8 +16,9 @@ if args["normal_sample"] and args["normal_id"]:
     samples += f" --vcf-normal-id {args['normal_sample']} --normal-id {args['normal_id']}"
 
 vcf_to_table = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vcf_to_table.py")
-if args["somatic_variant_annotation_tool"] == "vep":
-    vcf_to_table_config = os.path.join(os.path.dirname(os.path.realpath(__file__)), "vep.yaml")
+config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), args["somatic_variant_annotation_tool"] + ".yaml")
+if os.path.exists(config_path) and os.path.isfile(config_path):
+    vcf_to_table_config = config_path
 else:
     raise Exception(
         "vcf to maf conversion error: unimplemented conversion from annotation tool {}".format(

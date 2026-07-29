@@ -1,5 +1,7 @@
 from snappy_pipeline.workflows.adapter_trimming import AdapterTrimmingWorkflow
 from snappy_pipeline.workflows.cbioportal_export import cbioportalExportWorkflow
+from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
+from snappy_pipeline.workflows.create_proteome import CreateProteomeWorkflow
 from snappy_pipeline.workflows.gene_expression_quantification import (
     GeneExpressionQuantificationWorkflow,
 )
@@ -24,6 +26,9 @@ from snappy_pipeline.workflows.somatic_cnv_checking import SomaticCnvCheckingWor
 from snappy_pipeline.workflows.somatic_gene_fusion_calling import SomaticGeneFusionCallingWorkflow
 from snappy_pipeline.workflows.somatic_hla_loh_calling import SomaticHlaLohCallingWorkflow
 from snappy_pipeline.workflows.somatic_msi_calling import SomaticMsiCallingWorkflow
+from snappy_pipeline.workflows.somatic_neoepitope_prediction import (
+    SomaticNeoepitopePredictionWorkflow,
+)
 from snappy_pipeline.workflows.somatic_purity_ploidy_estimate import (
     SomaticPurityPloidyEstimateWorkflow,
 )
@@ -53,6 +58,8 @@ from snappy_pipeline.workflows.wgs_sv_export_external import WgsSvExportExternal
 WORKFLOW_REGISTRY = {
     "adapter_trimming": AdapterTrimmingWorkflow,
     "cbioportal_export": cbioportalExportWorkflow,
+    "combine_variants": CombineVariantsWorkflow,
+    "create_proteome": CreateProteomeWorkflow,
     "gene_expression_quantification": GeneExpressionQuantificationWorkflow,
     "gene_expression_report": GeneExpressionReportWorkflow,
     "helper_gcnv_model_targeted": HelperBuildTargetSeqGcnvModelWorkflow,
@@ -71,6 +78,7 @@ WORKFLOW_REGISTRY = {
     "somatic_gene_fusion_calling": SomaticGeneFusionCallingWorkflow,
     "somatic_hla_loh_calling": SomaticHlaLohCallingWorkflow,
     "somatic_msi_calling": SomaticMsiCallingWorkflow,
+    "somatic_neoepitope_prediction": SomaticNeoepitopePredictionWorkflow,
     "somatic_purity_ploidy_estimate": SomaticPurityPloidyEstimateWorkflow,
     "somatic_targeted_seq_cnv_calling": SomaticTargetedSeqCnvCallingWorkflow,
     "somatic_variant_signatures": SomaticVariantSignaturesWorkflow,

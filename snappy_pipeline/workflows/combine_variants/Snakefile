@@ -1,0 +1,50 @@
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
+
+
+configfile: "config.yaml"
+
+
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+wf = CombineVariantsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+
+localrules:
+    combine_variants_link_out_run,
+
+
+rule combine_variants_all:
+    default_target: True
+    input:
+        wf.get_result_files(),
+
+
+rule combine_variants_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        wf.run_locally("link_out", "run", wildcards)
+
+
+rule combine_variants_run:
+    input:
+        unpack(wf.get_input_files("combine", "run")),
+    output:
+        **wf.get_output_files("combine", "run"),
+    log:
+        **wf.get_log_file("combine", "run"),
+    threads: wf.get_resource("combine", "run", "threads")
+    resources:
+        time=wf.get_resource("combine", "run", "time"),
+        memory=wf.get_resource("combine", "run", "memory"),
+        partition=wf.get_resource("combine", "run", "partition"),
+        tmpdir=wf.get_resource("combine", "run", "tmpdir"),
+    params:
+        args=wf.get_args("combine", "run"),
+    wrapper:
+        wf.wrapper_path("combine_variants/run")

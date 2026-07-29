@@ -3,18 +3,20 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python==3.12
-  - r-base==4.3.3
+  - r-base==4.5.3
   - r-remotes==2.5.0
-  # sequenza requirements (+copynumber)
-  - r-pbapply==1.7_2
+  - r-rcpp==1.1.1_1.1
+  - r-rcpparmadillo==15.2.7_1
+  - r-rcppprogress==0.4.2
+  - r-stringr==1.6.0
+  - r-dplyr==1.2.1
+  - r-tibble==3.3.1
+  - r-readr==2.2.0
+  - r-pbapply==1.7_4
   - r-squash==1.0.9
-  - r-iotools==0.3_2  # See https://bitbucket.org/sequenzatools/sequenza/pull-requests/3
-  - r-readr==2.1.5
+  - r-iotools==0.4_0
   - r-seqminer==9.4
-  - r-data.table==1.15.2
-  # copynumber requirements
-  - bioconductor-s4vectors==0.40.2
-  - bioconductor-iranges==2.36.0
-  - bioconductor-genomicranges==1.54.1
-
+  - r-ks==1.15.2
+  - r-digest==0.6.39
+  - r-vgam==1.1_14
+  - pandoc==3.9.0.2

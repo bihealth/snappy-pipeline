@@ -494,6 +494,10 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
                 self.parent.upstream("copy_number")(local_path),
             )
 
+    def get_args(self, action: str) -> dict[str, str]:
+        self._validate_action(action)
+        return {"action_type": "segment", "mappings": ""}
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
