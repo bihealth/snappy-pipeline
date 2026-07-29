@@ -802,7 +802,7 @@ class BaseStep:
         self.workflow = workflow
         #: Setup logger for the step
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO if workflow.verbose else logging.WARN)
+        self.logger.setLevel(logging.INFO if getattr(workflow, "verbose", False) else logging.WARN)
         try:
             from snappy_pipeline.workflow_model import ConfigModel
 
