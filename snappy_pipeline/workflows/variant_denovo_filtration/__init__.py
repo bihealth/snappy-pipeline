@@ -47,26 +47,6 @@ For each pedigree, the following files will be generated:
 The the ``annotation`` and ``phasing`` will only be persent when the input is read from the
 ``variant_annotation`` or ``variant_phasing`` steps, respectively.
 
-For example, it might look as follows for the example from above:
-
-::
-
-    output/
-    +-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1
-    |   `-- out
-    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.md5
-    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.tbi
-    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
-    |       |-- bwa.gatk3_hc.de_novos.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.md5
-    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.tbi
-    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz.tbi.md5
-    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.vcf.gz
-    |       |-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.summary.txt
-    |       `-- bwa.gatk3_hc.de_novos_hard.P001-N1-DNA1-WES1.summary.txt.md5
-    [...]
-
 ====================
 Global Configuration
 ====================
