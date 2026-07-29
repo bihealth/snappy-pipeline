@@ -231,6 +231,8 @@ class ArcasHlaStepPart(BaseStepPart):
     #: Step name
     name = "arcashla"
 
+    supported_extraction_types = ("rna",)
+
     #: Class available actions
     actions = ("run",)
 
@@ -426,7 +428,7 @@ class HlaTypingWorkflow(BaseStep):
 
     #: Step name
     name = "hla_typing"
-    consumes = {DataSignature(DataType.RAW): True}
+    consumes = {DataSignature(DataType.RAW): False, DataSignature(DataType.ALIGNMENTS): False}
     produces = [DataSignature(DataType.TABULAR, frozenset({"hla"}))]
 
     #: Default biomed sheet class

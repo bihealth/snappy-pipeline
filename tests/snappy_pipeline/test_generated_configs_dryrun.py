@@ -39,7 +39,22 @@ def _get_task_names() -> list[str]:
 TASK_NAMES = _get_task_names()
 
 
-RNA_TASKS = {"ngs_mapping_star", "somatic_gene_fusion_calling_arriba"}
+RNA_TASKS = {
+    "ngs_mapping_star",
+    "somatic_gene_fusion_calling_arriba",
+    "gene_expression_quantification_salmon",
+    "gene_expression_quantification_featurecounts",
+    "gene_expression_quantification_dupradar",
+    "gene_expression_quantification_rnaseqc",
+    "gene_expression_quantification_duplication",
+    "gene_expression_quantification_stats",
+    "gene_expression_quantification_strandedness",
+    "gene_expression_report",
+    "somatic_neoepitope_prediction_pvacseq",
+    "somatic_neoepitope_prediction_pvacfuse",
+    "somatic_neoepitope_prediction_pvacsplice",
+    "create_proteome",
+}
 
 
 def _fixture_dir() -> Path:
@@ -53,7 +68,11 @@ def _task_sample_sheet(task_name: str) -> Path:
 
 def _task_raw_folders(task_name: str) -> tuple[str, ...]:
     if task_name in RNA_TASKS:
-        return ("case001subregion-T1-RNA1-mRNA_seq1",)
+        return (
+            "case001subregion-N1-DNA1-WES1",
+            "case001subregion-T1-DNA1-WES1",
+            "case001subregion-T1-RNA1-mRNA_seq1",
+        )
     return ("case001subregion-N1-DNA1-WES1", "case001subregion-T1-DNA1-WES1")
 
 

@@ -76,19 +76,19 @@ class SupportedGermlineVariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
 
 
-class HlaTypingDnaTools(SnappyModel):
+class HlaTypingDnaTool(SnappyModel):
     class_i: MHCIClassDnaTool | None = None
     class_ii: MHCIIClassDnaTool | None = None
 
 
-class HlaTypingRnaTools(SnappyModel):
+class HlaTypingRnaTool(SnappyModel):
     class_i: MHCIClassRnaTool | None = None
     class_ii: MHCIIClassRnaTool | None = None
 
 
-class HlaTypingTools(SnappyModel):
-    dna: HlaTypingDnaTools = HlaTypingDnaTools()
-    rna: HlaTypingRnaTools = HlaTypingRnaTools()
+class HlaTypingTool(SnappyModel):
+    dna: HlaTypingDnaTool = HlaTypingDnaTool()
+    rna: HlaTypingRnaTool = HlaTypingRnaTool()
 
 
 class InputVariantType(enum.StrEnum):
@@ -436,12 +436,12 @@ class Proteome(ToggleModel):
 
 
 class SomaticNeoepitopePredictionDependsOn(SnappyModel):
+    hla_typing: Annotated[str, DataSignature(DataType.TABULAR, frozenset({"hla"}))]
     somatic_variant_annotation: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedVariantVcf),
-    ]
-    hla_typing: Annotated[str, DataSignature(DataType.TABULAR, frozenset({"hla"}))]
+    ] = ""
     ngs_mapping: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS),
@@ -462,7 +462,7 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
 
     tool: SupportedPredictionTool = SupportedPredictionTool.PVACSEQ
 
-    tools_hla_typing: HlaTypingTools = HlaTypingTools()
+    tool_hla_typing: HlaTypingTool = HlaTypingTool()
 
     pileup: RnaMapping = RnaMapping()
     quantification: RnaQuantification = RnaQuantification()
@@ -475,6 +475,40 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
 
     @model_validator(mode="after")
     def ensure_at_least_one_tool_configured(self):
-        if self.tools_hla_typing.dna.class_i is None and self.tools_hla_typing.dna.class_ii is None:
-            raise ValueError("No HLA typing tools has been defined for DNA data")
+        if self.tool_hla_typing.dna.class_i is None and self.tool_hla_typing.dna.class_ii is None:
+            raise ValueError("No HLA typing tool has been defined for DNA data")
+        return self
+
+    @model_validator(mode="after")
+    def ensure_tool_dependencies_satisfied(self):
+        """Validate tool-specific depends_on requirements."""
+        deps = self.depends_on
+
+        # HLA typing is mandatory across all prediction tools
+        if not deps.hla_typing:
+            raise ValueError(
+                f"depends_on.hla_typing is required for neoepitope prediction (tool: {self.tool!r})"
+            )
+
+        match self.tool:
+            case SupportedPredictionTool.PVACSEQ:
+                if not deps.somatic_variant_annotation:
+                    raise ValueError(
+                        "depends_on.somatic_variant_annotation is required when tool is 'pvacseq'"
+                    )
+
+            case SupportedPredictionTool.PVACSPLICE:
+                if not deps.somatic_variant_annotation:
+                    raise ValueError(
+                        "depends_on.somatic_variant_annotation is required when tool is 'pvacsplice'"
+                    )
+                if not deps.ngs_mapping:
+                    raise ValueError("depends_on.ngs_mapping is required when tool is 'pvacsplice'")
+
+            case SupportedPredictionTool.PVACFUSE:
+                if not deps.somatic_gene_fusion_calling:
+                    raise ValueError(
+                        "depends_on.somatic_gene_fusion_calling is required when tool is 'pvacfuse'"
+                    )
+
         return self

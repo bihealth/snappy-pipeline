@@ -30,8 +30,9 @@ yaml.indent(sequence=4, offset=2)
 
 # Logical dependency names that are not step names but commonly appear in depends_on models.
 LOGICAL_DEP_ALIASES: dict[str, str] = {
-    "somatic_variant": "somatic_variant_calling",
-    "somatic_variants": "somatic_variant_calling",
+    "somatic_variant": "variant_calling",
+    "somatic_variants": "variant_calling",
+    "somatic_variant_annotation": "variant_annotation",
     "cnv_calling": "somatic_wgs_cnv_calling",
     "copy_number": "somatic_wgs_cnv_calling",
 }
@@ -422,9 +423,9 @@ def bootstrap_step_config(
             {"enabled": False, "path_target_interval_list_mapping": []},
         )
         cfg.setdefault(tool, {})
-        if tool in ("bwa", "bwa_mem2", "minimap2") and isinstance(cfg[tool], dict):
-            cfg[tool].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
-        elif tool == "star" and isinstance(cfg["star"], dict):
+
+        if tool == "star":
+            cfg.setdefault("library_selection", "extraction_type == 'rna'")
             cfg["star"].setdefault("path_index", _star_index_fixture_dir())
             cfg.setdefault("strandedness", {})
             if isinstance(cfg["strandedness"], dict):
@@ -437,7 +438,12 @@ def bootstrap_step_config(
                 )
                 cfg["strandedness"].setdefault("strand", -1)
                 cfg["strandedness"].setdefault("threshold", 0.85)
+        elif tool in ("bwa", "bwa_mem2", "minimap2", "bowtie2"):
+            cfg.setdefault("library_selection", "extraction_type == 'dna'")
+            if isinstance(cfg[tool], dict):
+                cfg[tool].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
         elif tool == "mbcs":
+            cfg.setdefault("library_selection", "extraction_type == 'dna'")
             if isinstance(cfg["mbcs"], dict):
                 cfg["mbcs"].setdefault("mapping_tool", "bwa")
             cfg.setdefault("bwa", {})
@@ -626,6 +632,25 @@ def bootstrap_step_config(
             cfg.setdefault("vembrane", {})
             if isinstance(cfg["vembrane"], dict):
                 cfg["vembrane"].setdefault("expressions", {"some_filter": "True"})
+
+    if step_name == "gene_expression_quantification":
+        tool = cfg.get("tool") or "salmon"
+        cfg["tool"] = tool
+        cfg.setdefault(tool, {})
+        if tool == "salmon" and isinstance(cfg["salmon"], dict):
+            placeholder_file = _existing_placeholder_file()
+            placeholder_dir = _star_index_fixture_dir()
+            cfg["salmon"].setdefault("path_index", placeholder_dir)
+            cfg["salmon"].setdefault("path_transcript_to_gene", placeholder_file)
+
+    if step_name == "somatic_neoepitope_prediction":
+        cfg.setdefault(
+            "tool_hla_typing",
+            {
+                "dna": {"class_i": "optitype", "class_ii": None},
+                "rna": {"class_i": None, "class_ii": None},
+            },
+        )
 
     return cfg
 

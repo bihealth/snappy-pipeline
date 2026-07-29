@@ -446,6 +446,7 @@ from snappy_pipeline.workflows.abstract import (
     LinkInPathGenerator,
     LinkInStepPart,
     ResourceUsage,
+    apply_library_selection,
     get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataType
@@ -453,7 +454,6 @@ from snappy_pipeline.workflows.abstract.protocol import DataType
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from .model import NgsMapping as NgsMappingConfigModel
-from .model import Tool
 
 # TODO: Need something smarter still for @RG
 
@@ -1579,21 +1579,24 @@ class NgsMappingWorkflow(BaseStep):
         :param sample_sheets_list: List with biomedical sample sheets.
         :type sample_sheets_list: list
         """
-        dna_analysis = False
-        rna_analysis = False
-        for sheet in sample_sheets_list:
-            dna_present, rna_present = self.extraction_type_check(sample_sheet=sheet)
-            dna_analysis = dna_analysis or dna_present
-            rna_analysis = rna_analysis or rna_present
+        df = self.build_library_dataframe()
+        if df.empty:
+            return
 
-        tool = config.tool
-        if not isinstance(tool, Tool):
-            tool = Tool(tool)
-        if dna_analysis and not tool.is_dna():
-            raise InvalidConfiguration(
-                "Sample sheet contains DNA but the configured tool does not support DNA mapping."
-            )
-        if rna_analysis and not tool.is_rna():
+        # Apply library_selection filter first so DNA-only or RNA-only mapping tasks
+        # only validate their selected subset of libraries.
+        selection = getattr(self.config, "library_selection", None)
+        if selection:
+            # Determine kind ('cancer' or 'germline') based on dataset kind
+            kind = df["kind"].iloc[0] if "kind" in df.columns and not df.empty else "germline"
+            df = apply_library_selection(df, selection, kind)
+
+        if df.empty:
+            return
+
+        # Check if selected libraries contain RNA for non-STAR tools
+        has_rna = (df["extraction_type"] == "rna").any()
+        if has_rna and self.config.tool != "star":
             raise InvalidConfiguration(
                 "Sample sheet contains RNA but the configured tool does not support RNA mapping."
             )

@@ -151,7 +151,7 @@ class PvacToolsStepPart(BaseStepPart):
         for extraction_type in ExtractionType:
             extraction_type = extraction_type.lower()
             for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
-                if tool := self.config.tools_hla_typing.get(extraction_type, {}).get(
+                if tool := self.config.tool_hla_typing.get(extraction_type, {}).get(
                     mhc_class.name, None
                 ):
                     if extraction_type not in self.hla_tools:
@@ -325,8 +325,8 @@ class PvacToolsStepPart(BaseStepPart):
         if action in ("pvacseq", "pvacfuse", "pvacsplice"):
             return ResourceUsage(
                 threads=min(self.default_resource_usage[action].threads, self.cfg.n_threads),
-                runtime=self.default_resource_usage[action].time,
-                mem=self.default_resource_usage[action].memory,
+                runtime=self.default_resource_usage[action].runtime,
+                mem=self.default_resource_usage[action].mem,
             )
         return self.default_resource_usage[action]
 
@@ -1173,7 +1173,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
     def check_config(self):
         for extraction_type in (ExtractionType.DNA, ExtractionType.RNA):
             for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
-                tool = self.config.tools_hla_typing.get(extraction_type, {}).get(
+                tool = self.config.tool_hla_typing.get(extraction_type, {}).get(
                     mhc_class.name, None
                 )
                 if tool:
