@@ -18,38 +18,36 @@ vep_config = args["config"]
 pick_order = ",".join(vep_config["pick_order"])
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
 
+dir_cache = f"--dir_cache {vep_config['cache_dir']}" if vep_config.get("cache_dir") else ""
+num_threads = getattr(snakemake, "threads", vep_config.get("num_threads", 1))
 full = snakemake.output.full if "full" in snakemake.output.keys() else ""
 
 ShellWrapper(snakemake).run(
     r"""
-if [[ -n "{full}" ]]
-then
+# Helper function to normalize, annotate with VEP, and index output
+run_vep() {
+    local outfile="$1"
+    shift
+
+    bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force | \
     vep --verbose --force_overwrite --offline --cache \
         --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
         --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
-        $(if [[ ! -z "{vep_config[cache_dir]}" ]]; then \
-            echo --dir_cache {vep_config[cache_dir]}
-        fi) \
+        {dir_cache} \
         {script_output_options} \
         --{vep_config[tx_flag]} \
         --fasta {snakemake.input.reference} \
-        --input_file {snakemake.input.vcf} --format vcf \
-        --output_file {full} --vcf --compress_output bgzip
-    tabix {full}
+        --format vcf --vcf --compress_output bgzip \
+        --output_file "$outfile" "$@"
+
+    tabix "$outfile"
+}
+
+# full annotation if requested
+if [[ -n "{full}" ]]; then
+    run_vep "{full}"
 fi
 
-vep --verbose --force_overwrite --offline --cache \
-    --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
-    --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
-    $(if [[ ! -z "{vep_config[cache_dir]}" ]]; then \
-        echo --dir_cache {vep_config[cache_dir]}
-    fi) \
-    {script_output_options} \
-    --pick --pick_order {pick_order} \
-    --{vep_config[tx_flag]} \
-    --fasta {snakemake.input.reference} \
-    --input_file {snakemake.input.vcf} --format vcf \
-    --output_file {snakemake.output.vcf} --vcf --compress_output bgzip
-tabix {snakemake.output.vcf}
+run_vep "{snakemake.output.vcf}" --pick --pick_order {pick_order}
 """
 )
