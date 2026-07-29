@@ -273,3 +273,4 @@ lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt"], description = "Run
 
 [tool.pixi.feature.dev.dependencies]
 pixi-pycharm = ">=0.0.11,<0.0.12"
+pandas-stubs = ">=3.0.3.260530,<4"
