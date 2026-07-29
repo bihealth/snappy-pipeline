@@ -155,9 +155,12 @@ class SalmonStepPart(BaseStepPart):
     def get_input_files(self, action):
         """Return input files"""
         assert action == "run"
+        if self.config.tool != self.name:
+            return
         yield "done", "work/input_links/{library_name}/.done"
         yield "features", self.w_config.static_data_config.features.path
-        yield "indices", self.cfg.path_index
+        if self.cfg and self.cfg.path_index:
+            yield "indices", self.cfg.path_index
 
     @dictify
     def get_output_files(self, action):

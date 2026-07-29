@@ -4,6 +4,7 @@ from biomedsheets.shortcuts import CancerCaseSheet
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -11,7 +12,6 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
@@ -24,8 +24,8 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 DEFAULT_CONFIG = CombineVariantsConfigModel.default_config_yaml_string()
 
-_OUT_PREFIX = "work/combined.{tumor_library}/out/combined.{tumor_library}"
-_LOG_PREFIX = "work/combined.{tumor_library}/log/combined.{tumor_library}"
+_OUT_PREFIX = "work/{tumor_library}/out/{tumor_library}"
+_LOG_PREFIX = "work/{tumor_library}/log/{tumor_library}"
 
 
 class CombineVariantsStepPart(BaseStepPart):
@@ -44,7 +44,7 @@ class CombineVariantsStepPart(BaseStepPart):
         somatic = self.parent.get_upstream_paths(
             "somatic_variant", library_name=wildcards.tumor_library
         )
-        yield "somatic_vcf", somatic["vcf"]
+        yield "somatic_vcf", somatic.vcf
 
         df = self.parent.build_library_dataframe()
         tumor_df = df[df["library_name"] == wildcards.tumor_library]
@@ -53,7 +53,7 @@ class CombineVariantsStepPart(BaseStepPart):
             normal_lib = tumor_df.iloc[0].get("matched_normal_lib") or None
         if normal_lib:
             germline = self.parent.get_upstream_paths("germline_variant", library_name=normal_lib)
-            yield "germline_vcf", germline["vcf"]
+            yield "germline_vcf", germline.vcf
 
     def get_output_files(self, action: str) -> dict[str, Any]:
         match action:
@@ -131,8 +131,8 @@ class CombineVariantsWorkflow(BaseStep):
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
-            "vcf": f"output/combined.{lib}/out/combined.{lib}.vcf.gz",
-            "vcf_tbi": f"output/combined.{lib}/out/combined.{lib}.vcf.gz.tbi",
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
         }
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir, **kwargs):
@@ -159,7 +159,7 @@ class CombineVariantsWorkflow(BaseStep):
         tumor_libs = df[df["role"] == "tumor"]["library_name"].unique()
         for t in tumor_libs:
             for ext in ("", ".tbi", ".md5", ".tbi.md5"):
-                yield f"output/combined.{t}/out/combined.{t}.vcf.gz{ext}"
+                yield f"output/{t}/out/{t}.vcf.gz{ext}"
             for ext in ("log", "conda_list.txt", "conda_info.txt"):
                 for hash_suffix in ("", ".md5"):
-                    yield f"output/combined.{t}/log/combined.{t}.{ext}{hash_suffix}"
+                    yield f"output/{t}/log/{t}.{ext}{hash_suffix}"
