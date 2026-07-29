@@ -13,6 +13,7 @@ cli_args = []
 
 # skip keys that are handled via snakemake.input
 ignore_keys = {"reference", "transcripts", "frequencies", "clinvar"}
+num_threads = snakemake.threads
 
 for key, value in mehari_config.items():
     if key in ignore_keys:
@@ -56,16 +57,18 @@ ShellWrapper(snakemake).run(
 set -x
 
 # Run Mehari annotation
-mehari annotate seqvars \
-    {mehari_options} \
-    {tx_args} \
-    {freq_arg} \
-    {clinvar_arg} \
-    --reference {snakemake.input.reference} \
-    --input {snakemake.input.vcf} \
-    --output {snakemake.output.vcf}
+bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} | \
+  mehari annotate seqvars \
+      --threads {num_threads} \
+      {mehari_options} \
+      {tx_args} \
+      {freq_arg} \
+      {clinvar_arg} \
+      --reference {snakemake.input.reference} \
+      --input - \
+      --output {snakemake.output.vcf}
 
 # Index the resulting VCF
-tabix {snakemake.output.vcf}
+tabix --threads {num_threads} {snakemake.output.vcf}
 """
 )
