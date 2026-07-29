@@ -13,12 +13,12 @@ import os
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
-from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticVariantSignatures as SomaticVariantSignaturesConfigModel
 
@@ -40,11 +40,20 @@ class SignaturesStepPart(BaseStepPart):
 
         self.name_postfix = "{tumor_library}"
 
+    @dictify
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
         name_pattern = f"{self.name}." + self.name_postfix
-        return os.path.join("work", name_pattern, "log", name_pattern + ".log")
+        prefix = os.path.join("work", "{tumor_library}", "log", name_pattern)
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -87,7 +96,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "tabulate_vcf." + self.name_postfix
-        yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
+        yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
 
     def get_args(self, action):
         """Return arguments to pass down."""
@@ -129,7 +138,7 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "tabulate_vcf." + self.name_postfix
-        yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
+        yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
 
     @dictify
     def get_output_files(self, action):
@@ -137,8 +146,8 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         # Validate action
         self._validate_action(action)
         name_pattern = "deconstruct_sigs." + self.name_postfix
-        yield "tsv", os.path.join("work", name_pattern, "out", name_pattern + ".tsv")
-        yield "pdf", os.path.join("work", name_pattern, "out", name_pattern + ".pdf")
+        yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
+        yield "pdf", os.path.join("work", "{tumor_library}", "out", name_pattern + ".pdf")
 
 
 class SomaticVariantSignaturesWorkflow(BaseStep):
@@ -175,7 +184,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         """Return local signature output paths for downstream consumers."""
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
-        return {"tsv": f"output/deconstruct_sigs.{lib}/out/deconstruct_sigs.{lib}.tsv"}
+        return {"tsv": f"output/{lib}/out/deconstruct_sigs.{lib}.tsv"}
 
     def __init__(
         self,

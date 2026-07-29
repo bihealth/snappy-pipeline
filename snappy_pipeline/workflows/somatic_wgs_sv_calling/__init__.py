@@ -336,8 +336,10 @@ class Delly2StepPart(BaseStepPart):
 
     def _get_input_files_final_vcf(self, wildcards):
         """Return input files for "final_vcf" action"""
-        infix = self.dir_infixes["filter_controls"].format(**wildcards)
-        yield os.path.join("work", infix, "out", infix + ".bcf")
+        sv_types = ("DEL", "DUP", "INV", "TRA", "INS")
+        for sv_type in sv_types:
+            infix = f"delly2.filter_controls.{wildcards.tumor_library}.{sv_type}"
+            yield os.path.join("work", infix, "out", infix + ".bcf")
 
     def _get_primary_pairs(self):
         """Yield donors with DNA NGS library"""

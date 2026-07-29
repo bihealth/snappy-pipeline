@@ -529,7 +529,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
             "ngs_mapping", library_name=infix
         )
-        yield "bam", getattr(alignments, "bam", alignments["bam"])
+        yield "bam", getattr(alignments, "bam", None) or alignments.bam
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:

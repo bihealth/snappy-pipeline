@@ -384,13 +384,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         somatic_vcf = self.parent.get_upstream_paths(
             "somatic_variants", library_name=wildcards.tumor_library
         )
-        yield (
-            "vcf",
-            getattr(somatic_vcf, "full_vcf", getattr(somatic_vcf, "vcf", somatic_vcf["vcf"])),
-        )
-        base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
-        yield "vcf", self.parent.upstream("somatic_variants")(base_path)
-        # PON outputs tracked as Snakemake inputs for proper dependency resolution.
+        yield "vcf", getattr(somatic_vcf, "full_vcf", None) or getattr(somatic_vcf, "vcf", None)
         purecn_cfg = self.config.purecn
         yield "normaldb", pon("output/purecn/out/purecn.panel_of_normals.rds")
         yield "mapping_bias", pon("output/purecn/out/purecn.mapping_bias.rds")

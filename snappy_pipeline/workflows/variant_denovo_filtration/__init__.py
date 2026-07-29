@@ -150,8 +150,7 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Output and log paths
-        self.base_path_out = "work/{index_library}/out/{index_library}"
+        self.base_path_out = "work/{index_library}/out/{index_library}.soft"
         self.path_log = "work/{index_library}/log/filter_denovo.{index_library}.log"
 
     def get_input_files(self, action):
@@ -160,17 +159,19 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
 
         @dictify
         def input_function(wildcards):
-            real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
+            ped_entry = self.ngs_library_to_pedigree.get(wildcards.index_library)
+            if not ped_entry:
+                return {}
+            real_index = ped_entry.index
             real_path = f"work/write_pedigree.{real_index.dna_ngs_library.name}/out/{real_index.dna_ngs_library.name}.ped"
             yield "ped", real_path
 
             _aln: ExpectedAlignments = self.parent.get_upstream_paths(
                 "ngs_mapping", library_name=wildcards.index_library
             )
-            yield "bam", _aln.bam
-            yield "bai", _aln.bai
+            yield "bam", getattr(_aln, "bam", None)
+            yield "bai", getattr(_aln, "bai", None)
 
-            # Resolve upstream VCF via CDC broker
             extra_kwargs = {}
             if self.previous_step == "variant_phasing":
                 phasing_cfg = self.parent.get_task_config("variant_phasing")
@@ -187,8 +188,8 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
                 library_name=real_index.dna_ngs_library.name,
                 **extra_kwargs,
             )
-            yield "vcf", getattr(upstream_vcf, "vcf", upstream_vcf["vcf"])
-            yield "vcf_tbi", getattr(upstream_vcf, "vcf_tbi", upstream_vcf.get("vcf_tbi", ""))
+            yield "vcf", getattr(upstream_vcf, "vcf", None)
+            yield "vcf_tbi", getattr(upstream_vcf, "vcf_tbi", None)
 
         return input_function
 
@@ -240,9 +241,8 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Output and log paths
+        self.base_path_in = "work/{index_library}/out/{index_library}.soft"
         self.base_path_out = "work/{index_library}/out/{index_library}"
-        self.base_path_in = "work/{index_library}/out/{index_library}"
         self.path_log = "work/{index_library}/log/filter_denovo_hard.{index_library}.log"
 
     @dictify

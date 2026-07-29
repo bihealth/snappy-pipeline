@@ -146,8 +146,13 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
+        lib_name = getattr(wildcards, "tumor_library", None) or getattr(
+            wildcards, "library_name", None
+        )
+        if not lib_name:
+            return None
         df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == wildcards.tumor_library]
+        tumor_df = df[df["library_name"] == lib_name]
         if tumor_df.empty:
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
@@ -254,23 +259,19 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @dictify
     def _get_input_files_tumor_normal_ratio(self, wildcards, **kwargs):
-        """Return input files that the merge step ("bcftools merge") needs"""
         _ = kwargs
-        tumor_library = (
-            wildcards.library_name
-            if hasattr(wildcards, "library_name")
-            else wildcards.tumor_library
+        tumor_library = getattr(wildcards, "library_name", None) or getattr(
+            wildcards, "tumor_library", None
         )
         normal_library = self.get_normal_lib_name(wildcards)
         libraries = {"tumor": tumor_library, "normal": normal_library}
         for kind, library_name in libraries.items():
+            if not library_name:
+                continue
             key = "{}_bcf".format(kind)
-            name_pattern = "cnvetti_coverage.{}".format(library_name)
             yield (
                 key,
-                "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                    name_pattern=name_pattern, ext=".bcf"
-                ),
+                f"work/cnvetti_coverage.{library_name}/out/cnvetti_coverage.{library_name}.bcf",
             )
 
     @dictify

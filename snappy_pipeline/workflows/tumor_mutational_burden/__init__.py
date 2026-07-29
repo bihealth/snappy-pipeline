@@ -49,7 +49,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
         base_name = "tmb.{tumor_library}"
 
-        tpl = os.path.join("output", base_name, "out", base_name)
+        tpl = os.path.join("work", "{tumor_library}", "out", base_name)
 
         key_ext = {"json": ".json"}
         for key, ext in key_ext.items():
@@ -57,12 +57,12 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
             yield key + "_md5", tpl + ext + ".md5"
 
     @dictify
-    def _get_log_file(self, action):
+    def get_log_file(self, action):
         self._validate_action(action)
 
         base_name = "tmb.{tumor_library}"
 
-        tpl = os.path.join("output", base_name, "log", base_name)
+        tpl = os.path.join("work", "{tumor_library}", "log", base_name)
 
         key_ext = (
             ("log", ".log"),
@@ -71,6 +71,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         )
         for key, ext in key_ext:
             yield key, tpl + ext
+            yield key + "_md5", tpl + ext + ".md5"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -115,7 +116,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         """Return local TMB output paths for downstream consumers."""
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
-        return {"tsv": f"output/tmb.{lib}/out/tmb.{lib}.tsv"}
+        return {"json": f"output/{lib}/out/tmb.{lib}.json"}
 
     def __init__(
         self,
@@ -137,7 +138,6 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
-        config = self.config
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
