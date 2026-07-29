@@ -97,6 +97,8 @@ class OptiTypeStepPart(BaseStepPart):
     #: Step name
     name = "optitype"
 
+    supported_extraction_types = ("dna", "rna")
+
     #: Class available actions
     actions = ("run",)
 

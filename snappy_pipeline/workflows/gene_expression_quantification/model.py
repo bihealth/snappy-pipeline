@@ -38,6 +38,7 @@ class DupRadar(SnappyModel):
 
 class Salmon(SnappyModel):
     path_index: str
+    path_transcript_to_gene: str
     salmon_params: str = " --gcBias --validateMappings"
     num_threads: int = 16
 
