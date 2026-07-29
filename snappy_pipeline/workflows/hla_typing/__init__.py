@@ -414,8 +414,8 @@ class HlaLaStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=8,
-            time="60:00:00",  # 60 hours
-            memory="60000M",
+            runtime="60:00:00",  # 60 hours
+            mem="60000M",
         )
 
 

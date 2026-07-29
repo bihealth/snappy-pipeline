@@ -40,8 +40,8 @@ rule combine_variants_run:
         **wf.get_log_file("combine", "run"),
     threads: wf.get_resource("combine", "run", "threads")
     resources:
-        time=wf.get_resource("combine", "run", "time"),
-        memory=wf.get_resource("combine", "run", "memory"),
+        runtime=wf.get_resource("combine", "run", "runtime"),
+        mem=wf.get_resource("combine", "run", "mem"),
         partition=wf.get_resource("combine", "run", "partition"),
         tmpdir=wf.get_resource("combine", "run", "tmpdir"),
     params:

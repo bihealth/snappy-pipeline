@@ -40,8 +40,8 @@ rule create_proteome_run:
         **wf.get_log_file("create_proteome", "run"),
     threads: wf.get_resource("create_proteome", "run", "threads")
     resources:
-        time=wf.get_resource("create_proteome", "run", "time"),
-        memory=wf.get_resource("create_proteome", "run", "memory"),
+        runtime=wf.get_resource("create_proteome", "run", "runtime"),
+        mem=wf.get_resource("create_proteome", "run", "mem"),
         partition=wf.get_resource("create_proteome", "run", "partition"),
         tmpdir=wf.get_resource("create_proteome", "run", "tmpdir"),
     params:

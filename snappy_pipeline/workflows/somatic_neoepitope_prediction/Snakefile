@@ -57,8 +57,8 @@ if not getattr(wf.config, wf.config.tool).path_container:
         log:
             wf.get_log_file("pvactools", "install"),
         resources:
-            time=wf.get_resource("pvactools", "install", "time"),
-            memory=wf.get_resource("pvactools", "install", "memory"),
+            runtime=wf.get_resource("pvactools", "install", "runtime"),
+            mem=wf.get_resource("pvactools", "install", "mem"),
             partition=wf.get_resource("pvactools", "install", "partition"),
         params:
             container="docker://griffithlab/pvactools:7.0.1",
@@ -83,8 +83,8 @@ if wf.config.tool != "pvacfuse" and not getattr(wf.config, wf.config.tool).use_a
             **wf.get_log_file("pvactools", "normalize"),
         threads: wf.get_resource("pvactools", "normalize", "threads")
         resources:
-            time=wf.get_resource("pvactools", "normalize", "time"),
-            memory=wf.get_resource("pvactools", "normalize", "memory"),
+            runtime=wf.get_resource("pvactools", "normalize", "runtime"),
+            mem=wf.get_resource("pvactools", "normalize", "mem"),
             partition=wf.get_resource("pvactools", "normalize", "partition"),
             tmpdir=wf.get_resource("pvactools", "normalize", "tmpdir"),
         params:
@@ -104,8 +104,8 @@ if wf.config.tool != "pvacfuse" and getattr(wf.config, wf.config.tool).use_all_t
             **wf.get_log_file("pvactools", "normalize_full"),
         threads: wf.get_resource("pvactools", "normalize_full", "threads")
         resources:
-            time=wf.get_resource("pvactools", "normalize_full", "time"),
-            memory=wf.get_resource("pvactools", "normalize_full", "memory"),
+            runtime=wf.get_resource("pvactools", "normalize_full", "runtime"),
+            mem=wf.get_resource("pvactools", "normalize_full", "mem"),
             partition=wf.get_resource("pvactools", "normalize_full", "partition"),
             tmpdir=wf.get_resource("pvactools", "normalize_full", "tmpdir"),
         params:
@@ -128,8 +128,8 @@ if wf.config.proteome.enabled and wf.config.proteome.add_unmutated:
             **wf.get_log_file("proteome", "run"),
         threads: wf.get_resource("proteome", "run", "threads")
         resources:
-            time=wf.get_resource("proteome", "run", "time"),
-            memory=wf.get_resource("proteome", "run", "memory"),
+            runtime=wf.get_resource("proteome", "run", "runtime"),
+            mem=wf.get_resource("proteome", "run", "mem"),
             partition=wf.get_resource("proteome", "run", "partition"),
             tmpdir=wf.get_resource("proteome", "run", "tmpdir"),
         params:
@@ -149,8 +149,8 @@ if wf.config.tool == "pvacseq" and wf.config.pileup.enabled:
             **wf.get_log_file("pvacseq", "pileup"),
         threads: wf.get_resource("pvacseq", "pileup", "threads")
         resources:
-            time=wf.get_resource("pvacseq", "pileup", "time"),
-            memory=wf.get_resource("pvacseq", "pileup", "memory"),
+            runtime=wf.get_resource("pvacseq", "pileup", "runtime"),
+            mem=wf.get_resource("pvacseq", "pileup", "mem"),
             partition=wf.get_resource("pvacseq", "pileup", "partition"),
             tmpdir=wf.get_resource("pvacseq", "pileup", "tmpdir"),
         params:
@@ -170,8 +170,8 @@ if wf.config.tool == "pvacseq" and wf.config.quantification.enabled:
             **wf.get_log_file("pvacseq", "combine"),
         threads: wf.get_resource("pvacseq", "combine", "threads")
         resources:
-            time=wf.get_resource("pvacseq", "combine", "time"),
-            memory=wf.get_resource("pvacseq", "combine", "memory"),
+            runtime=wf.get_resource("pvacseq", "combine", "runtime"),
+            mem=wf.get_resource("pvacseq", "combine", "mem"),
             partition=wf.get_resource("pvacseq", "combine", "partition"),
             tmpdir=wf.get_resource("pvacseq", "combine", "tmpdir"),
         params:
@@ -191,8 +191,8 @@ if wf.config.phasing.enabled:
             **wf.get_log_file("phasing", "run"),
         threads: wf.get_resource("phasing", "run", "threads")
         resources:
-            time=wf.get_resource("phasing", "run", "time"),
-            memory=wf.get_resource("phasing", "run", "memory"),
+            runtime=wf.get_resource("phasing", "run", "runtime"),
+            mem=wf.get_resource("phasing", "run", "mem"),
             partition=wf.get_resource("phasing", "run", "partition"),
             tmpdir=wf.get_resource("phasing", "run", "tmpdir"),
         params:
@@ -215,8 +215,8 @@ if wf.config.tool == "pvacseq":
             **wf.get_log_file("pvacseq", "pvacseq"),
         threads: wf.get_resource("pvacseq", "pvacseq", "threads")
         resources:
-            time=wf.get_resource("pvacseq", "pvacseq", "time"),
-            memory=wf.get_resource("pvacseq", "pvacseq", "memory"),
+            runtime=wf.get_resource("pvacseq", "pvacseq", "runtime"),
+            mem=wf.get_resource("pvacseq", "pvacseq", "mem"),
             partition=wf.get_resource("pvacseq", "pvacseq", "partition"),
             tmpdir=wf.get_resource("pvacseq", "pvacseq", "tmpdir"),
         params:
@@ -233,8 +233,8 @@ if wf.config.tool == "pvacseq":
             **wf.get_log_file("netchop", "pvacseq"),
         threads: wf.get_resource("netchop", "pvacseq", "threads")
         resources:
-            time=wf.get_resource("netchop", "pvacseq", "time"),
-            memory=wf.get_resource("netchop", "pvacseq", "memory"),
+            runtime=wf.get_resource("netchop", "pvacseq", "runtime"),
+            mem=wf.get_resource("netchop", "pvacseq", "mem"),
             partition=wf.get_resource("netchop", "pvacseq", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacseq", "tmpdir"),
         params:
@@ -257,8 +257,8 @@ if wf.config.tool == "pvacfuse":
             **wf.get_log_file("pvacfuse", "pvacfuse"),
         threads: wf.get_resource("pvacfuse", "pvacfuse", "threads")
         resources:
-            time=wf.get_resource("pvacfuse", "pvacfuse", "time"),
-            memory=wf.get_resource("pvacfuse", "pvacfuse", "memory"),
+            runtime=wf.get_resource("pvacfuse", "pvacfuse", "runtime"),
+            mem=wf.get_resource("pvacfuse", "pvacfuse", "mem"),
             partition=wf.get_resource("pvacfuse", "pvacfuse", "partition"),
             tmpdir=wf.get_resource("pvacfuse", "pvacfuse", "tmpdir"),
         params:
@@ -275,8 +275,8 @@ if wf.config.tool == "pvacfuse":
             **wf.get_log_file("netchop", "pvacfuse"),
         threads: wf.get_resource("netchop", "pvacfuse", "threads")
         resources:
-            time=wf.get_resource("netchop", "pvacfuse", "time"),
-            memory=wf.get_resource("netchop", "pvacfuse", "memory"),
+            runtime=wf.get_resource("netchop", "pvacfuse", "runtime"),
+            mem=wf.get_resource("netchop", "pvacfuse", "mem"),
             partition=wf.get_resource("netchop", "pvacfuse", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacfuse", "tmpdir"),
         params:
@@ -299,8 +299,8 @@ if wf.config.tool == "pvacsplice":
             **wf.get_log_file("pvacsplice", "junction"),
         threads: wf.get_resource("pvacsplice", "junction", "threads")
         resources:
-            time=wf.get_resource("pvacsplice", "junction", "time"),
-            memory=wf.get_resource("pvacsplice", "junction", "memory"),
+            runtime=wf.get_resource("pvacsplice", "junction", "runtime"),
+            mem=wf.get_resource("pvacsplice", "junction", "mem"),
             partition=wf.get_resource("pvacsplice", "junction", "partition"),
             tmpdir=wf.get_resource("pvacsplice", "junction", "tmpdir"),
         params:
@@ -347,8 +347,8 @@ if wf.config.tool == "pvacsplice":
             **wf.get_log_file("pvacsplice", "pvacsplice"),
         threads: wf.get_resource("pvacsplice", "pvacsplice", "threads")
         resources:
-            time=wf.get_resource("pvacsplice", "pvacsplice", "time"),
-            memory=wf.get_resource("pvacsplice", "pvacsplice", "memory"),
+            runtime=wf.get_resource("pvacsplice", "pvacsplice", "runtime"),
+            mem=wf.get_resource("pvacsplice", "pvacsplice", "mem"),
             partition=wf.get_resource("pvacsplice", "pvacsplice", "partition"),
             tmpdir=wf.get_resource("pvacsplice", "pvacsplice", "tmpdir"),
         params:
@@ -365,8 +365,8 @@ if wf.config.tool == "pvacsplice":
             **wf.get_log_file("netchop", "pvacsplice"),
         threads: wf.get_resource("netchop", "pvacsplice", "threads")
         resources:
-            time=wf.get_resource("netchop", "pvacsplice", "time"),
-            memory=wf.get_resource("netchop", "pvacsplice", "memory"),
+            runtime=wf.get_resource("netchop", "pvacsplice", "runtime"),
+            mem=wf.get_resource("netchop", "pvacsplice", "mem"),
             partition=wf.get_resource("netchop", "pvacsplice", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacsplice", "tmpdir"),
         params:
