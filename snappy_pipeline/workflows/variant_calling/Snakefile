@@ -33,6 +33,7 @@ wildcard_constraints:
 localrules:
     # Writing pedigrees should be done locally as well
     variant_calling_write_pedigree_run,
+    variant_calling_link_out_run,
 
 
 rule variant_calling_all:
@@ -449,3 +450,12 @@ if tool == "mutect2":
             args=wf.get_args("mutect2", "filter"),
         wrapper:
             wf.wrapper_path("mutect2/filter")
+
+
+rule variant_calling_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        wf.run_locally("link_out", "run", wildcards)

@@ -258,6 +258,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
+    LinkOutStepPart,
 )
 from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDict,
@@ -1083,6 +1084,7 @@ class VariantCallingWorkflow(BaseStep):
                 BcftoolsRohStepPart,
                 JannovarStatisticsStepPart,
                 BafFileGenerationStepPart,
+                LinkOutStepPart,
             )
         )
 
