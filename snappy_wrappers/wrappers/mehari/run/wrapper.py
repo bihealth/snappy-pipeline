@@ -56,10 +56,10 @@ ShellWrapper(snakemake).run(
     r"""
 set -x
 
-# Run Mehari annotation
-bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} | \
+# using --force here because GATK sometimes produces incorrect VCF headers;
+# should probably introduce a GATK cleanup rule instead.
+bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force | \
   mehari annotate seqvars \
-      --threads {num_threads} \
       {mehari_options} \
       {tx_args} \
       {freq_arg} \
