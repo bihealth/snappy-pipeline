@@ -849,15 +849,19 @@ class PanelOfNormalsWorkflow(BaseStep):
             **kwargs,
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                Mutect2StepPart,
-                CnvkitStepPart,
-                AccessStepPart,
-                PureCnStepPart,
-                LinkOutStepPart,
-            )
-        )
+        match self.config.tool:
+            case "mutect2":
+                selected = Mutect2StepPart
+            case "cnvkit":
+                selected = CnvkitStepPart
+            case "access":
+                selected = AccessStepPart
+            case "purecn":
+                selected = PureCnStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
+        extra = [AccessStepPart] if self.config.tool == "cnvkit" else []
+        self.register_sub_step_classes((selected, *extra, LinkOutStepPart))
 
     @listify
     def get_result_files(self):

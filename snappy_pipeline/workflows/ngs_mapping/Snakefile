@@ -56,133 +56,145 @@ rule ngs_mapping_link_in_run:  # localrule
 # Run link in external bam files ----------------------------------------------
 
 
-rule ngs_mapping_external_run:
-    input:
-        wf.get_input_files("external", "run"),
-    output:
-        **wf.get_output_files("external", "run"),
-    log:
-        **wf.get_log_file("external", "run"),
-    threads: wf.get_resource("external", "run", "threads")
-    resources:
-        runtime=wf.get_resource("external", "run", "runtime"),
-        mem=wf.get_resource("external", "run", "mem"),
-        partition=wf.get_resource("external", "run", "partition"),
-        tmpdir=wf.get_resource("external", "run", "tmpdir"),
-    params:
-        args=wf.get_args("external", "run"),
-    wrapper:
-        wf.wrapper_path("link_in_bam")
+if wf.config.tool == "external":
+
+    rule ngs_mapping_external_run:
+        input:
+            wf.get_input_files("external", "run"),
+        output:
+            **wf.get_output_files("external", "run"),
+        log:
+            **wf.get_log_file("external", "run"),
+        threads: wf.get_resource("external", "run", "threads")
+        resources:
+            runtime=wf.get_resource("external", "run", "runtime"),
+            mem=wf.get_resource("external", "run", "mem"),
+            partition=wf.get_resource("external", "run", "partition"),
+            tmpdir=wf.get_resource("external", "run", "tmpdir"),
+        params:
+            args=wf.get_args("external", "run"),
+        wrapper:
+            wf.wrapper_path("link_in_bam")
 
 
 # Run BWA ---------------------------------------------------------------------
 
 
-rule ngs_mapping_bwa_run:
-    input:
-        wf.get_input_files("bwa", "run"),
-    output:
-        **wf.get_output_files("bwa", "run"),
-    log:
-        **wf.get_log_file("bwa", "run"),
-    threads: wf.get_resource("bwa", "run", "threads")
-    resources:
-        runtime=wf.get_resource("bwa", "run", "runtime"),
-        mem=wf.get_resource("bwa", "run", "mem"),
-        partition=wf.get_resource("bwa", "run", "partition"),
-        tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
-    params:
-        args=wf.get_args("bwa", "run"),
-    wrapper:
-        wf.wrapper_path("bwa")
+if wf.config.tool == "bwa":
+
+    rule ngs_mapping_bwa_run:
+        input:
+            wf.get_input_files("bwa", "run"),
+        output:
+            **wf.get_output_files("bwa", "run"),
+        log:
+            **wf.get_log_file("bwa", "run"),
+        threads: wf.get_resource("bwa", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bwa", "run", "runtime"),
+            mem=wf.get_resource("bwa", "run", "mem"),
+            partition=wf.get_resource("bwa", "run", "partition"),
+            tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bwa", "run"),
+        wrapper:
+            wf.wrapper_path("bwa")
 
 
 # Run BWA-MEM2 ----------------------------------------------------------------
 
 
-rule ngs_mapping_bwa_mem2_run:
-    input:
-        wf.get_input_files("bwa_mem2", "run"),
-    output:
-        **wf.get_output_files("bwa_mem2", "run"),
-    log:
-        **wf.get_log_file("bwa_mem2", "run"),
-    threads: wf.get_resource("bwa_mem2", "run", "threads")
-    resources:
-        runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
-        mem=wf.get_resource("bwa_mem2", "run", "mem"),
-        partition=wf.get_resource("bwa_mem2", "run", "partition"),
-        tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
-    params:
-        args=wf.get_args("bwa_mem2", "run"),
-    wrapper:
-        wf.wrapper_path("bwa_mem2")
+if wf.config.tool == "bwa_mem2":
+
+    rule ngs_mapping_bwa_mem2_run:
+        input:
+            wf.get_input_files("bwa_mem2", "run"),
+        output:
+            **wf.get_output_files("bwa_mem2", "run"),
+        log:
+            **wf.get_log_file("bwa_mem2", "run"),
+        threads: wf.get_resource("bwa_mem2", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
+            mem=wf.get_resource("bwa_mem2", "run", "mem"),
+            partition=wf.get_resource("bwa_mem2", "run", "partition"),
+            tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bwa_mem2", "run"),
+        wrapper:
+            wf.wrapper_path("bwa_mem2")
 
 
 # Run Molecular Barcodes meta-tool --------------------------------------------
 
 
-rule ngs_mapping_mbcs_run:
-    input:
-        wf.get_input_files("mbcs", "run"),
-    output:
-        **wf.get_output_files("mbcs", "run"),
-    log:
-        **wf.get_log_file("mbcs", "run"),
-    threads: wf.get_resource("mbcs", "run", "threads")
-    resources:
-        runtime=wf.get_resource("mbcs", "run", "runtime"),
-        mem=wf.get_resource("mbcs", "run", "mem"),
-        partition=wf.get_resource("mbcs", "run", "partition"),
-        tmpdir=wf.get_resource("mbcs", "run", "tmpdir"),
-    params:
-        args=wf.get_args("mbcs", "run"),
-    wrapper:
-        wf.wrapper_path("mbcs")
+if wf.config.tool == "mbcs":
+
+    rule ngs_mapping_mbcs_run:
+        input:
+            wf.get_input_files("mbcs", "run"),
+        output:
+            **wf.get_output_files("mbcs", "run"),
+        log:
+            **wf.get_log_file("mbcs", "run"),
+        threads: wf.get_resource("mbcs", "run", "threads")
+        resources:
+            runtime=wf.get_resource("mbcs", "run", "runtime"),
+            mem=wf.get_resource("mbcs", "run", "mem"),
+            partition=wf.get_resource("mbcs", "run", "partition"),
+            tmpdir=wf.get_resource("mbcs", "run", "tmpdir"),
+        params:
+            args=wf.get_args("mbcs", "run"),
+        wrapper:
+            wf.wrapper_path("mbcs")
 
 
 # Run STAR --------------------------------------------------------------------
 
 
-rule ngs_mapping_star_run:
-    input:
-        wf.get_input_files("star", "run"),
-    output:
-        **wf.get_output_files("star", "run"),
-    log:
-        **wf.get_log_file("star", "run"),
-    threads: wf.get_resource("star", "run", "threads")
-    resources:
-        runtime=wf.get_resource("star", "run", "runtime"),
-        mem=wf.get_resource("star", "run", "mem"),
-        partition=wf.get_resource("star", "run", "partition"),
-        tmpdir=wf.get_resource("star", "run", "tmpdir"),
-    params:
-        args=wf.get_args("star", "run"),
-    wrapper:
-        wf.wrapper_path("star")
+if wf.config.tool == "star":
+
+    rule ngs_mapping_star_run:
+        input:
+            wf.get_input_files("star", "run"),
+        output:
+            **wf.get_output_files("star", "run"),
+        log:
+            **wf.get_log_file("star", "run"),
+        threads: wf.get_resource("star", "run", "threads")
+        resources:
+            runtime=wf.get_resource("star", "run", "runtime"),
+            mem=wf.get_resource("star", "run", "mem"),
+            partition=wf.get_resource("star", "run", "partition"),
+            tmpdir=wf.get_resource("star", "run", "tmpdir"),
+        params:
+            args=wf.get_args("star", "run"),
+        wrapper:
+            wf.wrapper_path("star")
 
 
 # Run minimap2 ---------------------------------------------------------------
 
 
-rule ngs_mapping_minimap2_run:
-    input:
-        wf.get_input_files("minimap2", "run"),
-    output:
-        **wf.get_output_files("minimap2", "run"),
-    log:
-        **wf.get_log_file("minimap2", "run"),
-    threads: wf.get_resource("minimap2", "run", "threads")
-    resources:
-        runtime=wf.get_resource("minimap2", "run", "runtime"),
-        mem=wf.get_resource("minimap2", "run", "mem"),
-        partition=wf.get_resource("minimap2", "run", "partition"),
-        tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
-    params:
-        args=wf.get_args("minimap2", "run"),
-    wrapper:
-        wf.wrapper_path("minimap2")
+if wf.config.tool == "minimap2":
+
+    rule ngs_mapping_minimap2_run:
+        input:
+            wf.get_input_files("minimap2", "run"),
+        output:
+            **wf.get_output_files("minimap2", "run"),
+        log:
+            **wf.get_log_file("minimap2", "run"),
+        threads: wf.get_resource("minimap2", "run", "threads")
+        resources:
+            runtime=wf.get_resource("minimap2", "run", "runtime"),
+            mem=wf.get_resource("minimap2", "run", "mem"),
+            partition=wf.get_resource("minimap2", "run", "partition"),
+            tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
+        params:
+            args=wf.get_args("minimap2", "run"),
+        wrapper:
+            wf.wrapper_path("minimap2")
 
 
 # QC / Statistics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

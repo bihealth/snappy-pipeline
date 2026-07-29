@@ -204,9 +204,14 @@ class AdapterTrimmingWorkflow(BaseStep):
 
     def __init__(self, *args, task_name: str, **kwargs):
         super().__init__(*args, task_name=task_name, **kwargs)
-        self.register_sub_step_classes(
-            (BbdukStepPart, FastpStepPart, LinkInStepPart, LinkOutFastqStepPart)
-        )
+        match self.config.tool:
+            case "bbduk":
+                selected = BbdukStepPart
+            case "fastp":
+                selected = FastpStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
+        self.register_sub_step_classes((LinkInStepPart, LinkOutFastqStepPart, selected))
 
     @classmethod
     def default_config_yaml(cls):

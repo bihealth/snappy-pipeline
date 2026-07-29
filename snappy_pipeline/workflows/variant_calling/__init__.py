@@ -1060,15 +1060,25 @@ class VariantCallingWorkflow(BaseStep):
                         self.sheet_shortcut_class(info.sheet, **(info.pedigree_field_kwargs or {}))
                     )
 
+        match self.config.tool:
+            case "bcftools_call":
+                selected_caller = BcftoolsCallStepPart
+            case "gatk3_hc":
+                selected_caller = Gatk3HaplotypeCallerStepPart
+            case "gatk3_ug":
+                selected_caller = Gatk3UnifiedGenotyperStepPart
+            case "gatk4_hc_joint":
+                selected_caller = Gatk4HaplotypeCallerJointStepPart
+            case "gatk4_hc_gvcf":
+                selected_caller = Gatk4HaplotypeCallerGvcfStepPart
+            case "mutect2":
+                selected_caller = Mutect2StepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(
             (
                 WritePedigreeStepPart,
-                BcftoolsCallStepPart,
-                Gatk3HaplotypeCallerStepPart,
-                Gatk3UnifiedGenotyperStepPart,
-                Gatk4HaplotypeCallerJointStepPart,
-                Gatk4HaplotypeCallerGvcfStepPart,
-                Mutect2StepPart,
+                selected_caller,
                 BcftoolsStatsStepPart,
                 BcftoolsRohStepPart,
                 JannovarStatisticsStepPart,

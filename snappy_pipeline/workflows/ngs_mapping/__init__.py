@@ -1459,15 +1459,25 @@ class NgsMappingWorkflow(BaseStep):
             task_name=task_name,
             **kwargs,
         )
+        match self.config.tool:
+            case "bwa":
+                selected_mapper = BwaStepPart
+            case "bwa_mem2":
+                selected_mapper = BwaMem2StepPart
+            case "mbcs":
+                selected_mapper = MBCsStepPart
+            case "external":
+                selected_mapper = ExternalStepPart
+            case "minimap2":
+                selected_mapper = Minimap2StepPart
+            case "star":
+                selected_mapper = StarStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(
             (
-                BwaStepPart,
-                BwaMem2StepPart,
-                MBCsStepPart,
-                ExternalStepPart,
+                selected_mapper,
                 LinkInStepPart,
-                Minimap2StepPart,
-                StarStepPart,
                 StrandednessStepPart,
                 TargetCovReportStepPart,
                 BamCollectDocStepPart,

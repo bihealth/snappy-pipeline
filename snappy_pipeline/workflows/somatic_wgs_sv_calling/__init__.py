@@ -436,7 +436,14 @@ class SomaticWgsSvCallingWorkflow(BaseStep):
             **kwargs,
         )
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((Delly2StepPart, MantaStepPart, LinkOutStepPart))
+        match self.config.tool:
+            case "manta":
+                selected_caller = MantaStepPart
+            case "delly2":
+                selected_caller = Delly2StepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
+        self.register_sub_step_classes((selected_caller, LinkOutStepPart))
 
     @listify
     def get_result_files(self):

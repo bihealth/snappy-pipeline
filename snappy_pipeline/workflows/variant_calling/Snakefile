@@ -313,137 +313,139 @@ if wf.config.bcftools_roh and wf.config.bcftools_roh.enabled:
 
 # Run MuTect 2 ----------------------------------------------------------------
 
-if getattr(wf.config.mutect2, "contamination", None) and wf.config.mutect2.contamination.enabled:
+if tool == "mutect2":
 
-    rule variant_calling_mutect2_pileup_normal:
+    if (
+        getattr(wf.config.mutect2, "contamination", None)
+        and wf.config.mutect2.contamination.enabled
+    ):
+
+        rule variant_calling_mutect2_pileup_normal:
+            input:
+                unpack(wf.get_input_files("mutect2", "pileup_normal")),
+            output:
+                **wf.get_output_files("mutect2", "pileup_normal"),
+            log:
+                **wf.get_log_file("mutect2", "pileup_normal"),
+            threads: wf.get_resource("mutect2", "pileup_normal", "threads")
+            resources:
+                runtime=wf.get_resource("mutect2", "pileup_normal", "runtime"),
+                mem=wf.get_resource("mutect2", "pileup_normal", "mem"),
+                partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
+                tmpdir=wf.get_resource("mutect2", "pileup_normal", "tmpdir"),
+            params:
+                args=wf.get_args("mutect2", "pileup_normal"),
+            wrapper:
+                wf.wrapper_path("mutect2/pileup")
+
+        rule variant_calling_mutect2_pileup_tumor:
+            input:
+                unpack(wf.get_input_files("mutect2", "pileup_tumor")),
+            output:
+                **wf.get_output_files("mutect2", "pileup_tumor"),
+            log:
+                **wf.get_log_file("mutect2", "pileup_tumor"),
+            threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
+            resources:
+                runtime=wf.get_resource("mutect2", "pileup_tumor", "runtime"),
+                mem=wf.get_resource("mutect2", "pileup_tumor", "mem"),
+                partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
+                tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
+            params:
+                args=wf.get_args("mutect2", "pileup_tumor"),
+            wrapper:
+                wf.wrapper_path("mutect2/pileup")
+
+        rule variant_calling_mutect2_contamination:
+            input:
+                unpack(wf.get_input_files("mutect2", "contamination")),
+            output:
+                **wf.get_output_files("mutect2", "contamination"),
+            log:
+                **wf.get_log_file("mutect2", "contamination"),
+            threads: wf.get_resource("mutect2", "contamination", "threads")
+            resources:
+                runtime=wf.get_resource("mutect2", "contamination", "runtime"),
+                mem=wf.get_resource("mutect2", "contamination", "mem"),
+                partition=wf.get_resource("mutect2", "contamination", "partition"),
+                tmpdir=wf.get_resource("mutect2", "contamination", "tmpdir"),
+            wrapper:
+                wf.wrapper_path("mutect2/contamination")
+
+    scattergather:
+        mutect2=(
+            getattr(wf.config.mutect2, "num_jobs", 24)
+            if getattr(wf.config, "mutect2", None)
+            else 24
+        ),
+
+    rule variant_calling_mutect2_scatter:
         input:
-            unpack(wf.get_input_files("mutect2", "pileup_normal")),
+            unpack(wf.get_input_files("mutect2", "scatter")),
         output:
-            **wf.get_output_files("mutect2", "pileup_normal"),
+            **wf.get_output_files("mutect2", "scatter"),
         log:
-            **wf.get_log_file("mutect2", "pileup_normal"),
-        threads: wf.get_resource("mutect2", "pileup_normal", "threads")
+            **wf.get_log_file("mutect2", "scatter"),
+        localrule: True
+        threads: 1
         resources:
-            runtime=wf.get_resource("mutect2", "pileup_normal", "runtime"),
-            mem=wf.get_resource("mutect2", "pileup_normal", "mem"),
-            partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
-            tmpdir=wf.get_resource("mutect2", "pileup_normal", "tmpdir"),
+            runtime=wf.get_resource("mutect2", "scatter", "runtime"),
+            mem=wf.get_resource("mutect2", "scatter", "mem"),
+            partition=wf.get_resource("mutect2", "scatter", "partition"),
+            tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "pileup_normal"),
+            args=wf.get_args("mutect2", "scatter"),
         wrapper:
-            wf.wrapper_path("mutect2/pileup")
+            wf.wrapper_path("split_regions")
 
-    rule variant_calling_mutect2_pileup_tumor:
+    rule variant_calling_mutect2_run:
         input:
-            unpack(wf.get_input_files("mutect2", "pileup_tumor")),
+            unpack(wf.get_input_files("mutect2", "run")),
         output:
-            **wf.get_output_files("mutect2", "pileup_tumor"),
+            **wf.get_output_files("mutect2", "run"),
         log:
-            **wf.get_log_file("mutect2", "pileup_tumor"),
-        threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
+            **wf.get_log_file("mutect2", "run"),
+        threads: wf.get_resource("mutect2", "run", "threads")
         resources:
-            runtime=wf.get_resource("mutect2", "pileup_tumor", "runtime"),
-            mem=wf.get_resource("mutect2", "pileup_tumor", "mem"),
-            partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
-            tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
+            runtime=wf.get_resource("mutect2", "run", "runtime"),
+            mem=wf.get_resource("mutect2", "run", "mem"),
+            partition=wf.get_resource("mutect2", "run", "partition"),
+            tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "pileup_tumor"),
+            args=wf.get_args("mutect2", "run"),
         wrapper:
-            wf.wrapper_path("mutect2/pileup")
+            wf.wrapper_path("mutect2/run")
 
-    rule variant_calling_mutect2_contamination:
+    rule variant_calling_mutect2_gather:
         input:
-            unpack(wf.get_input_files("mutect2", "contamination")),
+            unpack(wf.get_input_files("mutect2", "gather")),
         output:
-            **wf.get_output_files("mutect2", "contamination"),
+            **wf.get_output_files("mutect2", "gather"),
         log:
-            **wf.get_log_file("mutect2", "contamination"),
-        threads: wf.get_resource("mutect2", "contamination", "threads")
+            **wf.get_log_file("mutect2", "gather"),
+        threads: 1
         resources:
-            runtime=wf.get_resource("mutect2", "contamination", "runtime"),
-            mem=wf.get_resource("mutect2", "contamination", "mem"),
-            partition=wf.get_resource("mutect2", "contamination", "partition"),
-            tmpdir=wf.get_resource("mutect2", "contamination", "tmpdir"),
+            runtime=wf.get_resource("mutect2", "gather", "runtime"),
+            mem=wf.get_resource("mutect2", "gather", "mem"),
+            partition=wf.get_resource("mutect2", "gather", "partition"),
+            tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
         wrapper:
-            wf.wrapper_path("mutect2/contamination")
+            wf.wrapper_path("mutect2/gather")
 
-
-scattergather:
-    mutect2=(
-        getattr(wf.config.mutect2, "num_jobs", 24) if getattr(wf.config, "mutect2", None) else 24
-    ),
-
-
-rule variant_calling_mutect2_scatter:
-    input:
-        unpack(wf.get_input_files("mutect2", "scatter")),
-    output:
-        **wf.get_output_files("mutect2", "scatter"),
-    log:
-        **wf.get_log_file("mutect2", "scatter"),
-    localrule: True
-    threads: 1
-    resources:
-        runtime=wf.get_resource("mutect2", "scatter", "runtime"),
-        mem=wf.get_resource("mutect2", "scatter", "mem"),
-        partition=wf.get_resource("mutect2", "scatter", "partition"),
-        tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
-    params:
-        args=wf.get_args("mutect2", "scatter"),
-    wrapper:
-        wf.wrapper_path("split_regions")
-
-
-rule variant_calling_mutect2_run:
-    input:
-        unpack(wf.get_input_files("mutect2", "run")),
-    output:
-        **wf.get_output_files("mutect2", "run"),
-    log:
-        **wf.get_log_file("mutect2", "run"),
-    threads: wf.get_resource("mutect2", "run", "threads")
-    resources:
-        runtime=wf.get_resource("mutect2", "run", "runtime"),
-        mem=wf.get_resource("mutect2", "run", "mem"),
-        partition=wf.get_resource("mutect2", "run", "partition"),
-        tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
-    params:
-        args=wf.get_args("mutect2", "run"),
-    wrapper:
-        wf.wrapper_path("mutect2/run")
-
-
-rule variant_calling_mutect2_gather:
-    input:
-        unpack(wf.get_input_files("mutect2", "gather")),
-    output:
-        **wf.get_output_files("mutect2", "gather"),
-    log:
-        **wf.get_log_file("mutect2", "gather"),
-    threads: 1
-    resources:
-        runtime=wf.get_resource("mutect2", "gather", "runtime"),
-        mem=wf.get_resource("mutect2", "gather", "mem"),
-        partition=wf.get_resource("mutect2", "gather", "partition"),
-        tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
-    wrapper:
-        wf.wrapper_path("mutect2/gather")
-
-
-rule variant_calling_mutect2_filter:
-    input:
-        unpack(wf.get_input_files("mutect2", "filter")),
-    output:
-        **wf.get_output_files("mutect2", "filter"),
-    log:
-        **wf.get_log_file("mutect2", "filter"),
-    threads: wf.get_resource("mutect2", "filter", "threads")
-    resources:
-        runtime=wf.get_resource("mutect2", "filter", "runtime"),
-        mem=wf.get_resource("mutect2", "filter", "mem"),
-        partition=wf.get_resource("mutect2", "filter", "partition"),
-        tmpdir=wf.get_resource("mutect2", "filter", "tmpdir"),
-    params:
-        args=wf.get_args("mutect2", "filter"),
-    wrapper:
-        wf.wrapper_path("mutect2/filter")
+    rule variant_calling_mutect2_filter:
+        input:
+            unpack(wf.get_input_files("mutect2", "filter")),
+        output:
+            **wf.get_output_files("mutect2", "filter"),
+        log:
+            **wf.get_log_file("mutect2", "filter"),
+        threads: wf.get_resource("mutect2", "filter", "threads")
+        resources:
+            runtime=wf.get_resource("mutect2", "filter", "runtime"),
+            mem=wf.get_resource("mutect2", "filter", "mem"),
+            partition=wf.get_resource("mutect2", "filter", "partition"),
+            tmpdir=wf.get_resource("mutect2", "filter", "tmpdir"),
+        params:
+            args=wf.get_args("mutect2", "filter"),
+        wrapper:
+            wf.wrapper_path("mutect2/filter")
