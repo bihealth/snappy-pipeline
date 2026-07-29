@@ -919,7 +919,9 @@ def generic_sheet_fake_fs(fake_fs, generic_mix_extraction_sheet_tsv):
         fake_fs.fs.create_file(tpl.format(folder=folder, i=2), create_missing_dirs=True)
     # Create the sample TSV file
     fake_fs.fs.create_file(
-        "/work/config/sheet.tsv", contents=generic_mix_extraction_sheet_tsv, create_missing_dirs=True
+        "/work/config/sheet.tsv",
+        contents=generic_mix_extraction_sheet_tsv,
+        create_missing_dirs=True,
     )
     return fake_fs
 
@@ -967,7 +969,7 @@ def hla_typing_result_fake_fs(fake_fs, cancer_sheet_tsv):
             contents=contents,
             create_missing_dirs=True,
         )
-        if isTumor == "Y" and extract =="RNA":
+        if isTumor == "Y" and extract == "RNA":
             contents = r"""
 {
     "A": ["A*02:01", "A*11:01"],
@@ -992,7 +994,7 @@ def strandedness_result_fake_fs(fake_fs, cancer_sheet_tsv):
     tpl = "NGS_MAPPING/output/{mapping_tool}.{library_name}/strandedness/{mapping_tool}.{library_name}.decision.json"
     for line in cancer_sheet_tsv.splitlines()[8:]:
         (donor, sample, isTumor, assay, folder, libraryKit, extract) = line.split("\t")
-        if isTumor == "Y" and extract =="RNA":
+        if isTumor == "Y" and extract == "RNA":
             library_name = f"{donor}-{sample}-{extract}1-{assay}1"
             contents = r"""
 {
