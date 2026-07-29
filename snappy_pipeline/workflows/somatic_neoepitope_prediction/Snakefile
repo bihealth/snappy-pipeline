@@ -49,11 +49,7 @@ rule somatic_neoepitope_link_out_run:
 # Install pVACtools docker container ------------------------------------------
 
 
-if (
-    ("pvacseq" in wf.config.tools and not wf.config.pvacseq.path_container)
-    or ("pvacfuse" in wf.config.tools and not wf.config.pvacfuse.path_container)
-    or ("pvacsplice" in wf.config.tools and not wf.config.pvacsplice.path_container)
-):
+if not getattr(wf.config, wf.config.tool).path_container:
 
     rule somatic_neoepitope_install_pvactools:
         output:
@@ -76,9 +72,7 @@ if (
 # Rename samples for pVACtools ------------------------------------------------
 
 
-if ("pvacseq" in wf.config.tools and not wf.config.pvacseq.use_all_transcripts) or (
-    "pvacsplice" in wf.config.tools and not wf.config.pvacsplice.use_all_transcripts
-):
+if wf.config.tool != "pvacfuse" and not getattr(wf.config, wf.config.tool).use_all_transcripts:
 
     rule somatic_neoepitope_normalize:
         input:
@@ -99,9 +93,7 @@ if ("pvacseq" in wf.config.tools and not wf.config.pvacseq.use_all_transcripts) 
             wf.wrapper_path("pvactools/normalize")
 
 
-if ("pvacseq" in wf.config.tools and wf.config.pvacseq.use_all_transcripts) or (
-    "pvacsplice" in wf.config.tools and wf.config.pvacsplice.use_all_transcripts
-):
+if wf.config.tool != "pvacfuse" and getattr(wf.config, wf.config.tool).use_all_transcripts:
 
     rule somatic_neoepitope_normalize_full:
         input:
@@ -146,7 +138,7 @@ if wf.config.proteome.enabled and wf.config.proteome.add_unmutated:
             wf.wrapper_path("pvactools/create_proteome")
 
 
-if wf.config.pileup.enabled:
+if wf.config.tool == "pvacseq" and wf.config.pileup.enabled:
 
     rule somatic_neoepitope_pileup:
         input:
@@ -167,7 +159,7 @@ if wf.config.pileup.enabled:
             wf.wrapper_path("pvactools/pileup")
 
 
-if wf.config.quantification.enabled:
+if wf.config.tool == "pvacseq" and wf.config.quantification.enabled:
 
     rule somatic_neoepitope_combine:
         input:
@@ -212,7 +204,7 @@ if wf.config.phasing.enabled:
 # pVACseq-only rules ----------------------------------------------------------
 
 
-if "pvacseq" in wf.config.tools:
+if wf.config.tool == "pvacseq":
 
     rule somatic_neoepitope_prediction_pvacseq:
         input:
@@ -254,7 +246,7 @@ if "pvacseq" in wf.config.tools:
 # pVACfuse-only rules ---------------------------------------------------------
 
 
-if "pvacfuse" in wf.config.tools:
+if wf.config.tool == "pvacfuse":
 
     rule somatic_neoepitope_prediction_pvacfuse:
         input:
@@ -296,7 +288,7 @@ if "pvacfuse" in wf.config.tools:
 # pVACsplice-only rules -------------------------------------------------------
 
 
-if "pvacsplice" in wf.config.tools:
+if wf.config.tool == "pvacsplice":
 
     rule somatic_neoepitope_junction:
         input:

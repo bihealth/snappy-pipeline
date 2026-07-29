@@ -103,7 +103,10 @@ from snappy_pipeline.workflows.gene_expression_quantification import (
 )
 from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
 from snappy_pipeline.workflows.somatic_gene_fusion_calling import SomaticGeneFusionCallingWorkflow
-from .model import SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel
+from .model import (
+    SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel,
+    SupportedPredictionTool,
+)
 from .model import PVACseq as PVACseqModel
 from .model import PVACfuse as PVACfuseModel
 from .model import PVACsplice as PVACspliceModel
@@ -1091,12 +1094,19 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             **kwargs,
         )
 
+        match self.config.tool:
+            case SupportedPredictionTool.PVACSEQ:
+                selected_sub_step = PvacSeqStepPart
+            case SupportedPredictionTool.PVACFUSE:
+                selected_sub_step = PvacFuseStepPart
+            case SupportedPredictionTool.PVACSPLICE:
+                selected_sub_step = PvacSpliceStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(
             (
                 PvacToolsStepPart,
-                PvacSeqStepPart,
-                PvacFuseStepPart,
-                PvacSpliceStepPart,
+                selected_sub_step,
                 PhasingStepPart,
                 NetChopStepPart,
                 ProteomeStepPart,
@@ -1114,7 +1124,8 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         self.tumor_rna = self._dna_to_rna_mapping(df)
 
         if (self.config.pileup.enabled or self.config.quantification.enabled) or (
-            "pvacfuse" in self.config.tools or "pvacsplice" in self.config.tools
+            self.config.tool
+            in (SupportedPredictionTool.PVACFUSE, SupportedPredictionTool.PVACSPLICE)
         ):
             assert any(lib in self.tumor_rna for lib in self.tumor_dna), (
                 "No tumor sample with somatic variant has expression data"
@@ -1127,36 +1138,37 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
 
         tumor_samples = [lib for lib, norm in self.tumor_dna.items() if norm]
 
-        for tool_name in self.config.tools:
-            tool = self.sub_steps[tool_name]
+        tool_name = self.config.tool
+        tool = self.sub_steps[tool_name]
+        tool_cfg = self.config.get(tool_name)
 
-            if self.config.get(tool_name).class_i_epitope_length:
-                mhc_class_d = "MHC_Class_I"
-                mhc_class_fn = "MHC_I"
-                if self.config.get(tool_name).class_ii_epitope_length:
-                    mhc_class_d = "combined"
-                    mhc_class_fn = "Combined"
-            else:
-                mhc_class_d = "MHC_Class_II"
-                mhc_class_fn = "MHC_II"
+        if tool_cfg.class_i_epitope_length:
+            mhc_class_d = "MHC_Class_I"
+            mhc_class_fn = "MHC_I"
+            if tool_cfg.class_ii_epitope_length:
+                mhc_class_d = "combined"
+                mhc_class_fn = "Combined"
+        else:
+            mhc_class_d = "MHC_Class_II"
+            mhc_class_fn = "MHC_II"
 
-            if self.config.get(tool_name).net_chop.enabled:
-                ext = "netchop"
-            else:
-                ext = "filtered"
+        if tool_cfg.net_chop.enabled:
+            ext = "netchop"
+        else:
+            ext = "filtered"
 
-            for tumor_dna in tumor_samples:
-                if tool.require_rna and self.tumor_rna.get(tumor_dna, None) is None:
-                    continue
+        for tumor_dna in tumor_samples:
+            if tool.require_rna and self.tumor_rna.get(tumor_dna, None) is None:
+                continue
 
-                d = f"output/{tool_name}.{tumor_dna}"
-                fn = f"out/{mhc_class_d}/{tumor_dna}.{mhc_class_fn}.{ext}.tsv"
-                yield f"{d}/{fn}"
+            d = f"output/{tool_name}.{tumor_dna}"
+            fn = f"out/{mhc_class_d}/{tumor_dna}.{mhc_class_fn}.{ext}.tsv"
+            yield f"{d}/{fn}"
 
-                fn = f"log/{mhc_class_d}.{tumor_dna}.{mhc_class_fn}.{ext}.{{log_ext}}{{hash_ext}}"
-                for log_ext in log_exts:
-                    for hash_suffix in hash_exts:
-                        yield f"{d}/{fn.format(log_ext=log_ext, hash_ext=hash_suffix)}"
+            fn = f"log/{mhc_class_d}.{tumor_dna}.{mhc_class_fn}.{ext}.{{log_ext}}{{hash_ext}}"
+            for log_ext in log_exts:
+                for hash_suffix in hash_exts:
+                    yield f"{d}/{fn.format(log_ext=log_ext, hash_ext=hash_suffix)}"
 
     def check_config(self):
         for extraction_type in (ExtractionType.DNA, ExtractionType.RNA):

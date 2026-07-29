@@ -460,7 +460,7 @@ class SomaticNeoepitopePredictionDependsOn(SnappyModel):
 class SomaticNeoepitopePrediction(SnappyStepModel):
     depends_on: SomaticNeoepitopePredictionDependsOn
 
-    tools: list[SupportedPredictionTool] = [SupportedPredictionTool.PVACSEQ]
+    tool: SupportedPredictionTool = SupportedPredictionTool.PVACSEQ
 
     tools_hla_typing: HlaTypingTools = HlaTypingTools()
 
