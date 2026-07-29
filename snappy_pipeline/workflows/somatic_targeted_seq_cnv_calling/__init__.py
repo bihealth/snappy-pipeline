@@ -304,22 +304,6 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "length": self.config.sequenza.length,
         }
 
-    def _get_args_report(self, wildcards: Wildcards) -> dict[str, Any]:
-        extra_args_extract = self._coerce_model(
-            SequenzaExtractExtraArgs, self.config.sequenza.extra_args_extract
-        )
-        extra_args_fit = self._coerce_model(
-            SequenzaFitExtraArgs, self.config.sequenza.extra_args_fit
-        )
-        return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
-            "assembly": self.config.sequenza.assembly,
-            "ignore_chroms": self.config.sequenza.ignore_chroms,
-            "extra_args_extract": extra_args_extract.model_dump(by_alias=True),
-            "extra_args_fit": extra_args_fit.model_dump(by_alias=True),
-            "library_name": wildcards.tumor_library,
-        }
-
     def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
         extra_args_extract = self._coerce_model(
             SequenzaExtractExtraArgs, self.config.sequenza.extra_args_extract
