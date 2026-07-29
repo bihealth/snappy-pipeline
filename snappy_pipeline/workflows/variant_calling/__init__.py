@@ -1010,8 +1010,8 @@ class VariantCallingWorkflow(BaseStep):
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
-            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
         }
 
     @classmethod
@@ -1095,7 +1095,7 @@ class VariantCallingWorkflow(BaseStep):
 class SomaticVariantCallingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
+        self.base_path_out = "work/{library_name}/out/{library_name}{ext}"
 
     def get_input_files(self, action: str):
         self._validate_action(action)
@@ -1152,7 +1152,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
     def get_log_file(self, action):
         self._validate_action(action)
 
-        prefix = "work/{{library_name}}/log/{{library_name}}"
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -1380,7 +1380,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         if action == "run":
             base_path_out = (
-                "work/{{library_name}}/out/{{library_name}}/mutect2par/run/{{scatteritem}}{ext}"
+                "work/{library_name}/out/{library_name}/mutect2par/run/{scatteritem}{ext}"
             )
             exts = {
                 "vcf": ".raw.vcf.gz",
