@@ -263,7 +263,7 @@ pytest-xdist = ">=3.8.0,<4"
 
 [tool.pixi.feature.dev.tasks]
 fmt = { cmd = "ruff format .", description = "Apply Ruff code formatter" }
-snakefmt = { cmd = "snakefmt .", description = "Apply Snakefmt code formatter" }
+snakefmt = { cmd = "snakefmt snappy_pipeline/workflows/*/Snakefile", description = "Apply Snakefmt code formatter" }
 srcfmt = { depends-on = ["fmt", "snakefmt"], description = "Apply Python and Snakemake formatters" }
 
 check = { cmd = "ruff check .", description = "Run Ruff code checker" }
