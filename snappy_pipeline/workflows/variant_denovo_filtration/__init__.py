@@ -207,10 +207,8 @@ class FilterDeNovosStepPart(FilterDeNovosBaseStepPart):
                 library_name=real_index.dna_ngs_library.name,
                 **extra_kwargs,
             )
-            yield "vcf", upstream_vcf["vcf"]
-            yield "vcf_tbi", upstream_vcf["vcf_tbi"]
-
-        return input_function
+            yield "vcf", getattr(upstream_vcf, "vcf", upstream_vcf["vcf"])
+            yield "vcf_tbi", getattr(upstream_vcf, "vcf_tbi", upstream_vcf.get("vcf_tbi", ""))
 
         return input_function
 
@@ -509,7 +507,6 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
                 LinkOutStepPart,
             )
         )
-        # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
 
     @listify
     def get_result_files(self):
@@ -520,10 +517,12 @@ class VariantDeNovoFiltrationWorkflow(BaseStep):
             "output/{index_library.name}/out/{index_library.name}{ext}",
             ext=ext_values,
         )
+        # Summarise counts
         yield from expand(
             "output/denovo_count_summary/out/denovo_count_summary{ext}",
             ext=(".txt", ".txt.md5"),
         )
+        # Collect MSDN statistics
         if self.get_task_config("variant_denovo_filtration").collect_msdn:
             yield from expand(
                 "output/multisite_de_novo/out/multisite_de_novo{ext}",
