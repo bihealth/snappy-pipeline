@@ -189,59 +189,6 @@ Example Output
 Given a pedigree with index ``index`` and two more donors ``mother`` and ``father``, the following
 files would be created into ``output/``
 (each VCF file has a ``.tbi`` file and overall each file has a ``.md5`` file).
-
-
-```
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.wrapper.py
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.conda_info.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.conda_list.txt
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.environment.yaml
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.log
-index-N1-DNA1-WES1/log/index-N1-DNA1-WES1.jannovar_stats_run.wrapper.py
-index-N1-DNA1-WES1/out/index-N1-DNA1-WES1.g.vcf.gz
-index-N1-DNA1-WES1/out/index-N1-DNA1-WES1.vcf.gz
-index-N1-DNA1-WES1/report/baf/index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf.bw
-index-N1-DNA1-WES1/report/baf/index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf.bw
-index-N1-DNA1-WES1/report/baf/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf.bw
-index-N1-DNA1-WES1/report/bcftools_stats/index-N1-DNA1-WES1.index-N1-DNA1-WES1.txt
-index-N1-DNA1-WES1/report/bcftools_stats/index-N1-DNA1-WES1.father-N1-DNA1-WES1.txt
-index-N1-DNA1-WES1/report/bcftools_stats/index-N1-DNA1-WES1.mother-N1-DNA1-WES1.txt
-index-N1-DNA1-WES1/report/jannovar_stats/index-N1-DNA1-WES1.txt
-```
 """
 
 import re
@@ -252,13 +199,14 @@ from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    LinkOutStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
-    LinkOutStepPart,
 )
 from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDict,
@@ -269,7 +217,6 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_calling.model import TumorNormalMode
-from snappy_pipeline.models import RelationshipDefinition
 
 from .model import VariantCalling as VariantCallingConfigModel
 
@@ -423,7 +370,10 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
         bams = []
         for _, row in df_target.iterrows():
             infix = row["library_name"]
-            bams.append(self.parent.upstream("ngs_mapping")(f"output/{infix}/out/{infix}.bam"))
+            aln: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=infix
+            )
+            bams.append(getattr(aln, "bam", aln["bam"]))
         yield "bam", bams
 
     def get_output_files(self, action) -> SnakemakeDict:
@@ -440,13 +390,6 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
             "vcf_tbi_md5": f"work/{token}/out/{token}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(work_files.values(), self.get_log_file("run").values())
-            ],
-        )
 
 
 class BcftoolsCallStepPart(VariantCallingStepPart):
@@ -454,6 +397,10 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
 
     #: Step name
     name = "bcftools_call"
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_path_out = "work/{library_name}/out/{library_name}"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -582,7 +529,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
             "ngs_mapping", library_name=infix
         )
-        yield "bam", alignments.bam
+        yield "bam", getattr(alignments, "bam", alignments["bam"])
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
@@ -647,7 +594,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
         yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
-        yield "output_links", []
 
     @dictify
     def _get_output_files_combine_gvcfs(self) -> SnakemakeDictItemsGenerator:
@@ -656,7 +602,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
         yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
-        yield "output_links", []
 
     @dictify
     def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
@@ -672,13 +617,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
         }
         yield from result.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(result.values(), self.get_log_file("genotype").values())
-            ],
-        )
 
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
@@ -760,13 +698,6 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
         )
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(work_files.values(), self.get_log_file("run").values())
-            ],
-        )
 
     def get_args(self, action: str):
         self._validate_action(action)
@@ -961,13 +892,6 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         for key, ext in ext_names.items():
             work_files[key] = f"work/{base_path}{ext}"
         yield from work_files.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(work_files.values(), self.get_log_file("run").values())
-            ],
-        )
 
     def get_args(self, action: str):
         return {"min_dp": self.config.baf_file_generation.min_dp}
@@ -978,129 +902,6 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
             threads=1,
             runtime="2h",
             mem="1024MB",
-        )
-
-
-class VariantCallingWorkflow(BaseStep):
-    """Workflow implementation for germline variant calling"""
-
-    name = "variant_calling"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
-    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"}))]
-    config_model_class = VariantCallingConfigModel
-    sheet_shortcut_class = GermlineCaseSheet
-
-    #: Default relationship for somatic (mutect2) callers: resolve matched normal.
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
-
-    @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
-        """Return local VCF output paths for a germline-variants signature.
-
-        Arguments:
-            signature: Expected to satisfy
-                ``DataSignature(DataType.VARIANTS, frozenset({"germline"}))``.
-            **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
-                the ``{library_name}`` wildcard placeholder.
-        """
-        cls.require_signature(signature)
-        lib = kwargs.get("library_name", "{library_name}")
-        return {
-            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
-        }
-
-    @classmethod
-    def default_config_yaml(cls) -> str:
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
-
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(NgsMappingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
-        # Rebuild shortcut_sheets to use the appropriate shortcut class based on sheet type.
-        # Pedigree kwargs (e.g. join_by_field) must be forwarded so that germline
-        # shortcut sheets can resolve family relationships properly.
-        self.shortcut_sheets = []
-        for info in self.data_set_infos:
-            if info.sheet:
-                if info.sheet_type == "germline_variants":
-                    from biomedsheets.shortcuts.germline import GermlineCaseSheet
-
-                    self.shortcut_sheets.append(
-                        GermlineCaseSheet(info.sheet, **(info.pedigree_field_kwargs or {}))
-                    )
-                elif info.sheet_type in ("matched_cancer", "cancer_matched"):
-                    from biomedsheets.shortcuts.cancer import CancerCaseSheet
-
-                    self.shortcut_sheets.append(CancerCaseSheet(info.sheet))
-                else:
-                    self.shortcut_sheets.append(
-                        self.sheet_shortcut_class(info.sheet, **(info.pedigree_field_kwargs or {}))
-                    )
-
-        match self.config.tool:
-            case "bcftools_call":
-                selected_caller = BcftoolsCallStepPart
-            case "gatk3_hc":
-                selected_caller = Gatk3HaplotypeCallerStepPart
-            case "gatk3_ug":
-                selected_caller = Gatk3UnifiedGenotyperStepPart
-            case "gatk4_hc_joint":
-                selected_caller = Gatk4HaplotypeCallerJointStepPart
-            case "gatk4_hc_gvcf":
-                selected_caller = Gatk4HaplotypeCallerGvcfStepPart
-            case "mutect2":
-                selected_caller = Mutect2StepPart
-            case _:
-                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes(
-            (
-                WritePedigreeStepPart,
-                selected_caller,
-                BcftoolsStatsStepPart,
-                BcftoolsRohStepPart,
-                JannovarStatisticsStepPart,
-                BafFileGenerationStepPart,
-                LinkOutStepPart,
-            )
-        )
-
-    @listify
-    def get_result_files(self) -> SnakemakeListItemsGenerator:
-        yield from self.sub_steps[self.config.tool].get_result_files()
-        for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
-            name_config = self.config.get(name)
-            if name_config and name_config.enabled:
-                yield from self.sub_steps[name].get_result_files()
-
-    def check_config(self):
-        # Checks for static data
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for variant calling",
         )
 
 
@@ -1482,9 +1283,134 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
             df = apply_library_selection(df, selection, "cancer")
         else:
-            # Fallback if no selection: just get all tumor libraries
             df = df[df["role"] == "tumor"]
 
         tpl = "output/{library_name}/out/{library_name}.vcf.gz"
         for _, row in df.iterrows():
             yield tpl.format(library_name=row["library_name"])
+
+
+class VariantCallingWorkflow(BaseStep):
+    """Workflow implementation for germline variant calling"""
+
+    name = "variant_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        DataSignature(DataType.VARIANTS, frozenset({"germline"})),
+        DataSignature(DataType.VARIANTS),
+    ]
+    config_model_class = VariantCallingConfigModel
+    sheet_shortcut_class = GermlineCaseSheet
+
+    #: Default relationship for somatic (mutect2) callers: resolve matched normal.
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
+
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local VCF output paths for a germline-variants signature.
+
+        Arguments:
+            signature: Expected to satisfy
+                ``DataSignature(DataType.VARIANTS, frozenset({"germline"}))``.
+            **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
+                the ``{library_name}`` wildcard placeholder.
+        """
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+        }
+
+    @classmethod
+    def default_config_yaml(cls) -> str:
+        """Return default config YAML, to be overwritten by project-specific one"""
+        return DEFAULT_CONFIG
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
+        super().__init__(
+            workflow,
+            config,
+            config_lookup_paths,
+            config_paths,
+            workdir,
+            previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
+        )
+        self.shortcut_sheets = []
+        for info in self.data_set_infos:
+            if info.sheet:
+                if info.sheet_type == "germline_variants":
+                    from biomedsheets.shortcuts.germline import GermlineCaseSheet
+
+                    self.shortcut_sheets.append(
+                        GermlineCaseSheet(info.sheet, **(info.pedigree_field_kwargs or {}))
+                    )
+                elif info.sheet_type in ("matched_cancer", "cancer_matched"):
+                    from biomedsheets.shortcuts.cancer import CancerCaseSheet
+
+                    self.shortcut_sheets.append(CancerCaseSheet(info.sheet))
+                else:
+                    self.shortcut_sheets.append(
+                        self.sheet_shortcut_class(info.sheet, **(info.pedigree_field_kwargs or {}))
+                    )
+
+        match self.config.tool:
+            case "bcftools_call":
+                selected_caller = BcftoolsCallStepPart
+            case "gatk3_hc":
+                selected_caller = Gatk3HaplotypeCallerStepPart
+            case "gatk3_ug":
+                selected_caller = Gatk3UnifiedGenotyperStepPart
+            case "gatk4_hc_joint":
+                selected_caller = Gatk4HaplotypeCallerJointStepPart
+            case "gatk4_hc_gvcf":
+                selected_caller = Gatk4HaplotypeCallerGvcfStepPart
+            case "mutect2":
+                selected_caller = Mutect2StepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
+        self.register_sub_step_classes(
+            (
+                WritePedigreeStepPart,
+                selected_caller,
+                BcftoolsStatsStepPart,
+                BcftoolsRohStepPart,
+                JannovarStatisticsStepPart,
+                BafFileGenerationStepPart,
+                LinkOutStepPart,
+            )
+        )
+
+    @listify
+    def get_result_files(self) -> SnakemakeListItemsGenerator:
+        yield from self.sub_steps[self.config.tool].get_result_files()
+        for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
+            name_config = self.config.get(name)
+            if name_config and name_config.enabled:
+                yield from self.sub_steps[name].get_result_files()
+
+    def check_config(self):
+        # Checks for static data
+        self.ensure_w_config(
+            ("static_data_config", "reference", "path"),
+            "Path to reference FASTA not configured but required for variant calling",
+        )

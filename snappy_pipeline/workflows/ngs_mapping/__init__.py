@@ -972,8 +972,10 @@ class StrandednessStepPart(BaseStepPart):
         self._validate_action(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
+            cfg = getattr(self.config, "strandedness", None)
+            config_dump = cfg.model_dump(by_alias=True) if cfg else {}
             return {
-                "config": self.config.strandedness.model_dump(by_alias=True),
+                "config": config_dump,
                 "library_name": wildcards.library_name,
             }
 

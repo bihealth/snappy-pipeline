@@ -31,7 +31,7 @@ _LOG_PREFIX = "work/{library_name}/log/{library_name}"
 class CreateProteomeStepPart(BaseStepPart):
     name = "create_proteome"
     actions = ("run",)
-    default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="03:59:59")
+    default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
     def get_input_files(self, action: str):
         self._validate_action(action)
@@ -46,7 +46,7 @@ class CreateProteomeStepPart(BaseStepPart):
             yield "proteome", self.config.path_proteome
 
         variant = self.parent.get_upstream_paths("variant", library_name=wildcards.library_name)
-        yield "vcf", variant["vcf"]
+        yield "vcf", getattr(variant, "vcf", None) or variant["vcf"]
 
     def get_output_files(self, action: str) -> dict[str, Any]:
         match action:

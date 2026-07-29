@@ -77,6 +77,7 @@ import os
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -86,7 +87,6 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticWgsSvCalling as SomaticWgsSvCallingConfigModel
 
@@ -197,7 +197,14 @@ class Delly2StepPart(BaseStepPart):
     name = "delly2"
 
     #: Actions in Delly 2 workflow
-    actions = ("call", "filter_normal", "genotype", "merge_genotypes", "filter_controls")
+    actions = (
+        "call",
+        "filter_normal",
+        "genotype",
+        "merge_genotypes",
+        "filter_controls",
+        "final_vcf",
+    )
 
     #: Directory infixes
     dir_infixes = {
@@ -207,7 +214,7 @@ class Delly2StepPart(BaseStepPart):
         "genotype": "delly2.genotype.{bam_library}.{sv_type}",
         "merge_genotypes": "delly2.merge_genotypes.{tumor_library}.{sv_type}",
         "filter_controls": "delly2.filter_controls.{tumor_library}.{sv_type}",
-        "final_vcf": "delly2.{tumor_library}.{sv_type}",
+        "final_vcf": "{tumor_library}",
     }
 
     def __init__(self, parent):
@@ -297,7 +304,7 @@ class Delly2StepPart(BaseStepPart):
         infix = self.dir_infixes["genotype"]
         tpl = os.path.join("work", infix, "out", infix + ".bcf")
         # return BCF for one tumor
-        yield tpl.format(bam_library=wildcards.tumor_library.name, **wildcards)
+        yield tpl.format(bam_library=wildcards.tumor_library, **wildcards)
 
         # also create tsv with description of all the samples in this bcf
         infix = self.dir_infixes["merge_genotypes"]
@@ -329,8 +336,7 @@ class Delly2StepPart(BaseStepPart):
 
     def _get_input_files_final_vcf(self, wildcards):
         """Return input files for "final_vcf" action"""
-        _ = wildcards
-        infix = self.dir_infixes["filter_controls"]
+        infix = self.dir_infixes["filter_controls"].format(**wildcards)
         yield os.path.join("work", infix, "out", infix + ".bcf")
 
     def _get_primary_pairs(self):

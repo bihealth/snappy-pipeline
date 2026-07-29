@@ -60,13 +60,12 @@ Available Somatic Targeted CNV Caller
 - ``cnvkit``
 - ``sequenza``
 - ``purecn``. Note that ``purecn`` requires a panel of normals and a second set of variants called by ``mutect2``, that includes germline ones.
-- ``copywriter`` (deprecated, the `R` package was removed with Bioconductor release 3.18)
-- ``cnvetti_on_target`` & ``cnvetti_off_target`` upsupported
 
 """
 
 import os
 import os.path
+import re
 from itertools import chain
 from typing import Any
 
@@ -75,6 +74,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -85,7 +85,6 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.models import RelationshipDefinition
 
 from .model import Cnvkit as CnvkitModel
 from .model import SequenzaExtraArgs, SequenzaExtractExtraArgs, SequenzaFitExtraArgs
@@ -193,16 +192,15 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "run",
     )
 
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
         "coverage": ResourceUsage(
             threads=1,
-            runtime="24h",  # 1 day
+            runtime="24h",
             mem="24GB",
         ),
         "run": ResourceUsage(
             threads=4,
-            runtime="24h",  # 1 day
+            runtime="24h",
             mem="64GB",
         ),
     }
@@ -366,12 +364,12 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     resource_usage = {
         "coverage": ResourceUsage(
             threads=1,
-            runtime="4h",  # 4 hours
+            runtime="4h",
             mem="24GB",
         ),
         "run": ResourceUsage(
             threads=4,
-            runtime="24h",  # 4 hours
+            runtime="24h",
             mem="96GB",
         ),
     }
@@ -399,9 +397,12 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             ).format(**wildcards),
         )
         pon = self.parent.upstream("panel_of_normals")
-        name_pattern = "{tumor_library}".format(
-            caller=self.config.purecn.somatic_variant_caller,
-            **wildcards,
+        somatic_vcf = self.parent.get_upstream_paths(
+            "somatic_variants", library_name=wildcards.tumor_library
+        )
+        yield (
+            "vcf",
+            getattr(somatic_vcf, "full_vcf", getattr(somatic_vcf, "vcf", somatic_vcf["vcf"])),
         )
         base_path = os.path.join("output", name_pattern, "out", name_pattern + ".full.vcf.gz")
         yield "vcf", self.parent.upstream("somatic_variants")(base_path)
@@ -507,19 +508,18 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "report",
     )
 
-    # Overwrite defaults
-    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="7680MB")  # 4h
+    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="7680MB")
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
         "plot": ResourceUsage(
             threads=1,
-            runtime="8h",  # 8 hours
+            runtime="8h",
             mem=f"{30 * 1024}MB",
         ),
         "coverage": ResourceUsage(
             threads=8,
-            runtime="8h",  # 8 hours
+            runtime="8h",
             mem=f"{16 * 1024}MB",
         ),
     }
@@ -822,36 +822,35 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the somatic targeted sequencing CNV calling step"""
-        log_exts = (
-            ".log",
-            ".log.md5",
-            ".conda_info.txt",
-            ".conda_info.txt.md5",
-            ".conda_list.txt",
-            ".conda_list.txt.md5",
-        )
+        tool = self.config.tool
+        sub_step = self.sub_steps[tool]
         tool_actions = {
             Tool.cnvkit: ("fix", "postprocess", "report", "plot", "export"),
             Tool.sequenza: ("coverage", "run"),
             Tool.purecn: ("run",),
         }
-        tool = self.config.tool
         for action in tool_actions[tool]:
-            output_tpls = self.sub_steps[tool].get_output_files(action)
-            if isinstance(output_tpls, dict):
-                exts = [os.path.splitext(v)[1] for v in output_tpls.values()]
-            else:
-                exts = [os.path.splitext(output_tpls)[1]]
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                tumor_library=self.output_entities,
-                ext=exts,
+            output_files = sub_step.get_output_files(action)
+            paths = (
+                list(output_files.values()) if isinstance(output_files, dict) else [output_files]
             )
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "log", "{tumor_library}{ext}"),
-                tumor_library=self.output_entities,
-                ext=log_exts,
+            for p in paths:
+                if isinstance(p, str) and p.startswith("work/"):
+                    out_p = re.sub(r"^work/", "output/", p)
+                    yield from expand(out_p, tumor_library=self.output_entities)
+
+            log_files = sub_step.get_log_file(action)
+            log_paths = (
+                list(log_files.values())
+                if isinstance(log_files, dict)
+                else [log_files]
+                if isinstance(log_files, str)
+                else []
             )
+            for lp in log_paths:
+                if isinstance(lp, str) and lp.startswith("work/"):
+                    out_lp = re.sub(r"^work/", "output/", lp)
+                    yield from expand(out_lp, tumor_library=self.output_entities)
 
     def check_config(self):
         """Check that the necessary global configuration is present"""
