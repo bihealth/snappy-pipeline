@@ -1,0 +1,32 @@
+executor: slurm
+jobs: 250
+
+# Write structured run logs to an SQLite database (viewable with `snkmt`).
+# Requires: snakemake-logger-plugin-snkmt
+logger: snkmt
+
+restart-times: 3
+max-jobs-per-second: 1
+max-status-checks-per-second: 10
+local-cores: 1
+latency-wait: 60
+
+## See
+## https://snakemake.readthedocs.io/en/latest/snakefiles/rules.html#standard-resources
+## https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
+## and
+## https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html#advanced-resource-specifications
+## for more options
+
+# Example resource configuration (default resources might be used by the main snakemake job?)
+default-resources:
+  slurm_partition: "medium"
+  nodes: 1
+  runtime: 1440               # One day, wallclock time
+  mem_mb: 5000
+  disk_mb: 1000000
+  tmpdir: ${HOME}/scratch/tmp
+
+slurm-logdir: "slurm_log"
+slurm-keep-successful-logs: true
+slurm-no-account: true
