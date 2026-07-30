@@ -113,9 +113,7 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["snappy_pipeline", "snappy_wrappers"]
 
-[tool.hatch.build.targets.wheel.shared-data]
-"scripts/snappy-vcf_sort" = "scripts/snappy-vcf_sort"
-"scripts/snappy-vcf_split" = "scripts/snappy-vcf_split"
+
 
 
 # ==============================================================================
