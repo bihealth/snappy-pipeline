@@ -1585,23 +1585,29 @@ class NgsMappingWorkflow(BaseStep):
         if df.empty:
             return
 
-        # Apply library_selection filter first so DNA-only or RNA-only mapping tasks
-        # only validate their selected subset of libraries.
+        # Apply library_selection filter (uses per-kind defaults when selection is None)
         selection = getattr(self.config, "library_selection", None)
-        if selection:
-            # Determine kind ('cancer' or 'germline') based on dataset kind
-            kind = df["kind"].iloc[0] if "kind" in df.columns and not df.empty else "germline"
-            df = apply_library_selection(df, selection, kind)
+        kind = df["kind"].iloc[0] if "kind" in df.columns and not df.empty else "germline"
+        df = apply_library_selection(df, selection, kind)
 
         if df.empty:
             return
 
         # Check if selected libraries contain RNA for non-STAR tools
         has_rna = (df["extraction_type"] == "rna").any()
+        has_dna = (df["extraction_type"] == "dna").any()
         if has_rna and self.config.tool != "star":
-            raise InvalidConfiguration(
-                "Sample sheet contains RNA but the configured tool does not support RNA mapping."
-            )
+            if has_dna:
+                self.logger.warning(
+                    "Sample sheet contains both DNA and RNA but the configured tool '%s' only "
+                    "supports DNA mapping. RNA libraries will be skipped.",
+                    self.config.tool,
+                )
+            else:
+                raise InvalidConfiguration(
+                    "Sample sheet contains RNA but the configured tool '{}' does not support "
+                    "RNA mapping. Use 'star' for RNA mapping.".format(self.config.tool)
+                )
 
     @staticmethod
     def extraction_type_check(sample_sheet):
