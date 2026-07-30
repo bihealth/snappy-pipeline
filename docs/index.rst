@@ -80,7 +80,7 @@ Project Info
     step/variant_phasing
     step/variant_filtration
     step/sv_calling_wgs
-    step/wgs_sv_filtration
+    step/panel_of_normals
 
 
 .. toctree::
