@@ -82,3 +82,27 @@ Developer Documentation
 =======================
 
 Make sure to also read the "Pipeline Developer Docs" section, starting with :ref:`dev_intro`.
+
+Configuring GATK3
+==================
+
+Some wrappers rely on GATK 3.
+GATK v3 is not free software and cannot be redistributed.
+If you are a member of CUBI, you can use the central GATK download.
+Alternatively, download the tarball `from the Broad archive <https://storage.googleapis.com/gatk-software/package-archive/gatk/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2>`_.
+
+To register GATKv3 with the pipeline, create the conda environments first, then
+register the tarball into each environment that requires it:
+
+.. code-block:: shell
+
+    $ cd /path/to/project
+    $ snappy run -- --conda-create-envs-only
+    $ grep 'gatk.*3' .snakemake/conda/*.yaml
+    .snakemake/conda/d76b719b718c942f8e49e55059e956a6.yaml:  - gatk =3
+    $ for yaml in $(grep -l 'gatk.*3' .snakemake/conda/*.yaml); do
+          environ=${yaml%.yaml}
+          conda activate $environ
+          gatk3-register /path/to/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2
+          conda deactivate
+      done

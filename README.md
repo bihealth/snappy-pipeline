@@ -4,13 +4,11 @@
 
 # SNAPPY - SNAPPY Nucleic Acid Processing Pipeline
 
-## Installation
+A Snakemake-based pipeline for processing NGS data — read mapping, variant calling, annotation, filtration, and more.
 
-Installation should be complete in 10 to 15 minutes.
+## Quick Install
 
 **Prerequisites**: Install [pixi](https://pixi.sh) (see https://pixi.sh/latest/#installation).
-
-**In a nutshell**:
 
 ```bash
 git clone git@github.com:bihealth/snappy-pipeline.git
@@ -20,25 +18,18 @@ pixi install
 
 After installation the `snappy` command is available via `pixi run snappy ...` or by activating the pixi environment with `eval "$(pixi shell-hook)"`.
 
-See [user quickstart](docs/quickstart.rst) if you just want to use the pipeline.
-
-See [developer setup](docs/installation.rst) for testing, linting, and building documentation.
-
-## Using GATK3
-
-Some wrappers rely on GATK 3.
-GATK v3 is not free software and cannot be redistributed.
-If you are a member of CUBI, you can use the central GATK download.
-Alternatively, you can download the tarball [from the Broad archive](https://storage.googleapis.com/gatk-software/package-archive/gatk/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2).
-
-To use GATKv3 with the pipeline, run:
+## Quick Start
 
 ```bash
-$ cd variant_calling
-$ snappy run -- --conda-create-envs-only
+snappy init --directory my_project
+cd my_project
+# edit config.yaml, add samplesheet.tsv
+snappy run
 ```
 
-Find which conda environments use GATK v3 and register the tarball as described in the Snakemake documentation.
+See [user quickstart](docs/quickstart.rst) for details.
+
+See [developer setup](docs/installation.rst) for testing, linting, and building documentation.
 
 ## Development Notes
 
