@@ -81,7 +81,6 @@ Project Info
     step/variant_annotation
     step/variant_calling
     step/variant_checking
-    step/variant_denovo_filtration
     step/variant_phasing
     step/variant_filtration
     step/sv_calling_wgs

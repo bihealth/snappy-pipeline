@@ -47,7 +47,6 @@ from snappy_pipeline.workflows.varfish_export import VarfishExportWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
 from snappy_pipeline.workflows.variant_checking import VariantCheckingWorkflow
-from snappy_pipeline.workflows.variant_denovo_filtration import VariantDeNovoFiltrationWorkflow
 from snappy_pipeline.workflows.variant_export_external import VariantExportExternalWorkflow
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
@@ -90,7 +89,6 @@ WORKFLOW_REGISTRY = {
     "variant_annotation": VariantAnnotationWorkflow,
     "variant_calling": VariantCallingWorkflow,
     "variant_checking": VariantCheckingWorkflow,
-    "variant_denovo_filtration": VariantDeNovoFiltrationWorkflow,
     "variant_export_external": VariantExportExternalWorkflow,
     "variant_filtration": VariantFiltrationWorkflow,
     "variant_phasing": VariantPhasingWorkflow,
