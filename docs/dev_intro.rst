@@ -14,7 +14,7 @@ Developer's Introduction
 
     - know about the Python programming techniques required from a CUBI pipeline developer
     - have an overview of the components of a pipeline step
-    - know that ``snappy`` is the main CLI entry point (replacing the old ``cubi-snake``).
+    - know that ``snappy`` is the main CLI entry point.
 
 The target audience of this part of the documentation is developers who want to change or extend the pipeline.
 The aim is to give a good overview of the architecture of the pipeline system and dissect some typical existing pipeline steps for educational purposes.
@@ -100,7 +100,7 @@ The current configuration is passed into the constructor of this class and it th
 Then, you pass the result of method calls to your :class:`BaseStep <snappy_pipeline.workflows.abstract.BaseStep>` instance as the values for the ``input:``, ``output:``, etc. sections of your ``Snakefile``.
 
 .. warning::
-   By convention your new Workflow step should be instantiated as ``wf = StepClass(...)`` in the ``Snakefile`` during object setup. Otherwise tools including cubi-tk might not be able to detect and parse your step. See existing workflow ``Snakefile`` for reference.
+   By convention your new Workflow step should be instantiated as ``wf = StepClass(...)`` in the ``Snakefile`` during object setup. Otherwise external tools might not be able to detect and parse your step. See existing workflow ``Snakefile`` for reference.
 
 The :class:`BaseStep <snappy_pipeline.workflows.abstract.BaseStep>` sub class itself uses :class:`BaseStepPart <snappy_pipeline.workflows.abstract.BaseStepPart>` sub classes for the implementation of the individual parts.
 One part might be linking in FASTQ files from the raw input directory or linking from the ``work/`` to the ``output/`` directory.

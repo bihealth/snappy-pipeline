@@ -27,7 +27,7 @@ from .impl.fsmanip import (
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
 from .impl.yaml_utils import remove_non_required, remove_yaml_comment_lines
-from .snappy_snake import STEP_TO_MODULE
+from .step_registry import STEP_TO_MODULE
 
 
 def _get_cwd():

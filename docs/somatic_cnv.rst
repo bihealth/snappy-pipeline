@@ -61,32 +61,39 @@ Moreover, it also needs ``vcf`` files containing both germline & somatic variant
 For these files, ``mutect2`` needs to be run with different parameters than those used for somatic variant calling.
 Therefore, the ``somatic_variant_calling`` step must be run *twice*, with different arguments, in different locations.
 
-For the second ``mutect2`` run executed in the ``somatic_variant_calling_for_purecn`` directory, the configuration would look like:
+For the second ``mutect2`` run, create a separate task in ``config.yaml`` under the ``tasks`` list. The configuration would look like:
 
 .. code-block:: yaml
 
-    somatic_mutation_calling:
-      tools: [mutect2]
-      mutect2:
-        extra_arguments: [ "--genotype-germline-sites true", "--genotype-pon-sites true" ] # These arguments must be added
-        panel_of_normals: <absolute path to the panel of normal output>
-        germline_resource: <path to af-only-gnomad.raw.sites.vcf.gz>
-        common_variants: <path to small_exac_common_3.vcf.gz>
-        window_length: 300000000       # For exome data, it is sufficient to split the genome by chromosomes
-        ignore_chroms: [NC_007605, hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*'] # For hs37d5
-      ignore_chroms: [NC_007605, hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*'] # Must be repeated at the level above mutect2
-    
-    somatic_targeted_seq_cnv_calling:
-      tools: [purecn]
-      purecn:
-        genome_name: "hg19"             # This must match the names given while building the panel of normals
-        enrichment_kit_name: "exome"    # This must match the names given while building the panel of normals
-        path_somatic_variants: ../somatic_variant_calling_for_purecn
-        somatic_variant_caller: mutect2
-        path_panels_of_normals: <absolute path to panel_of_normals/output/<mapper>.purecn/out/<mapper>.purecn.panel_of_normals.rds>
-        path_mapping_bias: <absolute path to panel_of_normals/output/<mapper>.purecn/out/<mapper>.purecn.mapping_bias.rds>
-        path_intervals: <absolute path to panel_of_normals/output/purecn/out/exome_hg19.list>
-        path_container: <absolute path to panel_of_normals/work/containers/out/purecn.simg>
+    tasks:
+      - name: mutect2_for_purecn
+        step: variant_calling
+        config:
+          tool: mutect2
+          mutect2:
+            extra_arguments:
+              - "--genotype-germline-sites true"
+              - "--genotype-pon-sites true"
+            panel_of_normals: <absolute path to the panel of normal output>
+            germline_resource: <path to af-only-gnomad.raw.sites.vcf.gz>
+            common_variants: <path to small_exac_common_3.vcf.gz>
+            window_length: 300000000
+            ignore_chroms: [NC_007605, hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*']
+
+      - name: purecn_calling
+        step: somatic_targeted_seq_cnv_calling
+        depends_on:
+          variant_calling: mutect2_for_purecn
+        config:
+          tool: purecn
+          purecn:
+            genome_name: "hg19"
+            enrichment_kit_name: "exome"
+            somatic_variant_caller: mutect2
+            path_panels_of_normals: <absolute path to panel_of_normals output>
+            path_mapping_bias: <absolute path to panel_of_normals output>
+            path_intervals: <absolute path to panel_of_normals output>
+            path_container: <absolute path to panel_of_normals output>
 
 From the ``panel_of_normals`` directory, ``purecn`` requires 3 types of files:
 

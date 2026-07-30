@@ -51,4 +51,8 @@ snappy run options
     Enable SLURM cluster execution (layers a SLURM profile on top of the
     default conda profile).
 
+``-v``, ``--verbose``
+    Increase verbosity; prints the resolved task configuration and the
+    Snakemake command line.
+
 Everything after ``--`` is passed verbatim to Snakemake.
