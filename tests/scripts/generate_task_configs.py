@@ -910,6 +910,8 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                     depends_on["variant"] = step_to_default_task["variant_calling"]
                 elif step_name == "variant_filtration":
                     depends_on["variant"] = step_to_default_task["variant_annotation"]
+                elif step_name == "create_proteome":
+                    depends_on["variant"] = step_to_default_task["variant_annotation"]
             elif (
                 isinstance(default_target, str)
                 and default_target

@@ -40,20 +40,11 @@ class SignaturesStepPart(BaseStepPart):
 
         self.name_postfix = "{tumor_library}"
 
-    @dictify
     def get_log_file(self, action):
         # Validate action
         self._validate_action(action)
         name_pattern = f"{self.name}." + self.name_postfix
-        prefix = os.path.join("work", "{tumor_library}", "log", name_pattern)
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return os.path.join("work", "{tumor_library}", "log", name_pattern + ".log")
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

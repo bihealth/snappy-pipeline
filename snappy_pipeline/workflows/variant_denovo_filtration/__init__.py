@@ -271,12 +271,24 @@ class FilterDeNovosHardStepPart(FilterDeNovosBaseStepPart):
         self._validate_action(action)
 
         def args_function(wildcards: Wildcards) -> dict[str, Any]:
-            donor = self.ngs_library_to_donor[wildcards.index_library]
+            donor = self.ngs_library_to_donor.get(wildcards.index_library)
+            if donor is None:
+                raise ValueError(f"Cannot determine donor for library {wildcards.index_library}")
+            father = (
+                donor.father.dna_ngs_library.name
+                if donor.father and donor.father.dna_ngs_library
+                else None
+            )
+            mother = (
+                donor.mother.dna_ngs_library.name
+                if donor.mother and donor.mother.dna_ngs_library
+                else None
+            )
             return {
                 "index_library": wildcards.index_library,
-                "father": donor.father.dna_ngs_library.name,
-                "mother": donor.mother.dna_ngs_library.name,
-                "bad_regions_expression": self.config.bad_regions_expression,
+                "father": father,
+                "mother": mother,
+                "bad_region_expressions": self.config.bad_region_expressions,
             }
 
         return args_function
