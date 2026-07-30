@@ -235,7 +235,7 @@ snakemake-executor-plugin-slurm = ">=2,<3"
 snakemake-logger-plugin-snkmt = ">=0.1.6"
 
 # PREVENT CONFLICTS: Force Conda to pick older versions of these
-# dependencies so that uv doesn't block the PyPI/Git package installations.
+# dependencies so that it doesn't block the PyPI/Git package installations.
 jsonschema = "<4.5"
 tabulate = "<0.10"
 docutils = "<0.21"
