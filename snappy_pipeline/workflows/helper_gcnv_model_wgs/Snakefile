@@ -27,7 +27,7 @@ wf = HelperBuildWgsGcnvModelWorkflow(workflow, config, lookup_paths, config_path
 
 localrules:
     # Writing out pedigrees can be done locally
-    sv_calling_targeted_write_pedigree_run,
+    build_gcnv_model_write_pedigree_run,
 
 
 rule build_gcnv_model_all:

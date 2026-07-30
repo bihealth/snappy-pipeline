@@ -24,6 +24,8 @@ wf = VarfishExportWorkflow(workflow, config, lookup_paths, config_paths, os.getc
 
 
 localrules:
+    # Linking files from work/ to output/ should be done locally.
+    varfish_export_link_out_run,
     varfish_export_write_pedigree_run,
 
 
@@ -31,6 +33,20 @@ rule varfish_export_all:
     default_target: True
     input:
         wf.get_result_files(),
+
+
+# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Generic linking out ---------------------------------------------------------
+
+
+rule varfish_export_link_out_run:
+    input:
+        wf.get_input_files("link_out", "run"),
+    output:
+        wf.get_output_files("link_out", "run"),
+    run:
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Export for VarFish ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

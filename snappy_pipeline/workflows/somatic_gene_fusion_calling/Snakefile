@@ -33,7 +33,7 @@ localrules:
     somatic_gene_fusion_calling_link_out_run,
 
 
-rule somatic_msi_calling_all:
+rule somatic_gene_fusion_calling_all:
     default_target: True
     input:
         wf.get_result_files(),

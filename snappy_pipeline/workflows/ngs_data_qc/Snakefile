@@ -29,8 +29,8 @@ wf = NgsDataQcWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd()
 localrules:
     # Linking the FASTQ files in and linking out the files should be done
     # locally by the Snakemake master process
-    data_qc_link_in_run,
-    data_qc_link_out_run,
+    ngs_data_qc_link_in_run,
+    ngs_data_qc_link_out_run,
 
 
 rule ngs_data_qc_all:
