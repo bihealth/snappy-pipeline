@@ -36,6 +36,7 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
     assert result.exit_code == 0
 
     p = os.path.realpath(snappy_pipeline.workflows.__path__[0] + "/..")
+    apps_dir = os.path.dirname(snappy_pipeline.apps.__file__)
     m.assert_called_once_with(
         [
             "--directory",
@@ -44,5 +45,7 @@ def test_snappy_snake_list_output(germline_sheet_fake_project_ngs_mapping_fs, mo
             p + "/Snakefile",
             "--config",
             "dump_orchestrator=True",
+            "--workflow-profile",
+            os.path.join(apps_dir, "profile"),
         ]
     )

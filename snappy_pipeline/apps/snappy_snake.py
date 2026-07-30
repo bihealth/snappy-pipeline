@@ -138,10 +138,14 @@ def run(wrapper_args, snakemake_args):
     if len(config_args) > 1:
         snakemake_argv.extend(config_args)
 
-    # Configure profile if snappy pipeline profile is requested
-    if wrapper_args.profile_snappy_pipeline:
-        profile_path = os.path.join(os.path.dirname(__file__), "tpls", "profile")
-        snakemake_argv += ["--profile", profile_path]
+    # Always pass the default conda workflow profile
+    default_profile = os.path.join(os.path.dirname(__file__), "profile")
+    snakemake_argv += ["--workflow-profile", default_profile]
+
+    # Layer the SLURM profile on top when --slurm is requested
+    if wrapper_args.slurm:
+        slurm_profile = os.path.join(os.path.dirname(__file__), "profile-slurm")
+        snakemake_argv += ["--workflow-profile", slurm_profile]
 
     # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
@@ -165,7 +169,7 @@ def main(argv=None):
         snakemake_args = []
 
     parser = argparse.ArgumentParser(
-        usage="%(prog)s [--version] [-v] [-d directory] [--profile-snappy-pipeline] [--task TASK] [--all-tasks] [--] [snakemake arguments]",
+        usage="%(prog)s [--version] [-v] [-d directory] [--slurm] [--task TASK] [--all-tasks] [--] [snakemake arguments]",
         allow_abbrev=False,
     )
 
@@ -175,9 +179,9 @@ def main(argv=None):
         "-d", "--directory", default=os.getcwd(), help="Path to directory to run in, default is cwd"
     )
     parser.add_argument(
-        "--profile-snappy-pipeline",
+        "--slurm",
         action="store_true",
-        help="Uses the profile defined in the snappy pipeline",
+        help="Enable SLURM executor profile (adds executor, job limits, resource defaults)",
     )
     parser.add_argument(
         "--task",

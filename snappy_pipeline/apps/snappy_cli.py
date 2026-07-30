@@ -458,9 +458,9 @@ def task_list(project_directory):
     help="Path to directory to run in, default is cwd",
 )
 @click.option(
-    "--profile-snappy-pipeline",
+    "--slurm",
     is_flag=True,
-    help="Uses the profile defined in the snappy pipeline",
+    help="Enable SLURM executor profile (adds executor, job limits, resource defaults)",
 )
 @click.option(
     "--task",
@@ -481,7 +481,7 @@ def task_list(project_directory):
 )
 @click.option("-v", "--verbose", is_flag=True, help="Increase verbosity level")
 @click.pass_context
-def run(ctx, directory, profile_snappy_pipeline, task_name, all_tasks, verbose):
+def run(ctx, directory, slurm, task_name, all_tasks, verbose):
     """Run snappy pipeline workflows."""
     setup_logging(verbose)
     if task_name:
@@ -516,10 +516,14 @@ def run(ctx, directory, profile_snappy_pipeline, task_name, all_tasks, verbose):
     if len(config_args) > 1:
         snakemake_argv.extend(config_args)
 
-    # Configure profile if snappy pipeline profile is requested
-    if profile_snappy_pipeline:
-        profile_path = os.path.join(os.path.dirname(__file__), "tpls", "profile")
-        snakemake_argv += ["--profile", profile_path]
+    # Always pass the default conda workflow profile
+    default_profile = os.path.join(os.path.dirname(__file__), "profile")
+    snakemake_argv += ["--workflow-profile", default_profile]
+
+    # Layer the SLURM profile on top when --slurm is requested
+    if slurm:
+        slurm_profile = os.path.join(os.path.dirname(__file__), "profile-slurm")
+        snakemake_argv += ["--workflow-profile", slurm_profile]
 
     # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
@@ -528,6 +532,51 @@ def run(ctx, directory, profile_snappy_pipeline, task_name, all_tasks, verbose):
     res = snakemake_main(snakemake_argv)
     if res != 0:
         ctx.exit(res)
+
+
+@main.command()
+@click.option(
+    "--directory",
+    "-d",
+    type=click.Path(),
+    default=_get_cwd,
+    help="Project directory, defaults to current working directory",
+)
+@click.option(
+    "--db-path",
+    type=click.Path(),
+    default=None,
+    help="Custom path to the snkmt database. Defaults to <directory>/.snakemake/log/snkmt.sqlite",
+)
+def watch(directory, db_path):
+    """Launch snkmt TUI to monitor a running snakemake workflow.
+
+    Opens the snkmt interactive console for the snkmt database in the
+    project directory (or a custom path).  The database is written by
+    Snakemake when the profile has ``logger: snkmt`` (the default in
+    snappy's workflow profile).
+    """
+    path = db_path or os.path.join(directory, ".snakemake", "log", "snkmt.sqlite")
+    if not os.path.exists(path):
+        log(
+            "snkmt database not found at {path}.\n\n"
+            "Either:\n"
+            "  - Start a snakemake run first (snappy run) to generate it\n"
+            "  - Pass --db-path with the correct database location",
+            {"path": path},
+            level=LVL_ERROR,
+        )
+        sys.exit(1)
+
+    cmd = [sys.executable, "-m", "snkmt", "console", "--db-path", path]
+    log(
+        "Launching snkmt console for database at {path}",
+        {"path": path},
+        level=LVL_IMPORTANT,
+    )
+    res = subprocess.run(cmd)
+    if res.returncode != 0:
+        sys.exit(res.returncode)
 
 
 @main.command()

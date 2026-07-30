@@ -122,7 +122,7 @@ date    >> $LOGFILE
 #   ./pipeline_job.sh --logger snkmt
 
 snappy run \
-    --profile-snappy-pipeline \
+    --slurm \
     -- \
     --printshellcmds \
     "$@" \
