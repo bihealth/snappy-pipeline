@@ -188,7 +188,7 @@ exclude = "snappy_pipeline/Snakefile"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--cov=snappy_pipeline --cov-report=xml"
+addopts = "--cov=snappy_pipeline --cov-report=xml -n auto"
 markers = [
     "integration: tests requiring workflow-level integration setup",
     "slow: tests that are expected to take longer runtime",
