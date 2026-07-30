@@ -91,4 +91,4 @@ The versioning allows the pipeline step to check whether there are incompatibili
     - Use relative paths for static data (``static_data_config``) and workflow configuration paths;
       they will be resolved relative to the config file's directory. Alternatively, use absolute paths
       for external data that should not move relative to your config file.
-    - Use the ``snappy run --verbose``, which prints the step configuration (and all the dependent workflows) as ``snappy`` has understood it.
+    - Use ``snappy run --verbose``, which prints the step configuration (and all the dependent workflows) as ``snappy`` has understood it.
