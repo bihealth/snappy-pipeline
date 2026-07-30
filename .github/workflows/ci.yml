@@ -11,6 +11,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  PIXI_VERSION: v0.75.0
+
 jobs:
   cancel-previous:
     runs-on: ubuntu-latest
@@ -30,6 +33,7 @@ jobs:
       - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.9.6
         with:
+          pixi-version: ${{ env.PIXI_VERSION }}
           environments: dev
           cache: true
           frozen: true
@@ -62,6 +66,7 @@ jobs:
       - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.9.6
         with:
+          pixi-version: ${{ env.PIXI_VERSION }}
           environments: test
           cache: true
           frozen: true
@@ -86,6 +91,7 @@ jobs:
       - name: Setup Pixi
         uses: prefix-dev/setup-pixi@v0.9.6
         with:
+          pixi-version: ${{ env.PIXI_VERSION }}
           environments: docs
           cache: true
           frozen: true
