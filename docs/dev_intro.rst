@@ -14,7 +14,7 @@ Developer's Introduction
 
     - know about the Python programming techniques required from a CUBI pipeline developer
     - have an overview of the components of a pipeline step
-    - know that ``cubi-snake`` only serves as a shortcut to the ``snakemake`` executable.
+    - know that ``snappy`` is the main CLI entry point (replacing the old ``cubi-snake``).
 
 The target audience of this part of the documentation is developers who want to change or extend the pipeline.
 The aim is to give a good overview of the architecture of the pipeline system and dissect some typical existing pipeline steps for educational purposes.
@@ -58,7 +58,7 @@ In order to follow this developer's documentation comfortably, you should be fam
 
 - Python 3
 - Snakemake
-- Grid Engine (or similar cluster job queueing system).
+- a cluster job queueing system (e.g., SLURM).
 
 You should be familiar with the CUBI pipeline from the user perspective already.
 

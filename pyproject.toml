@@ -245,6 +245,9 @@ test = { features = ["test"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 dev = { features = ["test", "docs", "dev"], solve-group = "default" }
 
+[tool.pixi.feature.docs.tasks]
+docs = { cmd = "sphinx-build -b html docs/ docs/_build/html", description = "Build HTML documentation with Sphinx" }
+
 [tool.pixi.pypi-dependencies]
 snappy-pipeline = { path = ".", editable = true }
 

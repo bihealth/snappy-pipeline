@@ -8,31 +8,21 @@
 
 Installation should be complete in 10 to 15 minutes.
 
+**Prerequisites**: Install [pixi](https://pixi.sh) (see https://pixi.sh/latest/#installation).
+
 **In a nutshell**:
 
 ```bash
-# Download & preparation
 git clone git@github.com:bihealth/snappy-pipeline.git
 cd snappy-pipeline
-
-# If you want to select a given branch, uncomment the following:
-# git checkout <branch_name>
-
-# WARNING- make sure that you are in your conda base environment
-
-# Create conda environment "snappy_env" with all requirements:
-mamba env create --file environment.yml -n snappy_env
-conda activate snappy_env
-
-# Install snappy in snappy_env environment
-pip install -e ".[all]"
+pixi install
 ```
-The dependency group `all` includes all optional dependencies, i.e. `test` (for running tests with `pytest`), `dev` (for formatting, linting, pre-commit hooks) and `docs` (for building the documentation with `sphinx`).
-If you only want to install the core dependencies, you can omit the `[all]` part, or choose any combination of the other groups.
 
-See [user installation](docs/quickstart.rst) if you just want to use the pipeline.
+After installation the `snappy` command is available via `pixi run snappy ...` or by activating the pixi environment with `eval "$(pixi shell-hook)"`.
 
-See [developer installation](docs/installation.rst) for getting started with working on the pipeline code and also building the documentation.
+See [user quickstart](docs/quickstart.rst) if you just want to use the pipeline.
+
+See [developer setup](docs/installation.rst) for testing, linting, and building documentation.
 
 ## Using GATK3
 

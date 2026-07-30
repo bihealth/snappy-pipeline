@@ -145,12 +145,11 @@ The following figure shows the components involved when executing a pipeline ste
 
 The different parts are as follows:
 
-- The working directory ``project/ngs_mapping``.
-- The step-level configuration in ``project/ngs_mapping/config.yaml``.
-- The project-level configurations in ``project/.snappy_pipeline/config.yaml`` (by convention).
+- The working directory ``project/tasks/bwa_mapping``.
+- The task-level configuration in ``project/config.yaml`` under the ``tasks`` key.
 - The ``snappy_pipeline`` Python package installed centrally.
 - The bio-medical sample sheets with the data sets to use.
-  (The project-wide configuration files point at these files.)
+  (The project-wide configuration file points at these files.)
 - The static data files setup by the Cubit administrator (here, it would be the reference FASTA path and the read mapper index location).
 - The raw data files to be processed by the pipeline step (here, it would be the sample FASTQ files).
 

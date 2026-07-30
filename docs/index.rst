@@ -1,8 +1,8 @@
-===========================
-CUBI Pipeline Documentation
-===========================
+=============================
+Snappy Pipeline Documentation
+=============================
 
-This is the documentation for the CUBI Pipeline.
+This is the documentation for the snappy pipeline.
 This documentation is split into four parts:
 
 Pipeline User Docs

@@ -12,16 +12,19 @@ Installation
 Prerequisites
 -------------
 
-The CUBI pipeline requires Python >=3.12 (e.g., from a pixi or Miniconda3 installation).
+Install `pixi <https://pixi.sh>`_ (see https://pixi.sh/latest/#installation).
+The CUBI pipeline uses pixi to manage all dependencies -- both conda packages
+(system tools like BWA, STAR, samtools) and PyPI packages.
 
-For cluster execution, you need a Snakemake profile available (use ``--slurm`` with the ``snappy run`` command if your cluster uses SLURM).
+For cluster execution, you need a Snakemake profile available (use ``--slurm``
+with the ``snappy run`` command if your cluster uses SLURM).
 
 -------------------------
-Installing as a Developer
+User Installation
 -------------------------
 
-We use `pixi <https://pixi.sh>`_ as the project manager (install pixi: see https://pixi.sh/latest/#installation).
-Pixi handles both conda dependencies (system tools like BWA, STAR, samtools) and PyPI dependencies.
+If you just want to *run* a pipeline (not develop it), clone the repository and
+let pixi create the environment:
 
 .. code-block:: shell
 
@@ -29,7 +32,25 @@ Pixi handles both conda dependencies (system tools like BWA, STAR, samtools) and
     $ cd snappy-pipeline
     $ pixi install
 
-This sets up all environments, including the ``dev`` environment with test and linting tools.
+After installation the ``snappy`` command is available via
+``pixi run snappy <subcommand> ...``, or by activating the environment with
+``eval "$(pixi shell-hook)"``.
+
+For a reproducible install pinned to the exact dependency versions in the
+lock file, use ``pixi install --frozen`` instead.
+
+-------------------------
+Installing as a Developer
+-------------------------
+
+Same clone + install steps as above, then use the ``dev`` environment which
+includes test, lint, and documentation tools:
+
+.. code-block:: shell
+
+    $ pixi install
+    $ pixi run -e dev --  # one-off commands
+    $ pixi shell -e dev   # activate dev environment
 
 Running the Tests
 =================
@@ -47,6 +68,15 @@ Running the Style Checks
     $ pixi run -e dev fmt              # auto-format with ruff
     $ pixi run -e dev snakefmt         # auto-format Snakemake files
     $ pixi run -e dev srcfmt           # run all formatters
+
+Building the Documentation
+==========================
+
+.. code-block:: shell
+
+    $ pixi run -e docs docs
+
+The HTML output is written to ``docs/_build/html/``.
 
 Developer Documentation
 =======================

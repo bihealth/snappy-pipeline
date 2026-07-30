@@ -21,11 +21,21 @@ First, install `pixi <https://pixi.sh>`_ (see https://pixi.sh/latest/#installati
 Install Snappy Pipeline
 -----------------------
 
-The recommended way of installing the CUBI pipeline is via pip inside a pixi environment.
+Clone the repository and install with pixi:
 
 .. code-block:: shell
 
-    $ VERSION=vX.Y.Z
-    $ pip install git+ssh://git@github.com:bihealth/snappy-pipeline.git@v${VERSION}#egg=snappy_pipeline
+    $ git clone git@github.com:bihealth/snappy-pipeline.git
+    $ cd snappy-pipeline
+    $ pixi install
 
-Or see ``README.rst`` for a more detailed installation guide.
+To pin to the exact versions in the lock file (``pixi.lock``), use
+``pixi install --frozen``. The lock file is the single source of truth for all
+dependency versions and is kept in sync with ``pyproject.toml`` via
+``pixi update``.
+
+After installation the ``snappy`` command is available via
+``pixi run snappy <subcommand> ...``.
+
+Or see :ref:`installation` for a more detailed guide, including the developer
+setup with test, lint, and documentation tooling.
