@@ -2,7 +2,7 @@
 
 # SNAPPY best practice pipeline_job.sh
 #
-# Submit a snakemake job through the snappy pipeline wrapper "snappy-snake"
+# Submit a snakemake job through the snappy CLI (`snappy run`)
 # This script is written for snappy pipeline >=0.6, snakemake >= 9.13 & SLURM
 # A job can be submitted either using salloc or sbatch (HPC rules don't allow srun on login nodes).
 # * salloc:
