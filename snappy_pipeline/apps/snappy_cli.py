@@ -283,10 +283,16 @@ class AddTaskApp:
         step_config_yaml_str = step_cls.config_model_class.default_config_yaml_string(
             comment_optional=comment_optional, with_step_config=False
         )
-        step_config_block = yaml.load(step_config_yaml_str)
 
-        if self.config_mode == ConfigMode.MINIMAL and step_config_block:
-            step_config_block = remove_non_required(step_config_block)
+        if self.config_mode == ConfigMode.MINIMAL:
+            step_config_block = yaml.load(step_config_yaml_str)
+            if step_config_block:
+                step_config_block = remove_non_required(step_config_block)
+        else:
+            indented_lines = [
+                "    " + line if line.strip() else "" for line in step_config_yaml_str.splitlines()
+            ]
+            step_config_block = yaml.load("\n".join(indented_lines))
 
         if step_config_block is None:
             step_config_block = CommentedMap()

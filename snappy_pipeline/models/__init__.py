@@ -507,10 +507,17 @@ def _comment_key_paths_naive(
                 if not key_path:
                     break
 
-    return "\n".join(
-        (comment_prefix + line) if i in comment_lines else line
-        for i, line in enumerate(yaml_str.splitlines())
-    )
+    res_lines = []
+    for i, line in enumerate(yaml_str.splitlines()):
+        if i in comment_lines:
+            if line.strip():
+                indent = len(line) - len(line.lstrip())
+                res_lines.append(" " * indent + comment_prefix + line[indent:])
+            else:
+                res_lines.append(comment_prefix)
+        else:
+            res_lines.append(line)
+    return "\n".join(res_lines)
 
 
 def _optional_key_paths(
