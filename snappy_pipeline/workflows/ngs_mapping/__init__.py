@@ -1066,7 +1066,8 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
         return (
-            not self.config.target_coverage_report.enabled
+            not self.config.target_coverage_report
+            or not self.config.target_coverage_report.enabled
             or super().skip_result_files_for_library(library_name)
         )
 
@@ -1498,11 +1499,12 @@ class NgsMappingWorkflow(BaseStep):
         cov_config = self.get_task_config(self.task_name).target_coverage_report
         default_kit_configured = False
         regexes = {}
-        for item in cov_config.path_target_interval_list_mapping:
-            if item.name == "__default__":
-                default_kit_configured = True
-            else:
-                regexes[item.pattern] = item.name
+        if cov_config:
+            for item in cov_config.path_target_interval_list_mapping:
+                if item.name == "__default__":
+                    default_kit_configured = True
+                else:
+                    regexes[item.pattern] = item.name
         result = {}
         for donor in self._all_donors():
             for bio_sample in donor.bio_samples.values():

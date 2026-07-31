@@ -5,6 +5,7 @@ from pydantic import Field
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class ExpectedSomaticCnvCalls(SnappyModel):
@@ -38,6 +39,12 @@ class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
     ] = "somatic_targeted_seq_cnv_calling"
+
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
 
 class HomologousRecombinationDeficiency(SnappyStepModel):
