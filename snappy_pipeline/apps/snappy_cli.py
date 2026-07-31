@@ -11,6 +11,8 @@ import os
 import subprocess
 import sys
 
+import enum
+
 import rich_click as click
 import ruamel.yaml as ruamel_yaml
 from rich.console import Console
@@ -28,7 +30,32 @@ from .impl.fsmanip import (
     update_file,
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
-from .impl.yaml_utils import remove_non_required, remove_yaml_comment_lines
+from .impl.yaml_utils import remove_non_required
+
+
+class ConfigMode(str, enum.Enum):
+    """Configuration generation mode for tasks."""
+
+    COMMENTED = "commented"
+    FULL = "full"
+    MINIMAL = "minimal"
+
+
+class ShellType(str, enum.Enum):
+    """Supported shells for autocompletion."""
+
+    BASH = "bash"
+    ZSH = "zsh"
+    FISH = "fish"
+
+
+class JobStatus(str, enum.Enum):
+    """SLURM job status strings."""
+
+    SUCCESS = "success"
+    RUNNING = "running"
+    FAILED = "failed"
+
 
 # Configure rich-click settings for formatting
 click.rich_click.SHOW_ARGUMENTS = True
@@ -65,6 +92,11 @@ class TaskParamType(click.ParamType):
     def shell_complete(self, ctx, param, incomplete):
         from click.shell_completion import CompletionItem
 
+        if "=" in incomplete:
+            prefix, step_part = incomplete.split("=", 1)
+            return [
+                CompletionItem(f"{prefix}={step}") for step in STEPS if step.startswith(step_part)
+            ]
         return [CompletionItem(step) for step in STEPS if step.startswith(incomplete)]
 
 
@@ -144,13 +176,14 @@ class AddTaskApp:
 
     def __init__(
         self,
-        step,
-        task_name,
-        project_directory,
-        manage_config=True,
-        partition="medium",
-        email=None,
-        conda="",
+        step: str,
+        task_name: str,
+        project_directory: str,
+        manage_config: bool = True,
+        partition: str = "medium",
+        email: str | None = None,
+        conda: str = "",
+        config_mode: ConfigMode | str = ConfigMode.COMMENTED,
     ):
         self.step = step
         self.task_name = task_name
@@ -159,6 +192,7 @@ class AddTaskApp:
         self.partition = partition
         self.email = email
         self.conda = conda
+        self.config_mode = ConfigMode(config_mode)
 
     def run(self):
         log("")
@@ -242,18 +276,17 @@ class AddTaskApp:
         if "tasks" not in config_yaml:
             config_yaml["tasks"] = []
 
-        # Load default configuration, remove comment lines and lines not marked as required
         yaml = ruamel_yaml.YAML()
-        default_config_yaml = yaml.load(
-            remove_yaml_comment_lines(WORKFLOW_REGISTRY[self.step].default_config_yaml())
-        )
-        only_required = remove_non_required(default_config_yaml)
+        step_cls = WORKFLOW_REGISTRY[self.step]
 
-        step_config_block = None
-        if only_required and "step_config" in only_required:
-            step_name_key = self.step
-            if step_name_key in only_required["step_config"]:
-                step_config_block = only_required["step_config"][step_name_key]
+        comment_optional = self.config_mode == ConfigMode.COMMENTED
+        step_config_yaml_str = step_cls.config_model_class.default_config_yaml_string(
+            comment_optional=comment_optional, with_step_config=False
+        )
+        step_config_block = yaml.load(step_config_yaml_str)
+
+        if self.config_mode == ConfigMode.MINIMAL and step_config_block:
+            step_config_block = remove_non_required(step_config_block)
 
         if step_config_block is None:
             step_config_block = CommentedMap()
@@ -334,7 +367,13 @@ def main():
     default="",
     help="conda environment to load when submitting job",
 )
-def init(directory, project_name, partition, tasks, manage_config, email, conda):
+@click.option(
+    "--config-mode",
+    type=click.Choice(["commented", "full", "minimal"]),
+    default="commented",
+    help="Style for task config: 'commented' (defaults commented out), 'full' (all defaults active), 'minimal' (strip default options).",
+)
+def init(directory, project_name, partition, tasks, manage_config, email, conda, config_mode):
     """Initialize a new snappy project directory."""
     project_directory = directory() if callable(directory) else directory
     log("SNAPPY Pipeline -- init")
@@ -387,7 +426,7 @@ def init(directory, project_name, partition, tasks, manage_config, email, conda)
     dest_path = os.path.join(project_directory, "pipeline_job.sh")
     email_val = email or os.environ.get("SNAPPY_PIPELINE_EMAIL")
     create_from_tpl(
-        src_path=os.path.join(os.path.dirname(__file__), "tpls", "pipeline_job.sh"),
+        src_path=os.path.join(os.path.dirname(__file__), "tpls", FILENAME_PIPELINE_JOB_SH),
         dest_path=dest_path,
         format_args={
             "line_m": "##SBATCH --mail-type ALL" if not email_val else "#SBATCH --mail-type ALL",
@@ -414,6 +453,7 @@ def init(directory, project_name, partition, tasks, manage_config, email, conda)
             partition=partition,
             email=email_val,
             conda=conda,
+            config_mode=config_mode,
         )
         app.run()
 
@@ -453,6 +493,12 @@ def task():
     default="",
     help="conda environment to load when submitting job",
 )
+@click.option(
+    "--config-mode",
+    type=click.Choice(["commented", "full", "minimal"]),
+    default="commented",
+    help="Style for task config: 'commented' (defaults commented out), 'full' (all defaults active), 'minimal' (strip default options).",
+)
 def task_add(
     tasks,
     directory,
@@ -460,6 +506,7 @@ def task_add(
     email,
     manage_config,
     conda,
+    config_mode,
 ):
     """Add tasks to the project configuration.
 
@@ -477,6 +524,7 @@ def task_add(
             partition=partition,
             email=email_val,
             conda=conda,
+            config_mode=config_mode,
         )
         res = app.run()
         if res:
