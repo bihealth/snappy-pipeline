@@ -6,6 +6,28 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+# Register a ``tsv`` lexer alias so ``.. code-block:: tsv`` sample-sheet blocks render.
+from pygments.lexers._mapping import LEXERS
+from pygments.lexers.special import TextLexer
+import pygments.lexers as _pygments_lexers
+
+
+class TsvLexer(TextLexer):
+    name = "TSV"
+    aliases = ["tsv"]
+    filenames = ["*.tsv"]
+    mimetypes = ["text/tab-separated-values"]
+
+
+LEXERS["TsvLexer"] = (
+    "pygments.lexers.special",
+    "TSV",
+    ("tsv",),
+    ("*.tsv",),
+    ("text/tab-separated-values",),
+)
+_pygments_lexers._lexer_cache["TSV"] = TsvLexer
+
 project = "snappy-pipeline"
 copyright = "2015-2024, CUBI, Berlin Institute of Health"
 author = "CUBI, Berlin Institute of Health"

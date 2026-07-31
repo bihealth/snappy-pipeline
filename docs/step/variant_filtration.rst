@@ -66,7 +66,7 @@ Migration Guide: Legacy to Vembrane
 The legacy germline filtration workflow configured complex ``filter_combinations`` from predefined threshold blocks. These can be migrated directly into cleaner and more powerful ``vembrane`` tasks:
 
 1. Quality Thresholds
---------------------
+---------------------
 
 * **Legacy**:
   .. code-block:: yaml
@@ -76,6 +76,7 @@ The legacy germline filtration workflow configured complex ``filter_combinations
       min_dp_hom: 5
 
 * **Vembrane**:
+
   .. code-block:: python
 
       # As tag expressions:
@@ -84,7 +85,7 @@ The legacy germline filtration workflow configured complex ``filter_combinations
         poor_support: 'any((is_het(s) and FORMAT["DP"][s] < 10) or (is_hom(s) and FORMAT["DP"][s] < 5) for s in SAMPLES)'
 
 2. Frequency Thresholds
-----------------------
+-----------------------
 
 * **Legacy**:
   .. code-block:: yaml
@@ -99,7 +100,7 @@ The legacy germline filtration workflow configured complex ``filter_combinations
       expression: 'INFO.get("gnomAD_AF", 0.0) < 0.001 and INFO.get("gnomAD_AC", 0) <= 3'
 
 3. Score Thresholds
-------------------
+-------------------
 
 * **Legacy**:
   .. code-block:: yaml
