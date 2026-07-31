@@ -269,7 +269,7 @@ srcfmt = { depends-on = ["fmt", "snakefmt"], description = "Apply Python and Sna
 
 check = { cmd = "ruff check .", description = "Run Ruff code checker" }
 lint-fmt = { cmd = "ruff format --check .", description = "Check Python formatting" }
-lint-snakefmt = { cmd = "snakefmt --check .", description = "Check Snakemake formatting" }
+lint-snakefmt = { cmd = "snakefmt --check snappy_pipeline/workflows/*/Snakefile", description = "Check Snakemake formatting" }
 lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt"], description = "Run all linters" }
 
 [tool.pixi.feature.dev.dependencies]
