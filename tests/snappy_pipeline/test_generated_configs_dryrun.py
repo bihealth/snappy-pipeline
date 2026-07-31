@@ -224,6 +224,8 @@ def test_generated_config_task_closure_passes(
     assert isinstance(reloaded, dict), f"Generated closure config is not a mapping for {task_name}"
 
     # Run the dryrun command
+    # Use a per-test snkmt SQLite database so parallel CI workers (pytest-xdist)
+    # do not race on the shared default path (~/.local/share/snkmt/snkmt.db).
     cmd = [
         sys.executable,
         "-m",
@@ -237,6 +239,8 @@ def test_generated_config_task_closure_passes(
         "-n",
         "--cores",
         "1",
+        "--logger-snkmt-db",
+        str(tmp_path / "snkmt.sqlite"),
     ]
     dry = _run(cmd, cwd=root)
     dry_output = (dry.stdout or "") + "\n" + (dry.stderr or "")
