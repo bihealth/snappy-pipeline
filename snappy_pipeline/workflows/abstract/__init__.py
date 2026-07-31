@@ -739,23 +739,18 @@ class BaseStep:
         Override in concrete workflow classes to expose this step's outputs to downstream
         consumers via :meth:`get_upstream_paths`.
 
-        Arguments:
-            signature: The :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature`
-                requested by the consumer.  Implementations should check
-                ``signature.satisfies(...)`` and raise ``ValueError`` for unsupported
-                signatures.
-            **kwargs: Caller-supplied identifiers (e.g. ``library_name``, ``sample_name``)
-                used to parametrise the returned path strings.  Implementations may use
-                ``{library_name}``-style format strings when the identifiers are omitted.
-
-        Returns:
-            A ``dict[str, str]`` mapping logical output key (e.g. ``"bam"``, ``"vcf"``) to a
-            **local** path string (relative to the step's own ``output/`` directory, e.g.
+        :param signature: The
+            :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature` requested by the
+            consumer.  Implementations should check ``signature.satisfies(...)`` and raise
+            ``ValueError`` for unsupported signatures.
+        :param kwargs: Caller-supplied identifiers (e.g. ``library_name``, ``sample_name``)
+            used to parametrise the returned path strings.  Implementations may use
+            ``{library_name}``-style format strings when the identifiers are omitted.
+        :returns: A ``dict[str, str]`` mapping logical output key (e.g. ``"bam"``, ``"vcf"``) to
+            a **local** path string (relative to the step's own ``output/`` directory, e.g.
             ``"output/{library_name}/out/{library_name}.bam"``).
-
-        Raises:
-            NotImplementedError: When the concrete subclass has not overridden this method.
-            ValueError: When *signature* is not supported by this workflow.
+        :raises NotImplementedError: When the concrete subclass has not overridden this method.
+        :raises ValueError: When *signature* is not supported by this workflow.
         """
         raise NotImplementedError(
             f"'{cls.__name__}' must implement 'get_output_paths' to act as an upstream provider."
@@ -1203,7 +1198,7 @@ class BaseStep:
         Arguments:
             req_field_name: The field name on ``self.config.depends_on`` that holds the upstream
                 task reference. Must match a key in the ``depends_on`` Pydantic model.
-            **kwargs: Forwarded verbatim to the upstream workflow's
+            kwargs: Forwarded verbatim to the upstream workflow's
                 :py:meth:`get_output_paths` classmethod (e.g. ``library_name``, ``sample_name``).
 
         Returns:
