@@ -823,13 +823,3 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                 if isinstance(lp, str) and lp.startswith("work/"):
                     out_lp = re.sub(r"^work/", "output/", lp)
                     yield from expand(out_lp, tumor_library=self.output_entities)
-
-    def check_config(self):
-        """Check that the necessary global configuration is present"""
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            (
-                "Path to reference FASTA file not configured but required for targeted sequencing "
-                "CNV calling"
-            ),
-        )

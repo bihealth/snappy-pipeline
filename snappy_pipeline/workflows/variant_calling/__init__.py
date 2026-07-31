@@ -1008,15 +1008,6 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                 mem=run_resource_usage.mem,
             )
 
-    def check_config(self):
-        tool = self.config.tool
-        if self.name != tool:
-            return
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for %s" % (self.name,),
-        )
-
     def get_input_files(self, action):
         self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action))
@@ -1401,10 +1392,3 @@ class VariantCallingWorkflow(BaseStep):
             name_config = self.config.get(name)
             if name_config and name_config.enabled:
                 yield from self.sub_steps[name].get_result_files()
-
-    def check_config(self):
-        # Checks for static data
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for variant calling",
-        )

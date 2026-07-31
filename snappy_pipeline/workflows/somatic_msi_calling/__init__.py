@@ -257,10 +257,3 @@ class SomaticMsiCallingWorkflow(BaseStep):
                 tumor_library=[entity],
                 ext=log_exts,
             )
-
-    def check_config(self):
-        """Check that the necessary globalc onfiguration is present"""
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA file not configured but required",
-        )

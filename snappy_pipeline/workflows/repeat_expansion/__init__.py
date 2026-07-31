@@ -381,13 +381,3 @@ class RepeatExpansionWorkflow(BaseStep):
         for donor in self._all_donors(include_background=False):
             if donor.dna_ngs_library:  # ignores samples without DNA library
                 yield from expand(tpl, donor=[donor], **kwargs)
-
-    def check_config(self):
-        """Check that the necessary configuration is available for the step"""
-        # Requires path to reference genome FASTA
-        self.ensure_w_config(
-            config_keys=("static_data_config", "reference", "path"),
-            msg=(
-                "Path to reference FASTA not configured but required for repeat expansion analysis."
-            ),
-        )

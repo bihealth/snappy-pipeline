@@ -1117,19 +1117,6 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 for hash_suffix in hash_exts:
                     yield f"{d}/{fn.format(log_ext=log_ext, hash_ext=hash_suffix)}"
 
-    def check_config(self):
-        for extraction_type in (ExtractionType.DNA, ExtractionType.RNA):
-            ext_obj = getattr(self.config.tool_hla_typing, extraction_type.lower(), None)
-            if not ext_obj:
-                continue
-            for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
-                tool = getattr(ext_obj, mhc_class.name, None)
-                if tool:
-                    self.ensure_w_config(
-                        ("static_data_config", "reference", "path"),
-                        "Path to reference FASTA not configured but required for neoepitope prediction",
-                    )
-
     def _dna_to_rna_mapping(self, sample_table: pd.DataFrame) -> dict[str, str]:
         dna = sample_table[sample_table["extraction_type"].astype(str).str.lower() == "dna"]
         rna = sample_table[sample_table["extraction_type"].astype(str).str.lower() == "rna"]

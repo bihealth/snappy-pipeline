@@ -62,7 +62,7 @@ from typing import Any
 from biomedsheets.shortcuts import CancerCaseSheet
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
+from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -237,9 +237,15 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                             yield f.replace("work/", "output/")
 
     def check_config(self):
-        """Check that the necessary globalc onfiguration is present"""
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA file not configured but required",
-        )
-        assert self.get_task_config("somatic_targeted_seq_cnv_calling").tool == "sequenza"
+        """Check that the upstream CNV calling tool is supported.
+
+        ``scarHRD`` can currently only consume ``sequenza`` copy number output.
+        """
+        tool = self.get_task_config("somatic_targeted_seq_cnv_calling").tool
+        if tool != "sequenza":
+            raise InvalidConfiguration(
+                "Tool '{}' of upstream task 'somatic_targeted_seq_cnv_calling' "
+                "not supported by 'homologous_recombination_deficiency'; expected 'sequenza'".format(
+                    tool
+                )
+            )

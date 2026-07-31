@@ -30,7 +30,6 @@ from snakemake.io import touch
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
-    MissingConfiguration,
     UnsupportedActionException,
     merge_kwargs,
     print_config,
@@ -236,14 +235,6 @@ class BaseStepPart:
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
         )  # pragma: no cover
-
-    def check_config(self):
-        """Check configuration, raise ``ConfigurationMissing`` on problems
-
-        Override in sub classes.
-
-        :raises:MissingConfiguration: on missing configuration
-        """
 
 
 class WritePedigreeStepPart(BaseStepPart):
@@ -855,7 +846,7 @@ class BaseStep:
             )
 
         self._setup_hooks()
-        self._check_config()
+        self.check_config()
 
         config_string = self.config.model_dump_yaml(by_alias=True)
 
@@ -1076,58 +1067,11 @@ class BaseStep:
                 return members
         return [library_name]
 
-    def _check_config(self):
-        """Internal method, checks step and sub step configurations"""
-        self.check_config()
-        for step in self.sub_steps.values():
-            step.check_config()
-
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
 
         Override in sub classes.
-
-        :raises:MissingConfiguration: on missing configuration
         """
-
-    def ensure_w_config(self, config_keys, msg, e_class=MissingConfiguration):
-        """Check parameters in configuration.
-
-        Method ensures required configuration setting are present in the provided configuration;
-        if not, it raises exception.
-
-        :param config_keys: List of strings with all keys that must be present in the configuration
-        for a given step of the analysis to be performed.
-        :type config_keys: tuple
-
-        :param msg: Message to be used in case of exception.
-        :type msg: str
-
-        :param e_class: Preferred exception class to be raised in case of error.
-        Default: MissingConfiguration.
-        :type e_class: class
-        """
-        # Initialise variables
-        so_far = []
-        handle = self.w_config
-
-        # Check if configuration is empty
-        if not handle:
-            tpl = 'Empty configuration ("{full_path}"): {msg}'.format(
-                full_path="/".join(config_keys), msg=msg
-            )
-            raise e_class(tpl)
-
-        # Iterate over required configuration keys
-        for entry in config_keys:
-            # Check if keys are present in config dictionary
-            if (handle := (getattr(handle, entry, None) or handle.get(entry, None))) is not None:
-                so_far.append(entry)
-            else:
-                tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(
-                    full_path="/".join(config_keys), so_far="/".join(so_far), msg=msg
-                )
-                raise e_class(tpl)
 
     def register_sub_step_classes(
         self, classes: tuple[type[BaseStepPart] | tuple[type[BaseStepPart], Any], ...]

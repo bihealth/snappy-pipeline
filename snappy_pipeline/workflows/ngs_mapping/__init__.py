@@ -807,23 +807,6 @@ class StarStepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "rna"
 
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute BWA are present in the
-        configuration. It further checks that the provided index has all the expected file
-        extensions. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if self.name != self.config.tool:
-            return  # STAR not run, don't check configuration  # pragma: no cover
-
-        # Check required global configuration settings present
-        self.parent.ensure_w_config(
-            config_keys=("static_data_config", "reference"),
-            msg="No reference genome FASTA file given",
-        )
-
     @dictify
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
@@ -1027,16 +1010,6 @@ class ExternalStepPart(ReadMappingStepPart):
 
     #: Use wildcard for tool library
     tool_category = "__any__"
-
-    def check_config(self):
-        """Check parameters in configuration.
-
-        Method checks that all parameters required to execute BWA are present in the
-        configuration. If invalid configuration, it raises InvalidConfiguration exception.
-        """
-        # Check if tool is at all included in workflow
-        if self.name != self.config.tool:
-            return  # External not run, don't check configuration  # pragma: no cover
 
     def _get_args_run(self, wildcards: Wildcards):
         return {

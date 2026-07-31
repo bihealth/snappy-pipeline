@@ -178,9 +178,3 @@ class VariantAnnotationWorkflow(BaseStep):
                     ".conda_list.txt.md5",
                 ),
             )
-
-    def check_config(self):
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for variant annotation",
-        )

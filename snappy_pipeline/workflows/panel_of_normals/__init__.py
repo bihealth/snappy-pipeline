@@ -559,14 +559,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if self.name == self.config.tool:
             self.is_wgs = self.config.cnvkit.path_target == ""
 
-    def check_config(self):
-        if self.name != self.config.tool:
-            return None  # cnvkit not enabled, skip
-        self.parent.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for %s" % (self.name,),
-        )
-
     def get_args(self, action):
         if self.name != self.config.tool:
             return None  # cnvkit not enabled, skip
