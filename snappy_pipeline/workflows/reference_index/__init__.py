@@ -10,8 +10,6 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from .model import ReferenceIndex as ReferenceIndexConfigModel
 from .model import Tool
 
-DEFAULT_CONFIG = ReferenceIndexConfigModel.default_config_yaml_string()
-
 
 class BuildReferenceCommonStepPart(BaseStepPart):
     name = "common"
@@ -177,10 +175,6 @@ class ReferenceIndexWorkflow(BaseStep):
 
     sheet_shortcut_class = GenericSampleSheet
     config_model_class = ReferenceIndexConfigModel
-
-    @classmethod
-    def default_config_yaml(cls):
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

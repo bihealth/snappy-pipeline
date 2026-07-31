@@ -31,7 +31,6 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 GCNV_MIN_KIT_SAMPLES = 10
 
 #: Default configuration for the sv_calling_targeted step
-DEFAULT_CONFIG = SvCallingTargetedConfigModel.default_config_yaml_string()
 
 
 class GcnvTargetedStepPart(RunGcnvStepPart):
@@ -116,14 +115,6 @@ class SvCallingTargetedWorkflow(BaseStep):
                     if re.match(pattern, library_kit):
                         yield donor.dna_ngs_library.name, name
         return result
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Default configuration.
-
-        :return: Returns default config YAML, to be overwritten by project-specific one.
-        """
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

@@ -57,7 +57,7 @@ Not applicable.
 Default Configuration
 =====================
 
-.. include:: DEFAULT_CONFIG_wgs_sv_external.rst
+.. include:: DEFAULT_CONFIG_wgs_sv_export_external.rst
 
 ==================
 Parallel Execution
@@ -101,7 +101,6 @@ KEY_EXT = {
 }
 
 #: Default configuration for the wgs_sv_export_external step
-DEFAULT_CONFIG = WgsSvExportExternalConfigModel.default_config_yaml_string()
 
 
 class VarfishAnnotatorExternalStepPart(BaseStepPart):
@@ -320,11 +319,6 @@ class WgsSvExportExternalWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

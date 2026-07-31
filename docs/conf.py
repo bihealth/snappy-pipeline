@@ -82,18 +82,13 @@ htmlhelp_basename = "snappy_pipelinedoc"
 html_last_updated_fmt = "%b %d, %Y"
 
 
-import importlib
-import pkgutil
-
-import snappy_pipeline.workflows
 import textwrap
 
-for _, name, is_pkg in pkgutil.iter_modules(snappy_pipeline.workflows.__path__):
-    if is_pkg:
-        module = importlib.import_module("snappy_pipeline.workflows." + name)
-        try:
-            cfg = module.DEFAULT_CONFIG
-        except AttributeError:
-            continue  # swallow
-        with open("step/DEFAULT_CONFIG_{}.rst".format(name), "wt") as outf:
-            outf.write("::\n\n{}\n\n".format(textwrap.indent(cfg.strip(), "    ")))
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+for name, workflow_cls in sorted(WORKFLOW_REGISTRY.items()):
+    cfg = workflow_cls.default_config_yaml()
+    if not cfg:
+        continue  # swallow
+    with open("step/DEFAULT_CONFIG_{}.rst".format(name), "wt") as outf:
+        outf.write("::\n\n{}\n\n".format(textwrap.indent(cfg.strip(), "    ")))

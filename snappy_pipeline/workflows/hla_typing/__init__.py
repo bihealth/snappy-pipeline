@@ -88,7 +88,6 @@ EXT_NAMES = ("txt", "txt_md5", "json", "json_md5")
 HLA_TYPERS = ("optitype", "arcashla")
 
 #: Default configuration for the hla_typing schema
-DEFAULT_CONFIG = HlaTypingConfigModel.default_config_yaml_string()
 
 
 class OptiTypeStepPart(BaseStepPart):
@@ -436,13 +435,6 @@ class HlaTypingWorkflow(BaseStep):
 
     #: config_model_class
     config_model_class = HlaTypingConfigModel
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific
-        one
-        """
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

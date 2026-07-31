@@ -99,7 +99,6 @@ from snappy_pipeline.workflows.ngs_mapping import TargetCovReportStepPart
 from .model import VariantExportExternal as VariantExportExternalConfigModel
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = VariantExportExternalConfigModel.default_config_yaml_string()
 
 
 class BamReportsExternalStepPart(TargetCovReportStepPart):
@@ -536,11 +535,6 @@ class VariantExportExternalWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

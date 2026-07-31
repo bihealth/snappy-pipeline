@@ -120,7 +120,6 @@ __email__ = "eric.blanc@bih-charite.de"
 #: Extensions of files to create as main payload
 PREPARE_EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = SomaticNeoepitopePredictionConfigModel.default_config_yaml_string()
 
 
 class UnsupportedProtocolStrand(Exception):
@@ -1019,11 +1018,6 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
 
     def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir, **kwargs):
         previous_steps = [

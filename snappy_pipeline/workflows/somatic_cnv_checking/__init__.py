@@ -89,7 +89,6 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Default configuration for the somatic_cnv_checking schema
-DEFAULT_CONFIG = SomaticCnvCheckingConfigModel.default_config_yaml_string()
 
 
 class SomaticCnvCheckingStepPart(BaseStepPart):
@@ -312,11 +311,6 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             target="role == 'normal' and extraction_type == 'dna'",
         )
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

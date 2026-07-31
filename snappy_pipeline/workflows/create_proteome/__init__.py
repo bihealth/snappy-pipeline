@@ -22,7 +22,6 @@ from .model import CreateProteome as CreateProteomeConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-DEFAULT_CONFIG = CreateProteomeConfigModel.default_config_yaml_string()
 
 _OUT_PREFIX = "work/{library_name}/out/{library_name}"
 _LOG_PREFIX = "work/{library_name}/log/{library_name}"
@@ -85,10 +84,6 @@ class CreateProteomeWorkflow(BaseStep):
     produces = [DataSignature(DataType.TABULAR, frozenset({"proteome"}))]
 
     config_model_class = CreateProteomeConfigModel
-
-    @classmethod
-    def default_config_yaml(cls):
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

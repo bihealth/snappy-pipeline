@@ -32,7 +32,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 PURITY_PLOIDY_TOOLS = "ascat"
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = SomaticPurityPloidyEstimateConfigModel.default_config_yaml_string()
 
 #: Extensions of output payload files
 EXT_VALUES = ("_goodness_of_fit.txt", "_ploidy.txt", "_segments.txt", "_segments_raw.txt")
@@ -317,13 +316,6 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
             target="role == 'normal' and extraction_type == 'dna'",
         )
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific
-        one
-        """
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

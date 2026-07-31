@@ -89,7 +89,6 @@ MSI_CALLERS_MATCHED = ("mantis_msi2",)
 
 
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = SomaticMsiCallingConfigModel.default_config_yaml_string()
 
 
 class Mantis2StepPart(BaseStepPart):
@@ -201,11 +200,6 @@ class SomaticMsiCallingWorkflow(BaseStep):
             target="role == 'normal' and extraction_type == 'dna'",
         )
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

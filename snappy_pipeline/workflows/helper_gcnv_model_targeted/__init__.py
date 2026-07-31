@@ -99,7 +99,6 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from .model import HelperGcnvModelTargeted as HelperGcnvModelTargetedConfigModel
 
 #: Default configuration for the helper_gcnv_model_targeted schema
-DEFAULT_CONFIG = HelperGcnvModelTargetedConfigModel.default_config_yaml_string()
 
 
 class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
@@ -180,11 +179,6 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

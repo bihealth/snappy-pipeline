@@ -23,7 +23,6 @@ from .model import AdapterTrimming as AdapterTrimmingConfigModel
 TRIMMERS = ("bbduk", "fastp")
 
 #: Default configuration for the hla_typing schema
-DEFAULT_CONFIG = AdapterTrimmingConfigModel.default_config_yaml_string()
 
 
 class AdapterTrimmingStepPart(BaseStepPart):
@@ -212,10 +211,6 @@ class AdapterTrimmingWorkflow(BaseStep):
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes((LinkInStepPart, LinkOutFastqStepPart, selected))
-
-    @classmethod
-    def default_config_yaml(cls):
-        return DEFAULT_CONFIG
 
     @listify
     def get_result_files(self):

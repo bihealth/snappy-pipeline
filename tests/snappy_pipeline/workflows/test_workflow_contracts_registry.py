@@ -26,11 +26,6 @@ def test_default_config_yaml_has_valid_top_level_shape(step_name, workflow_cls):
     yaml = ruamel_yaml.YAML()
     config_text = workflow_cls.default_config_yaml()
     assert isinstance(config_text, str)
-    if not config_text.strip():
-        # link_in is a pure config-carrier helper and currently ships an empty default snippet.
-        assert step_name == "link_in"
-        return
-
     config = yaml.load(config_text)
     assert isinstance(config, dict)
     assert "tasks" in config or "step_config" in config

@@ -22,7 +22,6 @@ EXT_VALUES = (".json", ".json.md5")
 EXT_NAMES = ("json", "json_md5")
 
 #: Default configuration for the tmb calculation step
-DEFAULT_CONFIG = TumorMutationalBurdenConfigModel.default_config_yaml_string()
 
 
 class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
@@ -105,11 +104,6 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

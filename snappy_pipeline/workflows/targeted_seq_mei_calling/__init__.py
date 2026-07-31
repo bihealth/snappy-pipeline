@@ -102,7 +102,6 @@ EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 
 #: Default configuration for the targeted_seq_mei_calling step.
-DEFAULT_CONFIG = TargetedSeqMeiCallingConfigModel.default_config_yaml_string()
 
 
 class ScrambleStepPart(BaseStepPart):
@@ -321,11 +320,6 @@ class MeiWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

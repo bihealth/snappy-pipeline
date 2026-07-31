@@ -167,7 +167,6 @@ from .model import PanelOfNormals as PanelOfNormalsConfigModel
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_variant_calling schema
-DEFAULT_CONFIG = PanelOfNormalsConfigModel.default_config_yaml_string()
 
 
 class PanelOfNormalsStepPart(BaseStepPart):
@@ -815,11 +814,6 @@ class PanelOfNormalsWorkflow(BaseStep):
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

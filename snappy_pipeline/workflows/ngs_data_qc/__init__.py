@@ -35,7 +35,6 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from .model import NgsDataQc as NgsDataQcConfigModel
 
 #: Default configuration for the ngs_mapping schema
-DEFAULT_CONFIG = NgsDataQcConfigModel.default_config_yaml_string()
 
 MULTIPLE_METRICS = {
     "CollectAlignmentSummaryMetrics": ["alignment_summary_metrics"],
@@ -279,13 +278,6 @@ class NgsDataQcWorkflow(BaseStep):
     consumes = {DataSignature(DataType.RAW): True, DataSignature(DataType.ALIGNMENTS): False}
     produces = [DataSignature(DataType.QC)]
     sheet_shortcut_class = GenericSampleSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific
-        one
-        """
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

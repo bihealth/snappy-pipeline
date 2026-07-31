@@ -26,7 +26,6 @@ __author__ = "Clemens Messerschmidt"
 
 
 # Default configuration variant_signatures
-DEFAULT_CONFIG = SomaticVariantSignaturesConfigModel.default_config_yaml_string()
 
 
 class SignaturesStepPart(BaseStepPart):
@@ -164,11 +163,6 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     }
 
     config_model_class = SomaticVariantSignaturesConfigModel
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

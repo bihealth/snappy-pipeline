@@ -6,7 +6,7 @@ from snappy_pipeline.apps import snappy_cli
 from tests.snappy_pipeline.workflows.conftest import patch_module_fs
 
 
-def test_start_project(germline_sheet_fake_noproject_fs, mocker):
+def test_init(germline_sheet_fake_noproject_fs, mocker):
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.apps.snappy_cli", germline_sheet_fake_noproject_fs, mocker)
     patch_module_fs("snappy_pipeline.apps.impl.fsmanip", germline_sheet_fake_noproject_fs, mocker)

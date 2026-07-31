@@ -36,7 +36,6 @@ from .model import SvCallingWgs as SvCallingWgsConfigModel, Tool
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the sv_calling_wgs step
-DEFAULT_CONFIG = SvCallingWgsConfigModel.default_config_yaml_string()
 
 
 class GcnvWgsStepPart(RunGcnvStepPart):
@@ -288,11 +287,6 @@ class SvCallingWgsWorkflow(BaseStep):
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
     config_model_class = SvCallingWgsConfigModel
     sheet_shortcut_class = GermlineCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

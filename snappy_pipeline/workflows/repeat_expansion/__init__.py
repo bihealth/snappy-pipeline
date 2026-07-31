@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
-"""Implementation of the ``repeat_analysis`` step
+"""Implementation of the ``repeat_expansion`` step
 
-The ``repeat_analysis`` step takes as the input the results of the ``ngs_mapping`` step
+The ``repeat_expansion`` step takes as the input the results of the ``ngs_mapping`` step
 (aligned reads in BAM format) and performs repeat expansion analysis.  The result are variant files
 (VCF) with the repeat expansions definitions, and associated annotations (JSON).
 
@@ -101,7 +101,6 @@ EXT_JSON = (".json", ".json.md5")
 #: Extensions of files to create as main payload - VCF.
 EXT_VCF = (".vcf", ".vcf.md5")
 #: Default configuration for the repeat_expansion step.
-DEFAULT_CONFIG = RepeatExpansionConfigModel.default_config_yaml_string()
 
 
 class ExpansionHunterStepPart(BaseStepPart):
@@ -343,11 +342,6 @@ class RepeatExpansionWorkflow(BaseStep):
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

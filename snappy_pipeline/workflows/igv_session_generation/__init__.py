@@ -68,7 +68,6 @@ EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
 EXT_NAMES = ("xml", "xml_md5")
 
 #: Default configuration of the wgs_sv_filtration step
-DEFAULT_CONFIG = IgvSessionGenerationConfigModel.default_config_yaml_string()
 
 
 class WriteIgvSessionFileStepPart(BaseStepPart):
@@ -187,11 +186,6 @@ class IgvSessionGenerationWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

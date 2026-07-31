@@ -78,8 +78,6 @@ CASE_LIST_FILES = {
 
 LibraryPair = namedtuple("LibraryPair", ("normal", "tumor"))
 
-DEFAULT_CONFIG = CbioportalExportConfigModel.default_config_yaml_string()
-
 
 # ================================================================================================
 #
@@ -729,11 +727,6 @@ class cbioportalExportWorkflow(BaseStep):
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

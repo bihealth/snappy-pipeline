@@ -22,7 +22,6 @@ from .model import RenameCombine
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-DEFAULT_CONFIG = CombineVariantsConfigModel.default_config_yaml_string()
 
 _OUT_PREFIX = "work/{tumor_library}/out/{tumor_library}"
 _LOG_PREFIX = "work/{tumor_library}/log/{tumor_library}"
@@ -121,10 +120,6 @@ class CombineVariantsWorkflow(BaseStep):
             target="role == 'normal' and extraction_type == 'dna'",
         )
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

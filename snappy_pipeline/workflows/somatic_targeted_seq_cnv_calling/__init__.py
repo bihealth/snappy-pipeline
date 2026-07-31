@@ -93,7 +93,6 @@ from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingC
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the somatic_targeted_seq_cnv_calling step
-DEFAULT_CONFIG = SomaticTargetedSeqCnvCallingConfigModel.default_config_yaml_string()
 
 #: JSON key for "isCancer"
 KEY_IS_CANCER = "isCancer"
@@ -746,11 +745,6 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             target="role == 'normal' and extraction_type == 'dna'",
         )
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

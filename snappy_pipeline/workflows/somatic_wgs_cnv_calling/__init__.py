@@ -55,7 +55,7 @@ Default Configuration
 
 The default configuration is as follows.
 
-.. include:: DEFAULT_CONFIG_wgs_cnv_calling.rst
+.. include:: DEFAULT_CONFIG_somatic_wgs_cnv_calling.rst
 
 =============================
 Available Somatic CNV Callers
@@ -106,7 +106,6 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 SOMATIC_WGS_CNV_CALLERS = ("canvas", "cnvetti", "control_freec")
 
 #: Default configuration for the somatic_variant_calling schema
-DEFAULT_CONFIG = SomaticWgsCnvCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticWgsCnvCallingStepPart(BaseStepPart):
@@ -766,11 +765,6 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             target="role == 'normal' and extraction_type == 'dna'",
         )
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

@@ -96,7 +96,6 @@ CONFIG_TO_TOKEN = {
 }
 
 #: Default configuration of the wgs_sv_filtration step
-DEFAULT_CONFIG = VariantPhasingConfigModel.default_config_yaml_string()
 
 
 class WriteTrioPedigreeStepPart(BaseStepPart):
@@ -387,11 +386,6 @@ class VariantPhasingWorkflow(BaseStep):
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))]
     config_model_class = VariantPhasingConfigModel
     sheet_shortcut_class = GermlineCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

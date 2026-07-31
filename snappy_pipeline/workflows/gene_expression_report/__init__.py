@@ -14,7 +14,6 @@ from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import GeneExpressionReport as GeneExpressionReportConfigModel
 
-DEFAULT_CONFIG = GeneExpressionReportConfigModel.default_config_yaml_string()
 
 #: Names of the files to create for the extension (snakemake output)
 EXT_NAMES = ("tsv",)
@@ -156,11 +155,6 @@ class GeneExpressionReportWorkflow(BaseStep):
             )
         lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/{lib}/out/{lib}.tsv"}
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     def __init__(
         self,

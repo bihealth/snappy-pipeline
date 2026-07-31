@@ -238,7 +238,6 @@ VARIANT_CALLERS = (
 )
 
 #: Default configuration for the variant_calling step
-DEFAULT_CONFIG = VariantCallingConfigModel.default_config_yaml_string()
 
 
 class GetResultFilesMixin:
@@ -1329,11 +1328,6 @@ class VariantCallingWorkflow(BaseStep):
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
             "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
         }
-
-    @classmethod
-    def default_config_yaml(cls) -> str:
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     def __init__(
         self,

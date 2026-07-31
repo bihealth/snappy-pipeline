@@ -473,7 +473,6 @@ READ_MAPPERS_RNA = ("star",)
 READ_MAPPERS_DNA_LONG = ("minimap2",)
 
 #: Default configuration
-DEFAULT_CONFIG = NgsMappingConfigModel.default_config_yaml_string()
 
 
 class MappingGetResultFilesMixin:
@@ -1436,11 +1435,6 @@ class NgsMappingWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     def __init__(
         self,

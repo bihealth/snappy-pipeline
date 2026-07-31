@@ -80,7 +80,6 @@ from .model import HomologousRecombinationDeficiency as HomologousRecombinationD
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 #: Default configuration for the homologous recombination deficiency step
-DEFAULT_CONFIG = HomologousRecombinationDeficiencyConfigModel.default_config_yaml_string()
 
 
 class ScarHRDStepPart(BaseStepPart):
@@ -184,11 +183,6 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

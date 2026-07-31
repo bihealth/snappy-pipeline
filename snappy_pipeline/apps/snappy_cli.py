@@ -17,6 +17,7 @@ from ruamel.yaml.comments import CommentedMap
 from snakemake.cli import main as snakemake_main
 
 from .. import __version__
+from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     assume_path_existing,
     assume_path_nonexisting,
@@ -27,7 +28,6 @@ from .impl.fsmanip import (
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
 from .impl.yaml_utils import remove_non_required, remove_yaml_comment_lines
-from .step_registry import STEP_TO_MODULE
 
 
 def _get_cwd():
@@ -35,7 +35,7 @@ def _get_cwd():
 
 
 #: Allowed steps
-STEPS = tuple(sorted(STEP_TO_MODULE))
+STEPS = tuple(sorted(WORKFLOW_REGISTRY))
 
 
 class TaskParamType(click.ParamType):
@@ -181,7 +181,7 @@ class AddTaskApp:
         # Load default configuration, remove comment lines and lines not marked as required
         yaml = ruamel_yaml.YAML()
         default_config_yaml = yaml.load(
-            remove_yaml_comment_lines(STEP_TO_MODULE[self.step].DEFAULT_CONFIG)
+            remove_yaml_comment_lines(WORKFLOW_REGISTRY[self.step].default_config_yaml())
         )
         only_required = remove_non_required(default_config_yaml)
 
@@ -274,7 +274,7 @@ def main():
 )
 def init(project_directory, project_name, partition, tasks, manage_config, email, conda):
     """Initialize a new snappy project directory."""
-    log("SNAPPY Pipeline -- start_project")
+    log("SNAPPY Pipeline -- init")
     log("================================")
     log("")
 

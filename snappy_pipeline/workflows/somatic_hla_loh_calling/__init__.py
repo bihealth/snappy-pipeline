@@ -39,7 +39,6 @@ from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = SomaticHlaLohCallingConfigModel.default_config_yaml_string()
 
 
 class LohhlaStepPart(BaseStepPart):
@@ -134,11 +133,6 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
             target="role == 'normal' and extraction_type == 'dna'",
         )
     }
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

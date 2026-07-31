@@ -6,7 +6,7 @@ from snappy_pipeline.apps import snappy_cli
 from ..workflows.conftest import patch_module_fs
 
 
-def test_start_step_ngs_mapping(germline_sheet_fake_project_fs, mocker):
+def test_task_add_ngs_mapping(germline_sheet_fake_project_fs, mocker):
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.apps.snappy_cli", germline_sheet_fake_project_fs, mocker)
     patch_module_fs("snappy_pipeline.apps.impl.fsmanip", germline_sheet_fake_project_fs, mocker)
@@ -25,7 +25,7 @@ def test_start_step_ngs_mapping(germline_sheet_fake_project_fs, mocker):
         assert "ngs_mapping" in content
 
 
-def test_start_step_custom_task_name(germline_sheet_fake_project_fs, mocker):
+def test_task_add_custom_task_name(germline_sheet_fake_project_fs, mocker):
     # Patch out file-system related things in abstract (the crawling link in step is defined there)
     patch_module_fs("snappy_pipeline.apps.snappy_cli", germline_sheet_fake_project_fs, mocker)
     patch_module_fs("snappy_pipeline.apps.impl.fsmanip", germline_sheet_fake_project_fs, mocker)

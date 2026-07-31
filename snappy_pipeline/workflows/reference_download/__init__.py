@@ -10,8 +10,6 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from .model import ReferenceDownload as ReferenceDownloadConfigModel
 from .model import Source
 
-DEFAULT_CONFIG = ReferenceDownloadConfigModel.default_config_yaml_string()
-
 
 class _ReferenceDownloadStepPart(BaseStepPart):
     source: Source
@@ -133,10 +131,6 @@ class ReferenceDownloadWorkflow(BaseStep):
 
     sheet_shortcut_class = GenericSampleSheet
     config_model_class = ReferenceDownloadConfigModel
-
-    @classmethod
-    def default_config_yaml(cls):
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

@@ -713,12 +713,11 @@ class BaseStep:
 
     @classmethod
     def default_config_yaml(cls):
-        """Override this function for providing default configuration
+        """Return default configuration YAML for this workflow step.
 
-        The configuration should be a YAML fragment. Your configuration should define a top-level
-        key starting with '_' and then consist of the name of the schema, e.g.,
-        '_ngs_mapping_schema'. Your default configuration is then merged into the main
-        configuration where the main configuration takes precedence.
+        The configuration is generated from the step's ``config_model_class`` and should be a
+        YAML fragment with a top-level ``step_config`` key. Your default configuration is then
+        merged into the main configuration where the main configuration takes precedence.
 
         Example: ::
 
@@ -727,7 +726,7 @@ class BaseStep:
                     schema_config:
                       ngs_mapping:
                         max_threads: 16
-                ""\").lstrip()))
+                ""\").lstrip())
 
         Return ``None`` for no default configuration.
 
@@ -735,7 +734,7 @@ class BaseStep:
         (earlier ones will be overwritten by later ones).  This is useful if your schema needs
         configuration for a later one.
         """
-        return ""  # pragma: no cover
+        return cls.config_model_class.default_config_yaml_string()
 
     #: Override with the Pydantic model class for configuration validation
     config_model_class: type[SnappyStepModel]

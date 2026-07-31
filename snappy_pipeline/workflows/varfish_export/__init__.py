@@ -94,7 +94,6 @@ EXTS = (".tsv.gz", ".tsv.gz.md5")
 # TODO: the number of restart runtimes is high because tabix in HTSJDK/Jannovar is flaky...
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = VarfishExportConfigModel.default_config_yaml_string()
 
 
 class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
@@ -417,11 +416,6 @@ class VarfishExportWorkflow(BaseStep):
     produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
     config_model_class = VarfishExportConfigModel
     sheet_shortcut_class = GermlineCaseSheet
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:

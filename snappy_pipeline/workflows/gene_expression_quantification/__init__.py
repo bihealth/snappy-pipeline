@@ -123,8 +123,6 @@ EXTENSIONS = {
     },
 }
 
-DEFAULT_CONFIG = GeneExpressionQuantificationConfigModel.default_config_yaml_string()
-
 
 class SalmonStepPart(BaseStepPart):
     """Gene expression quantification for raw data using salmon"""
@@ -522,11 +520,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
             )
         lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/{lib}/out/{lib}.tsv"}
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
 
     def __init__(
         self,

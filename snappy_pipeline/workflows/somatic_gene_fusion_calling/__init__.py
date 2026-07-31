@@ -81,7 +81,6 @@ GENE_FUSION_CALLERS = (
 )
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = SomaticGeneFusionCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticGeneFusionCallingStepPart(BaseStepPart):
@@ -497,13 +496,6 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
-
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific
-        one
-        """
-        return DEFAULT_CONFIG
 
     def __init__(
         self,
