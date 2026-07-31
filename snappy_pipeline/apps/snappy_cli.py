@@ -11,8 +11,10 @@ import os
 import subprocess
 import sys
 
-import click
+import rich_click as click
 import ruamel.yaml as ruamel_yaml
+from rich.console import Console
+from rich.table import Table
 from ruamel.yaml.comments import CommentedMap
 from snakemake.cli import main as snakemake_main
 
@@ -20,7 +22,6 @@ from .. import __version__
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     assume_path_existing,
-    assume_path_nonexisting,
     backup_file,
     create_directory,
     create_from_tpl,
@@ -28,6 +29,10 @@ from .impl.fsmanip import (
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
 from .impl.yaml_utils import remove_non_required, remove_yaml_comment_lines
+
+# Configure rich-click settings for formatting
+click.rich_click.SHOW_ARGUMENTS = True
+click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 
 
 def _get_cwd():
@@ -56,6 +61,65 @@ class TaskParamType(click.ParamType):
                 ctx,
             )
         return task_name, step
+
+    def shell_complete(self, ctx, param, incomplete):
+        from click.shell_completion import CompletionItem
+
+        return [CompletionItem(step) for step in STEPS if step.startswith(incomplete)]
+
+
+def _complete_task_names(ctx, param, incomplete):
+    from click.shell_completion import CompletionItem
+
+    directory = ctx.params.get("directory")
+    if callable(directory):
+        directory = directory()
+    directory = directory or _get_cwd()
+
+    config_filename = os.path.join(directory, CONFIG_SUBDIR, CONFIG_FILENAME)
+    task_names = set()
+    if os.path.exists(config_filename):
+        try:
+            with open(config_filename, "rt") as f:
+                yaml = ruamel_yaml.YAML()
+                config_yaml = yaml.load(f.read())
+                if (
+                    config_yaml
+                    and "tasks" in config_yaml
+                    and isinstance(config_yaml["tasks"], list)
+                ):
+                    for task_item in config_yaml["tasks"]:
+                        if isinstance(task_item, dict) and "name" in task_item:
+                            task_names.add(task_item["name"])
+        except Exception:
+            pass
+    if not task_names:
+        task_names = set(STEPS)
+
+    return [CompletionItem(name) for name in sorted(task_names) if name.startswith(incomplete)]
+
+
+def _get_registered_steps_info():
+    info = []
+    for step_name in STEPS:
+        cls = WORKFLOW_REGISTRY[step_name]
+        doc = cls.__doc__ or ""
+        summary = doc.strip().split("\n")[0] if doc else "No description available."
+        info.append((step_name, summary))
+    return info
+
+
+def _print_steps_table():
+    steps_info = _get_registered_steps_info()
+    console = Console()
+    table = Table(
+        title="Available Workflow Steps in SNAPPY", show_header=True, header_style="bold magenta"
+    )
+    table.add_column("Step Name", style="cyan", no_wrap=True)
+    table.add_column("Description", style="white")
+    for step_name, summary in steps_info:
+        table.add_row(step_name, summary)
+    console.print(table)
 
 
 #: README file name
@@ -237,13 +301,12 @@ def main():
 
 
 @main.command()
-@click.option(
-    "--directory",
-    "-d",
-    "project_directory",
-    required=True,
+@click.argument(
+    "directory",
+    default=_get_cwd,
     type=click.Path(),
-    help="Path to directory to create for the project",
+    required=False,
+    metavar="[DIRECTORY]",
 )
 @click.option(
     "--project-name",
@@ -253,7 +316,6 @@ def main():
 @click.option("--partition", default="medium", help="Partition to submit into")
 @click.option(
     "--task",
-    "-t",
     "tasks",
     type=TaskParamType(),
     multiple=True,
@@ -272,14 +334,21 @@ def main():
     default="",
     help="conda environment to load when submitting job",
 )
-def init(project_directory, project_name, partition, tasks, manage_config, email, conda):
+def init(directory, project_name, partition, tasks, manage_config, email, conda):
     """Initialize a new snappy project directory."""
+    project_directory = directory() if callable(directory) else directory
     log("SNAPPY Pipeline -- init")
     log("================================")
     log("")
 
-    # Check if directory already exists - no overwrite
-    if not assume_path_nonexisting(project_directory):
+    # Check if config file already exists - do not overwrite existing project
+    config_dest_path = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
+    if os.path.exists(config_dest_path):
+        log(
+            "Project already initialized at {path} ({config} exists)",
+            {"path": project_directory, "config": CONFIG_FILENAME},
+            level=LVL_ERROR,
+        )
         sys.exit(1)
 
     # Create project directory and subdirectory for configuration files
@@ -287,7 +356,7 @@ def init(project_directory, project_name, partition, tasks, manage_config, email
     if CONFIG_SUBDIR:
         paths.append(os.path.join(project_directory, CONFIG_SUBDIR))
     for path in paths:
-        create_directory(path)
+        create_directory(path, exist_ok=True)
 
     # Create config file in subdirectory based on template
     config_dest_path = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
@@ -296,7 +365,7 @@ def init(project_directory, project_name, partition, tasks, manage_config, email
         dest_path=config_dest_path,
         format_args={
             "created_at": datetime.datetime.now().isoformat(),
-            "project_name": (project_name or os.path.basename(project_directory)),
+            "project_name": (project_name or os.path.basename(os.path.abspath(project_directory))),
         },
         message="Creating project-wide configuration in {path}",
         message_args={"path": config_dest_path},
@@ -308,7 +377,7 @@ def init(project_directory, project_name, partition, tasks, manage_config, email
         dest_path=os.path.join(project_directory, README_FILENAME),
         format_args={
             "created_at": datetime.datetime.now().isoformat(),
-            "project_name": (project_name or os.path.basename(project_directory)),
+            "project_name": (project_name or os.path.basename(os.path.abspath(project_directory))),
         },
         message="Creating README file in in {path}",
         message_args={"path": os.path.join(project_directory, README_FILENAME)},
@@ -329,7 +398,7 @@ def init(project_directory, project_name, partition, tasks, manage_config, email
             ),
             "partition": partition,
             "conda": conda,
-            "project_name": (project_name or os.path.basename(project_directory)),
+            "project_name": (project_name or os.path.basename(os.path.abspath(project_directory))),
         },
         message="Creating master job shell file in {path}",
         message_args={"path": dest_path},
@@ -366,7 +435,7 @@ def task():
     "tasks", nargs=-1, required=True, type=TaskParamType(), metavar="[NAME=]STEP_TYPE..."
 )
 @click.option(
-    "--project-directory",
+    "--directory",
     type=click.Path(),
     default=_get_cwd,
     help="Project directory, defaults to current working directory",
@@ -386,7 +455,7 @@ def task():
 )
 def task_add(
     tasks,
-    project_directory,
+    directory,
     partition,
     email,
     manage_config,
@@ -396,6 +465,7 @@ def task_add(
 
     TASKS is a list of tasks to add, formatted as [task_name=]step_type.
     """
+    project_directory = directory() if callable(directory) else directory
     email_val = email or os.environ.get("SNAPPY_EMAIL") or os.environ.get("SNAPPY_PIPELINE_EMAIL")
 
     for task_name, step in tasks:
@@ -415,13 +485,24 @@ def task_add(
 
 @task.command(name="list")
 @click.option(
-    "--project-directory",
+    "--directory",
     type=click.Path(),
     default=_get_cwd,
     help="Project directory, defaults to current working directory",
 )
-def task_list(project_directory):
-    """List all defined tasks in the project."""
+@click.option(
+    "--available",
+    is_flag=True,
+    default=False,
+    help="List all available registered workflow steps in SNAPPY instead of configured tasks.",
+)
+def task_list(directory, available):
+    """List defined tasks in the project (or available steps with --available)."""
+    if available:
+        _print_steps_table()
+        return
+
+    project_directory = directory() if callable(directory) else directory
     config_filename = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
     if not os.path.exists(config_filename):
         click.echo(f"Error: Configuration file not found at {config_filename}", err=True)
@@ -437,11 +518,17 @@ def task_list(project_directory):
         return
 
     click.echo(f"Defined tasks in {config_filename}:")
-    for task in tasks:
-        if isinstance(task, dict):
-            name = task.get("name", "unnamed")
-            step = task.get("step", "unknown")
+    for task_item in tasks:
+        if isinstance(task_item, dict):
+            name = task_item.get("name", "unnamed")
+            step = task_item.get("step", "unknown")
             click.echo(f"  - {name} ({step})")
+
+
+@task.command(name="steps")
+def task_steps():
+    """List all available workflow steps registered in SNAPPY."""
+    _print_steps_table()
 
 
 @main.command(
@@ -451,11 +538,10 @@ def task_list(project_directory):
     )
 )
 @click.option(
-    "-d",
     "--directory",
     type=click.Path(),
     default=_get_cwd,
-    help="Path to directory to run in, default is cwd",
+    help="Path to directory to run in, default is current working directory",
 )
 @click.option(
     "--slurm",
@@ -467,6 +553,7 @@ def task_list(project_directory):
     "task_name",
     type=str,
     default=None,
+    shell_complete=_complete_task_names,
     help="The specific task name from config.yaml to run",
 )
 @click.option(
@@ -479,10 +566,11 @@ def task_list(project_directory):
         "By default only leaf tasks (tasks not depended on by any other task) are targeted."
     ),
 )
-@click.option("-v", "--verbose", is_flag=True, help="Increase verbosity level")
+@click.option("--verbose", is_flag=True, help="Increase verbosity level")
 @click.pass_context
 def run(ctx, directory, slurm, task_name, all_tasks, verbose):
     """Run snappy pipeline workflows."""
+    directory_path = directory() if callable(directory) else directory
     setup_logging(verbose)
     if task_name:
         logging.info("Targeting single task: %s", task_name)
@@ -500,7 +588,7 @@ def run(ctx, directory, slurm, task_name, all_tasks, verbose):
 
     snakemake_argv = [
         "--directory",
-        directory,
+        directory_path,
         "--snakefile",
         orchestrator_snakefile,
     ]
@@ -537,7 +625,6 @@ def run(ctx, directory, slurm, task_name, all_tasks, verbose):
 @main.command()
 @click.option(
     "--directory",
-    "-d",
     type=click.Path(),
     default=_get_cwd,
     help="Project directory, defaults to current working directory",
@@ -556,7 +643,8 @@ def watch(directory, db_path):
     Snakemake when the profile has ``logger: snkmt`` (the default in
     snappy's workflow profile).
     """
-    path = db_path or os.path.join(directory, ".snakemake", "log", "snkmt.sqlite")
+    directory_path = directory() if callable(directory) else directory
+    path = db_path or os.path.join(directory_path, ".snakemake", "log", "snkmt.sqlite")
     if not os.path.exists(path):
         log(
             "snkmt database not found at {path}.\n\n"
@@ -581,7 +669,7 @@ def watch(directory, db_path):
 
 @main.command()
 @click.option(
-    "--project-directory",
+    "--directory",
     type=click.Path(),
     default=_get_cwd,
     help="Project directory, defaults to current working directory",
@@ -594,8 +682,9 @@ def watch(directory, db_path):
     default="",
     help="conda environment to load when submitting job",
 )
-def refresh(project_directory, partition, email, conda):
+def refresh(directory, partition, email, conda):
     """Recreate the master pipeline_job.sh and ensure slurm_log exists."""
+    project_directory = directory() if callable(directory) else directory
     log("CUBI Pipeline -- refresh")
     log("========================")
 
@@ -627,7 +716,7 @@ def refresh(project_directory, partition, email, conda):
             ),
             "partition": partition,
             "conda": conda,
-            "project_name": os.path.basename(project_directory),
+            "project_name": os.path.basename(os.path.abspath(project_directory)),
         },
         message="creating SGE job shell file in {path}",
         message_args={"path": os.path.join(project_directory, FILENAME_PIPELINE_JOB_SH)},
@@ -657,7 +746,6 @@ def status(jobid):
 
 @main.command(name="pull-sheet")
 @click.option(
-    "-o",
     "--output",
     type=click.File("wt"),
     default="-",
@@ -729,6 +817,41 @@ def pull_sheet(
     from .snappy_pull_sheet import run as run_pull_sheet
 
     run_pull_sheet(args)
+
+
+@main.command()
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]), required=False)
+def completion(shell):
+    """Generate shell autocompletion script.
+
+    Usage:
+        eval "$(snappy completion zsh)"   # for zsh
+        eval "$(snappy completion bash)"  # for bash
+        eval "$(snappy completion fish)"  # for fish
+    """
+    if not shell:
+        shell_path = os.environ.get("SHELL", "")
+        if "zsh" in shell_path:
+            shell = "zsh"
+        elif "fish" in shell_path:
+            shell = "fish"
+        else:
+            shell = "bash"
+
+    from click.shell_completion import get_completion_class
+
+    comp_cls = get_completion_class(shell)
+    if comp_cls is None:
+        click.echo(f"Error: Unsupported shell '{shell}'", err=True)
+        sys.exit(1)
+
+    comp = comp_cls(
+        cli=main,
+        ctx_args={},
+        prog_name="snappy",
+        complete_var="_SNAPPY_COMPLETE",
+    )
+    click.echo(comp.source())
 
 
 if __name__ == "__main__":

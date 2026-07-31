@@ -45,9 +45,10 @@ dependencies = [
     # Parsing of ISA-tab.
     "altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8",
     # Validation for models, mainly used for configuration validation
-    "pydantic >=2.9.0,<3"
-    # Note: varfish-cli is used as an *external CLI tool* by pipeline users, not imported
-    # as a Python library here. Install it separately.
+    "pydantic >=2.9.0,<3",
+    # Rich colored help formatting for Click CLIs
+    "rich-click >=1.7.0,<2",
+    "rich >=13.0.0",
 ]
 
 [project.urls]
