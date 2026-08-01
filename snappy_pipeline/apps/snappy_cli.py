@@ -8,6 +8,7 @@ import datetime
 import io
 import logging
 import os
+import shutil
 import subprocess
 import sys
 
@@ -710,7 +711,7 @@ def watch(directory, db_path):
         )
         sys.exit(1)
 
-    cmd = [sys.executable, "-m", "snkmt", "console", "--db-path", path]
+    cmd = _snkmt_console_cmd(path)
     log(
         "Launching snkmt console for database at {path}",
         {"path": path},
@@ -719,6 +720,27 @@ def watch(directory, db_path):
     res = subprocess.run(cmd)
     if res.returncode != 0:
         sys.exit(res.returncode)
+
+
+def _snkmt_console_cmd(db_path: str) -> list[str]:
+    """Return the command line to launch the snkmt console for ``db_path``.
+
+    ``python -m snkmt.cli`` silently does nothing because the package has no
+    ``__main__`` guard; the ``snkmt`` console script is the proper entry point
+    (``snkmt = snkmt.cli:main``).  Prefer it on PATH, and fall back to calling
+    ``main()`` directly with the current interpreter.
+    """
+    snkmt_bin = shutil.which("snkmt")
+    if snkmt_bin:
+        return [snkmt_bin, "console", "--db-path", db_path]
+    return [
+        sys.executable,
+        "-c",
+        "from snkmt.cli import main; main()",
+        "console",
+        "--db-path",
+        db_path,
+    ]
 
 
 @main.command()
