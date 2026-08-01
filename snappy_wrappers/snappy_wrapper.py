@@ -1,6 +1,7 @@
 """Abstract wrapper classes as utilities for snappy specific wrappers."""
 # Note that this file tries to target a baseline of python 3.8, so outdated wrappers don't crash
 
+import contextlib
 import os
 import shutil
 import stat
@@ -21,15 +22,11 @@ class SnappyWrapper(metaclass=ABCMeta):
         #!/usr/bin/env bash
         set -euo pipefail
 
-        # Pipe everything to log file
+        # Pipe everything to the snakemake log file while keeping the output
+        # on the original stdout (terminal or slurm job log).
         if [[ -n "{snakemake.log.log}" ]]; then
-            if [[ "$(set +e; tty; set -e)" != "" ]]; then
-                rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-                exec &> >(tee -a "{snakemake.log.log}" >&2)
-            else
-                rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-                echo "No tty, logging disabled" >"{snakemake.log.log}"
-            fi
+            rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
+            exec > >(tee -a "{snakemake.log.log}") 2>&1
         fi
 
         # Compute md5 except when filename ends with .md5
@@ -218,3 +215,51 @@ class RWrapper(SnappyWrapper):
 
     def run(self, cmd: str) -> None:
         self._run_R(cmd)
+
+
+class PythonWrapper:
+    """Base class for pure-Python wrappers (no external script executed).
+
+    Re-routes ``stdout`` and ``stderr`` into the Snakemake log file declared
+    via ``snakemake.log.log`` using ``contextlib.redirect_stdout`` and
+    ``contextlib.redirect_stderr``.  This ensures that output produced by
+    Python code -- including output from nested in-process Snakemake runs --
+    ends up in the Snakemake log file regardless of whether a TTY is present.
+    """
+
+    def __init__(self, snakemake) -> None:
+        self.snakemake = snakemake
+
+    def _log_path(self) -> str:
+        log = getattr(self.snakemake, "log", None)
+        if log is not None:
+            if getattr(log, "log", None):
+                return os.path.realpath(str(log.log))
+            if str(log):
+                return os.path.realpath(str(log))
+        raise AttributeError("snakemake.log.log is not defined")
+
+    @contextlib.contextmanager
+    def logging_context(self):
+        """Context manager capturing stdout/stderr into the Snakemake log file."""
+        log_path = self._log_path()
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, "at") as log_file:
+            with contextlib.redirect_stdout(log_file):
+                with contextlib.redirect_stderr(log_file):
+                    yield
+
+    def compute_log_md5(self) -> None:
+        shell(SnappyWrapper.md5_log.format(log=self._log_path()))
+
+    def write_conda_info(self) -> None:
+        """Write conda_list/conda_info files plus their md5 sums, if declared."""
+        log = getattr(self.snakemake, "log", None)
+        if log is None:
+            return
+        for key, command in (("conda_list", "conda list"), ("conda_info", "conda info")):
+            path = getattr(log, key, None)
+            if not path:
+                continue
+            shell("{} > {}".format(command, path))
+            shell(SnappyWrapper.md5_log.format(log=path))

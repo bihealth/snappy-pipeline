@@ -26,6 +26,7 @@ from pathlib import Path
 from snakemake.api import ResourceSettings, SnakemakeApi
 from snakemake.cli import get_profile_dir
 
+from snappy_wrappers.snappy_wrapper import PythonWrapper
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -416,7 +417,7 @@ def compute_md5_checksum(filename, buffer_size=65_536):
     return the_hash.hexdigest()
 
 
-class ParallelBaseWrapper:
+class ParallelBaseWrapper(PythonWrapper):
     """Base class for parallel wrapper classes.
 
     Serves mainly as a template class with methods to override to obtain the desired behaviour
@@ -726,39 +727,42 @@ class ParallelBaseWrapper:
                 return self.step_name
 
     def run(self):
-        # The setup of the temporary directory depends on whether it is to be kept (for debugging
-        # purposes) or not.
-        keep_tmpdir = self._get_config().get("keep_tmpdir", "never")
-        # Either run with TemporaryDirectory as context manager and auto-cleanup on exit or
-        # create temporary directory using mkdtemp().
-        if keep_tmpdir == "never":
-            self.logger.info("Running temporary directory with automated clean-up")
-            with tempfile.TemporaryDirectory(self._job_name_token()) as tmpdir:
-                self._do_run(tmpdir)
-            return self  # short-circuit
-        else:
-            tmpdir = tempfile.mkdtemp(self._job_name_token())
-        # Handle case of always keeping or cleanup on error only.
-        if keep_tmpdir == "always":
-            self.logger.info("Running temporary directory and WILL NOT CLEAN UP")
-            self._do_run(tmpdir)
-        else:  # keep_tmpdir == 'onerror'
-            self.logger.info("Running in temporary directory, will cleanup in case of success")
-            try:
-                self._do_run(tmpdir)
-            except SnakemakeExecutionFailed as e:
-                self.logger.info(
-                    "Caught error %s: %s, WILL NOT CLEAN UP temporary directory %s",
-                    type(e),
-                    e,
-                    tmpdir,
-                )
-                raise  # re-raise e
+        # Re-route stdout/stderr into the Snakemake log file so that output from
+        # Python code and nested in-process Snakemake runs is captured there.
+        with self.logging_context():
+            # The setup of the temporary directory depends on whether it is to be kept (for
+            # debugging purposes) or not.
+            keep_tmpdir = self._get_config().get("keep_tmpdir", "never")
+            # Either run with TemporaryDirectory as context manager and auto-cleanup on exit or
+            # create temporary directory using mkdtemp().
+            if keep_tmpdir == "never":
+                self.logger.info("Running temporary directory with automated clean-up")
+                with tempfile.TemporaryDirectory(self._job_name_token()) as tmpdir:
+                    self._do_run(tmpdir)
+                return self  # short-circuit
             else:
-                self.logger.info("Ran through successfully, cleaning up %s...", tmpdir)
-                shutil.rmtree(tmpdir)
-                self.logger.info("Done cleaning up.")
-        return self
+                tmpdir = tempfile.mkdtemp(self._job_name_token())
+            # Handle case of always keeping or cleanup on error only.
+            if keep_tmpdir == "always":
+                self.logger.info("Running temporary directory and WILL NOT CLEAN UP")
+                self._do_run(tmpdir)
+            else:  # keep_tmpdir == 'onerror'
+                self.logger.info("Running in temporary directory, will cleanup in case of success")
+                try:
+                    self._do_run(tmpdir)
+                except SnakemakeExecutionFailed as e:
+                    self.logger.info(
+                        "Caught error %s: %s, WILL NOT CLEAN UP temporary directory %s",
+                        type(e),
+                        e,
+                        tmpdir,
+                    )
+                    raise  # re-raise e
+                else:
+                    self.logger.info("Ran through successfully, cleaning up %s...", tmpdir)
+                    shutil.rmtree(tmpdir)
+                    self.logger.info("Done cleaning up.")
+            return self
 
     def shutdown_logging(self):
         logging.shutdown()
