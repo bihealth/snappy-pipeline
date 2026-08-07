@@ -24,7 +24,7 @@ reads_right = (
 
 trim_adapters = args["trim_adapters"]
 num_threads_trimming = args["num_threads_trimming"]
-trim_cmd = "trimadap-mt -p {num_threads_trimming}" if trim_adapters else "zcat"
+trim_cmd = f"trimadap-mt -p {num_threads_trimming}" if trim_adapters else "zcat"
 
 num_threads = args["num_threads"]
 arriba_index = args["path_index"]
