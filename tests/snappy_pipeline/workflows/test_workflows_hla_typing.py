@@ -302,7 +302,7 @@ def test_hla_la_step_part_get_log_file(hla_typing_workflow):
 def test_hla_la_step_part_get_resource_usage(hla_typing_workflow):
     """Tests HlaLaStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 8, "time": "60:00:00", "memory": "60000M", "partition": "medium"}
+    expected_dict = {"threads": 8, "time": "60:00:00", "memory": "96000M", "partition": "medium"}
     # Evaluate
     for action in ("prepare_graph", "run"):
         for resource, expected in expected_dict.items():
