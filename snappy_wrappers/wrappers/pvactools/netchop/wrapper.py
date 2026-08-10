@@ -19,6 +19,12 @@ else:
 
 shell.executable("/bin/bash")
 
+if snakemake.wildcards.get("tool") == "pvacsplice":
+    fasta = os.path.join(os.path.dirname(os.path.dirname(snakemake.output.netchop)), snakemake.wildcards.get("tumor_dna") + ".transcripts.fa")
+else:
+    fasta = os.path.join(os.path.dirname(snakemake.output.netchop), snakemake.wildcards.get("tumor_dna") + ".fasta")
+# assert os.path.exists(fasta), f"Missing fasta file {fasta}"
+
 shell(
     r"""
 # -----------------------------------------------------------------------------
@@ -57,17 +63,22 @@ md5() {{
 set -x
 # -----------------------------------------------------------------------------
 
-tmpdir=$(dirname {snakemake.output.epitopes})
-tmpdir="$tmpdir/tmp"
-rm -rf $tmpdir
-mkdir $tmpdir
+if [[ -s {snakemake.input.epitopes} ]]
+then
+    tmpdir=$(dirname {snakemake.output.netchop})
+    tmpdir="$tmpdir/tmp/netchop.{snakemake.wildcards[mhc_class_fn]}"
+    mkdir -p $tmpdir
 
-python {script} --workers {snakemake.threads} \
-    --tmpdir $tmpdir --force \
-    --method {args[method]} --threshold {args[threshold]} --timeout {timeout} \
-    --netchop {snakemake.input.netchop} \
-    --output {snakemake.output.epitopes} \
-    {snakemake.input.vcf} \
-    {snakemake.input.epitopes}
+    rm -rf $tmpdir/*
+    python {script} --workers {snakemake.threads} \
+        --tmpdir $tmpdir --force \
+        --method {args[method]} --threshold {args[threshold]} --timeout {timeout} \
+        --tool {snakemake.wildcards[tool]} --netchop {snakemake.input.netchop} \
+        --output {snakemake.output.netchop} \
+        {snakemake.input.epitopes} \
+        {fasta}
+else
+    touch {snakemake.output.netchop}
+fi
 """
 )
