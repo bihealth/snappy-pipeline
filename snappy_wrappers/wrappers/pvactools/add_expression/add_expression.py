@@ -180,7 +180,7 @@ class TPM:
         assert self.filename, "Can't extract TPM value before reading data"
         if feature:
             try:
-                tpm = "{feature}|{value}".format(feature=feature, value=str(self.tpms.get(feature)))
+                tpm = "{feature}|{value}".format(feature=feature, value=str(self.tpms[feature]))
             except KeyError:
                 logging.warning(f"Unknown feature id {feature} in record {rec_pos}")
                 tpm = "."
@@ -295,11 +295,11 @@ def add_header_lines(
     out_allele_depth_id: str = DEFAULT_VCF_IDS["out_allele_depth_id"],
 ):
     """Add required lines to vcf header (program, and if available FORMAT for pileup & expression)"""
-    dna.header.add_line(vcfpy.HeaderLine("combineVersion", VERSION))
+    dna.header.add_line(vcfpy.HeaderLine("add_expressionVersion", VERSION))
 
     dna.header.add_line(
         vcfpy.HeaderLine(
-            "combineCommand",
+            "add_expressionCommand",
             "{gene_tpms} {tx_tpms} {pileups} {dna_fn}; Date={today}".format(
                 gene_tpms=f"--gene-tpms {gene_tpms.filename}" if gene_tpms else "",
                 tx_tpms=f"--transcript-tpms {tx_tpms.filename}" if tx_tpms else "",
@@ -645,7 +645,7 @@ def main() -> int:
       multiple annotations are allowed. The TPM values are output as "<feature id>|<TPM value>".
     """
     parser = argparse.ArgumentParser(
-        prog="combine",
+        prog="add_expression",
         description="combine a vcf containing (somatic) variants with pileups of mRNA expression at the same loci, and TPM value from salmon",
     )
 
