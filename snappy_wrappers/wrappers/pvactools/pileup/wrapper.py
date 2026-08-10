@@ -9,6 +9,7 @@ __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
+extra_args = " ".join(args.get("extra_args", []))
 
 shell(
     r"""
@@ -38,7 +39,7 @@ conda info > {snakemake.log.conda_info}
 
 bcftools mpileup \
     --fasta-ref {snakemake.input.reference} --regions-file {snakemake.input.loci} \
-    {args[extra_args]} \
+    {extra_args} \
     {snakemake.input.bam} \
 | bcftools reheader --samples <(echo "{args[tumor_sample]}") \
 | bcftools norm --multiallelics -both --remove-duplicates \

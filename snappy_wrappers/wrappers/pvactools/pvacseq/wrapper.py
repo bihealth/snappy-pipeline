@@ -1,3 +1,4 @@
+import csv
 import os
 
 from snakemake import shell
@@ -7,6 +8,7 @@ __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
+extra_args = " ".join(args.get("extra_args", []))
 
 # TODO: Extend to lists, check for directories in directories [outputs/rw precedence on inputs/ro] & put in a function (decide where...)
 def bindings_for_container(
@@ -44,8 +46,6 @@ def bindings_for_container(
     snakemake.output, base_container_path="/outputs", access="rw", exclude_bind=args["exclude_bind"]
 )
 
-alleles = ",".join(args["class_i"] + args["class_ii"])
-
 if phased := getattr(snakemake.input, "phased", ""):
     phased = f"--phased-proximal-variants-vcf {input_fns['phased']}"
 
@@ -59,6 +59,19 @@ if normal:
     normal = f"--normal-sample-name {normal}"
 else:
     normal = ""
+
+alleles = []
+with open(snakemake.input.alleles, "rt") as f:
+    reader = csv.DictReader(f, delimiter="\t")
+    for row in reader:
+        alleles.append(row["HLA Allele"])
+alleles = ",".join(sorted(list(set(alleles))))
+
+algorithms = " ".join(args["algorithms"])
+class_i_epitope_length = ",".join(map(str, args["lengths"]["class_i"]))
+class_ii_epitope_length = ",".join(map(str, args["lengths"]["class_ii"]))
+
+produced = [snakemake.output.get(f"{k}.{d}") for k in ("all", "aggregated", "filtered", "json") for d in ("MHC_I", "MHC_II", "Combined")]
 
 shell.executable("/bin/bash")
 
@@ -82,10 +95,6 @@ conda info >{snakemake.log.conda_info}
 md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
 md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
 
-# Setup auto-cleaned tmpdir
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
 # Compute md5 checksum
 md5() {{
     fn=$1
@@ -100,37 +109,76 @@ md5() {{
 set -x
 # -----------------------------------------------------------------------------
 
-export TMPDIR=$(realpath $TMPDIR)
 export LC_ALL=C.UTF-8
 
-# Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
-# Create home on TMPDIR? But then the calling script is gone...
+# snakemake.output.done is needed because pVACtools modules create MHC_class_iI? folders
+# so the path to bind is work/mapper.caller.annotator(.filtered)?.tumor_dna/out
+# rather than the dirname of snakemake.output.all (which is the MHC_class_II? subdir of the
+# bound directory)
 out=$(dirname {snakemake.output.done})
-out=$(realpath $out)
 rm -rf $out
 mkdir -p $out
+out=$(realpath $out)
 
-home=$(dirname $out)/home
-home=$(realpath $home)
-rm -rf $home
-mkdir -p $home
+tmp=$(dirname $out)/tmp/pvacseq
+rm -rf $tmp
+mkdir -p $tmp
 
-cat << __EOF > $home/run_pVACseq.sh
+scripts=$(dirname $out)/scripts
+mkdir -p $scripts
+
+cat << __EOF > $scripts/run_pVACseq.sh
+export TMPDIR=/short_tmp
 pvacseq run --n-threads {snakemake.threads} \\
     {normal} \\
     --iedb-install-directory /opt/iedb \\
-    {args[extra_args]} \\
+    --class-i-epitope-length {class_i_epitope_length} --class-ii-epitope-length {class_ii_epitope_length} \\
+    {extra_args} \\
     {peptides} {genes} {phased} \\
     {input_fns[vcf]} \\
-    {args[tumor_sample]} {alleles} {args[algorithms]} \\
+    {args[tumor_sample]} {alleles} {algorithms} \\
     $(dirname {output_fns[done]})
 __EOF
-chmod +x $home/run_pVACseq.sh
+chmod +x $scripts/run_pVACseq.sh
 
+# Short path tmp to avoid AF_UNIX path too long error
 apptainer exec \
-    --home $home --bind $TMPDIR:$TMPDIR:rw \
-    {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACseq.sh
+    --no-home --bind $tmp:/short_tmp:rw --bind $scripts:/scripts:ro \
+    {input_bindings} {output_bindings} {snakemake.input[container]} bash /scripts/run_pVACseq.sh
 
+link_missing() {{
+    combined=$1
+    cls_i=$2
+    cls_ii=$3
+
+    if [[ ! -e $combined ]]
+    then
+        mkdir -p $(dirname $combined)
+        if [[ ! -e $cls_i ]]
+        then
+            mkdir -p $(dirname $cls_i)
+            if [[ ! -e $cls_ii ]]
+            then
+                mkdir -p $(dirname $cls_ii)
+                echo "Missing $cls_i and $cls_ii, aborting"
+                exit 1
+            fi
+            touch $cls_i
+            ln -sr $cls_ii $combined
+        else
+            mkdir $(dirname $cls_ii)
+            touch $cls_ii
+            ln -sr $cls_i $combined
+        fi
+    fi
+}}
+
+
+link_missing {snakemake.output[all.Combined]} {snakemake.output[all.MHC_I]} {snakemake.output[all.MHC_II]}
+link_missing {snakemake.output[aggregated.Combined]} {snakemake.output[aggregated.MHC_I]} {snakemake.output[aggregated.MHC_II]}
+link_missing {snakemake.output[filtered.Combined]} {snakemake.output[filtered.MHC_I]} {snakemake.output[filtered.MHC_II]}
+
+ls -altrR $(dirname {snakemake.output.done})
 touch {snakemake.output.done}
 """
 )
