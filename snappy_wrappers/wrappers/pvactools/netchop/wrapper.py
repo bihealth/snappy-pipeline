@@ -70,6 +70,8 @@ then
     mkdir -p $tmpdir
 
     rm -rf $tmpdir/*
+    # IMPORTANT: use local /tmp to avoid clobbering cephfs with the creation of many small files
+    export TMPDIR=/tmp
     python {script} --workers {snakemake.threads} \
         --tmpdir $tmpdir --force \
         --method {args[method]} --threshold {args[threshold]} --timeout {timeout} \

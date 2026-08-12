@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
 from operator import itemgetter
@@ -63,6 +64,7 @@ class Epitope:
                 mt_peptide, self.epitope, flanking_sequence_length
             )
 
+        self.seq_hash = str(hash(self.epitope + "\t" + self.peptide + "\t" + str(self.start_diff)))
         self.sites = []
 
     def _extract_flanked_epitope(
@@ -168,7 +170,7 @@ def _run_netchop_command(
         f.write(f">seq_{epitope.iRecord}\n")
         i = 0
         while i < len(epitope.peptide):
-            f.write(epitope.peptide[i : max(i + line_length, len(epitope.peptide))] + "\n")
+            f.write(epitope.peptide[i : min(i + line_length, len(epitope.peptide))] + "\n")
             i += line_length
 
     # Find all cleavage sites
@@ -211,7 +213,7 @@ def _worker(
 
 
 def _netchop_workaround(
-    netchop: str, tmpdir: str = os.path.join(os.getcwd(), "tmp"), force: bool = False
+    netchop: str, workaround_dir: str = os.path.join(os.getcwd(), "tmp"), force: bool = False
 ):
     """
     Workaround problems running netchop
@@ -232,40 +234,42 @@ def _netchop_workaround(
     nmhome_rel = os.path.basename(nmhome_dir)
     netchop_rel = os.path.join(nmhome_rel, os.path.basename(netchop_dir))
 
-    # Create or use existing temp directory
+    # Create or use existing workaround_dir
     try:
-        os.makedirs(tmpdir, mode=0o755, exist_ok=False)
+        os.makedirs(workaround_dir, mode=0o755, exist_ok=False)
     except FileExistsError as e:
         if force:
             try:
-                os.remove(tmpdir)
-                logging.warning(f"File {tmpdir} has been removed to make space for temp directory")
-            except OSError:
-                shutil.rmtree(tmpdir)
+                os.remove(workaround_dir)
                 logging.warning(
-                    f"Directory {tmpdir} has been removed to make space for temp directory"
+                    f"File {workaround_dir} has been removed to make space for temp directory"
                 )
-            os.makedirs(tmpdir, mode=0o755, exist_ok=False)
+            except OSError:
+                shutil.rmtree(workaround_dir)
+                logging.warning(
+                    f"Directory {workaround_dir} has been removed to make space for temp directory"
+                )
+            os.makedirs(workaround_dir, mode=0o755, exist_ok=False)
         else:
             raise e
 
-    # Create symlink to NMHOME in temp dir
+    # Create symlink to NMHOME in workaround_dir
     try:
-        os.symlink(nmhome_dir, os.path.join(tmpdir, nmhome_rel))
+        os.symlink(nmhome_dir, os.path.join(workaround_dir, nmhome_rel))
         logging.info(f"Created symlink {nmhome_rel} -> {nmhome_dir}")
     except FileExistsError as e:
         if force:
             try:
-                os.remove(os.path.join(tmpdir, nmhome_rel))
+                os.remove(os.path.join(workaround_dir, nmhome_rel))
                 logging.warning(
-                    f"File {os.path.join(tmpdir, nmhome_rel)} has been removed to make space for symlink"
+                    f"File {os.path.join(workaround_dir, nmhome_rel)} has been removed to make space for symlink"
                 )
             except OSError:
                 shutil.rmtree(nmhome_rel)
                 logging.warning(
-                    f"Directory {os.path.join(tmpdir, nmhome_rel)} has been removed to make space for symlink"
+                    f"Directory {os.path.join(workaround_dir, nmhome_rel)} has been removed to make space for symlink"
                 )
-            os.symlink(nmhome_dir, os.path.join(tmpdir, nmhome_rel))
+            os.symlink(nmhome_dir, os.path.join(workaround_dir, nmhome_rel))
             logging.info(f"Created symlink {nmhome_rel} -> {nmhome_dir}")
         else:
             raise e
@@ -277,7 +281,7 @@ def run_netchop(
     epitopes: dict[str, Epitope],
     netchop: str,
     args: dict[str, Any] = {},
-    tmpdir: str = os.path.join(os.getcwd(), "tmp"),
+    workaround_dir: str = os.path.join(os.getcwd(), "tmp"),
     clean: bool = True,
     force: bool = False,
     n_workers: int = 1,
@@ -296,9 +300,9 @@ def run_netchop(
     # Workaround problems getting netchop to work with long paths(?)
     # The workaround creates temp directory, symlinks & alters environment variables
     current_dir = os.getcwd()
-    _netchop_workaround(netchop, tmpdir, force)
-    os.chdir(tmpdir)
-    logging.info(f"Working from newly created directory {tmpdir}")
+    _netchop_workaround(netchop, workaround_dir, force)
+    os.chdir(workaround_dir)
+    logging.info(f"Working from newly created directory {workaround_dir}")
     logging.info(f"NMHOME environment variable set to {os.environ['NMHOME']}")
     logging.info(f"NETCHOP environment variable set to {os.environ['NETCHOP']}")
 
@@ -313,13 +317,21 @@ def run_netchop(
     logging.info(f"netchop command: {' '.join(cmd + ['<fn>'])}")
 
     # Prepare multiprocessing
+    tmpdir = tempfile.mkdtemp()
+    worker_tmp_template = os.path.join(tmpdir, "worker_{i_worker}")
     for i_worker in range(n_workers):
-        worker_tmp = f"worker_{i_worker}"
+        worker_tmp = worker_tmp_template.format(i_worker=i_worker)
         os.makedirs(worker_tmp, mode=0o700, exist_ok=False)
 
+    # Avoid duplication: epitopes with same epitope, peptide & starting pos are just computed once
     task_queue = Queue()
+    indices = {}
     for epitope in epitopes:
-        task_queue.put(epitope)
+        h = epitope.seq_hash
+        if h not in indices:
+            indices[h] = []
+            task_queue.put(epitope)
+        indices[h].append(epitope.iRecord)
     error_queue = Queue()
     return_dict = Manager().dict()
     processes: list[Process] = []
@@ -328,7 +340,7 @@ def run_netchop(
 
     # Start the workers
     for i_worker in range(n_workers):
-        worker_tmp = f"worker_{i_worker}"
+        worker_tmp = worker_tmp_template.format(i_worker=i_worker)
         p = Process(
             target=_worker, args=(task_queue, error_queue, return_dict, cmd, worker_tmp, timeout)
         )
@@ -354,11 +366,15 @@ def run_netchop(
 
     # Rapatriate netchop results into epitope
     for iRecord, sites in return_dict.items():
-        epitopes[int(iRecord)].set_sites(sites)
+        iRecord = int(iRecord)
+        h = epitopes[iRecord].seq_hash
+        for i in indices[h]:
+            epitopes[i].set_sites(sites)
 
     # Clean-up workaround
     os.chdir(current_dir)
     if clean:
+        shutil.rmtree(workaround_dir)
         shutil.rmtree(tmpdir)
 
 
@@ -544,7 +560,7 @@ def main() -> int:
         epitopes,
         args.netchop[0],
         args={"method": args.method, "threshold": args.threshold},
-        tmpdir=args.tmpdir,
+        workaround_dir=args.tmpdir,
         clean=args.verbose,
         force=args.force,
         n_workers=args.workers,
