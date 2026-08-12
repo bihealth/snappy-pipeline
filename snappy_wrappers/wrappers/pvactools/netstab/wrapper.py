@@ -88,7 +88,8 @@ set -x
 
 if [[ -s {snakemake.input.epitopes} ]]
 then
-    export TMPDIR=$(realpath $TMPDIR)
+    # IMPORTANT: use local /tmp to avoid clobbering cephfs with the creation of many small files
+    export TMPDIR=/tmp
     export LC_ALL=C.UTF-8
 
     # Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
