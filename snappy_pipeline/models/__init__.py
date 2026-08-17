@@ -1,5 +1,6 @@
 import enum
 import json
+import os
 import re
 import types
 import typing
@@ -11,9 +12,73 @@ from typing import Annotated
 import ruamel
 import typing_extensions
 from annotated_types import Predicate
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML
+
+
+class _PathMarker:
+    """Marker for path fields that should be resolved. Used with Annotated."""
+
+    def __init__(self, check_exists: bool = True):
+        self.check_exists = check_exists
+
+    def __repr__(self):
+        return f"_PathMarker(check_exists={self.check_exists})"
+
+
+# Public path annotation types for use in models
+ResolvablePath = Annotated[str, _PathMarker(check_exists=True)]
+"""Annotated type for file paths that must exist after resolution."""
+
+ResolvablePathPrefix = Annotated[str, _PathMarker(check_exists=False)]
+"""Annotated type for index prefixes or paths where sidecar files are checked separately."""
+
+ResolvablePathList = Annotated[list[str], _PathMarker(check_exists=True)]
+"""Annotated type for lists of file paths that must exist after resolution."""
+
+
+def resolve_relative_path(path_value: str, info: ValidationInfo, check_exists: bool = True) -> str:
+    """
+    Resolve relative paths using config_lookup_paths from validation context.
+
+    Args:
+        path_value: The path to resolve (string)
+        info: ValidationInfo from Pydantic
+        check_exists: If True, raises error if relative path cannot be found in any lookup base.
+                     If False, returns the path resolved against the first lookup base
+                     (useful for index prefixes that don't exist as files themselves).
+
+    Returns:
+        Absolute path. The original value is returned if:
+          - it's already absolute
+          - it's empty
+          - context doesn't provide config_lookup_paths
+
+    Raises:
+        ValueError if check_exists=True and relative path cannot be found in any lookup base.
+    """
+    if not path_value or os.path.isabs(path_value):
+        return path_value
+
+    config_lookup_paths = info.context.get("config_lookup_paths") if info.context else None
+    if not config_lookup_paths:
+        return path_value
+
+    # Try to find the path in any lookup base
+    for base_path in config_lookup_paths:
+        candidate = os.path.abspath(os.path.join(base_path, path_value))
+        if os.path.exists(candidate):
+            return candidate
+
+    # If check_exists is False, return the path resolved against the first lookup base
+    if not check_exists:
+        return os.path.abspath(os.path.join(config_lookup_paths[0], path_value))
+
+    # Relative path not found and check_exists=True
+    raise ValueError(
+        f"relative path '{path_value}' not found in lookup bases: {config_lookup_paths}"
+    )
 
 
 def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:
@@ -51,6 +116,9 @@ class SnappyModel(BaseModel):
     By default, extra fields are forbidden, attribute docstrings are used for field descriptions,
     enum member values instead of names are used, and default values are validated (because
     validation can potentially modify the values of fields with default values)
+
+    Path fields can be marked with ResolvablePath or ResolvablePathPrefix annotations
+    to automatically resolve relative paths during validation
     """
 
     model_config = ConfigDict(
@@ -80,13 +148,110 @@ class SnappyModel(BaseModel):
         return self.model_fields.keys()
 
 
+class RelationshipDefinition(SnappyModel):
+    """Definition of a relationship between rows in the library DataFrame.
+
+    A relationship adds a new column to the DataFrame whose value is looked
+    up from a *related* row.  The ``via`` column is the join key (e.g.
+    ``"donor_name"``), and ``target`` is a pandas ``DataFrame.query()``
+    expression applied to the related rows to select the correct match.
+
+    **Examples**
+
+    .. code-block:: yaml
+
+        # Find the matched normal DNA library for a tumor sample
+        matched_normal_lib:
+          via: donor_name
+          target: "role == 'normal' and extraction_type == 'dna'"
+          column: matched_normal_lib
+
+        # Find the index/proband library for any library in the same cohort
+        index_lib:
+          via: cohort_name
+          target: "role == 'index'"
+          column: index_lib
+
+        # Find all tumor libraries in the same donor (one-to-many)
+        donor_tumor_libs:
+          via: donor_name
+          target: "role == 'tumor'"
+          column: donor_tumor_libs
+          many: true
+    """
+
+    via: str
+    """Column name in the library DataFrame to use as the join key.
+    The related row must have the *same* value in this column as the
+    source row."""
+
+    target: str
+    """Pandas ``DataFrame.query()`` expression applied to the related
+    rows (those sharing the same ``via`` value) to select the desired
+    match."""
+
+    column: str | None = None
+    """Name of the new column to add.  Defaults to the relationship key
+    name in the ``relationships`` dict."""
+
+    many: bool = False
+    """If ``True``, the relationship may match multiple related rows.
+    The column value will be a ``list[str]`` of all matching library
+    names.  If ``False`` (default), only the first match is kept and
+    the column value is a single ``str`` (or ``""`` if no match)."""
+
+
 # This exists to distinguish workflow step_config models from other snappy specific models
 # It also provides a default_config_yaml_string method that includes the step_config section
 # by default.
 class SnappyStepModel(SnappyModel, object):
+    """A base class for all workflow step configuration models.
+
+    Every step gets ``library_selection``, ``group_by``, and ``relationships``
+    fields.  Steps that do not use these fields leave them at their defaults
+    (``None`` / empty).
     """
-    A base class for all workflow step configuration models.
-    """
+
+    library_selection: str | None = None
+    """Optional pandas ``DataFrame.query()`` expression to choose which
+    libraries this task processes.
+
+    The expression is evaluated against the tidy library DataFrame produced
+    by :func:`~snappy_pipeline.workflows.abstract.build_library_dataframe`.
+    See the ``_LIBRARY_SELECTION_DEFAULTS`` dict and column reference in
+    ``build_library_dataframe`` for supported columns."""
+
+    group_by: str | None = None
+    """Controls output granularity.
+
+    * ``"cohort"`` -- one output per cohort / pedigree / donor.
+    * ``None`` (default) -- one output per library."""
+
+    relationships: dict[str, RelationshipDefinition] | None = None
+    """Named relationships that add derived columns to the library DataFrame
+    *before* ``library_selection`` is applied.
+
+    Each key is the column name; the value is a
+    :class:`RelationshipDefinition`."""
+
+    @model_validator(mode="after")
+    def validate_selected_tool_config(self):
+        model_fields = type(self).model_fields
+        if "tool" not in model_fields:
+            return self
+
+        selected = getattr(self, "tool", None)
+        if selected is None:
+            return self
+        if isinstance(selected, enum.Enum):
+            selected = selected.value
+        if not isinstance(selected, str) or not selected:
+            return self
+
+        if selected in model_fields and getattr(self, selected, None) is None:
+            raise ValueError(f"tool={selected} requires explicit '{selected}' config section")
+
+        return self
 
     @classmethod
     def default_config_yaml_string(
@@ -300,7 +465,10 @@ def _dump_commented_yaml(model: type[BaseModel], comment_optional: bool = True) 
 def _model_to_commented_yaml(model_instance: BaseModel, **kwargs):
     yaml = _yaml_instance()
     with StringIO() as s:
-        yaml.dump(json.loads(model_instance.model_dump_json(**kwargs)), stream=s)
+        yaml.dump(
+            json.loads(model_instance.model_dump_json(warnings=False, **kwargs)),
+            stream=s,
+        )
         s.flush()
         yaml_config_string = s.getvalue()
         max_column = max(map(len, yaml_config_string.splitlines())) + 2
@@ -339,10 +507,17 @@ def _comment_key_paths_naive(
                 if not key_path:
                     break
 
-    return "\n".join(
-        (comment_prefix + line) if i in comment_lines else line
-        for i, line in enumerate(yaml_str.splitlines())
-    )
+    res_lines = []
+    for i, line in enumerate(yaml_str.splitlines()):
+        if i in comment_lines:
+            if line.strip():
+                indent = len(line) - len(line.lstrip())
+                res_lines.append(" " * indent + comment_prefix + line[indent:])
+            else:
+                res_lines.append(comment_prefix)
+        else:
+            res_lines.append(line)
+    return "\n".join(res_lines)
 
 
 def _optional_key_paths(
@@ -368,3 +543,14 @@ def _optional_key_paths(
 
 class ToggleModel(SnappyModel):
     enabled: bool = False
+
+    def __init__(self, enabled: bool = False, **kwargs):
+        super().__init__(enabled=enabled, **kwargs)
+
+
+__all__ = [
+    "RelationshipDefinition",
+    "SnappyModel",
+    "SnappyStepModel",
+    "ToggleModel",
+]

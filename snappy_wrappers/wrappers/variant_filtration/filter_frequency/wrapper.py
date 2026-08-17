@@ -3,14 +3,18 @@
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 # Prelude -----------------------------------------------------------------------------------------
 
-shell.executable("/bin/bash")
 shell.prefix("set -eu -o pipefail -x; ")
 
 # Get path to this file's (wrapper.py) directory.
@@ -25,10 +29,6 @@ if args["filter_mode"] == "freq_all":
     # Frequency set to "freq_all", just copy out the data.
     cp -L {snakemake.input.vcf} {snakemake.output.vcf}
     cp -L {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
-
-    pushd $(dirname {snakemake.output.vcf})
-    md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
     """
     )
     sys.exit(0)  # everything went well!
@@ -39,7 +39,7 @@ if args["filter_mode"] == "freq_all":
 # Get shortcut to frequencies set.
 frequencies = args["filter_config"]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
@@ -77,10 +77,6 @@ fi
 
 if [[ "${{links-0}}" -ne 1 ]]; then
     tabix -f {snakemake.output.vcf}
-
-    pushd $(dirname {snakemake.output.vcf})
-    md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5
 fi
 """
 )

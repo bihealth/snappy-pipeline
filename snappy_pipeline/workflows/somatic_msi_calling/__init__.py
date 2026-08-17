@@ -28,9 +28,9 @@ Generally, the following links are generated to ``output/``.
     of this tool.  In the future, this section might contain "common" output and tool-specific
     output sub sections.
 
-- ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}/out/``
-    - ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}.results.txt``
-    - ``{mapper}.mantis_msi2.{lib_name}-{lib_pk}.results.txt.status``
+- ``{lib_name}-{lib_pk}/out/``
+    - ``{lib_name}-{lib_pk}.results.txt``
+    - ``{lib_name}-{lib_pk}.results.txt.status``
 
 =====================
 Default Configuration
@@ -49,10 +49,8 @@ Available Somatic Targeted CNV Caller
 """
 
 import os
-import sys
-from collections import OrderedDict
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -62,7 +60,10 @@ from snappy_pipeline.workflows.abstract import (
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticMsiCalling as SomaticMsiCallingConfigModel
 
@@ -88,7 +89,6 @@ MSI_CALLERS_MATCHED = ("mantis_msi2",)
 
 
 #: Default configuration for the somatic_msi_calling step
-DEFAULT_CONFIG = SomaticMsiCallingConfigModel.default_config_yaml_string()
 
 
 class Mantis2StepPart(BaseStepPart):
@@ -100,16 +100,7 @@ class Mantis2StepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{msi_caller}.{{tumor_library}}/out/"
-            "{{mapper}}.{msi_caller}.{{tumor_library}}{ext}"
-        )
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        self.tumor_ngs_library_to_sample_pair = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.tumor_ngs_library_to_sample_pair.update(
-                sheet.all_sample_pairs_by_tumor_dna_ngs_library
-            )
+        self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
 
     def get_input_files(self, action):
         # Validate action
@@ -117,23 +108,21 @@ class Mantis2StepPart(BaseStepPart):
 
         def input_function(wildcards):
             """Helper wrapper function"""
-            # Get shorcut to Snakemake sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
             # Get names of primary libraries of the selected cancer bio sample and the
             # corresponding primary normal sample
-            normal_base_path = (
-                "output/{mapper}.{normal_library}/out/{mapper}.{normal_library}".format(
-                    normal_library=self.get_normal_lib_name(wildcards), **wildcards
-                )
+            normal_lib = self.get_normal_lib_name(wildcards)
+            tumor_lib = wildcards.tumor_library
+            normal: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=normal_lib
             )
-            tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
-            ).format(**wildcards)
+            tumor: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=tumor_lib
+            )
             return {
-                "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
-                "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-                "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+                "normal_bam": normal.bam,
+                "normal_bai": normal.bai,
+                "tumor_bam": tumor.bam,
+                "tumor_bai": tumor.bai,
                 "reference": self.w_config.static_data_config.reference.path,
                 "loci_bed": self.config.loci_bed,
             }
@@ -142,15 +131,18 @@ class Mantis2StepPart(BaseStepPart):
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
-        pair = self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
-        return pair.normal_sample.dna_ngs_library.name
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == wildcards.tumor_library]
+        if tumor_df.empty:
+            return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        return dict(
-            zip(EXT_NAMES, expand(self.base_path_out, msi_caller=[self.name], ext=EXT_VALUES))
-        )
+        return {
+            key: self.base_path_out.replace("{ext}", ext) for key, ext in zip(EXT_NAMES, EXT_VALUES)
+        }
 
     @dictify
     def _get_log_file(self, action):
@@ -158,10 +150,7 @@ class Mantis2StepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        prefix = (
-            "work/{{mapper}}.{msi_caller}.{{tumor_library}}/log/"
-            "{{mapper}}.{msi_caller}.{{tumor_library}}"
-        ).format(msi_caller=self.__class__.name)
+        prefix = "work/{tumor_library}/log/{tumor_library}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -183,8 +172,8 @@ class Mantis2StepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=1,  # Because of https://github.com/OSU-SRLab/MANTIS/issues/57
-            time="24:00:00",  # 24 hours
-            memory=f"{30 * 1024 * 3}M",
+            runtime="24h",  # 24 hours
+            mem=f"{30 * 1024 * 3}MB",
         )
 
 
@@ -193,6 +182,10 @@ class SomaticMsiCallingWorkflow(BaseStep):
 
     #: Step name
     name = "somatic_msi_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"msi"}))]
+
+    config_model_class = SomaticMsiCallingConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -201,76 +194,66 @@ class SomaticMsiCallingWorkflow(BaseStep):
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
-    @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local MSI calling output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"results": f"output/{lib}/out/{lib}.results.txt"}
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticMsiCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Mantis2StepPart, LinkOutStepPart))
-        # Initialize sub-workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self):
         """Return list of result files for the MSI calling workflow"""
-        name_pattern = "{mapper}.{msi_caller}.{tumor_library.name}"
-        for msi_caller in set(self.config.tools) & set(MSI_CALLERS_MATCHED):
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-                msi_caller=msi_caller,
-                ext=EXT_MATCHED[msi_caller].values() if msi_caller in EXT_MATCHED else EXT_VALUES,
-            )
-            yield from self._yield_result_files_matched(
-                os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-                mapper=self.w_config.step_config["ngs_mapping"].tools.dna,
-                msi_caller=msi_caller,
-                ext=(
-                    ".log",
-                    ".log.md5",
-                    ".conda_info.txt",
-                    ".conda_info.txt.md5",
-                    ".conda_list.txt",
-                    ".conda_list.txt.md5",
-                ),
-            )
-
-    def _yield_result_files_matched(self, tpl, **kwargs):
-        """Build output paths from path template and extension list.
-
-        This function returns the results from the matched msi callers such as
-        mantis.
-        """
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for sample_pair in sheet.all_sample_pairs:
-                if (
-                    not sample_pair.tumor_sample.dna_ngs_library
-                    or not sample_pair.normal_sample.dna_ngs_library
-                ):
-                    msg = (
-                        "INFO: sample pair for cancer bio sample {} has is missing primary"
-                        "normal or primary cancer NGS library"
-                    )
-                    print(msg.format(sample_pair.tumor_sample.name), file=sys.stderr)
-                    continue
-                yield from expand(
-                    tpl, tumor_library=[sample_pair.tumor_sample.dna_ngs_library], **kwargs
-                )
-
-    def check_config(self):
-        """Check that the necessary globalc onfiguration is present"""
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA file not configured but required",
+        msi_tool = str(self.config.tool)
+        if msi_tool not in MSI_CALLERS_MATCHED:
+            return
+        payload_exts = EXT_MATCHED[msi_tool].values() if msi_tool in EXT_MATCHED else EXT_VALUES
+        log_exts = (
+            ".log",
+            ".log.md5",
+            ".conda_info.txt",
+            ".conda_info.txt.md5",
+            ".conda_list.txt",
+            ".conda_list.txt.md5",
         )
+        for entity in self.output_entities:
+            yield from expand(
+                os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
+                tumor_library=[entity],
+                ext=payload_exts,
+            )
+            yield from expand(
+                os.path.join("output", "{tumor_library}", "log", "{tumor_library}{ext}"),
+                tumor_library=[entity],
+                ext=log_exts,
+            )

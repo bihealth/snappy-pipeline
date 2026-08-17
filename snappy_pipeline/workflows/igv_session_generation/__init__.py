@@ -54,6 +54,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
@@ -67,7 +68,6 @@ EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
 EXT_NAMES = ("xml", "xml_md5")
 
 #: Default configuration of the wgs_sv_filtration step
-DEFAULT_CONFIG = IgvSessionGenerationConfigModel.default_config_yaml_string()
 
 
 class WriteIgvSessionFileStepPart(BaseStepPart):
@@ -91,23 +91,21 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
 
     def _get_path_bam(self, wildcards, donor):
         # TODO: This cannot be correct. For each set of donors it will return the same index bam.
-        # TODO: For instance, given pedigree (P001, P002, P003) it will return three time the
-        # TODO: same value: 'NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
+        # TODO: For instance, given pedigree (P001, P002, P003) it will return three runtime the
+        # TODO: same value: '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        return ngs_mapping(
-            "output/{mapper}.{index_library}/out/{mapper}.{index_library}.bam".format(**wildcards)
+        return self.parent.upstream("ngs_mapping")(
+            "output/{index_library}/out/{index_library}.bam".format(**wildcards)
         )
 
     def _get_path_vcf(self, wildcards, real_index):
-        prev_step = self.parent.sub_workflows[self.previous_step]
-        name_pattern = "{mapper}.{caller}{prev_token}.{real_index_library}"
+        name_pattern = "{prev_token}.{real_index_library}"
         input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
             prev_token=self.prev_token,
             real_index_library=real_index.dna_ngs_library.name,
             **wildcards,
         )
-        return prev_step(input_path + ".vcf.gz")
+        return self.parent.upstream(self.previous_step)(input_path + ".vcf.gz")
 
     def get_input_files(self, action):
         # Validate action
@@ -128,7 +126,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{index_library}"
+        name_pattern = "{index_library}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + "%s")
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, tpl % ext
@@ -181,34 +179,51 @@ class IgvSessionGenerationWorkflow(BaseStep):
 
     #: Workflow name
     name = "igv_session_generation"
+    consumes = {DataSignature(DataType.ALIGNMENTS): True, DataSignature(DataType.VARIANTS): False}
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"igv"}))]
+
+    config_model_class = IgvSessionGenerationConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local IGV session output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        token = kwargs.get("token", "")
+        if token:
+            token = token + "."
+        prefix = f"output/{token}{lib}/out/{token}{lib}"
+        return {"xml": f"{prefix}.igv_session.xml"}
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=IgvSessionGenerationConfigModel,
             previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
+            task_name=task_name,
+            **kwargs,
         )
-        # Register sub workflows
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
-            if prev_path := self.config.get(f"path_{prev}"):
+            if getattr(self.config.depends_on, prev, None):
                 self.previous_step = prev
-                self.register_sub_workflow(prev, prev_path)
                 break
         else:
-            raise Exception("No path to previous step given!")  # pragma: no cover
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+            raise Exception("No previous step given!")  # pragma: no cover
         #: Name token for input
         self.prev_token = {
             "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
@@ -218,20 +233,14 @@ class IgvSessionGenerationWorkflow(BaseStep):
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WriteIgvSessionFileStepPart, LinkOutStepPart))
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-        if not self.config.tools_ngs_mapping:
-            self.config.tools_ngs_mapping = self.w_config.step_config["ngs_mapping"].tools.dna
-        if not self.config.tools_variant_calling:
-            self.config.tools_variant_calling = self.w_config.step_config["variant_calling"].tools
 
     @listify
     def get_result_files(self):
         """Return list of result files for the workflow."""
         # Hard-filtered results
-        name_pattern = "{mapper}.{caller}%s.{index_library.name}" % (self.prev_token,)
+        name_pattern = "%s.{index_library.name}" % (self.prev_token,)
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            mapper=self.config.tools_ngs_mapping,
-            caller=self.config.tools_variant_calling,
             ext=EXT_VALUES,
         )
 
@@ -248,4 +257,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
                     elif not donor.mother or not donor.mother.dna_ngs_library:
                         continue
                     else:
-                        yield from expand(tpl, index_library=[donor.dna_ngs_library], **kwargs)
+                        yield from expand(
+                            tpl,
+                            index_library=[donor.dna_ngs_library],
+                            **kwargs,
+                        )

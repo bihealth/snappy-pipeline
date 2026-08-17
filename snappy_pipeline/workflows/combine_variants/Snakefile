@@ -1,43 +1,25 @@
-# -*- coding: utf-8 -*-
-"""CUBI Pipeline combine_variants step Snakefile"""
-
 import os
 
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
 
-__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
-
-
-# Configuration ===============================================================
-
 
 configfile: "config.yaml"
 
 
-# Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
-
-# WorkflowImpl Object Setup ===================================================
 
 wf = CombineVariantsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
-# Rules =======================================================================
-
 
 localrules:
-    # Linking files from work/ to output/ should be done locally
     combine_variants_link_out_run,
 
 
-rule all:
+rule combine_variants_all:
+    default_target: True
     input:
         wf.get_result_files(),
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
 
 
 rule combine_variants_link_out_run:
@@ -46,10 +28,7 @@ rule combine_variants_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
-
-
-# Combine variants ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        wf.run_locally("link_out", "run", wildcards)
 
 
 rule combine_variants_run:
@@ -57,15 +36,15 @@ rule combine_variants_run:
         unpack(wf.get_input_files("combine", "run")),
     output:
         **wf.get_output_files("combine", "run"),
-    params:
-        args=wf.get_args("combine", "run"),
-    threads: wf.get_resource("combine", "run", "threads")
-    resources:
-        time=wf.get_resource("combine", "run", "time"),
-        memory=wf.get_resource("combine", "run", "memory"),
-        partition=wf.get_resource("combine", "run", "partition"),
-        tmpdir=wf.get_resource("combine", "run", "tmpdir"),
     log:
         **wf.get_log_file("combine", "run"),
+    threads: wf.get_resource("combine", "run", "threads")
+    resources:
+        runtime=wf.get_resource("combine", "run", "runtime"),
+        mem=wf.get_resource("combine", "run", "mem"),
+        partition=wf.get_resource("combine", "run", "partition"),
+        tmpdir=wf.get_resource("combine", "run", "tmpdir"),
+    params:
+        args=wf.get_args("combine", "run"),
     wrapper:
         wf.wrapper_path("combine_variants/run")

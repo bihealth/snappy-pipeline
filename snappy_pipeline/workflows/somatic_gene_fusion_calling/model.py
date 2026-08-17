@@ -4,7 +4,10 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 
 
 class Tool(enum.StrEnum):
@@ -95,25 +98,26 @@ class Arriba(SnappyModel):
         return self
 
 
-class SomaticGeneFusionCalling(SnappyStepModel, validators.ToolsMixin):
-    path_link_in: str = ""
-    """Override data set configuration search paths for FASTQ files"""
+class SomaticGeneFusionCallingDependsOn(SnappyModel):
+    # Optional external/in-pipeline FASTQ source.
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    adapter_trimming: Annotated[
+        str,
+        DataSignature(DataType.RAW, frozenset({"trimmed"})),
+        ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
 
-    tools: Annotated[
-        list[Tool],
-        EnumField(
-            Tool,
-            [
-                Tool.fusioncatcher,
-                Tool.jaffa,
-                Tool.arriba,
-                Tool.defuse,
-                Tool.hera,
-                Tool.pizzly,
-                Tool.star_fusion,
-            ],
-        ),
-    ]
+
+class SomaticGeneFusionCalling(SnappyStepModel):
+    depends_on: SomaticGeneFusionCallingDependsOn = Field(
+        default_factory=SomaticGeneFusionCallingDependsOn
+    )
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.fusioncatcher)]
 
     fusioncatcher: Fusioncatcher | None = None
 

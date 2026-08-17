@@ -1,24 +1,20 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running "popdel profile"."""
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-exec &> >(tee -a "{snakemake.log}")
-set -x
-# -----------------------------------------------------------------------------
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
 cat >$TMPDIR/intervals.txt <<"EOF"
 chr1:35000000-36000000
 chr2:174000000-175000000
@@ -54,8 +50,5 @@ popdel profile \
     -i $TMPDIR/intervals.txt \
     -o {snakemake.output.profile} \
     {snakemake.input.bam}
-
-pushd $(dirname {snakemake.output.profile})
-md5sum $(basename {snakemake.output.profile}) >$(basename {snakemake.output.profile}).md5
 """
 )

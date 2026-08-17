@@ -1,36 +1,23 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for bcftools stats: Snakemake wrapper.py"""
+"""CUBI+Snakemake wrapper code for bcftools query: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Clemens Messerschmidt"
 
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
-
 bcftools query \
     -f '{args[tumor_library]}\t%CHROM\t%POS\t%REF\t%ALT\n' \
     -s {args[tumor_library]} \
     {snakemake.input.vcf} \
 > {snakemake.output.tsv}
-
-md5sum {snakemake.output.tsv} > {snakemake.output.tsv}.md5
 """
 )

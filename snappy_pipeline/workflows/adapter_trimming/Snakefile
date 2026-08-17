@@ -20,7 +20,14 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 # WorkflowImpl Object Setup ===================================================
 
-wf = AdapterTrimmingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = AdapterTrimmingWorkflow(
+    workflow,
+    config,
+    lookup_paths,
+    config_paths,
+    os.getcwd(),
+    task_name=config.get("__task_name__", "adapter_trimming"),
+)
 
 # Rules =======================================================================
 
@@ -32,7 +39,8 @@ localrules:
     adapter_trimming_link_out_fastq_run,
 
 
-rule all:
+rule adapter_trimming_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -48,7 +56,7 @@ rule adapter_trimming_link_in_run:
     output:
         wf.get_output_files("link_in", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+        wf.run_locally("link_in", "run", wildcards)
 
 
 # Link out fastq files --------------------------------------------------------
@@ -60,7 +68,7 @@ rule adapter_trimming_link_out_fastq_run:  # localrule
     output:
         wf.get_output_files("link_out_fastq", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out_fastq", "run", wildcards))
+        wf.run_locally("link_out_fastq", "run", wildcards)
 
 
 # Adapter trimming ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,42 +76,46 @@ rule adapter_trimming_link_out_fastq_run:  # localrule
 # bbduk -----------------------------------------------------------------------
 
 
-rule adapter_trimming_bbduk_run:
-    input:
-        **wf.get_input_files("bbduk", "run"),
-    output:
-        **wf.get_output_files("bbduk", "run"),
-    threads: wf.get_resource("bbduk", "run", "threads")
-    resources:
-        time=wf.get_resource("bbduk", "run", "time"),
-        memory=wf.get_resource("bbduk", "run", "memory"),
-        partition=wf.get_resource("bbduk", "run", "partition"),
-        tmpdir=wf.get_resource("bbduk", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("bbduk", "run"),
-    params:
-        args=wf.get_args("bbduk", "run"),
-    wrapper:
-        wf.wrapper_path("bbduk/run")
+if wf.config.tool == "bbduk":
+
+    rule adapter_trimming_bbduk_run:
+        input:
+            **wf.get_input_files("bbduk", "run"),
+        output:
+            **wf.get_output_files("bbduk", "run"),
+        log:
+            **wf.get_log_file("bbduk", "run"),
+        threads: wf.get_resource("bbduk", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bbduk", "run", "runtime"),
+            mem=wf.get_resource("bbduk", "run", "mem"),
+            partition=wf.get_resource("bbduk", "run", "partition"),
+            tmpdir=wf.get_resource("bbduk", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bbduk", "run"),
+        wrapper:
+            wf.wrapper_path("bbduk/run")
 
 
 # fastp -----------------------------------------------------------------------
 
 
-rule adapter_trimming_fastp_run:
-    input:
-        **wf.get_input_files("fastp", "run"),
-    output:
-        **wf.get_output_files("fastp", "run"),
-    threads: wf.get_resource("fastp", "run", "threads")
-    resources:
-        time=wf.get_resource("fastp", "run", "time"),
-        memory=wf.get_resource("fastp", "run", "memory"),
-        partition=wf.get_resource("fastp", "run", "partition"),
-        tmpdir=wf.get_resource("fastp", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("fastp", "run"),
-    params:
-        args=wf.get_args("fastp", "run"),
-    wrapper:
-        wf.wrapper_path("fastp/run")
+if wf.config.tool == "fastp":
+
+    rule adapter_trimming_fastp_run:
+        input:
+            **wf.get_input_files("fastp", "run"),
+        output:
+            **wf.get_output_files("fastp", "run"),
+        log:
+            **wf.get_log_file("fastp", "run"),
+        threads: wf.get_resource("fastp", "run", "threads")
+        resources:
+            runtime=wf.get_resource("fastp", "run", "runtime"),
+            mem=wf.get_resource("fastp", "run", "mem"),
+            partition=wf.get_resource("fastp", "run", "partition"),
+            tmpdir=wf.get_resource("fastp", "run", "tmpdir"),
+        params:
+            args=wf.get_args("fastp", "run"),
+        wrapper:
+            wf.wrapper_path("fastp/run")

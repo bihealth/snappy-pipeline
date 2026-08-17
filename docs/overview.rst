@@ -112,16 +112,14 @@ The following figure shows the different components that are involved for runnin
 
 The different parts are as follows
 
-- The blue-colored boxes represent the ``snappy_pipeline`` Python package that contains the ``snappy-snake`` executable and the code for the different pipeline steps.
+- The blue-colored boxes represent the ``snappy_pipeline`` Python package that contains the ``snappy`` command and the code for the different pipeline steps.
 
-- The yellow-colored boxes represent the project directory with the different sub directories for the step instances.
-  For each step that is to be executed (with a given configuration set), a directory is created.
-  In the given example, there is only one directory (and thus instance) for each step.
+- The yellow-colored boxes represent the project directory with the ``tasks/`` subdirectory.
+  Each task is namespaced below ``tasks/<task_name>/``.
 
 - The orange-colored boxes represent the configuration.
-  There is a project-wide ``config.yaml`` file that defines project-wide defaults.
-  Each step instance can then override certain settings, similar to how sub-classing in OOP works.
-  One read mapping step instance may use GRCh37 for the reference and another instance might use GRCh38 (not shown in this example).
+  There is a project-wide ``config.yaml`` file that defines all tasks under a ``tasks`` key.
+  Each task carries its own self-contained configuration, including the tool, library selection, and dependencies.
 
 - The purple-colored box represents static data such as the reference sequence, annotations, databases such as dbSNP or dbNSFP.
   These static data files are created and maintained independently of the individual projects.
@@ -147,12 +145,11 @@ The following figure shows the components involved when executing a pipeline ste
 
 The different parts are as follows:
 
-- The working directory ``project/ngs_mapping``.
-- The step-level configuration in ``project/ngs_mapping/config.yaml``.
-- The project-level configurations in ``project/.snappy_pipeline/config.yaml`` (by convention).
+- The working directory ``project/tasks/bwa_mapping``.
+- The task-level configuration in ``project/config.yaml`` under the ``tasks`` key.
 - The ``snappy_pipeline`` Python package installed centrally.
 - The bio-medical sample sheets with the data sets to use.
-  (The project-wide configuration files point at these files.)
+  (The project-wide configuration file points at these files.)
 - The static data files setup by the Cubit administrator (here, it would be the reference FASTA path and the read mapper index location).
 - The raw data files to be processed by the pipeline step (here, it would be the sample FASTQ files).
 
@@ -201,241 +198,125 @@ Here, we give a summary so this document is self-contained.
 Project Directory Setup
 =======================
 
-The project directory is setup with the following helper tool:
-
-.. VS Code highlighting broken with backtick in code-block, thus double-colon
-
-::
-
-    $ snappy-start-project --directory somatic_project
-    [...]
-    Do not forget to fill out your README.md file!
-
-    SUCCESS: all done, have a nice day!
-
-    $ tree -a somatic_project
-    somatic_project/
-    +-- .snappy_pipeline/
-    |   `-- config.yaml
-    `-- README.md
-
-The ``config.yaml`` file is setup with common configuration for the pipeline steps.
-The template used uses the paths specific to the Cubit installation on the BIH cluster.
-In the far future, custom templates will be used for this and the generic files will contain "TODO" entries for changes.
-
-Further, a project-wide ``README.md`` file is setup in which you can place documentation on the project.
+A project directory is set up with the ``snappy init`` command:
 
 .. code-block:: shell
 
-    $ cd somatic_project
-    $ head .snappy_pipeline/config.yaml
-    # CUBI Pipeline Project "somatic_project" Configuration
-    #
-    # created: 2017-02-03T12:57:17.302044
+    $ snappy init --directory somatic_project
+    $ tree -a somatic_project
+    somatic_project/
+    +-- config.yaml
+    +-- pipeline_job.sh
+    +-- samplesheet.tsv
+    +-- raw/
+    +-- resources/
 
-    # Step Configuration ==============================================================================
-    #
-    # Configuration for paths with static data.  This has been preconfigured for the paths on the BIH
-    # cluster.
-    #
+The ``config.yaml`` file contains a ``tasks`` list with the step configurations, ``static_data_config`` for paths to reference data, and a ``data_sets`` section describing the input data and sample sheet.
+
+Tasks reference step types (``ngs_mapping``, ``variant_calling``, etc.) and each task can have its own tool, library selection, and dependency configuration.
+For example, after editing ``config.yaml`` to add a mapping and variant calling task, the project might look like:
+
+.. code-block:: yaml
+
     static_data_config:
+      reference:
+        path: ../../resources/refs/GRCh38.fa
 
-Working Directories for Step Instances
-======================================
+    tasks:
+      - name: bwa_mapping
+        step: ngs_mapping
+        config:
+          tool: bwa
+          bwa:
+            path_index: ../../resources/refs/bwa_index
 
-Next, we create the different step instances that we want to use using ``snappy-start-step``.
-Note that this will extend the ``.snappy_pipeline/config.yaml`` file if there is no configuration entry for the given step.
-A different name for the instance can be given using the ``--step`` parameter.
+      - name: strelka_calling
+        step: variant_calling
+        config:
+          tool: strelka
+          depends_on:
+            ngs_mapping: bwa_mapping
 
-Adding the ``ngs_mapping`` step creates the required directory and configuration files pointing to the global configuration for extension.
-Note how the difference in the project-wide configuration (and all other files created or modified) is displayed in the script's output.
+    data_sets:
+      batch1:
+        file: samplesheet.tsv
+        search_patterns:
+          - { left: '*.R1.fastq.gz', right: '*.R2.fastq.gz' }
+        search_paths:
+          - raw
+        type: matched_cancer
 
-See :ref:`step_ngs_mapping` for the default configuration of the ``ngs_mapping`` step.
-For all configuration settings that have no default and are marked with a ``# required`` comment (case insensitive), these markers are copied to the project configuration so you know which settings to adjust.
+Adding tasks can also be done incrementally with ``snappy task add``:
 
-::
+.. code-block:: shell
 
-    $ cd somatic_project
-    $ snappy-start-step --step ngs_mapping
-    [...]
-    INFO: applying the following change:
+    $ snappy task add --directory somatic_project ngs_mapping=bwa_mapping
+    $ snappy task add --directory somatic_project variant_calling=strelka_calling
 
-    --- a/.snappy_pipeline/config.yaml	2017-02-03T12:47:32.246833
-    +++ b/.snappy_pipeline/config.yaml	2017-02-03T12:49:29.811706
-    @@ -22,7 +22,12 @@
-     # Configuration for the individual steps.  These can be filled by the snappy-start-step command
-     # or initialized already with snappy-start-project.
-     #
-    -step_config: {}
-    +step_config:
-    +  ngs_mapping:
-    +    bwa:
-    +      path_index:  # REQUIRED
-    +    star:
-    +      path_index:  # REQUIRED
+Path Resolution for Static Data and Configuration Files
+========================================================
 
-     # Data Sets =======================================================================================
-     #
-    [...]
+Relative paths in ``static_data_config`` and in task-level configuration
+are resolved relative to the **config file's directory** at validation time.
+Absolute paths are supported and will not be modified.
 
-    $ tree ngs_mapping
-    ngs_mapping/
-    |-- config.yaml
-    |-- pipeline_job.sh
-    `-- sge_log
+Working Directory Layout
+========================
 
-    $ cat ngs_mapping/config.yaml
-    pipeline_step:
-    name: ngs_mapping
-    version: 1
-
-    $ref: 'file://../.snappy/config.yaml'
-
-Similarly, adding ``somatic_variant_calling`` adds configuration for somatic variant calling.
+After running a task, the output and working files are namespaced below ``tasks/<task_name>/``:
 
 ::
 
-    $ snappy-start-step --step somatic_variant_calling
-    [...]
-    INFO: applying the following change:
-
-    --- a/.snappy/config.yaml	2017-02-03T13:11:10.023648
-    +++ b/.snappy/config.yaml	2017-02-03T13:11:20.806588
-    @@ -29,6 +29,10 @@
-         star:
-         path_index: REQUIRED  # REQUIRED
-
-    +  somatic_variant_calling:
-    +    path_ngs_mapping: ../ngs_mapping  # REQUIRED
-    +    scalpel:
-    +      path_target_regions:  # REQUIRED
-     # Data Sets =======================================================================================
-     #
-     # Define data sets.  The search paths and patterns are given per data set.
-    [...]
-
-    $ tree somatic_variant_calling
-    somatic_variant_calling
-    +-- sge_log/
-    `-- config.yaml
-
-The same is true for adding ``somatic_variant_annotation``.
-
-::
-
-    $ snappy-start-step --step somatic_variant_annotation
-    [...]
-    INFO: applying the following change:
-
-    --- a/.snappy_pipeline/config.yaml	2017-02-03T13:11:20.807090
-    +++ b/.snappy_pipeline/config.yaml	2017-02-03T13:12:22.693821
-    @@ -33,6 +33,10 @@
-         path_ngs_mapping: ../ngs_mapping  # REQUIRED
-         scalpel:
-         path_target_regions:  # REQUIRED
-    +  somatic_variant_annotation:
-    +    path_somatic_variant_calling: ../somatic_variant_calling  # REQUIRED
-    +    oncotator:
-    +      path_corpus: REQUIRED  # REQUIRED
-     # Data Sets =======================================================================================
-     #
-     # Define data sets.  The search paths and patterns are given per data set.
-    @@ -50,4 +54,5 @@
-     #       - /fast/projects/medgen_genomes/2017-01-09_acheiropodia
-     #     type: germline_variants
-     #
-    -data_sets: {}
-    +data_sets                   # REQUIRED
-    +: {}
-    [...]
-    $ tree somatic_variant_annotation
-    somatic_variant_annotation
-    +-- sge_log/
-    `-- config.yaml
-
+    somatic_project/
+    +-- config.yaml
+    +-- tasks/
+    |   +-- bwa_mapping/
+    |   |   +-- output/
+    |   |   +-- work/
+    |   +-- strelka_calling/
+    |       +-- output/
+    |       +-- work/
+    +-- raw/
+    +-- resources/
 
 Adding Sample Sheets
 ====================
 
-.. note:: The following does not work yet but should in the future
+Sample sheets are TSV files describing the study design.
+For matched cancer studies, the format is:
 
-    **TODO**
+.. code-block:: tsv
 
-For matched cancer studies, the most simple way of creating a sample sheet is starting from the shortcut TSV.
-The following creates a sample sheet TSV shortcut.
-This is then converted into a JSON bio-med sample sheet.
-
-.. code-block:: shell
-
-    $ cat <<"EOF" | sed $'s/[ \t]\+/\t/g' > .snappy_pipeline/01_data_set.tsv
     [Metadata]
     schema          cancer_matched
     schema_version  v1
-    title           Example matched cancer tumor/normal study
-    description     The study has two patients, P001 has one tumor sample, P002 has two
 
     [Data]
     patientName sampleName  isTumor    libraryType folderName
     P001    N1  N   WES P001-N1-DNA1-WES1
     P001    T1  Y   WES P001-T1-DNA1-WES1
-    P001    T1  Y   mRNA_seq    P001-T1-RNA1-mRNA_seq1
     P002    N1  N   WES P002-N1-DNA1-WES1
     P002    T1  Y   WES P002-T1-DNA1-WES1
-    P002    T1  Y   WES P002-T1-RNA1-mRNA_seq1
-    P002    T2  Y   WES P002-T2-DNA1-WES1
-    P002    T2  Y   mRNA_seq    P002-T2-RNA1-mRNA_seq1
-    EOF
-    $ biomedsheets -t matched_cancer \
-        --input .snappy_pipeline/01_data_set.tsv \
-        --output .snappy_pipeline/01_data_set.json
-    $ head .snappy_pipeline/01_data_set.json
-    [TODO]
 
-.. note::
+Executing the Pipeline
+======================
 
-    Updating entries in data set TSV files does not work yet and requires a re-starting from scratch.
-    As the data set primary keys are part of the file names, changing the PK of sample or library will require cleaning all output files and re-running the whole pipeline.
-    Overall, it is better to only use the JSON sheet files and the corresponding tools and helpers.
-
-Now, we have to register the data set in the configuration.
-Ensure that the ``data_sets`` entry look as follows.
-Replace ``<path-to-demo-dir>`` with the path to the ``demo`` directory of the ``snappy_pipeline`` project.
-
-.. code-block:: yaml
-
-    data_sets:
-      first_batch:
-        file: 01_first_batch.tsv
-        search_patterns:
-          # Note that currently only "left" and "right" key known
-          - {'left': '*/L???/*_R1.fastq.gz', 'right': '*/L???/*_R2.fastq.gz'}
-        search_paths: ['<path-to-demo-dir>/input/01_first_batch']
-        type: matched_cancer
-
-.. TODO: describe full configuration and setting format
-
-The full configuration format will be described elsewhere.
-It is notable, however, that there also is an optional ``naming_scheme`` property for each batch.
-Using this, you can select between naming based on secondary ID and pk (``secondary_id_pk``) and secondary ID alone (``only_secondary_id``).
-
-
-Executing the Project's Pipeline
-================================
-
-After executing the steps from above, our pipeline is ready to use.
-Each pipeline step instance will automatically run each predecessor within the pipeline.
-Thus, it is enough to execute the pipeline in the ``somatic_variant_annotation`` step.
-
-For running, locally use:
+To run the pipeline, use ``snappy run``:
 
 .. code-block:: shell
 
-    $ cd somatic_variant_annotation
-    $ snappy-snake -p --step somatic_variant_annotation
+    $ cd somatic_project
+    $ snappy run                    # run all leaf tasks
+    $ snappy run --task bwa_mapping  # run only bwa_mapping
 
-For running with Snakemake profile on the cluster, use the ``--snappy-pipeline-use-profile`` parameter.
+For cluster execution with SLURM:
 
 .. code-block:: shell
 
-    $ cd somatic_variant_annotation
-    $ snappy-snake -p --step somatic_variant_annotation --snappy-pipeline-use-profile "cubi-v1"
+    $ snappy run --slurm
+
+Extra Snakemake arguments can be passed after ``--``:
+
+.. code-block:: shell
+
+    $ snappy run --task bwa_mapping -n -- --quiet

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from math import ceil
+from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 paths_cov = " ".join(snakemake.input.covs)
 
@@ -17,9 +21,8 @@ else:
 # As an estimate, give 75% of total memory as usable to JVM
 mem_jvm = ceil(mem_i / 1024.0 / 1024.0 * 0.75)
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
 
 gatk --java-options "-Xmx{mem_jvm}m" \
     FilterIntervals \

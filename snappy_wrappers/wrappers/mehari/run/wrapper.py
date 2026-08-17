@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running Mehari variant annotation (v0.42.0+)"""
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Till Hartmann"
 __email__ = "till.hartmann@bih-charite.de"
@@ -13,6 +13,7 @@ cli_args = []
 
 # skip keys that are handled via snakemake.input
 ignore_keys = {"reference", "transcripts", "frequencies", "clinvar"}
+num_threads = snakemake.threads
 
 for key, value in mehari_config.items():
     if key in ignore_keys:
@@ -51,52 +52,23 @@ freq_arg = f"--frequencies {freq_db}" if freq_db else ""
 clinvar_db = snakemake.input.get("clinvar", "")
 clinvar_arg = f"--clinvar {clinvar_db}" if clinvar_db else ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
-md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Run Mehari annotation
-mehari annotate seqvars \
-    {mehari_options} \
-    {tx_args} \
-    {freq_arg} \
-    {clinvar_arg} \
-    --reference {snakemake.input.reference} \
-    --input {snakemake.input.vcf} \
-    --output {snakemake.output.vcf}
+# using --force here because GATK sometimes produces incorrect VCF headers;
+# should probably introduce a GATK cleanup rule instead.
+bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force | \
+  mehari annotate seqvars \
+      {mehari_options} \
+      {tx_args} \
+      {freq_arg} \
+      {clinvar_arg} \
+      --reference {snakemake.input.reference} \
+      --input - \
+      --output {snakemake.output.vcf}
 
 # Index the resulting VCF
-tabix {snakemake.output.vcf}
-
-# Compute MD5 sums for outputs
-pushd $(dirname {snakemake.output.vcf})
-f=$(basename {snakemake.output.vcf})
-md5sum $f > $f.md5
-md5sum $f.tbi > $f.tbi.md5
-popd
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-sleep 1s  # try to wait for log file flush
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+tabix --threads {num_threads} {snakemake.output.vcf}
 """
 )

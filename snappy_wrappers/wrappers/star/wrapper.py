@@ -1,4 +1,9 @@
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -8,58 +13,14 @@ out_gc = snakemake.output.get("gene_counts", "__dummy__")
 out_sj = snakemake.output.get("junctions", "__dummy__")
 out_tx = snakemake.output.get("transcriptome", "__dummy__")
 
-DEF_HELPER_FUNCS = r"""
-compute-md5()
-{
-    if [[ $# -ne 2 ]]; then
-        >&2 echo "Invalid number of arguments: $#"
-        exit 1
-    fi
-    md5sum $1 \
-    | awk '{ gsub(/.*\//, "", $2); print; }' \
-    > $2
-}
-"""
-
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
 reads_left = args["input"]["reads_left"]
 reads_right = args["input"].get("reads_right", "")
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write files for reproducibility -----------------------------------------------------------------
-
-{DEF_HELPER_FUNCS}
-
-# Write out information about conda and save a copy of the wrapper with picked variables
-# as well as the environment.yaml file.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-compute-md5 {snakemake.log.conda_list} {snakemake.log.conda_list_md5}
-compute-md5 {snakemake.log.conda_info} {snakemake.log.conda_info_md5}
-cp {__real_file__} {snakemake.log.wrapper}
-compute-md5 {snakemake.log.wrapper} {snakemake.log.wrapper_md5}
-cp $(dirname {__file__})/environment.yaml {snakemake.log.env_yaml}
-compute-md5 {snakemake.log.env_yaml} {snakemake.log.env_yaml_md5}
-
-# Also pipe stderr to log file --------------------------------------------------------------------
-
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Create auto-cleaned temporary directory
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 
 # Some More Preparation ---------------------------------------------------------------------------
 
@@ -80,7 +41,7 @@ mask_duplicates()
 {{
     set -x
 
-    samblaster --addMateTags 
+    samblaster --addMateTags
 }}
 
 # Sort by coordinate input SAM from STDIN
@@ -104,9 +65,6 @@ index_bam()
     # Index resulting BAM file
     samtools index $out_bam
 
-    # Build MD5 files
-    compute-md5 $out_bam $out_bam.md5
-    compute-md5 $out_bam.bai $out_bam.bai.md5
 }}
 
 # Function for running STAR
@@ -186,7 +144,7 @@ run_star()
         else
             echo " --outSAMtype BAM SortedByCoordinate "; \
         fi) \
-        --runThreadN {args[num_threads_align]} 
+        --runThreadN {args[num_threads_align]}
 
     >&2 ls -lhR $TMPDIR
 }}
@@ -204,9 +162,7 @@ fi
 index_bam {snakemake.output.bam}
 
 mv $TMPDIR/pre.d/out.ReadsPerGene.out.tab {out_gc}
-compute-md5 {out_gc} {out_gc}.md5
 mv $TMPDIR/pre.d/out.SJ.out.tab {out_sj}
-compute-md5 {out_sj} {out_sj}.md5
 
 # Optional output: mapping on transcriptome -------------------------------------------------------
 
@@ -216,7 +172,6 @@ if [[ "{args[transcriptome]}" = "True" ]]; then
     else
         mv $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam {out_tx}
     fi
-    compute-md5 {out_tx} {out_tx}.md5
 fi
 
 # QC Report ---------------------------------------------------------------------------------------
@@ -227,27 +182,5 @@ samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt
 samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
 
-# Build MD5 files for the reports
-compute-md5 {snakemake.output.report_bamstats_txt}  {snakemake.output.report_bamstats_txt_md5}
-compute-md5 {snakemake.output.report_flagstats_txt} {snakemake.output.report_flagstats_txt_md5}
-compute-md5 {snakemake.output.report_idxstats_txt}  {snakemake.output.report_idxstats_txt_md5}
-
-# Create output links -----------------------------------------------------------------------------
-
-for path in {snakemake.output.output_links}; do
-  dst=$path
-  src=work/${{dst#output/}}
-  ln -sr $src $dst
-done
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-{DEF_HELPER_FUNCS}
-
-sleep 1s  # try to wait for log file flush
-compute-md5 {snakemake.log.log} {snakemake.log.log_md5}
 """
 )

@@ -1,10 +1,12 @@
 import enum
-
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class MHCIClassDnaTool(enum.StrEnum):
@@ -25,9 +27,9 @@ class MHCIIClassRnaTool(enum.StrEnum):
     arcashla = "arcashla"
 
 
-class Tools(SnappyModel):
-    dna: list[MHCIClassDnaTool | MHCIIClassDnaTool] = []
-    rna: list[MHCIClassRnaTool | MHCIIClassRnaTool] = []
+class Tool(enum.StrEnum):
+    optitype = "optitype"
+    arcashla = "arcashla"
 
 
 class YaraSensitivity(enum.StrEnum):
@@ -44,12 +46,9 @@ class Yara(SnappyModel):
 
 class Optitype(SnappyModel):
     yara_mapper: Yara = Yara()
-
     max_reads: int = 5000
     """5000 is a suggestion by OptiType author"""
-
     num_mapping_threads: int = 4
-
     use_discordant: bool = False
 
 
@@ -64,7 +63,6 @@ class Population(enum.StrEnum):
 
 class ArcasHla(SnappyModel):
     mapper: str = "star"
-
     population: Population = Population.PRIOR
     min_count: int = 75
     tolerance: float = 1e-7
@@ -72,42 +70,38 @@ class ArcasHla(SnappyModel):
     drop_iterations: int | None = None
     drop_threshold: float = 0.1
     zygocity_threshold: float = 0.15
-
     avg: int | None = None
     std: int | None = None
 
 
-class HlaLa(SnappyModel):
-    mapper: str = "bwa"
+class ExpectedHlaTyping(SnappyModel):
+    """Consumer-driven contract: expected output keys from hla_typing."""
 
-    path_graph: str | None = None
-    """HLA-LA will use that path when provided. The graphs must be serialized"""
+    txt: str
+    done: str
 
-    start: Annotated[int, Field(examples=[28477796, 28510120])] = 0
-    """GRCh37: 28477796, GRCh38: 28510120"""
 
-    end: Annotated[int, Field(examples=[33448355, 33480577])] = 0
-    """GRCh37: 33448355, GRCh38: 33480577"""
-
-    min_score: float = 0.95
+class HlaTypingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    """Optional: name of the ``link_in`` task to use as the preprocessed FASTQ source."""
 
 
 class HlaTyping(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
-
-    path_link_in: str = ""
     """Override data set configuration search paths for FASTQ files"""
 
-    tools: Tools = Tools()
+    depends_on: HlaTypingDependsOn = Field(default_factory=HlaTypingDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.optitype)]
 
     optitype: Optitype = Optitype()
 
     arcashla: ArcasHla = ArcasHla()
-
-    hla_la: HlaLa = HlaLa()
-
-    @model_validator(mode="after")
-    def ensure_at_least_one_tool(self):
-        if len(self.tools.dna) + len(self.tools.rna) == 0:
-            raise ValueError("No HLA typing tool requested")
-        return self

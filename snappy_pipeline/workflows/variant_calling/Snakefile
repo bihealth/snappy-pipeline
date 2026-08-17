@@ -21,17 +21,23 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = VariantCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.config.tools
+tool = str(wf.config.tool)
 
 # Rules =======================================================================
+
+
+wildcard_constraints:
+    library_name="[^/.]+",
 
 
 localrules:
     # Writing pedigrees should be done locally as well
     variant_calling_write_pedigree_run,
+    variant_calling_link_out_run,
 
 
-rule all:
+rule variant_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -54,23 +60,23 @@ rule variant_calling_write_pedigree_run:
 
 # Run bcftools call -----------------------------------------------------------
 
-if "bcftools_call" in tools:
+if tool == "bcftools_call":
 
     rule variant_calling_bcftools_call_run:
         input:
             unpack(wf.get_input_files("bcftools_call", "run")),
         output:
             **wf.get_output_files("bcftools_call", "run"),
-        params:
-            args=wf.get_args("bcftools_call", "run"),
-        threads: wf.get_resource("bcftools_call", "run", "threads")
-        resources:
-            time=wf.get_resource("bcftools_call", "run", "time"),
-            memory=wf.get_resource("bcftools_call", "run", "memory"),
-            partition=wf.get_resource("bcftools_call", "run", "partition"),
-            tmpdir=wf.get_resource("bcftools_call", "run", "tmpdir"),
         log:
             **wf.get_log_file("bcftools_call", "run"),
+        threads: wf.get_resource("bcftools_call", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bcftools_call", "run", "runtime"),
+            mem=wf.get_resource("bcftools_call", "run", "mem"),
+            partition=wf.get_resource("bcftools_call", "run", "partition"),
+            tmpdir=wf.get_resource("bcftools_call", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bcftools_call", "run"),
         wrapper:
             wf.wrapper_path("bcftools_call")
 
@@ -78,23 +84,23 @@ if "bcftools_call" in tools:
 # Run GATK HaplotypeCaller (direct, pedigree/multi-sample) --------------------
 
 
-if "gatk3_hc" in tools:
+elif tool == "gatk3_hc":
 
     rule variant_calling_gatk3_hc_run:
         input:
             unpack(wf.get_input_files("gatk3_hc", "run")),
         output:
             **wf.get_output_files("gatk3_hc", "run"),
-        params:
-            args=wf.get_args("gatk3_hc", "run"),
-        threads: wf.get_resource("gatk3_hc", "run", "threads")
-        resources:
-            time=wf.get_resource("gatk3_hc", "run", "time"),
-            memory=wf.get_resource("gatk3_hc", "run", "memory"),
-            partition=wf.get_resource("gatk3_hc", "run", "partition"),
-            tmpdir=wf.get_resource("gatk3_hc", "run", "tmpdir"),
         log:
             **wf.get_log_file("gatk3_hc", "run"),
+        threads: wf.get_resource("gatk3_hc", "run", "threads")
+        resources:
+            runtime=wf.get_resource("gatk3_hc", "run", "runtime"),
+            mem=wf.get_resource("gatk3_hc", "run", "mem"),
+            partition=wf.get_resource("gatk3_hc", "run", "partition"),
+            tmpdir=wf.get_resource("gatk3_hc", "run", "tmpdir"),
+        params:
+            args=wf.get_args("gatk3_hc", "run"),
         wrapper:
             wf.wrapper_path("gatk3_hc")
 
@@ -102,23 +108,23 @@ if "gatk3_hc" in tools:
 # Run GATK UnifiedGenotyper ---------------------------------------------------
 
 
-if "gatk3_ug" in tools:
+elif tool == "gatk3_ug":
 
     rule variant_calling_gatk3_ug_run:
         input:
             unpack(wf.get_input_files("gatk3_ug", "run")),
         output:
             **wf.get_output_files("gatk3_ug", "run"),
-        params:
-            args=wf.get_args("gatk3_ug", "run"),
-        threads: wf.get_resource("gatk3_ug", "run", "threads")
-        resources:
-            time=wf.get_resource("gatk3_ug", "run", "time"),
-            memory=wf.get_resource("gatk3_ug", "run", "memory"),
-            partition=wf.get_resource("gatk3_ug", "run", "partition"),
-            tmpdir=wf.get_resource("gatk3_ug", "run", "tmpdir"),
         log:
             **wf.get_log_file("gatk3_ug", "run"),
+        threads: wf.get_resource("gatk3_ug", "run", "threads")
+        resources:
+            runtime=wf.get_resource("gatk3_ug", "run", "runtime"),
+            mem=wf.get_resource("gatk3_ug", "run", "mem"),
+            partition=wf.get_resource("gatk3_ug", "run", "partition"),
+            tmpdir=wf.get_resource("gatk3_ug", "run", "tmpdir"),
+        params:
+            args=wf.get_args("gatk3_ug", "run"),
         wrapper:
             wf.wrapper_path("gatk3_ug")
 
@@ -126,21 +132,21 @@ if "gatk3_ug" in tools:
 # Run GATK 4 HaplotypeCaller Joint (direct, pedigree/multi-sample) ------------
 
 
-if "gatk4_hc_joint" in tools:
+elif tool == "gatk4_hc_joint":
 
     rule variant_calling_gatk4_hc_joint_run:
         input:
             unpack(wf.get_input_files("gatk4_hc_joint", "run")),
         output:
             **wf.get_output_files("gatk4_hc_joint", "run"),
-        threads: wf.get_resource("gatk4_hc_joint", "run", "threads")
-        resources:
-            time=wf.get_resource("gatk4_hc_joint", "run", "time"),
-            memory=wf.get_resource("gatk4_hc_joint", "run", "memory"),
-            partition=wf.get_resource("gatk4_hc_joint", "run", "partition"),
-            tmpdir=wf.get_resource("gatk4_hc_joint", "run", "tmpdir"),
         log:
             **wf.get_log_file("gatk4_hc_joint", "run"),
+        threads: wf.get_resource("gatk4_hc_joint", "run", "threads")
+        resources:
+            runtime=wf.get_resource("gatk4_hc_joint", "run", "runtime"),
+            mem=wf.get_resource("gatk4_hc_joint", "run", "mem"),
+            partition=wf.get_resource("gatk4_hc_joint", "run", "partition"),
+            tmpdir=wf.get_resource("gatk4_hc_joint", "run", "tmpdir"),
         wrapper:
             wf.wrapper_path("gatk4_hc/joint")
 
@@ -148,7 +154,7 @@ if "gatk4_hc_joint" in tools:
 # Run GATK 4 HaplotypeCaller gVCF (going via per-sample gVCF files) -----------
 
 
-if "gatk4_hc_gvcf" in tools:
+elif tool == "gatk4_hc_gvcf":
 
     # Discover variants with GATK HaplotypeCaller, create per-sample gVCF file
     rule variant_calling_gatk4_hc_gvcf_discover:
@@ -156,16 +162,16 @@ if "gatk4_hc_gvcf" in tools:
             unpack(wf.get_input_files("gatk4_hc_gvcf", "discover")),
         output:
             **wf.get_output_files("gatk4_hc_gvcf", "discover"),
+        log:
+            **wf.get_log_file("gatk4_hc_gvcf", "discover"),
         threads: wf.get_resource("gatk4_hc_gvcf", "discover", "threads")
         resources:
-            time=wf.get_resource("gatk4_hc_gvcf", "discover", "time"),
-            memory=wf.get_resource("gatk4_hc_gvcf", "discover", "memory"),
+            runtime=wf.get_resource("gatk4_hc_gvcf", "discover", "runtime"),
+            mem=wf.get_resource("gatk4_hc_gvcf", "discover", "mem"),
             partition=wf.get_resource("gatk4_hc_gvcf", "discover", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "discover", "tmpdir"),
         params:
-            args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
-        log:
-            **wf.get_log_file("gatk4_hc_gvcf", "discover"),
+            args=wf.get_args("gatk4_hc_gvcf", "discover"),
         wrapper:
             wf.wrapper_path("gatk4_hc/discover")
 
@@ -175,16 +181,16 @@ if "gatk4_hc_gvcf" in tools:
             unpack(wf.get_input_files("gatk4_hc_gvcf", "combine_gvcfs")),
         output:
             **wf.get_output_files("gatk4_hc_gvcf", "combine_gvcfs"),
+        log:
+            **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
         threads: wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "threads")
         resources:
-            time=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "time"),
-            memory=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "memory"),
+            runtime=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "runtime"),
+            mem=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "mem"),
             partition=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "tmpdir"),
         params:
             args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
-        log:
-            **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
         wrapper:
             wf.wrapper_path("gatk4_hc/combine_gvcfs")
 
@@ -194,16 +200,16 @@ if "gatk4_hc_gvcf" in tools:
             unpack(wf.get_input_files("gatk4_hc_gvcf", "genotype")),
         output:
             **wf.get_output_files("gatk4_hc_gvcf", "genotype"),
+        log:
+            **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
         threads: wf.get_resource("gatk4_hc_gvcf", "genotype", "threads")
         resources:
-            time=wf.get_resource("gatk4_hc_gvcf", "genotype", "time"),
-            memory=wf.get_resource("gatk4_hc_gvcf", "genotype", "memory"),
+            runtime=wf.get_resource("gatk4_hc_gvcf", "genotype", "runtime"),
+            mem=wf.get_resource("gatk4_hc_gvcf", "genotype", "mem"),
             partition=wf.get_resource("gatk4_hc_gvcf", "genotype", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "genotype", "tmpdir"),
         params:
             args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
-        log:
-            **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
         wrapper:
             wf.wrapper_path("gatk4_hc/genotype")
 
@@ -213,86 +219,243 @@ if "gatk4_hc_gvcf" in tools:
 # Generate BCFtools stats report ----------------------------------------------
 
 
-rule variant_calling_bcftools_stats_report:
-    input:
-        **wf.get_input_files("bcftools_stats", "run"),
-    output:
-        **wf.get_output_files("bcftools_stats", "run"),
-    params:
-        args=wf.get_args("bcftools_stats", "run"),
-    threads: wf.get_resource("bcftools_stats", "run", "threads")
-    resources:
-        time=wf.get_resource("bcftools_stats", "run", "time"),
-        memory=wf.get_resource("bcftools_stats", "run", "memory"),
-        partition=wf.get_resource("bcftools_stats", "run", "partition"),
-        tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("bcftools_stats", "run"),
-    wrapper:
-        wf.wrapper_path("bcftools_stats/run")
+if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
+
+    rule variant_calling_bcftools_stats_report:
+        input:
+            **wf.get_input_files("bcftools_stats", "run"),
+        output:
+            **wf.get_output_files("bcftools_stats", "run"),
+        log:
+            **wf.get_log_file("bcftools_stats", "run"),
+        threads: wf.get_resource("bcftools_stats", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bcftools_stats", "run", "runtime"),
+            mem=wf.get_resource("bcftools_stats", "run", "mem"),
+            partition=wf.get_resource("bcftools_stats", "run", "partition"),
+            tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bcftools_stats", "run"),
+        wrapper:
+            wf.wrapper_path("bcftools_stats/run")
 
 
 # Generate Jannovar statistics report -----------------------------------------
 
 
-rule variant_calling_jannovar_stats_report:
-    input:
-        **wf.get_input_files("jannovar_stats", "run"),
-    output:
-        **wf.get_output_files("jannovar_stats", "run"),
-    params:
-        args=wf.get_args("jannovar_stats", "run"),
-    threads: wf.get_resource("jannovar_stats", "run", "threads")
-    resources:
-        time=wf.get_resource("jannovar_stats", "run", "time"),
-        memory=wf.get_resource("jannovar_stats", "run", "memory"),
-        partition=wf.get_resource("jannovar_stats", "run", "partition"),
-        tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("jannovar_stats", "run"),
-    wrapper:
-        wf.wrapper_path("jannovar/statistics")
+if wf.config.jannovar_stats and wf.config.jannovar_stats.enabled:
+
+    rule variant_calling_jannovar_stats_report:
+        input:
+            **wf.get_input_files("jannovar_stats", "run"),
+        output:
+            **wf.get_output_files("jannovar_stats", "run"),
+        log:
+            **wf.get_log_file("jannovar_stats", "run"),
+        threads: wf.get_resource("jannovar_stats", "run", "threads")
+        resources:
+            runtime=wf.get_resource("jannovar_stats", "run", "runtime"),
+            mem=wf.get_resource("jannovar_stats", "run", "mem"),
+            partition=wf.get_resource("jannovar_stats", "run", "partition"),
+            tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
+        params:
+            args=wf.get_args("jannovar_stats", "run"),
+        wrapper:
+            wf.wrapper_path("jannovar/statistics")
 
 
 # Generate B allele fraction files --------------------------------------------
 
 
-rule variant_calling_baf_file_generation:
-    input:
-        **wf.get_input_files("baf_file_generation", "run"),
-    output:
-        **wf.get_output_files("baf_file_generation", "run"),
-    params:
-        args=wf.get_args("baf_file_generation", "run"),
-    threads: wf.get_resource("baf_file_generation", "run", "threads")
-    resources:
-        time=wf.get_resource("baf_file_generation", "run", "time"),
-        memory=wf.get_resource("baf_file_generation", "run", "memory"),
-        partition=wf.get_resource("baf_file_generation", "run", "partition"),
-        tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("baf_file_generation", "run"),
-    wrapper:
-        wf.wrapper_path("baf_file_generation")
+if wf.config.baf_file_generation and wf.config.baf_file_generation.enabled:
+
+    rule variant_calling_baf_file_generation:
+        input:
+            **wf.get_input_files("baf_file_generation", "run"),
+        output:
+            **wf.get_output_files("baf_file_generation", "run"),
+        log:
+            **wf.get_log_file("baf_file_generation", "run"),
+        threads: wf.get_resource("baf_file_generation", "run", "threads")
+        resources:
+            runtime=wf.get_resource("baf_file_generation", "run", "runtime"),
+            mem=wf.get_resource("baf_file_generation", "run", "mem"),
+            partition=wf.get_resource("baf_file_generation", "run", "partition"),
+            tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
+        params:
+            args=wf.get_args("baf_file_generation", "run"),
+        wrapper:
+            wf.wrapper_path("baf_file_generation")
 
 
 # Run bcftools roh ------------------------------------------------------------
 
 
-rule variant_calling_bcftools_roh:
+if wf.config.bcftools_roh and wf.config.bcftools_roh.enabled:
+
+    rule variant_calling_bcftools_roh:
+        input:
+            **wf.get_input_files("bcftools_roh", "run"),
+        output:
+            **wf.get_output_files("bcftools_roh", "run"),
+        log:
+            **wf.get_log_file("bcftools_roh", "run"),
+        threads: wf.get_resource("bcftools_roh", "run", "threads")
+        resources:
+            runtime=wf.get_resource("bcftools_roh", "run", "runtime"),
+            mem=wf.get_resource("bcftools_roh", "run", "mem"),
+            partition=wf.get_resource("bcftools_roh", "run", "partition"),
+            tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
+        params:
+            args=wf.get_args("bcftools_roh", "run"),
+        wrapper:
+            wf.wrapper_path("bcftools_roh")
+
+
+# Run MuTect 2 ----------------------------------------------------------------
+
+if tool == "mutect2":
+
+    if (
+        getattr(wf.config.mutect2, "contamination", None)
+        and wf.config.mutect2.contamination.enabled
+    ):
+
+        rule variant_calling_mutect2_pileup_normal:
+            input:
+                unpack(wf.get_input_files("mutect2", "pileup_normal")),
+            output:
+                **wf.get_output_files("mutect2", "pileup_normal"),
+            log:
+                **wf.get_log_file("mutect2", "pileup_normal"),
+            threads: wf.get_resource("mutect2", "pileup_normal", "threads")
+            resources:
+                runtime=wf.get_resource("mutect2", "pileup_normal", "runtime"),
+                mem=wf.get_resource("mutect2", "pileup_normal", "mem"),
+                partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
+                tmpdir=wf.get_resource("mutect2", "pileup_normal", "tmpdir"),
+            params:
+                args=wf.get_args("mutect2", "pileup_normal"),
+            wrapper:
+                wf.wrapper_path("mutect2/pileup")
+
+        rule variant_calling_mutect2_pileup_tumor:
+            input:
+                unpack(wf.get_input_files("mutect2", "pileup_tumor")),
+            output:
+                **wf.get_output_files("mutect2", "pileup_tumor"),
+            log:
+                **wf.get_log_file("mutect2", "pileup_tumor"),
+            threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
+            resources:
+                runtime=wf.get_resource("mutect2", "pileup_tumor", "runtime"),
+                mem=wf.get_resource("mutect2", "pileup_tumor", "mem"),
+                partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
+                tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
+            params:
+                args=wf.get_args("mutect2", "pileup_tumor"),
+            wrapper:
+                wf.wrapper_path("mutect2/pileup")
+
+        rule variant_calling_mutect2_contamination:
+            input:
+                unpack(wf.get_input_files("mutect2", "contamination")),
+            output:
+                **wf.get_output_files("mutect2", "contamination"),
+            log:
+                **wf.get_log_file("mutect2", "contamination"),
+            threads: wf.get_resource("mutect2", "contamination", "threads")
+            resources:
+                runtime=wf.get_resource("mutect2", "contamination", "runtime"),
+                mem=wf.get_resource("mutect2", "contamination", "mem"),
+                partition=wf.get_resource("mutect2", "contamination", "partition"),
+                tmpdir=wf.get_resource("mutect2", "contamination", "tmpdir"),
+            wrapper:
+                wf.wrapper_path("mutect2/contamination")
+
+    scattergather:
+        mutect2=(
+            getattr(wf.config.mutect2, "num_jobs", 24)
+            if getattr(wf.config, "mutect2", None)
+            else 24
+        ),
+
+    rule variant_calling_mutect2_scatter:
+        input:
+            unpack(wf.get_input_files("mutect2", "scatter")),
+        output:
+            **wf.get_output_files("mutect2", "scatter"),
+        log:
+            **wf.get_log_file("mutect2", "scatter"),
+        localrule: True
+        threads: 1
+        resources:
+            runtime=wf.get_resource("mutect2", "scatter", "runtime"),
+            mem=wf.get_resource("mutect2", "scatter", "mem"),
+            partition=wf.get_resource("mutect2", "scatter", "partition"),
+            tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
+        params:
+            args=wf.get_args("mutect2", "scatter"),
+        wrapper:
+            wf.wrapper_path("split_regions")
+
+    rule variant_calling_mutect2_run:
+        input:
+            unpack(wf.get_input_files("mutect2", "run")),
+        output:
+            **wf.get_output_files("mutect2", "run"),
+        log:
+            **wf.get_log_file("mutect2", "run"),
+        threads: wf.get_resource("mutect2", "run", "threads")
+        resources:
+            runtime=wf.get_resource("mutect2", "run", "runtime"),
+            mem=wf.get_resource("mutect2", "run", "mem"),
+            partition=wf.get_resource("mutect2", "run", "partition"),
+            tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
+        params:
+            args=wf.get_args("mutect2", "run"),
+        wrapper:
+            wf.wrapper_path("mutect2/run")
+
+    rule variant_calling_mutect2_gather:
+        input:
+            unpack(wf.get_input_files("mutect2", "gather")),
+        output:
+            **wf.get_output_files("mutect2", "gather"),
+        log:
+            **wf.get_log_file("mutect2", "gather"),
+        threads: 1
+        resources:
+            runtime=wf.get_resource("mutect2", "gather", "runtime"),
+            mem=wf.get_resource("mutect2", "gather", "mem"),
+            partition=wf.get_resource("mutect2", "gather", "partition"),
+            tmpdir=wf.get_resource("mutect2", "gather", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("mutect2/gather")
+
+    rule variant_calling_mutect2_filter:
+        input:
+            unpack(wf.get_input_files("mutect2", "filter")),
+        output:
+            **wf.get_output_files("mutect2", "filter"),
+        log:
+            **wf.get_log_file("mutect2", "filter"),
+        threads: wf.get_resource("mutect2", "filter", "threads")
+        resources:
+            runtime=wf.get_resource("mutect2", "filter", "runtime"),
+            mem=wf.get_resource("mutect2", "filter", "mem"),
+            partition=wf.get_resource("mutect2", "filter", "partition"),
+            tmpdir=wf.get_resource("mutect2", "filter", "tmpdir"),
+        params:
+            args=wf.get_args("mutect2", "filter"),
+        wrapper:
+            wf.wrapper_path("mutect2/filter")
+
+
+rule variant_calling_link_out_run:
     input:
-        **wf.get_input_files("bcftools_roh", "run"),
+        wf.get_input_files("link_out", "run"),
     output:
-        **wf.get_output_files("bcftools_roh", "run"),
-    params:
-        args=wf.get_args("bcftools_roh", "run"),
-    threads: wf.get_resource("bcftools_roh", "run", "threads")
-    resources:
-        time=wf.get_resource("bcftools_roh", "run", "time"),
-        memory=wf.get_resource("bcftools_roh", "run", "memory"),
-        partition=wf.get_resource("bcftools_roh", "run", "partition"),
-        tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
-    log:
-        **wf.get_log_file("bcftools_roh", "run"),
-    wrapper:
-        wf.wrapper_path("bcftools_roh")
+        wf.get_output_files("link_out", "run"),
+    run:
+        wf.run_locally("link_out", "run", wildcards)

@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running VEP variant annotation"""
 
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
@@ -12,90 +17,37 @@ vep_config = args["config"]
 # Get shortcuts to step configuration
 pick_order = ",".join(vep_config["pick_order"])
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
-if vep_config["plugins"]:
-    plugins = " ".join(["--plugin " + x for x in vep_config["plugins"]])
-    if not vep_config["plugins_dir"]:
-        raise Exception("Please provide plugins directory if you want to use plugins")
-    else:
-        plugins_dir = "--dir_plugins " + vep_config["plugins_dir"]
-else:
-    plugins = ""
-    plugins_dir = ""
 
+dir_cache = f"--dir_cache {vep_config['cache_dir']}" if vep_config.get("cache_dir") else ""
+num_threads = getattr(snakemake, "threads", vep_config.get("num_threads", 1))
 full = snakemake.output.full if "full" in snakemake.output.keys() else ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
+# Helper function to normalize, annotate with VEP, and index output
+run_vep() {
+    local outfile="$1"
+    shift
 
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
-md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-if [[ -n "{full}" ]]
-then
+    bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force | \
     vep --verbose --force_overwrite --offline --cache \
         --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
         --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
-        $(if [[ ! -z "{vep_config[cache_dir]}" ]]; then \
-            echo --dir_cache {vep_config[cache_dir]}
-        fi) \
+        {dir_cache} \
         {script_output_options} \
-        {plugins} \
-        {plugins_dir} \
         --{vep_config[tx_flag]} \
         --fasta {snakemake.input.reference} \
-        --input_file {snakemake.input.vcf} --format vcf \
-        --output_file {full} --vcf --compress_output bgzip
-    tabix {full}
+        --format vcf --vcf --compress_output bgzip \
+        --output_file "$outfile" "$@"
 
-    pushd $(dirname {full})
-    f=$(basename {full})
-    md5sum $f > $f.md5
-    md5sum $f.tbi > $f.tbi.md5
-    popd
+    tabix "$outfile"
+}
+
+# full annotation if requested
+if [[ -n "{full}" ]]; then
+    run_vep "{full}"
 fi
 
-vep --verbose --force_overwrite --offline --cache \
-    --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
-    --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
-    $(if [[ ! -z "{vep_config[cache_dir]}" ]]; then \
-        echo --dir_cache {vep_config[cache_dir]}
-    fi) \
-    {script_output_options} \
-    {plugins} \
-    {plugins_dir} \
-    --pick --pick_order {pick_order} \
-    --{vep_config[tx_flag]} \
-    --fasta {snakemake.input.reference} \
-    --input_file {snakemake.input.vcf} --format vcf \
-    --output_file {snakemake.output.vcf} --vcf --compress_output bgzip
-tabix {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf})
-f=$(basename {snakemake.output.vcf})
-md5sum $f > $f.md5
-md5sum $f.tbi > $f.tbi.md5
-popd
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-sleep 1s  # try to wait for log file flush
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+run_vep "{snakemake.output.vcf}" --pick --pick_order {pick_order}
 """
 )

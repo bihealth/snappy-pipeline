@@ -17,13 +17,17 @@ class SvCallingGetResultFilesMixin:
         The implementation will return a list of all paths with prefix ``output/` that are
         returned by ``self.get_output_files()`` for all actions in ``self.actions``.
         """
-        if self.name not in self.config.tools and not (
-            hasattr(self.config.tools, "dna") and self.name in self.config.tools.dna
-        ):
+        if self.name != self.config.tool:
             return  # tool not enabled, no result files
 
-        ngs_mapping_config = self.w_config.step_config["ngs_mapping"]
-        for mapper in ngs_mapping_config.tools.dna:
+        ngs_mapping_config = self.parent.get_task_config("ngs_mapping")
+        ngs_mapping_tool = ngs_mapping_config.tool
+        is_dna = (
+            ngs_mapping_tool.is_dna()
+            if hasattr(ngs_mapping_tool, "is_dna")
+            else str(ngs_mapping_tool) in {"bwa", "bwa_mem2", "minimap2", "mbcs"}
+        )
+        if is_dna:
             # Get list of result path templates.
             output_files_tmp = self.get_output_files(self.actions[-1])
             if isinstance(output_files_tmp, dict):
@@ -39,9 +43,9 @@ class SvCallingGetResultFilesMixin:
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
                 for library_name in self.index_ngs_library_to_pedigree.keys():
-                    if cfg := self.config.get(self.name):
+                    if cfg := getattr(self.config, self.name, None):
                         if library_name not in cfg.skip_libraries:
-                            yield from expand(path_tpl, mapper=[mapper], library_name=library_name)
+                            yield from expand(path_tpl, library_name=library_name)
 
 
 class SvCallingGetLogFileMixin:
@@ -58,7 +62,7 @@ class SvCallingGetLogFileMixin:
         if hasattr(self, f"_get_log_file_infix_{action}"):
             infix = getattr(self, f"_get_log_file_infix_{action}")()
         else:
-            infix = f"{{mapper}}.{token}.{{library_name}}"
+            infix = f"{token}.{{library_name}}"
         prefix = f"work/{infix}/log/{infix}.sv_calling"
         key_ext = (
             ("log", ".log"),

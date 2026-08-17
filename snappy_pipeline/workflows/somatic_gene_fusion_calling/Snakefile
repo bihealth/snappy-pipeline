@@ -33,7 +33,8 @@ localrules:
     somatic_gene_fusion_calling_link_out_run,
 
 
-rule all:
+rule somatic_gene_fusion_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -49,7 +50,7 @@ rule somatic_gene_fusion_calling_link_in_run:
     output:
         wf.get_output_files("link_in", "run"),
     run:
-        shell(wf.get_shell_cmd("link_in", "run", wildcards))
+        wf.run_locally("link_in", "run", wildcards)
 
 
 # Generic linking out ---------------------------------------------------------
@@ -61,160 +62,147 @@ rule somatic_gene_fusion_calling_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Somatic Gene Fusion Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Run Fusioncatcher -----------------------------------------------------------
+if str(wf.config.tool) == "fusioncatcher":
 
+    rule somatic_gene_fusion_calling_fusioncatcher_run:
+        input:
+            **wf.get_input_files("fusioncatcher", "run"),
+        output:
+            **wf.get_output_files("fusioncatcher", "run"),
+        log:
+            wf.get_log_file("fusioncatcher", "run"),
+        threads: wf.get_resource("fusioncatcher", "run", "threads")
+        resources:
+            runtime=wf.get_resource("fusioncatcher", "run", "runtime"),
+            mem=wf.get_resource("fusioncatcher", "run", "mem"),
+            partition=wf.get_resource("fusioncatcher", "run", "partition"),
+            tmpdir=wf.get_resource("fusioncatcher", "run", "tmpdir"),
+        params:
+            args=wf.get_args("fusioncatcher", "run"),
+        wrapper:
+            wf.wrapper_path("fusioncatcher/run")
 
-rule somatic_gene_fusion_calling_fusioncatcher_run:
-    input:
-        **wf.get_input_files("fusioncatcher", "run"),
-    output:
-        **wf.get_output_files("fusioncatcher", "run"),
-    threads: wf.get_resource("fusioncatcher", "run", "threads")
-    resources:
-        time=wf.get_resource("fusioncatcher", "run", "time"),
-        memory=wf.get_resource("fusioncatcher", "run", "memory"),
-        partition=wf.get_resource("fusioncatcher", "run", "partition"),
-        tmpdir=wf.get_resource("fusioncatcher", "run", "tmpdir"),
-    params:
-        args=wf.get_args("fusioncatcher", "run"),
-    log:
-        wf.get_log_file("fusioncatcher", "run"),
-    wrapper:
-        wf.wrapper_path("fusioncatcher/run")
+elif str(wf.config.tool) == "jaffa":
 
+    rule somatic_gene_fusion_calling_jaffa_run:
+        input:
+            **wf.get_input_files("jaffa", "run"),
+        output:
+            **wf.get_output_files("jaffa", "run"),
+        log:
+            wf.get_log_file("jaffa", "run"),
+        threads: wf.get_resource("jaffa", "run", "threads")
+        resources:
+            runtime=wf.get_resource("jaffa", "run", "runtime"),
+            mem=wf.get_resource("jaffa", "run", "mem"),
+            partition=wf.get_resource("jaffa", "run", "partition"),
+            tmpdir=wf.get_resource("jaffa", "run", "tmpdir"),
+        params:
+            args=wf.get_args("jaffa", "run"),
+        wrapper:
+            wf.wrapper_path("jaffa/run")
 
-# Run Jaffa -------------------------------------------------------------------
+elif str(wf.config.tool) == "pizzly":
 
+    rule somatic_gene_fusion_calling_pizzly_run:
+        input:
+            **wf.get_input_files("pizzly", "run"),
+        output:
+            **wf.get_output_files("pizzly", "run"),
+        log:
+            wf.get_log_file("pizzly", "run"),
+        threads: wf.get_resource("pizzly", "run", "threads")
+        resources:
+            runtime=wf.get_resource("pizzly", "run", "runtime"),
+            mem=wf.get_resource("pizzly", "run", "mem"),
+            partition=wf.get_resource("pizzly", "run", "partition"),
+            tmpdir=wf.get_resource("pizzly", "run", "tmpdir"),
+        params:
+            args=wf.get_args("pizzly", "run"),
+        wrapper:
+            wf.wrapper_path("pizzly/run")
 
-rule somatic_gene_fusion_calling_jaffa_run:
-    input:
-        **wf.get_input_files("jaffa", "run"),
-    output:
-        **wf.get_output_files("jaffa", "run"),
-    threads: wf.get_resource("jaffa", "run", "threads")
-    resources:
-        time=wf.get_resource("jaffa", "run", "time"),
-        memory=wf.get_resource("jaffa", "run", "memory"),
-        partition=wf.get_resource("jaffa", "run", "partition"),
-        tmpdir=wf.get_resource("jaffa", "run", "tmpdir"),
-    params:
-        args=wf.get_args("jaffa", "run"),
-    log:
-        wf.get_log_file("jaffa", "run"),
-    wrapper:
-        wf.wrapper_path("jaffa/run")
+elif str(wf.config.tool) == "hera":
 
+    rule somatic_gene_fusion_calling_hera_run:
+        input:
+            **wf.get_input_files("hera", "run"),
+        output:
+            **wf.get_output_files("hera", "run"),
+        log:
+            wf.get_log_file("hera", "run"),
+        threads: wf.get_resource("hera", "run", "threads")
+        resources:
+            runtime=wf.get_resource("hera", "run", "runtime"),
+            mem=wf.get_resource("hera", "run", "mem"),
+            partition=wf.get_resource("hera", "run", "partition"),
+            tmpdir=wf.get_resource("hera", "run", "tmpdir"),
+        params:
+            args=wf.get_args("hera", "run"),
+        wrapper:
+            wf.wrapper_path("hera/quant")
 
-# Run Kallisto + Pizzly -------------------------------------------------------
+elif str(wf.config.tool) == "star_fusion":
 
+    rule somatic_gene_fusion_calling_star_fusion_run:
+        input:
+            **wf.get_input_files("star_fusion", "run"),
+        output:
+            **wf.get_output_files("star_fusion", "run"),
+        log:
+            wf.get_log_file("star_fusion", "run"),
+        threads: wf.get_resource("star_fusion", "run", "threads")
+        resources:
+            runtime=wf.get_resource("star_fusion", "run", "runtime"),
+            mem=wf.get_resource("star_fusion", "run", "mem"),
+            partition=wf.get_resource("star_fusion", "run", "partition"),
+            tmpdir=wf.get_resource("star_fusion", "run", "tmpdir"),
+        params:
+            args=wf.get_args("star_fusion", "run"),
+        wrapper:
+            wf.wrapper_path("star_fusion")
 
-rule somatic_gene_fusion_calling_pizzly_run:
-    input:
-        **wf.get_input_files("pizzly", "run"),
-    output:
-        **wf.get_output_files("pizzly", "run"),
-    threads: wf.get_resource("pizzly", "run", "threads")
-    resources:
-        time=wf.get_resource("pizzly", "run", "time"),
-        memory=wf.get_resource("pizzly", "run", "memory"),
-        partition=wf.get_resource("pizzly", "run", "partition"),
-        tmpdir=wf.get_resource("pizzly", "run", "tmpdir"),
-    params:
-        args=wf.get_args("pizzly", "run"),
-    log:
-        wf.get_log_file("pizzly", "run"),
-    wrapper:
-        wf.wrapper_path("pizzly/run")
+elif str(wf.config.tool) == "defuse":
 
+    rule somatic_gene_fusion_calling_defuse_run:
+        input:
+            **wf.get_input_files("defuse", "run"),
+        output:
+            **wf.get_output_files("defuse", "run"),
+        log:
+            wf.get_log_file("defuse", "run"),
+        threads: wf.get_resource("defuse", "run", "threads")
+        resources:
+            runtime=wf.get_resource("defuse", "run", "runtime"),
+            mem=wf.get_resource("defuse", "run", "mem"),
+            partition=wf.get_resource("defuse", "run", "partition"),
+            tmpdir=wf.get_resource("defuse", "run", "tmpdir"),
+        params:
+            args=wf.get_args("defuse", "run"),
+        wrapper:
+            wf.wrapper_path("defuse")
 
-# Run Hera --------------------------------------------------------------------
+elif str(wf.config.tool) == "arriba":
 
-
-rule somatic_gene_fusion_calling_hera_run:
-    input:
-        **wf.get_input_files("hera", "run"),
-    output:
-        **wf.get_output_files("hera", "run"),
-    threads: wf.get_resource("hera", "run", "threads")
-    resources:
-        time=wf.get_resource("hera", "run", "time"),
-        memory=wf.get_resource("hera", "run", "memory"),
-        partition=wf.get_resource("hera", "run", "partition"),
-        tmpdir=wf.get_resource("hera", "run", "tmpdir"),
-    params:
-        args=wf.get_args("hera", "run"),
-    log:
-        wf.get_log_file("hera", "run"),
-    wrapper:
-        wf.wrapper_path("hera/quant")
-
-
-# Run STAR-Fusion -------------------------------------------------------------
-
-
-rule somatic_gene_fusion_calling_star_fusion_run:
-    input:
-        **wf.get_input_files("star_fusion", "run"),
-    output:
-        **wf.get_output_files("star_fusion", "run"),
-    threads: wf.get_resource("star_fusion", "run", "threads")
-    resources:
-        time=wf.get_resource("star_fusion", "run", "time"),
-        memory=wf.get_resource("star_fusion", "run", "memory"),
-        partition=wf.get_resource("star_fusion", "run", "partition"),
-        tmpdir=wf.get_resource("star_fusion", "run", "tmpdir"),
-    params:
-        args=wf.get_args("star_fusion", "run"),
-    log:
-        wf.get_log_file("star_fusion", "run"),
-    wrapper:
-        wf.wrapper_path("star_fusion")
-
-
-# Run Defuse ------------------------------------------------------------------
-
-
-rule somatic_gene_fusion_calling_defuse_run:
-    input:
-        **wf.get_input_files("defuse", "run"),
-    output:
-        **wf.get_output_files("defuse", "run"),
-    threads: wf.get_resource("defuse", "run", "threads")
-    resources:
-        time=wf.get_resource("defuse", "run", "time"),
-        memory=wf.get_resource("defuse", "run", "memory"),
-        partition=wf.get_resource("defuse", "run", "partition"),
-        tmpdir=wf.get_resource("defuse", "run", "tmpdir"),
-    params:
-        args=wf.get_args("defuse", "run"),
-    log:
-        wf.get_log_file("defuse", "run"),
-    wrapper:
-        wf.wrapper_path("defuse")
-
-
-# Run arriba ------------------------------------------------------------------
-
-
-rule somatic_gene_fusion_calling_arriba_run:
-    input:
-        **wf.get_input_files("arriba", "run"),
-    output:
-        **wf.get_output_files("arriba", "run"),
-    threads: wf.get_resource("arriba", "run", "threads")
-    resources:
-        time=wf.get_resource("arriba", "run", "time"),
-        memory=wf.get_resource("arriba", "run", "memory"),
-        partition=wf.get_resource("arriba", "run", "partition"),
-        tmpdir=wf.get_resource("arriba", "run", "tmpdir"),
-    params:
-        args=wf.get_args("arriba", "run"),
-    log:
-        **wf.get_log_file("arriba", "run"),
-    wrapper:
-        wf.wrapper_path("arriba/run")
+    rule somatic_gene_fusion_calling_arriba_run:
+        input:
+            **wf.get_input_files("arriba", "run"),
+        output:
+            **wf.get_output_files("arriba", "run"),
+        log:
+            **wf.get_log_file("arriba", "run"),
+        threads: wf.get_resource("arriba", "run", "threads")
+        resources:
+            runtime=wf.get_resource("arriba", "run", "runtime"),
+            mem=wf.get_resource("arriba", "run", "mem"),
+            partition=wf.get_resource("arriba", "run", "partition"),
+            tmpdir=wf.get_resource("arriba", "run", "tmpdir"),
+        params:
+            args=wf.get_args("arriba", "run"),
+        wrapper:
+            wf.wrapper_path("arriba/run")

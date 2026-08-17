@@ -25,7 +25,7 @@ Step Output
 
 There is no standard for reporting gene fusions, and therefore the output is different for all implemented tools.
 
-``arriba`` returns two tab-separated files: ``arriba.<library name>.fusions.tsv`` & ``arriba.<library name>.discarded_fusions.tsv.gz``.
+``arriba`` returns two tab-separated files: ``<library name>.fusions.tsv`` & ``<library name>.discarded_fusions.tsv.gz``.
 Both files list the affected genes, reads supporting the fusion & a confidence level.
 Obviously, the discarded fusion file contains all hints of fusion that have been discarded because of insufficient evidence.
 
@@ -58,13 +58,14 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkInPathGenerator,
-    LinkInStep,
+    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
     get_ngs_library_folder_name,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
-from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel
+from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel, Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -80,7 +81,6 @@ GENE_FUSION_CALLERS = (
 )
 
 #: Default configuration for the somatic_gene_fusion_calling step
-DEFAULT_CONFIG = SomaticGeneFusionCallingConfigModel.default_config_yaml_string()
 
 
 class SomaticGeneFusionCallingStepPart(BaseStepPart):
@@ -92,13 +92,13 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_in = "work/input_links/{library_name}"
-        self.base_path_out = "work/{name}.{{library_name}}/out/.done".format(name=self.name)
+        self.base_path_out = "work/{library_name}/out/.done"
         # Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.config.path_link_in,
+            preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
     @dictify
@@ -119,9 +119,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         """Return path to log file"""
         # Validate action
         self._validate_action(action)
-        return "work/{name}.{{library_name}}/log/snakemake.gene_fusion_calling.log".format(
-            name=self.name
-        )
+        return "work/{library_name}/log/snakemake.gene_fusion_calling.log"
 
     def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
@@ -129,7 +127,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         Yields paths to right reads if prefix=='right-'
         """
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.parent.get_preprocessed_path():
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -174,8 +172,8 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{7500 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{7500 * 4}MB",
         )
 
 
@@ -212,8 +210,8 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{40 * 1024 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{40 * 1024 * 4}MB",
         )
 
 
@@ -257,8 +255,8 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{20 * 1024 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{20 * 1024 * 4}MB",
         )
 
 
@@ -299,8 +297,8 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=4,
-            time="5-00:00:00",  # 5 days
-            memory=f"{30 * 1024 * 4}M",
+            runtime="5d",  # 5 days
+            mem=f"{30 * 1024 * 4}MB",
         )
 
 
@@ -341,8 +339,8 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=8,
-            time="5-00:00:00",  # 5 days
-            memory=f"{10 * 1024 * 8}M",
+            runtime="5d",  # 5 days
+            mem=f"{10 * 1024 * 8}MB",
         )
 
 
@@ -384,8 +382,8 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=8,
-            time="5-00:00:00",  # 5 days
-            memory=f"{20 * 1024 * 8}M",
+            runtime="5d",  # 5 days
+            mem=f"{20 * 1024 * 8}MB",
         )
 
 
@@ -425,21 +423,22 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
-        base_path_out = "work/{name}.{{library_name}}/out/{name}.{{library_name}}.{ext}"
+        base_path_out = "work/{{library_name}}/out/{{library_name}}.{ext}"
         key_ext = (
             ("fusions", "fusions.tsv"),
             ("discarded", "discarded_fusions.tsv.gz"),
         )
         for key, ext in key_ext:
-            yield key, base_path_out.format(name=self.name, ext=ext)
-            yield key + "_md5", base_path_out.format(name=self.name, ext=ext) + ".md5"
-        yield "done", "work/arriba.{library_name}/out/.done"
+            path = base_path_out.format(ext=ext)
+            yield key, path
+            yield key + "_md5", path + ".md5"
+        yield "done", "work/{library_name}/out/.done"
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files."""
         _ = action
-        prefix = "work/{name}.{{library_name}}/log/{name}.{{library_name}}".format(name=self.name)
+        prefix = "work/{library_name}/log/{library_name}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -448,7 +447,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-        prefix = "work/{name}.{{library_name}}/log/".format(name=self.name)
+        prefix = "work/{library_name}/log/"
         key_ext = (
             ("out", "Log.out"),
             ("final", "Log.final.out"),
@@ -470,7 +469,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=self.config.arriba.num_threads, time="24:00:00", memory=f"{96 * 1024}M"
+            threads=self.config.arriba.num_threads, runtime="24h", mem=f"{96 * 1024}MB"
         )  # 1 day
 
 
@@ -479,6 +478,10 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_gene_fusion_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})): True}
+    produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))]
+
+    config_model_class = SomaticGeneFusionCallingConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
@@ -488,31 +491,53 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
     }
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific
-        one
-        """
-        return DEFAULT_CONFIG
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local fusion-calling output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {"done": f"output/{lib}/out/.done"}
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=SomaticGeneFusionCallingConfigModel,
+            task_name=task_name,
+            **kwargs,
         )
+        selected_tool = self.config.tool
+        match selected_tool:
+            case Tool.fusioncatcher:
+                selected_sub_step = FusioncatcherStepPart
+            case Tool.jaffa:
+                selected_sub_step = JaffaStepPart
+            case Tool.pizzly:
+                selected_sub_step = PizzlyStepPart
+            case Tool.hera:
+                selected_sub_step = HeraStepPart
+            case Tool.star_fusion:
+                selected_sub_step = StarFusionStepPart
+            case Tool.defuse:
+                selected_sub_step = DefuseStepPart
+            case Tool.arriba:
+                selected_sub_step = ArribaStepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {selected_tool}")
         self.register_sub_step_classes(
             (
-                FusioncatcherStepPart,
-                JaffaStepPart,
-                PizzlyStepPart,
-                HeraStepPart,
-                StarFusionStepPart,
-                DefuseStepPart,
-                ArribaStepPart,
-                LinkInStep,
+                selected_sub_step,
+                LinkInStepPart,
                 LinkOutStepPart,
             )
         )
@@ -524,45 +549,38 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        # Convert sheet parsing into method
-        library_names_list = list(self._get_all_rna_ngs_libraries())
-        # Get results
-        name_pattern = "{fusion_caller}.{ngs_library}"
-        for fusion_caller in self.config.tools:
-            for ngs_library in library_names_list:
-                # Constant to all callers
-                name_pattern_value = name_pattern.format(
-                    fusion_caller=fusion_caller, ngs_library=ngs_library
+        df = self.build_library_dataframe()
+        if df.empty:
+            return []
+
+        fusion_tool = str(self.config.tool)
+        name_pattern = "{library_name}"
+        for library_name in self.output_entities:
+            row = df[df["library_name"] == library_name]
+            if row.empty:
+                continue
+            extraction_type = row.iloc[0].get("extraction_type", "")
+            if extraction_type.lower() != "rna":
+                continue
+            name_pattern_value = name_pattern.format(library_name=library_name)
+            yield os.path.join("output", name_pattern_value, "out", ".done")
+            if fusion_tool == "arriba":
+                yield from self._yield_arriba_files(library_name)
+            else:
+                yield os.path.join(
+                    "output", name_pattern_value, "log", "snakemake.gene_fusion_calling.log"
                 )
-                yield os.path.join("output", name_pattern_value, "out", ".done")
-                # Caller specific stuff...
-                if fusion_caller == "arriba":
-                    yield from self._yield_arriba_files(ngs_library)
-                else:
-                    yield os.path.join(
-                        "output", name_pattern_value, "log", "snakemake.gene_fusion_calling.log"
-                    )
 
-    def _get_all_rna_ngs_libraries(self):
-        for sheet in self.shortcut_sheets:
-            for donor in sheet.donors:
-                for _, bio_sample in donor.bio_samples.items():
-                    for _, test_sample in bio_sample.test_samples.items():
-                        extraction_type = test_sample.extra_infos.get("extractionType", "DNA")
-                        if extraction_type.lower() == "rna":
-                            for _, ngs_library in test_sample.ngs_libraries.items():
-                                yield ngs_library.name
-
-    def _yield_arriba_files(self, ngs_library):
-        tpl = "output/arriba.{library_name}/out/arriba.{library_name}.{ext}"
+    def _yield_arriba_files(self, library_name):
+        tpl = "output/{library_name}/out/{library_name}.{ext}"
         for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
-            yield tpl.format(library_name=ngs_library, ext=ext)
-            yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
-        tpl = "output/arriba.{library_name}/log/arriba.{library_name}.{ext}"
+            yield tpl.format(library_name=library_name, ext=ext)
+            yield tpl.format(library_name=library_name, ext=ext + ".md5")
+        tpl = "output/{library_name}/log/{library_name}.{ext}"
         for ext in ("log", "conda_list.txt", "conda_info.txt"):
-            yield tpl.format(library_name=ngs_library, ext=ext)
-            yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
-        tpl = "output/arriba.{library_name}/log/{ext}"
+            yield tpl.format(library_name=library_name, ext=ext)
+            yield tpl.format(library_name=library_name, ext=ext + ".md5")
+        tpl = "output/{library_name}/log/{ext}"
         for ext in ("Log.out", "Log.std.out", "Log.final.out", "SJ.out.tab"):
-            yield tpl.format(library_name=ngs_library, ext=ext)
-            yield tpl.format(library_name=ngs_library, ext=ext + ".md5")
+            yield tpl.format(library_name=library_name, ext=ext)
+            yield tpl.format(library_name=library_name, ext=ext + ".md5")

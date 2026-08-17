@@ -1,7 +1,6 @@
 [build-system]
-requires = ["setuptools >= 75.0"]
-build-backend = "setuptools.build_meta"
-
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "snappy-pipeline"
@@ -33,7 +32,8 @@ dependencies = [
     # Helpful for CLIs
     "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality
-    "snakemake >=7.32.0,<8",
+    "snakemake >=9.19.0,<10",
+    "snakemake-executor-plugin-slurm >=2,<3",
     # Required for plotting
     "matplotlib >=3.8.4",
     # Library for working with VCF files.
@@ -44,10 +44,11 @@ dependencies = [
     "jinja2 >=3.1.4,<4",
     # Parsing of ISA-tab.
     "altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8",
-    # REST API client for VarFish Server
-    "varfish-cli >=0.6.3",
     # Validation for models, mainly used for configuration validation
-    "pydantic >=2.9.0,<2.10.0"
+    "pydantic >=2.9.0,<3",
+    # Rich colored help formatting for Click CLIs
+    "rich-click >=1.7.0,<2",
+    "rich >=13.0.0",
 ]
 
 [project.urls]
@@ -58,7 +59,7 @@ Changelog = "https://github.com/bihealth/snappy-pipeline/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
-    "pytest >=8.2.2,<9",
+    "pytest >=8.2.2,<10",
     "coverage >=7.5.3,<8",
     "pytest-cov >=5.0.0,<6",
     "pytest-mock >=3.14.0,<4",
@@ -72,9 +73,9 @@ test = [
 ]
 dev = [
     # ruff code linter + formatter
-    "ruff >=0.9.0,<1",
+    "ruff >=0.15.11,<1",
     # "snakefmt" code formatter and checker.
-    "snakefmt >=0.10.2,<1",
+    "snakefmt >=1,<2",
     "pre-commit >=4.0.1,<5"
 ]
 docs = [
@@ -87,12 +88,7 @@ all = [
 ]
 
 [project.scripts]
-snappy-pull-sheet = "snappy_pipeline.apps.snappy_pull_sheet:main"
-snappy-snake = "snappy_pipeline.apps.snappy_snake:main"
-snappy-start-project = "snappy_pipeline.apps.snappy_start_project:main"
-snappy-start-step = "snappy_pipeline.apps.snappy_start_step:main"
-snappy-refresh-step = "snappy_pipeline.apps.snappy_refresh_step:main"
-snappy-slurm-status = "snappy_pipeline.apps.snappy_slurm_status:main"
+snappy = "snappy_pipeline.apps.snappy_cli:main"
 # additional tools
 snappy-bed_filter_jaccard = "snappy_wrappers.tools.bed_filter_jaccard:main"
 snappy-fix_vcf = "snappy_wrappers.tools.fix_vcf:main"
@@ -105,65 +101,43 @@ snappy-vcf_filter_to_info = "snappy_wrappers.tools.vcf_filter_to_info:main"
 snappy-ped_to_vcf_header = "snappy_wrappers.tools.ped_to_vcf_header:main"
 
 
-[tool.setuptools]
+# ==============================================================================
+# HATCHLING CONFIGURATION
+# ==============================================================================
+
+[tool.hatch.version]
+path = "snappy_pipeline/version.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
 packages = ["snappy_pipeline", "snappy_wrappers"]
-# bash scripts
-script-files = [
-    "scripts/snappy-vcf_sort",
-    "scripts/snappy-vcf_split"
-]
 
-[tool.setuptools.dynamic]
-version = {attr = "snappy_pipeline.version.__version__"}
 
+
+
+# ==============================================================================
+# TOOL CONFIGURATIONS
+# ==============================================================================
 
 [tool.coverage.run]
-omit = ["snappy_pipeline/_version.py", "snappy_wrappers/wrappers/*/wrapper.p"]
+omit = ["snappy_pipeline/_version.py", "snappy_pipeline/Snakefile", "snappy_pipeline/workflows/*/Snakefile", "snappy_wrappers/wrappers/*/wrapper.py"]
 relative_files = true
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':"]
 
-
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pyenv",
-    ".pytest_cache",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    ".vscode",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "site-packages",
-    "venv",
-    "docs",
-    "tests",
-    ".*.py",
-    ".snakemake.*.wrapper.py",
-    "splitMNPsAndComplex.py",
-    "wrapper.py",
-    "snappy_pipeline/__init__.py",
-    ".tests",
+    ".bzr", ".direnv", ".eggs", ".git", ".git-rewrite", ".hg", ".ipynb_checkpoints",
+    ".mypy_cache", ".nox", ".pants.d", ".pyenv", ".pytest_cache", ".pytype", ".ruff_cache",
+    ".svn", ".tox", ".venv", ".vscode", "__pypackages__", "_build", "buck-out", "build",
+    "dist", "node_modules", "site-packages", "venv", "docs", ".*.py",
+    ".snakemake.*.wrapper.py", "splitMNPsAndComplex.py", "wrapper.py",
+    "snappy_pipeline/__init__.py", ".tests",
 ]
-
 line-length = 100
 indent-width = 4
 target-version = "py312"
@@ -208,24 +182,97 @@ docstring-code-format = false
 # enabled.
 docstring-code-line-length = "dynamic"
 
-
 [tool.snakefmt]
 line_length = 100
 include = "\\.smk$|\\.rules$|^Snakefile"
-
+exclude = "snappy_pipeline/Snakefile"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--cov=snappy_pipeline --cov-report=xml"
-testpaths = [
-    "tests",
+addopts = "--cov=snappy_pipeline --cov-report=xml -n auto"
+markers = [
+    "integration: tests requiring workflow-level integration setup",
+    "slow: tests that are expected to take longer runtime",
 ]
-norecursedirs = [
-    "docs",
-    "*.egg-info",
-    ".git"
-]
+testpaths = ["tests"]
+norecursedirs = ["docs", "*.egg-info", ".git"]
 filterwarnings = [
     "error",
     "ignore::DeprecationWarning",
+    "ignore::coverage.exceptions.CoverageWarning",
 ]
+
+
+# ==============================================================================
+# PIXI CONFIGURATION
+# ==============================================================================
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "bioconda", "nodefaults"]
+platforms = ["linux-64"]
+
+[tool.pixi.dependencies]
+python = "3.12.*"
+git-lfs = "~=3.5.1"
+gcc_linux-64 = "~=13.2.0"
+gcc_impl_linux-64 = "~=13.2.0"
+gxx_linux-64 = "~=13.2.0"
+gxx_impl_linux-64 = "~=13.2.0"
+sysroot_linux-64 = "~=2.17"
+binutils_linux-64 = "*"
+coreutils = "~=9.5"
+gawk = "~=5.3.0"
+bash = "~=5.2.21"
+gzip = "~=1.13"
+zlib = "~=1.3.0"
+htslib = "1.20.*"
+bcftools = "1.20.*"
+samtools = "1.20.*"
+conda = ">=25,<26"
+snakemake = ">=9.19.0,<10"
+snakemake-executor-plugin-slurm = ">=2,<3"
+snakemake-logger-plugin-snkmt = ">=0.1.6"
+
+# PREVENT CONFLICTS: Force Conda to pick older versions of these
+# dependencies so that it doesn't block the PyPI/Git package installations.
+jsonschema = "<4.5"
+tabulate = "<0.10"
+docutils = "<0.21"
+click = ">=8.4.0,<9"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
+docs = { features = ["docs"], solve-group = "default" }
+dev = { features = ["test", "docs", "dev"], solve-group = "default" }
+
+[tool.pixi.feature.docs.tasks]
+docs = { cmd = "sphinx-build -b html docs/ docs/_build/html", description = "Build HTML documentation with Sphinx" }
+
+[tool.pixi.pypi-dependencies]
+snappy-pipeline = { path = ".", editable = true }
+
+# ==============================================================================
+# PIXI TASKS
+# ==============================================================================
+
+[tool.pixi.feature.test.tasks]
+test = { cmd = "pytest", env = { PYTHONPATH = "." }, description = "Run tests through pytest" }
+coverage = { cmd = "coverage report && coverage html", description = "Generate code coverage reports" }
+
+[tool.pixi.feature.test.dependencies]
+pytest-xdist = ">=3.8.0,<4"
+
+[tool.pixi.feature.dev.tasks]
+fmt = { cmd = "ruff format .", description = "Apply Ruff code formatter" }
+snakefmt = { cmd = "snakefmt snappy_pipeline/workflows/*/Snakefile", description = "Apply Snakefmt code formatter" }
+srcfmt = { depends-on = ["fmt", "snakefmt"], description = "Apply Python and Snakemake formatters" }
+
+check = { cmd = "ruff check .", description = "Run Ruff code checker" }
+lint-fmt = { cmd = "ruff format --check .", description = "Check Python formatting" }
+lint-snakefmt = { cmd = "snakefmt --check snappy_pipeline/workflows/*/Snakefile", description = "Check Snakemake formatting" }
+lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt"], description = "Run all linters" }
+
+[tool.pixi.feature.dev.dependencies]
+pixi-pycharm = ">=0.0.11,<0.0.12"
+pandas-stubs = ">=3.0.3.260530,<4"

@@ -8,7 +8,6 @@ from snappy_pipeline.workflows.helper_gcnv_model_targeted import (
     HelperBuildTargetSeqGcnvModelWorkflow,
 )
 
-
 # Configuration ===============================================================
 
 
@@ -24,15 +23,17 @@ wf = HelperBuildTargetSeqGcnvModelWorkflow(
     workflow, config, lookup_paths, config_paths, os.getcwd()
 )
 
+
 # Rules =======================================================================
 
 
 localrules:
     # Writing out pedigrees can be done locally
-    sv_calling_targeted_write_pedigree_run,
+    build_gcnv_model_write_pedigree_run,
 
 
-rule all:
+rule build_gcnv_model_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -49,14 +50,14 @@ rule build_gcnv_model_preprocess_intervals:
         unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
     output:
         **wf.get_output_files("gcnv", "preprocess_intervals"),
-    threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "preprocess_intervals", "time"),
-        memory=wf.get_resource("gcnv", "preprocess_intervals", "memory"),
-        partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
-        tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "preprocess_intervals"),
+    threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "preprocess_intervals", "runtime"),
+        mem=wf.get_resource("gcnv", "preprocess_intervals", "mem"),
+        partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
     params:
         args=wf.get_args("gcnv", "preprocess_intervals"),
     wrapper:
@@ -68,16 +69,14 @@ rule build_gcnv_model_annotate_gc:
         unpack(wf.get_input_files("gcnv", "annotate_gc")),
     output:
         **wf.get_output_files("gcnv", "annotate_gc"),
-    params:
-        args=wf.get_args("gcnv", "annotate_gc"),
-    threads: wf.get_resource("gcnv", "annotate_gc", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "annotate_gc", "time"),
-        memory=wf.get_resource("gcnv", "annotate_gc", "memory"),
-        partition=wf.get_resource("gcnv", "annotate_gc", "partition"),
-        tmpdir=wf.get_resource("gcnv", "annotate_gc", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "annotate_gc"),
+    threads: wf.get_resource("gcnv", "annotate_gc", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "annotate_gc", "runtime"),
+        mem=wf.get_resource("gcnv", "annotate_gc", "mem"),
+        partition=wf.get_resource("gcnv", "annotate_gc", "partition"),
+        tmpdir=wf.get_resource("gcnv", "annotate_gc", "tmpdir"),
     params:
         step_key="helper_gcnv_model_targeted",
     wrapper:
@@ -89,16 +88,16 @@ rule build_gcnv_model_coverage:
         unpack(wf.get_input_files("gcnv", "coverage")),
     output:
         **wf.get_output_files("gcnv", "coverage"),
-    params:
-        args=wf.get_args("gcnv", "coverage"),
-    threads: wf.get_resource("gcnv", "coverage", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "coverage", "time"),
-        memory=wf.get_resource("gcnv", "coverage", "memory"),
-        partition=wf.get_resource("gcnv", "coverage", "partition"),
-        tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "coverage"),
+    threads: wf.get_resource("gcnv", "coverage", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "coverage", "runtime"),
+        mem=wf.get_resource("gcnv", "coverage", "mem"),
+        partition=wf.get_resource("gcnv", "coverage", "partition"),
+        tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
+    params:
+        args=wf.get_args("gcnv", "coverage"),
     wrapper:
         wf.wrapper_path("gcnv/coverage")
 
@@ -108,14 +107,14 @@ rule build_gcnv_model_filter_intervals:
         unpack(wf.get_input_files("gcnv", "filter_intervals")),
     output:
         **wf.get_output_files("gcnv", "filter_intervals"),
-    threads: wf.get_resource("gcnv", "filter_intervals", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "filter_intervals", "time"),
-        memory=wf.get_resource("gcnv", "filter_intervals", "memory"),
-        partition=wf.get_resource("gcnv", "filter_intervals", "partition"),
-        tmpdir=wf.get_resource("gcnv", "filter_intervals", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "filter_intervals"),
+    threads: wf.get_resource("gcnv", "filter_intervals", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "filter_intervals", "runtime"),
+        mem=wf.get_resource("gcnv", "filter_intervals", "mem"),
+        partition=wf.get_resource("gcnv", "filter_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "filter_intervals", "tmpdir"),
     wrapper:
         wf.wrapper_path("gcnv/filter_intervals")
 
@@ -125,14 +124,14 @@ rule build_gcnv_model_contig_ploidy:
         unpack(wf.get_input_files("gcnv", "contig_ploidy")),
     output:
         **wf.get_output_files("gcnv", "contig_ploidy"),
-    threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "contig_ploidy", "time"),
-        memory=wf.get_resource("gcnv", "contig_ploidy", "memory"),
-        partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
-        tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "contig_ploidy"),
+    threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "contig_ploidy", "runtime"),
+        mem=wf.get_resource("gcnv", "contig_ploidy", "mem"),
+        partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
+        tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
     params:
         args=wf.get_args("gcnv", "contig_ploidy"),
     wrapper:
@@ -144,14 +143,14 @@ rule build_gcnv_model_call_cnvs:
         unpack(wf.get_input_files("gcnv", "call_cnvs")),
     output:
         **wf.get_output_files("gcnv", "call_cnvs"),
-    threads: wf.get_resource("gcnv", "call_cnvs", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "call_cnvs", "time"),
-        memory=wf.get_resource("gcnv", "call_cnvs", "memory"),
-        partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
-        tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "call_cnvs"),
+    threads: wf.get_resource("gcnv", "call_cnvs", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "call_cnvs", "runtime"),
+        mem=wf.get_resource("gcnv", "call_cnvs", "mem"),
+        partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
+        tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
     wrapper:
         wf.wrapper_path("gcnv/call_cnvs_cohort_mode")
 
@@ -165,14 +164,14 @@ checkpoint build_gcnv_model_scatter_intervals:
         unpack(wf.get_input_files("gcnv", "scatter_intervals")),
     output:
         directory(wf.get_output_files("gcnv", "scatter_intervals")),
-    threads: wf.get_resource("gcnv", "scatter_intervals", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "scatter_intervals", "time"),
-        memory=wf.get_resource("gcnv", "scatter_intervals", "memory"),
-        partition=wf.get_resource("gcnv", "scatter_intervals", "partition"),
-        tmpdir=wf.get_resource("gcnv", "scatter_intervals", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "scatter_intervals"),
+    threads: wf.get_resource("gcnv", "scatter_intervals", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "scatter_intervals", "runtime"),
+        mem=wf.get_resource("gcnv", "scatter_intervals", "mem"),
+        partition=wf.get_resource("gcnv", "scatter_intervals", "partition"),
+        tmpdir=wf.get_resource("gcnv", "scatter_intervals", "tmpdir"),
     wrapper:
         wf.wrapper_path("gcnv/scatter_intervals")
 
@@ -182,13 +181,13 @@ rule build_gcnv_model_calling_gcnv_post_germline_calls:
         unpack(build_gcnv_model_post_germline_calls_input),
     output:
         **wf.get_output_files("gcnv", "post_germline_calls"),
-    threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
-    resources:
-        time=wf.get_resource("gcnv", "post_germline_calls", "time"),
-        memory=wf.get_resource("gcnv", "post_germline_calls", "memory"),
-        partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
-        tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
     log:
         wf.get_log_file("gcnv", "post_germline_calls"),
+    threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
+    resources:
+        runtime=wf.get_resource("gcnv", "post_germline_calls", "runtime"),
+        mem=wf.get_resource("gcnv", "post_germline_calls", "mem"),
+        partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
+        tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
     wrapper:
         wf.wrapper_path("gcnv/post_germline_calls")

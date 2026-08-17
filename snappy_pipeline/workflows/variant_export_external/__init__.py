@@ -93,12 +93,12 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import TargetCovReportStepPart
 
 from .model import VariantExportExternal as VariantExportExternalConfigModel
 
 #: Default configuration for the somatic_variant_calling step
-DEFAULT_CONFIG = VariantExportExternalConfigModel.default_config_yaml_string()
 
 
 class BamReportsExternalStepPart(TargetCovReportStepPart):
@@ -140,23 +140,25 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     @listify
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
-        mapper_lib = "{mapper}.{library_name}"
+        mapper_lib = "{library_name}"
         yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.alfred.json.gz"
+
+    @dictify
+    def _get_output_files_collect_work(self):
+        yield "report", "work/target_cov_report/out/target_coverage_summary.txt"
+        yield "report_md5", "work/target_cov_report/out/target_coverage_summary.txt.md5"
 
     @dictify
     def _get_output_files_bam_qc_work(self):
         for report in ("bamstats", "flagstats", "idxstats"):
-            report_path = (
-                f"work/{{mapper}}.{{library_name}}/report/bam_qc/"
-                f"{{mapper}}.{{library_name}}.bam.{report}.txt"
-            )
+            report_path = f"work/{{library_name}}/report/bam_qc/{{library_name}}.bam.{report}.txt"
             yield report, report_path
             yield report + "_md5", report_path + ".md5"
 
     def get_log_file(self, action):
         self._validate_action(action)
         if action == "run":
-            return "work/{mapper}.{library_name}/log/snakemake.target_coverage.log"
+            return "work/{library_name}/log/snakemake.target_coverage.log"
         elif action == "bam_qc":
             return self._get_log_file_bam_qc()
         else:
@@ -172,7 +174,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     @staticmethod
     @dictify
     def _get_log_file_bam_qc():
-        prefix = "work/{mapper}.{library_name}/log/{mapper}.{library_name}.bam_qc"
+        prefix = "work/{library_name}/log/{library_name}.bam_qc"
         key_ext = (
             ("log", ".log"),
             ("log_md5", ".log.md5"),
@@ -299,16 +301,16 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "cov_qc": []}
         for donor in pedigree.donors:
-            mapper = self.external_tool_prefix[:-1]  # strip trailing dot
+            _mapper = self.external_tool_prefix[:-1]  # strip trailing dot
             library_name = donor.dna_ngs_library.name
             if not donor.dna_ngs_library:
                 continue
-            tpl = f"work/{mapper}.{library_name}/report/bam_qc/{mapper}.{library_name}.bam.%s.txt"
+            tpl = f"work/{library_name}/report/bam_qc/{library_name}.bam.%s.txt"
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(tpl % key)
             if donor.dna_ngs_library.name not in self.parent.ngs_library_list:
                 continue
-            path = f"work/{mapper}.{library_name}/report/alfred_qc/{mapper}.{library_name}.alfred.json.gz"
+            path = f"work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
             result["cov_qc"].append(path)
 
         return result
@@ -366,9 +368,9 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     def get_log_file(self, action):
         self._validate_action(action)
         if action in ("gvcf_to_vcf", "merge_vcf"):
-            return getattr(self, "_get_log_file_complete_set")(action)
+            return self._get_log_file_complete_set(action)
         else:
-            return getattr(self, "_get_log_file_annotation_generic")(action)
+            return self._get_log_file_annotation_generic(action)
 
     @dictify
     def _get_log_file_complete_set(self, action):
@@ -417,14 +419,14 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         if action == "annotate":
             return ResourceUsage(
                 threads=2,
-                time="4-04:00:00",  # 4 days and 4 hours
-                memory=f"{7 * 1024 * 2}M",
+                runtime="4d",  # 4 days
+                mem=f"{7 * 1024 * 2}MB",
             )
         else:
             return ResourceUsage(
                 threads=1,
-                time="02:00:00",  # 2 hours
-                memory=f"{7 * 1024 * 2}M",
+                runtime="2h",  # 2 hours
+                mem=f"{7 * 1024 * 2}MB",
             )
 
     def get_args(self, action):
@@ -527,24 +529,43 @@ class VariantExportExternalWorkflow(BaseStep):
 
     #: Workflow name
     name = "variant_export_external"
+    consumes = {DataSignature(DataType.VARIANTS): True}
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    config_model_class = VariantExportExternalConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local external-export output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        prefix = f"output/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
+        return {
+            "gts": f"{prefix}.gts.tsv.gz",
+            "db_infos": f"{prefix}.db-infos.tsv.gz",
+        }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantExportExternalConfigModel,
             previous_steps=(),
+            task_name=task_name,
+            **kwargs,
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())

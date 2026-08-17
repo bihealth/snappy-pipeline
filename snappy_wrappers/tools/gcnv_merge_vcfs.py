@@ -7,9 +7,9 @@ import logging
 import os
 import sys
 import typing
+from dataclasses import dataclass
 from statistics import mean
 
-import attr
 import logzero
 import ncls
 import pandas as pd
@@ -43,7 +43,7 @@ class UnionFind:
         self._sz = [1] * len(vertex_names)
 
     def find(self, v):
-        assert type(v) is int
+        assert type(v) is int  # noqa: E721
         j = v
 
         while j != self._id[j]:
@@ -59,8 +59,8 @@ class UnionFind:
         self.union(self.find_by_name(v_name), self.find_by_name(w_name))
 
     def union(self, v, w):
-        assert type(v) is int
-        assert type(w) is int
+        assert type(v) is int  # noqa: E721
+        assert type(w) is int  # noqa: E721
         i = self.find(v)
         j = self.find(w)
 
@@ -77,7 +77,7 @@ class UnionFind:
         self._sz[i] += self._sz[j]
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclass(frozen=True)
 class CopyNumberVariant:
     """Represent on CNV from one sample."""
 
@@ -96,7 +96,7 @@ class CopyNumberVariant:
     #: Annotation of the CNV.
     anno: typing.Dict[str, typing.Any]
 
-    def recip_ovl(self, other: typing.TypeVar("CopyNumberVariant")) -> float:
+    def recip_ovl(self, other: "CopyNumberVariant") -> float:
         """Compute reciprocal overlap of self with other."""
         if self.chrom != other.chrom:
             return False
@@ -108,7 +108,7 @@ class CopyNumberVariant:
             return 0.0
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclass(frozen=True)
 class ContigCnvs:
     """Store the CNVs for one contig with lookup table."""
 
@@ -120,9 +120,7 @@ class ContigCnvs:
     ncls: ncls.NCLS
 
     @staticmethod
-    def from_cnvs(contig: str, cnvs: typing.Iterable[CopyNumberVariant]) -> typing.TypeVar(
-        "ContigCnvs"
-    ):
+    def from_cnvs(contig: str, cnvs: typing.Iterable[CopyNumberVariant]) -> "ContigCnvs":
         """Build from name and list of CopyNumberVariant."""
         start = pd.Series([cnv.pos_begin for cnv in cnvs])
         ends = pd.Series([cnv.pos_end for cnv in cnvs])
@@ -131,7 +129,7 @@ class ContigCnvs:
         return ContigCnvs(contig, tuple(cnvs), lookup)
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclass(frozen=True)
 class CnvCluster:
     """Represent one cluster of CNVs."""
 

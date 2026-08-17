@@ -1,9 +1,17 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedSomaticCnvCalls(SnappyModel):
+    """Consumer-driven contract: expected output keys from somatic CNV caller steps."""
+
+    vcf: str
 
 
 class CnvAssayType(enum.StrEnum):
@@ -11,10 +19,21 @@ class CnvAssayType(enum.StrEnum):
     WGS = "WGS"
 
 
-class SomaticCnvChecking(SnappyStepModel):
-    path_ngs_mapping: str = "../ngs_mapping"
+class SomaticCnvCheckingDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    cnv_calling: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
+        ExpectedPathSchema(ExpectedSomaticCnvCalls),
+    ] = "cnv_calling"
 
-    path_cnv_calling: Annotated[str, Field(examples=["../somatic_targeted_seq_cnv_calling"])] = ""
+
+class SomaticCnvChecking(SnappyStepModel):
+    depends_on: SomaticCnvCheckingDependsOn = Field(default_factory=SomaticCnvCheckingDependsOn)
 
     cnv_assay_type: CnvAssayType | None = None
     """
@@ -34,9 +53,3 @@ class SomaticCnvChecking(SnappyStepModel):
 
     min_baf: Annotated[float, Field(0.4, ge=0, le=0.5)]
     """Maximum BAF to consider variant as heterozygous (between 0 & 1/2)"""
-
-    @model_validator(mode="after")
-    def ensure_cnv_assay_type_is_specified(self):
-        if self.path_cnv_calling and not self.cnv_assay_type:
-            raise ValueError("CNV assay type must be specified")
-        return self

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import InputFiles, Log, OutputFiles, Params, Resources, Wildcards
+from snakemake.iocontainers import InputFiles, Log, OutputFiles, Params, Wildcards
 from snakemake.script import Snakemake
 
 from snappy_wrappers.wrappers.gatk_read_backed_phasing_par.parallel_read_backed_phasing import (
@@ -78,7 +78,7 @@ def snakemake_obj(minimal_config):
     bench_iteration = 2
     script_dir = "/work"
     input_base_name = (
-        "VARIANT_ANNOTATION/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
+        "../variant_annotation/output/bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1/out/"
         "bwa.gatk3_hc.jannovar_annotate_vcf.P001-N1-DNA1-WGS1"
     )
     input_dict = {
@@ -87,14 +87,14 @@ def snakemake_obj(minimal_config):
         "vcf_tbi": input_base_name + ".vcf.gz.tbi",
         "vcf_tbi_md5": input_base_name + ".vcf.gz.tbi.md5",
         "bai": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+            "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
         ],
         "bam": [
-            "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-            "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+            "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
         ],
     }
     output_base_name = (
@@ -128,7 +128,7 @@ def snakemake_obj(minimal_config):
     params_ = Params(fromdict=params_dict)
     log_ = Log(fromdict=log_dict)
     wildcards_ = Wildcards(fromdict=wildcards_dict)
-    resources_ = Resources(fromdict={})
+    resources_ = {}
 
     return Snakemake(
         rulename=rule_name,

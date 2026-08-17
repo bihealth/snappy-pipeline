@@ -22,6 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = SomaticMsiCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
 # Rules =======================================================================
 
 
@@ -30,7 +31,8 @@ localrules:
     somatic_msi_calling_link_out_run,
 
 
-rule all:
+rule somatic_msi_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -46,7 +48,7 @@ rule somatic_msi_calling_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Somatic Microsatellite Instability analysis~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,13 +61,13 @@ rule somatic_msi_calling_mantis_msi2:
         unpack(wf.get_input_files("mantis_msi2", "run")),
     output:
         **wf.get_output_files("mantis_msi2", "run"),
-    threads: wf.get_resource("mantis_msi2", "run", "threads")
-    resources:
-        time=wf.get_resource("mantis_msi2", "run", "time"),
-        memory=wf.get_resource("mantis_msi2", "run", "memory"),
-        partition=wf.get_resource("mantis_msi2", "run", "partition"),
-        tmpdir=wf.get_resource("mantis_msi2", "run", "tmpdir"),
     log:
         **wf.get_log_file("mantis_msi2", "run"),
+    threads: wf.get_resource("mantis_msi2", "run", "threads")
+    resources:
+        runtime=wf.get_resource("mantis_msi2", "run", "runtime"),
+        mem=wf.get_resource("mantis_msi2", "run", "mem"),
+        partition=wf.get_resource("mantis_msi2", "run", "partition"),
+        tmpdir=wf.get_resource("mantis_msi2", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("mantis/mantis_msi2/run")

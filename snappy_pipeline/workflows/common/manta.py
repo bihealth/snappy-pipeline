@@ -47,8 +47,8 @@ class MantaStepPart(
         num_threads = self.config.manta.num_threads
         return ResourceUsage(
             threads=num_threads,
-            time="7-00:00:00",  # 3 days
-            memory=f"{int(3.5 * 1024 * num_threads)}M",
+            runtime="7d",  # 7 days
+            mem=f"{int(3.5 * 1024 * num_threads)}MB",
         )
 
     def __init__(self, parent):
@@ -60,18 +60,18 @@ class MantaStepPart(
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
+        ngs_mapping = self.parent.upstream("ngs_mapping")
         bams = []
         for donor in self.index_ngs_library_to_pedigree[wildcards.library_name].donors:
             if donor.dna_ngs_library:
-                token = f"{wildcards.mapper}.{donor.dna_ngs_library.name}"
+                token = f"{donor.dna_ngs_library.name}"
                 bams.append(ngs_mapping(f"output/{token}/out/{token}.bam"))
         yield "bam", bams
         yield "reference", self.parent.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_run(self):
-        infix = "{mapper}.manta.{library_name}"
+        infix = "manta.{library_name}"
         work_files = {
             "vcf": f"work/{infix}/out/{infix}.vcf.gz",
             "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",

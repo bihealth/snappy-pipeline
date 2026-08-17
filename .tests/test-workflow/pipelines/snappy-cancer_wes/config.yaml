@@ -1,0 +1,97 @@
+static_data_config:
+  reference:
+    path: ../../resources/refs/subregion.fa
+
+tasks:
+  - name: mapping
+    step: ngs_mapping
+    config:
+      tool: bwa
+      bwa:
+        path_index: ../../resources/refs/subregion
+        mask_duplicates: false
+        memory_bam_sort: 2G
+        num_threads_bam_sort: 2
+        num_threads_bam_view: 2
+        num_threads_align: 2
+      ngs_chew_fingerprint:
+        enabled: false
+      target_coverage_report:
+        path_target_interval_list_mapping:
+          - name: MedExome_hg19_empirical_targets
+            pattern: MedExome
+            path: resources/Exome-MedExome.chr12.bed
+
+  - name: variant_calling
+    step: variant_calling
+    config:
+      depends_on:
+        ngs_mapping: mapping
+      tool: mutect2
+      mutect2:
+        extra_arguments: [ ]
+        num_jobs: 5
+        contamination: { }
+
+  - name: annotation
+    step: variant_annotation
+    config:
+      depends_on:
+        variant: variant_calling
+      tool: "mehari"
+      mehari:
+        transcripts:
+          - ../../resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst
+        assembly: GRCh37
+        reference: ../../resources/refs/subregion.fa
+
+  - name: filtration_dkfz
+    step: variant_filtration
+    config:
+      tool: dkfz
+      depends_on:
+        variant: annotation
+        ngs_mapping: mapping
+
+  - name: filtration_AGAIN
+    step: variant_filtration
+    config:
+      tool: bcftools
+      depends_on:
+        variant: filtration_dkfz
+      bcftools:
+        # Tags low support events, but does not remove records yet.
+        exclude: "FORMAT/DP[1]<=50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.025"
+
+  - name: tag_complex
+    step: variant_filtration
+    config:
+      tool: vembrane
+      depends_on:
+        variant: filtration_AGAIN
+      vembrane:
+        mode: tag
+        expressions:
+          modifier: 'ANN["Annotation_Impact"] == "MODIFIER"'
+          moderate: 'ANN["Annotation_Impact"] == "MODERATE"'
+
+  - name: filtration_final
+    step: variant_filtration
+    config:
+      tool: vembrane
+      depends_on:
+        variant: tag_complex
+      vembrane:
+        mode: filter
+        expression: '"modifier" not in FILTER'
+
+
+data_sets:
+  trbc:
+    file: samplesheet.tsv
+    search_patterns:
+      - { left: '*.R1.fastq.gz', right: '*.R2.fastq.gz' }
+    search_paths:
+      - raw
+    type: matched_cancer
+    naming_scheme: only_secondary_id

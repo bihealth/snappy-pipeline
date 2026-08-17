@@ -1,7 +1,13 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from pydantic import Field
+
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Strand(enum.IntEnum):
@@ -32,6 +38,7 @@ class DupRadar(SnappyModel):
 
 class Salmon(SnappyModel):
     path_index: str
+    path_transcript_to_gene: str
     salmon_params: str = " --gcBias --validateMappings"
     num_threads: int = 16
 
@@ -44,7 +51,13 @@ class Stats(SnappyModel):
     pass
 
 
-class Tool(enum.Enum):
+class ExpectedExpression(SnappyModel):
+    """Consumer-driven contract: expected output keys from gene_expression_quantification."""
+
+    tsv: str
+
+
+class Tool(enum.StrEnum):
     strandedness = "strandedness"
     featurecounts = "featurecounts"
     dupradar = "dupradar"
@@ -54,15 +67,32 @@ class Tool(enum.Enum):
     stats = "stats"
 
 
-class GeneExpressionQuantification(
-    SnappyStepModel, validators.NgsMappingMixin, validators.ToolsMixin
-):
-    path_ngs_mapping: str = "../ngs_mapping"
+class GeneExpressionQuantificationDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    path_link_in: str = ""
-    """OPTIONAL Override data set configuration search paths for FASTQ files"""
+    # Optional external/in-pipeline FASTQ source for salmon mode.
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+    adapter_trimming: Annotated[
+        str,
+        DataSignature(DataType.RAW, frozenset({"trimmed"})),
+        ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
 
-    tools: Annotated[list[Tool], EnumField(Tool, min_length=1)] = [Tool.salmon]
+
+class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):
+    depends_on: GeneExpressionQuantificationDependsOn = Field(
+        default_factory=GeneExpressionQuantificationDependsOn
+    )
+
+    tool: Tool  # TODO: add default = [Tool.salmon]
 
     strand: Strand | int = -1  # TODO: what is this default value of -1?
     """Use 0, 1 or 2 to force unstranded, forward or reverse strand. Use -1 to guess."""

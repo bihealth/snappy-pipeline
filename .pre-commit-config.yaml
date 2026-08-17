@@ -3,10 +3,10 @@ repos:
     # Ruff version.
     rev: v0.15.11
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [ --fix ]
       - id: ruff-format
   - repo: https://github.com/snakemake/snakefmt
-    rev: v0.10.2 # https://github.com/snakemake/snakefmt/releases
+    rev: v1.1.0 # https://github.com/snakemake/snakefmt/releases
     hooks:
       - id: snakefmt

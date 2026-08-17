@@ -1,8 +1,8 @@
-===========================
-CUBI Pipeline Documentation
-===========================
+=============================
+Snappy Pipeline Documentation
+=============================
 
-This is the documentation for the CUBI Pipeline.
+This is the documentation for the snappy pipeline.
 This documentation is split into four parts:
 
 Pipeline User Docs
@@ -51,7 +51,6 @@ Project Info
 
     somatic_ngs
     panel_of_normals
-    somatic_variant_filtration
     somatic_cnv
     cbioportal_export
 
@@ -69,25 +68,19 @@ Project Info
     step/ngs_data_qc
     step/ngs_mapping
     step/somatic_gene_fusion_calling
-    step/somatic_neoepitope_prediction
     step/somatic_purity_ploidy_estimate
     step/somatic_targeted_seq_cnv_calling
-    step/somatic_variant_annotation
-    step/somatic_variant_calling
-    step/somatic_variant_filtration
     step/somatic_wgs_cnv_calling
-    step/somatic_wgs_sv_calling
     step/sv_calling_targeted
     step/targeted_seq_mei_calling
     step/targeted_seq_repeat_analysis
     step/variant_annotation
     step/variant_calling
     step/variant_checking
-    step/variant_denovo_filtration
     step/variant_phasing
     step/variant_filtration
     step/sv_calling_wgs
-    step/wgs_sv_filtration
+    step/panel_of_normals
 
 
 .. toctree::

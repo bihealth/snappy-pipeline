@@ -1,51 +1,101 @@
 import enum
-import itertools
 import os
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import EnumField, SizeString, SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.models import (
+    SizeString,
+    SnappyModel,
+    SnappyStepModel,
+    ToggleModel,
+    ResolvablePathPrefix,
+    ResolvablePath,
+)
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.reference_index.model import ExpectedReferenceIndexFiles
 
 
-class DnaMapper(Enum):
+class ExpectedAlignments(BaseModel):
+    """Consumer-driven contract: expected output keys from an ngs_mapping upstream task."""
+
+    bam: str
+    bai: str
+
+
+class NgsMappingDependsOn(SnappyModel):
+    # External FASTQ source. Usually points to a dedicated link_in task.
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
+
+    # Optional in-pipeline FASTQ source, e.g. adapter_trimming output.
+    adapter_trimming: Annotated[
+        str,
+        DataSignature(DataType.RAW, frozenset({"trimmed"})),
+        ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
+
+    # Optional upstream index provider task.
+    reference_index: Annotated[
+        str,
+        DataSignature(
+            DataType.INDEX,
+            frozenset({("bwa", "bwa_mem2", "minimap2", "star"), ("dna", "rna")}),
+        ),
+        ExpectedPathSchema(ExpectedReferenceIndexFiles),
+    ] = ""
+
+
+class DnaMapper(StrEnum):
     BWA = "bwa"
     BWA_MEM2 = "bwa_mem2"
 
 
-class LongDnaMapper(Enum):
+class LongDnaMapper(StrEnum):
     MINIMAP2 = "minimap2"
 
 
-class RnaMapper(Enum):
+class RnaMapper(StrEnum):
     STAR = "star"
 
 
-class MetaTool(Enum):
+class MetaTool(StrEnum):
     MBCS = "mbcs"
 
 
-CombinedDnaTool = Enum(
-    "CombinedDnaTool",
-    {
-        (name, member.value)
-        for name, member in itertools.chain(
-            DnaMapper.__members__.items(), MetaTool.__members__.items()
-        )
-    },
-)
+class Tool(StrEnum):
+    bwa = "bwa"
+    bwa_mem2 = "bwa_mem2"
+    minimap2 = "minimap2"
+    star = "star"
+    mbcs = "mbcs"
 
+    def is_dna(self):
+        return self in {self.bwa, self.bwa_mem2, self.minimap2, self.mbcs}
 
-class Tools(SnappyModel):
-    dna: Annotated[list[CombinedDnaTool], EnumField(CombinedDnaTool, [])]
-    """Required if DNA analysis; otherwise, leave empty."""
+    def is_rna(self):
+        return self in {self.star}
 
-    rna: Annotated[list[RnaMapper], EnumField(RnaMapper, [])]
-    """Required if RNA analysis; otherwise, leave empty."""
+    def supports_long_reads(self):
+        return self in {self.bwa_mem2, self.minimap2}
 
-    dna_long: Annotated[list[LongDnaMapper], EnumField(LongDnaMapper, [])]
-    """Required if long-read mapper used; otherwise, leave empty."""
+    def get_tags(self):
+        tags = set()
+        if self.is_dna():
+            tags |= {"dna"}
+        if self.is_rna():
+            tags |= {"rna"}
+        if self.supports_long_reads():
+            tags |= {"long_read"}
+        if self == self.mbcs:
+            tags |= {"mbcs", "meta"}
+        return tags
 
 
 class TargetCoverageReportEntry(SnappyModel):
@@ -65,7 +115,7 @@ class TargetCoverageReportEntry(SnappyModel):
 
     pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
 
-    path: Annotated[str, Field(examples=["path/to/targets.bed"])]
+    path: ResolvablePath = Field(examples=["path/to/targets.bed"])
 
 
 class TargetCoverageReport(ToggleModel):
@@ -80,15 +130,16 @@ class NgsChewFingerprint(ToggleModel):
     pass
 
 
-class BwaMode(Enum):
+class BwaMode(StrEnum):
     AUTO = "auto"
     BWA_ALN = "bwa-aln"
     BWA_MEM = "bwa-mem"
 
 
 class BwaMapper(SnappyModel):
-    path_index: str
-    """Required if listed in ngs_mapping.tools.dna; otherwise, can be removed."""
+    path_index: ResolvablePathPrefix
+    """Path prefix for BWA index files (e.g., "path/to/GRCh38" without ".amb" extension)"""
+
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -105,11 +156,11 @@ class BwaMapper(SnappyModel):
 
 
 class Bwa(BwaMapper):
-    @field_validator("path_index")
-    @classmethod
-    def validate_bwa_path_index(cls, v):
+    @model_validator(mode="after")
+    def validate_bwa_path_index(self):
         import logging
 
+        v = self.path_index
         extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
         prefix, ext = os.path.splitext(v)
         if ext:
@@ -119,17 +170,20 @@ class Bwa(BwaMapper):
                 if ext not in extensions:
                     logging.warning(f"unknown extension '{v}'")
         for extension in extensions:
-            if not os.path.exists(prefix + extension):
-                logging.warning(f"{v} does not exist")
-        return prefix
+            sidecar = prefix + extension
+            alt_sidecar = os.path.splitext(prefix)[0] + extension
+            if not (os.path.exists(sidecar) or os.path.exists(alt_sidecar)):
+                logging.warning(f"missing BWA index sidecar file: {sidecar} (or {alt_sidecar})")
+        self.path_index = prefix
+        return self
 
 
 class BwaMem2(BwaMapper):
-    @field_validator("path_index")
-    @classmethod
-    def validate_bwa_mem2_path_index(cls, v):
+    @model_validator(mode="after")
+    def validate_bwa_mem2_path_index(self):
         import logging
 
+        v = self.path_index
         extensions = {".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"}
         prefix, ext = os.path.splitext(v)
         if ext:
@@ -139,21 +193,26 @@ class BwaMem2(BwaMapper):
                 if ext not in extensions:
                     logging.warning(f"unknown extension '{v}'")
         for extension in extensions:
-            if not os.path.exists(prefix + extension):
-                logging.warning(f"{v} does not exist")
-        return prefix
+            sidecar = prefix + extension
+            alt_sidecar = os.path.splitext(prefix)[0] + extension
+            if not (os.path.exists(sidecar) or os.path.exists(alt_sidecar)):
+                logging.warning(
+                    f"missing BWA-MEM2 index sidecar file: {sidecar} (or {alt_sidecar})"
+                )
+        self.path_index = prefix
+        return self
 
 
-class BarcodeTool(Enum):
+class BarcodeTool(StrEnum):
     AGENT = "agent"
 
 
 class Bqsr(SnappyModel):
-    common_variants: str
+    common_variants: ResolvablePath
     """Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)"""
 
 
-class AgentLibPrepType(Enum):
+class AgentLibPrepType(StrEnum):
     HALO_PLEX = "halo"
     HALO_PLEX_HS = "hs"
     SURE_SELECT = "xt"
@@ -171,7 +230,7 @@ class AgentPrepare(SnappyModel):
     """Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data"""
 
 
-class AgentMarkDuplicatesConsensusMode(Enum):
+class AgentMarkDuplicatesConsensusMode(enum.StrEnum):
     SINGLE = "SINGLE"
     HYBRID = "HYBRID"
     DUPLEX = "DUPLEX"
@@ -199,7 +258,6 @@ class Agent(SnappyModel):
 
 class Star(SnappyModel):
     path_index: str
-    """Required if listed in ngs_mapping.tools.rna; otherwise, can be removed."""
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -277,11 +335,10 @@ class Mbcs(SnappyModel):
 
 
 class NgsMapping(SnappyStepModel):
-    tools: Tools
-    """Aligners to use for the different NGS library types"""
+    depends_on: NgsMappingDependsOn = Field(default_factory=NgsMappingDependsOn)
 
-    path_link_in: str = ""
-    """OPTIONAL Override data set configuration search paths for FASTQ files"""
+    tool: Tool
+    """Aligner to use for the NGS library"""
 
     target_coverage_report: TargetCoverageReport | None = None
     """Thresholds for targeted sequencing coverage QC."""
@@ -314,15 +371,6 @@ class NgsMapping(SnappyStepModel):
     Configuration for somatic ngs_calling
     (separate read groups, molecular barcodes & base quality recalibration)
     """
-
-    @model_validator(mode="after")
-    def ensure_tools_are_configured(self):
-        for data_type in ("dna", "rna", "dna_long"):
-            tool_list = getattr(self.tools, data_type)
-            for tool in tool_list:
-                if not getattr(self, tool):
-                    raise ValueError(f"Tool {tool} not configured")
-        return self
 
     @model_validator(mode="after")
     def check_mbcs_prerequisites(self):

@@ -3,10 +3,10 @@
 
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
-    from snakemake.script import snakemake
+    from snakemake.iocontainers import snakemake
 
 
 args = getattr(snakemake.params, "args", {})
@@ -23,21 +23,8 @@ elif locii_arg := args.get("locii"):
 else:
     locii = ""
 
-# Actually run the script.
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-exec &> >(tee -a "{snakemake.log.log}")
-set -x
-# -----------------------------------------------------------------------------
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 bcftools mpileup \
     {locii} \
     --max-depth {max_depth} \
@@ -46,19 +33,5 @@ bcftools mpileup \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.bam}
 tabix {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf})
-md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf_md5})
-md5sum $(basename {snakemake.output.vcf_tbi}) > $(basename {snakemake.output.vcf_tbi_md5})
-popd
-"""
-)
-
-# Compute MD5 sums of logs
-shell(
-    r"""
-md5sum {snakemake.log.log} > {snakemake.log.log_md5}
-md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
 """
 )

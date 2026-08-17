@@ -1,25 +1,16 @@
 # -*- coding: utf-8 -*-
 """Wrapper code for GATK ReadBackedPhasing"""
 
-from parallel_read_backed_phasing import ParallelGaktReadBackedPhasingWrapper
-from snakemake.shell import shell
+from typing import TYPE_CHECKING
 
-# Write out information about conda installation.
-shell(
-    r"""
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-"""
-)
+from parallel_read_backed_phasing import ParallelGaktReadBackedPhasingWrapper
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 # Kick off execution using the wrapper class defined above.
 ParallelGaktReadBackedPhasingWrapper(snakemake).run()
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)
+# Trigger standardized conda/log capture and md5 generation from SnappyWrapper.
+ShellWrapper(snakemake, with_output_links=False).run("true")

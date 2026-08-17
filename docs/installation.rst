@@ -12,74 +12,97 @@ Installation
 Prerequisites
 -------------
 
-The CUBI pipeline requires Python >=3.12 (e.g., from a Miniconda3 installation).
+Install `pixi <https://pixi.sh>`_ (see https://pixi.sh/latest/#installation).
+The CUBI pipeline uses pixi to manage all dependencies -- both conda packages
+(system tools like BWA, STAR, samtools) and PyPI packages.
 
-More recent versions also work but other requirements as Snakemake might make it depend on a more recent Python version.
+For cluster execution, you need a Snakemake profile available (use ``--slurm``
+with the ``snappy run`` command if your cluster uses SLURM).
 
-For cluster execution, you need a Snakemake profile available.
+-------------------------
+User Installation
+-------------------------
 
---------------------
-Installing a Release
---------------------
+If you just want to *run* a pipeline (not develop it), clone the repository and
+let pixi create the environment:
 
-This is the recommended way if you just want to use the pipeline, simply read :ref:`quickstart`.
+.. code-block:: shell
+
+    $ git clone git@github.com:bihealth/snappy-pipeline.git
+    $ cd snappy-pipeline
+    $ pixi install
+
+After installation the ``snappy`` command is available via
+``pixi run snappy <subcommand> ...``, or by activating the environment with
+``eval "$(pixi shell-hook)"``.
+
+For a reproducible install pinned to the exact dependency versions in the
+lock file, use ``pixi install --frozen`` instead.
 
 -------------------------
 Installing as a Developer
 -------------------------
 
-It is highly recommended to have a Miniconda installation for the development as this allows for easily resetting everything.
-You can of course clone the code anywhere you like.
+Same clone + install steps as above, then use the ``dev`` environment which
+includes test, lint, and documentation tools:
 
 .. code-block:: shell
 
-    $ mkdir -p ~/Development/pipeline_dev
-    $ cd ~/Development/pipeline_dev
-    $ git clone git@github.com:bihealth/snappy-pipeline.git
-    $ cd snappy_pipeline
-    $ conda env create -n snappy_dev --file environment.yml
-    $ conda activate snappy_dev
-    $ pip install -e ".[all]"
-
-
-Installing pre-commit-hooks
-===========================
-To make it easier to follow the coding style, we use `pre-commit <https://pre-commit.com>`_ hooks.
-These hooks will run the style checks before you commit your changes and will automatically fix some issues.
-
-First, install the pre-commit package (if not already installed, part of the optional dependency group ``dev``):
-
-.. code-block:: shell
-
-    $ conda install pre-commit  # or pip install pre-commit
-
-Then, install the pre-commit hooks:
-
-.. code-block:: shell
-
-    $ pre-commit install
-
-The next time you commit changes, the pre-commit hooks will run automatically.
+    $ pixi install
+    $ pixi run -e dev --  # one-off commands
+    $ pixi shell -e dev   # activate dev environment
 
 Running the Tests
 =================
 
-To run the tests, simply invoke ``pytest`` (part of the optional dependency group ``test``):
-
 .. code-block:: shell
 
-    $ cd ~/Development/pipeline_dev
-    $ pytest
+    $ pixi run -e dev test
 
 Running the Style Checks
-========================
+=========================
 
 .. code-block:: shell
 
-    $ cd ~/Development/pipeline_dev
-    $ make lint
+    $ pixi run -e dev lint             # ruff check + ruff format --check + snakefmt --check
+    $ pixi run -e dev fmt              # auto-format with ruff
+    $ pixi run -e dev snakefmt         # auto-format Snakemake files
+    $ pixi run -e dev srcfmt           # run all formatters
+
+Building the Documentation
+==========================
+
+.. code-block:: shell
+
+    $ pixi run -e docs docs
+
+The HTML output is written to ``docs/_build/html/``.
 
 Developer Documentation
 =======================
 
 Make sure to also read the "Pipeline Developer Docs" section, starting with :ref:`dev_intro`.
+
+Configuring GATK3
+==================
+
+Some wrappers rely on GATK 3.
+GATK v3 is not free software and cannot be redistributed.
+If you are a member of CUBI, you can use the central GATK download.
+Alternatively, download the tarball `from the Broad archive <https://storage.googleapis.com/gatk-software/package-archive/gatk/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2>`_.
+
+To register GATKv3 with the pipeline, create the conda environments first, then
+register the tarball into each environment that requires it:
+
+.. code-block:: shell
+
+    $ cd /path/to/project
+    $ snappy run -- --conda-create-envs-only
+    $ grep 'gatk.*3' .snakemake/conda/*.yaml
+    .snakemake/conda/d76b719b718c942f8e49e55059e956a6.yaml:  - gatk =3
+    $ for yaml in $(grep -l 'gatk.*3' .snakemake/conda/*.yaml); do
+          environ=${yaml%.yaml}
+          conda activate $environ
+          gatk3-register /path/to/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2
+          conda deactivate
+      done

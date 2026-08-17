@@ -2,10 +2,12 @@
 """CUBI+Snakemake wrapper code for ExpansionHunter: Snakemake wrapper.py"""
 
 import os
+from typing import TYPE_CHECKING
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
-shell.executable("/bin/bash")
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 this_file = __file__
 
@@ -23,25 +25,11 @@ if args["sex"] in valid_sex_list:
     sex_argument = "--sex " + args["sex"]
 
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# TODO: remove this again, is for fail early
 # Additional logging for transparency & reproducibility
 # Logging: Save a copy this wrapper (with the pickle details in the header)
 cp {this_file} $(dirname {snakemake.log})/wrapper_expansionhunter.py
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        exec 2> >(tee -a "{snakemake.log}" >&2)
-    else
-        rm -f "{snakemake.log}" && mkdir -p $(dirname {snakemake.log})
-        echo "No tty, logging disabled" >"{snakemake.log}"
-    fi
-fi
 
 # Create out dir
 mkdir -p $(dirname {snakemake.output.json})
@@ -51,13 +39,5 @@ ExpansionHunter --reads {snakemake.input.bam} \
         --reference {snakemake.input.reference} \
         --variant-catalog {snakemake.input.repeat_catalog} \
         --output-prefix {prefix} {sex_argument}
-"""
-)
-
-# Compute MD5 sums of log and vcf.
-shell(
-    r"""
-md5sum {snakemake.log} > {snakemake.log}.md5
-md5sum {snakemake.output.vcf} > {snakemake.output.vcf_md5}
 """
 )

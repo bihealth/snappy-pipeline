@@ -31,19 +31,18 @@ BAM files from the ``ngs_mapping`` step.
 Step Output
 ===========
 
-Creates one output directory for each read mapper (from ``ngs_mapping``), each variant caller, and
-each pedigree from the germline sample sheet.
+Creates one output directory for each pedigree from the germline sample sheet.
 
 **Primary Output**
 
-- ``output/{mapper}.{caller}.{index_library}/out/{mapper}.{caller}.{index_library}.vcf.gz``
+- ``output/{index_library}/out/{index_library}.vcf.gz``
 
 **Additional Output**
 
 The callers implementing a gVCF workflow (currently only ``gatk4_hc_gvcf``) also create one output
 gVCF file for the pedigree.
 
-- ``output/{mapper}.{caller}.{index_library}/out/{mapper}.{caller}.{index_library}.g.vcf.gz``
+- ``output/{index_library}/out/{index_library}.g.vcf.gz``
 
 Further, each VCF and gVCF file gets an appropriate TBI index file ``{vcf_file}.tbi`` and each output
 is gets an appropriate MD5 checksum file ``{file}.md5``.
@@ -127,26 +126,25 @@ Reports
 
     ::
 
-        report/jannovar_stats/{mapper}.{caller}.{index_library}.{donor_library}.txt
+        report/jannovar_stats/{index_library}.{donor_library}.txt
 
 ``bcftools_stats``
 
     Create statistics on variants using ``bcftools stats`` for each donor in each pedigree
-    for each mapper and caller.
 
     ::
 
-        report/bcftools_stats/{mapper}.{caller}.{index_library}.{donor_library}.txt
+        report/bcftools_stats/{index_library}.{donor_library}.txt
 
 ``baf_file_generation``
 
-    Create one UCSC BigWig file for each individual in each pedigree for each mapper and caller
-    with B-allele fraction.  These files can be used for to visually confirm structural variants
+    Create one UCSC BigWig file for each individual in each pedigree with B-allele fraction.
+    These files can be used for to visually confirm structural variants
     or runs of homozygosity.
 
     ::
 
-        report/baf/{mapper}.{caller}.{index_library}.{donor_library}.bw
+        report/baf/{index_library}.{donor_library}.bw
 
 ``roh_calling``
 
@@ -189,78 +187,24 @@ Example Output
 ==============
 
 Given a pedigree with index ``index`` and two more donors ``mother`` and ``father``, the following
-files would be created into ``output/`` (each VCF file has a ``.tbi`` file and overall each file has
-a ``.md5`` file).  In this case, the read mapper is ``bwa`` and the variant caller is ``gatk4_hc_gvcf``.
-
-
-```
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf_file_generation_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.bcftools_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.conda_info.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.conda_list.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.environment.yaml
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.log
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/log/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.jannovar_stats_run.wrapper.py
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/out/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.g.vcf.gz
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/out/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.vcf.gz
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.baf.bw
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.baf.bw
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/baf/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.baf.bw
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.index-N1-DNA1-WES1.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.father-N1-DNA1-WES1.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/bcftools_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.mother-N1-DNA1-WES1.txt
-bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1/report/jannovar_stats/bwa.gatk4_hc_gvcf.index-N1-DNA1-WES1.txt
-```
+files would be created into ``output/``
+(each VCF file has a ``.tbi`` file and overall each file has a ``.md5`` file).
 """
 
 import re
-import sys
-import typing
-import warnings
-from collections import OrderedDict
 from itertools import chain
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
-from snakemake.io import Wildcards, expand
+from biomedsheets.shortcuts import GermlineCaseSheet
+from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    LinkOutStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -269,8 +213,10 @@ from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDictItemsGenerator,
     SnakemakeListItemsGenerator,
 )
-from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.variant_calling.model import TumorNormalMode
 
 from .model import VariantCalling as VariantCallingConfigModel
 
@@ -292,7 +238,6 @@ VARIANT_CALLERS = (
 )
 
 #: Default configuration for the variant_calling step
-DEFAULT_CONFIG = VariantCallingConfigModel.default_config_yaml_string()
 
 
 class GetResultFilesMixin:
@@ -310,22 +255,26 @@ class GetResultFilesMixin:
         def strip_tpl(tpl):
             return tpl.replace(r",[^\.]+", "")
 
-        index_dna_ngs_libraries = self._get_index_dna_ngs_libraries()
+        group_by = self.parent.effective_group_by
+        members = self.parent.cohort_members if group_by == "cohort" else {}
+
         for action in self.actions:
             output_files = self.get_output_files(action).values()
             result_paths_tpls = [
                 strip_tpl(p) for p in flatten(output_files) if p.startswith("output/")
             ]
             for path_tpl in result_paths_tpls:
-                for index_library_name, member_library_names in index_dna_ngs_libraries.items():
-                    kwargs = {
-                        "mapper": self.w_config.step_config["ngs_mapping"].tools.dna,
-                    }
+                for entity_name in self.parent.output_entities:
+                    kwargs = {}
                     if "index_library_name" in path_tpl:
-                        kwargs["index_library_name"] = [index_library_name]
-                        kwargs["donor_library_name"] = member_library_names
+                        kwargs["index_library_name"] = [entity_name]
+                        # Find member libs for this cohort's primary library.
+                        for cohort_name, member_libs in members.items():
+                            if entity_name in member_libs:
+                                kwargs["donor_library_name"] = member_libs
+                                break
                     else:
-                        kwargs["library_name"] = [index_library_name]
+                        kwargs["library_name"] = [entity_name]
                     for key, value in self.get_extra_kv_pairs().items():
                         if "{%s}" % key in path_tpl:
                             kwargs[key] = value
@@ -335,40 +284,7 @@ class GetResultFilesMixin:
                     )
 
     def get_extra_kv_pairs(self):
-        return {"var_caller": self.parent.config.tools}
-
-    @dictify
-    def _get_index_dna_ngs_libraries(
-        self,
-    ) -> typing.Generator[typing.Tuple[str, typing.List[str]], None, None]:
-        """Return ``dict`` that maps the index DNA library name to a list of all pedigree
-        member's DNA library names.
-        """
-        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                if self._is_pedigree_good(pedigree):
-                    index = pedigree.index.dna_ngs_library.name
-                    donors = [
-                        donor.dna_ngs_library.name
-                        for donor in pedigree.donors
-                        if donor.dna_ngs_library
-                    ]
-                    yield index, donors
-
-    def _is_pedigree_good(self, pedigree: Pedigree) -> bool:
-        """Check pedigrees for inconsistencies and issue warning for any.
-
-        :return: ``True`` if there was no inconsistency reported
-        """
-        msg = None
-        donor_names = list(sorted(d.name for d in pedigree.donors))
-        if not pedigree.index:  # pragma: no cover
-            msg = f"INFO: pedigree without index (name: {donor_names})"
-        elif not pedigree.index.dna_ngs_library:  # pragma: no cover
-            msg = f"INFO: pedigree index without DNA NGS library (names: {donor_names})"
-        if msg:
-            warnings.warn(InconsistentPedigreeWarning(msg))
-        return not msg
+        return {}
 
 
 class VariantCallingGetLogFileMixin:
@@ -378,7 +294,7 @@ class VariantCallingGetLogFileMixin:
     def get_log_file(self, action) -> SnakemakeDictItemsGenerator:
         """Return dict of log files in the "log" directory."""
         _ = action
-        token = f"{{mapper}}.{self.name}.{{library_name}}"
+        token = "{library_name}"
         prefix = f"work/{token}/log/{token}.{self.name}_{action}"
         key_ext = (
             ("log", ".log"),
@@ -404,15 +320,8 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_out = (
-            "work/{{mapper}}.{var_caller}.{{index_library_name}}/out/"
-            "{{mapper}}.{var_caller}.{{index_library_name}}{ext}"
-        )
+        self.base_path_out = "work/{index_library_name}/out/{index_library_name}{ext}"
         self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     def get_input_files(self, action) -> SnakemakeDict:
         self._validate_action(action)
@@ -420,26 +329,51 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            return
 
-        if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
-            msg = "INFO: pedigree without index (names: {})"
-            donor_names = list(sorted(d.name for d in pedigree.donors))
-            print(msg.format(donor_names), file=sys.stderr)
-            yield "bam", []
-            yield "ped", None
+        group_by = self.parent.effective_group_by or "cohort"
+
+        # Determine the target libraries based on the wildcard
+        if group_by == "cohort":
+            # wildcards.library_name is the index library name; find its cohort
+            df_target = df[
+                df["library_name"].isin(self.parent.get_cohort_libraries(wildcards.library_name))
+            ]
+        elif group_by == "library":
+            # Per-library logic
+            df_target = df[df["library_name"] == wildcards.library_name]
         else:
-            library_name = pedigree.index.dna_ngs_library.name
-            yield "ped", f"work/write_pedigree.{library_name}/out/{library_name}.ped"
+            raise ValueError(f"Unknown group_by: {group_by}")
 
-            bams = []
-            for donor in pedigree.donors:
-                if not donor.dna_ngs_library:
-                    continue  # skip
-                infix = f"{wildcards.mapper}.{donor.dna_ngs_library.name}"
-                bams.append(ngs_mapping(f"output/{infix}/out/{infix}.bam"))
-            yield "bam", bams
+        selection = getattr(self.config, "library_selection", None)
+        if selection:
+            from snappy_pipeline.workflows.abstract import apply_library_selection
+
+            # Note: "kind" logic isn't strictly necessary if selection encompasses it, but we can assume default 'germline' if needed
+            df_target = apply_library_selection(df_target, selection, "germline")
+
+        if df_target["kind"].eq("cancer").all():
+            yield "ped", []
+        else:
+            if group_by == "cohort":
+                yield (
+                    "ped",
+                    f"work/write_pedigree.{wildcards.library_name}/out/{wildcards.library_name}.ped",
+                )
+            else:
+                cohort_name = df_target.iloc[0]["cohort_name"]
+                yield "ped", f"work/write_pedigree.{cohort_name}/out/{cohort_name}.ped"
+
+        bams = []
+        for _, row in df_target.iterrows():
+            infix = row["library_name"]
+            aln: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=infix
+            )
+            bams.append(getattr(aln, "bam", aln["bam"]))
+        yield "bam", bams
 
     def get_output_files(self, action) -> SnakemakeDict:
         self._validate_action(action)
@@ -447,7 +381,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        token = f"{{mapper}}.{self.name}.{{library_name}}"
+        token = "{library_name}"
         work_files = {
             "vcf": f"work/{token}/out/{token}.vcf.gz",
             "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
@@ -455,13 +389,6 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
             "vcf_tbi_md5": f"work/{token}/out/{token}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(work_files.values(), self.get_log_file("run").values())
-            ],
-        )
 
 
 class BcftoolsCallStepPart(VariantCallingStepPart):
@@ -470,12 +397,16 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
     #: Step name
     name = "bcftools_call"
 
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_path_out = "work/{library_name}/out/{library_name}"
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         return ResourceUsage(
             threads=16,
-            time="2-00:00:00",
-            memory=f"{int(3.75 * 1024 * 16)}M",
+            runtime="2d",
+            mem=f"{int(3.75 * 1024 * 16)}MB",
         )
 
     @dictify
@@ -529,8 +460,8 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
         mem_total = int(mem_per_thread * num_threads + 0.5)
         return ResourceUsage(
             threads=num_threads,
-            time="2-00:00:00",
-            memory=f"{mem_total}G",
+            runtime="2d",
+            mem=f"{mem_total}GB",
         )
 
 
@@ -593,40 +524,63 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
     def _get_input_files_discover(self, wildcards):
         yield "reference", self.w_config.static_data_config.reference.path
         yield "dbsnp", self.w_config.static_data_config.dbsnp.path
-        infix = f"{wildcards.mapper}.{wildcards.library_name}"
-        bam_path = f"output/{infix}/out/{infix}.bam"
-        ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-        yield "bam", ngs_mapping(bam_path)
+        infix = wildcards.library_name
+        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=infix
+        )
+        yield "bam", getattr(alignments, "bam", None) or alignments.bam
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
         yield "reference", self.w_config.static_data_config.reference.path
 
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            return
 
-        if not pedigree.index or not pedigree.index.dna_ngs_library:  # pragma: no cover
-            msg = "INFO: pedigree without index (names: {})"
-            donor_names = list(sorted(d.name for d in pedigree.donors))
-            print(msg.format(donor_names), file=sys.stderr)
-            yield "ped", None
-            yield "gvcf", []
+        group_by = self.parent.effective_group_by or "cohort"
+
+        # Determine the target libraries based on the wildcard
+        if group_by == "cohort":
+            # wildcards.library_name is the index library name; find its cohort
+            df_target = df[
+                df["library_name"].isin(self.parent.get_cohort_libraries(wildcards.library_name))
+            ]
+        elif group_by == "library":
+            # Per-library logic
+            df_target = df[df["library_name"] == wildcards.library_name]
         else:
-            library_name = pedigree.index.dna_ngs_library.name
-            yield "ped", f"work/write_pedigree.{library_name}/out/{library_name}.ped"
+            raise ValueError(f"Unknown group_by: {group_by}")
 
-            gvcfs = []
-            for donor in pedigree.donors:
-                if not donor.dna_ngs_library:
-                    continue  # skip
-                infix = f"{wildcards.mapper}.gatk4_hc_gvcf_discover.{donor.dna_ngs_library.name}"
-                gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
-            yield "gvcf", gvcfs
+        selection = getattr(self.config, "library_selection", None)
+        if selection:
+            from snappy_pipeline.workflows.abstract import apply_library_selection
+
+            df_target = apply_library_selection(df_target, selection, "germline")
+
+        if df_target["kind"].eq("cancer").all():
+            yield "ped", []
+        else:
+            if group_by == "cohort":
+                yield (
+                    "ped",
+                    f"work/write_pedigree.{wildcards.library_name}/out/{wildcards.library_name}.ped",
+                )
+            else:
+                cohort_name = df_target.iloc[0]["cohort_name"]
+                yield "ped", f"work/write_pedigree.{cohort_name}/out/{cohort_name}.ped"
+
+        gvcfs = []
+        for _, row in df_target.iterrows():
+            infix = f"gatk4_hc_gvcf_discover.{row['library_name']}"
+            gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
+        yield "gvcf", gvcfs
 
     @dictify
     def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield "reference", self.w_config.static_data_config.reference.path
 
-        infix = f"{wildcards.mapper}.gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
+        infix = f"gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
@@ -634,25 +588,23 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_output_files_discover(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf_discover.{library_name}"
+        infix = "gatk4_hc_gvcf_discover.{library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
         yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
-        yield "output_links", []
 
     @dictify
     def _get_output_files_combine_gvcfs(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf_combine_gvcfs.{library_name}"
+        infix = "gatk4_hc_gvcf_combine_gvcfs.{library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
         yield "gvcf_md5", f"work/{infix}/out/{infix}.g.vcf.gz.md5"
         yield "gvcf_tbi", f"work/{infix}/out/{infix}.g.vcf.gz.tbi"
         yield "gvcf_tbi_md5", f"work/{infix}/out/{infix}.g.vcf.gz.tbi.md5"
-        yield "output_links", []
 
     @dictify
     def _get_output_files_genotype(self) -> SnakemakeDictItemsGenerator:
-        infix = "{mapper}.gatk4_hc_gvcf.{library_name}"
+        infix = "{library_name}"
         result = {
             "gvcf": f"work/{infix}/out/{infix}.g.vcf.gz",
             "gvcf_md5": f"work/{infix}/out/{infix}.g.vcf.gz.md5",
@@ -664,13 +616,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
         }
         yield from result.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(result.values(), self.get_log_file("genotype").values())
-            ],
-        )
 
     def get_args(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
@@ -695,7 +640,7 @@ class ReportGetLogFileMixin:
         """Return dict of log files in the "log" directory."""
         self._validate_action(action)
         assert self.report_per_donor is not None
-        token = "{mapper}.{var_caller}.{index_library_name}"
+        token = "{index_library_name}"
         prefix = f"work/{token}/log/{token}.{{donor_library_name}}.{self.name}_{action}"
         if not self.report_per_donor:
             prefix = prefix.replace("{donor_library_name}.", "")
@@ -735,10 +680,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            (
-                "work/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
         )
 
     def get_output_files(self, action: str) -> SnakemakeDict:
@@ -750,18 +692,11 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
         base_path = (
-            "work/{mapper}.{var_caller}.{index_library_name}/report/bcftools_stats/"
-            "{mapper}.{var_caller}.{index_library_name}.{donor_library_name}"
+            "work/{index_library_name}/report/bcftools_stats/"
+            "{index_library_name}.{donor_library_name}"
         )
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(work_files.values(), self.get_log_file("run").values())
-            ],
-        )
 
     def get_args(self, action: str):
         self._validate_action(action)
@@ -782,8 +717,8 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="02:00:00",
-            memory="1024M",
+            runtime="2h",
+            mem="1024MB",
         )
 
 
@@ -803,10 +738,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
     def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            (
-                "output/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            ("output/{index_library_name}/out/{index_library_name}.vcf.gz"),
         )
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
         if self.config.get(self.name).get("path_targets"):
@@ -835,10 +767,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        base_path = (
-            "work/{mapper}.{var_caller}.{index_library_name}/report/roh/"
-            "{mapper}.{var_caller}.{index_library_name}"
-        )
+        base_path = "work/{index_library_name}/report/roh/{index_library_name}"
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
         yield (
@@ -860,8 +789,8 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="01:00:00",
-            memory="4G",
+            runtime="1h",
+            mem="4GB",
         )
 
 
@@ -881,10 +810,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         self._validate_action(action)
         yield (
             "vcf",
-            (
-                "work/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
         )
         yield "path_ser", self.config.jannovar_stats.path_ser
 
@@ -898,10 +824,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         """Return output files that all germline variant calling sub steps must return (VCF +
         TBI file)
         """
-        base_path = (
-            "work/{mapper}.{var_caller}.{index_library_name}/report/jannovar_stats/"
-            "{mapper}.{var_caller}.{index_library_name}"
-        )
+        base_path = "work/{index_library_name}/report/jannovar_stats/{index_library_name}"
         ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
@@ -928,8 +851,8 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="04:00:00",
-            memory=f"{int(3.75 * 1024 * 2)}M",
+            runtime="4h",
+            mem=f"{int(3.75 * 1024 * 2)}MB",
         )
 
 
@@ -953,10 +876,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         self._validate_action(action)
         yield (
             "vcf",
-            (
-                "work/{mapper}.{var_caller}.{index_library_name}/out/"
-                "{mapper}.{var_caller}.{index_library_name}.vcf.gz"
-            ),
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
         )
         yield "reference_index", self.w_config.static_data_config.reference.path + ".fai"
 
@@ -964,21 +884,13 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     def get_output_files(self, action: str) -> SnakemakeDictItemsGenerator:
         self._validate_action(action)
         base_path = (
-            "{mapper}.{var_caller}.{index_library_name}/report/baf/"
-            r"{mapper}.{var_caller}.{index_library_name}.{donor_library_name,[^\.]+}.baf"
+            "{index_library_name}/report/baf/{index_library_name}.{donor_library_name,[^\\.]+}.baf"
         )
         ext_names = {"bw": ".bw", "bw_md5": ".bw.md5"}
         work_files = {}
         for key, ext in ext_names.items():
             work_files[key] = f"work/{base_path}{ext}"
         yield from work_files.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(work_files.values(), self.get_log_file("run").values())
-            ],
-        )
 
     def get_args(self, action: str):
         return {"min_dp": self.config.baf_file_generation.min_dp}
@@ -987,62 +899,496 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         self._validate_action(action)
         return ResourceUsage(
             threads=1,
-            time="02:00:00",
-            memory="1024M",
+            runtime="2h",
+            mem="1024MB",
         )
+
+
+class SomaticVariantCallingStepPart(BaseStepPart):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_path_out = "work/{library_name}/out/{library_name}{ext}"
+
+    def get_input_files(self, action: str):
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        tumor_base_path = ("output/{library_name}/out/{library_name}").format(**wildcards)
+
+        input_files = {
+            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+        }
+
+        normal_library = self.get_normal_lib_name(wildcards)
+        if normal_library:
+            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+                normal_library=normal_library, **wildcards
+            )
+            input_files.update(
+                {
+                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                }
+            )
+
+        return input_files
+
+    def get_normal_lib_name(self, wildcards):
+        df = self.parent.build_library_dataframe()
+        tumor_df = df[df["library_name"] == wildcards.library_name]
+        if tumor_df.empty:
+            return None
+        # Use relationship column if available (resolved via config relationships).
+        normal_lib = tumor_df.iloc[0].get("matched_normal_lib", "")
+        if normal_lib:
+            return normal_lib
+        # Fallback: find normal libraries for the same donor.
+        donor_name = tumor_df.iloc[0]["donor_name"]
+        normal_df = df[(df["donor_name"] == donor_name) & (df["role"] == "normal")]
+        if not normal_df.empty:
+            return normal_df.iloc[0]["library_name"]
+        return None
+
+    def get_tumor_lib_name(self, wildcards):
+        return wildcards.library_name
+
+    def get_output_files(self, action):
+        self._validate_action(action)
+        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
+
+    @dictify
+    def get_log_file(self, action):
+        self._validate_action(action)
+
+        prefix = "work/{library_name}/log/{library_name}"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
+
+
+class Mutect2StepPart(SomaticVariantCallingStepPart):
+    name = "mutect2"
+
+    actions = [
+        "scatter",
+        "run",
+        "gather",
+        "filter",
+        "contamination",
+        "pileup_normal",
+        "pileup_tumor",
+    ]
+
+    resource_usage_dict = {
+        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
+        "run": ResourceUsage(threads=1, runtime="5d", mem="8000MB"),
+        "gather": ResourceUsage(threads=1, runtime="4h", mem="32768MB"),
+        "filter": ResourceUsage(threads=2, runtime="4h", mem="15872MB"),
+        "contamination": ResourceUsage(threads=2, runtime="4h", mem="7680MB"),
+        "pileup_normal": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+        "pileup_tumor": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+    }
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        if self.config.tool == "mutect2":
+            run_resource_usage = self.resource_usage_dict["run"]
+            self.resource_usage_dict["run"] = ResourceUsage(
+                threads=self.config.mutect2.num_cores or run_resource_usage.threads,
+                runtime=run_resource_usage.runtime,
+                mem=run_resource_usage.mem,
+            )
+
+    def get_input_files(self, action):
+        self._validate_action(action)
+        return getattr(self, "_get_input_files_{}".format(action))
+
+    def get_args(self, action):
+        self._validate_action(action)
+        return getattr(self, f"_get_args_{action}")
+
+    def _get_args_scatter(self, wildcards):
+        ignore_chroms = list(
+            set(
+                self.w_config.get("ignore_chroms", [])
+                + self.config.get("ignore_chroms", [])
+                + self.config.get(self.name).get("ignore_chroms", [])
+            )
+        )
+        return {
+            "ignore_chroms": sorted(list(ignore_chroms)),
+            "padding": self.config.mutect2.padding,
+            "java_options": self.config.mutect2.contamination.java_options,
+            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
+        }
+
+    def _get_args_pileup_normal(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "normal_lib_name": self.get_normal_lib_name(wildcards)
+        }
+
+    def _get_args_pileup_tumor(self, wildcards):
+        return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
+            "tumor_lib_name": self.get_tumor_lib_name(wildcards)
+        }
+
+    def _get_args_contamination(self, wildcards):
+        return {
+            "java_options": self.config.mutect2.contamination.java_options,
+            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
+        }
+
+    def _get_args_run(self, wildcards):
+        return {
+            "normal_lib_name": self.get_normal_lib_name(wildcards),
+            "java_options": self.config.mutect2.java_options,
+            "extra_arguments": self.config.mutect2.extra_arguments,
+        }
+
+    def _get_args_gather(self, wildcards):
+        return {}
+
+    def _get_args_filter(self, wildcards):
+        return self.config.mutect2.filtration.model_dump(by_alias=True)
+
+    def _get_input_files_scatter(self, wildcards):
+        return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
+
+    def _get_input_files_run(self, wildcards):
+        tumor_base_path = ("output/{library_name}/out/{library_name}").format(**wildcards)
+        scatteritem_base_path = (
+            "work/{library_name}/out/{library_name}/mutect2par/scatter/{scatteritem}".format(
+                **wildcards
+            )
+        )
+
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        input_files = {
+            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
+            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+            "region": scatteritem_base_path + ".region.bed",
+        }
+
+        tumor_normal_mode = self.config.mutect2.tumor_normal_mode
+        if tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
+            normal_library = self.get_normal_lib_name(wildcards)
+            if normal_library:
+                normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+                    normal_library=normal_library, **wildcards
+                )
+                input_files.update(
+                    {
+                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
+                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                    }
+                )
+            else:
+                if tumor_normal_mode == TumorNormalMode.PAIRED:
+                    raise ValueError(
+                        f"Normal sample for tumor {wildcards.library_name} required but not found."
+                    )
+
+        input_files["reference"] = self.w_config.static_data_config.reference.path
+
+        if self.config.mutect2.germline_resource:
+            input_files["germline_resource"] = self.config.mutect2.germline_resource
+        if self.config.mutect2.panel_of_normals:
+            input_files["panel_of_normals"] = self.config.mutect2.panel_of_normals
+
+        return input_files
+
+    def _get_input_files_gather(self, wildcards):
+        gather = self.parent.workflow.globals.get("gather")
+        gather = getattr(gather, self.name)
+        scatteritem_base_path = (
+            "work/{library_name}/out/{library_name}/mutect2par/run/{{scatteritem}}".format(
+                **wildcards
+            )
+        )
+        input_files = {
+            "vcf": scatteritem_base_path + ".raw.vcf.gz",
+            "stats": scatteritem_base_path + ".raw.vcf.stats",
+            "f1r2": scatteritem_base_path + ".raw.f1r2.tar.gz",
+        }
+        return dict(map(lambda item: (item[0], gather(item[1])), input_files.items()))
+
+    def _get_input_files_filter(self, wildcards):
+        base_path = "work/{library_name}/out/{library_name}".format(**wildcards)
+        input_files = {
+            "raw": base_path + ".raw.vcf.gz",
+            "stats": base_path + ".raw.vcf.stats",
+            "orientation": base_path + ".raw.read_orientation_model.tar.gz",
+            "reference": self.w_config.static_data_config.reference.path,
+        }
+        if self.get_normal_lib_name(wildcards):
+            if self.config.mutect2.contamination.enabled:
+                input_files["table"] = base_path + ".contamination.tbl"
+                input_files["segments"] = base_path + ".segments.tbl"
+        return input_files
+
+    def _get_input_files_pileup_normal(self, wildcards):
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        base_path = "output/{normal_library}/out/{normal_library}".format(
+            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        )
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.contamination.common_variants,
+        }
+
+    def _get_input_files_pileup_tumor(self, wildcards):
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam"),
+            "reference": self.w_config.static_data_config.reference.path,
+            "common_variants": self.config.mutect2.contamination.common_variants,
+        }
+
+    def _get_input_files_contamination(self, wildcards: Wildcards):
+        base_path = "work/{library_name}/out/{library_name}".format(**wildcards)
+        return {
+            "normal": base_path + ".normal.pileup",
+            "tumor": base_path + ".tumor.pileup",
+            "reference": self.w_config.static_data_config.reference.path,
+        }
+
+    def get_output_files(self, action):
+        exts = {}
+        output_files = {}
+
+        self._validate_action(action)
+        tool = self.config.tool
+        if self.name != tool:
+            return {}
+        base_path_out = self.base_path_out
+
+        if action == "scatter":
+            scatter = self.parent.workflow.globals.get("scatter")
+            scatter = getattr(scatter, self.name)
+            template = "work/{{library_name}}/out/{{library_name}}/mutect2par/scatter/{scatteritem}.region.bed"
+            return {"regions": scatter(template)}
+
+        if action == "run":
+            base_path_out = (
+                "work/{library_name}/out/{library_name}/mutect2par/run/{scatteritem}{ext}"
+            )
+            exts = {
+                "vcf": ".raw.vcf.gz",
+                "vcf_md5": ".raw.vcf.gz.md5",
+                "vcf_tbi": ".raw.vcf.gz.tbi",
+                "vcf_tbi_md5": ".raw.vcf.gz.tbi.md5",
+                "stats": ".raw.vcf.stats",
+                "stats_md5": ".raw.vcf.stats.md5",
+                "f1r2": ".raw.f1r2.tar.gz",
+                "f1r2_md5": ".raw.f1r2.tar.gz.md5",
+            }
+        if action == "gather":
+            exts = {
+                "vcf": ".raw.vcf.gz",
+                "vcf_md5": ".raw.vcf.gz.md5",
+                "vcf_tbi": ".raw.vcf.gz.tbi",
+                "vcf_tbi_md5": ".raw.vcf.gz.tbi.md5",
+                "stats": ".raw.vcf.stats",
+                "stats_md5": ".raw.vcf.stats.md5",
+                "orientation": ".raw.read_orientation_model.tar.gz",
+                "orientation_md5": ".raw.read_orientation_model.tar.gz.md5",
+            }
+        elif action == "pileup_normal" or action == "pileup_tumor":
+            ext_name = "normal" if action == "pileup_normal" else "tumor"
+            exts = {
+                "pileup": f".{ext_name}.pileup",
+                "pileup_md5": f".{ext_name}.pileup.md5",
+            }
+        elif action == "contamination":
+            exts = {
+                "table": ".contamination.tbl",
+                "table_md5": ".contamination.tbl.md5",
+                "segments": ".segments.tbl",
+                "segments_md5": ".segments.tbl.md5",
+            }
+        elif action == "filter":
+            exts = {
+                "vcf": ".vcf.gz",
+                "vcf_md5": ".vcf.gz.md5",
+                "vcf_tbi": ".vcf.gz.tbi",
+                "vcf_tbi_md5": ".vcf.gz.tbi.md5",
+                "full_vcf": ".full.vcf.gz",
+                "full_vcf_md5": ".full.vcf.gz.md5",
+                "full_vcf_tbi": ".full.vcf.gz.tbi",
+                "full_vcf_tbi_md5": ".full.vcf.gz.tbi.md5",
+            }
+        for key, ext in exts.items():
+            output_files[key] = base_path_out.replace("{ext}", ext)
+        return output_files
+
+    def get_log_file(self, action):
+        postfix = ""
+        log_files = {}
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+
+        self._validate_action(action)
+        tool = self.config.tool
+        if self.name != tool:
+            return {}
+
+        if action != "gather":
+            if action == "run":
+                postfix = ".{scatteritem}"
+            else:
+                postfix = "." + action
+
+        prefix = ("work/{{library_name}}/log/{{library_name}}{postfix}").format(postfix=postfix)
+
+        for key, ext in key_ext:
+            log_files[key] = prefix + ext
+            log_files[key + "_md5"] = prefix + ext + ".md5"
+        return log_files
+
+    @listify
+    def get_result_files(self):
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            return
+
+        selection = getattr(self.config, "library_selection", None)
+        if selection:
+            from snappy_pipeline.workflows.abstract import apply_library_selection
+
+            df = apply_library_selection(df, selection, "cancer")
+        else:
+            df = df[df["role"] == "tumor"]
+
+        tpl = "output/{library_name}/out/{library_name}.vcf.gz"
+        for _, row in df.iterrows():
+            yield tpl.format(library_name=row["library_name"])
 
 
 class VariantCallingWorkflow(BaseStep):
     """Workflow implementation for germline variant calling"""
 
     name = "variant_calling"
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
+        DataSignature(DataType.VARIANTS, frozenset({"germline"})),
+        DataSignature(DataType.VARIANTS),
+    ]
+    config_model_class = VariantCallingConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
-    @classmethod
-    def default_config_yaml(cls) -> str:
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
+    #: Default relationship for somatic (mutect2) callers: resolve matched normal.
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    @classmethod
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local VCF output paths for a germline-variants signature.
+
+        Arguments:
+            signature: Expected to satisfy
+                ``DataSignature(DataType.VARIANTS, frozenset({"germline"}))``.
+            **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
+                the ``{library_name}`` wildcard placeholder.
+        """
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+        }
+
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=VariantCallingConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
-        # Register sub step classes so the sub steps are available
+        self.shortcut_sheets = []
+        for info in self.data_set_infos:
+            if info.sheet:
+                if info.sheet_type == "germline_variants":
+                    from biomedsheets.shortcuts.germline import GermlineCaseSheet
+
+                    self.shortcut_sheets.append(
+                        GermlineCaseSheet(info.sheet, **(info.pedigree_field_kwargs or {}))
+                    )
+                elif info.sheet_type in ("matched_cancer", "cancer_matched"):
+                    from biomedsheets.shortcuts.cancer import CancerCaseSheet
+
+                    self.shortcut_sheets.append(CancerCaseSheet(info.sheet))
+                else:
+                    self.shortcut_sheets.append(
+                        self.sheet_shortcut_class(info.sheet, **(info.pedigree_field_kwargs or {}))
+                    )
+
+        match self.config.tool:
+            case "bcftools_call":
+                selected_caller = BcftoolsCallStepPart
+            case "gatk3_hc":
+                selected_caller = Gatk3HaplotypeCallerStepPart
+            case "gatk3_ug":
+                selected_caller = Gatk3UnifiedGenotyperStepPart
+            case "gatk4_hc_joint":
+                selected_caller = Gatk4HaplotypeCallerJointStepPart
+            case "gatk4_hc_gvcf":
+                selected_caller = Gatk4HaplotypeCallerGvcfStepPart
+            case "mutect2":
+                selected_caller = Mutect2StepPart
+            case _:
+                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(
             (
                 WritePedigreeStepPart,
-                BcftoolsCallStepPart,
-                Gatk3HaplotypeCallerStepPart,
-                Gatk3UnifiedGenotyperStepPart,
-                Gatk4HaplotypeCallerJointStepPart,
-                Gatk4HaplotypeCallerGvcfStepPart,
+                selected_caller,
                 BcftoolsStatsStepPart,
                 BcftoolsRohStepPart,
                 JannovarStatisticsStepPart,
                 BafFileGenerationStepPart,
+                LinkOutStepPart,
             )
         )
-        # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
 
     @listify
     def get_result_files(self) -> SnakemakeListItemsGenerator:
-        for tool in self.config.tools:
-            yield from self.sub_steps[tool].get_result_files()
+        yield from self.sub_steps[self.config.tool].get_result_files()
         for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
             name_config = self.config.get(name)
             if name_config and name_config.enabled:
                 yield from self.sub_steps[name].get_result_files()
-
-    def check_config(self):
-        # Checks for static data
-        self.ensure_w_config(
-            ("static_data_config", "reference", "path"),
-            "Path to reference FASTA not configured but required for variant calling",
-        )

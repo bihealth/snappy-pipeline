@@ -92,13 +92,13 @@ from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import HelperGcnvModelTargeted as HelperGcnvModelTargetedConfigModel
 
 #: Default configuration for the helper_gcnv_model_targeted schema
-DEFAULT_CONFIG = HelperGcnvModelTargetedConfigModel.default_config_yaml_string()
 
 
 class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
@@ -111,7 +111,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
 
     @dictify
     def _build_ngs_library_to_kit(self):
-        gcnv_config = self.w_config.step_config["helper_gcnv_model_targeted"].gcnv
+        gcnv_config = self.parent.get_task_config("helper_gcnv_model_targeted").gcnv
         if not gcnv_config.path_target_interval_list_mapping:
             # No mapping given, we will use the "default" one for all.
             for donor in self.parent.all_donors():
@@ -142,9 +142,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        name_pattern = "{mapper}.gcnv_call_cnvs.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
+        name_pattern = "gcnv_call_cnvs.{library_kit}".format(library_kit=library_kit, **wildcards)
         yield (
             "calls",
             [
@@ -155,13 +153,13 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
             ],
         )
         ext = "ploidy"
-        name_pattern = "{mapper}.gcnv_contig_ploidy.{library_kit}".format(
+        name_pattern = "gcnv_contig_ploidy.{library_kit}".format(
             library_kit=library_kit, **wildcards
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
     def get_args(self, action: str) -> dict[str, Any]:
-        gcnv_config = self.w_config.step_config["helper_gcnv_model_targeted"].gcnv
+        gcnv_config = self.parent.get_task_config("helper_gcnv_model_targeted").gcnv
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_par_intervals": gcnv_config.path_par_intervals,
@@ -175,24 +173,47 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "helper_gcnv_model_targeted"
+    config_model_class = HelperGcnvModelTargetedConfigModel
+    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
+    produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local helper gCNV model output paths for downstream consumers."""
+        if signature is not None and not signature.satisfies(
+            DataSignature(DataType.MODELS, frozenset({"gcnv"}))
+        ):
+            raise ValueError(
+                f"HelperBuildTargetSeqGcnvModelWorkflow does not support signature: {signature}"
+            )
+        kit = kwargs.get("library_kit", "{library_kit}")
+        return {
+            "ploidy_done": f"output/gcnv_contig_ploidy.{kit}/out/gcnv_contig_ploidy.{kit}/.done",
+            "calls_done": f"output/gcnv_call_cnvs.{kit}.{{shard}}/out/gcnv_call_cnvs.{kit}.{{shard}}/.done",
+        }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=HelperGcnvModelTargetedConfigModel,
             previous_steps=(NgsMappingWorkflow,),
+            task_name=task_name,
+            **kwargs,
         )
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
@@ -201,8 +222,7 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
                 BuildGcnvTargetSeqModelStepPart,
             )
         )
-        # Register sub workflows
-        self.register_sub_workflow("ngs_mapping", self.config.path_ngs_mapping)
+
         # Build mapping from NGS DNA library to library kit
         self.ngs_library_to_kit = self.sub_steps["gcnv"].ngs_library_to_kit
 

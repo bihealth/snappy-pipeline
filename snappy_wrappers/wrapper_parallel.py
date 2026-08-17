@@ -21,12 +21,43 @@ import tempfile
 import textwrap
 import time
 from collections.abc import MutableMapping, MutableSequence
+from pathlib import Path
 
-from snakemake import get_profile_file, snakemake
+from snakemake.api import ResourceSettings, SnakemakeApi
+from snakemake.cli import get_profile_dir
 
+from snappy_wrappers.snappy_wrapper import PythonWrapper
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+
+def get_appdirs():
+    global APPDIRS
+    if APPDIRS is None:
+        from appdirs import AppDirs
+
+        APPDIRS = AppDirs("snakemake", "snakemake")
+    return APPDIRS
+
+
+def get_profile_file(profile: str, file: str, return_default=False):
+    profile_dir, profile_candidate = get_profile_dir(profile)
+    dirs = get_appdirs()
+    search_dirs = [profile_dir, os.getcwd(), dirs.user_config_dir, dirs.site_config_dir]
+    print(search_dirs, profile_candidate, file=sys.stderr)
+
+    def get_path(d):
+        return os.path.join(d, profile, file)
+
+    for d in search_dirs:
+        p = get_path(d)
+        if os.path.exists(p):
+            return p
+
+    if return_default:
+        return file
+    return None
 
 
 @contextlib.contextmanager
@@ -231,12 +262,14 @@ def run_snakemake(
     profile=None,
 ):
     """Given a pipeline step's configuration, launch sequential or parallel Snakemake"""
+    snakefile = Path(snakefile)
     if config["use_profile"]:
+        workdir = Path(os.getcwd())
         print(
             f"Running with Snakemake profile on {num_jobs or config['num_jobs']} "
-            f"cores in directory {os.getcwd()}"
+            f"cores in directory {workdir}"
         )
-        os.mkdir(os.path.join(os.getcwd(), "slurm_log"))
+        os.mkdir(os.path.join(workdir, "slurm_log"))
         if partition:
             os.environ["SNAPPY_PIPELINE_DEFAULT_PARTITION"] = partition
 
@@ -252,40 +285,46 @@ def run_snakemake(
             ),
         )
 
-        result = snakemake(
-            snakefile,
-            workdir=os.getcwd(),
-            jobname="snakejob{token}.{{rulename}}.{{jobid}}.sh".format(token="." + job_name_token),
-            cores=cores,
-            nodes=num_jobs or config["num_jobs"],
-            max_jobs_per_second=max_jobs_per_second or config["max_jobs_per_second"],
-            max_status_checks_per_second=max_status_checks_per_second
-            or config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
-            jobscript=get_profile_file(profile, "slurm-jobscript.sh"),
-            cluster=get_profile_file(profile, "slurm-submit.py"),
-            cluster_status=get_profile_file(profile, "slurm-status.py"),
-            cluster_sidecar=get_profile_file(profile, "slurm-sidecar.py"),
-            cluster_cancel="scancel",
-        )
+        with SnakemakeApi() as api:
+            result = (
+                api.workflow(
+                    snakefile=snakefile,
+                    workdir=workdir,
+                    resource_settings=ResourceSettings(
+                        cores=cores, nodes=num_jobs or config["num_jobs"]
+                    ),
+                    # TODO properly choose remaining *_settings, if needed
+                    # config_settings=None,
+                    # storage_settings=None,
+                    # workflow_settings=None,
+                    # deployment_settings=None,
+                    # storage_provider_settings=None,
+                )
+                .dag()
+                .execute_workflow()
+            )
     else:
         print(
             "Running locally with {num_jobs} jobs in directory {cwd}".format(
                 num_jobs=config["num_jobs"], cwd=os.getcwd()
             )
         )
-        result = snakemake(
-            snakefile,
-            cores=config["num_jobs"],
-            max_jobs_per_second=config["max_jobs_per_second"],
-            max_status_checks_per_second=config["max_status_checks_per_second"],
-            restart_times=config["restart_times"],
-            verbose=True,
-            use_conda=False,  # has to be done externally (no locking if True here) and is!
-        )
-    if not result:
+        with SnakemakeApi() as api:
+            result = (
+                api.workflow(
+                    snakefile=snakefile,
+                    resource_settings=ResourceSettings(cores=config["num_jobs"]),
+                    # TODO properly choose remaining *_settings, if needed
+                    # config_settings=None,
+                    # storage_settings=None,
+                    # workflow_settings=None,
+                    # deployment_settings=None,
+                    # storage_provider_settings=None,
+                )
+                .dag()
+                .execute_workflow()
+            )
+    if result is False:
         raise SnakemakeExecutionFailed("Could not perform nested Snakemake call")
 
 
@@ -330,7 +369,8 @@ def write_snakemake_debug_helper(
                         "--cores",
                         "--printshellcmds",
                         "--verbose",
-                        "--use-conda",  # sic!
+                        "--software-deployment-method",  # sic! <- ?
+                        "conda",
                         "--profile",
                         shlex.quote(profile),
                         "--jobs",
@@ -377,7 +417,7 @@ def compute_md5_checksum(filename, buffer_size=65_536):
     return the_hash.hexdigest()
 
 
-class ParallelBaseWrapper:
+class ParallelBaseWrapper(PythonWrapper):
     """Base class for parallel wrapper classes.
 
     Serves mainly as a template class with methods to override to obtain the desired behaviour
@@ -418,8 +458,13 @@ class ParallelBaseWrapper:
         self.snakemake = snakemake
         #: Base directory to wrappers
         self.wrapper_base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+        #: Path to the main pipeline step workflow directory
+        self.main_cwd = os.getcwd()
+
         # Kick-off initialization
         self._apply_realpath_to_output()
+        self._apply_realpath_to_input()
+
         # Setup logging (will run in wrapper and its own process)
         if hasattr(snakemake.log, "log"):
             log_filename = self.snakemake.log.log
@@ -432,8 +477,6 @@ class ParallelBaseWrapper:
             level=logging.INFO,
         )  # TODO: make configurable?
         self.logger = logging.getLogger(self._job_name_token())
-        #: Path to the main pipeline step workflow directory
-        self.main_cwd = os.getcwd()
 
     def _apply_realpath_to_output(self):
         """Update output and log file paths to be realpaths."""
@@ -447,6 +490,11 @@ class ParallelBaseWrapper:
         for key in self.realpath_log_keys or []:
             if hasattr(self.snakemake.log, key):
                 setattr(self.snakemake.log, key, os.path.realpath(getattr(self.snakemake.log, key)))
+
+    def _apply_realpath_to_input(self):
+        for name, f in self.snakemake.input.items():
+            path = os.path.realpath(os.path.join(self.main_cwd, f))
+            setattr(self.snakemake.input, name, path)
 
     def get_fai_path(self):
         """Return path to FAI file for reference to use.
@@ -629,11 +677,11 @@ class ParallelBaseWrapper:
                 all_output=repr(self.get_all_output()),
                 chunk_resources_threads=repr(self.job_resources.threads),
                 chunk_resources_time=repr(self.job_resources.time),
-                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_memory=repr(self.job_resources.mem),
                 chunk_resources_partition=repr(self.job_resources.partition),
                 merge_resources_threads=repr(self.merge_resources.threads),
                 merge_resources_time=repr(self.merge_resources.time),
-                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_memory=repr(self.merge_resources.mem),
                 merge_resources_partition=repr(self.merge_resources.partition),
             )
         )
@@ -679,39 +727,42 @@ class ParallelBaseWrapper:
                 return self.step_name
 
     def run(self):
-        # The setup of the temporary directory depends on whether it is to be kept (for debugging
-        # purposes) or not.
-        keep_tmpdir = self._get_config().get("keep_tmpdir", "never")
-        # Either run with TemporaryDirectory as context manager and auto-cleanup on exit or
-        # create temporary directory using mkdtemp().
-        if keep_tmpdir == "never":
-            self.logger.info("Running temporary directory with automated clean-up")
-            with tempfile.TemporaryDirectory(self._job_name_token()) as tmpdir:
-                self._do_run(tmpdir)
-            return self  # short-circuit
-        else:
-            tmpdir = tempfile.mkdtemp(self._job_name_token())
-        # Handle case of always keeping or cleanup on error only.
-        if keep_tmpdir == "always":
-            self.logger.info("Running temporary directory and WILL NOT CLEAN UP")
-            self._do_run(tmpdir)
-        else:  # keep_tmpdir == 'onerror'
-            self.logger.info("Running in temporary directory, will cleanup in case of success")
-            try:
-                self._do_run(tmpdir)
-            except SnakemakeExecutionFailed as e:
-                self.logger.info(
-                    "Caught error %s: %s, WILL NOT CLEAN UP temporary directory %s",
-                    type(e),
-                    e,
-                    tmpdir,
-                )
-                raise  # re-raise e
+        # Re-route stdout/stderr into the Snakemake log file so that output from
+        # Python code and nested in-process Snakemake runs is captured there.
+        with self.logging_context():
+            # The setup of the temporary directory depends on whether it is to be kept (for
+            # debugging purposes) or not.
+            keep_tmpdir = self._get_config().get("keep_tmpdir", "never")
+            # Either run with TemporaryDirectory as context manager and auto-cleanup on exit or
+            # create temporary directory using mkdtemp().
+            if keep_tmpdir == "never":
+                self.logger.info("Running temporary directory with automated clean-up")
+                with tempfile.TemporaryDirectory(self._job_name_token()) as tmpdir:
+                    self._do_run(tmpdir)
+                return self  # short-circuit
             else:
-                self.logger.info("Ran through successfully, cleaning up %s...", tmpdir)
-                shutil.rmtree(tmpdir)
-                self.logger.info("Done cleaning up.")
-        return self
+                tmpdir = tempfile.mkdtemp(self._job_name_token())
+            # Handle case of always keeping or cleanup on error only.
+            if keep_tmpdir == "always":
+                self.logger.info("Running temporary directory and WILL NOT CLEAN UP")
+                self._do_run(tmpdir)
+            else:  # keep_tmpdir == 'onerror'
+                self.logger.info("Running in temporary directory, will cleanup in case of success")
+                try:
+                    self._do_run(tmpdir)
+                except SnakemakeExecutionFailed as e:
+                    self.logger.info(
+                        "Caught error %s: %s, WILL NOT CLEAN UP temporary directory %s",
+                        type(e),
+                        e,
+                        tmpdir,
+                    )
+                    raise  # re-raise e
+                else:
+                    self.logger.info("Ran through successfully, cleaning up %s...", tmpdir)
+                    shutil.rmtree(tmpdir)
+                    self.logger.info("Done cleaning up.")
+            return self
 
     def shutdown_logging(self):
         logging.shutdown()
@@ -837,8 +888,8 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                     tbi='merge_out.{chunk_no}.d/out/out.vcf.gz.tbi',
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''
@@ -871,8 +922,8 @@ class ParallelVcfOutputBaseWrapper(ParallelBaseWrapper):
                 output: **{all_output}
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 log: **{all_log}
                 shell:
@@ -959,8 +1010,8 @@ class ParallelVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1013,8 +1064,8 @@ class ParallelVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1068,8 +1119,8 @@ class ParallelSomaticVariantCallingBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1122,8 +1173,8 @@ class ParallelSomaticVariantAnnotationBaseWrapper(ParallelVcfOutputBaseWrapper):
                         **{output}
                     threads: resource_chunk_threads
                     resources:
-                        time=resource_chunk_time,
-                        memory=resource_chunk_memory,
+                        runtime=resource_chunk_time,
+                        mem=resource_chunk_memory,
                         partition=resource_chunk_partition,
                     params:
                         **{params}
@@ -1178,11 +1229,11 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 all_output=self.get_all_output(),
                 chunk_resources_threads=repr(self.job_resources.threads),
                 chunk_resources_time=repr(self.job_resources.time),
-                chunk_resources_memory=repr(self.job_resources.memory),
+                chunk_resources_memory=repr(self.job_resources.mem),
                 chunk_resources_partition=repr(self.job_resources.partition),
                 merge_resources_threads=repr(self.merge_resources.threads),
                 merge_resources_time=repr(self.merge_resources.time),
-                merge_resources_memory=repr(self.merge_resources.memory),
+                merge_resources_memory=repr(self.merge_resources.mem),
                 merge_resources_partition=repr(self.merge_resources.partition),
             )
         )
@@ -1347,8 +1398,8 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                     **{log}
                 threads: resource_chunk_threads
                 resources:
-                    time=resource_chunk_time,
-                    memory=resource_chunk_memory,
+                    runtime=resource_chunk_time,
+                    mem=resource_chunk_memory,
                     partition=resource_chunk_partition,
                 params:
                     **{params}
@@ -1485,8 +1536,8 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 output: **{chunk_output}
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''
@@ -1526,8 +1577,8 @@ class ParallelMutect2BaseWrapper(ParallelBaseWrapper):
                 log: "{log.log}.merge.log"
                 threads: resource_merge_threads
                 resources:
-                    time=resource_merge_time,
-                    memory=resource_merge_memory,
+                    runtime=resource_merge_time,
+                    mem=resource_merge_memory,
                     partition=resource_merge_partition,
                 shell:
                     r'''

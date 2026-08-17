@@ -43,30 +43,26 @@ rule somatic_neoepitope_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Install pVACtools docker container ------------------------------------------
 
 
-if (
-    ("pvacseq" in wf.config["tools"] and not wf.config["pvacseq"]["path_container"])
-    or ("pvacfuse" in wf.config["tools"] and not wf.config["pvacfuse"]["path_container"])
-    or ("pvacsplice" in wf.config["tools"] and not wf.config["pvacsplice"]["path_container"])
-):
+if not getattr(wf.config, wf.config.tool).path_container:
 
     rule somatic_neoepitope_install_pvactools:
         output:
             **wf.get_output_files("pvactools", "install"),
+        log:
+            wf.get_log_file("pvactools", "install"),
+        resources:
+            runtime=wf.get_resource("pvactools", "install", "runtime"),
+            mem=wf.get_resource("pvactools", "install", "mem"),
+            partition=wf.get_resource("pvactools", "install", "partition"),
         params:
             container="docker://griffithlab/pvactools:7.0.1",
             extra_args="--ignore-proot",
-        resources:
-            time=wf.get_resource("pvactools", "install", "time"),
-            memory=wf.get_resource("pvactools", "install", "memory"),
-            partition=wf.get_resource("pvactools", "install", "partition"),
-        log:
-            wf.get_log_file("pvactools", "install"),
         shell:
             r"""
                 apptainer build {params.extra_args} {output} {params.container}
@@ -76,9 +72,7 @@ if (
 # Rename samples for pVACtools ------------------------------------------------
 
 
-if ("pvacseq" in wf.config["tools"] and not wf.config["pvacseq"]["use_all_transcripts"]) or (
-    "pvacsplice" in wf.config["tools"] and not wf.config["pvacsplice"]["use_all_transcripts"]
-):
+if wf.config.tool != "pvacfuse" and not getattr(wf.config, wf.config.tool).use_all_transcripts:
 
     rule somatic_neoepitope_normalize:
         input:
@@ -89,8 +83,8 @@ if ("pvacseq" in wf.config["tools"] and not wf.config["pvacseq"]["use_all_transc
             **wf.get_log_file("pvactools", "normalize"),
         threads: wf.get_resource("pvactools", "normalize", "threads")
         resources:
-            time=wf.get_resource("pvactools", "normalize", "time"),
-            memory=wf.get_resource("pvactools", "normalize", "memory"),
+            runtime=wf.get_resource("pvactools", "normalize", "runtime"),
+            mem=wf.get_resource("pvactools", "normalize", "mem"),
             partition=wf.get_resource("pvactools", "normalize", "partition"),
             tmpdir=wf.get_resource("pvactools", "normalize", "tmpdir"),
         params:
@@ -99,9 +93,7 @@ if ("pvacseq" in wf.config["tools"] and not wf.config["pvacseq"]["use_all_transc
             wf.wrapper_path("pvactools/normalize")
 
 
-if ("pvacseq" in wf.config["tools"] and wf.config["pvacseq"]["use_all_transcripts"]) or (
-    "pvacsplice" in wf.config["tools"] and wf.config["pvacsplice"]["use_all_transcripts"]
-):
+if wf.config.tool != "pvacfuse" and getattr(wf.config, wf.config.tool).use_all_transcripts:
 
     rule somatic_neoepitope_normalize_full:
         input:
@@ -112,8 +104,8 @@ if ("pvacseq" in wf.config["tools"] and wf.config["pvacseq"]["use_all_transcript
             **wf.get_log_file("pvactools", "normalize_full"),
         threads: wf.get_resource("pvactools", "normalize_full", "threads")
         resources:
-            time=wf.get_resource("pvactools", "normalize_full", "time"),
-            memory=wf.get_resource("pvactools", "normalize_full", "memory"),
+            runtime=wf.get_resource("pvactools", "normalize_full", "runtime"),
+            mem=wf.get_resource("pvactools", "normalize_full", "mem"),
             partition=wf.get_resource("pvactools", "normalize_full", "partition"),
             tmpdir=wf.get_resource("pvactools", "normalize_full", "tmpdir"),
         params:
@@ -125,9 +117,7 @@ if ("pvacseq" in wf.config["tools"] and wf.config["pvacseq"]["use_all_transcript
 # All output stored independently of pvacseq/pvacfuse/pvacsplice --------------
 
 
-if wf.config["proteome"]["enabled"] and (
-    wf.config["proteome"]["path_germline_variants"] or wf.config["proteome"]["add_unmutated"]
-):
+if wf.config.proteome.enabled and wf.config.proteome.add_unmutated:
 
     rule somatic_neoepitope_proteome:
         input:
@@ -138,8 +128,8 @@ if wf.config["proteome"]["enabled"] and (
             **wf.get_log_file("proteome", "run"),
         threads: wf.get_resource("proteome", "run", "threads")
         resources:
-            time=wf.get_resource("proteome", "run", "time"),
-            memory=wf.get_resource("proteome", "run", "memory"),
+            runtime=wf.get_resource("proteome", "run", "runtime"),
+            mem=wf.get_resource("proteome", "run", "mem"),
             partition=wf.get_resource("proteome", "run", "partition"),
             tmpdir=wf.get_resource("proteome", "run", "tmpdir"),
         params:
@@ -148,7 +138,7 @@ if wf.config["proteome"]["enabled"] and (
             wf.wrapper_path("pvactools/create_proteome")
 
 
-if wf.config["pileup"]["enabled"]:
+if wf.config.tool == "pvacseq" and wf.config.pileup.enabled:
 
     rule somatic_neoepitope_pileup:
         input:
@@ -159,8 +149,8 @@ if wf.config["pileup"]["enabled"]:
             **wf.get_log_file("pvacseq", "pileup"),
         threads: wf.get_resource("pvacseq", "pileup", "threads")
         resources:
-            time=wf.get_resource("pvacseq", "pileup", "time"),
-            memory=wf.get_resource("pvacseq", "pileup", "memory"),
+            runtime=wf.get_resource("pvacseq", "pileup", "runtime"),
+            mem=wf.get_resource("pvacseq", "pileup", "mem"),
             partition=wf.get_resource("pvacseq", "pileup", "partition"),
             tmpdir=wf.get_resource("pvacseq", "pileup", "tmpdir"),
         params:
@@ -169,7 +159,7 @@ if wf.config["pileup"]["enabled"]:
             wf.wrapper_path("pvactools/pileup")
 
 
-if wf.config["quantification"]["enabled"]:
+if wf.config.tool == "pvacseq" and wf.config.quantification.enabled:
 
     rule somatic_neoepitope_combine:
         input:
@@ -180,8 +170,8 @@ if wf.config["quantification"]["enabled"]:
             **wf.get_log_file("pvacseq", "combine"),
         threads: wf.get_resource("pvacseq", "combine", "threads")
         resources:
-            time=wf.get_resource("pvacseq", "combine", "time"),
-            memory=wf.get_resource("pvacseq", "combine", "memory"),
+            runtime=wf.get_resource("pvacseq", "combine", "runtime"),
+            mem=wf.get_resource("pvacseq", "combine", "mem"),
             partition=wf.get_resource("pvacseq", "combine", "partition"),
             tmpdir=wf.get_resource("pvacseq", "combine", "tmpdir"),
         params:
@@ -190,7 +180,7 @@ if wf.config["quantification"]["enabled"]:
             wf.wrapper_path("pvactools/combine")
 
 
-if wf.config["phasing"]["enabled"]:
+if wf.config.phasing.enabled:
 
     rule somatic_neoepitope_phasing:
         input:
@@ -201,8 +191,8 @@ if wf.config["phasing"]["enabled"]:
             **wf.get_log_file("phasing", "run"),
         threads: wf.get_resource("phasing", "run", "threads")
         resources:
-            time=wf.get_resource("phasing", "run", "time"),
-            memory=wf.get_resource("phasing", "run", "memory"),
+            runtime=wf.get_resource("phasing", "run", "runtime"),
+            mem=wf.get_resource("phasing", "run", "mem"),
             partition=wf.get_resource("phasing", "run", "partition"),
             tmpdir=wf.get_resource("phasing", "run", "tmpdir"),
         params:
@@ -214,7 +204,7 @@ if wf.config["phasing"]["enabled"]:
 # pVACseq-only rules ----------------------------------------------------------
 
 
-if "pvacseq" in wf.config["tools"]:
+if wf.config.tool == "pvacseq":
 
     rule somatic_neoepitope_prediction_pvacseq:
         input:
@@ -225,8 +215,8 @@ if "pvacseq" in wf.config["tools"]:
             **wf.get_log_file("pvacseq", "pvacseq"),
         threads: wf.get_resource("pvacseq", "pvacseq", "threads")
         resources:
-            time=wf.get_resource("pvacseq", "pvacseq", "time"),
-            memory=wf.get_resource("pvacseq", "pvacseq", "memory"),
+            runtime=wf.get_resource("pvacseq", "pvacseq", "runtime"),
+            mem=wf.get_resource("pvacseq", "pvacseq", "mem"),
             partition=wf.get_resource("pvacseq", "pvacseq", "partition"),
             tmpdir=wf.get_resource("pvacseq", "pvacseq", "tmpdir"),
         params:
@@ -243,8 +233,8 @@ if "pvacseq" in wf.config["tools"]:
             **wf.get_log_file("netchop", "pvacseq"),
         threads: wf.get_resource("netchop", "pvacseq", "threads")
         resources:
-            time=wf.get_resource("netchop", "pvacseq", "time"),
-            memory=wf.get_resource("netchop", "pvacseq", "memory"),
+            runtime=wf.get_resource("netchop", "pvacseq", "runtime"),
+            mem=wf.get_resource("netchop", "pvacseq", "mem"),
             partition=wf.get_resource("netchop", "pvacseq", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacseq", "tmpdir"),
         params:
@@ -256,7 +246,7 @@ if "pvacseq" in wf.config["tools"]:
 # pVACfuse-only rules ---------------------------------------------------------
 
 
-if "pvacfuse" in wf.config["tools"]:
+if wf.config.tool == "pvacfuse":
 
     rule somatic_neoepitope_prediction_pvacfuse:
         input:
@@ -267,8 +257,8 @@ if "pvacfuse" in wf.config["tools"]:
             **wf.get_log_file("pvacfuse", "pvacfuse"),
         threads: wf.get_resource("pvacfuse", "pvacfuse", "threads")
         resources:
-            time=wf.get_resource("pvacfuse", "pvacfuse", "time"),
-            memory=wf.get_resource("pvacfuse", "pvacfuse", "memory"),
+            runtime=wf.get_resource("pvacfuse", "pvacfuse", "runtime"),
+            mem=wf.get_resource("pvacfuse", "pvacfuse", "mem"),
             partition=wf.get_resource("pvacfuse", "pvacfuse", "partition"),
             tmpdir=wf.get_resource("pvacfuse", "pvacfuse", "tmpdir"),
         params:
@@ -285,8 +275,8 @@ if "pvacfuse" in wf.config["tools"]:
             **wf.get_log_file("netchop", "pvacfuse"),
         threads: wf.get_resource("netchop", "pvacfuse", "threads")
         resources:
-            time=wf.get_resource("netchop", "pvacfuse", "time"),
-            memory=wf.get_resource("netchop", "pvacfuse", "memory"),
+            runtime=wf.get_resource("netchop", "pvacfuse", "runtime"),
+            mem=wf.get_resource("netchop", "pvacfuse", "mem"),
             partition=wf.get_resource("netchop", "pvacfuse", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacfuse", "tmpdir"),
         params:
@@ -298,7 +288,7 @@ if "pvacfuse" in wf.config["tools"]:
 # pVACsplice-only rules -------------------------------------------------------
 
 
-if "pvacsplice" in wf.config["tools"]:
+if wf.config.tool == "pvacsplice":
 
     rule somatic_neoepitope_junction:
         input:
@@ -309,8 +299,8 @@ if "pvacsplice" in wf.config["tools"]:
             **wf.get_log_file("pvacsplice", "junction"),
         threads: wf.get_resource("pvacsplice", "junction", "threads")
         resources:
-            time=wf.get_resource("pvacsplice", "junction", "time"),
-            memory=wf.get_resource("pvacsplice", "junction", "memory"),
+            runtime=wf.get_resource("pvacsplice", "junction", "runtime"),
+            mem=wf.get_resource("pvacsplice", "junction", "mem"),
             partition=wf.get_resource("pvacsplice", "junction", "partition"),
             tmpdir=wf.get_resource("pvacsplice", "junction", "tmpdir"),
         params:
@@ -320,7 +310,7 @@ if "pvacsplice" in wf.config["tools"]:
 
     rule somatic_neoepitope_pvacsplice_workaround:
         input:
-            features=wf.w_config["static_data_config"]["features"]["path"],
+            features=wf.w_config.static_data_config.features.path,
         output:
             gtf="work/pvacsplice_workaround/out/features.gtf",
         run:
@@ -357,8 +347,8 @@ if "pvacsplice" in wf.config["tools"]:
             **wf.get_log_file("pvacsplice", "pvacsplice"),
         threads: wf.get_resource("pvacsplice", "pvacsplice", "threads")
         resources:
-            time=wf.get_resource("pvacsplice", "pvacsplice", "time"),
-            memory=wf.get_resource("pvacsplice", "pvacsplice", "memory"),
+            runtime=wf.get_resource("pvacsplice", "pvacsplice", "runtime"),
+            mem=wf.get_resource("pvacsplice", "pvacsplice", "mem"),
             partition=wf.get_resource("pvacsplice", "pvacsplice", "partition"),
             tmpdir=wf.get_resource("pvacsplice", "pvacsplice", "tmpdir"),
         params:
@@ -375,8 +365,8 @@ if "pvacsplice" in wf.config["tools"]:
             **wf.get_log_file("netchop", "pvacsplice"),
         threads: wf.get_resource("netchop", "pvacsplice", "threads")
         resources:
-            time=wf.get_resource("netchop", "pvacsplice", "time"),
-            memory=wf.get_resource("netchop", "pvacsplice", "memory"),
+            runtime=wf.get_resource("netchop", "pvacsplice", "runtime"),
+            mem=wf.get_resource("netchop", "pvacsplice", "mem"),
             partition=wf.get_resource("netchop", "pvacsplice", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacsplice", "tmpdir"),
         params:

@@ -11,40 +11,34 @@ import tempfile
 import typing
 from collections import OrderedDict
 from collections.abc import MutableMapping
+from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
 from typing import Any, Callable
 
-import attr
 import pydantic
 import ruamel.yaml as ruamel_yaml
-import snakemake
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
-from biomedsheets.shortcuts import (
-    ShortcutSampleSheet,
-    donor_has_dna_ngs_library,
-    write_pedigree_to_ped,
-    write_pedigrees_to_ped,
-)
-from snakemake.io import InputFiles, OutputFiles, Wildcards, touch
+from biomedsheets.shortcuts import ShortcutSampleSheet
+from snakemake.api import Workflow
+from snakemake.io import touch
+from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
-    MissingConfiguration,
     UnsupportedActionException,
     merge_kwargs,
     print_config,
     print_sample_sheets,
-    snakefile_path,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
-from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.pedigree import append_pedigree_to_ped
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
@@ -116,8 +110,8 @@ class BaseStepPart:
     #: Default resource usage for actions that are not given in ``resource_usage``.
     default_resource_usage: ResourceUsage = ResourceUsage(
         threads=1,
-        time="01:00:00",
-        memory="2G",  # 1h
+        runtime="1h",
+        mem="2GB",  # 1h
     )
 
     #: Configure resource usage here that should not use the default resource usage from
@@ -164,7 +158,7 @@ class BaseStepPart:
         :param action: The action to return the resource requirement for.
         :param resource_name: The name to return the resource for.
         """
-        if resource_name not in ("threads", "time", "memory", "partition", "tmpdir"):
+        if resource_name not in ("threads", "runtime", "mem", "partition", "tmpdir"):
             raise ValueError(f"Invalid resource name: {resource_name}")
 
         def _get_resource(
@@ -230,19 +224,17 @@ class BaseStepPart:
             "Override this method before calling it!"
         )  # pragma: no cover
 
+    def run_locally(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
+        """Runs a function locally for the given action of the sub step and the given wildcards"""
+        raise ImplementationUnavailableError(
+            "Override this method before calling it!"
+        )  # pragma: no cover
+
     def run(self, action: str, wildcards: Wildcards):  # NOSONAR
         """Run the sub steps action action's code with the given wildcards"""
         raise ImplementationUnavailableError(
             "Override this method before calling it!"
         )  # pragma: no cover
-
-    def check_config(self):
-        """Check configuration, raise ``ConfigurationMissing`` on problems
-
-        Override in sub classes.
-
-        :raises:MissingConfiguration: on missing configuration
-        """
 
 
 class WritePedigreeStepPart(BaseStepPart):
@@ -260,29 +252,7 @@ class WritePedigreeStepPart(BaseStepPart):
         super().__init__(parent)
         #: Whether to prevent writing out of samples with out NGS library.
         self.require_dna_ngs_library = require_dna_ngs_library
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            if require_dna_ngs_library:
-                for name, pedigree in sheet.index_ngs_library_to_pedigree.items():
-                    pedigree = pedigree.with_filtered_donors(donor_has_dna_ngs_library)
-                    if only_trios:
-                        in_trio = set()
-                        for donor in pedigree.donors:
-                            if donor.father and donor.mother:
-                                in_trio |= {
-                                    donor.name,
-                                    donor.father.name,
-                                    donor.mother.name,
-                                }
-                        if not any((donor.name in in_trio for donor in pedigree.donors)):
-                            continue  # ignore empty pedigree post filtration
-                        pedigree = pedigree.with_filtered_donors(
-                            lambda donor: donor.name in in_trio
-                        )
-                    self.index_ngs_library_to_pedigree[name] = pedigree
-            else:
-                self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
+        self.only_trios = only_trios
 
     def get_input_files(self, action):
         """Returns function returning input files.
@@ -294,30 +264,32 @@ class WritePedigreeStepPart(BaseStepPart):
 
         @listify
         def get_input_files(wildcards):
-            if "ngs_mapping" not in self.parent.sub_workflows:
-                return  # early exit
-            # Get shortcut to NGS mapping sub workflow
-            ngs_mapping = self.parent.sub_workflows["ngs_mapping"]
-            # Get names of primary libraries of the selected pedigree.  The pedigree is selected
-            # by the primary DNA NGS library of the index.
-            pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-            if not pedigree.index or not pedigree.index.dna_ngs_library:
-                msg = "INFO: pedigree without index (names: {})"  # pragma: no cover
-                donor_names = list(sorted(d.name for d in pedigree.donors))
-                print(msg.format(donor_names), file=sys.stderr)  # pragma: no cover
+            df = self.parent.build_library_dataframe()
+            if df.empty:
                 return
-            mappers = self.w_config.step_config["ngs_mapping"].tools.dna
-            tpl = "output/{mapper}.{library_name}/out/{mapper}.{library_name}{ext}"
-            for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-                library_name = donor.dna_ngs_library.name
-                for mapper in mappers:
-                    path = tpl.format(
-                        library_name=library_name,
-                        mapper=mapper,
-                        ext=".bam",
-                        **wildcards,
-                    )
-                    yield ngs_mapping(path)
+
+            # Cancer cases: do not generate pedigree logic for now
+            if df["kind"].eq("cancer").all():
+                return
+
+            if wildcards.index_ngs_library == "whole_cohort":
+                df_cohort = df[df["kind"] == "germline"]
+            else:
+                df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
+
+            if self.require_dna_ngs_library:
+                df_cohort = df_cohort[df_cohort["extraction_type"] == "dna"]
+
+            # TODO only_trios not fully implemented via pandas yet, fall back to writing all
+
+            tpl = "output/{library_name}/out/{library_name}{ext}"
+            for _, row in df_cohort.iterrows():
+                path = tpl.format(
+                    library_name=row["library_name"],
+                    ext=".bam",
+                    **wildcards,
+                )
+                yield self.parent.upstream("ngs_mapping")(path)
 
         return get_input_files
 
@@ -325,30 +297,47 @@ class WritePedigreeStepPart(BaseStepPart):
         self._validate_action(action=action)
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
-    # @listify
     def get_result_files(self):
-        # tpl = self.get_output_files("run")
-        # for sheet in getattr(self.parent, "shortcut_sheets", []):
-        #     for index_ngs_library in sheet.index_ngs_library_to_pedigree.keys():
-        #         yield tpl.format(index_ngs_library=index_ngs_library)
         return []
 
     def run(self, wildcards: Wildcards, output: OutputFiles):
-        """Write out the pedigree information
+        """Write out the pedigree information"""
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            with open(str(output), "w") as f:
+                f.write("")
+            return
 
-        :param wildcards: Snakemake wildcards associated with rule (unused).
-        :type wildcards: snakemake.io.Wildcards
+        # Skip for cancer completely
+        if df["kind"].eq("cancer").all():
+            with open(str(output), "w") as f:
+                f.write("")
+            return
 
-        :param output: Snakemake output associated with rule.
-        :type output: snakemake.io.Namedlist
-        """
         if wildcards.index_ngs_library == "whole_cohort":
-            write_pedigrees_to_ped(self.index_ngs_library_to_pedigree.values(), str(output))
+            df_cohort = df[df["kind"] == "germline"]
         else:
-            write_pedigree_to_ped(
-                self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
-                str(output),
-            )
+            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
+
+        with open(str(output), "w") as f:
+            for _, row in df_cohort.iterrows():
+                # Sex encoding: 'male' -> 1, 'female' -> 2, else 0
+                sex_str = str(row["sex"]).lower()
+                sex = "1" if sex_str == "male" else ("2" if sex_str == "female" else "0")
+
+                print(
+                    "\t".join(
+                        [
+                            row["cohort_name"],
+                            row["donor_name"],
+                            row["father_name"],
+                            row["mother_name"],
+                            sex,
+                            str(row["disease_state"]),
+                        ]
+                    ),
+                    file=f,
+                )
 
 
 class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
@@ -356,6 +345,11 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
     Class contains method to write pedigree file for primary DNA sample given the index
     NGS library name.It will create pedigree information based sole on sample name,
     example 'P001' instead of 'P001-N1-DNA1-WGS1'.
+
+    Used by export-external workflows that operate on externally-provided data, so they
+    have no upstream ``ngs_mapping`` dependency.  Overrides ``get_input_files`` to return
+    an empty list — the pedigree is derived solely from the sample sheet and needs no
+    BAM-file ordering constraint.
     """
 
     #: Step name
@@ -364,19 +358,48 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
     def __init__(self, *args, **kwargs):
         WritePedigreeStepPart.__init__(self, *args, **kwargs)
 
+    def get_input_files(self, action):
+        """Return empty input list — pedigree writing only needs sample-sheet data."""
+        self._validate_action(action=action)
+        return []
+
     def run(self, wildcards, output):
-        """Write out the pedigree information
+        """Write out the pedigree information"""
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            with open(str(output), "a") as f:
+                f.write("")
+            return
 
-        :param wildcards: Snakemake wildcards associated with rule (unused).
-        :type wildcards: snakemake.io.Wildcards
+        if df["kind"].eq("cancer").all():
+            with open(str(output), "a") as f:
+                f.write("")
+            return
 
-        :param output: Snakemake output associated with rule.
-        :type output: snakemake.io.Namedlist
-        """
-        append_pedigree_to_ped(
-            pedigree=self.index_ngs_library_to_pedigree[wildcards.index_ngs_library],
-            output_path=str(output),
-        )
+        if wildcards.index_ngs_library == "whole_cohort":
+            df_cohort = df[df["kind"] == "germline"]
+        else:
+            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
+
+        with open(str(output), "a") as f:
+            for _, row in df_cohort.iterrows():
+                sex_str = str(row["sex"]).lower()
+                sex = "1" if sex_str == "male" else ("2" if sex_str == "female" else "0")
+                print(
+                    "\t".join(
+                        [
+                            row["cohort_name"],
+                            row["sample_name"],
+                            row[
+                                "father_name"
+                            ],  # Should technically be mapped to sample_name for consistency if needed, but keeping as is for now
+                            row["mother_name"],
+                            sex,
+                            str(row["disease_state"]),
+                        ]
+                    ),
+                    file=f,
+                )
 
 
 class LinkOutStepPart(BaseStepPart):
@@ -401,15 +424,19 @@ class LinkOutStepPart(BaseStepPart):
     def get_input_files(self, action):
         """Return input file pattern"""
 
+        if not self.disable_patterns:
+            return self.base_path_in
+
+        task_prefix = self.parent.task_path_prefix()
+
         def input_function(wildcards):
             """Helper wrapper function"""
             result = self.base_path_in.format(**wildcards)
             for pattern in self.disable_patterns:
                 if fnmatch(result, pattern):
                     raise ValueError("Blocking match...")
-            return result
+            return task_prefix + result
 
-        assert action == "run", "Unsupported action"
         return input_function
 
     def get_output_files(self, action):
@@ -420,10 +447,17 @@ class LinkOutStepPart(BaseStepPart):
     def get_shell_cmd(self, action, wildcards):
         """Return call for linking out"""
         assert action == "run", "Unsupported action"
-        tpl = "test -h {out} || ln -sr {in_} {out}"
-        in_ = self.base_path_in.replace("{", "{wildcards.")
-        out = self.base_path_out.replace("{", "{wildcards.")
-        return tpl.format(in_=in_, out=out)
+        return "test -h {output[0]} || ln -sr {input[0]} {output[0]}"
+
+    def run_locally(self, action, wildcards):
+        assert action == "run", "Unsupported action"
+        task_prefix = self.parent.task_path_prefix()
+        # Prepend the task prefix to the paths
+        path_out = task_prefix + f"output/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        path_in = task_prefix + f"work/{wildcards.path}/{wildcards.file}.{wildcards.ext}"
+        if not os.path.islink(path_out):
+            target = os.path.relpath(path_in, start=os.path.dirname(path_out))
+            os.symlink(target, path_out)
 
 
 @lru_cache()
@@ -606,7 +640,7 @@ class DataSetInfo:
         return sheet
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@dataclass(frozen=True)
 class DataSearchInfo:
     """Data search information - simplified version of ``DataSetInfo``."""
 
@@ -617,6 +651,18 @@ class DataSearchInfo:
     mixed_se_pe: bool
 
 
+@dataclass(frozen=True)
+class ResolvedDependency:
+    """Normalized dependency resolution result for one ``depends_on`` field."""
+
+    field_name: str
+    task_name: str
+    step_name: str
+    workflow_cls: type["BaseStep"]
+    signature: DataSignature | None
+    expected_schema: type[pydantic.BaseModel] | None
+
+
 class BaseStep:
     """Base class for the pipeline steps
 
@@ -625,6 +671,26 @@ class BaseStep:
 
     #: Override with step name
     name: str
+
+    #: DataSignatures this workflow step consumes
+    consumes: dict[DataSignature, bool] = {}
+
+    #: DataSignatures this workflow step produces
+    produces: list[DataSignature] = []
+
+    #: Default relationships merged into ``build_library_dataframe()``.
+    #: Config-level ``relationships`` override these.
+    default_relationships: dict[str, RelationshipDefinition] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        """Enforce that every ``BaseStep`` subclass declares a ``produces`` contract."""
+        super().__init_subclass__(**kwargs)
+        # Only check concrete leaf classes that inherit produces=[] from BaseStep
+        own_produces = cls.__dict__.get("produces")
+        if own_produces is None and not cls.produces:
+            raise TypeError(
+                f"'{cls.__name__}' must declare a 'produces' list for contract compliance."
+            )
 
     #: Override with the sheet shortcut class to use
     sheet_shortcut_class: type[ShortcutSampleSheet]
@@ -638,12 +704,11 @@ class BaseStep:
 
     @classmethod
     def default_config_yaml(cls):
-        """Override this function for providing default configuration
+        """Return default configuration YAML for this workflow step.
 
-        The configuration should be a YAML fragment. Your configuration should define a top-level
-        key starting with '_' and then consist of the name of the schema, e.g.,
-        '_ngs_mapping_schema'. Your default configuration is then merged into the main
-        configuration where the main configuration takes precedence.
+        The configuration is generated from the step's ``config_model_class`` and should be a
+        YAML fragment with a top-level ``step_config`` key. Your default configuration is then
+        merged into the main configuration where the main configuration takes precedence.
 
         Example: ::
 
@@ -652,7 +717,7 @@ class BaseStep:
                     schema_config:
                       ngs_mapping:
                         max_threads: 16
-                ""\").lstrip()))
+                ""\").lstrip())
 
         Return ``None`` for no default configuration.
 
@@ -660,69 +725,104 @@ class BaseStep:
         (earlier ones will be overwritten by later ones).  This is useful if your schema needs
         configuration for a later one.
         """
-        return ""  # pragma: no cover
+        return cls.config_model_class.default_config_yaml_string()
 
-    def __init__[C: SnappyStepModel](
+    #: Override with the Pydantic model class for configuration validation
+    config_model_class: type[SnappyStepModel]
+
+    @classmethod
+    def get_output_paths(
+        cls, signature: "DataSignature | None" = None, **kwargs
+    ) -> "dict[str, str]":
+        """Return **local** output paths for *signature*.
+
+        Override in concrete workflow classes to expose this step's outputs to downstream
+        consumers via :meth:`get_upstream_paths`.
+
+        :param signature: The
+            :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature` requested by the
+            consumer.  Implementations should check ``signature.satisfies(...)`` and raise
+            ``ValueError`` for unsupported signatures.
+        :param kwargs: Caller-supplied identifiers (e.g. ``library_name``, ``sample_name``)
+            used to parametrise the returned path strings.  Implementations may use
+            ``{library_name}``-style format strings when the identifiers are omitted.
+        :returns: A ``dict[str, str]`` mapping logical output key (e.g. ``"bam"``, ``"vcf"``) to
+            a **local** path string (relative to the step's own ``output/`` directory, e.g.
+            ``"output/{library_name}/out/{library_name}.bam"``).
+        :raises NotImplementedError: When the concrete subclass has not overridden this method.
+        :raises ValueError: When *signature* is not supported by this workflow.
+        """
+        raise NotImplementedError(
+            f"'{cls.__name__}' must implement 'get_output_paths' to act as an upstream provider."
+        )
+
+    @classmethod
+    def supports_signature(cls, required: DataSignature | None) -> bool:
+        """Return whether ``required`` is produced by this workflow class."""
+        if required is None:
+            return True
+        return any(provided.satisfies(required) for provided in cls.produces)
+
+    @classmethod
+    def require_signature(cls, required: DataSignature | None) -> None:
+        """Raise ``ValueError`` when ``required`` is unsupported by this workflow class."""
+        if not cls.supports_signature(required):
+            raise ValueError(f"{cls.__name__} does not support signature: {required}")
+
+    def __init__(
         self,
-        workflow: snakemake.Workflow,
+        workflow: Workflow,
         config: MutableMapping[str, Any],
         config_lookup_paths: tuple[str, ...],
         config_paths: tuple[str, ...],
         work_dir: str,
         *,
-        config_model_class: type[C],
+        task_name: str | None = None,
         previous_steps: tuple[type[typing.Self], ...] | None = None,
     ):
-        self.name = self.__class__.name
-        #: Tuple with absolute paths to configuration files read
+        self.step_name = self.__class__.name
         self.config_paths = config_paths
-        #: Pydantic model class for configuration validation
-        self.config_model_class = config_model_class
-        #: Absolute path to directory of where to perform work
         self.work_dir = work_dir
-        #: Classes of previously executed steps, used for merging their default configuration as
-        #: well.
         self.previous_steps = tuple(previous_steps or [])
-        #: Snakefile "workflow" object
         self.workflow = workflow
         #: Setup logger for the step
         self.logger = logging.getLogger(self.name)
-        self.logger.setLevel(logging.INFO if workflow.verbose else logging.WARN)
-        #: Merge default configuration with true configuration
-        workflow_config = config
-        local_config = workflow_config["step_config"].get(self.name, OrderedDict())
-        self.logger.info(local_config)
-
-        # #: Validate workflow step configuration using its accompanying pydantic model
-        # #: available through self.config_model_class (mandatory keyword arg for BaseStep)
-        # try:
-        #     self.config: C = validate_config(local_config, self.config_model_class)
-        #     # Also update the workflow config, just in case
-        #     workflow_config["step_config"][self.name] = self.config.model_dump(by_alias=True)
-        # except pydantic.ValidationError as ve:
-        #     self.logger.error(f"{self.name} failed validation:\n{local_config}")
-        #     raise ve
-
-        #: Validate complete workflow configuration using SnappyPipeline's ConfigModel
-        #: This includes static_data_config, step_config and data_sets
+        self.logger.setLevel(logging.INFO if getattr(workflow, "verbose", False) else logging.WARN)
         try:
-            # local import of ConfigModel to avoid circular import
             from snappy_pipeline.workflow_model import ConfigModel
 
-            self.w_config: ConfigModel = ConfigModel(**workflow_config)
-            self.config: C = self.w_config.step_config[self.name]
+            self.w_config: ConfigModel = ConfigModel(**config)
         except pydantic.ValidationError as ve:
-            self.logger.error(f"Workflow configuration failed validation:\n{workflow_config}")
             raise ve
 
-        #: Paths with configuration paths, important for later retrieving sample sheet files
+        # 1. Look up the task name injected by the orchestrator
+        req_task_name = config.get("__task_name__") or task_name or self.step_name
+        self.task = next((t for t in self.w_config.tasks if t.name == req_task_name), None)
+
+        # 2. If the task doesn't match our step type (i.e. we are a submodule being
+        # blindly initialized by a parent's boilerplate Snakefile), ignore it and
+        # grab the actual config for our step type.
+        if not self.task or self.task.step != self.step_name:
+            self.task = next((t for t in self.w_config.tasks if t.step == self.step_name), None)
+
+        if not self.task:
+            raise ValueError(f"No task configuration found for step '{self.step_name}'.")
+
+        self.task_name = self.task.name
+        self.logger = logging.getLogger(self.task_name)
+
+        # Validate from mapping input explicitly to ensure nested coercion is applied consistently.
+        # Pass config_lookup_paths as validation context for path resolution.
+        self.config = self.config_model_class.model_validate(
+            self.task.config, context={"config_lookup_paths": config_lookup_paths}
+        )
+        self.depends_on = getattr(self.config, "depends_on", None)
+
         self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps: dict[str, BaseStepPart] = {}
         self.data_set_infos = list(self._load_data_set_infos())
-
-        #: Shortcut to the BioMed SampleSheet objects
         self.sheets = [info.sheet for info in self.data_set_infos]
-        #: Shortcut BioMed SampleSheet keyword arguments
+
         sheet_kwargs_list = [
             merge_kwargs(
                 first_kwargs=self.sheet_shortcut_kwargs,
@@ -730,7 +830,7 @@ class BaseStep:
             )
             for info in self.data_set_infos
         ]
-        #: Shortcut sheets
+
         self.shortcut_sheets = []
         klass = self.__class__.sheet_shortcut_class
         for sheet, kwargs in zip(self.sheets, sheet_kwargs_list):
@@ -739,28 +839,121 @@ class BaseStep:
             self.shortcut_sheets.append(
                 klass(sheet, *(self.__class__.sheet_shortcut_args or []), **kwargs)
             )
-        # Setup onstart/onerror/onsuccess hooks
-        self._setup_hooks()
-        #: Functions from sub workflows, can be used to generate output paths into these workflows
-        self.sub_workflows: dict[str, snakemake.Workflow] = {}
 
-        # Even though we already validated via pydantic, we still call check_config here, as
-        # some of the checks done in substep check_config are not covered by the pydantic models yet
-        # and some of the checks actually influence program logic/flow
-        self._check_config()
+        self._setup_hooks()
+        self.check_config()
 
         config_string = self.config.model_dump_yaml(by_alias=True)
-        self.logger.info(f"Configuration for step {self.name}\n{config_string}")
 
-        config_string = self.w_config.model_dump_yaml(by_alias=True)
-        self.logger.info(f"Configuration for workflow\n{config_string}")
-
-        # Update snakemake.config (which `config` is a reference to)
-        # with the validated configuration.
-        # All fields with default values are explicitly defined.
         _config = _cached_yaml_round_trip_load_str(config_string)
         config.update(_config)
-        self.logger.info(f"Snakemake config\n{config}")
+
+    @staticmethod
+    def task_root(task_name: str) -> str:
+        """Return canonical namespace root for one task."""
+        return f"tasks/{task_name}"
+
+    @classmethod
+    def namespaced_path(cls, task_name: str, local_path: str) -> str:
+        """Return ``local_path`` namespaced below ``tasks/<task_name>/``."""
+        return os.path.join(cls.task_root(task_name), local_path).replace("\\", "/")
+
+    def task_path_prefix(self) -> str:
+        """Return canonical task prefix for this workflow instance."""
+        if getattr(self, "task_name", ""):
+            return f"{self.task_root(self.task_name)}/"
+        return ""
+
+    def get_task_config(self, name: str) -> SnappyStepModel:
+        """Retrieve the typed configuration model of an upstream task based on dependency resolution."""
+
+        # If the requested name matches this instance's step type or task name, return own config.
+        if name == self.name or name == getattr(self, "task_name", ""):
+            return self.config
+
+        # Resolve via config-model typed dependency mapping, then literal name as fallback.
+        dep_target = getattr(self.depends_on, name, None) if self.depends_on is not None else None
+        if dep_target is None and self.depends_on is not None:
+            # Check if any resolved dependency task has a step that matches `name`
+            for dep_field, dep_val in self.depends_on.model_dump().items():
+                if isinstance(dep_val, str) and dep_val:
+                    t = next((tk for tk in self.w_config.tasks if tk.name == dep_val), None)
+                    if t and t.step == name:
+                        dep_target = dep_val
+                        break
+        target_task_name = dep_target or name
+
+        # Find the task in the global config
+        task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
+
+        if not task:
+            matching_steps = [t for t in self.w_config.tasks if t.step == target_task_name]
+            if len(matching_steps) == 1:
+                task = matching_steps[0]
+            elif len(matching_steps) > 1:
+                raise ValueError(
+                    f"Ambiguous dependency: '{target_task_name}' matches multiple tasks by step type. "
+                    f"Please explicitly map it in the 'depends_on' block for task '{self.task_name}'."
+                )
+
+        if not task:
+            raise ValueError(
+                f"Task '{target_task_name}' (resolved from '{name}') not found in configuration."
+            )
+
+        # Instantiate and return its strictly typed config model
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        wf_class = WORKFLOW_REGISTRY.get(task.step)
+        if not wf_class:
+            raise ValueError(
+                f"Workflow class for step '{task.step}' not found in WORKFLOW_REGISTRY."
+            )
+
+        return wf_class.config_model_class.model_validate(task.config)
+
+    def get_preprocessed_path(self) -> str:
+        """Return a preprocessed FASTQ directory from configured RAW dependencies.
+
+        Resolution order:
+
+        1. The ``link_in`` dependency, if configured, using its explicit ``path`` value.
+        2. Any other configured ``depends_on`` field annotated with ``DataSignature(DataType.RAW)``,
+           interpreted as an in-pipeline task that exposes FASTQs under
+           ``tasks/<upstream_task_name>/output`` (e.g. ``adapter_trimming``).
+
+        Returns an empty string if no matching RAW provider dependency is configured.
+        """
+        if self.depends_on is None:
+            return ""
+
+        # Prefer explicit external path from link_in, if available.
+        link_in_task_name = getattr(self.depends_on, "link_in", "")
+        if link_in_task_name:
+            try:
+                upstream_config = self.get_task_config("link_in")
+                explicit_path = getattr(upstream_config, "path", "") or ""
+                if explicit_path:
+                    return explicit_path
+            except Exception:
+                pass
+
+        # Fallback: any configured RAW dependency task with standard output layout.
+        for field_name, field_info in type(self.depends_on).model_fields.items():
+            dep_task_name = getattr(self.depends_on, field_name, "")
+            if not dep_task_name:
+                continue
+            is_raw_dep = any(
+                isinstance(meta, DataSignature) and meta.type.value == "raw"
+                for meta in field_info.metadata
+            )
+            if not is_raw_dep:
+                continue
+            if field_name == "link_in":
+                continue
+            return self.namespaced_path(dep_task_name, "output")
+
+        return ""
 
     def _setup_hooks(self):
         """Setup Snakemake workflow hooks for start/end/error"""
@@ -795,58 +988,85 @@ class BaseStep:
         self.workflow.onerror(on_error)
         self.workflow.onsuccess(on_success)
 
-    def _check_config(self):
-        """Internal method, checks step and sub step configurations"""
-        self.check_config()
-        for step in self.sub_steps.values():
-            step.check_config()
+    def build_library_dataframe(self):
+        """Convenience method to build the unified library dataframe for this workflow."""
+        default_relationships = getattr(type(self), "default_relationships", {})
+        config_relationships = getattr(self.config, "relationships", None) or {}
+        relationships = {**default_relationships, **config_relationships}
+        return build_library_dataframe(
+            self.data_set_infos,
+            self.sheets,
+            self.shortcut_sheets,
+            relationships=relationships or None,
+        )
+
+    @property
+    def effective_group_by(self) -> str | None:
+        """Return the effective ``group_by`` for this workflow.
+
+        Resolution order:
+        1. Explicit ``group_by`` on this task's config.
+        2. Inherited transitively from upstream dependencies.
+        3. ``None`` (per-library default).
+
+        The walk recurses through the dependency chain so that a
+        filtration step depending on annotation depending on variant_calling
+        with ``group_by: cohort`` correctly inherits ``"cohort"``.
+        """
+        own = getattr(self.config, "group_by", None)
+        if own is not None:
+            return own
+        return _resolve_upstream_group_by(
+            self.config, self.get_task_config, _visited=frozenset({self.task_name})
+        )
+
+    @property
+    def output_entities(self) -> list[str]:
+        """Output entity names for this workflow, driven by config.
+
+        Returns cohort-level entity names when ``group_by == "cohort"``,
+        or individual library names otherwise.
+        """
+        selection = getattr(self.config, "library_selection", None)
+        relationships = getattr(self.config, "relationships", None)
+        return output_entity_names(
+            self.data_set_infos,
+            self.sheets,
+            self.shortcut_sheets,
+            selection,
+            self.effective_group_by,
+            relationships=relationships,
+        )
+
+    @property
+    def cohort_members(self) -> dict[str, list[str]]:
+        """Cohort name -> member library names mapping."""
+        selection = getattr(self.config, "library_selection", None)
+        relationships = getattr(self.config, "relationships", None)
+        return cohort_members(
+            self.data_set_infos,
+            self.sheets,
+            self.shortcut_sheets,
+            selection,
+            relationships=relationships,
+        )
+
+    def get_cohort_libraries(self, library_name: str) -> list[str]:
+        """Return all library names in the same cohort as *library_name*.
+
+        Returns ``[library_name]`` when the cohort cannot be found or when
+        ``effective_group_by != "cohort"``.
+        """
+        for _cohort_name, members in self.cohort_members.items():
+            if library_name in members:
+                return members
+        return [library_name]
 
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
 
         Override in sub classes.
-
-        :raises:MissingConfiguration: on missing configuration
         """
-
-    def ensure_w_config(self, config_keys, msg, e_class=MissingConfiguration):
-        """Check parameters in configuration.
-
-        Method ensures required configuration setting are present in the provided configuration;
-        if not, it raises exception.
-
-        :param config_keys: List of strings with all keys that must be present in the configuration
-        for a given step of the analysis to be performed.
-        :type config_keys: tuple
-
-        :param msg: Message to be used in case of exception.
-        :type msg: str
-
-        :param e_class: Preferred exception class to be raised in case of error.
-        Default: MissingConfiguration.
-        :type e_class: class
-        """
-        # Initialise variables
-        so_far = []
-        handle = self.w_config
-
-        # Check if configuration is empty
-        if not handle:
-            tpl = 'Empty configuration ("{full_path}"): {msg}'.format(
-                full_path="/".join(config_keys), msg=msg
-            )
-            raise e_class(tpl)
-
-        # Iterate over required configuration keys
-        for entry in config_keys:
-            # Check if keys are present in config dictionary
-            if (handle := (getattr(handle, entry, None) or handle.get(entry, None))) is not None:
-                so_far.append(entry)
-            else:
-                tpl = 'Missing configuration ("{full_path}", got up to "{so_far}"): {msg}'.format(
-                    full_path="/".join(config_keys), so_far="/".join(so_far), msg=msg
-                )
-                raise e_class(tpl)
 
     def register_sub_step_classes(
         self, classes: tuple[type[BaseStepPart] | tuple[type[BaseStepPart], Any], ...]
@@ -865,30 +1085,147 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def register_sub_workflow(
-        self, step_name: str, workdir: str, sub_workflow_name: str | None = None
-    ):
-        """Register workflow with given pipeline ``step_name`` and in the given ``workdir``.
+    def resolve_dependency(self, field_name: str) -> ResolvedDependency:
+        """Resolve one typed ``depends_on`` field into a normalized dependency object."""
+        if self.depends_on is None:
+            raise AttributeError(
+                f"Task '{self.task_name}' has no 'depends_on' configuration; "
+                f"cannot resolve upstream field '{field_name}'."
+            )
 
-        Optionally, the sub workflow name can be given separate from ``step_name`` (the default)
-        value for it.
-        """
-        sub_workflow_name = sub_workflow_name or step_name
-        if sub_workflow_name in self.sub_workflows:
-            raise ValueError("Sub workflow {} already registered!".format(sub_workflow_name))
-        if os.path.isabs(workdir):
-            abs_workdir = workdir
-        else:
-            abs_workdir = os.path.realpath(os.path.join(os.getcwd(), workdir))
-        self.workflow.subworkflow(
-            sub_workflow_name,
-            workdir=abs_workdir,
-            snakefile=snakefile_path(step_name),
-            configfile=abs_workdir + "/" + "config.yaml",
+        model_fields = type(self.depends_on).model_fields
+        field_info = model_fields.get(field_name)
+        if field_info is None:
+            raise ValueError(
+                f"Task '{self.task_name}' has no depends_on field named '{field_name}'."
+            )
+
+        target_task_name = getattr(self.depends_on, field_name)
+        if not target_task_name:
+            raise ValueError(f"Task '{self.task_name}': depends_on.{field_name} is empty or unset.")
+
+        target_task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
+        if target_task is None:
+            raise ValueError(
+                f"Task '{self.task_name}': upstream task '{target_task_name}' from "
+                f"depends_on.{field_name} was not found in configuration."
+            )
+        step_name = target_task.step
+
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        workflow_cls = WORKFLOW_REGISTRY.get(step_name)
+        if workflow_cls is None:
+            raise ValueError(
+                f"Workflow class for step '{step_name}' (from depends_on.{field_name}="
+                f"'{target_task_name}') not found in WORKFLOW_REGISTRY."
+            )
+
+        required_sig: DataSignature | None = None
+        expected_schema: type[pydantic.BaseModel] | None = None
+        for meta in field_info.metadata:
+            if isinstance(meta, DataSignature):
+                required_sig = meta
+            elif isinstance(meta, ExpectedPathSchema):
+                expected_schema = meta.schema
+            elif isinstance(meta, type) and issubclass(meta, pydantic.BaseModel):
+                expected_schema = meta
+
+        return ResolvedDependency(
+            field_name=field_name,
+            task_name=target_task_name,
+            step_name=step_name,
+            workflow_cls=workflow_cls,
+            signature=required_sig,
+            expected_schema=expected_schema,
         )
-        self.sub_workflows[sub_workflow_name] = self.workflow.globals[sub_workflow_name]
 
-    def get_args(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
+    def upstream(self, field_name: str) -> "Callable[[str], str]":
+        """Return a path-namespacing callable for ``depends_on.<field_name>``.
+
+        The returned callable accepts a single local path string and returns the
+        globally namespaced version (i.e. prefixed with the upstream task name).
+
+        Usage::
+
+            ngs = self.parent.upstream("ngs_mapping")
+            bam = ngs(f"output/{lib}/out/{lib}.bam")
+            bai = ngs(f"output/{lib}/out/{lib}.bam.bai")
+
+        Arguments:
+            field_name: The ``depends_on`` field name identifying the upstream task.
+
+        Returns:
+            A ``str -> str`` callable that prepends the resolved task name.
+        """
+        # Resolve once — cheap after the first call thanks to how resolve_dependency works.
+        dep = self.resolve_dependency(field_name)
+
+        def _prefix(local_path: str) -> str:
+            if local_path.startswith("output/") or local_path.startswith("work/"):
+                return self.namespaced_path(dep.task_name, local_path)
+            return self.namespaced_path(dep.task_name, local_path)
+
+        return _prefix
+
+    def get_upstream_paths(
+        self, req_field_name: str, **kwargs
+    ) -> "pydantic.BaseModel | dict[str, str]":
+        """Resolve global output paths from an upstream task using the Consumer-Driven Contract.
+
+        This is the broker method for the semantic retrieval pattern.  The upstream
+        task's workflow class is located via :data:`~snappy_pipeline.workflow_registry.WORKFLOW_REGISTRY`
+        and its :py:meth:`get_output_paths` classmethod is called to produce **local** paths, which
+        are then namespaced with the upstream task name.
+
+        The ``depends_on`` field referenced by *req_field_name* may carry ``typing.Annotated``
+        metadata with:
+
+        * A :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature` – forwarded to
+          :py:meth:`get_output_paths`.
+        * An optional ``pydantic.BaseModel`` subclass – used to wrap the returned paths into a
+          typed object for dot-notation access.
+
+        Example::
+
+            # in a step part's _get_input_files_run method
+            alignments: ExpectedAlignments = self.parent.get_upstream_paths(
+                "ngs_mapping", library_name=wildcards.library_name
+            )
+            bam = alignments.bam
+            bai = alignments.bai
+
+        Arguments:
+            req_field_name: The field name on ``self.config.depends_on`` that holds the upstream
+                task reference. Must match a key in the ``depends_on`` Pydantic model.
+            kwargs: Forwarded verbatim to the upstream workflow's
+                :py:meth:`get_output_paths` classmethod (e.g. ``library_name``, ``sample_name``).
+
+        Returns:
+            A ``pydantic.BaseModel`` instance when an expected-schema class is present in the
+            ``Annotated`` metadata, otherwise a plain ``dict[str, str]``.
+
+        Raises:
+            AttributeError: If ``self.config`` has no ``depends_on`` attribute.
+            ValueError: If the upstream task or its workflow class cannot be resolved.
+        """
+        dependency = self.resolve_dependency(req_field_name)
+
+        # Delegate path construction to the upstream workflow classmethod.
+        local_paths = dependency.workflow_cls.get_output_paths(
+            signature=dependency.signature, **kwargs
+        )
+
+        # Prepend upstream task name for Snakemake global namespace.
+        global_paths = {
+            k: self.namespaced_path(dependency.task_name, v) for k, v in local_paths.items()
+        }
+
+        if dependency.expected_schema is not None:
+            return dependency.expected_schema(**global_paths)
+        return global_paths
+
+    def get_args(self, sub_step, action):
         """Return arguments for action of substep with given wildcards
 
         Delegates to the sub step object's get_args function
@@ -900,7 +1237,22 @@ class BaseStep:
 
         Delegates to the sub step object's get_input_files function
         """
-        return self._get_sub_step(sub_step).get_input_files(action)
+        input_files = self._get_sub_step(sub_step).get_input_files(action)
+        if callable(input_files):
+
+            def input_wrapper(*args, **kwargs):
+                try:
+                    return input_files(*args, **kwargs)
+                except TypeError as e:
+                    if kwargs and "unexpected keyword argument" in str(e):
+                        if args:
+                            return input_files(*args)
+                        if "wildcards" in kwargs:
+                            return input_files(kwargs["wildcards"])
+                    raise
+
+            return input_wrapper
+        return input_files
 
     def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
@@ -958,6 +1310,13 @@ class BaseStep:
         Delegates to the sub step object's get_shell_cmd function
         """
         return self.substep_dispatch(sub_step, "get_shell_cmd", action, wildcards)
+
+    def run_locally(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
+        """Runs a function locally for the pipeline sub step
+
+        Delegates to the sub step object's run_locally function
+        """
+        return self.substep_dispatch(sub_step, "run_locally", action, wildcards)
 
     def run(self, sub_step: str, action: str, wildcards: Wildcards) -> str:
         """Run command for the given action of the given sub step with the given wildcards
@@ -1029,6 +1388,705 @@ class BaseStep:
                 path,
             )
         )
+
+
+# ---------------------------------------------------------------------------
+# Upstream group_by resolution
+# ---------------------------------------------------------------------------
+
+
+def _resolve_upstream_group_by(config, get_task_config, *, _visited: frozenset[str]):
+    """Walk upstream dependencies looking for a non-None ``group_by``.
+
+    This is a standalone function (rather than a method) so that it can
+    recurse through *config* objects without requiring workflow instances.
+
+    ``get_task_config(task_name)`` must return the config model for a
+    task, resolved from the perspective of the **root** workflow.
+    """
+    depends_on = getattr(config, "depends_on", None)
+    if depends_on is None:
+        return None
+    for field_name in type(depends_on).model_fields:
+        dep_val = getattr(depends_on, field_name, "")
+        if not dep_val or dep_val in _visited:
+            continue
+        try:
+            upstream_cfg = get_task_config(dep_val)
+        except Exception:
+            continue
+        upstream_gb = getattr(upstream_cfg, "group_by", None)
+        if upstream_gb is not None:
+            return upstream_gb
+        result = _resolve_upstream_group_by(
+            upstream_cfg, get_task_config, _visited=_visited | {dep_val}
+        )
+        if result is not None:
+            return result
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Library DataFrame helpers (used by variant_annotation, variant_filtration, …)
+# ---------------------------------------------------------------------------
+
+#: Default pandas query expressions applied when library_selection is None.
+_LIBRARY_SELECTION_DEFAULTS: dict[str, str] = {
+    "cancer": "role == 'tumor' and extraction_type == 'dna'",
+    "germline": "extraction_type == 'dna'",
+}
+
+
+def _derive_pedigree_from_raw_sheet(sheet):
+    """Derive pedigree grouping from raw bio entity relationships.
+
+    Used as fallback when the shortcut sheet lacks pedigree structure
+    (e.g., ``GenericSampleSheet``).  Walks ``sheet.bio_entities`` and
+    uses ``fatherPk``/``motherPk`` (or ``fatherName``/``motherName``)
+    to reconstruct family groupings, identify the index/proband, and
+    assign sex and disease status.
+
+    Returns ``None`` when the sheet contains no usable NGS libraries.
+    Otherwise returns a dict with the same keys that the pedigree
+    branch of :func:`build_library_dataframe` populates.
+    """
+    import collections
+
+    pk_to_lib: dict[int, str] = {}
+    lib_to_be: dict[str, object] = {}
+    name_to_lib: dict[str, str] = {}
+
+    for be in sheet.bio_entities.values():
+        for bs in be.bio_samples.values():
+            for ts in bs.test_samples.values():
+                for lib in ts.ngs_libraries.values():
+                    if not lib.disabled:
+                        pk_to_lib[be.pk] = lib.name
+                        lib_to_be[lib.name] = be
+                        name_to_lib[be.name] = lib.name
+
+    if not pk_to_lib:
+        return None
+
+    # Build parent references for each library.
+    lib_father: dict[str, str] = {}
+    lib_mother: dict[str, str] = {}
+    for lib_name, be in lib_to_be.items():
+        father_ref = be.extra_infos.get("fatherPk")
+        if father_ref is not None:
+            lib_father[lib_name] = pk_to_lib.get(int(father_ref), "0")
+        else:
+            fname = be.extra_infos.get("fatherName", "0")
+            lib_father[lib_name] = name_to_lib.get(fname, "0") if fname and fname != "0" else "0"
+
+        mother_ref = be.extra_infos.get("motherPk")
+        if mother_ref is not None:
+            lib_mother[lib_name] = pk_to_lib.get(int(mother_ref), "0")
+        else:
+            mname = be.extra_infos.get("motherName", "0")
+            lib_mother[lib_name] = name_to_lib.get(mname, "0") if mname and mname != "0" else "0"
+
+    # Union-find to discover families.
+    _uf_parent: dict[str, str] = {}
+
+    def _uf_find(x: str) -> str:
+        while _uf_parent[x] != x:
+            _uf_parent[x] = _uf_parent[_uf_parent[x]]
+            x = _uf_parent[x]
+        return x
+
+    def _uf_union(x: str, y: str) -> None:
+        rx, ry = _uf_find(x), _uf_find(y)
+        if rx != ry:
+            _uf_parent[rx] = ry
+
+    for ln in lib_to_be:
+        _uf_parent[ln] = ln
+
+    for ln in lib_to_be:
+        f = lib_father.get(ln, "0")
+        m = lib_mother.get(ln, "0")
+        if f != "0" and f in _uf_parent:
+            _uf_union(ln, f)
+        if m != "0" and m in _uf_parent:
+            _uf_union(ln, m)
+
+    families: dict[str, list[str]] = collections.defaultdict(list)
+    for ln in lib_to_be:
+        families[_uf_find(ln)].append(ln)
+
+    # Collect PKs of entities that are parents (referenced as father/mother).
+    parent_pks: set[int] = set()
+    for ln, be in lib_to_be.items():
+        fp = be.extra_infos.get("fatherPk")
+        mp = be.extra_infos.get("motherPk")
+        if fp is not None:
+            parent_pks.add(int(fp))
+        if mp is not None:
+            parent_pks.add(int(mp))
+
+    # Per-family: pick index, assign cohort / sex / disease / role.
+    index_lib_names: set[str] = set()
+    father_lib_names: set[str] = set()
+    mother_lib_names: set[str] = set()
+    lib_cohort: dict[str, str] = {}
+    lib_sex: dict[str, str] = {}
+    lib_disease: dict[str, int] = {}
+
+    for members in families.values():
+        # Index is the entity NOT referenced as a parent by anyone.
+        # Prefer the affected one.
+        index: str | None = None
+        for ln in members:
+            be = lib_to_be[ln]
+            if be.pk not in parent_pks:
+                is_affected = be.extra_infos.get("isAffected")
+                if is_affected is True or str(is_affected).lower() == "affected":
+                    index = ln
+                    break
+                if index is None:
+                    index = ln
+        if index is None:
+            index = members[0]
+
+        index_lib_names.add(index)
+
+        for ln in members:
+            be = lib_to_be[ln]
+            lib_cohort[ln] = index
+
+            sex_raw = be.extra_infos.get("sex", "unknown")
+            lib_sex[ln] = sex_raw if sex_raw in ("male", "female") else "unknown"
+
+            is_affected = be.extra_infos.get("isAffected")
+            if is_affected is True or str(is_affected).lower() == "affected":
+                lib_disease[ln] = 2
+            elif is_affected is False or str(is_affected).lower() == "unaffected":
+                lib_disease[ln] = 1
+            else:
+                lib_disease[ln] = 0
+
+            # Identify father / mother roles.
+            lib_pk = be.pk
+            for other_ln, other_be in lib_to_be.items():
+                if other_ln == ln:
+                    continue
+                ofp = other_be.extra_infos.get("fatherPk")
+                omp = other_be.extra_infos.get("motherPk")
+                if ofp is not None and int(ofp) == lib_pk:
+                    father_lib_names.add(ln)
+                if omp is not None and int(omp) == lib_pk:
+                    mother_lib_names.add(ln)
+
+    return {
+        "index_lib_names": index_lib_names,
+        "father_lib_names": father_lib_names,
+        "mother_lib_names": mother_lib_names,
+        "lib_cohort": lib_cohort,
+        "lib_sex": lib_sex,
+        "lib_disease": lib_disease,
+        "lib_father": lib_father,
+        "lib_mother": lib_mother,
+    }
+
+
+def build_library_dataframe(
+    data_set_infos,
+    sheets,
+    shortcut_sheets,
+    relationships=None,
+):
+    """Build a tidy pandas DataFrame with one row per NGS library.
+
+    The shortcut sheet objects (CancerCaseSheet, GermlineCaseSheet, …) are
+    used directly as the data source so that information already computed by
+    biomedsheets (primary pairs, pedigree roles, affected status, sex, …) is
+    re-used rather than re-derived.
+
+    Parameters
+    ----------
+    data_set_infos:
+        Iterable of :class:`DataSetInfo` objects (``self.data_set_infos``).
+    sheets:
+        Corresponding raw biomedsheets ``sheet`` objects (``self.sheets``).
+    shortcut_sheets:
+        Corresponding shortcut sheet objects (``self.shortcut_sheets``).
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per NGS library.  Columns:
+
+        * ``library_name`` — NGS library identifier
+        * ``extraction_type`` — ``"dna"``, ``"rna"``, … (always lower-cased)
+        * ``kind`` — ``"cancer"`` or ``"germline"``
+        * ``role`` — ``"tumor"`` / ``"normal"`` / ``"index"`` / ``"father"``
+          / ``"mother"`` / ``"affected"`` / ``"unaffected"``
+        * ``is_primary`` — ``True`` for primary tumor (cancer) or pedigree
+          index (germline); ``False`` otherwise
+        * ``sex`` — ``"male"``, ``"female"``, or ``"unknown"``
+        * ``donor_name`` — patient / family identifier
+        * ``sample_name`` — bio-sample name
+        * ``tissue_type`` — ``"tumor"``, ``"normal"``, or ``"unknown"``
+    """
+    import pandas as pd
+    from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
+
+    rows: list[dict] = []
+
+    for info, _raw_sheet, shortcut_sheet in zip(data_set_infos, sheets, shortcut_sheets):
+        if info.is_background:
+            continue
+
+        sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
+
+        # ── matched_cancer ───────────────────────────────────────────────────
+        if sheet_type == "matched_cancer":
+            try:
+                csheet = CancerCaseSheet(
+                    _raw_sheet,
+                    options=CancerCaseSheetOptions(
+                        allow_missing_normal=True, allow_missing_tumor=True
+                    ),
+                )
+            except Exception as exc:
+                print(
+                    f"WARNING: could not build cancer library DataFrame: {exc}",
+                    file=sys.stderr,
+                )
+                continue
+
+            # Collect library names that belong to the primary tumor per donor
+            # (first tumor in primary_sample_pairs).
+            primary_tumor_lib_names: set[str] = set()
+            for pair in csheet.primary_sample_pairs:
+                if pair and pair.tumor_sample and pair.tumor_sample.dna_ngs_library:
+                    primary_tumor_lib_names.add(pair.tumor_sample.dna_ngs_library.name)
+                if pair and pair.tumor_sample and pair.tumor_sample.rna_ngs_library:
+                    primary_tumor_lib_names.add(pair.tumor_sample.rna_ngs_library.name)
+
+            for donor in csheet.donors:
+                donor_name = donor.name
+                for bio_sample in donor.bio_samples.values():
+                    is_tumor = bio_sample.extra_infos.get("isTumor", False)
+                    role = "tumor" if is_tumor else "normal"
+                    sample_name = bio_sample.name
+                    for ts in bio_sample.test_samples.values():
+                        ext = ts.extra_infos.get("extractionType", "unknown").lower()
+                        for lib in ts.ngs_libraries.values():
+                            is_primary = lib.name in primary_tumor_lib_names if is_tumor else True
+                            rows.append(
+                                {
+                                    "library_name": lib.name,
+                                    "extraction_type": ext,
+                                    "kind": "cancer",
+                                    "role": role,
+                                    "is_primary": is_primary,
+                                    "sex": "unknown",
+                                    "donor_name": donor_name,
+                                    "sample_name": sample_name,
+                                    "cohort_name": donor_name,
+                                    "father_name": "0",
+                                    "mother_name": "0",
+                                    "disease_state": 0,
+                                    "tissue_type": "tumor" if is_tumor else "normal",
+                                }
+                            )
+
+        # ── germline_variants (and generic) ──────────────────────────────────
+        else:
+            # Derive role and pedigree-level attributes from the shortcut sheet
+            # if it exposes them (GermlineCaseSheet); fall back gracefully for
+            # plain GenericSampleSheet.
+            index_lib_names: set[str] = set()
+            father_lib_names: set[str] = set()
+            mother_lib_names: set[str] = set()
+            lib_sex: dict[str, str] = {}
+            lib_cohort: dict[str, str] = {}
+            lib_father: dict[str, str] = {}
+            lib_mother: dict[str, str] = {}
+            lib_disease: dict[str, int] = {}
+
+            # Determine the pedigrees list: GermlineCaseSheet stores them
+            # in ``cohort.pedigrees``; GenericSampleSheet doesn't have them.
+            pedigrees = (
+                getattr(shortcut_sheet, "pedigrees", None)
+                or getattr(getattr(shortcut_sheet, "cohort", None), "pedigrees", None)
+                or []
+            )
+
+            if pedigrees:
+                # First pass: map donor PKs to their DNA library names
+                pk_to_lib = {}
+                for ped in pedigrees:
+                    for d in ped.donors:
+                        lib = getattr(d, "dna_ngs_library", None)
+                        if lib:
+                            pk_to_lib[getattr(d, "pk", None)] = lib.name
+
+                for ped in pedigrees:
+                    # Index / proband
+                    if ped.index and ped.index.dna_ngs_library:
+                        index_lib_names.add(ped.index.dna_ngs_library.name)
+
+                    # Build sets of PKs referenced as father / mother by children
+                    pk_is_father: set = {
+                        int(d.father_pk)
+                        for d in ped.donors
+                        if getattr(d, "father_pk", None) is not None
+                    }
+                    pk_is_mother: set = {
+                        int(d.mother_pk)
+                        for d in ped.donors
+                        if getattr(d, "mother_pk", None) is not None
+                    }
+
+                    for d in ped.donors:
+                        lib = getattr(d, "dna_ngs_library", None)
+                        if lib is None:
+                            continue
+                        pk = getattr(d, "pk", None)
+                        sex_raw = (
+                            d.extra_infos.get("sex", "unknown")
+                            if hasattr(d, "extra_infos")
+                            else "unknown"
+                        )
+                        lib_sex[lib.name] = sex_raw if sex_raw in ("male", "female") else "unknown"
+                        lib_cohort[lib.name] = (
+                            ped.index.dna_ngs_library.name
+                            if ped.index and ped.index.dna_ngs_library
+                            else "unknown"
+                        )
+                        if pk in pk_is_father:
+                            father_lib_names.add(lib.name)
+                        elif pk in pk_is_mother:
+                            mother_lib_names.add(lib.name)
+
+                        father_pk = getattr(d, "father_pk", None)
+                        mother_pk = getattr(d, "mother_pk", None)
+                        lib_father[lib.name] = pk_to_lib.get(
+                            int(father_pk) if father_pk is not None else None, "0"
+                        )
+                        lib_mother[lib.name] = pk_to_lib.get(
+                            int(mother_pk) if mother_pk is not None else None, "0"
+                        )
+
+                        is_affected = (
+                            d.extra_infos.get("isAffected") if hasattr(d, "extra_infos") else None
+                        )
+                        if is_affected is True or str(is_affected).lower() == "affected":
+                            lib_disease[lib.name] = 2
+                        elif is_affected is False or str(is_affected).lower() == "unaffected":
+                            lib_disease[lib.name] = 1
+                        else:
+                            lib_disease[lib.name] = 0
+            else:
+                # Shortcut sheet lacks pedigree structure (e.g. GenericSampleSheet).
+                # Derive family grouping from the raw bio entity relationships.
+                derived = _derive_pedigree_from_raw_sheet(_raw_sheet)
+                if derived:
+                    index_lib_names = derived["index_lib_names"]
+                    father_lib_names = derived["father_lib_names"]
+                    mother_lib_names = derived["mother_lib_names"]
+                    lib_cohort = derived["lib_cohort"]
+                    lib_sex = derived["lib_sex"]
+                    lib_disease = derived["lib_disease"]
+                    lib_father = derived["lib_father"]
+                    lib_mother = derived["lib_mother"]
+
+            all_ngs_libs = getattr(shortcut_sheet, "all_ngs_libraries", None) or []
+            if not all_ngs_libs and pedigrees:
+                # Collect NGS libraries from pedigree donors as fallback.
+                all_ngs_libs = []
+                for ped in pedigrees:
+                    for d in ped.donors:
+                        lib = getattr(d, "dna_ngs_library", None)
+                        if lib is not None:
+                            all_ngs_libs.append(lib)
+            for lib in all_ngs_libs:
+                ts = lib.test_sample
+                bs = getattr(ts, "bio_sample", None)
+                bio_entity = getattr(bs, "bio_entity", None)
+
+                # Handle both GenericSampleSheet (TestSample has extra_infos)
+                # and GermlineCaseSheet (TestSampleShortcut wraps TestSample).
+                ts_extra = getattr(ts, "extra_infos", None)
+                if ts_extra is None and hasattr(ts, "test_sample"):
+                    ts_extra = getattr(ts.test_sample, "extra_infos", {})
+                else:
+                    ts_extra = ts_extra or {}
+
+                be_extra = getattr(bio_entity, "extra_infos", {}) if bio_entity else {}
+
+                ext = ts_extra.get("extractionType", "unknown").lower()
+                lib_name = lib.name
+                donor_name = getattr(bio_entity, "name", "")
+                sample_name = getattr(bs, "name", "")
+                is_affected = be_extra.get("isAffected") or ts_extra.get("isAffected", None)
+                sex = lib_sex.get(lib_name, "unknown")
+
+                if lib_name in index_lib_names:
+                    role = "index"
+                    is_primary = True
+                elif lib_name in father_lib_names:
+                    role = "father"
+                    is_primary = False
+                elif lib_name in mother_lib_names:
+                    role = "mother"
+                    is_primary = False
+                elif is_affected is True:
+                    role = "affected"
+                    is_primary = False
+                elif is_affected is False:
+                    role = "unaffected"
+                    is_primary = False
+                else:
+                    role = "index"  # singleton / unknown → treat as index
+                    is_primary = True
+
+                rows.append(
+                    {
+                        "library_name": lib_name,
+                        "extraction_type": ext,
+                        "kind": "germline",
+                        "role": role,
+                        "is_primary": is_primary,
+                        "sex": sex,
+                        "donor_name": donor_name,
+                        "sample_name": sample_name,
+                        "cohort_name": lib_cohort.get(lib_name, donor_name),
+                        "father_name": lib_father.get(lib_name, "0"),
+                        "mother_name": lib_mother.get(lib_name, "0"),
+                        "disease_state": lib_disease.get(lib_name, 0),
+                        "tissue_type": "unknown",
+                    }
+                )
+
+    _COLS = [
+        "library_name",
+        "extraction_type",
+        "kind",
+        "role",
+        "is_primary",
+        "sex",
+        "donor_name",
+        "sample_name",
+        "cohort_name",
+        "father_name",
+        "mother_name",
+        "disease_state",
+        "tissue_type",
+    ]
+    df = pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
+    if relationships:
+        df = resolve_relationships(df, relationships)
+    return df
+
+
+def resolve_relationships(df, relationships: dict):
+    """Add relationship columns to the library DataFrame.
+
+    For each relationship definition, a new column is added whose value is
+    looked up from related rows sharing the same ``via`` column value and
+    matching the ``target`` query expression.
+
+    Parameters
+    ----------
+    df:
+        Library DataFrame produced by :func:`build_library_dataframe`.
+    relationships:
+        Dict mapping relationship names to :class:`RelationshipDefinition`
+        instances (or dicts with ``via``, ``target``, ``column``, ``many``
+        keys).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of *df* with additional relationship columns.
+    """
+    if df.empty or not relationships:
+        return df
+
+    result = df.copy()
+
+    for rel_name, rel_def in relationships.items():
+        # Accept both model instances and plain dicts.
+        via = rel_def.via if hasattr(rel_def, "via") else rel_def["via"]
+        target = rel_def.target if hasattr(rel_def, "target") else rel_def["target"]
+        column = (
+            rel_def.column if hasattr(rel_def, "column") else rel_def.get("column")
+        ) or rel_name
+        many = rel_def.many if hasattr(rel_def, "many") else rel_def.get("many", False)
+
+        if via not in result.columns:
+            raise ValueError(
+                f"Relationship {rel_name!r}: join column {via!r} not found in DataFrame. "
+                f"Available columns: {list(result.columns)}"
+            )
+
+        # Build a lookup: for each unique ``via`` value, find matching rows.
+        # We query the full DataFrame for each group so that the target
+        # expression can reference any column.
+        matched: dict[str, list[str]] = {}
+        for via_val, group in result.groupby(via):
+            try:
+                hits = group.query(target)
+            except Exception as exc:
+                raise ValueError(
+                    f"Relationship {rel_name!r}: target query {target!r} failed: {exc}"
+                ) from exc
+            matched[str(via_val)] = hits["library_name"].tolist()
+
+        if many:
+            result[column] = result[via].map(lambda v: matched.get(str(v), []))
+        else:
+
+            def _single_match(via_value):
+                matches = matched.get(str(via_value), [])
+                if len(matches) > 1:
+                    raise ValueError(
+                        f"Relationship {rel_name!r}: expected single match for "
+                        f"via value {via_value!r}, got {len(matches)}: {matches}. "
+                        f"Use 'many: true' if multiple matches are expected."
+                    )
+                return matches[0] if matches else ""
+
+            result[column] = result[via].map(_single_match)
+
+    return result
+
+
+def apply_library_selection(
+    df,
+    selection: str | None,
+    kind: str,
+):
+    """Filter *df* using *selection* or the per-*kind* default.
+
+    Parameters
+    ----------
+    df:
+        Library DataFrame produced by :func:`build_library_dataframe`.
+    selection:
+        A pandas ``DataFrame.query()`` expression, or ``None`` to use the
+        default for *kind*.
+    kind:
+        Sheet kind (``"cancer"`` or ``"germline"``); used only when
+        *selection* is ``None``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered subset of *df*.
+    """
+    if df.empty:
+        return df
+    expr = selection if selection is not None else _LIBRARY_SELECTION_DEFAULTS.get(kind, "")
+    if not expr:
+        return df
+    try:
+        return df.query(expr)
+    except Exception as exc:
+        raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
+
+
+def output_entity_names(
+    data_set_infos,
+    sheets,
+    shortcut_sheets,
+    selection: str | None,
+    group_by: str | None = None,
+    relationships=None,
+) -> list[str]:
+    """Return output entity names driven by *group_by* and *selection*.
+
+    When ``group_by == "cohort"``, returns one primary library name per
+    cohort (pedigree).  Otherwise returns individual library names.
+
+    Parameters
+    ----------
+    data_set_infos, sheets, shortcut_sheets:
+        As returned by ``BaseStep`` initialisation.
+    selection:
+        ``library_selection`` value from the step config (may be ``None``).
+    group_by:
+        ``"cohort"`` for cohort-level granularity, ``None`` or ``"library"``
+        for per-library granularity.
+    relationships:
+        Optional relationship definitions passed to
+        :func:`build_library_dataframe`.
+    """
+    import pandas as pd
+
+    df = build_library_dataframe(
+        data_set_infos, sheets, shortcut_sheets, relationships=relationships
+    )
+    if df.empty:
+        return []
+
+    # Apply per-kind defaults when no explicit selection is given.
+    if selection is not None:
+        df = apply_library_selection(df, selection, "germline")
+    else:
+        rows = []
+        for kind in ("cancer", "germline"):
+            subset = df[df["kind"] == kind]
+            default = _LIBRARY_SELECTION_DEFAULTS.get(kind, "")
+            if default:
+                subset = subset.query(default)
+            rows.append(subset)
+        df = pd.concat(rows) if rows else df.iloc[0:0]
+
+    if df.empty:
+        return []
+
+    if group_by == "cohort":
+        # Return primary library name per cohort.
+        entities = []
+        for _, group in df.groupby("cohort_name"):
+            primary = group[group["is_primary"]]
+            if not primary.empty:
+                entities.append(primary.iloc[0]["library_name"])
+            else:
+                entities.append(group.iloc[0]["library_name"])
+        return entities
+    else:
+        # Per-library: return distinct library names.
+        return df["library_name"].unique().tolist()
+
+
+def cohort_members(
+    data_set_infos,
+    sheets,
+    shortcut_sheets,
+    selection: str | None,
+    relationships=None,
+) -> dict[str, list[str]]:
+    """Return mapping from cohort name to member library names.
+
+    Parameters
+    ----------
+    data_set_infos, sheets, shortcut_sheets:
+        As returned by ``BaseStep`` initialisation.
+    selection:
+        ``library_selection`` value from the step config (may be ``None``).
+    relationships:
+        Optional relationship definitions passed to
+        :func:`build_library_dataframe`.
+    """
+    df = build_library_dataframe(
+        data_set_infos, sheets, shortcut_sheets, relationships=relationships
+    )
+    if df.empty:
+        return {}
+
+    if selection is not None:
+        df = apply_library_selection(df, selection, "germline")
+
+    result: dict[str, list[str]] = {}
+    for cohort_name, group in df.groupby("cohort_name"):
+        result[cohort_name] = group["library_name"].tolist()
+    return result
 
 
 class LinkInPathGenerator:
@@ -1152,13 +2210,13 @@ class LinkInPathGenerator:
         # Iterate over DataSetInfo objects
         for info in data_set_infos:
             # Search paths - expects a list already
-            out_list.extend(getattr(info, "search_paths"))
+            out_list.extend(info.search_paths)
 
             # Sheet path
             # Only name of file is stored in config file (relative path used),
             # hence we need to find it in the base paths
-            sheet_file_name = getattr(info, "sheet_path")  # expects a string
-            base_paths = getattr(info, "base_paths")  # expects a list
+            sheet_file_name = info.sheet_path  # expects a string
+            base_paths = info.base_paths  # expects a list
             sheet_path = cls._find_sheet_file(sheet_file_name, base_paths)
             # Append if not None
             if sheet_path:
@@ -1214,8 +2272,7 @@ def get_ngs_library_folder_name(sheets, library_name):
     raise ValueError("Found no folders for NGS library of name {}".format(library_name))
 
 
-# TODO: Rename to LinkInStepPart
-class LinkInStep(BaseStepPart):
+class LinkInStepPart(BaseStepPart):
     """Link in the raw files, e.g. FASTQ files
 
     Depending on the configuration, the files are linked out after postprocessing
@@ -1226,14 +2283,7 @@ class LinkInStep(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_pattern_out = "work/input_links/{library_name}/.done"
-
-        # The key 'path_link_in' is only defined for pipelines that could used preprocessed
-        # FASTQ files. That doesn't make sense for pipelines that are using externally generated
-        # data already.
-        try:
-            preprocessed_path = self.config.path_link_in
-        except AttributeError:
-            preprocessed_path = ""
+        self.preprocessed_path = self.parent.get_preprocessed_path()
 
         # Path generator.
         self.path_gen = LinkInPathGenerator(
@@ -1241,7 +2291,7 @@ class LinkInStep(BaseStepPart):
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
             cache_file_name=".snappy_path_cache",
-            preprocessed_path=preprocessed_path,
+            preprocessed_path=self.preprocessed_path,
         )
 
     def get_input_files(self, action):
@@ -1253,17 +2303,14 @@ class LinkInStep(BaseStepPart):
         return touch(self.base_pattern_out)
 
     def get_shell_cmd(self, action, wildcards):
-        """Return call for linking in the files
-
-        The files are linked, keeping their relative paths to the item matching the "folderName"
-        intact.
-        """
+        """Return call for linking in the files"""
         assert action == "run", "Unsupported action"
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        task_prefix = self.parent.task_path_prefix()
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Get folder name of first library candidate
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.config.path_link_in:
+        if self.preprocessed_path:
             folder_name = wildcards.library_name
         # Perform the command generation
         lines = []
@@ -1295,13 +2342,57 @@ class LinkInStep(BaseStepPart):
             raise Exception(msg)
         return "\n".join(lines)
 
+    def run_locally(self, action, wildcards):
+        """Links fastq files"""
+        assert action == "run", "Unsupported action"
+
+        task_prefix = self.parent.task_path_prefix()
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
+
+        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
+        if self.preprocessed_path:
+            folder_name = wildcards.library_name
+
+        filenames = self._create_all_symlinks(self.path_gen, folder_name, out_path)
+        if not filenames:
+            msg = "Found no files to link in for {}".format(dict(**wildcards))
+            print(msg, file=sys.stderr)
+            raise Exception(msg)
+
+    @staticmethod
+    def _create_all_symlinks(
+        path_generator,
+        folder_name,
+        out_path,
+        pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam"),
+    ):
+        filenames = {}  # generated so far
+        for src_path, path_infix, filename in path_generator.run(folder_name, pattern_set_keys):
+            new_path = os.path.join(out_path, path_infix, filename)
+            if new_path in filenames:
+                if filenames[new_path] == src_path:
+                    continue  # ignore TODO: better correct this
+                msg = "WARNING: Detected double output path {}"
+                print(msg.format(filename), file=sys.stderr)
+            filenames[new_path] = src_path
+            # Create the symlink
+            d = os.path.realpath(os.path.join(out_path, path_infix))
+            link = os.path.join(d, filename)
+            os.makedirs(d, exist_ok=True)
+            if not os.path.islink(link):
+                target = os.path.relpath(
+                    os.path.join(os.path.realpath(src_path), filename), start=d
+                )
+                os.symlink(target, link)
+        return filenames
+
     def run(self, action, wildcards):
         raise ImplementationUnavailableError(
             "run() not implemented for linking in reads"
         )  # pragma: no cover
 
 
-class LinkInVcfExternalStepPart(LinkInStep):
+class LinkInVcfExternalStepPart(LinkInStepPart):
     """Link in the external VCF files."""
 
     #: Step name
@@ -1323,14 +2414,15 @@ class LinkInVcfExternalStepPart(LinkInStep):
         intact.
         """
         self._validate_action(action)
+        task_prefix = self.parent.task_path_prefix()
         # Define path generator
         path_gen = LinkInPathGenerator(
             self.parent.work_dir,
             self.parent.data_search_infos,
             self.parent.config_lookup_paths,
         )
-        # Get base out path
-        out_path = os.path.dirname(self.base_pattern_out.format(**wildcards))
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
         # Perform the command generation
         lines = []
         tpl = (
@@ -1362,6 +2454,33 @@ class LinkInVcfExternalStepPart(LinkInStep):
             print(msg, file=sys.stderr)
             raise Exception(msg)
         return "\n".join(lines)
+
+    def run_locally(self, action, wildcards):
+        """Links fastq files
+
+        The files are linked, keeping their relative paths to the item matching the "folderName"
+        intact.
+        """
+        self._validate_action(action)
+        task_prefix = self.parent.task_path_prefix()
+        # Define path generator
+        path_gen = LinkInPathGenerator(
+            self.parent.work_dir,
+            self.parent.data_search_infos,
+            self.parent.config_lookup_paths,
+        )
+        # Get base out path with the task prefix prepended
+        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
+        filenames = self._create_all_symlinks(
+            path_generator=path_gen,
+            folder_name=wildcards.library_name,
+            out_path=out_path,
+            pattern_set_keys=self.pattern_set_keys,
+        )
+        if not filenames:
+            msg = "Found no files to link in for {}".format(dict(**wildcards))
+            print(msg, file=sys.stderr)
+            raise Exception(msg)
 
 
 class LinkInBamExternalStepPart(LinkInVcfExternalStepPart):

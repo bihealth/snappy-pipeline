@@ -47,4 +47,9 @@ def test_install_R_package(fake_fs, mocker, fp):
             ]
         )
         fp.register_subprocess(["R", "--vanilla", "-e", script], stdout="")
-        install_R_package(dest="/path/to/lib", name="package", repository=package["repo"], url=package.get("url", None))
+        install_R_package(
+            dest="/path/to/lib",
+            name="package",
+            repository=package["repo"],
+            url=package.get("url", None),
+        )

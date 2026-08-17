@@ -22,6 +22,7 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 
 wf = VariantCheckingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
+
 # Rules =======================================================================
 
 
@@ -32,7 +33,8 @@ localrules:
     variant_checking_write_pedigree_run,
 
 
-rule all:
+rule variant_checking_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -48,7 +50,7 @@ rule variant_checking_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Variant Checking ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,13 +73,13 @@ rule variant_checking_peddy_run:
         **wf.get_input_files("peddy", "run"),
     output:
         **wf.get_output_files("peddy", "run"),
-    threads: wf.get_resource("peddy", "run", "threads")
-    resources:
-        time=wf.get_resource("peddy", "run", "time"),
-        memory=wf.get_resource("peddy", "run", "memory"),
-        partition=wf.get_resource("peddy", "run", "partition"),
-        tmpdir=wf.get_resource("peddy", "run", "tmpdir"),
     log:
         wf.get_log_file("peddy", "run"),
+    threads: wf.get_resource("peddy", "run", "threads")
+    resources:
+        runtime=wf.get_resource("peddy", "run", "runtime"),
+        mem=wf.get_resource("peddy", "run", "mem"),
+        partition=wf.get_resource("peddy", "run", "partition"),
+        tmpdir=wf.get_resource("peddy", "run", "tmpdir"),
     wrapper:
         wf.wrapper_path("peddy/run")

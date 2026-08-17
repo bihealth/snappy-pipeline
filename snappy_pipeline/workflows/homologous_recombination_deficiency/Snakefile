@@ -26,6 +26,7 @@ wf = HomologousRecombinationDeficiencyWorkflow(
     workflow, config, lookup_paths, config_paths, os.getcwd()
 )
 
+
 # Rules =======================================================================
 
 
@@ -34,7 +35,8 @@ localrules:
     homologous_recombination_deficiency_link_out_run,
 
 
-rule all:
+rule homologous_recombination_deficiency_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -50,7 +52,7 @@ rule homologous_recombination_deficiency_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Homologous Recombination Deficiency score ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,19 +63,19 @@ rule homologous_recombination_deficiency_link_out_run:
 rule homologous_recombination_deficiency_scarHRD_install:
     output:
         **wf.get_output_files("scarHRD", "install"),
+    log:
+        **wf.get_log_file("scarHRD", "install"),
+    resources:
+        runtime=wf.get_resource("scarHRD", "install", "runtime"),
+        mem=wf.get_resource("scarHRD", "install", "mem"),
+        partition=wf.get_resource("scarHRD", "install", "partition"),
+        tmpdir=wf.get_resource("scarHRD", "install", "tmpdir"),
     params:
         packages=[
             {"name": "aroneklund/copynumber", "repo": "github"},
             {"name": "sequenzatools/sequenza@3.0.0", "repo": "bitbucket"},
             {"name": "sztup/scarHRD", "repo": "github"},
         ],
-    resources:
-        time=wf.get_resource("scarHRD", "install", "time"),
-        memory=wf.get_resource("scarHRD", "install", "memory"),
-        partition=wf.get_resource("scarHRD", "install", "partition"),
-        tmpdir=wf.get_resource("scarHRD", "install", "tmpdir"),
-    log:
-        **wf.get_log_file("scarHRD", "install"),
     wrapper:
         wf.wrapper_path("scarHRD/install")
 
@@ -83,15 +85,15 @@ rule homologous_recombination_deficiency_scarHRD_run:
         unpack(wf.get_input_files("scarHRD", "run")),
     output:
         **wf.get_output_files("scarHRD", "run"),
-    params:
-        args=wf.get_args("scarHRD", "run"),
-    threads: wf.get_resource("scarHRD", "run", "threads")
-    resources:
-        time=wf.get_resource("scarHRD", "run", "time"),
-        memory=wf.get_resource("scarHRD", "run", "memory"),
-        partition=wf.get_resource("scarHRD", "run", "partition"),
-        tmpdir=wf.get_resource("scarHRD", "run", "tmpdir"),
     log:
         **wf.get_log_file("scarHRD", "run"),
+    threads: wf.get_resource("scarHRD", "run", "threads")
+    resources:
+        runtime=wf.get_resource("scarHRD", "run", "runtime"),
+        mem=wf.get_resource("scarHRD", "run", "mem"),
+        partition=wf.get_resource("scarHRD", "run", "partition"),
+        tmpdir=wf.get_resource("scarHRD", "run", "tmpdir"),
+    params:
+        args=wf.get_args("scarHRD", "run"),
     wrapper:
         wf.wrapper_path("scarHRD/run")

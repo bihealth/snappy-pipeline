@@ -12,13 +12,13 @@ import sys
 from collections import namedtuple
 from typing import Iterator
 
-from snakemake.io import Wildcards
-
-from biomedsheets.models import BioEntity, BioSample, TestSample, NGSLibrary, SheetEntry
+from biomedsheets.models import BioEntity, BioSample, NGSLibrary, SheetEntry, TestSample
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import CbioportalExport as CbioportalExportConfigModel
 
@@ -78,12 +78,10 @@ CASE_LIST_FILES = {
 
 LibraryPair = namedtuple("LibraryPair", ("normal", "tumor"))
 
-DEFAULT_CONFIG = CbioportalExportConfigModel.default_config_yaml_string()
-
 
 # ================================================================================================
 #
-# Abstract classes: one generic, and the other for substeps dealing with a single sample at a time
+# Abstract classes: one generic, and the other for substeps dealing with a single sample at a runtime
 #
 # ================================================================================================
 
@@ -189,16 +187,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.name_pattern = None
-        if self.config.is_filtered:
-            self.name_pattern = "{mapper}.{caller}.{annotator}.filtered.{{tumor_library}}"
-        else:
-            self.name_pattern = "{mapper}.{caller}.{annotator}.{{tumor_library}}"
-        self.name_pattern = self.name_pattern.format(
-            mapper=self.config.mapping_tool,
-            caller=self.config.somatic_variant_calling_tool,
-            annotator=self.config.somatic_variant_annotation_tool,
-        )
+        self.name_pattern = "{tumor_library}"
 
         # Build shortcut from cancer bio sample name to matched cancer sample
         donors = {}
@@ -254,11 +243,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         """Return input vcf for each output maf"""
         # Validate action
         self._validate_action(action)
-        somatic_variant = self.parent.sub_workflows["somatic_variant"]
-        tpl = somatic_variant(
-            os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
-        )
-        yield "vcf", tpl
+        tpl = os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
+        yield "vcf", self.parent.upstream("somatic_variant")(tpl)
 
     @dictify
     def get_log_file(self, action):
@@ -286,7 +272,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
                 "normal_sample": self._get_normal_lib_name(wildcards),
                 "tumor_id": self._get_tumor_bio_sample(wildcards),
                 "normal_id": self._get_normal_bio_sample(wildcards),
-                "somatic_variant_annotation_tool": self.config.somatic_variant_annotation_tool,
+                "somatic_variant_annotation_tool": self.config.vcf2maf.annotation_tool,
                 "ncbi_build": self.config.vcf2maf.ncbi_build,
                 "Center": self.config.vcf2maf.Center,
             }
@@ -318,8 +304,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="5120M",
+            runtime="2h",  # 2 hours
+            mem="5120MB",
         )
 
 
@@ -340,18 +326,9 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = "{mapper}.{caller}.{annotator}."
-        if self.config.is_filtered:
-            name_pattern += "filtered.{{library_name}}"
-        else:
-            name_pattern += "{{library_name}}"
+        name_pattern = "{{library_name}}"
         tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
-        self.input_tpl = tpl.format(
-            mapper=self.config.mapping_tool,
-            caller=self.config.somatic_variant_calling_tool,
-            annotator=self.config.somatic_variant_annotation_tool,
-            ext=".maf",
-        )
+        self.input_tpl = tpl.format(ext=".maf")
 
 
 class cbioportalCns2CnaStepPart(BaseStepPart):
@@ -368,16 +345,12 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         """Return the library"""
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{tumor_library}"
+        name_pattern = "{tumor_library}"
         yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
-            os.path.join(
-                self.config.copy_number_alteration.path_copy_number,
-                "output",
-                name_pattern,
-                "out",
-                name_pattern + "_dnacopy.seg",
+            self.parent.upstream("copy_number")(
+                os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg")
             ),
         )
 
@@ -386,7 +359,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         """Return maf output file"""
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{tumor_library}"
+        name_pattern = "{tumor_library}"
         yield "cna", os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
     @dictify
@@ -394,7 +367,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         """Return path to log files for all data files"""
         # Validate action
         self._validate_action(action)
-        name_pattern = "{mapper}.{caller}.{tumor_library}"
+        name_pattern = "{tumor_library}"
         tpl = os.path.join("work/cna/", name_pattern, "log", name_pattern)
         key_ext = (
             ("log", ".log"),
@@ -422,8 +395,8 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 
@@ -441,12 +414,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = (
-            self.config.mapping_tool
-            + "."
-            + self.config.copy_number_alteration.copy_number_tool
-            + ".{library_name}"
-        )
+        name_pattern = "{library_name}"
         self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
     def get_args(self, action):
@@ -485,8 +453,8 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 
@@ -505,19 +473,24 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        name_pattern = (
-            self.config.mapping_tool
-            + "."
-            + self.config.copy_number_alteration.copy_number_tool
-            + ".{library_name}"
-        )
-        self.input_tpl = os.path.join(
-            self.config.copy_number_alteration.path_copy_number,
-            "output",
-            name_pattern,
-            "out",
-            name_pattern + "_dnacopy.seg",
-        )
+        name_pattern = "{library_name}"
+        self._seg_name_pattern = name_pattern
+
+    @dictify
+    def get_input_files(self, action):
+        """Return path of input files for merging"""
+        self._validate_action(action)
+        for lib in self._yield_libraries():
+            local_path = os.path.join(
+                "output",
+                self._seg_name_pattern,
+                "out",
+                self._seg_name_pattern + "_dnacopy.seg",
+            ).format(library_name=lib.name)
+            yield (
+                lib.test_sample.bio_sample.name,
+                self.parent.upstream("copy_number")(local_path),
+            )
 
     def get_args(self, action: str) -> dict[str, str]:
         self._validate_action(action)
@@ -535,8 +508,8 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 
@@ -559,13 +532,23 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         super().__init__(parent)
 
         name_pattern = self.config.expression.expression_tool + ".{library_name}"
-        self.input_tpl = os.path.join(
-            self.config.expression.path_ngs_mapping,
-            "output",
-            name_pattern,
-            "out",
-            name_pattern + ".GeneCounts.tab",
-        )
+        self._expr_name_pattern = name_pattern
+
+    @dictify
+    def get_input_files(self, action):
+        """Return path of input files for merging"""
+        self._validate_action(action)
+        for lib in self._yield_libraries():
+            local_path = os.path.join(
+                "output",
+                self._expr_name_pattern,
+                "out",
+                self._expr_name_pattern + ".GeneCounts.tab",
+            ).format(library_name=lib.name)
+            yield (
+                lib.test_sample.bio_sample.name,
+                self.parent.upstream("ngs_mapping")(local_path),
+            )
 
     def get_args(self, action):
         # Validate action
@@ -590,8 +573,8 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         self._validate_action(action)
         return ResourceUsage(
             threads=2,
-            time="02:00:00",  # 2 hours
-            memory="8192M",
+            runtime="2h",  # 2 hours
+            mem="8192MB",
         )
 
 
@@ -729,6 +712,15 @@ class cbioportalExportWorkflow(BaseStep):
     #: Workflow name
     name = "cbioportal_export"
 
+    config_model_class = CbioportalExportConfigModel
+
+    consumes = {
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True,
+        DataSignature(DataType.EXPRESSION): False,
+    }
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))]
+
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
@@ -737,18 +729,33 @@ class cbioportalExportWorkflow(BaseStep):
     }
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local cBioPortal export output paths for downstream consumers."""
+        cls.require_signature(signature)
+        _ = kwargs
+        return {
+            "meta_study": "output/upload/meta_study.txt",
+            "clinical_patient": "output/upload/data_clinical_patient.txt",
+        }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=CbioportalExportConfigModel,
+            task_name=task_name,
+            **kwargs,
         )
 
         # cBioPortal requires the genome release as GRC[hm]3[78] in the MAF file
@@ -779,35 +786,7 @@ class cbioportalExportWorkflow(BaseStep):
                 cbioportalExpressionStepPart,
             )
         )
-        # Initialize sub-workflows
-        self.register_sub_workflow(
-            self.config.somatic_variant_step,
-            workdir=self.config.path_somatic_variant,
-            sub_workflow_name="somatic_variant",
-        )
-        if self.config.copy_number_alteration.enabled:
-            if self.config.copy_number_alteration.copy_number_tool in (
-                "cnvkit",
-                "purecn",
-                "sequenza",
-            ):
-                self.register_sub_workflow(
-                    "somatic_targeted_seq_cnv_calling",
-                    workdir=self.config.copy_number_alteration.path_copy_number,
-                    sub_workflow_name="copy_number_step",
-                )
-            else:
-                self.register_sub_workflow(
-                    "somatic_wgs_cnv_calling",
-                    workdir=self.config.copy_number_alteration.path_copy_number,
-                    sub_workflow_name="copy_number_step",
-                )
-        if self.config.expression.enabled:
-            self.register_sub_workflow(
-                "ngs_mapping",
-                workdir=self.config.expression.path_ngs_mapping,
-                sub_workflow_name="ngs_mapping",
-            )
+        # Sub-workflows were registered above.
 
     @listify
     def get_result_files(self):

@@ -1,0 +1,10 @@
+[Metadata]
+schema	cancer_matched
+schema_version	v1
+title	Reference Download and Index Test
+description	Test pipeline for reference download from Ensembl and minimap2 indexing
+
+[Data]
+patientName	sampleName	isTumor	libraryType	folderName
+case001	normal	N	WGS	case001-normal-WGS
+case001	tumor	Y	WGS	case001-tumor-WGS

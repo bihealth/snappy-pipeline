@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline reference_download step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.reference_download import ReferenceDownloadWorkflow
+
+
+configfile: "config.yaml"
+
+
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+wf = ReferenceDownloadWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+
+rule reference_download_all:
+    default_target: True
+    input:
+        wf.get_result_files(),
+
+
+source = str(wf.config.source)
+if source == "ensembl":
+
+    rule reference_download_ensembl_run:
+        output:
+            **wf.get_output_files("ensembl", "run"),
+        log:
+            **wf.get_log_file("ensembl", "run"),
+        cache: "omit-software"
+        threads: wf.get_resource("ensembl", "run", "threads")
+        resources:
+            runtime=wf.get_resource("ensembl", "run", "runtime"),
+            mem=wf.get_resource("ensembl", "run", "mem"),
+            partition=wf.get_resource("ensembl", "run", "partition"),
+            tmpdir=wf.get_resource("ensembl", "run", "tmpdir"),
+        params:
+            args=wf.get_args("ensembl", "run"),
+        wrapper:
+            wf.wrapper_path("reference_download/ensembl")
+
+elif source == "refseq":
+
+    rule reference_download_refseq_run:
+        output:
+            **wf.get_output_files("refseq", "run"),
+        log:
+            **wf.get_log_file("refseq", "run"),
+        cache: "omit-software"
+        threads: wf.get_resource("refseq", "run", "threads")
+        resources:
+            runtime=wf.get_resource("refseq", "run", "runtime"),
+            mem=wf.get_resource("refseq", "run", "mem"),
+            partition=wf.get_resource("refseq", "run", "partition"),
+            tmpdir=wf.get_resource("refseq", "run", "tmpdir"),
+        params:
+            args=wf.get_args("refseq", "run"),
+        wrapper:
+            wf.wrapper_path("reference_download/refseq")
+
+elif source == "ucsc":
+
+    rule reference_download_ucsc_run:
+        output:
+            **wf.get_output_files("ucsc", "run"),
+        log:
+            **wf.get_log_file("ucsc", "run"),
+        cache: "omit-software"
+        threads: wf.get_resource("ucsc", "run", "threads")
+        resources:
+            runtime=wf.get_resource("ucsc", "run", "runtime"),
+            mem=wf.get_resource("ucsc", "run", "mem"),
+            partition=wf.get_resource("ucsc", "run", "partition"),
+            tmpdir=wf.get_resource("ucsc", "run", "tmpdir"),
+        params:
+            args=wf.get_args("ucsc", "run"),
+        wrapper:
+            wf.wrapper_path("reference_download/ucsc")

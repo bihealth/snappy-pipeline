@@ -9,9 +9,9 @@ import pytest
 import snappy_pipeline.apps
 import snappy_pipeline.workflows
 from tests.snappy_pipeline.workflows.conftest import (
-    fake_fs,
-    germline_sheet_fake_fs,
-    germline_sheet_tsv,
+    fake_fs,  # noqa: F401
+    germline_sheet_fake_fs,  # noqa: F401
+    germline_sheet_tsv,  # noqa: F401
 )
 
 
@@ -24,7 +24,7 @@ def germline_sheet_config_yaml():
           reference:
             path: /path/to/ref.fa
 
-        step_config: {}
+        tasks: []
 
         data_sets:
           first_batch:
@@ -47,14 +47,17 @@ def germline_sheet_ngs_mapping_config_yaml():
           name: ngs_mapping
           version: 1
 
-        $ref: 'file://../.snappy_pipeline/config.yaml'
+        $ref: 'file://../config.yaml'
         """
     ).lstrip()
 
 
 @pytest.fixture
 def germline_sheet_fake_noproject_fs(
-    fake_fs, germline_sheet_tsv, germline_sheet_fake_fs, germline_sheet_config_yaml
+    fake_fs,  # noqa: F811
+    germline_sheet_tsv,  # noqa: F811
+    germline_sheet_fake_fs,  # noqa: F811
+    germline_sheet_config_yaml,  # noqa: F811
 ):
     # Create /dev/null
     if not fake_fs.os.path.exists("/dev/null"):
@@ -69,16 +72,18 @@ def germline_sheet_fake_noproject_fs(
 
 @pytest.fixture
 def germline_sheet_fake_project_fs(
-    fake_fs, germline_sheet_tsv, germline_sheet_fake_fs, germline_sheet_config_yaml
+    fake_fs,  # noqa: F811
+    germline_sheet_tsv,  # noqa: F811
+    germline_sheet_fake_fs,  # noqa: F811
+    germline_sheet_config_yaml,  # noqa: F811
 ):
-    fake_fs.fs.create_dir("/project-dir/.snappy_pipeline")
     # Create the configuration YAML file
     fake_fs.fs.create_file(
-        "/project-dir/.snappy_pipeline/config.yaml", contents=germline_sheet_config_yaml
+        "/project-dir/config.yaml", contents=germline_sheet_config_yaml, create_missing_dirs=True
     )
     # Create the sample TSV file
     fake_fs.fs.create_file(
-        "/project-dir/.snappy_pipeline/sheet.tsv",
+        "/project-dir/sheet.tsv",
         contents=germline_sheet_tsv,
         create_missing_dirs=True,
     )
@@ -96,7 +101,7 @@ def germline_sheet_fake_project_fs(
 def germline_sheet_fake_project_ngs_mapping_fs(
     germline_sheet_fake_project_fs, germline_sheet_ngs_mapping_config_yaml
 ):
-    fake_fs = germline_sheet_fake_project_fs
+    fake_fs = germline_sheet_fake_project_fs  # noqa: F811
     fake_fs.fs.create_dir("/project-dir/ngs_mapping")
     fake_fs.fs.create_file(
         "/project-dir/ngs_mapping/config.yaml",

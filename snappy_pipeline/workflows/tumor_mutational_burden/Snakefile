@@ -26,12 +26,16 @@ wf = TumorMutationalBurdenCalculationWorkflow(
 )
 
 
+# Rules =======================================================================
+
+
 localrules:
     # Linking files from work/ to output/ should be done locally
     tumor_mutational_burden_link_out_run,
 
 
-rule all:
+rule tumor_mutational_burden_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -45,7 +49,7 @@ rule tumor_mutational_burden_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 rule tumor_mutational_burden_calculation:
@@ -53,15 +57,15 @@ rule tumor_mutational_burden_calculation:
         **wf.get_input_files("tmb_gathering", "run"),
     output:
         **wf.get_output_files("tmb_gathering", "run"),
+    log:
+        **wf.get_log_file("tmb_gathering", "run"),
     threads: wf.get_resource("tmb_gathering", "run", "threads")
     resources:
-        time=wf.get_resource("tmb_gathering", "run", "time"),
-        memory=wf.get_resource("tmb_gathering", "run", "memory"),
+        runtime=wf.get_resource("tmb_gathering", "run", "runtime"),
+        mem=wf.get_resource("tmb_gathering", "run", "mem"),
         partition=wf.get_resource("tmb_gathering", "run", "partition"),
         tmpdir=wf.get_resource("tmb_gathering", "run", "tmpdir"),
     params:
         args=wf.get_args("tmb_gathering", "run"),
-    log:
-        **wf.get_log_file("tmb_gathering", "run"),
     wrapper:
         wf.wrapper_path("bcftools/TMB")

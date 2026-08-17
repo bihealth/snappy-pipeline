@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for STAR: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-shell.executable("/bin/bash")
 
 args = getattr(snakemake.params, "args", {})
 
@@ -22,30 +25,8 @@ else:
 
 this_file = __file__
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d $TMPDIR/pre.d
 
 # Define left and right reads as Bash arrays
@@ -60,6 +41,13 @@ right_files_prefixed=""
 if [[ "{reads_right}" != "" ]]; then
     right_files=$(IFS=" " ; echo "${{reads_right[*]}}")
     right_files_prefixed=" -2 ${{right_files}}"
+fi
+
+t2g="{args[path_transcript_to_gene]}"
+t2g_cmd=""
+if [[ "$t2g" != "" ]] && [[ "$t2g" != "REQUIRED" ]] && [[ -r "$t2g" ]]
+then
+    t2g_cmd=" -g $t2g"
 fi
 
 libraryType="A"
@@ -81,10 +69,10 @@ then
 fi
 
 salmon quant \
-    -i $(dirname {snakemake.input.indices}) \
+    -i {args[path_index]} \
     -l $libraryType \
     {read_flag} ${{left_files_prefixed}} ${{right_files_prefixed}} \
-    -g {snakemake.input.features} \
+    ${{t2g_cmd}} \
     -o $TMPDIR \
     -p {args[num_threads]} \
     --auxDir aux \
@@ -92,18 +80,16 @@ salmon quant \
 
 # Copy over the output files
 cp $TMPDIR/quant.sf {snakemake.output.transcript_sf}
-md5sum {snakemake.output.transcript_sf} > {snakemake.output.transcript_sf_md5}
-cp $TMPDIR/quant.genes.sf {snakemake.output.gene_sf}
-md5sum {snakemake.output.gene_sf} > {snakemake.output.gene_sf_md5}
+if [[ "${{t2g_cmd}}" != "" ]]
+then
+    cp $TMPDIR/quant.genes.sf {snakemake.output.gene_sf}
+fi
 
 # Copy log files
 log=$(dirname {snakemake.log.log})
 cp $TMPDIR/cmd_info.json $log/cmd_info.json
 cp $TMPDIR/lib_format_counts.json $log/lib_format_counts.json
 cp $TMPDIR/logs/salmon_quant.log $log/salmon_quant.log
-md5sum $log/cmd_info.json > $log/cmd_info.json.md5
-md5sum $log/lib_format_counts.json > $log/lib_format_counts.json.md5
-md5sum $log/salmon_quant.log > $log/salmon_quant.log.md5
 
 # Copy extra files
 aux=$(dirname {snakemake.output.transcript_sf})/aux

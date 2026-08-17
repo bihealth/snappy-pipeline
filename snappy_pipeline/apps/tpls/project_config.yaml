@@ -1,11 +1,11 @@
-# CUBI Pipeline Project "%(project_name)s" Configuration
+# Snappy Pipeline Project "%(project_name)s" Configuration
 #
 # created: %(created_at)s
 
-# Step Configuration ==============================================================================
+# Static Data Configuration ==========================================================
 #
-# Configuration for paths with static data.  This has been preconfigured for the paths on the BIH
-# cluster.
+# Paths to reference data (reference genome, annotation databases, etc.).
+# Relative paths are resolved relative to this config file's directory.
 #
 static_data_config:
   cosmic:
@@ -17,28 +17,29 @@ static_data_config:
   reference:
     path: /fast/projects/cubit/current/static_data/reference/GRCh37/hs37d5/hs37d5.fa
 
-# Step Configuration ==============================================================================
+# Task Configuration ================================================================
 #
-# Configuration for the individual steps.  These can be filled by the snappy-start-step command
-# or initialized already with snappy-start-project.
+# Define pipeline tasks.  Each task references a step type, a unique name,
+# and a self-contained config block.
 #
-step_config: {}
+# Use `snappy task add` to add tasks incrementally.
+#
+tasks: []
 
-# Data Sets =======================================================================================
+# Data Sets ========================================================================
 #
-# Define data sets.  The search paths and patterns are given per data set.
+# Define data sets with sample sheets and search paths/patterns for raw FASTQ files.
 #
 # Example
 # -------
 #
 # data_sets:
-#   first_batch:  # example for a germline data set
-#     file: 01_acheiropodia.tsv
+#   first_batch:
+#     file: samplesheet.tsv
 #     search_patterns:
-#     # Note that currently only "left" and "right" key known
 #     - {'left': '*_R1.fastq.gz', 'right': '*_R2.fastq.gz'}
 #     search_paths:
-#     - /fast/projects/medgen_genomes/2017-01-09_acheiropodia
+#     - /path/to/raw/data
 #     type: germline_variants
 #
 data_sets: {}

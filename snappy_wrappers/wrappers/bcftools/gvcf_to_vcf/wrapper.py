@@ -3,26 +3,16 @@
 
 from typing import TYPE_CHECKING
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 if TYPE_CHECKING:
-    from snakemake.script import snakemake
+    from snakemake.iocontainers import snakemake
 
 args = getattr(snakemake.params, "args", {})
 reference_path = args["reference_path"]
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-exec 2> >(tee -a "{snakemake.log.log}")
-set -x
-# -----------------------------------------------------------------------------
-
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 # Method checks if VCF contains sample
 check_vcf() {{
     # Variables
@@ -54,17 +44,5 @@ while read sample; do
     check_vcf {snakemake.output.vcf} $sample
 done < <(echo {snakemake.params.args[sample_names]})
 
-pushd $(dirname {snakemake.output.vcf})
-md5sum $(basename {snakemake.output.vcf}) > $(basename {snakemake.output.vcf_md5})
-md5sum $(basename {snakemake.output.vcf_tbi}) > $(basename {snakemake.output.vcf_tbi_md5})
-"""
-)
-
-# Compute MD5 sums of logs
-shell(
-    r"""
-md5sum {snakemake.log.log} > {snakemake.log.log_md5}
-md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
 """
 )

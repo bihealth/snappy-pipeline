@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for JAFFA: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.executable("/bin/bash")
-
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 echo ${{JOB_ID:-unknown}} >$(dirname {snakemake.output.done})/sge_job_id
 
@@ -23,10 +26,10 @@ inputdir=$workdir/input
 
 mkdir -p $inputdir
 
-if [[ ! -f "$$inputdir/reads_1.fastq.gz" ]]; then
+if [[ ! -f "$inputdir/reads_1.fastq.gz" ]]; then
     cat {args[left]} > $inputdir/reads_1.fastq.gz
 fi
-if [[ ! -f "$$inputdir/reads_2.fastq.gz" ]]; then
+if [[ ! -f "$inputdir/reads_2.fastq.gz" ]]; then
     cat {args[right]} > $inputdir/reads_2.fastq.gz
 fi
 

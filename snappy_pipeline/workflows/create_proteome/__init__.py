@@ -1,89 +1,36 @@
-# -*- coding: utf-8 -*-
-"""Combine germline & somatic variants (useful for many applications)
-
-==========
-Step Input
-==========
-
-One ``vcf`` file for somatic variants, and another for germline variants.
-
-Both these files can be annotated and/or filtered. But unfortunaterly, because steps
-cannot appear multiple times in the pipeline, if annotation or filtration is used
-for either somatic or germline file, then the combined vcf cannot be further annotated
-or filtered (depending on which one has occurred).
-
-===========
-Step Output
-===========
-
-The combined ``vcf`` is found in ``output/{mapper}.{caller}.{library}/out/output/{mapper}.combined.{library}.vcf.gz``.
-The variant callers, annotator(s) and filtration status are discarded in the filenames.
-It means that for downstream applications (TMB, ...), the status of file must be un-filtered and
-un-annotated, in order to generate the correct filenames.
-
-====================
-Global Configuration
-====================
-
-TODO
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_create_proteome.rst
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
-"""
-
+import os
 from typing import Any
 
-from snakemake.io import Wildcards
-
-from biomedsheets.shortcuts import CancerCaseSheet
+from biomedsheets.shortcuts import GermlineCaseSheet
+from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.common.samplesheet import filter_table_by_modality, sample_sheets
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
     ResourceUsage,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
+from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
+from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 
 from .model import CreateProteome as CreateProteomeConfigModel
-from .model import InputVariantType
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-#: Default configuration for the any_variant_calling step
-DEFAULT_CONFIG = CreateProteomeConfigModel.default_config_yaml_string()
+
+_OUT_PREFIX = "work/{library_name}/out/{library_name}"
+_LOG_PREFIX = "work/{library_name}/log/{library_name}"
 
 
 class CreateProteomeStepPart(BaseStepPart):
     name = "create_proteome"
-
     actions = ("run",)
-
-    default_resource_usage = ResourceUsage(threads=1, memory="4G", time="03:59:59")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        cfg: CreateProteomeConfigModel = self.config
-
-        self.tpl = f"{cfg.tool_ngs_mapping}.{cfg.tool_variant_calling}"
-        if annotator := cfg.tool_variant_annotation:
-            self.tpl += f".{annotator}"
-        if cfg.is_filtered:
-            self.tpl += ".filtered"
-        self.tpl += ".{library}"
+    default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
     def get_input_files(self, action: str):
         self._validate_action(action)
@@ -97,14 +44,13 @@ class CreateProteomeStepPart(BaseStepPart):
         if self.config.path_proteome:
             yield "proteome", self.config.path_proteome
 
-        vcf = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.tpl)
-        variant = self.parent.sub_workflows["variant"]
-        yield "vcf", variant(vcf.format(library=wildcards.library))
+        variant = self.parent.get_upstream_paths("variant", library_name=wildcards.library_name)
+        yield "vcf", getattr(variant, "vcf", None) or variant["vcf"]
 
     def get_output_files(self, action: str) -> dict[str, Any]:
         match action:
             case "run":
-                return {"vcf": "work/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.tpl)}
+                return {"vcf": _OUT_PREFIX + ".fa.gz"}
             case _:
                 raise MissingConfiguration(f"Unimplemented action {action}")
 
@@ -120,53 +66,39 @@ class CreateProteomeStepPart(BaseStepPart):
         match action:
             case "run":
                 for k, ext in (
-                    ("log", "log"),
-                    ("conda_list", "conda_list.txt"),
-                    ("conda_info", "conda_info.txt"),
+                    ("log", ".log"),
+                    ("conda_list", ".conda_list.txt"),
+                    ("conda_info", ".conda_info.txt"),
                 ):
-                    yield k, "work/{tpl}/log/{tpl}.{ext}".format(tpl=self.tpl, ext=ext)
-                    yield (
-                        k + "_md5",
-                        "work/{tpl}/log/{tpl}.{ext}.md5".format(tpl=self.tpl, ext=ext),
-                    )
+                    yield k, _LOG_PREFIX + ext
+                    yield k + "_md5", _LOG_PREFIX + ext + ".md5"
             case _:
                 raise MissingConfiguration(f"Unimplemented action {action}")
 
 
 class CreateProteomeWorkflow(BaseStep):
-    """Perform somatic variant filtration"""
-
-    #: Workflow name
     name = "create_proteome"
+    sheet_shortcut_class = GermlineCaseSheet
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
+    consumes = {DataSignature(DataType.VARIANTS): True}
+    produces = [DataSignature(DataType.TABULAR, frozenset({"proteome"}))]
+
+    config_model_class = CreateProteomeConfigModel
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one."""
-        return DEFAULT_CONFIG
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        return {
+            "proteome": f"output/{lib}/out/{lib}.fa.gz",
+        }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
-        previous_steps = []
-
-        match config["step_config"][self.name]["variant_type"]:
-            case InputVariantType.CALLING:
-                from snappy_pipeline.workflows.any_variant_calling import AnyVariantCallingWorkflow
-
-                previous_steps.append(AnyVariantCallingWorkflow)
-            case InputVariantType.ANNOTATION:
-                from snappy_pipeline.workflows.any_variant_annotation import (
-                    AnyVariantAnnotationWorkflow,
-                )
-
-                previous_steps.append(AnyVariantAnnotationWorkflow)
-            case InputVariantType.FILTRATION:
-                from snappy_pipeline.workflows.any_variant_filtration import (
-                    AnyVariantFiltrationWorkflow,
-                )
-
-                previous_steps.append(AnyVariantFiltrationWorkflow)
+    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir, **kwargs):
+        previous_steps = [
+            VariantCallingWorkflow,
+            VariantAnnotationWorkflow,
+            VariantFiltrationWorkflow,
+        ]
 
         super().__init__(
             workflow,
@@ -174,31 +106,28 @@ class CreateProteomeWorkflow(BaseStep):
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=CreateProteomeConfigModel,
             previous_steps=previous_steps,
+            **kwargs,
         )
-        # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((CreateProteomeStepPart, LinkOutStepPart))
-
-        # Register sub-workflows by variant origin
-        self.register_sub_workflow(
-            f"any_variant_{self.config['variant_type']}",
-            self.config.path_variant,
-            "variant",
-        )
-
-        self.table = filter_table_by_modality(sample_sheets(self.sheets), modality="dna")
-        assert self.table.shape[1] > 0, "No valid samples"
 
     @listify
     def get_result_files(self):
-        tpl = f"{self.config['tool_ngs_mapping']}.{self.config['tool_variant_calling']}"
-        if self.config["tool_variant_annotation"]:
-            tpl += f".{self.config['tool_variant_annotation']}"
-        if self.config["is_filtered"]:
-            tpl += ".filtered"
-        for library in self.table["ngs_library"]:
-            for hash in ("", ".md5"):
-                yield f"output/{tpl}.{library}/out/{tpl}.{library}.fa.gz{hash}"
-                for ext in ("log", "conda_list.txt", "conda_info.txt"):
-                    yield f"output/{tpl}.{library}/log/{tpl}.{library}.{ext}{hash}"
+        for entity_name in self.output_entities:
+            yield from expand(
+                os.path.join("output", "{library_name}", "out", "{library_name}.fa.gz{hash}"),
+                library_name=[entity_name],
+                hash=("", ".md5"),
+            )
+            yield from expand(
+                os.path.join("output", "{library_name}", "log", "{library_name}{ext}"),
+                library_name=[entity_name],
+                ext=(
+                    ".log",
+                    ".log.md5",
+                    ".conda_info.txt",
+                    ".conda_info.txt.md5",
+                    ".conda_list.txt",
+                    ".conda_list.txt.md5",
+                ),
+            )

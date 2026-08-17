@@ -5,40 +5,16 @@ When a matched normal sample is given for the tumor then a log2-transformed rati
 otherwise the log2-transformed relative coverage of the tumor is forwarded.
 """
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 tumor_bcf = snakemake.input.tumor_bcf
 normal_bcf = getattr(snakemake.input, "normal_bcf", None)
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# Write out information about conda installation --------------------------------------------------
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-
-# Also pipe stderr to log file --------------------------------------------------------------------
-
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Setup auto-cleaned TMPDIR -----------------------------------------------------------------------
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Compute ratio or forward relative coverage ------------------------------------------------------
 
 if [[ "{normal_bcf}" == "None" ]]; then
     cp {tumor_bcf} {snakemake.output.bcf}
@@ -60,11 +36,5 @@ else
 
     tabix -f {snakemake.output.bcf}
 fi
-
-# Compute MD5 checksums ---------------------------------------------------------------------------
-
-pushd $(dirname "{snakemake.output.bcf}")
-md5sum $(basename "{snakemake.output.bcf}") >$(basename "{snakemake.output.bcf}").md5
-md5sum $(basename "{snakemake.output.csi}") >$(basename "{snakemake.output.csi}").md5
 """
 )

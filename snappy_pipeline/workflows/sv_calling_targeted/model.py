@@ -3,8 +3,10 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.gcnv import PrecomputedModelEntry, TargetIntervalEntry
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class Tool(enum.StrEnum):
@@ -94,12 +96,18 @@ class Melt(SnappyModel):
     """
 
 
-class SvCallingTargeted(SnappyStepModel, validators.ToolsMixin):
-    path_ngs_mapping: str = "../ngs_mapping"
+class SvCallingTargetedDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    tools: Annotated[
-        list[Tool], EnumField(Tool, [Tool.gcnv, Tool.delly2, Tool.manta], min_length=1)
-    ]
+
+class SvCallingTargeted(SnappyStepModel):
+    depends_on: SvCallingTargetedDependsOn = Field(default_factory=SvCallingTargetedDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.gcnv)]
 
     gcnv: Gcnv | None = None
 

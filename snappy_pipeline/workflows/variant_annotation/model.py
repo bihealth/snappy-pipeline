@@ -3,33 +3,43 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import EnumField, SnappyStepModel, validators
-from snappy_pipeline.models.annotation import Vep
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models.annotation import Mehari, Vep
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 
 
 class Tool(enum.StrEnum):
     vep = "vep"
+    mehari = "mehari"
 
 
-class VepCustom(Vep):
-    buffer_size: int = 100000
-    num_threads: int = 16
+class ExpectedVariantVcf(SnappyModel):
+    """Generic VCF contract consumed by the unified variant_annotation step."""
 
-    cache_version: str = "85"
-    """The cache version to use.  gnomAD v2 used 85, gnomAD v3.1 uses 101."""
-
-    assembly: str = "GRCh37"
-    """The assembly to use.  gnomAD v2 used "GRCh37", gnomAD v3.1 uses "GRCh38"."""
-
-    more_flags: str = "--af_gnomade --af_gnomadg"
+    vcf: str
+    vcf_tbi: str
 
 
-class VariantAnnotation(SnappyStepModel, validators.ToolsMixin):
-    path_variant_calling: Annotated[str, Field(examples=["../variant_calling"])] = (
-        "../variant_calling"
-    )
-    """Path to variant calling"""
+class ExpectedAnnotatedVariants(SnappyModel):
+    """Consumer-driven contract: expected annotated-variant output keys."""
 
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.vep], min_length=1)]
+    vcf: str
+    vcf_tbi: str
 
-    vep: VepCustom | None = None
+
+class VariantAnnotationDependsOn(SnappyModel):
+    variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS),
+        ExpectedPathSchema(ExpectedVariantVcf),
+    ]
+
+
+class VariantAnnotation(SnappyStepModel):
+    depends_on: VariantAnnotationDependsOn
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.vep)]
+
+    vep: Vep = Field(default_factory=Vep)
+
+    mehari: Mehari | None = None

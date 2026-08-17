@@ -57,7 +57,7 @@ Not applicable.
 Default Configuration
 =====================
 
-.. include:: DEFAULT_CONFIG_wgs_sv_external.rst
+.. include:: DEFAULT_CONFIG_wgs_sv_export_external.rst
 
 ==================
 Parallel Execution
@@ -82,6 +82,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import WgsSvExportExternal as WgsSvExportExternalConfigModel
 
@@ -100,7 +101,6 @@ KEY_EXT = {
 }
 
 #: Default configuration for the wgs_sv_export_external step
-DEFAULT_CONFIG = WgsSvExportExternalConfigModel.default_config_yaml_string()
 
 
 class VarfishAnnotatorExternalStepPart(BaseStepPart):
@@ -234,14 +234,14 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         if action == "annotate":
             return ResourceUsage(
                 threads=2,
-                time="4-04:00:00",  # 4 days and 4 hours
-                memory=f"{7 * 1024 * 2}M",
+                runtime="4d",  # 4 days
+                mem=f"{7 * 1024 * 2}MB",
             )
         else:
             return ResourceUsage(
                 threads=1,
-                time="02:00:00",  # 2 hours
-                memory=f"{7 * 1024 * 2}M",
+                runtime="2h",  # 2 hours
+                mem=f"{7 * 1024 * 2}MB",
             )
 
     def get_args(self, action):
@@ -299,11 +299,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         mapper = self.config.tool_ngs_mapping
         caller = self.config.tool_sv_calling_wgs
         if mapper and caller:
-            return f"{mapper}.{caller}."
+            return ""
         elif mapper or caller:
             mapper = mapper or ""
             caller = caller or ""
-            return f"{mapper}{caller}."
+            return ""
         else:
             return ""
 
@@ -313,24 +313,43 @@ class WgsSvExportExternalWorkflow(BaseStep):
 
     #: Workflow name
     name = "wgs_sv_export_external"
+    consumes = {DataSignature(DataType.VARIANTS): True}
+    produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
+    config_model_class = WgsSvExportExternalConfigModel
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default config YAML, to be overwritten by project-specific one"""
-        return DEFAULT_CONFIG
+    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+        """Return local external WGS SV export output paths for downstream consumers."""
+        cls.require_signature(signature)
+        lib = kwargs.get("library_name", "{library_name}")
+        prefix = f"output/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
+        return {
+            "gts": f"{prefix}.gts.tsv.gz",
+            "db_infos": f"{prefix}.db-infos.tsv.gz",
+        }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir):
+    def __init__(
+        self,
+        workflow,
+        config,
+        config_lookup_paths,
+        config_paths,
+        workdir,
+        task_name: str | None = None,
+        **kwargs,
+    ):
         super().__init__(
             workflow,
             config,
             config_lookup_paths,
             config_paths,
             workdir,
-            config_model_class=WgsSvExportExternalConfigModel,
             previous_steps=(),
+            task_name=task_name,
+            **kwargs,
         )
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())
@@ -391,4 +410,8 @@ class WgsSvExportExternalWorkflow(BaseStep):
                         file=sys.stderr,
                     )
                     continue  # pragma: no cover
-                yield from expand(tpl, index_library=[pedigree.index.dna_ngs_library], **kwargs)
+                yield from expand(
+                    tpl,
+                    index_library=[pedigree.index.dna_ngs_library],
+                    **kwargs,
+                )

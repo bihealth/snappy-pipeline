@@ -1,107 +1,94 @@
 name: Tests
 
 on:
-  # always run tests when pushing to main
   push:
     branches: [ main ]
-
-  # only run tests on pull requests which actually modify files that affect the tests
   pull_request:
-    branches_ignore: []
-    # for now, the tests defined in this file are only run when any of the following paths are modified:
+    branches_ignore: [ ]
     paths:
-      # workflow definitions
       - '.tests/**'
-
-      # github workflow configurations
-      - '.github/**'
-
-      # 'base' files of snappy-pipeline
-      - 'snappy_pipeline/*'
-      - 'snappy_pipeline/workflows/abstract/**'
-
-      # steps used in the test workflows
-      - 'snappy_pipeline/workflows/ngs_mapping/**'
-      - 'snappy_pipeline/workflows/somatic_variant_calling/**'
-      - 'snappy_pipeline/workflows/somatic_variant_annotation/**'
-      - 'snappy_pipeline/workflows/somatic_variant_filtration/**'
-
-      # 'base' files of snappy_wrappers
-      - 'snappy_wrappers/*'
-
-      # wrappers used in the test workflows
-      - 'snappy_wrappers/wrappers/alfred/**'
-      - 'snappy_wrappers/wrappers/bcftools/**'
-      - 'snappy_wrappers/wrappers/bwa/**'
-      - 'snappy_wrappers/wrappers/link_in_bam/**'
-      - 'snappy_wrappers/wrappers/mutect/**'
-      - 'snappy_wrappers/wrappers/mutect_par/**'
-      - 'snappy_wrappers/wrappers/mutect2/**'
-      - 'snappy_wrappers/wrappers/mutect2_par/**'
-      - 'snappy_wrappers/wrappers/ngs_chew/**'
-      - 'snappy_wrappers/wrappers/somatic_variant_filtration/**'
-      - 'snappy_wrappers/wrappers/vep/**'
+      - '.github/workflows/ci-e2e.yml'
+      - 'snappy_pipeline/**'
+      - 'snappy_wrappers/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'pixi.lock'
 
 defaults:
   run:
-    shell: bash -el {0}
+    shell: bash
+
+env:
+  PIXI_VERSION: v0.75.0
 
 jobs:
-
-  Dryrun_Tests:
+  dryrun:
+    name: Dry-run all pipeline configs
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          - "3.12"
     steps:
-    - uses: actions/checkout@v4
-      with:
-        lfs: 'true'
+      - uses: actions/checkout@v4
+        with:
+          lfs: 'true'
 
-    - name: Setup conda
-      uses: ./.github/actions/conda-cache
-      with:
-        python-version: ${{ matrix.python-version }}
-        environment-file: environment.yml
-        cache-number: 2
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.6
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          environments: default
+          cache: true
+          frozen: true
 
-    - name: Test workflow (local FASTQs)
-      uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
-      with:
-        directory: .tests/test-workflow
-        snakefile: .tests/test-workflow/workflow/Snakefile
-        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --conda-frontend conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache --dryrun"
-        show-disk-usage-on-error: true
-        snakemake-version: 7.32.4
+      - name: Pull LFS test fixtures
+        run: |
+          git lfs pull --include=".tests/test-workflow/pipelines/**,.tests/test-workflow/resources/**"
 
+      - name: Dry-run each pipeline
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          configs=(.tests/test-workflow/pipelines/*/config.yaml)
+          if [ ${#configs[@]} -eq 0 ]; then
+            echo "No pipeline configs found in .tests/test-workflow/pipelines"
+            exit 1
+          fi
+          for config_path in "${configs[@]}"; do
+            pipeline_dir="$(dirname "${config_path}")"
+            echo "==> Dry-run: ${config_path}"
+            (cd "${pipeline_dir}" && pixi run snappy run -n -- --cores 1)
+          done
 
-  Tests:
+  run:
+    name: Run all pipeline configs
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version:
-          - "3.12"
-    needs:
-      - Dryrun_Tests
+    needs: dryrun
     steps:
-    - uses: actions/checkout@v4
-      with:
-        lfs: 'true'
+      - uses: actions/checkout@v4
+        with:
+          lfs: 'true'
 
-    - name: Setup conda
-      uses: ./.github/actions/conda-cache
-      with:
-        python-version: ${{ matrix.python-version }}
-        environment-file: environment.yml
-        cache-number: 2
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.9.6
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          environments: default
+          cache: true
+          frozen: true
 
-    - name: Test workflow (local FASTQs)
-      uses: snakemake/snakemake-github-action@cebcb23c87aa3a23efddff3f79b3a4bd143d4120
-      with:
-        directory: .tests/test-workflow
-        snakefile: .tests/test-workflow/workflow/Snakefile
-        args: "--configfile .tests/test-workflow/config/config.yaml --use-conda --conda-frontend conda --show-failed-logs -j 2 --conda-cleanup-pkgs cache"
-        show-disk-usage-on-error: true
-        snakemake-version: 7.32.4
+      - name: Pull LFS test fixtures
+        run: |
+          git lfs pull --include=".tests/test-workflow/pipelines/**,.tests/test-workflow/resources/**"
 
+      - name: Run each pipeline
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          configs=(.tests/test-workflow/pipelines/*/config.yaml)
+          if [ ${#configs[@]} -eq 0 ]; then
+            echo "No pipeline configs found in .tests/test-workflow/pipelines"
+            exit 1
+          fi
+          for config_path in "${configs[@]}"; do
+            pipeline_dir="$(dirname "${config_path}")"
+            echo "==> Running: ${config_path}"
+            (cd "${pipeline_dir}" && pixi run snappy run -- --cores 1 --software-deployment-method conda --show-failed-logs)
+          done

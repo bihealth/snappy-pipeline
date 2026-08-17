@@ -11,42 +11,31 @@ This chapter gives the minimal number of commands required for setting up the pi
     This describes the setup as a pipeline user.
     If you want to know about the setup as a pipeline developer, see :ref:`installation`.
 
--------------------
-Install (Mini)conda
--------------------
+-----------------------
+Install pixi
+-----------------------
 
-First, install miniconda, e.g., into ``$HOME/miniconda3``.
-
-.. code-block:: shell
-
-    $ wget -O /tmp/Miniconda3-latest-Linux-x86_64.sh \
-        https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    $ bash /tmp/Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
-
-.. note:: What is conda/miniconda?
-
-    Conda is a Python-based package manager that can also package binary files (such as Bioinformatics software).
-    Miniconda is a minimal Conda installation.
-
-    If anything goes wrong with your Miniconda installation, you can always just remove ``$HOME/miniconda3`` and start anew.
-
-Now, make sure it is available in your ``PATH`` environment variable.
-
-.. code-block:: shell
-
-    $ export PATH=$HOME/miniconda3/bin:$PATH
+First, install `pixi <https://pixi.sh>`_ (see https://pixi.sh/latest/#installation for instructions).
 
 -----------------------
 Install Snappy Pipeline
 -----------------------
 
-The recommended way of installing the CUBI pipeline is via ``pip``.
-
-Replace the `X.Y.Z` in the definition of ``VERSION`` below with the version you find in the ``README.rst`` file of the project on the CUBI GitHub.
+Clone the repository and install with pixi:
 
 .. code-block:: shell
 
-    $ VERSION=vX.Y.Z
-    $ pip install git+ssh://git@github.com:bihealth/snappy-pipeline.git@v${VERSION}#egg=snappy_pipeline
+    $ git clone git@github.com:bihealth/snappy-pipeline.git
+    $ cd snappy-pipeline
+    $ pixi install
 
-Or see ``README.rst`` for a more detailed installation guide and the environment setup step.
+To pin to the exact versions in the lock file (``pixi.lock``), use
+``pixi install --frozen``. The lock file is the single source of truth for all
+dependency versions and is kept in sync with ``pyproject.toml`` via
+``pixi update``.
+
+After installation the ``snappy`` command is available via
+``pixi run snappy <subcommand> ...``.
+
+Or see :ref:`installation` for a more detailed guide, including the developer
+setup with test, lint, and documentation tooling.

@@ -3,7 +3,7 @@
 
 import os
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -54,44 +54,8 @@ if "seg-file" in bound_files.keys():
 if "log-ratio-file" in bound_files.keys():
     extra_commands += " --log-ratio-file={}".format(bound_files["log-ratio-file"])
 
-shell.executable("/bin/bash")
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Setup auto-cleaned tmpdir
-export tmpdir=$(mktemp -d)
-trap "rm -rf $tmpdir" EXIT
-
-# Compute md5 checksum
-md5() {{
-    fn=$1
-    d=$(dirname $fn)
-    f=$(basename $fn)
-    pushd $d 1> /dev/null 2>&1
-    checksum=$(md5sum $f)
-    popd 1> /dev/null 2>&1
-    echo "$checksum"
-}}
-
 # Rename PureCN files to snappy conventions
 rename() {{
     to=$1
@@ -164,21 +128,7 @@ else
         }}
     }}'
 fi
-mv {snakemake.output.segments} $tmpdir/segments.seg
-awk -F'\t' "$pgm" $tmpdir/segments.seg > {snakemake.output.segments}
-
-md5 {snakemake.output.segments} > {snakemake.output.segments_md5}
-md5 {snakemake.output.ploidy} > {snakemake.output.ploidy_md5}
-md5 {snakemake.output.pvalues} > {snakemake.output.pvalues_md5}
-md5 {snakemake.output.vcf} > {snakemake.output.vcf_md5}
-md5 {snakemake.output.vcf_tbi} > {snakemake.output.vcf_tbi_md5}
-md5 {snakemake.output.loh} > {snakemake.output.loh_md5}
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+mv {snakemake.output.segments} $TMPDIR/segments.seg
+awk -F'\t' "$pgm" $TMPDIR/segments.seg > {snakemake.output.segments}
 """
 )

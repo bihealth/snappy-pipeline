@@ -1,57 +1,58 @@
-from enum import Enum
+from enum import IntEnum, StrEnum
 
-from pydantic import Field, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.models.validators import ToolsMixin
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 
 
-class Tool(Enum):
+class Tool(StrEnum):
     BBDUK = "bbduk"
     FASTP = "fastp"
 
 
-class Interleaved(Enum):
+class Interleaved(StrEnum):
     AUTO = "auto"
 
 
-class Qin(Enum):
-    AUTO = "auto"
-    FIELD_33 = "33"
-    FIELD_64 = "64"
-
-
-class Qout(Enum):
+class Qin(StrEnum):
     AUTO = "auto"
     FIELD_33 = "33"
     FIELD_64 = "64"
 
 
-class Statscolumns(Enum):
+class Qout(StrEnum):
+    AUTO = "auto"
+    FIELD_33 = "33"
+    FIELD_64 = "64"
+
+
+class Statscolumns(IntEnum):
     INTEGER_3 = 3
     INTEGER_5 = 5
 
 
-class Gcbins(Enum):
+class Gcbins(StrEnum):
     AUTO = "auto"
 
 
-class Maxhistlen(Enum):
+class Maxhistlen(StrEnum):
     AUTO = "auto"
 
 
-class Idbins(Enum):
+class Idbins(StrEnum):
     AUTO = "auto"
 
 
-class Ktrim(Enum):
+class Ktrim(StrEnum):
     F = "f"
     R = "r"
     L = "l"
 
 
-class Qtrim(Enum):
+class Qtrim(StrEnum):
     RL = "rl"
     F = "f"
     R = "r"
@@ -59,13 +60,13 @@ class Qtrim(Enum):
     W = "w"
 
 
-class Barcodefilter(Enum):
+class Barcodefilter(StrEnum):
     T = "t"
     F = "f"
     CRASH = "crash"
 
 
-class Entropytrim(Enum):
+class Entropytrim(StrEnum):
     F = "f"
     """Do not entropy-trim"""
 
@@ -79,13 +80,13 @@ class Entropytrim(Enum):
     """Trim low entropy on both ends."""
 
 
-class Entropymask(Enum):
+class Entropymask(StrEnum):
     F = "f"
     T = "t"
     LC = "lc"
 
 
-class UmiLoc(Enum):
+class UmiLoc(StrEnum):
     INDEX1 = "index1"
     INDEX2 = "index2"
     READ1 = "read1"
@@ -145,7 +146,7 @@ class Fastp(SnappyModel):
 
     dont_eval_duplication: bool = True
     """
-    don't evaluate duplication rate to save time and use less memory.
+    don't evaluate duplication rate to save runtime and use less memory.
     """
 
     trim_poly_g: bool = True
@@ -384,7 +385,7 @@ class Bbduk(SnappyModel):
     copyundefined: bool = False
     """
     (cu) Process non-AGCT IUPAC reference bases by making all possible unambiguous copies.
-    Intended for short motifs or adapter barcodes, as time/memory use is exponential.
+    Intended for short motifs or adapter barcodes, as runtime/memory use is exponential.
     """
 
     nzo: bool = True
@@ -874,10 +875,24 @@ class Bbduk(SnappyModel):
     """
 
 
-class AdapterTrimming(SnappyStepModel, ToolsMixin):
-    path_link_in: str | None = None
-    """Override data set configuration search paths for FASTQ files"""
+class AdapterTrimmingDependsOn(SnappyModel):
+    # External FASTQ source. Usually points to a dedicated link_in task.
+    link_in: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+        ExpectedPathSchema(ExpectedLinkedRawFastq),
+    ] = ""
 
-    tools: Annotated[list[Tool], EnumField(Tool, min_length=1, default=["bbduk", "fastp"])]
+
+class ExpectedTrimmedRawFastq(BaseModel):
+    """Consumer-driven contract for adapter_trimming raw FASTQ outputs."""
+
+    fastq_dir: str
+
+
+class AdapterTrimming(SnappyStepModel):
+    depends_on: AdapterTrimmingDependsOn = Field(default_factory=AdapterTrimmingDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.FASTP)]
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None

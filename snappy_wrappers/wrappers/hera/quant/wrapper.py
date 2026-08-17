@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for Hera: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.executable("/bin/bash")
-
 args = getattr(snakemake.params, "args", {})
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -euo pipefail
-set -x
 echo ${{JOB_ID:-unknown}} >$(dirname {snakemake.output.done})/sge_job_id
 
-export TMPDIR=$(mktemp -d)
 
 workdir=$(dirname {snakemake.output.done})
 inputdir=$workdir/input

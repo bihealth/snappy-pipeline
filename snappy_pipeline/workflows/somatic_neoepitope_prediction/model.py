@@ -1,16 +1,20 @@
 import dataclasses
 import enum
 import re
+from typing import Annotated
 
 from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.hla_typing.model import (
     MHCIClassDnaTool,
     MHCIClassRnaTool,
     MHCIIClassDnaTool,
     MHCIIClassRnaTool,
 )
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.variant_annotation.model import ExpectedVariantVcf
 
 
 @dataclasses.dataclass
@@ -72,19 +76,19 @@ class SupportedGermlineVariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
 
 
-class HlaTypingDnaTools(SnappyModel):
+class HlaTypingDnaTool(SnappyModel):
     class_i: MHCIClassDnaTool | None = None
     class_ii: MHCIIClassDnaTool | None = None
 
 
-class HlaTypingRnaTools(SnappyModel):
+class HlaTypingRnaTool(SnappyModel):
     class_i: MHCIClassRnaTool | None = None
     class_ii: MHCIIClassRnaTool | None = None
 
 
-class HlaTypingTools(SnappyModel):
-    dna: HlaTypingDnaTools = HlaTypingDnaTools()
-    rna: HlaTypingRnaTools = HlaTypingRnaTools()
+class HlaTypingTool(SnappyModel):
+    dna: HlaTypingDnaTool = HlaTypingDnaTool()
+    rna: HlaTypingRnaTool = HlaTypingRnaTool()
 
 
 class InputVariantType(enum.StrEnum):
@@ -301,7 +305,6 @@ class PVACseq(PVACtools):
 
 
 class PVACfuse(PVACtools):
-    path_somatic_gene_fusion_calling: str = "../somatic_gene_fusion_calling"
     tool_somatic_gene_fusion_calling: SupportedGeneFusionTool = SupportedGeneFusionTool.ARRIBA
 
     downstream_sequence_length: int = 1000
@@ -379,7 +382,6 @@ class EnsemblVersion(enum.StrEnum):
 
 
 class RnaMapping(ToggleModel):
-    path_ngs_mapping: str = "../ngs_mapping"
     tool_rna_mapping: SupportedPileupTool = SupportedPileupTool.STAR
 
     baq: BAQ | None = None
@@ -394,7 +396,6 @@ class RnaMapping(ToggleModel):
 
 
 class RnaQuantification(ToggleModel):
-    path_gene_expression_quantification: str = "../gene_expression_quantification"
     tool_gene_expression_quantification: SupportedExpressionTool = SupportedExpressionTool.SALMON
 
     duplicate_transcripts_table: str | None = None
@@ -419,65 +420,49 @@ class RnaQuantification(ToggleModel):
 
 class Phasing(ToggleModel):
     tool_ngs_mapping: str = "bwa"
-    path_combine_variants: str = "../combine_variants"
-
-
-class GermlineVariantStep(enum.StrEnum):
-    CALL = "germline_variant_calling"
-    ANNOTATION = "germline_variant_annotation"
-    FILTER = "germline_variant_filtration"
 
 
 class Proteome(ToggleModel):
-    path_germline_variants: str | None = None
-    tool_ngs_mapping: str = "bwa"
-    tool_germline_variant_calling: str = "gatk4_hc"
-    tool_germline_variant_annotation: str | None = None
-    is_filtered: bool = True
-    germline_variant_step: GermlineVariantStep = GermlineVariantStep.FILTER
-
     add_unmutated: bool = True
     external_proteome: str | None = None
 
     @model_validator(mode="after")
-    def ensure_valid_variant_configuration(self):
-        if self.enabled and self.path_germline_variants:
-            match self.germline_variant_step:
-                case GermlineVariantStep.CALL:
-                    if self.is_filtered | self.tool_germline_variant_annotation:
-                        raise ValueError(
-                            "Filtration & annotation tool must be unset in calling mode"
-                        )
-                case GermlineVariantStep.FILTER:
-                    if not self.is_filtered:
-                        raise ValueError("Filtration must be set in filtration mode")
-                case GermlineVariantStep.ANNOTATION:
-                    if not self.tool_germline_variant_annotation:
-                        raise ValueError("Annotation tool must be set in annotation mode")
-        return self
-
-    @model_validator(mode="after")
     def ensure_at_least_one_proteome_source(self):
-        if (
-            self.enabled
-            and not self.path_germline_variants
-            and not self.add_unmutated
-            and not self.external_proteome
-        ):
+        if self.enabled and not self.add_unmutated and not self.external_proteome:
             raise ValueError(
                 "One proteome source must be configured when proteome similarity is enabled"
             )
         return self
 
 
+class SomaticNeoepitopePredictionDependsOn(SnappyModel):
+    hla_typing: Annotated[str, DataSignature(DataType.TABULAR, frozenset({"hla"}))]
+    somatic_variant_annotation: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS),
+        ExpectedPathSchema(ExpectedVariantVcf),
+    ] = ""
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = ""
+    gene_expression_quantification: Annotated[
+        str, DataSignature(DataType.EXPRESSION, frozenset({"rna"}))
+    ] = ""
+    combine_variants: Annotated[str, DataSignature(DataType.VARIANTS)] = ""
+    somatic_gene_fusion_calling: Annotated[
+        str, DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))
+    ] = ""
+    germline_variant: Annotated[str, DataSignature(DataType.VARIANTS)] = ""
+
+
 class SomaticNeoepitopePrediction(SnappyStepModel):
-    tools: list[SupportedPredictionTool] = [SupportedPredictionTool.PVACSEQ]
+    depends_on: SomaticNeoepitopePredictionDependsOn
 
-    path_somatic_variant_annotation: str = "../somatic_variant_annotation"
-    is_filtered: bool = True
+    tool: SupportedPredictionTool = SupportedPredictionTool.PVACSEQ
 
-    path_hla_typing: str = "../hla_typing"
-    tools_hla_typing: HlaTypingTools = HlaTypingTools()
+    tool_hla_typing: HlaTypingTool = HlaTypingTool()
 
     pileup: RnaMapping = RnaMapping()
     quantification: RnaQuantification = RnaQuantification()
@@ -490,6 +475,40 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
 
     @model_validator(mode="after")
     def ensure_at_least_one_tool_configured(self):
-        if self.tools_hla_typing.dna.class_i is None and self.tools_hla_typing.dna.class_ii is None:
-            raise ValueError("No HLA typing tools has been defined for DNA data")
+        if self.tool_hla_typing.dna.class_i is None and self.tool_hla_typing.dna.class_ii is None:
+            raise ValueError("No HLA typing tool has been defined for DNA data")
+        return self
+
+    @model_validator(mode="after")
+    def ensure_tool_dependencies_satisfied(self):
+        """Validate tool-specific depends_on requirements."""
+        deps = self.depends_on
+
+        # HLA typing is mandatory across all prediction tools
+        if not deps.hla_typing:
+            raise ValueError(
+                f"depends_on.hla_typing is required for neoepitope prediction (tool: {self.tool!r})"
+            )
+
+        match self.tool:
+            case SupportedPredictionTool.PVACSEQ:
+                if not deps.somatic_variant_annotation:
+                    raise ValueError(
+                        "depends_on.somatic_variant_annotation is required when tool is 'pvacseq'"
+                    )
+
+            case SupportedPredictionTool.PVACSPLICE:
+                if not deps.somatic_variant_annotation:
+                    raise ValueError(
+                        "depends_on.somatic_variant_annotation is required when tool is 'pvacsplice'"
+                    )
+                if not deps.ngs_mapping:
+                    raise ValueError("depends_on.ngs_mapping is required when tool is 'pvacsplice'")
+
+            case SupportedPredictionTool.PVACFUSE:
+                if not deps.somatic_gene_fusion_calling:
+                    raise ValueError(
+                        "depends_on.somatic_gene_fusion_calling is required when tool is 'pvacfuse'"
+                    )
+
         return self

@@ -1,77 +1,41 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for actually running ASCAT"""
+"""Wrapper for running ARCAS-HLA"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-shell.executable("/bin/bash")
+ARCAS_HLA_THREADS = 8
+ARCAS_HLA_PAIRED_IS_PAIRED = True
+_ARCAS_HLA_PAIRED = "--paired" if ARCAS_HLA_PAIRED_IS_PAIRED else ""
 
-args = getattr(snakemake.params, "args", {})
-
-single = "--single" if args.get("single", False) else ""
-
-extra_args = (
-    f"--population {args['population']} --min_count {args['min_count']} --tolerance {args['tolerance']} "
-    f"--max_iterations {args['max_iterations']} "
-    f"--drop_threshold {args['drop_threshold']} "  # fails with --zygocity_threshold {args['zygocity_threshold']}" 
-)
-if "drop_iterations" in args:
-    extra_args += f" --drop_iterations {args['drop_iterations']}"
-
-if args.get("single", False):
-    single = "--single"
-    extra_args += f" --avg {args['avg']} --std {args['std']}"
-else:
-    single = ""
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
+input=$(readlink -f {snakemake.input.bam})
+mkdir -p work/star.arcashla.{snakemake.wildcards.library_name}/tmp/{{extracted,genotyped}}
+mkdir -p $(dirname {snakemake.output.txt})
+pushd work/star.arcashla.{snakemake.wildcards.library_name}
 
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
+arcasHLA extract \
+    {snakemake.input.bam} \
+    -o tmp/extracted \
+    {_ARCAS_HLA_PAIRED} \
+    -t {ARCAS_HLA_THREADS} \
+    -v
 
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+arcasHLA genotype \
+    tmp/extracted/*.fq.gz \
+    -o tmp/genotyped \
+    -t {ARCAS_HLA_THREADS} \
+    -v
 
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-mkdir $TMPDIR/tmp
-arcasHLA extract --verbose --threads {snakemake.threads} {single} \
-    --temp $TMPDIR/tmp \
-    --outdir $TMPDIR/extracted \
-    {snakemake.input.bam}
-
-rm -rf $TMPDIR/tmp
-
-mkdir $TMPDIR/tmp
-arcasHLA genotype --verbose --threads {snakemake.threads} \
-    --outdir $TMPDIR/genotyped \
-    --temp $TMPDIR/tmp \
-    {extra_args} \
-    $TMPDIR/extracted/*.fq.gz
-
-cp $TMPDIR/genotyped/{args[mapper]}.genotype.json {snakemake.output.json}
-pushd $(dirname {snakemake.output.json})
-md5sum $(basename {snakemake.output.json}) >$(basename {snakemake.output.json}).md5
 popd
 
-# To make the pipeline happy.
-# TODO: move all the step output to json.
-md5sum {snakemake.log.log} > {snakemake.log.log}.md5
-touch {snakemake.output.txt}
-touch {snakemake.output.txt}.md5
+cp work/star.arcashla.{snakemake.wildcards.library_name}/tmp/genotyped/star.genotype.json {snakemake.output.txt}
 """
 )

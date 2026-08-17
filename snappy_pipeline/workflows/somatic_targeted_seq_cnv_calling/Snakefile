@@ -23,7 +23,8 @@ config, lookup_paths, config_paths = expand_ref("config.yaml", config)
 # WorkflowImpl Object Setup ===================================================
 
 wf = SomaticTargetedSeqCnvCallingWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
-tools = wf.w_config["step_config"]["somatic_targeted_seq_cnv_calling"]["tools"]
+tool = str(wf.config.tool)
+
 
 # Rules =======================================================================
 
@@ -33,7 +34,8 @@ localrules:
     somatic_targeted_seq_cnv_calling_link_out_run,
 
 
-rule all:
+rule somatic_targeted_seq_cnv_calling_all:
+    default_target: True
     input:
         wf.get_result_files(),
 
@@ -49,7 +51,7 @@ rule somatic_targeted_seq_cnv_calling_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
+        wf.run_locally("link_out", "run", wildcards)
 
 
 # Somatic Targeted Sequencing CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,7 +60,7 @@ rule somatic_targeted_seq_cnv_calling_link_out_run:
 
 
 # cnvkit requires a large number of rules, thus externalized
-if "cnvkit" in tools:
+if tool == "cnvkit":
 
     include: "cnvkit.rules"
 
@@ -66,35 +68,40 @@ if "cnvkit" in tools:
 # Run sequenza ----------------------------------------------------
 
 
-if "sequenza" in tools:
+elif tool == "sequenza":
 
     rule somatic_targeted_seq_cnv_calling_sequenza_install:
         output:
             **wf.get_output_files("sequenza", "install"),
-        threads: wf.get_resource("sequenza", "install", "threads")
-        resources:
-            time=wf.get_resource("sequenza", "install", "time"),
-            memory=wf.get_resource("sequenza", "install", "memory"),
-            partition=wf.get_resource("sequenza", "install", "partition"),
-            tmpdir=wf.get_resource("sequenza", "install", "tmpdir"),
         log:
             **wf.get_log_file("sequenza", "install"),
+        threads: wf.get_resource("sequenza", "install", "threads")
+        resources:
+            runtime=wf.get_resource("sequenza", "install", "runtime"),
+            mem=wf.get_resource("sequenza", "install", "mem"),
+            partition=wf.get_resource("sequenza", "install", "partition"),
+            tmpdir=wf.get_resource("sequenza", "install", "tmpdir"),
+        params:
+            packages=[
+                {"name": "aroneklund/copynumber", "repo": "github"},
+                {"name": "sequenzatools/sequenza@3.0.0", "repo": "bitbucket"},
+            ],
         wrapper:
             wf.wrapper_path("sequenza/install")
 
     rule somatic_targeted_seq_cnv_calling_sequenza_gcreference:
         output:
             **wf.get_output_files("sequenza", "gcreference"),
-        params:
-            args=wf.get_args("sequenza", "gcreference"),
-        threads: wf.get_resource("sequenza", "gcreference", "threads")
-        resources:
-            time=wf.get_resource("sequenza", "gcreference", "time"),
-            memory=wf.get_resource("sequenza", "gcreference", "memory"),
-            partition=wf.get_resource("sequenza", "gcreference", "partition"),
-            tmpdir=wf.get_resource("sequenza", "gcreference", "tmpdir"),
         log:
             **wf.get_log_file("sequenza", "gcreference"),
+        threads: wf.get_resource("sequenza", "gcreference", "threads")
+        resources:
+            runtime=wf.get_resource("sequenza", "gcreference", "runtime"),
+            mem=wf.get_resource("sequenza", "gcreference", "mem"),
+            partition=wf.get_resource("sequenza", "gcreference", "partition"),
+            tmpdir=wf.get_resource("sequenza", "gcreference", "tmpdir"),
+        params:
+            args=wf.get_args("sequenza", "gcreference"),
         wrapper:
             wf.wrapper_path("sequenza/gcreference")
 
@@ -103,16 +110,16 @@ if "sequenza" in tools:
             unpack(wf.get_input_files("sequenza", "coverage")),
         output:
             **wf.get_output_files("sequenza", "coverage"),
-        params:
-            args=wf.get_args("sequenza", "coverage"),
-        threads: wf.get_resource("sequenza", "coverage", "threads")
-        resources:
-            time=wf.get_resource("sequenza", "coverage", "time"),
-            memory=wf.get_resource("sequenza", "coverage", "memory"),
-            partition=wf.get_resource("sequenza", "coverage", "partition"),
-            tmpdir=wf.get_resource("sequenza", "coverage", "tmpdir"),
         log:
             **wf.get_log_file("sequenza", "coverage"),
+        threads: wf.get_resource("sequenza", "coverage", "threads")
+        resources:
+            runtime=wf.get_resource("sequenza", "coverage", "runtime"),
+            mem=wf.get_resource("sequenza", "coverage", "mem"),
+            partition=wf.get_resource("sequenza", "coverage", "partition"),
+            tmpdir=wf.get_resource("sequenza", "coverage", "tmpdir"),
+        params:
+            args=wf.get_args("sequenza", "coverage"),
         wrapper:
             wf.wrapper_path("sequenza/coverage")
 
@@ -121,16 +128,16 @@ if "sequenza" in tools:
             unpack(wf.get_input_files("sequenza", "run")),
         output:
             **wf.get_output_files("sequenza", "run"),
-        params:
-            args=wf.get_args("sequenza", "run"),
-        threads: wf.get_resource("sequenza", "run", "threads")
-        resources:
-            time=wf.get_resource("sequenza", "run", "time"),
-            memory=wf.get_resource("sequenza", "run", "memory"),
-            partition=wf.get_resource("sequenza", "run", "partition"),
-            tmpdir=wf.get_resource("sequenza", "run", "tmpdir"),
         log:
             **wf.get_log_file("sequenza", "run"),
+        threads: wf.get_resource("sequenza", "run", "threads")
+        resources:
+            runtime=wf.get_resource("sequenza", "run", "runtime"),
+            mem=wf.get_resource("sequenza", "run", "mem"),
+            partition=wf.get_resource("sequenza", "run", "partition"),
+            tmpdir=wf.get_resource("sequenza", "run", "tmpdir"),
+        params:
+            args=wf.get_args("sequenza", "run"),
         wrapper:
             wf.wrapper_path("sequenza/run")
 
@@ -138,23 +145,23 @@ if "sequenza" in tools:
 # Run PureCN ------------------------------------------------------
 
 
-if "purecn" in tools:
+elif tool == "purecn":
 
     rule somatic_targeted_seq_cnv_calling_purecn_coverage:
         input:
             unpack(wf.get_input_files("purecn", "coverage")),
         output:
             **wf.get_output_files("purecn", "coverage"),
-        params:
-            args=wf.get_args("purecn", "coverage"),
-        threads: wf.get_resource("purecn", "coverage", "threads")
-        resources:
-            time=wf.get_resource("purecn", "coverage", "time"),
-            memory=wf.get_resource("purecn", "coverage", "memory"),
-            partition=wf.get_resource("purecn", "coverage", "partition"),
-            tmpdir=wf.get_resource("purecn", "coverage", "tmpdir"),
         log:
             **wf.get_log_file("purecn", "coverage"),
+        threads: wf.get_resource("purecn", "coverage", "threads")
+        resources:
+            runtime=wf.get_resource("purecn", "coverage", "runtime"),
+            mem=wf.get_resource("purecn", "coverage", "mem"),
+            partition=wf.get_resource("purecn", "coverage", "partition"),
+            tmpdir=wf.get_resource("purecn", "coverage", "tmpdir"),
+        params:
+            args=wf.get_args("purecn", "coverage"),
         wrapper:
             wf.wrapper_path("purecn/coverage")
 
@@ -163,15 +170,15 @@ if "purecn" in tools:
             unpack(wf.get_input_files("purecn", "run")),
         output:
             **wf.get_output_files("purecn", "run"),
-        params:
-            args=wf.get_args("purecn", "run"),
-        threads: wf.get_resource("purecn", "run", "threads")
-        resources:
-            time=wf.get_resource("purecn", "run", "time"),
-            memory=wf.get_resource("purecn", "run", "memory"),
-            partition=wf.get_resource("purecn", "run", "partition"),
-            tmpdir=wf.get_resource("purecn", "run", "tmpdir"),
         log:
             **wf.get_log_file("purecn", "run"),
+        threads: wf.get_resource("purecn", "run", "threads")
+        resources:
+            runtime=wf.get_resource("purecn", "run", "runtime"),
+            mem=wf.get_resource("purecn", "run", "mem"),
+            partition=wf.get_resource("purecn", "run", "partition"),
+            tmpdir=wf.get_resource("purecn", "run", "tmpdir"),
+        params:
+            args=wf.get_args("purecn", "run"),
         wrapper:
             wf.wrapper_path("purecn/run")

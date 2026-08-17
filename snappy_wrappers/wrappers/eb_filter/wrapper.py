@@ -3,20 +3,21 @@
 
 from snakemake import shell
 
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"] if "filter_name" in args else ""
+mode = args.get("mode", "tag")
 has_annotation = str(args["has_annotation"] if "has_annotation" in args else False)
 
 if "interval" in args:
-    cmd_fetch = "tabix --print-header {} {}".format(
-        snakemake.input.vcf, args["interval"]
-    )
+    cmd_fetch = "tabix --print-header {} {}".format(snakemake.input.vcf, args["interval"])
 else:
     cmd_fetch = "zcat {}".format(snakemake.input.vcf)
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
 set -x
 
@@ -28,22 +29,6 @@ export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
 export REF={snakemake.input.reference}
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
-md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
 
 # Used to be:
 # filter='FILTER == "germline_risk" || FILTER == "t_lod_fstar" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
@@ -97,15 +82,23 @@ if [[ $lines -gt 0 ]]; then
         {snakemake.input.bam} \
         {snakemake.input.txt} \
         $TMPDIR/after_running_eb_filter.vcf
-    if [[ -n "{filter_name}" ]]
+    if [[ "{mode}" == "tag" ]]
     then
-        bcftools filter --soft-filter {filter_name} --mode + \
+        if [[ -n "{filter_name}" ]]
+        then
+            bcftools filter --soft-filter {filter_name} --mode + \
+                --exclude "INFO/EB < {args[ebfilter_threshold]}" \
+                -O z -o $TMPDIR/after_eb_filter.vcf.gz \
+                $TMPDIR/after_running_eb_filter.vcf
+        else
+            mv $TMPDIR/after_running_eb_filter.vcf $TMPDIR/after_eb_filter.vcf
+            bgzip $TMPDIR/after_eb_filter.vcf
+        fi
+    else
+        bcftools filter \
             --exclude "INFO/EB < {args[ebfilter_threshold]}" \
             -O z -o $TMPDIR/after_eb_filter.vcf.gz \
             $TMPDIR/after_running_eb_filter.vcf
-    else
-        mv $TMPDIR/after_running_eb_filter.vcf $TMPDIR/after_eb_filter.vcf
-        bgzip $TMPDIR/after_eb_filter.vcf
     fi
 else
     mv $TMPDIR/for_eb_filter.vcf.gz $TMPDIR/after_eb_filter.vcf.gz
@@ -121,17 +114,5 @@ bcftools concat \
 | bcftools sort --output {snakemake.output.vcf} --output-type z
 
 tabix -f {snakemake.output.vcf}
-
-pushd $(dirname {snakemake.output.vcf}) && \
-    md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5 && \
-    md5sum $(basename {snakemake.output.vcf_tbi}) >$(basename {snakemake.output.vcf_tbi}).md5 && \
-    popd
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

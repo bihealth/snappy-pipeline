@@ -1,12 +1,20 @@
 import enum
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
-from snappy_pipeline.models.parallel import Parallel
-from snappy_pipeline.models.gatk import GATK
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
+from snappy_pipeline.models.gatk import GATK
+from snappy_pipeline.models.parallel import Parallel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedPonPaths(BaseModel):
+    """Consumer-driven contract for panel-of-normals provider outputs."""
+
+    done: str
 
 
 class Tool(enum.StrEnum):
@@ -73,9 +81,6 @@ class PureCn(SnappyModel):
     recommended by PureCN author
     """
 
-    path_genomicsDB: str
-    """Mutect2 genomicsDB created during panel_of_normals"""
-
     genome_name: Annotated[
         GenomeName | Literal["unknown"],
         EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
@@ -96,10 +101,29 @@ class PureCn(SnappyModel):
     seed: int = 1234567
 
 
-class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.mutect2], min_length=1)]
+class PanelOfNormalsDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
 
-    path_ngs_mapping: str = "../ngs_mapping"
+    panel_of_normals: Annotated[
+        str,
+        DataSignature(DataType.MODELS, frozenset({"pon"})),
+        ExpectedPathSchema(ExpectedPonPaths),
+    ] = ""
+    """
+    Required when ``tool: purecn``.
+    Must name the upstream ``panel_of_normals`` task that was run with ``tool: mutect2``
+    to produce the Mutect2 genomicsDB used by PureCN's NormalDB.R step.
+    """
+
+
+class PanelOfNormals(SnappyStepModel):
+    depends_on: PanelOfNormalsDependsOn = Field(default_factory=PanelOfNormalsDependsOn)
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.mutect2)]
 
     ignore_chroms: Annotated[
         list[str],
@@ -132,3 +156,21 @@ class PanelOfNormals(SnappyStepModel, validators.ToolsMixin):
     access: Access = Access()
 
     purecn: PureCn | None = None
+
+    @model_validator(mode="after")
+    def validate_purecn_dependencies(self) -> "PanelOfNormals":
+        """Enforce the explicit dependency: purecn requires a prior mutect2 panel-of-normals task.
+
+        The purecn PON build needs the Mutect2 genomicsDB produced by a preceding
+        ``panel_of_normals`` task with ``tool: mutect2``.  This dependency must be
+        expressed via ``depends_on.panel_of_normals`` so that Snakemake can track the
+        genomicsDB tar.gz as a proper input file rather than a bare config path.
+        """
+        if self.tool == Tool.purecn:
+            if not self.depends_on.panel_of_normals:
+                raise ValueError(
+                    "depends_on.panel_of_normals must be set when tool='purecn'; "
+                    "name the upstream panel_of_normals task that ran with tool='mutect2' "
+                    "to produce the Mutect2 genomicsDB required by PureCN"
+                )
+        return self

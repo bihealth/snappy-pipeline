@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for cnvkit.py report"""
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
@@ -26,7 +26,6 @@ if getattr(snakemake.output, "breaks", ""):
         )
     else:
         breaks = "touch {out}".format(out=snakemake.output.breaks)
-    breaks += "\n" + "md5 {out}".format(out=snakemake.output.breaks)
 else:
     breaks = ""
 
@@ -42,14 +41,16 @@ cnvkit.py genemetrics \
     --alpha {args[genemetrics][alpha]} --bootstrap {args[genemetrics][bootstrap]} \
     {input_cnr}
         """.format(
-            input_cnr=input_cnr, input_cns=input_cns,
+            input_cnr=input_cnr,
+            input_cns=input_cns,
             args=args,
             out=snakemake.output.genemetrics,
-            drop_low_coverage=drop_low_coverage, gender=gender, male=male,
+            drop_low_coverage=drop_low_coverage,
+            gender=gender,
+            male=male,
         )
     else:
         genemetrics = "touch {out}".format(out=snakemake.output.genemetrics)
-    genemetrics += "\n" + "md5 {out}".format(out=snakemake.output.genemetrics)
 else:
     genemetrics = ""
 
@@ -64,15 +65,17 @@ cnvkit.py segmetrics \
     {smooth_bootstrap} {drop_low_coverage} \
     {input_cnr}
         """.format(
-            input_cnr=input_cnr, input_cns=input_cns,
+            input_cnr=input_cnr,
+            input_cns=input_cns,
             args=args,
             out=snakemake.output.segmetrics,
-            drop_low_coverage=drop_low_coverage, 
-            smooth_bootstrap="--smooth-bootstrap" if args["segmetrics"].get("smooth_bootstrap", False) else "",
+            drop_low_coverage=drop_low_coverage,
+            smooth_bootstrap="--smooth-bootstrap"
+            if args["segmetrics"].get("smooth_bootstrap", False)
+            else "",
         )
     else:
         segmetrics = "touch {out}".format(out=snakemake.output.segmetrics)
-    segmetrics += "\n" + "md5 {out}".format(out=snakemake.output.segmetrics)
 else:
     segmetrics = ""
 
@@ -83,14 +86,16 @@ if getattr(snakemake.output, "sex", ""):
             --output {out} {male} \
             {input_target} {input_antitarget} {input_cnr} {input_cns}
         """.format(
-            input_cnr=input_cnr, input_cns=input_cns, input_target=input_target, input_antitarget=input_antitarget,
+            input_cnr=input_cnr,
+            input_cns=input_cns,
+            input_target=input_target,
+            input_antitarget=input_antitarget,
             args=args,
             out=snakemake.output.sex,
             male=male,
         )
     else:
         sex = "touch {out}".format(out=snakemake.output.sex)
-    sex += "\n" + "md5 {out}".format(out=snakemake.output.sex)
 else:
     sex = ""
 
@@ -102,51 +107,22 @@ cnvkit.py metrics \
     {drop_low_coverage} \
     {input_target} {input_antitarget} {input_cnr} {input_cns}
         """.format(
-            input_cnr=input_cnr, input_target=input_target, input_antitarget=input_antitarget,
+            input_cnr=input_cnr,
+            input_target=input_target,
+            input_antitarget=input_antitarget,
             input_cns=f"--segments {input_cns}" if input_cns else "",
             args=args,
             out=snakemake.output.metrics,
-            drop_low_coverage=drop_low_coverage, 
+            drop_low_coverage=drop_low_coverage,
         )
     else:
         metrics = "touch {out}".format(out=snakemake.output.metrics)
-    metrics += "\n" + "md5 {out}".format(out=snakemake.output.metrics)
 else:
     metrics = ""
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
 set -x
-
-# -----------------------------------------------------------------------------
-
-md5()
-{{
-    d=$(dirname $1)
-    f=$(basename $1)
-    pushd $d
-    md5sum $f > $f.md5
-    popd
-}}
-
-# -----------------------------------------------------------------------------
 
 {breaks}
 
@@ -160,9 +136,3 @@ md5()
 """
 )
 
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
-"""
-)

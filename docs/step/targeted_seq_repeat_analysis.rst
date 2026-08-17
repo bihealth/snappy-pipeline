@@ -1,4 +1,4 @@
-.. _step_repeat_analysis:
+.. _step_repeat_expansion:
 
 ==================================
 Germline Repeat Expansion Analysis

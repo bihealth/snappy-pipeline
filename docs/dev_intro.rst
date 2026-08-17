@@ -14,7 +14,7 @@ Developer's Introduction
 
     - know about the Python programming techniques required from a CUBI pipeline developer
     - have an overview of the components of a pipeline step
-    - know that ``cubi-snake`` only serves as a shortcut to the ``snakemake`` executable.
+    - know that ``snappy`` is the main CLI entry point.
 
 The target audience of this part of the documentation is developers who want to change or extend the pipeline.
 The aim is to give a good overview of the architecture of the pipeline system and dissect some typical existing pipeline steps for educational purposes.
@@ -52,13 +52,13 @@ Before we start, here is the Zen of Python as a reminder::
 Prerequisites -- Your Tool Belt
 -------------------------------
 
-The CUBI pipeline system is implemented using Python 3 (>=3.4 at the moment) and built upon the wonderful `Snakemake <https://snakemake.bitbucket.org>`_ (>=3.10 at the moment).
-For distributed, parallel execution, the pipeline is tailored towards execution with SGE Grid Engine.
+The CUBI pipeline system is implemented using Python 3 and built upon `Snakemake <https://snakemake.bitbucket.org>`_ (>=9).
+For distributed, parallel execution, the pipeline is tailored towards execution with SLURM.
 In order to follow this developer's documentation comfortably, you should be familiar with all three systems:
 
 - Python 3
 - Snakemake
-- Grid Engine (or similar cluster job queueing system).
+- a cluster job queueing system (e.g., SLURM).
 
 You should be familiar with the CUBI pipeline from the user perspective already.
 
@@ -100,7 +100,7 @@ The current configuration is passed into the constructor of this class and it th
 Then, you pass the result of method calls to your :class:`BaseStep <snappy_pipeline.workflows.abstract.BaseStep>` instance as the values for the ``input:``, ``output:``, etc. sections of your ``Snakefile``.
 
 .. warning::
-   By convention your new Workflow step should be instantiated as ``wf = StepClass(...)`` in the ``Snakefile`` during object setup. Otherwise tools including cubi-tk might not be able to detect and parse your step. See existing workflow ``Snakefile`` for reference.
+   By convention your new Workflow step should be instantiated as ``wf = StepClass(...)`` in the ``Snakefile`` during object setup. Otherwise external tools might not be able to detect and parse your step. See existing workflow ``Snakefile`` for reference.
 
 The :class:`BaseStep <snappy_pipeline.workflows.abstract.BaseStep>` sub class itself uses :class:`BaseStepPart <snappy_pipeline.workflows.abstract.BaseStepPart>` sub classes for the implementation of the individual parts.
 One part might be linking in FASTQ files from the raw input directory or linking from the ``work/`` to the ``output/`` directory.
@@ -116,15 +116,15 @@ In the Python files, we can use the whole Python tooling ecosystem whereas in th
 In short, the ``Snakefile`` only serves as the entry point for your Python code.
 
 
-----------------------------------------
-Anatomy of the ``cubi-snake`` Executable
-----------------------------------------
+---------------------------------------
+Anatomy of the ``snappy`` Command
+---------------------------------------
 
-CUBI pipeline runs are invoked with the ``cubi-snake`` executable that internally calls Snakemake with sensible defaults for either local execution or execution on via SGE on an HPC cluster.
-It serves as a convenience wrapper that reads the current pipeline step from the current working directories ``config.yaml`` file (where available, otherwise you have to use the ``--step`` argument).
+CUBI pipeline runs are invoked with the ``snappy`` command that internally calls Snakemake with sensible defaults for either local execution or execution via SLURM on an HPC cluster.
+It serves as a convenience wrapper that reads the project configuration from the ``config.yaml`` file in the project directory.
 
-Some parameters are handed through directly to Snakemake, others are serve as macros that add more complex parameters with best pratice values or print the configuration setting.
+Some parameters are handed through directly to Snakemake, others serve as macros that add more complex parameters with best practice values or print the configuration setting.
 
-This sounds like an aweful amount of "magic" but is quite simple and transparent, really.
-The generally useful ``snakemake`` parameters are also available to ``cubi-snake`` (or should be added, please create a ticket).
-Also, snakemake is invoked through the command line interface and a command line to copy and paste is printed at the beginning of every ``cubi-snake`` invocation.
+This sounds like an awful amount of "magic" but is quite simple and transparent, really.
+The generally useful ``snakemake`` parameters are also available to ``snappy run`` (or should be added, please create a ticket).
+Also, Snakemake is invoked through the command line interface and a command line to copy and paste is printed at the beginning of every ``snappy run`` invocation.

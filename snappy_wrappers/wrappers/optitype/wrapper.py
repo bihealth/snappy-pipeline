@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for Optitype: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -12,38 +17,11 @@ args = getattr(snakemake.params, "args", {})
 reads_left = args["input"]["reads_left"]
 reads_right = args["input"].get("reads_right", "")
 
-shell.executable("/bin/bash")
+paired = 1 if reads_right else 0
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Setup auto-cleaned TMPDIR
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d
-
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_list}.md5
-md5sum {snakemake.log.conda_info} | sed -re "s/  (\.?.+\/)([^\/]+)$/  \2/" > {snakemake.log.conda_info}.md5
-
-if [[ -z "{reads_right}" ]]; then
-    paired=0
-else
-    paired=1
-fi
 
 # First alignment step (filter to candidate HLA reads) --------------------------------------------
 
@@ -58,21 +36,17 @@ yara_indexer -o $TMPDIR/yara_index/$refname $TMPDIR/yara_index/$refname
 
 yara_mapper \
     -t {args[num_mapping_threads]} \
-    --error-rate {args[yara_error_rate]} \
-    --strata-rate {args[yara_strata_rate]} \
-    --sensitivity {args[yara_sensitivity]} \
+    --error-rate 5 \
     --output-format sam \
     $TMPDIR/yara_index/$refname \
     <(zcat --force {reads_left}) \
 | samtools fastq -F 4 - \
 > $TMPDIR/tmp.d/reads_left.fastq
 
-if [[ $paired -eq 1 ]]; then
+if [[ {paired} -eq 1 ]]; then
     yara_mapper \
         -t {args[num_mapping_threads]} \
-        --error-rate {args[yara_error_rate]} \
-        --strata-rate {args[yara_strata_rate]} \
-        --sensitivity {args[yara_sensitivity]} \
+        --error-rate 5 \
         --output-format sam \
         $TMPDIR/yara_index/$refname \
         <(zcat --force {reads_right}) \
@@ -100,7 +74,7 @@ threads=1
 [behavior]
 deletebam=true
 unpaired_weight=0
-use_discordant={args[use_discordant]}
+use_discordant=false
 EOF
 
 mkdir -p $TMPDIR/out.tmp
@@ -111,18 +85,10 @@ OptiTypePipeline.py \
     --$seq_type \
     --outdir $TMPDIR/out.tmp
 
-pushd $TMPDIR/out.tmp/*
-for f in *; do
-    test -f $f && md5sum $f >$f.md5
-done
-popd
-
 # move files to the output directory
 prefix=$(basename $(ls $TMPDIR/out.tmp | head -n 1))
 mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_coverage_plot.pdf {snakemake.output.cov_pdf}
-mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_coverage_plot.pdf.md5 {snakemake.output.cov_pdf}.md5
 mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_result.tsv {snakemake.output.tsv}
-mv $TMPDIR/out.tmp/${{prefix}}/${{prefix}}_result.tsv.md5 {snakemake.output.tsv}.md5
 
 # create final .txt file
 tail -n +2 {snakemake.output.tsv} \
@@ -130,30 +96,5 @@ tail -n +2 {snakemake.output.tsv} \
     | tr '\t' '\n' \
     | sort \
     > {snakemake.output.txt}
-md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
-
-# create final .json file
-echo "{{" > {snakemake.output.json}
-tail -n +2 {snakemake.output.tsv} | head -n 1 \
-    | cut -f 2-3 \
-    | sed -re $"s/^(A\*[0-9]+:[0-9]+)\t(A\*[0-9]+:[0-9]+)/    \"A\": [\"\1\", \"\2\"],/" \
-    >> {snakemake.output.json}
-tail -n +2 {snakemake.output.tsv} | head -n 1 \
-    | cut -f 4-5 \
-    | sed -re $"s/^(B\*[0-9]+:[0-9]+)\t(B\*[0-9]+:[0-9]+)/    \"B\": [\"\1\", \"\2\"],/" \
-    >> {snakemake.output.json}
-tail -n +2 {snakemake.output.tsv} | head -n 1 \
-    | cut -f 6-7 \
-    | sed -re $"s/^(C\*[0-9]+:[0-9]+)\t(C\*[0-9]+:[0-9]+)/    \"C\": [\"\1\", \"\2\"]/" \
-    >> {snakemake.output.json}
-echo "}}" >> {snakemake.output.json}
-md5sum {snakemake.output.json} > {snakemake.output.json_md5}
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
 """
 )

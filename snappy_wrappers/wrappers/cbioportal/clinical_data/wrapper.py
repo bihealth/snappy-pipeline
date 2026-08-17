@@ -9,8 +9,8 @@ import os
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from snakemake.script import snakemake
-    from snakemake.io import Wildcards
+    from snakemake.iocontainers import snakemake
+    from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.cbioportal_export.model import CbioportalExport
 
@@ -138,5 +138,9 @@ def write_clinical_samples_tsv(out, donors, config):
 
 
 args = getattr(snakemake.params, "args", {})
-write_clinical_patient_tsv(str(snakemake.output.patient), args.get("donors", []), args.get("config", {}))
-write_clinical_samples_tsv(str(snakemake.output.sample), args.get("donors", []), args.get("config", {}))
+write_clinical_patient_tsv(
+    str(snakemake.output.patient), args.get("donors", []), args.get("config", {})
+)
+write_clinical_samples_tsv(
+    str(snakemake.output.sample), args.get("donors", []), args.get("config", {})
+)

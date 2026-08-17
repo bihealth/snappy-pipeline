@@ -1,43 +1,25 @@
-# -*- coding: utf-8 -*-
-"""CUBI Pipeline create_proteome step Snakefile"""
-
 import os
 
 from snappy_pipeline import expand_ref
 from snappy_pipeline.workflows.create_proteome import CreateProteomeWorkflow
 
-__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
-
-
-# Configuration ===============================================================
-
 
 configfile: "config.yaml"
 
 
-# Expand "$ref" JSON pointers in configuration (also works for YAML)
 config, lookup_paths, config_paths = expand_ref("config.yaml", config)
-
-# WorkflowImpl Object Setup ===================================================
 
 wf = CreateProteomeWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
 
-# Rules =======================================================================
-
 
 localrules:
-    # Linking files from work/ to output/ should be done locally
     create_proteome_link_out_run,
 
 
-rule all:
+rule create_proteome_all:
+    default_target: True
     input:
         wf.get_result_files(),
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
 
 
 rule create_proteome_link_out_run:
@@ -46,10 +28,7 @@ rule create_proteome_link_out_run:
     output:
         wf.get_output_files("link_out", "run"),
     run:
-        shell(wf.get_shell_cmd("link_out", "run", wildcards))
-
-
-# Combine variants ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        wf.run_locally("link_out", "run", wildcards)
 
 
 rule create_proteome_run:
@@ -57,15 +36,15 @@ rule create_proteome_run:
         unpack(wf.get_input_files("create_proteome", "run")),
     output:
         **wf.get_output_files("create_proteome", "run"),
-    params:
-        args=wf.get_args("create_proteome", "run"),
-    threads: wf.get_resource("create_proteome", "run", "threads")
-    resources:
-        time=wf.get_resource("create_proteome", "run", "time"),
-        memory=wf.get_resource("create_proteome", "run", "memory"),
-        partition=wf.get_resource("create_proteome", "run", "partition"),
-        tmpdir=wf.get_resource("create_proteome", "run", "tmpdir"),
     log:
         **wf.get_log_file("create_proteome", "run"),
+    threads: wf.get_resource("create_proteome", "run", "threads")
+    resources:
+        runtime=wf.get_resource("create_proteome", "run", "runtime"),
+        mem=wf.get_resource("create_proteome", "run", "mem"),
+        partition=wf.get_resource("create_proteome", "run", "partition"),
+        tmpdir=wf.get_resource("create_proteome", "run", "tmpdir"),
+    params:
+        args=wf.get_args("create_proteome", "run"),
     wrapper:
-        wf.wrapper_path("create_proteome/run")
+        wf.wrapper_path("pvactools/create_proteome")

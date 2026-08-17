@@ -1,29 +1,27 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict, Any
+from typing import Annotated, Any, TypedDict
 
-from pydantic import ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
-class MappingTool(enum.StrEnum):
-    BWA = "bwa"
-    BWA_MEM2 = "bwa_mem2"
-    MBCS = "mbcs"
-    MINIMAP2 = "minimap2"
+class ExpectedCopyNumberCalls(BaseModel):
+    """Consumer-driven contract for copy-number provider outputs used by cBioPortal export."""
+
+    done: str
 
 
 class ExpressionTool(enum.StrEnum):
     STAR = "star"
 
 
-class SomaticVariantCallingTool(enum.StrEnum):
-    MUTECT2 = "mutect2"
-
-
-class SomaticVariantAnnotationTool(enum.StrEnum):
+class VariantAnnotationTool(enum.StrEnum):
     VEP = "vep"
     MEHARI = "mehari"
 
@@ -43,7 +41,13 @@ class NcbiBuild(enum.StrEnum):
 class Vcf2Maf(SnappyModel):
     Center: str
     ncbi_build: NcbiBuild
-    # Remember to move path_gene_id_mappings option here when re-factoring the step
+
+    annotation_tool: VariantAnnotationTool = VariantAnnotationTool.VEP
+    """Which annotation tool was used on the input VCF.
+
+    The vcf2maf wrapper uses this to select the correct config for parsing
+    VCF annotation fields (e.g. VEP vs Mehari format).
+    """
 
 
 class GenomeName(enum.StrEnum):
@@ -53,28 +57,15 @@ class GenomeName(enum.StrEnum):
 
 
 class Expression(ToggleModel):
-    path_ngs_mapping: str = "../ngs_mapping"
     """When missing, no expression data is uploaded to cBioPortal"""
 
     expression_tool: ExpressionTool = ExpressionTool.STAR
 
 
-class SomaticVariantStep(enum.StrEnum):
-    ANNOTATION = "somatic_variant_annotation"
-    FILTER = "somatic_variant_filtration"
-
-
 class CNA(ToggleModel):
-    path_copy_number: str | None = None
     """When missing, no CNV data uploaded to portal. Access WES & WGS steps"""
 
     copy_number_tool: CopyNumberTool = CopyNumberTool.CNVKIT
-
-    @model_validator(mode="after")
-    def ensure_path_set_when_enabled(self):
-        if self.enabled and not self.path_copy_number:
-            raise ValueError("Copy number path must be set when copy_number_alteration is enabled")
-        return self
 
 
 class Study(SnappyModel):
@@ -99,27 +90,32 @@ class ExtraInfos(TypedDict):
     column: str
 
 
+class CbioportalExportDependsOn(SnappyModel):
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+    copy_number: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
+        ExpectedPathSchema(ExpectedCopyNumberCalls),
+    ] = "copy_number"
+    somatic_variant: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
+        ExpectedPathSchema(ExpectedSomaticVariants),
+    ] = "somatic_variant"
+
+
 class CbioportalExport(SnappyStepModel):
+    depends_on: CbioportalExportDependsOn = Field(default_factory=CbioportalExportDependsOn)
+
     model_config = ConfigDict(
         extra="forbid",
     )
 
-    path_somatic_variant: str
     """Annotation is mandatory, but filtration is optional, can happen before or after annotation"""
-
-    mapping_tool: MappingTool = MappingTool.BWA
-
-    somatic_variant_calling_tool: SomaticVariantCallingTool = SomaticVariantCallingTool.MUTECT2
-    """mutect/scalpel combo unsupported"""
-
-    somatic_variant_step: SomaticVariantStep = SomaticVariantStep.FILTER
-    """Which pipeline step is used to compute signatures"""
-
-    somatic_variant_annotation_tool: SomaticVariantAnnotationTool = SomaticVariantAnnotationTool.VEP
-    """select somatic variant annotation tool"""
-
-    is_filtered: bool = True
-    """Is the vcf post-filtered"""
 
     path_gene_id_mappings: str
     """Mapping from pipeline gene ids to cBioPortal ids (HGNC symbols from GeneNexus)"""
@@ -142,33 +138,3 @@ class CbioportalExport(SnappyStepModel):
 
     sample_info: dict[str, Any] = {}
     """Implementation must be re-designed"""
-    # sample_info: dict[str, ExtraInfos] = Field(
-    #     {},
-    #     examples=[
-    #         {
-    #             "tumor_mutational_burden": dict(
-    #                 name="TMB",
-    #                 description="Tumor mutational burden computed on CDS regions",
-    #                 datatype="NUMBER",
-    #                 priority="2",
-    #                 column="TMB",
-    #             )
-    #         }
-    #     ],
-    # )
-    # """Each additional sample column must have a name and a (possibly empty) config attached."""
-
-    @model_validator(mode="after")
-    def ensure_filtration_are_configured_correctly(self):
-        if self.somatic_variant_step == SomaticVariantStep.FILTER:
-            if not self.is_filtered:
-                raise ValueError(
-                    "When the input step is 'somatic_variant_filtration', the filtration status must be set to 'True'"
-                )
-        return self
-
-    @model_validator(mode="after")
-    def block_mehari_annotation_tool(self):
-        if self.somatic_variant_annotation_tool == SomaticVariantAnnotationTool.MEHARI:
-            raise ValueError("mehari is currently unsupported (no support for mehari in vcf2table)")
-        return self

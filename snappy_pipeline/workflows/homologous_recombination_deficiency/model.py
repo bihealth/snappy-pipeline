@@ -1,7 +1,17 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from pydantic import Field
+
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedSomaticCnvCalls(SnappyModel):
+    """Consumer-driven contract: expected output keys from somatic CNV caller steps."""
+
+    vcf: str
 
 
 class Tool(enum.StrEnum):
@@ -23,9 +33,25 @@ class ScarHRD(SnappyModel):
     """Wiggle track for GC reference file"""
 
 
-class HomologousRecombinationDeficiency(SnappyStepModel, validators.ToolsMixin):
-    tools: Annotated[list[Tool], EnumField(Tool, [Tool.scarHRD], min_length=1)]
+class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
+    cnv_calling: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
+        ExpectedPathSchema(ExpectedSomaticCnvCalls),
+    ] = "somatic_targeted_seq_cnv_calling"
 
-    path_cnv_calling: str
+    ngs_mapping: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS, frozenset({"somatic"})),
+        ExpectedPathSchema(ExpectedAlignments),
+    ] = "ngs_mapping"
+
+
+class HomologousRecombinationDeficiency(SnappyStepModel):
+    depends_on: HomologousRecombinationDeficiencyDependsOn = Field(
+        default_factory=HomologousRecombinationDeficiencyDependsOn
+    )
+
+    tool: Annotated[Tool, EnumField(Tool, default=Tool.scarHRD)]
 
     scarHRD: ScarHRD | None = None

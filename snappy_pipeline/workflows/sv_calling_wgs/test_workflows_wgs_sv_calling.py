@@ -5,7 +5,7 @@ import textwrap
 
 import pytest
 import ruamel.yaml as ruamel_yaml
-from snakemake.io import Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
 
@@ -79,7 +79,7 @@ def sv_calling_wgs_workflow(
     patch_module_fs("snappy_pipeline.workflows.sv_calling_wgs", germline_sheet_fake_fs, mocker)
     # Update the "globals" attribute of the mock workflow (snakemake.workflow.Workflow) so we
     # can obtain paths from the function as if we really a NGSMappingPipelineStep here
-    dummy_workflow.globals = {"ngs_mapping": lambda x: "NGS_MAPPING/" + x}
+    dummy_workflow.globals = {"ngs_mapping": lambda x: "../ngs_mapping/" + x}
     # Construct the workflow object
     return SvCallingWgsWorkflow(
         dummy_workflow,
@@ -103,14 +103,14 @@ def test_delly2_step_part_get_resource_usage(sv_calling_wgs_workflow):
     # Define expected
     cheap_expected_dict = {
         "threads": 2,
-        "time": "4-00:00:00",
-        "memory": "14336M",
+        "runtime": "4d",
+        "mem": "14336MB",
         "partition": "medium",
     }
     default_expected_dict = {
         "threads": 2,
-        "time": "7-00:00:00",
-        "memory": "40960M",
+        "runtime": "7d",
+        "mem": "40960MB",
         "partition": "medium",
     }
 
@@ -137,8 +137,8 @@ def test_delly2_step_part_call_get_input_files(sv_calling_wgs_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = sv_calling_wgs_workflow.get_input_files("delly2", "call")(wildcards)
     expected = {
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
     }
     assert actual == expected
 
@@ -215,8 +215,8 @@ def test_delly2_step_part_genotype_get_input_files(sv_calling_wgs_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = sv_calling_wgs_workflow.get_input_files("delly2", "genotype")(wildcards)
     expected = {
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "bcf": "work/bwa.delly2.merge_calls.P001-N1-DNA1-WGS1/out/bwa.delly2.merge_calls.P001-N1-DNA1-WGS1.bcf",
     }
     assert actual == expected
@@ -293,12 +293,12 @@ def test_manta_step_part_get_input_files(sv_calling_wgs_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
     actual = sv_calling_wgs_workflow.get_input_files("manta", "run")(wildcards)
     expected = [
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
     ]
     assert actual == expected
 
@@ -320,7 +320,7 @@ def test_manta_step_part_get_log_file(sv_calling_wgs_workflow):
 def test_manta_step_part_get_resource_usage(sv_calling_wgs_workflow):
     """Tests MantaStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "40h", "mem": "61440MB", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():
@@ -336,8 +336,8 @@ def test_popdel_step_part_get_input_files_profile(sv_calling_wgs_workflow):
     """Tests PopDelStepPart._get_input_files_profile()"""
     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = sv_calling_wgs_workflow.get_input_files("popdel", "profile")(wildcards)
     assert actual == expected
@@ -495,7 +495,7 @@ def test_popdel_step_part_get_resource_usage(sv_calling_wgs_workflow):
     """Tests PopDelStepPart.get_resource_usage()"""
     all_actions = sv_calling_wgs_workflow.substep_getattr("popdel", "actions")
     # Define expected
-    expected_dict = {"threads": 2, "time": "4-00:00:00", "memory": "24576M", "partition": "medium"}
+    expected_dict = {"threads": 2, "runtime": "4d", "mem": "24576MB", "partition": "medium"}
     # Evaluate
     for action in all_actions:
         for resource, expected in expected_dict.items():
@@ -522,12 +522,12 @@ def test_pb_honey_spots_step_part_get_input_files(sv_calling_wgs_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
     actual = sv_calling_wgs_workflow.get_input_files("pb_honey_spots", "run")(wildcards)
     expected = [
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
     ]
     assert actual == expected
 
@@ -558,7 +558,7 @@ def test_pb_honey_spots_step_part_get_log_file(sv_calling_wgs_workflow):
 def test_pb_honey_spots_step_part_get_resource_usage(sv_calling_wgs_workflow):
     """Tests PbHoneySpotsStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "40h", "mem": "61440MB", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():
@@ -575,12 +575,12 @@ def test_sniffles_step_part_get_input_files(sv_calling_wgs_workflow):
     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
     actual = sv_calling_wgs_workflow.get_input_files("sniffles", "run")(wildcards)
     expected = [
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
-        "NGS_MAPPING/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P002-N1-DNA1-WGS1/out/bwa.P002-N1-DNA1-WGS1.bam.bai",
+        "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam",
+        "../ngs_mapping/output/bwa.P003-N1-DNA1-WGS1/out/bwa.P003-N1-DNA1-WGS1.bam.bai",
     ]
     assert actual == expected
 
@@ -607,7 +607,7 @@ def test_sniffles_step_part_get_log_file(sv_calling_wgs_workflow):
 def test_sniffles_step_part_get_resource_usage(sv_calling_wgs_workflow):
     """Tests SnifflesStepPart.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "1-16:00:00", "memory": "61440M", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "40h", "mem": "61440MB", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():
@@ -624,8 +624,8 @@ def test_sniffles2_spots_step_part_get_input_files_bam_to_snf(sv_calling_wgs_wor
     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
     actual = sv_calling_wgs_workflow.get_input_files("sniffles2", "bam_to_snf")(wildcards)
     expected = {
-        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": "../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     assert actual == expected
 
@@ -690,7 +690,7 @@ def test_sniffles2_step_part_get_log_file_snf_to_vcf(sv_calling_wgs_workflow):
 def test_sniffles2_step_part_get_resource_usage_bam_to_snf(sv_calling_wgs_workflow):
     """Tests Sniffles2StepPart.get_resource_usage() for bam_to_snf"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "0-02:00:00", "memory": "4G", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "2h", "mem": "4GB", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():
@@ -702,7 +702,7 @@ def test_sniffles2_step_part_get_resource_usage_bam_to_snf(sv_calling_wgs_workfl
 def test_sniffles2_step_part_get_resource_usage_snf_to_vcf(sv_calling_wgs_workflow):
     """Tests Sniffles2StepPart.get_resource_usage() for snf_to_vcf"""
     # Define expected
-    expected_dict = {"threads": 16, "time": "0-02:00:00", "memory": "4G", "partition": "medium"}
+    expected_dict = {"threads": 16, "runtime": "2h", "mem": "4GB", "partition": "medium"}
     # Evaluate
     # Note: only action available is 'run'
     for resource, expected in expected_dict.items():
