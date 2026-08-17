@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/bihealth/snappy-pipeline/compare/v0.6.0...v0.6.1) (2026-08-07)
+
+
+### Bug Fixes
+
+* missing f string prefix in arriba wrapper  ([#666](https://github.com/bihealth/snappy-pipeline/issues/666)) ([21b8f4f](https://github.com/bihealth/snappy-pipeline/commit/21b8f4f37c51f8f3a9d4357beecf8ea6e64ea6f5))
+
 ## [0.6.0](https://github.com/bihealth/snappy-pipeline/compare/v0.5.0...v0.6.0) (2026-06-26)
 
 
