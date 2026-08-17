@@ -125,10 +125,15 @@ class Epitope:
         self.sites.sort(key=itemgetter(1), reverse=True)
 
     def format_sites(self) -> str:
-        sites = {"Best Cleavage Position": "NA", "Best Cleavage Score": "NA", "Cleavage Sites": []}
+        sites = {
+            "Best Cleavage Position": "NA",
+            "Best Cleavage Score": "NA",
+            "Cleavage Sites": "NA",
+        }
         if self.sites:
             sites["Best Cleavage Position"] = self.sites[0][0]
             sites["Best Cleavage Score"] = self.sites[0][1]
+            sites["Cleavage Sites"] = []
             for site in self.sites:
                 sites["Cleavage Sites"].append(site)
             sites["Cleavage Sites"] = ",".join([f"{k}:{v}" for k, v in sites["Cleavage Sites"]])
@@ -552,7 +557,7 @@ def main() -> int:
     logging.info(f"{len(sequences)} sequences have been read from file {args.sequences}")
 
     create_epitope_objects = globals().get(f"create_epitope_objects_{args.tool}", None)
-    assert create_epitope_objects, f"Tool {args.tools} not implemented"
+    assert create_epitope_objects, f"Tool {args.tool} not implemented"
     epitopes = create_epitope_objects(sequences, records)
 
     logging.info(f"Starting netchop runs ({args.netchop}) with {args.workers} processes")

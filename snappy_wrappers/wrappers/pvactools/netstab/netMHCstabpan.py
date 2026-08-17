@@ -42,8 +42,6 @@ HLA_CLEAN_PATTERN = re.compile(r"[:\*\-]+")
 ALLELE_PROXIMITY_PATTERN = re.compile(
     r"^(.*?) : Distance to trai?ning data\s+(\d.\d+).*? nearest neighbor (.*?)\)$", re.MULTILINE
 )
-NETMHCSTABPAN_OUTPUT_PATTERN = re.compile(r"")
-FILENAME_PATTERN = re.compile(r"^(?P<hla>[^_]+)_(?P<len>[0-9]+)\.(fasta|xls|head)$")
 COMMA = re.compile(r",")
 
 
@@ -224,7 +222,7 @@ def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 3
         out, err = p.communicate(timeout=timeout)
     except TimeoutError:
         p.kill()
-        raise (f"The command {' '.join(cmd)} has timed out")
+        raise TimeoutError(f"The command {' '.join(cmd)} has timed out")
     if p.returncode != 0:
         raise ChildProcessError(f"Command {' '.join(cmd)} failed with return code {p.returncode}")
 

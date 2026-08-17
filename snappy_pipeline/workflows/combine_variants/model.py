@@ -92,6 +92,7 @@ class CombineVariants(SnappyStepModel):
                     )
         return self
 
+    @model_validator(mode="after")
     def ensure_annotation_enabled_for_use_all_transcript(self):
         if self.use_all_transcripts_for_germline_annotations:
             if (

@@ -9,7 +9,9 @@ from typing import Any
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
-
+# Expressed genes (not genes fragments, not pseudogenes) taken from
+# Marsh et al. (2026) "Nomenclature for Factors of the HLA System, 2026". HLA 107(3):e70595
+# https://doi.org/10.1111/tan.70595
 CLASS_I_LOCII = ("A", "B", "C", "E", "F", "G")
 CLASS_II_LOCII = (
     "DRA",
@@ -46,7 +48,7 @@ def read_hla_values(hla_typing_file: str, mhc_class: str | None = None) -> set[s
             elif locus in CLASS_II_LOCII:
                 cls = "class_ii"
             else:
-                logging.warning(f"Unsupported locus {locus} found in file {fn}")
+                logging.warning(f"Unsupported locus {locus} found in file {hla_typing_file}")
                 continue
             if mhc_class and mhc_class != cls:
                 continue
