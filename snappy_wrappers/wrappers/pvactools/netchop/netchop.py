@@ -7,213 +7,137 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
+from operator import itemgetter
 from multiprocessing import Manager, Process, ProcessError, Queue, current_process
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 
-class Variant:
-    """
-    Slightly enhanced data class to store somatic variant
-
-    The variant's HGVSp serves as unique identifier of the variant (at the protein level).
-    If two variants share the same HGVSp, the second is ignored.
-    Only protein sequence altering variants are stored.
-    """
-
-    AMINO_ACID: re.Pattern = re.compile(r"[ACDEFGHIKLMNPQRSTVWYX]+")
-    NUCLEOTIDE: re.Pattern = re.compile(r"^[ACGT-]+")
-    PROTEIN_POSITION: re.Pattern = re.compile(r"^([0-9]+|\?)(-([0-9]+|\?))?$")
-    MUTATION: re.Pattern = re.compile(
-        r"^([ACDEFGHIKLMNPQRSTVWYX]*\*|[ACDEFGHIKLMNPQRSTVWYX]+\*?|-+)$"
+class Epitope:
+    ALLOWED_AA = (
+        "A",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "K",
+        "L",
+        "M",
+        "N",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "V",
+        "W",
+        "Y",
     )
-    BCFTOOLS_COLUMNS: list[str] = [
-        "CHROM",
-        "POS",
-        "REF",
-        "ALT",
-        "HGVSp",
-        "Feature",
-        "Protein_position",
-        "Amino_acids",
-        "FrameshiftSequence",
-        "WildtypeProtein",
-    ]
 
     def __init__(
         self,
-        chrom: str,
-        pos: int,
-        ref: str,
-        alt: str,
-        identifier: str,
-        feature: str,
-        sequence: str,
-        wt_seq: str,
-        mt_seq: str,
-        start: int | None,
-        end: int | None,
+        iRecord: int,
+        epitope: str,
+        mt_peptide: str,
+        wt_peptide: str | None = None,
+        flanking_sequence_length: int = 9,
     ):
-        self.chrom = chrom
-        self.pos = pos
-        self.ref = ref
-        self.alt = alt
+        self.iRecord = iRecord
+        self.epitope = epitope
 
-        self.feature = feature
-        self.identifier = identifier
-
-        self.sequence = sequence
-        self.wt_seq = wt_seq
-        self.mt_seq = mt_seq
-
-        self.start = start
-        self.end = end if end is not None else self.start
-
-        self.sites = [(-1, -1.0)]
-
-        self._check_input()
-
-    def _check_input(self):
-        assert self.pos > 0, f"Negative variant position {self.pos} for variant {self.identifier}"
-        assert self.NUCLEOTIDE.match(self.ref), (
-            f"Illegal reference allele {self.ref} for variant {self.identifier}"
-        )
-        assert self.NUCLEOTIDE.match(self.alt), (
-            f"Illegal alt allele {self.alt} for variant {self.identifier}"
-        )
-        assert self.AMINO_ACID.match(self.sequence), (
-            f"Illegal protein sequence {self.sequence} for variant {self.identifier}"
-        )
-        assert self.MUTATION.match(self.wt_seq), (
-            f"Illegal wild-type sequence {self.wt_seq} for variant {self.identifier}"
-        )
-        assert self.MUTATION.match(self.mt_seq), (
-            f"Illegal mutation sequence {self.mt_seq} for variant {self.identifier}"
-        )
-        if self.start is not None:
-            assert self.start > 0 and (self.end is None or self.end >= self.start), (
-                f"Illegal mutation position {self.start}-{self.end if self.end else '?'} for variant {self.identifier}"
+        if wt_peptide:
+            self.peptide = self._get_mutated_peptide_with_flanking_sequence(
+                wt_peptide, mt_peptide, flanking_sequence_length
             )
+            self.start_diff = flanking_sequence_length
         else:
-            assert self.end is not None and self.end > 0, (
-                f"Illegal mutation position ?-{self.end} for variant {self.identifier}"
-            )
-        try:
-            trimmed = self.sequence[: self.sequence.index("*")]
-        except ValueError:
-            trimmed = self.sequence
-        if self.end > len(trimmed):
-            logging.warning(f"Mutation for variant {self.identifier} outside bounds")
-
-    @staticmethod
-    def _parse_table(out: str) -> list[Self]:
-        """
-        Parse the bcftools +split-vep output
-
-        The table must have 10 columns:
-        1. CHROM,
-        2. POS,
-        3. REF,
-        4. ALT,
-        5. HGVSp,
-        6. Feature (transcript ID)
-        7. Protein_position (can be from-to),
-        8. Amino_acids,
-        9. FrameshiftSequence, and
-        10. WildtypeProtein
-
-        Only 1 to 4 are always present, 7 is used as flag for the presence of a protein,
-        and when empty, the variant is ignored. Silent variants are checked with 8, and also ignored.
-        The sequence stored in the variant is 9 when not empty, and 10 otherwise.
-        """
-        variants = {}
-        for line in out.split("\n"):
-            if line == "":
-                continue
-            tokens = line.strip().split("\t")
-            assert len(tokens) >= len(Variant.BCFTOOLS_COLUMNS), (
-                f"Not enough fields in {line.strip()}"
+            self.peptide, self.start_diff = self._extract_flanked_epitope(
+                mt_peptide, self.epitope, flanking_sequence_length
             )
 
-            contig = tokens[0]
-            pos = int(tokens[1])
-            ref = tokens[2]
-            alt = tokens[3]
-            identifier = tokens[4]
-            feature = tokens[5]
-            assert identifier not in variants, f"Duplicated variant {identifier}"
+        self.seq_hash = str(hash(self.epitope + "\t" + self.peptide + "\t" + str(self.start_diff)))
+        self.sites = []
 
-            if tokens[6] == "" or tokens[6] == ".":
-                continue
+    def _extract_flanked_epitope(
+        self, full_peptide: str, epitope: str, flanking_sequence_length: int
+    ) -> tuple[str, int]:
+        assert epitope in full_peptide, (
+            f"Epitope {epitope} not in {full_peptide} for {self.iRecord}"
+        )
+        ep_start = full_peptide.index(epitope)
+        start = max(0, ep_start - flanking_sequence_length)
+        start_diff = ep_start - start
+        end = ep_start + len(self.epitope) + flanking_sequence_length
+        return full_peptide[start:end], start_diff
 
-            m = Variant.PROTEIN_POSITION.match(tokens[6])
-            assert m, f"Illegal protein position {tokens[6]}"
-            if m.group(1) == "?":
-                start = None
-            else:
-                start = int(m.group(1))
-            if m.group(2):
-                if m.group(3) == "?":
-                    end = None
-                else:
-                    end = int(m.group(3))
-            else:
-                end = start
+    def _get_mutated_peptide_with_flanking_sequence(
+        self, wt_peptide, mt_peptide, flanking_length
+    ) -> str:
+        wt_l = len(wt_peptide)
+        mt_l = len(mt_peptide)
 
-            # Check that variant is not silent
-            mutation = tokens[7].split("/")
-            if len(mutation) == 1:
-                continue
-            assert len(mutation) == 2, f"Illegal mutation {tokens[7]}"
-            wt_seq = mutation[0]
-            mt_seq = mutation[1]
-            try:
-                mt_seq = mt_seq[: (mt_seq.index("*") + 1)]
-            except ValueError:
-                pass
+        n = min(wt_l, mt_l) - flanking_length + 1
+        for start in range(n):
+            if (
+                wt_peptide[start : (start + flanking_length)]
+                != mt_peptide[start : (start + flanking_length)]
+            ):
+                break
 
-            sequence = tokens[9] if tokens[8] == "." or tokens[8] == "" else tokens[8]
+        n = max(min(wt_l, mt_l) - start - flanking_length, 1)
+        for i in range(n):
+            wt_i = wt_l - i - flanking_length + 1
+            mt_i = mt_l - i - flanking_length + 1
+            if (
+                wt_peptide[wt_i : (wt_i + flanking_length)]
+                != mt_peptide[mt_i : (mt_i + flanking_length)]
+            ):
+                break
+        stop = min(mt_i + flanking_length, mt_l)
 
-            variant = Variant(
-                contig,
-                pos,
-                ref,
-                alt,
-                identifier,
-                feature,
-                sequence,
-                wt_seq,
-                mt_seq,
-                start,
-                end,
+        mutant_subsequence = mt_peptide[start:stop]
+
+        if mutant_subsequence[0] not in self.ALLOWED_AA:
+            mutant_subsequence = mutant_subsequence[1:]
+        if mutant_subsequence[-1] not in self.ALLOWED_AA:
+            mutant_subsequence = mutant_subsequence[:-1]
+        if not all([c in self.ALLOWED_AA for c in mutant_subsequence]):
+            logging.warning(
+                f"Mutant sequence contains unsupported amino acid. Skipping entry {self.iRecord}"
             )
-            variants[identifier] = variant
+            return ""
+        return mutant_subsequence
 
-        return variants
+    def set_sites(self, sites: list[tuple[int, float]]):
+        for site in sites:
+            pos = site[0]
+            if self.start_diff <= pos and pos <= self.start_diff + len(self.epitope):
+                self.sites.append((pos - self.start_diff, site[1]))
+        self.sites.sort(key=itemgetter(1), reverse=True)
 
-    @staticmethod
-    def parse_annotated_vcf(fn: str | Path, timeout: int = 300) -> list[tuple]:
-        """Runs bcftools +split-vep & parses the output."""
-        bcftools = shutil.which("bcftools")
-        cmd = [bcftools, "+split-vep", fn, "-f", "%{}".format("\t%".join(Variant.BCFTOOLS_COLUMNS))]
-        logging.debug(f"VCF parsing command: {' '.join(cmd)}")
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        try:
-            out, err = p.communicate(timeout=timeout)
-        except TimeoutError:
-            p.kill()
-            raise TimeoutError(f"The command {' '.join(cmd)} has timed out")
-        if p.returncode != 0:
-            raise ChildProcessError(
-                f"Command {' '.join(cmd)} failed with return code {p.returncode}"
-            )
-        variants = Variant._parse_table(out.decode("utf-8"))
-        return variants
+    def format_sites(self) -> str:
+        sites = {
+            "Best Cleavage Position": "NA",
+            "Best Cleavage Score": "NA",
+            "Cleavage Sites": "NA",
+        }
+        if self.sites:
+            sites["Best Cleavage Position"] = self.sites[0][0]
+            sites["Best Cleavage Score"] = self.sites[0][1]
+            sites["Cleavage Sites"] = []
+            for site in self.sites:
+                sites["Cleavage Sites"].append(site)
+            sites["Cleavage Sites"] = ",".join([f"{k}:{v}" for k, v in sites["Cleavage Sites"]])
+        return "\t".join(map(str, sites.values()))
 
 
 def _parse_netchop_output(
@@ -228,30 +152,30 @@ def _parse_netchop_output(
         m = pattern.match(line.strip())
         if m and m.group("site") == "S":
             sites.append((int(m.group("pos")), float(m.group("score"))))
-    return sorted(sites, key=lambda x: x[1])
+    return sites
 
 
 def _run_netchop_command(
-    variant: Variant, cmd: list[str], worker_tmp: str, timeout: int = 3600, line_length: int = 80
+    epitope: Epitope, cmd: list[str], worker_tmp: str, timeout: int = 3600, line_length: int = 80
 ):
     """
     Runs netchop to find cleavage sites in on protein sequence
 
     The sequence is first saved in a temp directory, and netchop is run.
-    The output is parsed and cleavage sites are stored in the variant object.
+    The output is parsed and cleavage sites are stored in the epitope object.
     The site position and its score are retained.
     """
     logging.debug(
-        f"Process {current_process().name} variant {variant.identifier}, cmd = {' '.join(cmd)}, timeout = {timeout}"
+        f"Process {current_process().name} epitope {epitope.iRecord}, cmd = {' '.join(cmd)}, timeout = {timeout}"
     )
 
     # Write the mutated sequence
-    fn = os.path.join(worker_tmp, "sequence.fasta")
+    fn = os.path.join(worker_tmp, f"sequence_{epitope.iRecord}.fasta")
     with open(fn, "wt") as f:
-        f.write(f">{variant.feature}\n")
+        f.write(f">seq_{epitope.iRecord}\n")
         i = 0
-        while i < len(variant.sequence):
-            f.write(variant.sequence[i : max(i + line_length, len(variant.sequence))] + "\n")
+        while i < len(epitope.peptide):
+            f.write(epitope.peptide[i : min(i + line_length, len(epitope.peptide))] + "\n")
             i += line_length
 
     # Find all cleavage sites
@@ -267,14 +191,14 @@ def _run_netchop_command(
             f"Command {' '.join(cmd + [fn])} failed with return code {p.returncode}"
         )
 
-    # Parse cleavage sites & put them into variant object
+    # Parse cleavage sites & put them into epitope object
     return _parse_netchop_output(out.decode("utf-8").split("\n"))
 
 
 def _worker(
     task_queue: Queue,
     error_queue: Queue,
-    return_dict: dict,
+    return_dict: dict[str, Any],
     cmd: list[str],
     worker_tmp: str,
     timeout: int = 3600,
@@ -284,17 +208,17 @@ def _worker(
         f"Starting worker with cmd = {' '.join(cmd)}, tmpdir = {worker_tmp}, timeout = {timeout}"
     )
     while not task_queue.empty():
-        variant: Variant = task_queue.get()
+        epitope: Epitope = task_queue.get()
         try:
-            return_dict[variant.identifier] = _run_netchop_command(
-                variant, cmd, worker_tmp, timeout
+            return_dict[str(epitope.iRecord)] = _run_netchop_command(
+                epitope, cmd, worker_tmp, timeout
             )
         except Exception as e:
-            error_queue.put((e, variant))
+            error_queue.put((e, epitope))
 
 
 def _netchop_workaround(
-    netchop: str, tmpdir: str = os.path.join(os.getcwd(), "tmp"), force: bool = False
+    netchop: str, workaround_dir: str = os.path.join(os.getcwd(), "tmp"), force: bool = False
 ):
     """
     Workaround problems running netchop
@@ -315,40 +239,42 @@ def _netchop_workaround(
     nmhome_rel = os.path.basename(nmhome_dir)
     netchop_rel = os.path.join(nmhome_rel, os.path.basename(netchop_dir))
 
-    # Create or use existing temp directory
+    # Create or use existing workaround_dir
     try:
-        os.makedirs(tmpdir, mode=0o755, exist_ok=False)
+        os.makedirs(workaround_dir, mode=0o755, exist_ok=False)
     except FileExistsError as e:
         if force:
             try:
-                os.remove(tmpdir)
-                logging.warning(f"File {tmpdir} has been removed to make space for temp directory")
-            except OSError:
-                shutil.rmtree(tmpdir)
+                os.remove(workaround_dir)
                 logging.warning(
-                    f"Directory {tmpdir} has been removed to make space for temp directory"
+                    f"File {workaround_dir} has been removed to make space for temp directory"
                 )
-            os.makedirs(tmpdir, mode=0o755, exist_ok=False)
+            except OSError:
+                shutil.rmtree(workaround_dir)
+                logging.warning(
+                    f"Directory {workaround_dir} has been removed to make space for temp directory"
+                )
+            os.makedirs(workaround_dir, mode=0o755, exist_ok=False)
         else:
             raise e
 
-    # Create symlink to NMHOME in temp dir
+    # Create symlink to NMHOME in workaround_dir
     try:
-        os.symlink(nmhome_dir, os.path.join(tmpdir, nmhome_rel))
+        os.symlink(nmhome_dir, os.path.join(workaround_dir, nmhome_rel))
         logging.info(f"Created symlink {nmhome_rel} -> {nmhome_dir}")
     except FileExistsError as e:
         if force:
             try:
-                os.remove(os.path.join(tmpdir, nmhome_rel))
+                os.remove(os.path.join(workaround_dir, nmhome_rel))
                 logging.warning(
-                    f"File {os.path.join(tmpdir, nmhome_rel)} has been removed to make space for symlink"
+                    f"File {os.path.join(workaround_dir, nmhome_rel)} has been removed to make space for symlink"
                 )
             except OSError:
                 shutil.rmtree(nmhome_rel)
                 logging.warning(
-                    f"Directory {os.path.join(tmpdir, nmhome_rel)} has been removed to make space for symlink"
+                    f"Directory {os.path.join(workaround_dir, nmhome_rel)} has been removed to make space for symlink"
                 )
-            os.symlink(nmhome_dir, os.path.join(tmpdir, nmhome_rel))
+            os.symlink(nmhome_dir, os.path.join(workaround_dir, nmhome_rel))
             logging.info(f"Created symlink {nmhome_rel} -> {nmhome_dir}")
         else:
             raise e
@@ -357,10 +283,10 @@ def _netchop_workaround(
 
 
 def run_netchop(
-    variants: dict[str, Variant],
+    epitopes: dict[str, Epitope],
     netchop: str,
     args: dict[str, Any] = {},
-    tmpdir: str = os.path.join(os.getcwd(), "tmp"),
+    workaround_dir: str = os.path.join(os.getcwd(), "tmp"),
     clean: bool = True,
     force: bool = False,
     n_workers: int = 1,
@@ -379,9 +305,9 @@ def run_netchop(
     # Workaround problems getting netchop to work with long paths(?)
     # The workaround creates temp directory, symlinks & alters environment variables
     current_dir = os.getcwd()
-    _netchop_workaround(netchop, tmpdir, force)
-    os.chdir(tmpdir)
-    logging.info(f"Working from newly created directory {tmpdir}")
+    _netchop_workaround(netchop, workaround_dir, force)
+    os.chdir(workaround_dir)
+    logging.info(f"Working from newly created directory {workaround_dir}")
     logging.info(f"NMHOME environment variable set to {os.environ['NMHOME']}")
     logging.info(f"NETCHOP environment variable set to {os.environ['NETCHOP']}")
 
@@ -393,16 +319,24 @@ def run_netchop(
         "-t",
         str(args.get("threshold", 0.5)),
     ]
-    logging.debug(f"netchop command: {' '.join(cmd + ['<fn>'])}")
+    logging.info(f"netchop command: {' '.join(cmd + ['<fn>'])}")
 
     # Prepare multiprocessing
+    tmpdir = tempfile.mkdtemp()
+    worker_tmp_template = os.path.join(tmpdir, "worker_{i_worker}")
     for i_worker in range(n_workers):
-        worker_tmp = f"worker_{i_worker}"
+        worker_tmp = worker_tmp_template.format(i_worker=i_worker)
         os.makedirs(worker_tmp, mode=0o700, exist_ok=False)
 
+    # Avoid duplication: epitopes with same epitope, peptide & starting pos are just computed once
     task_queue = Queue()
-    for variant in variants.values():
-        task_queue.put(variant)
+    indices = {}
+    for epitope in epitopes:
+        h = epitope.seq_hash
+        if h not in indices:
+            indices[h] = []
+            task_queue.put(epitope)
+        indices[h].append(epitope.iRecord)
     error_queue = Queue()
     return_dict = Manager().dict()
     processes: list[Process] = []
@@ -411,7 +345,7 @@ def run_netchop(
 
     # Start the workers
     for i_worker in range(n_workers):
-        worker_tmp = f"worker_{i_worker}"
+        worker_tmp = worker_tmp_template.format(i_worker=i_worker)
         p = Process(
             target=_worker, args=(task_queue, error_queue, return_dict, cmd, worker_tmp, timeout)
         )
@@ -428,115 +362,137 @@ def run_netchop(
     error = False
     while not error_queue.empty():
         error = True
-        e, variant = error_queue.get()
+        e, epitope = error_queue.get()
         logging.error(
-            f"An error occurred during netchop for variant {variant.identifier} - message {e}"
+            f"An error occurred during netchop for epitope {epitope.iRecord} - message {e}"
         )
     if error:
         raise ProcessError("Error running one of netchop sub-processes")
 
-    # Rapatriate netchop results into variants
-    for identifier, sites in return_dict.items():
-        variants[identifier].sites = sites
+    # Rapatriate netchop results into epitope
+    for iRecord, sites in return_dict.items():
+        iRecord = int(iRecord)
+        h = epitopes[iRecord].seq_hash
+        for i in indices[h]:
+            epitopes[i].set_sites(sites)
 
     # Clean-up workaround
     os.chdir(current_dir)
     if clean:
+        shutil.rmtree(workaround_dir)
         shutil.rmtree(tmpdir)
 
 
-def read_epitopes_table(fn: str | Path, columns: list[str] = []) -> dict[str, dict[str, Any]]:
+def read_fasta(fn: str | Path) -> dict[str, str]:
+    sequences = {}
+    seqname = None
+    seq = ""
+
+    with open(fn, "rt") as f:
+        iLine = 0
+        for line in f:
+            iLine += 1
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith(">"):
+                if seqname:
+                    if seqname in sequences:
+                        logging.warning(
+                            f"Duplicate sequence {seqname} on line {iLine} of {fn}, ignored"
+                        )
+                    else:
+                        assert seq, f"Missing sequence for {seqname} of {fn}"
+                        sequences[seqname] = seq
+                seqname = line.strip("> ")
+                seq = ""
+            else:
+                seq += line
+
+    if not seqname:
+        assert seq == "", f"{fn} is not FASTA format"
+        logging.warning(f"{fn} contains no sequence")
+    elif seqname in sequences:
+        logging.warning(f"Duplicate sequence {seqname} on last line of {fn}, ignored")
+    else:
+        assert seq, f"Missing sequence for {seqname} of {fn}"
+        sequences[seqname] = seq
+
+    return sequences
+
+
+def read_epitopes_table(fn: str | Path) -> list[dict[str, str]]:
     """
     Reads neo-epitope table
 
     Produced by pVACseq (should work for pVACSplice and pVACfuse, but untested)
     The files are generally <sample>.<MHC class>.(all_epitopes|filtered).tsv.
     """
-    epitopes = {}
+    records = []
     with open(fn, "rt") as f:
         reader = csv.DictReader(f, delimiter="\t")
-        if columns:
-            assert all(column in reader.fieldnames for column in columns), (
-                f"Not all requested column ({columns}) are present in file {fn}"
-            )
+        assert "Index" in reader.fieldnames, f"Index column missing from {fn}"
         for row in reader:
-            if columns:
-                epitope = {}
-                for column in columns:
-                    epitope[column] = row[column]
-            else:
-                epitope = row
-            identifier = f"{row['HGVSp']}|{row['HLA Allele']}|{row['MT Epitope Seq']}"
-            assert identifier not in epitopes, f"Duplicated epitope {identifier}"
-            epitopes[identifier] = epitope
+            records.append(row)
+    return records
+
+
+def create_epitope_objects_pvacseq(
+    sequences: dict[str, str], records: list[dict[str, str]]
+) -> list[Epitope]:
+    epitopes = []
+    for iRecord, record in enumerate(records):
+        epitopes.append(
+            Epitope(iRecord, record["MT Epitope Seq"], sequences["MT." + record["Index"]])
+        )
     return epitopes
 
 
-def match_variant_to_epitope(
-    variants: dict[str, Variant], epitopes: dict[str, dict[str, Any]]
-) -> dict[str, str]:
-    """Creates a mapping table from epitope to corresponding variant, based on HGVSp identifiers"""
-    mapping_table = {}
-    for identifier in epitopes.keys():
-        variant_id = identifier.split("|")[0]
-        assert variant_id in variants, f"Variant identifer {variant_id} not in variant table"
-        mapping_table[identifier] = variant_id
-    return mapping_table
+def create_epitope_objects_pvacfuse(
+    sequences: dict[str, str], records: list[dict[str, str]]
+) -> list[Epitope]:
+    epitopes = []
+    for iRecord, record in enumerate(records):
+        epitopes.append(Epitope(iRecord, record["Epitope Seq"], sequences[record["Index"]]))
+    return epitopes
 
 
-def _mutation_locus(epitope: dict[str, Any]) -> tuple[int, int]:
-    """Extract the epitope position in the protein (may not be correct for default wildtype sequence)"""
-    m = Variant.PROTEIN_POSITION.match(epitope["Protein Position"])
-    assert m, f"Illegal protein position in epitope {epitope}"
-    start_pos = int(m.group(1))
-    if m.group(3):
-        end_pos = int(m.group(3))
-    else:
-        end_pos = start_pos
-    start = start_pos - int(epitope["Peptide Length"]) + int(epitope["Sub-peptide Position"])
-    end = start + int(epitope["Peptide Length"]) + (end_pos - start_pos)
-    return (start, end)
-
-
-def _output_sites(epitope: dict[str, Any], variant: Variant) -> str:
-    """Fill cleavage data for an epitope, using the sites in the variant object"""
-    sites = {"Best Cleavage Position": "NA", "Best Cleavage Score": "NA", "Cleavage Sites": []}
-    start, end = _mutation_locus(epitope)
-    for site in variant.sites:
-        pos = site[0]
-        score = site[1]
-        if start <= pos and pos <= end:
-            sites["Best Cleavage Position"] = pos
-            sites["Best Cleavage Score"] = score
-            sites["Cleavage Sites"].append(site)
-    sites["Cleavage Sites"] = (
-        ",".join([f"{k}:{v}" for k, v in sites["Cleavage Sites"]])
-        if sites["Cleavage Sites"]
-        else "NA"
-    )
-    return "\t".join(map(str, sites.values()))
+def create_epitope_objects_pvacsplice(
+    sequences: dict[str, str], records: list[dict[str, str]]
+) -> list[Epitope]:
+    epitopes = []
+    for iRecord, record in enumerate(records):
+        epitopes.append(
+            Epitope(
+                iRecord,
+                record["Epitope Seq"],
+                sequences["ALT." + record["Index"]],
+                sequences["WT." + record["Index"]],
+            )
+        )
+    return epitopes
 
 
 def write_output_table(
     f: io.TextIOBase,
-    variants: dict[str, Variant],
-    epitopes: dict[str, dict[str, Any]],
-    mapping_table: dict[str, str],
+    epitopes: list[Epitope],
+    records: list[dict[str, Any]],
 ):
     """Add 3 columns to the epitope table (Best cleavage pos & score, and digest of all cleavage sites)"""
-    titles = list(epitopes.values())[0].keys()
+    assert len(records) == len(epitopes), (
+        f"Internal error: input ({len(records)}) and output ({len(epitopes)}) out of sync"
+    )
+    titles = records[0].keys()
     f.write(
         "\t".join(
             list(titles) + ["Best Cleavage Position", "Best Cleavage Score", "Cleavage Sites"]
         )
         + "\n"
     )
-    for e_identifier, v_identifier in mapping_table.items():
-        variant = variants[v_identifier]
-        epitope = epitopes[e_identifier]
-        line = (
-            "\t".join([epitope[title] for title in titles]) + "\t" + _output_sites(epitope, variant)
-        )
+    for iRecord in range(len(records)):
+        record = records[iRecord]
+        epitope = epitopes[iRecord]
+        line = "\t".join([record[title] for title in titles]) + "\t" + epitope.format_sites()
         f.write(line + "\n")
 
 
@@ -556,13 +512,19 @@ def main() -> int:
         "-w", "--workers", type=int, default=1, help="Number of threads for netchop"
     )
 
+    parser.add_argument(
+        "-t",
+        "--tool",
+        choices=("pvacseq", "pvacfuse", "pvacsplice"),
+        default="pvacseq",
+        help="pVACtool module (pvacseq, pvacfuse, pvacsplice)",
+    )
     parser.add_argument("-n", "--netchop", nargs=1, help="Path to the netchop binary")
     parser.add_argument("--timeout", type=int, default=3600, help="Netchop command timeout")
     parser.add_argument(
         "-m", "--method", choices=("cterm", "20s"), default="cterm", help="Netchop method"
     )
     parser.add_argument(
-        "-t",
         "--threshold",
         type=float,
         default=0.5,
@@ -571,11 +533,11 @@ def main() -> int:
     parser.add_argument("-o", "--output", help="Output table filename (stdout if missing)")
 
     parser.add_argument(
-        "variants",
-        help="Somatic variants vcf file annotated with VEP unsig Frameshift & Wildtype plugins",
+        "epitopes", help="Neoepitope prediction results (*.all_epitopes.tsv or *.filtered.tsv)"
     )
     parser.add_argument(
-        "epitopes", help="Neoepitope prediction results (*.all_epitopes.tsv or *.filtered.tsv)"
+        "sequences",
+        help="Neighboring sequences near somatic variants in fasta format",
     )
 
     args = parser.parse_args()
@@ -585,41 +547,38 @@ def main() -> int:
         level=logging.DEBUG if args.verbose else logging.INFO,
     )
 
-    epitopes = read_epitopes_table(args.epitopes)
-    if len(epitopes) == 0:
+    records = read_epitopes_table(args.epitopes)
+    if len(records) == 0:
         logging.info("No predicted neo-epitopes")
         Path.touch(args.output, mode=0o750)
         return 0
-    logging.info(
-        f"{len(epitopes)} neo-epitope predictions have been read from file {args.epitopes}"
-    )
-    variants = Variant.parse_annotated_vcf(args.variants)
-    logging.info(f"{len(variants)} somatic variants have been read from file {args.variants}")
+    logging.info(f"{len(records)} neo-epitope predictions have been read from file {args.epitopes}")
+    sequences = read_fasta(args.sequences)
+    logging.info(f"{len(sequences)} sequences have been read from file {args.sequences}")
 
-    mapping_table = match_variant_to_epitope(variants, epitopes)
-    variants_in_epitopes = set(mapping_table.values())
-    variants = {k: v for k, v in variants.items() if k in variants_in_epitopes}
-    logging.info(f"{len(variants)} somatic variants produce {len(mapping_table)} neo-epitopes")
+    create_epitope_objects = globals().get(f"create_epitope_objects_{args.tool}", None)
+    assert create_epitope_objects, f"Tool {args.tool} not implemented"
+    epitopes = create_epitope_objects(sequences, records)
 
     logging.info(f"Starting netchop runs ({args.netchop}) with {args.workers} processes")
     run_netchop(
-        variants,
+        epitopes,
         args.netchop[0],
         args={"method": args.method, "threshold": args.threshold},
-        tmpdir=args.tmpdir,
+        workaround_dir=args.tmpdir,
         clean=args.verbose,
         force=args.force,
         n_workers=args.workers,
         timeout=args.timeout,
     )
-    logging.info(f"{len(variants)} netchop run completed")
+    logging.info(f"{len(epitopes)} netchop run completed")
 
     logging.info("Writing results")
     if args.output:
         f = open(args.output, "wt")
     else:
         f = sys.stdout
-    write_output_table(f, variants, epitopes, mapping_table)
+    write_output_table(f, epitopes, records)
     if args.output:
         f.flush()
         f.close()

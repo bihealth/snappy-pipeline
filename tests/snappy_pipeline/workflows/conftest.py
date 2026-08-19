@@ -960,7 +960,7 @@ def hla_typing_result_fake_fs(fake_fs, cancer_sheet_tsv):
 {
     "A": ["A*02:01", "A*11:01"],
     "B": ["B*15:32"],
-    "C": ["C*04:03"]
+    "C": ["C*04:03"],
 }"""
         fake_fs.fs.create_file(
             tpl.format(typing_tool="optitype", library_name=library_name),
@@ -973,7 +973,8 @@ def hla_typing_result_fake_fs(fake_fs, cancer_sheet_tsv):
     "A": ["A*02:01", "A*11:01"],
     "B": ["B*15:32"],
     "C": ["C*04:04"],
-    "DPB1": ["DPB1*14:01:01"]
+    "DPA1": ["DPA1*01:01"],
+    "DPB1": ["DPB1*14:01:01"],
 }"""
             fake_fs.fs.create_file(
                 tpl.format(typing_tool="star.arcashla", library_name=library_name),

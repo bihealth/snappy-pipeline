@@ -322,7 +322,7 @@ class ArcasHlaStepPart(BaseStepPart):
         return ResourceUsage(
             threads=4,
             time="60:00:00",  # 60 hours
-            memory="15000M",
+            memory="64000M",
         )
 
 
@@ -445,7 +445,7 @@ class HlaLaStepPart(BaseStepPart):
         return ResourceUsage(
             threads=8,
             time="60:00:00",  # 60 hours
-            memory="60000M",
+            memory="96000M",
         )
 
 
