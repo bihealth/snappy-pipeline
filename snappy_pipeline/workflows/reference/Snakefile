@@ -1,0 +1,43 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline adapter_trimming step Snakefile"""
+
+import os
+
+from snappy_pipeline import expand_ref
+from snappy_pipeline.workflows.reference import ReferenceWorkflow
+
+__author__ = "Till Hartmann <till.hartmann@bih-charite.de>"
+
+
+# Configuration ===============================================================
+
+
+configfile: "config.yaml"
+
+
+# Expand "$ref" JSON pointers in configuration (also works for YAML)
+config, lookup_paths, config_paths = expand_ref("config.yaml", config)
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = ReferenceWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+
+# Rules =======================================================================
+
+
+rule reference_all:
+    input:
+        wf.get_result_files(),
+    default_target: True
+
+
+rule reference_retrieve_fasta_run:
+    output:
+        fasta=protected("work/reference/{reference}/reference.fasta"),
+    params:
+        reference=lambda wildcards: wildcards.reference,
+    cache: "omit-software"
+    shell:
+        """
+        touch {output.fasta}
+        """
