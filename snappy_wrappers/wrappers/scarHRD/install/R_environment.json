@@ -1,0 +1,17 @@
+[
+    {
+        "name": "copynumber",
+        "repository": "github",
+        "url": "aroneklund/copynumber"
+    },
+    {
+        "name": "sequenza",
+        "repository": "bitbucket",
+        "url": "sequenzatools/sequenza@3.0.0"
+    },
+    {
+        "name": "scarHRD",
+        "repo": "github",
+        "url": "sztup/scarHRD"
+    }
+]

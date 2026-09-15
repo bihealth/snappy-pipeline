@@ -58,30 +58,27 @@ def dictify(gen):
 
 
 def install_R_package(
-    dest: str, name: str, repository: str = "cran", url: str | None = None
+    dest: str, name: str, repository: str = "cran", url: str = None
 ) -> subprocess.CompletedProcess:
     assert dest, "Missing R package destination folder"
     os.makedirs(os.path.dirname(dest), mode=0o750, exist_ok=True)
 
-    match repository:
-        case "cran":
-            install_cmd = f"install.packages('{name}', lib='{dest}', repos='https://cloud.r-project.org', update=FALSE, ask=FALSE)"
-        case "bioconductor":
-            install_cmd = f"BiocManager::install('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
-        case "github":
-            assert url, f"Can't install R package '{name}' from github, URL is missing"
-            install_cmd = f"remotes::install_github('{url}', lib='{dest}', upgrade='never')"
-        case "bitbucket":
-            assert url, f"Can't install R package '{name}' from bitbucket, URL is missing"
-            install_cmd = f"remotes::install_bitbucket('{url}', lib='{dest}', upgrade='never')"
-        case "local":
-            assert url, f"Can't install local R package '{name}', missing path"
-            assert os.path.exists(url), f"Can't find local R package '{name}' at location '{url}'"
-            install_cmd = (
-                f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
-            )
-        case _:
-            raise ValueError("Unknown repository '{repository}'")
+    if repository == "cran":
+        install_cmd = f"install.packages('{name}', lib='{dest}', repos='https://cloud.r-project.org', update=FALSE, ask=FALSE)"
+    elif repository == "bioconductor":
+        install_cmd = f"BiocManager::install('{name}', lib='{dest}', update=FALSE, ask=FALSE)"
+    elif repository == "github":
+        assert url, f"Can't install R package '{name}' from github, URL is missing"
+        install_cmd = f"remotes::install_github('{url}', lib='{dest}', upgrade='never')"
+    elif repository == "bitbucket":
+        assert url, f"Can't install R package '{name}' from bitbucket, URL is missing"
+        install_cmd = f"remotes::install_bitbucket('{url}', lib='{dest}', upgrade='never')"
+    elif repository == "local":
+        assert url, f"Can't install local R package '{name}', missing path"
+        assert os.path.exists(url), f"Can't find local R package '{name}' at location '{url}'"
+        install_cmd = f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
+    else:
+        raise ValueError("Unknown repository '{repository}'")
     R_script = [
         ".libPaths(c('{conda_prefix}', '{dest}'))".format(
             conda_prefix=os.path.join(os.getenv("CONDA_PREFIX"), "lib", "R", "library"), dest=dest
@@ -92,7 +89,7 @@ def install_R_package(
         "quit(save='no', status=status, runLast=FALSE)",
     ]
     cmd = ["R", "--vanilla", "-e", "; ".join(R_script)]
-    return subprocess.run(cmd, text=True, check=True)
+    return subprocess.run(cmd, universal_newlines=True, check=True)
 
 
 def install_R_packages(dest: str, filename: str):
