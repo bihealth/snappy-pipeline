@@ -37,8 +37,15 @@ set -x
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
+bcftools query \
+    --format '%CHROM\t%POS0\t%END' \
+    {snakemake.input.loci} \
+| bedtools merge -i - \
+> $TMPDIR/regions.bed
+
 bcftools mpileup \
-    --fasta-ref {snakemake.input.reference} --regions-file {snakemake.input.loci} \
+    --fasta-ref {snakemake.input.reference} \
+    --regions-file $TMPDIR/regions.bed \
     {extra_args} \
     {snakemake.input.bam} \
 | bcftools reheader --samples <(echo "{args[tumor_sample]}") \

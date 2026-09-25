@@ -5,3 +5,5 @@ channels:
 dependencies:
     - python>=3.12
     - bcftools>=1.21
+    - bedtools>=2.31.1
+
