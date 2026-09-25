@@ -525,7 +525,12 @@ def run(
                     #     for r in expr:
                     #         print(f"        Pileup record: POS = {r.POS}, REF = {r.REF}, ALT = {r.ALT}")
                     eds = aggregate_counts(
-                        expr, sample_id, pos + 1 - record.POS, ref, alt, allele_depth=vcf_ids["rna_allele_depth"]
+                        expr,
+                        sample_id,
+                        pos + 1 - record.POS,
+                        ref,
+                        alt,
+                        allele_depth=vcf_ids["rna_allele_depth"],
                     )
                     sum_eds[0] += eds[0]
                     sum_eds[1] += eds[1]
@@ -546,7 +551,6 @@ def run(
                     sum_eds.pop()
                 data[vcf_ids["out_allele_depth_id"]] = sum_eds
                 nPileup += 1
-
 
         writer.write_record(record)
 

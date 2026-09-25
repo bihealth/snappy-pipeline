@@ -76,7 +76,9 @@ def install_R_package(
     elif repository == "local":
         assert url, f"Can't install local R package '{name}', missing path"
         assert os.path.exists(url), f"Can't find local R package '{name}' at location '{url}'"
-        install_cmd = f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
+        install_cmd = (
+            f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
+        )
     else:
         raise ValueError("Unknown repository '{repository}'")
     R_script = [
