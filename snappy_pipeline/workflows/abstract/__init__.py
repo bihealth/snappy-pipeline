@@ -6,6 +6,7 @@ import datetime
 import logging
 import os
 import os.path
+import re
 import sys
 import tempfile
 import typing
@@ -15,16 +16,23 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import lru_cache
 from io import StringIO
-from typing import Any, Callable
+from typing import Any, Callable, Type
 
 import pydantic
 import ruamel.yaml as ruamel_yaml
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
+from biomedsheets.models import SheetEntry, BioEntity, BioSample, TestSample, NGSLibrary
 from biomedsheets.models import SecondaryIDNotFoundException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
-from biomedsheets.shortcuts import ShortcutSampleSheet
+from biomedsheets.shortcuts import (
+    CancerCaseSheet,
+    GermlineCaseSheet,
+    GenericSampleSheet,
+    ShortcutSampleSheet,
+    is_background,
+)
 from snakemake.api import Workflow
 from snakemake.io import touch
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
@@ -40,6 +48,8 @@ from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 from snappy_wrappers.resource_usage import ResourceUsage
+
+import pandas as pd
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -2549,3 +2559,324 @@ class InputFilesStepPartMixin:
 
         assert action == "run"
         return input_function
+
+
+def _update_extra_infos_at_level(
+    sheet_entry: SheetEntry, extra_infos: dict, defaults: dict[Type[SheetEntry], dict] = {}
+) -> dict[str, str]:
+    """Return the extra_infos dict for a BioEntity or TestSample.
+
+    If the entity has no extra_infos, returns an empty dict.
+    """
+    # Filter out any defaults that are already present in extra_infos
+    # to avoid overwriting existing values.
+    entry_defaults = defaults.get(type(sheet_entry), {})
+    valid_defaults = {k: v for k, v in entry_defaults.items() if k not in entry_defaults}
+
+    # Skip missing extra_infos.
+    # extra_infos could be list, according to biomedsheet specs, how can it work?
+    extra_infos_at_level = sheet_entry.extra_infos
+    if extra_infos_at_level is None or not isinstance(extra_infos_at_level, dict):
+        return valid_defaults
+
+    # Fill missing columns with defaults, but do not overwrite existing values.
+    for key, value in valid_defaults.items():
+        if key not in extra_infos:
+            extra_infos[key] = value
+
+    return extra_infos
+
+
+def simple_biomedsheet_to_dataframe_with_extra_columns(
+    sheet: ShortcutSampleSheet, relationships=None
+) -> pd.DataFrame:
+    """Convert a BioMedSheet to a pandas DataFrame, keeping extra information.
+
+    The resulting DataFrame has one row per NGS library, with columns for
+    library name, extraction type, kind, role, sex, donor name, sample name,
+    cohort name, father name, mother name, disease state, and tissue type.
+
+    The function ensures validity (& presence when needed) of extraction type, kind, role & sex.
+    Additional columns stored as extra_infos in the BioMedSheet are also included in the DataFrame,
+    provided that their name does not conflict with the standard columns, and that the name
+    is not repeated in multiple levels of the BioMedSheet hierarchy (BioEntity, BioSample, TestSample, NGSLibrary).
+
+    Parameters
+    ----------
+    sheet:
+        A ShortcutSampleSheet instance (e.g. CancerCaseSheet or GermlineCaseSheet).
+    relationships:
+        A list of relationships between entities in the sheet.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per NGS library.  Columns always present:
+
+        * ``library_name`` — NGS library identifier
+        * ``extraction_type`` — ``"dna"``, ``"rna"``, … (always lower-cased)
+        * ``kind`` — ``"cancer"`` or ``"germline"``
+        * ``role`` — ``"tumor"`` / ``"normal"`` / ``"index"`` / ``"father"``
+          / ``"mother"`` / ``"affected"`` / ``"unaffected"``
+        * ``is_primary`` — ``True`` for primary tumor (cancer) or pedigree
+          index (germline); ``False`` otherwise
+        * ``sex`` — ``"male"``, ``"female"``, or ``"unknown"``
+        * ``donor_name`` — patient / family identifier
+        * ``sample_name`` — bio-sample name
+        * ``tissue_type`` — ``"tumor"``, ``"normal"``, or ``"unknown"``
+    """
+    all_extra_defaults = {
+        CancerCaseSheet: {
+            BioEntity: {"sex": "unknown", "diseaseState": 0, "tissueType": "unknown"},
+            BioSample: {"isTumor": False},
+            TestSample: {"extractionType": "unknown"},
+            NGSLibrary: {},
+        },
+        GermlineCaseSheet: {
+            BioEntity: {
+                "sex": "unknown",
+                "fatherPk": None,
+                "fatherName": "0",
+                "motherPk": None,
+                "motherName": "0",
+            },
+            BioSample: {},
+            TestSample: {"extractionType": "unknown"},
+            NGSLibrary: {},
+        },
+        GenericSampleSheet: {
+            BioEntity: {"sex": "unknown"},
+            BioSample: {},
+            TestSample: {"extractionType": "unknown"},
+            NGSLibrary: {},
+        },
+    }
+
+    rows = []
+    if sheet is not None and not is_background(sheet):
+        extra_defaults = all_extra_defaults.get(type(sheet), {})
+        fathers = []
+        mothers = []
+        for donor in sheet.sheet.bio_entities:
+            extra_infos = {}
+            if donor.disabled:
+                continue
+            extra_infos = _update_extra_infos_at_level(donor, extra_infos, extra_defaults)
+
+            # Taken from the biomedsheet specs
+            father_name = extra_infos.get("fatherName", "")
+            mother_name = extra_infos.get("motherName", "")
+            if father_name == "0" or father_name == ".":
+                father_name = ""
+            if mother_name == "0" or mother_name == ".":
+                mother_name = ""
+            if father_name:
+                fathers.append(father_name)
+            if mother_name:
+                mothers.append(mother_name)
+            sex = extra_infos.get("sex", "unknown")
+            if sex == "M":
+                sex = "male"
+            elif sex == "F":
+                sex = "female"
+            else:
+                sex = "unknown"
+            disease_state = extra_infos.get("affected", 0)
+            if (isinstance(disease_state, bool) and disease_state) or disease_state == "Y":
+                disease_state = 2
+            elif (isinstance(disease_state, bool) and not disease_state) or disease_state == "N":
+                disease_state = 1
+            else:
+                disease_state = 0
+
+            primary_dna_tumor_library = None
+            primary_rna_tumor_library = None
+            for sample in donor.bio_samples:
+                if sample.disabled:
+                    continue
+                extra_infos = _update_extra_infos_at_level(sample, extra_infos, extra_defaults)
+                isTumor = extra_infos.get("isTumor", None)
+                for ts in sample.test_samples:
+                    if ts.disabled:
+                        continue
+                    extra_infos = _update_extra_infos_at_level(ts, extra_infos, extra_defaults)
+                    extractionType = extra_infos.get("extractionType", "unknown").lower()
+                    for lib in ts.dna_ngs_libraries:
+                        if lib.disabled:
+                            continue
+                        extra_infos = _update_extra_infos_at_level(lib, extra_infos)
+
+                        if not primary_dna_tumor_library and extractionType == "dna" and isTumor:
+                            primary_dna_tumor_library = lib
+                        if not primary_rna_tumor_library and extractionType == "rna" and isTumor:
+                            primary_rna_tumor_library = lib
+
+                        if isinstance(sheet, CancerCaseSheet):
+                            if extractionType == "dna" and isTumor:
+                                is_primary = lib == primary_dna_tumor_library
+                            elif extractionType == "rna" and isTumor:
+                                is_primary = lib == primary_rna_tumor_library
+                            else:
+                                is_primary = False
+                        elif isinstance(sheet, GermlineCaseSheet):
+                            is_primary = father_name != "" and mother_name != ""
+                        else:
+                            is_primary = True
+
+                        row = {
+                            "library_name": lib.name,
+                            "extraction_type": extractionType,
+                            "kind": "cancer" if isinstance(sheet, CancerCaseSheet) else "germline",
+                            "role": None
+                            if not isinstance(sheet, CancerCaseSheet)
+                            else ("tumor" if isTumor else "normal"),
+                            "is_primary": is_primary,
+                            "sex": sex,
+                            "donor_name": donor.name,
+                            "sample_name": sample.name,
+                            "cohort_name": donor.name
+                            if isinstance(sheet, GenericSampleSheet)
+                            else "",
+                            "father_name": father_name,
+                            "mother_name": mother_name,
+                            "disease_state": disease_state,
+                            "tissue_type": "unknown"
+                            if not isinstance(sheet, CancerCaseSheet)
+                            else ("tumor" if isTumor else "normal"),
+                        }
+
+                        rows.append(row)
+
+        for row in rows:
+            if row["role"] is None:
+                if row["father_name"] in fathers:
+                    row["role"] = "father"
+                elif row["mother_name"] in mothers:
+                    row["role"] = "mother"
+                else:
+                    row["role"] = "index"
+
+    _COLS = [
+        "library_name",
+        "extraction_type",
+        "kind",
+        "role",
+        "is_primary",
+        "sex",
+        "donor_name",
+        "sample_name",
+        "cohort_name",
+        "father_name",
+        "mother_name",
+        "disease_state",
+        "tissue_type",
+    ]
+    df = pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
+    if relationships:
+        df = resolve_relationships(df, relationships)
+    return df
+
+
+def LevenshteinDistance(s: str, t: str) -> int:
+    """Compute the Levenshtein distance between two strings."""
+    m = len(s)
+    n = len(t)
+    row_len = n + 1
+    d = [0] * ((m + 1) * row_len)
+
+    for i in range(m + 1):
+        d[i * row_len] = i
+
+    for j in range(n + 1):
+        d[j] = j
+
+    k = n
+    for i in range(m):
+        k += 1
+        for j in range(n):
+            k += 1
+            if s[i] == t[j]:
+                cost = 0
+            else:
+                cost = 1
+            d[k] = min(
+                d[k - row_len] + 1,  # deletion
+                d[k - 1] + 1,  # insertion
+                d[k - row_len - 1] + cost,  # substitution
+            )
+    return d[k]
+
+
+def get_raw_files_from_folder(
+    folder_path, patterns: list[dict[str, re.Pattern]]
+) -> dict[str, dict[str, str]]:
+    r"""
+    Return a dict of readgroup -> mate -> file path for files in *folder_path* matching *patterns*.
+
+    This function should be used to collect raw data files for any step requiring fastqs.
+    It is the responsibility of the step/wrapper to merge read groups if necessary,
+    as the function returns the files split by read group.
+
+    The patterns are regular expressions with named groups "readgroup" and "mate".
+    The "readgroup" group is used to differentiate different sequencing units (typically lanes),
+    and the "mate" group labels the first or second read, or possibly the index file.
+    The function returns a dictionary where all fastq files are paired (when necessary),
+    and split by read group. This allows mappers to align reads separately for each readgroup.
+
+    Example of patterns:
+    - {"left": "^(?P<path>.+/)?(?P<readgroup>.+)_(?P<mate>R1)_001\\.fastq\\.gz$",
+       "right": "^(?P<path>.+/)?(?P<readgroup>.+)_(?P<mate>R2)_001\\.fastq\\.gz$",
+       "index": "^(?P<path>.+/)?(?P<readgroup>.+)_(?P<mate>index|I1)_001\\.fastq\\.gz$"
+       }
+    - {"left": "^.*/(?P<readgroup>.+)/(?P<sample>.+)_(?P<mate>read1)\\.fastq\\.gz$",
+       "right": "^.*/(?P<readgroup>.+)/(?P<sample>.+)_(?P<mate>read2)\\.fastq\\.gz$"
+       }
+
+    Note that the readgroups must be unique across patterns, and likewise
+    fastq files cannot be reached by different patterns.
+
+    Parameters
+    ----------
+    folder_path: str
+        Path to the folder to search for files.
+    patterns: list of dict
+        List of patterns to match files. Each pattern is a dict mapping mate names ("left", "right", or "index")
+        to compiled regular expressions. The "left" key is mandatory.
+
+    Returns
+    -------
+    dict
+        A dictionary mapping readgroup names to dictionaries of mate names to absolute file paths.
+    """
+    file_list = {}
+    for pattern in patterns:
+        files_matched = {}
+        for side, regex in pattern.items():
+            assert "readgroup" in regex.groupindex, "Pattern must have a 'readgroup' named group"
+            assert "mate" in regex.groupindex, "Pattern must have a 'mate' named group"
+            for root, _, files in os.walk(folder_path):
+                for file in files:
+                    path = os.path.join(root, file)
+                    m = regex.match(path)
+                    if m:
+                        rg = m.group("readgroup")
+                        if rg not in files_matched:
+                            files_matched[rg] = {}
+                        assert side not in files_matched[rg], (
+                            f"Duplicate mate {side} for readgroup {rg} in file {path}"
+                        )
+                        files_matched[rg][side] = os.path.realpath(path)
+
+        for rg, mates in files_matched.items():
+            assert rg not in file_list, f"Duplicate readgroup {rg} across patterns"
+            assert "left" in files_matched[rg], f"Missing left mate for readgroup {rg}"
+            file_list[rg] = files_matched[rg]
+
+    for rg, mates in file_list.items():
+        paths = set()
+        for path in mates.values():
+            if path in paths:
+                raise ValueError(f"Duplicate path {path} for readgroup {rg}")
+            paths.add(path)
+
+    return file_list
