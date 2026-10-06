@@ -558,9 +558,7 @@ def main() -> int:
     if args.lengths:
         lengths = lengths.intersection(set(map(int, COMMA.split(args.lengths))))
 
-    logger.info(
-        f"Starting netMHCstabpan runs ({args.netMHCstabpan}) with {args.workers} processes"
-    )
+    logger.info(f"Starting netMHCstabpan runs ({args.netMHCstabpan}) with {args.workers} processes")
     epitopes = run_netMHCstabpan(
         records,
         hla_types=hla_types,
