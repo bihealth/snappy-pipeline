@@ -7,15 +7,16 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 
-from multiprocessing import Manager, Process, ProcessError, Queue, current_process
+from multiprocessing import Process, ProcessError, Queue, current_process
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Tuple, TextIO
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
+
+logger = logging.getLogger(__name__)
 
 NETMHCSTABPAN_CMD = r"""
 allele=$1
@@ -23,6 +24,7 @@ length=$2
 fasta=$3
 out=$4
 
+export TMPDIR=/base_temp
 export NETMHCpan={netMHCpan_path}
 export NETMHCstabpan={netMHCstabpan_path}
 
@@ -51,8 +53,9 @@ class EpitopeSeq(NamedTuple):
     indices: list[int] = []
 
 
-def _clean_hla(hla_type: str) -> str:
-    return HLA_CLEAN_PATTERN.sub("", hla_type)
+def _epitope_length_filename(epitope_name: str, length: int) -> str:
+    """Creates a filename for one epitope of a given length"""
+    return f"{epitope_name}_{str(length)}"
 
 
 def _create_sequence_files(
@@ -62,7 +65,7 @@ def _create_sequence_files(
     lengths: set[int],
     seq_name: str = "MT Epitope Seq",
     hla_name: str = "HLA Allele",
-) -> list[str]:
+) -> dict[str, Any]:
     """
     Creates fasta files containing all epitopes from one allele & one length.
 
@@ -82,21 +85,21 @@ def _create_sequence_files(
         if hla_type not in hla_types or epitope_length not in lengths:
             continue
 
-        k = f"{_clean_hla(epitope[hla_name])}_{str(epitope_length)}"
-        if k not in file_list:
-            file_list[k] = {
+        fn = _epitope_length_filename(epitope[hla_name], epitope_length)
+        if fn not in file_list:
+            file_list[fn] = {
                 "hla_type": hla_type,
                 "length": epitope_length,
                 "sequences": dict[str, EpitopeSeq](),
             }
 
         epitope_sequence = epitope[seq_name]
-        if epitope_sequence not in file_list[k]["sequences"]:
-            n = len(file_list[k]["sequences"].keys())
-            file_list[k]["sequences"][epitope_sequence] = EpitopeSeq(
+        if epitope_sequence not in file_list[fn]["sequences"]:
+            n = len(file_list[fn]["sequences"].keys())
+            file_list[fn]["sequences"][epitope_sequence] = EpitopeSeq(
                 name=f"seq_{n}", seq=epitope_sequence, indices=[]
             )
-        file_list[k]["sequences"][epitope_sequence].indices.append(iEpitope)
+        file_list[fn]["sequences"][epitope_sequence].indices.append(iEpitope)
 
     for fn, content in file_list.items():
         seq_by_name = {}
@@ -116,58 +119,55 @@ def _create_sequence_files(
 def _verify(
     file_list: dict[str, Any], epitopes: list[dict[str, str]], column_name: str = "MT Epitope Seq"
 ) -> bool:
-    oks = [None] * len(epitopes)
+    oks: list[bool | None] = [None] * len(epitopes)
     for fn, content in file_list.items():
-        logging.info(f"Starting check of {fn}")
+        logger.debug(f"Starting check of {fn}")
 
         hla_type = content["hla_type"]
         length = content["length"]
-        expected = f"{_clean_hla(hla_type)}_{str(length)}"
+        expected = f"{hla_type}_{str(length)}"
         if expected != fn:
-            logging.error(f"Filename error: filename = {fn}, expected = {expected}")
+            logger.error(f"Filename error: filename = {fn}, expected = {expected}")
 
-        sequences: list[EpitopeSeq] = content["sequences"]
+        sequences: dict[str, EpitopeSeq] = content["sequences"]
         n = 0
         for name, epitope_seq in sequences.items():
-            logging.debug(
-                f"Sequence {epitope_seq.name} ({epitope_seq.seq}) is in {len(epitope_seq.indices)} epitopes"
-            )
             if name != epitope_seq.name:
-                logging.error(f"Sequence ID error: key = {name}, sequence id = {epitope_seq.name}")
+                logger.error(f"Sequence ID error: key = {name}, sequence id = {epitope_seq.name}")
             for iEpitope in epitope_seq.indices:
                 n += 1
                 epitope = epitopes[iEpitope]
                 if epitope["HLA Allele"] != hla_type:
-                    logging.error(
+                    logger.error(
                         f"HLA type mismatch for sequence {epitope_seq.name}, index {iEpitope}: {epitope['HLA Allele']} != {hla_type}"
                     )
                     oks[iEpitope] = False
                 if epitope[column_name] != epitope_seq.seq:
-                    logging.error(
+                    logger.error(
                         f"Sequence mismatch for sequence {epitope_seq.name}, index {iEpitope}: {epitope[column_name]} != {epitope_seq.seq}"
                     )
                     oks[iEpitope] = False
                 if len(epitope[column_name]) != length:
-                    logging.error(
+                    logger.error(
                         f"Sequence length mismatch for sequence {epitope_seq.name}, index {iEpitope}"
                     )
                     oks[iEpitope] = False
                 if oks[iEpitope] is None:
                     oks[iEpitope] = True
 
-        logging.info(f"Check of {fn} complete, {n} epitopes assessed")
+        logger.debug(f"Check of {fn} complete, {n} epitopes assessed")
 
     n = 0
     for ok in oks:
         if ok is None:
             n += 1
     if n > 0:
-        logging.error(f"{n} epitopes not assessed")
+        logger.error(f"{n} epitopes not assessed")
 
-    return n > 0 or not all(oks)
+    return n == 0 and all(oks)
 
 
-def _parse_netMHCstabpan_output(out: io.StringIO):
+def _parse_netMHCstabpan_output(out: list[str]) -> Tuple[str, float]:
     """Parses long netMHCstabpan output"""
     distance = 0.0
     replacement = ""
@@ -199,7 +199,7 @@ def _parse_output_file(fn: str) -> list[dict[str, Any]]:
     return results
 
 
-def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 3600):
+def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 43200):
     """
     Runs netMHCstabpan on one fasta file, to find peptide stability score
 
@@ -210,14 +210,10 @@ def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 3
 
     The output file is separately parsed by _parse_output_file
     """
-    logging.debug(f"Process {current_process().name}, cmd = {' '.join(cmd)}, timeout = {timeout}")
-
-    # Setup tempdir to the worker's private dir
-    netMHCstabpan_env = os.environ.copy()
-    netMHCstabpan_env["TMPDIR"] = worker_tmp
+    logger.debug(f"Process {current_process().name}, cmd = {' '.join(cmd)}, timeout = {timeout}")
 
     # Compute stability scores
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=netMHCstabpan_env)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     try:
         out, err = p.communicate(timeout=timeout)
     except TimeoutError:
@@ -226,42 +222,54 @@ def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 3
     if p.returncode != 0:
         raise ChildProcessError(f"Command {' '.join(cmd)} failed with return code {p.returncode}")
 
-    # Parse cleavage sites & put them into epitope object
-    return _parse_netMHCstabpan_output(out.decode("utf-8").split("\n"))
+    # Return parsed stability output (allele used and distance to requested allele)
+    return _parse_netMHCstabpan_output(out.split("\n"))
 
 
 def _worker(
     task_queue: Queue,
+    output_queue: Queue,
     error_queue: Queue,
-    return_dict: dict[str, Any],
     cmd: list[str],
-    worker_tmp: str,
-    timeout: int = 3600,
+    timeout: int = 43200,
+    log_level: int = logging.WARNING,
 ):
     """Multi-processing intermediate for netchop"""
-    # Add binding to worker-specific temp dir
-    try:
-        i = cmd.index("--bind")
-        cmd.insert(i, f"{worker_tmp}:/base_temp:rw")
-        cmd.insert(i, "--bind")
-    except IndexError:
-        logging.error(f"Can't find binding argument to insert tmp {worker_tmp}")
-        return
-
-    logging.debug(
-        f"Starting worker with cmd = {' '.join(cmd)}, tmpdir = {worker_tmp}, timeout = {timeout}"
+    logger = logging.getLogger(current_process().name)
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=log_level,
     )
-    while not task_queue.empty():
-        hla_type, length, sequences, out = task_queue.get()
-        logging.debug(
+
+    logger.debug(f"Process {current_process().name} starts")
+    while True:
+        args = task_queue.get()
+        if args is None:
+            logger.debug(f"Process {current_process().name} received stop signal")
+            break
+        hla_type, length = (args[0], args[1])
+        sequences = os.path.join(
+            "/main_path", "seqs", _epitope_length_filename(hla_type, length) + ".fasta"
+        )
+        out = os.path.join("/main_path", "out", _epitope_length_filename(hla_type, length) + ".xls")
+        logger.debug(
             f"Processing queued job with arguments {hla_type}, {length}, {sequences}, {out}"
         )
         try:
-            return_dict[f"{_clean_hla(hla_type)}_{str(length)}.head"] = _run_netMHCstabpan_command(
-                cmd + [hla_type, str(length), sequences, out], "/base_temp", timeout
+            output_queue.put(
+                (
+                    hla_type,
+                    length,
+                    _run_netMHCstabpan_command(
+                        cmd + [hla_type.replace("*", ""), str(length), sequences, out],
+                        "/base_temp",
+                        timeout,
+                    ),
+                )
             )
         except Exception as e:
-            error_queue.put((e, hla_type, length))
+            error_queue.put((hla_type, length, e))
 
 
 def run_netMHCstabpan(
@@ -269,25 +277,44 @@ def run_netMHCstabpan(
     hla_types: set[str],
     lengths: set[int],
     base_path: str,
-    temp_dir: str,
     container: str,
     netMHCstabpan_path: str,
     netMHCpan_path: str,
     epitope_seq_column_name: str = "MT Epitope Seq",
     n_workers: int = 1,
-    timeout: int = 3600,
+    timeout: int = 43200,
 ):
-    """Runs netMHCstabpan within docker container"""
-    base_path = os.path.realpath(base_path)
-    temp_path = os.path.join(base_path, "tmp", "netMHCstabpan")
-    container_path = "/base_path"
-    if os.path.exists(temp_path):
-        shutil.rmtree(temp_path)
+    """
+    Runs netMHCstabpan within docker container
 
+    Because computing stability is quite time-consuming, the function delegates
+    the bulk of the work to a number of workers, each running netMHCstabpan on
+    one allele/length combination. This adds some complexity to the function.
+
+    The function prepares the jobs, creating the input data and separate temp
+    for each worker. Then it creates and starts the worker processes, creates a
+    task queue, and two queues to receive the results and possible errors.
+    Finally, is waits for the workers to finish, and collects the results into
+    the main epitope table.
+
+    There are several directories that must be created and bound to the container.
+    All those directories are temporary to a different degree. Some contain the
+    input data prepared by the main process and must remain present until
+    the job is finished. Some are private temporary directories used by the workers.
+    Finally, a separate directory is created to hold the script that is executed
+    in the container (to allow to keep in read-only during binding to the container).
+    """
+    # Real paths and bound paths
+    base_path = os.path.realpath(base_path)
+    base_path = os.path.join(base_path, "tmp", "netMHCstabpan")
+    if os.path.exists(base_path):
+        shutil.rmtree(base_path)
+
+    main_path = os.path.join(base_path, "main")
     seq_dir = "seqs"
     out_dir = "out"
     for d in (seq_dir, out_dir):
-        os.makedirs(os.path.join(temp_path, d), mode=0o750, exist_ok=False)
+        os.makedirs(os.path.join(main_path, d), mode=0o750, exist_ok=False)
 
     script = os.path.join(base_path, "scripts", "run_netMHCstabpan.sh")
     os.makedirs(os.path.dirname(script), mode=0o750, exist_ok=True)
@@ -299,106 +326,109 @@ def run_netMHCstabpan(
             )
         )
 
+    for i_worker in range(n_workers):
+        os.makedirs(os.path.join(base_path, "workers", str(i_worker)), mode=0o700, exist_ok=False)
+
+    # Prepare fasta files with peptide sequences for netMHCstabpan input
     file_list = _create_sequence_files(
-        os.path.join(temp_path, seq_dir),
+        os.path.join(main_path, seq_dir),
         epitopes,
         hla_types,
         lengths,
         seq_name=epitope_seq_column_name,
     )
+    assert _verify(file_list, epitopes), "Internal error: verification of sequence files failed"
 
-    # _verify(file_list, epitopes)
-
-    container = os.path.realpath(container)
-
-    # Prepare netMHCstabpan command
-    cmd = [
+    # Prepare netMHCstabpan command (binding, container path, ...)
+    cmd_part1 = [
         "apptainer",
         "run",
         "--no-home",
         "--bind",
-        f"{temp_path}:{container_path}:rw",
+        f"{main_path}:/main_path:rw",
         "--bind",
         f"{os.path.dirname(script)}:/scripts:ro",
-        container,
+    ]
+    cmd_part2 = [
+        os.path.realpath(container),
         "bash",
         os.path.join("/scripts", os.path.basename(script)),
     ]
-    logging.info(
-        f"netMHCstabpan command: {' '.join(cmd + ['<hla_type>', '<length>', '<fasta>', '<xls>'])}"
+    logger.info(
+        f"netMHCstabpan command: {' '.join(cmd_part1 + ['--bind', '<base_path>/workers/<i_worker>:/base_temp:rw'] + cmd_part2 + ['<hla_type>', '<length>', '<fasta>', '<xls>'])}"
     )
 
     # Prepare multiprocessing
-    netMHCstabpan_tempdir = tempfile.mkdtemp(dir=temp_dir)
-    netMHCstabpan_tempdir = os.path.join(netMHCstabpan_tempdir, "worker_{i_worker}")
-    for i_worker in range(n_workers):
-        os.makedirs(netMHCstabpan_tempdir.format(i_worker=i_worker), mode=0o700, exist_ok=False)
-
     task_queue = Queue()
-    for file_name, descr in file_list.items():
-        task_queue.put(
-            (
-                descr["hla_type"].replace("*", ""),
-                descr["length"],
-                os.path.join(container_path, seq_dir, file_name + ".fasta"),
-                os.path.join(container_path, out_dir, file_name + ".xls"),
-            )
-        )
+    output_queue = Queue()
     error_queue = Queue()
-    return_dict = Manager().dict()
     processes: list[Process] = []
 
-    time.sleep(2.0)
-
-    # Start the workers
-    for i_worker in range(n_workers):
-        p = Process(
-            target=_worker,
-            args=(
-                task_queue,
-                error_queue,
-                return_dict,
-                cmd,
-                netMHCstabpan_tempdir.format(i_worker=i_worker),
-                timeout,
-            ),
-        )
-        processes.append(p)
-        logging.info(f"Starting worker {i_worker}")
-        p.start()
-
-    # Wait for completion
-    for p in processes:
-        p.join()
-        logging.info(f"Worker {p.name} completed")
-
-    # Check for errors
-    error = False
-    while not error_queue.empty():
-        error = True
-        e, hla_type, length = error_queue.get()
-        logging.error(
-            f"An error occurred during netMHCstabpan for {hla_type} epitopes of length {length} - message {e}"
-        )
-    if error:
-        raise ProcessError("Error running one of netMHCstabpan sub-processes")
-
+    # Fill all epitopes with stability default values
     for i in range(len(epitopes)):
         for k in ("Predicted Stability", "Half Life", "Stability Rank", "NetMHCstab allele"):
             epitopes[i][k] = "NA"
 
-    # Rapatriate netMHCstabpan results into epitope
-    for fn, content in file_list.items():
-        replacement = return_dict[fn + ".head"]
+    # Start the workers
+    for i_worker in range(n_workers):
+        worker_temp = os.path.join(base_path, "workers", str(i_worker))
+        cmd = (
+            cmd_part1
+            + [
+                "--bind",
+                worker_temp + ":/base_temp:rw",
+            ]
+            + cmd_part2
+        )
+        p = Process(
+            target=_worker,
+            args=(
+                task_queue,
+                output_queue,
+                error_queue,
+                cmd,
+                timeout,
+                logger.root.level,
+            ),
+        )
+        processes.append(p)
+        logger.info(f"Starting worker {i_worker}")
+        p.start()
+
+    for file_name, descr in file_list.items():
+        task_queue.put((descr["hla_type"], descr["length"]))
+
+    time.sleep(2.0)
+
+    for i_worker in range(n_workers):
+        task_queue.put(None)
+
+    # Wait for completion
+    for p in processes:
+        p.join()
+        logger.info(f"Worker {p.name} completed")
+
+    # Fill the epitope tables with the output queue & the contents of output files
+    while not output_queue.empty():
+        hla_type, length, replacement = output_queue.get()
+
         if replacement[0]:
             replacement = f"{replacement[0]} (distance: {float(replacement[1])})"
         else:
-            replacement = f"{content['hla_type']} (distance: {float(replacement[1])})"
+            replacement = f"{hla_type} (distance: {float(replacement[1])})"
 
-        fn = os.path.join(temp_path, out_dir, fn + ".xls")
-        assert os.path.exists(fn), f"Can't find file {fn}"
-        results = _parse_output_file(fn)
-        logging.debug(f"Inserting {len(results)} results from file {fn}")
+        results = _parse_output_file(
+            os.path.join(
+                main_path,
+                "out",
+                _epitope_length_filename(hla_type, length) + ".xls",
+            )
+        )
+
+        fn = _epitope_length_filename(hla_type, length)
+        content = file_list[fn]
+        logger.debug(f"Inserting {len(results)} results from file {fn}")
+
         for row in results:
             iSeq = row["ID"]
             assert iSeq in content["sequences"], f"Can't find sequence {iSeq} in {fn}"
@@ -411,8 +441,18 @@ def run_netMHCstabpan(
                     epitopes[iEpitope][dest] = row[src]
                 epitopes[iEpitope]["NetMHCstab allele"] = replacement
 
-    shutil.rmtree(os.path.dirname(netMHCstabpan_tempdir))
-    # shutil.rmtree(temp_path)
+    # Check for errors
+    error = False
+    while not error_queue.empty():
+        error = True
+        hla_type, length, e = error_queue.get()
+        logger.error(
+            f"An error occurred during netMHCstabpan for {hla_type} epitopes of length {length} - message {e}"
+        )
+    if error:
+        raise ProcessError("Error running one of netMHCstabpan sub-processes")
+
+    shutil.rmtree(base_path)
 
     return epitopes
 
@@ -427,6 +467,9 @@ def read_epitopes_table(fn: str | Path) -> list[dict[str, str]]:
     records = []
     with open(fn, "rt") as f:
         reader = csv.DictReader(f, delimiter="\t")
+        assert isinstance(reader.fieldnames, list), (
+            "Internal error: protects against pandas-created tables(?)"
+        )
         assert "Index" in reader.fieldnames, f"Index column missing from {fn}"
         for row in reader:
             records.append(row)
@@ -434,7 +477,7 @@ def read_epitopes_table(fn: str | Path) -> list[dict[str, str]]:
 
 
 def write_output_table(
-    f: io.TextIOBase,
+    f: io.TextIOWrapper | TextIO,
     epitopes: list[dict[str, Any]],
 ):
     """Add 3 columns to the epitope table (Best cleavage pos & score, and digest of all cleavage sites)"""
@@ -453,7 +496,6 @@ def main() -> int:
     parser.add_argument(
         "-w", "--workers", type=int, default=1, help="Number of threads for netMHCstabpan"
     )
-    parser.add_argument("--temp-dir", help="Temporary directory for netMHCstabpan")
     parser.add_argument(
         "--base-path", help="Base directory to create scripts & tmp/netMHCstabpan sub-directories"
     )
@@ -481,7 +523,7 @@ def main() -> int:
     parser.add_argument("--hla-types", help="HLA types separated by a comma")
     parser.add_argument("--lengths", help="Epitope lengths separated by a comma")
 
-    parser.add_argument("--timeout", type=int, default=3600, help="Netchop command timeout")
+    parser.add_argument("--timeout", type=int, default=43200, help="Netchop command timeout")
     parser.add_argument("-o", "--output", help="Output table filename (stdout if missing)")
 
     parser.add_argument(
@@ -499,17 +541,13 @@ def main() -> int:
         base_path = os.getcwd()
     else:
         base_path = args.base_path
-    if not args.temp_dir:
-        temp_dir = os.environ["TMPDIR"]
-    else:
-        temp_dir = args.temp_dir
 
     records = read_epitopes_table(args.epitopes)
     if len(records) == 0:
-        logging.info("No predicted neo-epitopes")
+        logger.info("No predicted neo-epitopes")
         Path.touch(args.output, mode=0o750)
         return 0
-    logging.info(f"{len(records)} neo-epitope predictions have been read from file {args.epitopes}")
+    logger.info(f"{len(records)} neo-epitope predictions have been read from file {args.epitopes}")
 
     hla_types = set(map(lambda record: record["HLA Allele"], records))
     if args.hla_types:
@@ -520,7 +558,7 @@ def main() -> int:
     if args.lengths:
         lengths = lengths.intersection(set(map(int, COMMA.split(args.lengths))))
 
-    logging.info(
+    logger.info(
         f"Starting netMHCstabpan runs ({args.netMHCstabpan}) with {args.workers} processes"
     )
     epitopes = run_netMHCstabpan(
@@ -528,7 +566,6 @@ def main() -> int:
         hla_types=hla_types,
         lengths=lengths,
         base_path=base_path,
-        temp_dir=temp_dir,
         container=args.container,
         netMHCstabpan_path=args.netMHCstabpan,
         netMHCpan_path=args.netMHCpan,
@@ -536,9 +573,9 @@ def main() -> int:
         n_workers=args.workers,
         timeout=args.timeout,
     )
-    logging.info(f"{len(epitopes)} netMHCstabpan run completed")
+    logger.info(f"{len(epitopes)} netMHCstabpan run completed")
 
-    logging.info("Writing results")
+    logger.info("Writing results")
     if args.output:
         f = open(args.output, "wt")
     else:
@@ -548,7 +585,7 @@ def main() -> int:
         f.flush()
         f.close()
 
-    logging.info("Success - all done!")
+    logger.info("Success - all done!")
     return 0
 
 
