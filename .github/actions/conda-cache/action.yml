@@ -30,7 +30,6 @@ runs:
         use-mamba: true
         conda-remove-defaults: "true"
         channels: conda-forge,bioconda
-        python-version: "3.12"
 
     - name: Cache conda
       uses: actions/cache@v3
