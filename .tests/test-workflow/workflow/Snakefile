@@ -21,7 +21,7 @@ rule all:
             sample=["case001subregion-T1-DNA1-WES1"],
             mapper=["bwa"],
             caller=["mutect2"],
-            annotator=["vep"],
+            annotator=["mehari"],
         ),
 
 
@@ -33,4 +33,4 @@ rule generate_snakemake_profile_config:
     log:
         "logs/generate_snakemake_profile_config",
     shell:
-        """echo "use-conda: true\nconda-frontend: mamba\ncores: all" > {output.config} 2> {log}"""
+        """echo "use-conda: true\nconda-frontend: conda\ncores: all" > {output.config} 2> {log}"""

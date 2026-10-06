@@ -10,6 +10,8 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 r_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "script.R"))
 helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functions.R")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -44,7 +46,7 @@ R --vanilla --slave << __EOF
 source("{helper_functions}")
 source("{r_script}")
 write.table(
-    cns_to_cna("{snakemake.input}", "{snakemake.config[static_data_config][features][path]}", "{snakemake.params[pipeline_id]}"),
+    cns_to_cna("{snakemake.input.DNAcopy}", "{snakemake.input.features}", "{args[pipeline_id]}"),
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
 __EOF

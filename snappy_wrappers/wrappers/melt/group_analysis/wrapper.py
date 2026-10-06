@@ -2,7 +2,11 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-melt_config = snakemake.config["step_config"][snakemake.params.step_key]["melt"]
+args = getattr(snakemake.params, "args", {})
+melt_config = args["config"]
+
+reference = snakemake.input[0]
+individual = snakemake.input[1]
 
 shell(
     r"""
@@ -18,14 +22,14 @@ ME_INFIX={melt_config[me_refs_infix]}
 
 java -jar -Xmx13G -jar $JAR \
     GroupAnalysis \
-    -h {snakemake.config[static_data_config][reference][path]} \
-    -t $ME_REFS/$ME_INFIX/{snakemake.wildcards.me_type}_MELT.zip \
+    -h {reference} \
+    -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     $(if [[ $ME_REFS == *37* ]] || [[ $ME_REFS == *hg19* ]]; then
-        echo -v $ME_REFS/../../prior_files/{snakemake.wildcards.me_type}.1KGP.sites.vcf;
+        echo -v $ME_REFS/../../prior_files/{args[me_type]}.1KGP.sites.vcf;
     fi) \
     -w $(dirname {snakemake.output.done}) \
     -r 150 \
     -n {melt_config[genes_file]} \
-    -discoverydir $(dirname $(echo {snakemake.input} | cut -d ' ' -f 1))
+    -discoverydir $(dirname {individual})
 """
 )

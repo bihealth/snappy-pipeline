@@ -1,4 +1,0 @@
-name: gatk_hc_par
-description: (Germline) variant calling calling using GATK HaplotypeCaller (CUBI parallelization flavour)
-authors:
-  - Manuel Holtgrewe

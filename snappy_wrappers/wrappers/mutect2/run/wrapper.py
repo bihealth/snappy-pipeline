@@ -5,15 +5,56 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
-config = snakemake.config["step_config"]["somatic_variant_calling"]["mutect2"]
+reference = snakemake.input.reference
+args = getattr(snakemake.params, "args", {})
+log = snakemake.log
 
-extra_arguments = " ".join(config["extra_arguments"])
-
-if "normal_bam" in snakemake.input.keys():
-    normal = f'--normal "{snakemake.params.normal_lib_name}" --input {snakemake.input.normal_bam}'
+intervals = getattr(snakemake.input, "region", None)
+if intervals:
+    interval_params = f"--intervals {intervals}"
 else:
-    normal = ""
+    interval_params = ""
+
+vcf_output = snakemake.output.vcf
+
+input_param_list = []
+if "normal_bam" in snakemake.input.keys():
+    input_param_list.append(f"--input {snakemake.input.normal_bam}")
+    if normal := args.get("normal_lib_name", None):
+        input_param_list.append(f'--normal "{normal}"')
+if "tumor_bam" in snakemake.input.keys():
+    input_param_list.append(f"--input {snakemake.input.tumor_bam}")
+
+input_params = " ".join(input_param_list)
+
+if (max_mnp_distance := args.get("max_mnp_distance", -1)) >= 0:
+    max_mnp_distance = f"--max-mnp-distance {max_mnp_distance}"
+else:
+    max_mnp_distance = ""
+
+if getattr(snakemake.output, "f1r2", None):
+    out_base = str(vcf_output).removesuffix(".vcf.gz")
+    assert str(snakemake.output.f1r2) == out_base + ".f1r2.tar.gz"
+    with_f1r2_tar_gz = "yes"
+    # f1r2_param = f"--f1r2-tar-gz {snakemake.output.f1r2}"
+else:
+    # f1r2_param = ""
+    with_f1r2_tar_gz = ""
+
+if germline_resource := getattr(snakemake.input, "germline_resource", ""):
+    germline_resource_param = f"--germline-resource {germline_resource}"
+else:
+    germline_resource_param = ""
+
+if panel_of_normals := getattr(snakemake.input, "panel_of_normals", ""):
+    panel_of_normals_param = f"--panel-of-normals {panel_of_normals}"
+else:
+    panel_of_normals_param = ""
+
+if java_options := args.get("java_options", ""):
+    java_options = f'--java-options "{java_options}"'
+
+extra_arguments = " ".join(args.get("extra_arguments", []))
 
 shell.executable("/bin/bash")
 
@@ -25,52 +66,40 @@ set -x
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
 # Also pipe everything to log file
-if [[ -n "{snakemake.log.log}" ]]; then
+if [[ -n "{log.log}" ]]; then
     if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec &> >(tee -a "{snakemake.log.log}" >&2)
+        rm -f "{log.log}" && mkdir -p $(dirname {log.log})
+        exec &> >(tee -a "{log.log}" >&2)
     else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
+        rm -f "{log.log}" && mkdir -p $(dirname {log.log})
+        echo "No tty, logging disabled" >"{log.log}"
     fi
 fi
 
 # Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+conda list >{log.conda_list}
+conda info >{log.conda_info}
+md5sum {log.conda_list} >{log.conda_list_md5}
+md5sum {log.conda_info} >{log.conda_info_md5}
 
 # Setup auto-cleaned tmpdir
 export tmpdir=$(mktemp -d)
 trap "rm -rf $tmpdir" EXIT
 
-out_base=$tmpdir/$(basename {snakemake.output.raw} .vcf.gz)
+out_base=$tmpdir/$(basename {vcf_output} .vcf.gz)
 
-# Add intervals if required
-intervals=""
-if [[ -n "{snakemake.params.args[intervals]}" ]]
-then
-    for itv in "{snakemake.params.args[intervals]}"
-    do
-        intervals="$intervals --intervals $itv"
-    done
-fi
-
-gatk Mutect2 \
+gatk {java_options} Mutect2 \
     --tmp-dir $tmpdir \
-    {normal} \
-    --input {snakemake.input.tumor_bam} \
     --reference {reference} \
+    {input_params} \
     --output $out_base.vcf \
-    --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz \
-    $(if [[ -n "{config[germline_resource]}" ]]; then \
-        echo --germline-resource {config[germline_resource]}
+    {max_mnp_distance} \
+    $(if [[ -n "{with_f1r2_tar_gz}" ]]; then \
+        echo --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz
     fi) \
-    $(if [[ -n "{config[panel_of_normals]}" ]]; then \
-        echo --panel-of-normals {config[panel_of_normals]}
-    fi) \
-    $intervals \
+    {germline_resource_param} \
+    {panel_of_normals_param} \
+    {interval_params} \
     {extra_arguments}
 
 rm -f $out_base.vcf.idx
@@ -78,25 +107,19 @@ rm -f $out_base.vcf.idx
 bgzip $out_base.vcf
 tabix -f $out_base.vcf.gz
 
-# Store the f1r2 tar file in a sub-directory (for compatibility with parallel wrapper)
-file_base=$(basename ${{out_base}})
-dir_base=$(dirname ${{out_base}})
-
-tar -zcvf ${{out_base}}.f1r2_tar.tar.gz --directory ${{dir_base}} ${{file_base}}.f1r2.tar.gz
-
 pushd $tmpdir
 for f in $out_base.*; do
     md5sum $f >$f.md5
 done
 popd
 
-mv $out_base.* $(dirname {snakemake.output.raw})
+mv $out_base.* $(dirname {vcf_output})
 """
 )
 
 # Compute MD5 sums of logs.
 shell(
     r"""
-md5sum {snakemake.log.log} >{snakemake.log.log_md5}
+md5sum {log.log} >{log.log_md5}
 """
 )

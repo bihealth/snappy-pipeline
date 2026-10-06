@@ -5,9 +5,9 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["picard"]
+args = getattr(snakemake.params, "args", {})
+
+reference = args["reference"]
 
 collect_multiple_metrics_programs = {
     "CollectAlignmentSummaryMetrics",
@@ -22,18 +22,13 @@ collect_multiple_metrics_programs = {
 collect_multiple_metrics = " ".join(
     [
         f"-PROGRAM {pgm}"
-        for pgm in collect_multiple_metrics_programs.intersection(set(config["programs"]))
+        for pgm in collect_multiple_metrics_programs.intersection(set(args["programs"]))
     ]
 )
 
-# TODO: understand why snakemake.params is a list...
-prefix = ""
-if "prefix" in snakemake.params[0].keys() and snakemake.params[0]["prefix"]:
-    prefix = snakemake.params[0]["prefix"] + "."
+prefix = args.get("prefix", "")
 
-name = "null"
-if "bait_name" in config.keys() and config["bait_name"]:
-    name = config["bait_name"]
+name = args.get("bait_name", "null")
 
 shell.executable("/bin/bash")
 
@@ -84,25 +79,25 @@ then
         {collect_multiple_metrics}
 fi
 
-if [[ "{config[programs]}" == *"EstimateLibraryComplexity"* ]]
+if [[ "{args[programs]}" == *"EstimateLibraryComplexity"* ]]
 then
     java -jar $picard_jar EstimateLibraryComplexity \
         -I {snakemake.input.bam} \
         -O $d/{prefix}EstimateLibraryComplexity.txt
 fi
 
-if [[ "{config[programs]}" == *"CollectJumpingLibraryMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectJumpingLibraryMetrics"* ]]
 then
     java -jar $picard_jar CollectJumpingLibraryMetrics \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectJumpingLibraryMetrics.txt
 fi
 
-if [[ "{config[programs]}" == *"CollectOxoGMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectOxoGMetrics"* ]]
 then
-    if [[ -r "{snakemake.config[static_data_config][dbsnp][path]}" ]]
+    if [[ -n "{args[dbsnp]}" ]]
     then
-        dbsnp="-DB_SNP {snakemake.config[static_data_config][dbsnp][path]}"
+        dbsnp="-DB_SNP {args[dbsnp]}"
     else
         dbsnp=""
     fi
@@ -113,7 +108,7 @@ then
         $dbsnp
 fi
 
-if [[ "{config[programs]}" == *"CollectHsMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectHsMetrics"* ]]
 then
     java -jar $picard_jar CollectHsMetrics \
         -I {snakemake.input.bam} \
@@ -124,7 +119,7 @@ then
         -TARGET_INTERVALS {snakemake.input.targets}
 fi
 
-if [[ "{config[programs]}" == *"CollectRawWgsMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectRawWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectRawWgsMetrics \
         -I {snakemake.input.bam} \
@@ -132,7 +127,7 @@ then
         -R {reference}
 fi
 
-if [[ "{config[programs]}" == *"CollectWgsMetrics"* ]]
+if [[ "{args[programs]}" == *"CollectWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectWgsMetrics \
         -I {snakemake.input.bam} \
@@ -140,7 +135,7 @@ then
         -R {reference}
 fi
 
-if [[ "{config[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]
+if [[ "{args[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]
 then
     java -jar $picard_jar CollectWgsMetricsWithNonZeroCoverage \
         -I {snakemake.input.bam} \

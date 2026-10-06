@@ -37,7 +37,7 @@ You can of course clone the code anywhere you like.
     $ cd ~/Development/pipeline_dev
     $ git clone git@github.com:bihealth/snappy-pipeline.git
     $ cd snappy_pipeline
-    $ conda env create -n snappy_dev --file environment.yaml
+    $ conda env create -n snappy_dev --file environment.yml
     $ conda activate snappy_dev
     $ pip install -e ".[all]"
 

@@ -8,15 +8,14 @@ from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-reference = snakemake.config["static_data_config"]["reference"]["path"]
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["picard"]
+args = getattr(snakemake.params, "args", {})
 
+reference = args["reference"]
 reference = re.sub("\.fa(sta)?(\.b?gz)?$", ".dict", reference)
 assert os.path.exists(reference), "Missing dict of reference fasta"
 
-baits = config["path_to_baits"]
-targets = config.get("path_to_targets", "")
+baits = args["path_to_baits"]
+targets = args.get("path_to_targets", "")
 
 shell.executable("/bin/bash")
 

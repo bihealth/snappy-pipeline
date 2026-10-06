@@ -56,80 +56,77 @@ def _check_config(config: typing.Dict[str, typing.Any]) -> typing.Dict[str, typi
     assert isinstance(config["output"], dict), "Illegal (or empty) output definition"
     for k, v in config["output"].items():
         assert isinstance(v, dict), 'Illegal (or empty) definition of output column "{}"'.format(k)
-        assert "input" in v or not isinstance(
-            v["input"], list
-        ), 'Missing inputs for output column "{}"'.format(k)
+        assert "input" in v or not isinstance(v["input"], list), (
+            'Missing inputs for output column "{}"'.format(k)
+        )
         for i in range(len(v["input"])):
             x = v["input"][i]
-            assert isinstance(
-                x, dict
-            ), "Illegal (or empty) element {} of inputs definition for output column {}".format(
-                i + 1, k
-            )
-            assert (
-                "set" in x and "column" in x
-            ), '"set" and/or "column" definition missing from element {} of inputs definition for output column {}'.format(
-                i + 1, k
-            )
-            assert (
-                x["set"]
-                in (
-                    "annotation",
-                    "constant",
-                    "fixed",
-                    "format",
-                    "info",
-                    "variant",
+            assert isinstance(x, dict), (
+                "Illegal (or empty) element {} of inputs definition for output column {}".format(
+                    i + 1, k
                 )
-            ), 'Illegal set "{}" for input column "{}" of inputs definition for output column {}, must be one of "annotation", "constant", "fixed", "format", "info" or "variant"'.format(
-                x["set"], x["column"], k
             )
-            if x["set"] == "format":
-                assert (
-                    "sample" in x
-                ), 'Sample definition is missing from set "{}" for input column "{}" of inputs definition for output column {}, must be present for "format" sets'.format(
+            assert "set" in x and "column" in x, (
+                '"set" and/or "column" definition missing from element {} of inputs definition for output column {}'.format(
+                    i + 1, k
+                )
+            )
+            assert x["set"] in (
+                "annotation",
+                "constant",
+                "fixed",
+                "format",
+                "info",
+                "variant",
+            ), (
+                'Illegal set "{}" for input column "{}" of inputs definition for output column {}, must be one of "annotation", "constant", "fixed", "format", "info" or "variant"'.format(
                     x["set"], x["column"], k
                 )
-            if "on_missing" in x:
-                assert (
-                    x["on_missing"]
-                    in (
-                        "stop",
-                        "skip",
-                        "default",
-                        "ignore",
+            )
+            if x["set"] == "format":
+                assert "sample" in x, (
+                    'Sample definition is missing from set "{}" for input column "{}" of inputs definition for output column {}, must be present for "format" sets'.format(
+                        x["set"], x["column"], k
                     )
-                ), 'Illegal value of requested action for missing input "{}" for output column "{}", must be either "stop", "skip", "default" or "ignore"'.format(
-                    x["column"], k
                 )
-            else:
-                config["output"][k]["input"][i]["on_missing"] = "ignore"
-            if x["on_missing"] == "default":
-                assert (
-                    "default" in x and x["default"] is not None
-                ), 'Missing default value for input "{}" for output column "{}"'.format(
-                    x["column"], k
-                )
-            else:
-                config["output"][k]["input"][i]["default"] = None
-        if "on_missing" in v:
-            assert (
-                v["on_missing"]
-                in (
+            if "on_missing" in x:
+                assert x["on_missing"] in (
                     "stop",
                     "skip",
                     "default",
                     "ignore",
+                ), (
+                    'Illegal value of requested action for missing input "{}" for output column "{}", must be either "stop", "skip", "default" or "ignore"'.format(
+                        x["column"], k
+                    )
                 )
-            ), 'Illegal value of requested action for output column "{}", must be either "stop", "skip", "default" or "ignore"'.format(
-                k
+            else:
+                config["output"][k]["input"][i]["on_missing"] = "ignore"
+            if x["on_missing"] == "default":
+                assert "default" in x and x["default"] is not None, (
+                    'Missing default value for input "{}" for output column "{}"'.format(
+                        x["column"], k
+                    )
+                )
+            else:
+                config["output"][k]["input"][i]["default"] = None
+        if "on_missing" in v:
+            assert v["on_missing"] in (
+                "stop",
+                "skip",
+                "default",
+                "ignore",
+            ), (
+                'Illegal value of requested action for output column "{}", must be either "stop", "skip", "default" or "ignore"'.format(
+                    k
+                )
             )
         else:
             config["output"][k]["on_missing"] = "ignore"
         if v["on_missing"] == "default":
-            assert (
-                "default" in v and v["default"] is not None
-            ), 'Missing default value for output column "{}"'.format(k)
+            assert "default" in v and v["default"] is not None, (
+                'Missing default value for output column "{}"'.format(k)
+            )
         else:
             config["output"][k]["default"] = None
     return config

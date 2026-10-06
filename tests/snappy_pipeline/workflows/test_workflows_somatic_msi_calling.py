@@ -87,6 +87,8 @@ def test_mantis_msi2_step_part_get_input_files(somatic_msi_calling_workflow):
         "normal_bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
         "tumor_bai": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam.bai",
         "tumor_bam": "NGS_MAPPING/output/bwa.P001-T1-DNA1-WGS1/out/bwa.P001-T1-DNA1-WGS1.bam",
+        "reference": "/path/to/ref.fa",
+        "loci_bed": "/path/to/hg19/loci.bed",
     }
     actual = somatic_msi_calling_workflow.get_input_files("mantis_msi2", "run")(wildcards)
     assert actual == expected
@@ -120,7 +122,7 @@ def test_mantis_msi2_step_part_get_resource_usage(
 ):
     """Tests mantis_msi2.get_resource_usage()"""
     # Define expected
-    expected_dict = {"threads": 3, "time": "08:00:00", "memory": f"{30 * 1024 * 3}M"}
+    expected_dict = {"threads": 1, "time": "24:00:00", "memory": f"{30 * 1024 * 3}M"}
     # Evaluate
     for resource, expected in expected_dict.items():
         msg_error = f"Assertion error for resource '{resource}'."

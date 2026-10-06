@@ -7,6 +7,8 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -euo pipefail
@@ -27,11 +29,11 @@ if [[ -n "{snakemake.log}" ]]; then
     fi
 fi
 
-strand={snakemake.config[step_config][gene_expression_quantification][strand]}
+strand={args[strand]}
 
 if [ ${{strand}} -eq -1 ]
 then
-    strand=$(cat {snakemake.input.decision})
+    strand=$(jq -r '[.decision][0]' {snakemake.input.decision})
 fi
 
 # only use primary alignments to prevent featurecounts from re-sorting the bam on disk
@@ -45,7 +47,7 @@ samtools view -h -F 260 -q 255 $bam \
     -T 2 \
     -g gene_id \
     -t exon \
-    -a {snakemake.config[step_config][gene_expression_quantification][featurecounts][path_annotation_gtf]} \
+    -a {snakemake.input.features} \
     -s ${{strand}} \
     -p \
     --verbose \

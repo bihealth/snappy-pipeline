@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """Wrapper for calculating tumor mutation burde with bcftools"""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
+args = getattr(snakemake.params, "args", {})
+target_regions = args["target_regions"]
+has_annotation = args["has_annotation"]
 
-missense_re = (
-    snakemake.params.args["missense_re"]
-    if "args" in snakemake.params.keys()
-    and "missense_re" in snakemake.params.args.keys()
-    and config["has_annotation"]
-    else ""
-)
+missense_re = args["missense_re"] if has_annotation else ""
 
 shell(
     r"""
@@ -32,7 +32,7 @@ export LC_ALL=C
 conda list > {snakemake.log.conda_list}
 conda info > {snakemake.log.conda_info}
 
-bed_file={config[target_regions]}
+bed_file={target_regions}
 bed_file_name=$(basename $bed_file)
 bed_md5=$(md5sum $bed_file | awk '{{print $1}}')
 
@@ -59,7 +59,7 @@ fi
 
 TMB=$(printf "%f" $(echo "1000000*($number_variants/$total_exom_length)" | bc -l))
 missense_TMB=$(printf "%f" $(echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l))
-if [[ $(echo "{config[has_annotation]}" | tr '[a-z]' '[A-Z]') = "TRUE" ]]
+if [[ $(echo "{has_annotation}" | tr '[a-z]' '[A-Z]') = "TRUE" ]]
 then
     cat << EOF > {snakemake.output.json}
 {{

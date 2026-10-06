@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -28,8 +30,8 @@ _JAVA_OPTIONS="-Xms256m -Xmx512m -XX:CompressedClassSpaceSize=512m" \
 fastqc \
     --noextract \
     -o $outdir \
-    -t {snakemake.params[args][num_threads]} \
-    $(echo {snakemake.input} {snakemake.params[args][more_reads]} | tr ' ' '\n' | grep 'fastq.gz$\|fastq$\|sam$\|bam$')
+    -t {args[num_threads]} \
+    $(echo {snakemake.input} {args[more_reads]} | tr ' ' '\n' | grep 'fastq.gz$\|fastq$\|sam$\|bam$')
 
 pushd $outdir
 pwd

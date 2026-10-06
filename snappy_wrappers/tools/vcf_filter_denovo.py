@@ -985,8 +985,7 @@ def main(argv=None):
     # Setup command line parser
     parser = argparse.ArgumentParser(
         description=(
-            "Annotate VCF file with various of soft filters for sequence variant de "
-            "novo filtration"
+            "Annotate VCF file with various of soft filters for sequence variant de novo filtration"
         )
     )
 

@@ -1,4 +1,0 @@
-name: gatk_ug
-description: (Germline) variant calling calling using GATK UnifiedGenotyper
-authors:
-  - Manuel Holtgrewe

@@ -81,7 +81,7 @@ rule somatic_gene_fusion_calling_fusioncatcher_run:
         partition=wf.get_resource("fusioncatcher", "run", "partition"),
         tmpdir=wf.get_resource("fusioncatcher", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("fusioncatcher", "get_args", "run"),
+        args=wf.get_args("fusioncatcher", "run"),
     log:
         wf.get_log_file("fusioncatcher", "run"),
     wrapper:
@@ -103,7 +103,7 @@ rule somatic_gene_fusion_calling_jaffa_run:
         partition=wf.get_resource("jaffa", "run", "partition"),
         tmpdir=wf.get_resource("jaffa", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("jaffa", "get_args", "run"),
+        args=wf.get_args("jaffa", "run"),
     log:
         wf.get_log_file("jaffa", "run"),
     wrapper:
@@ -125,7 +125,7 @@ rule somatic_gene_fusion_calling_pizzly_run:
         partition=wf.get_resource("pizzly", "run", "partition"),
         tmpdir=wf.get_resource("pizzly", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("pizzly", "get_args", "run"),
+        args=wf.get_args("pizzly", "run"),
     log:
         wf.get_log_file("pizzly", "run"),
     wrapper:
@@ -147,7 +147,7 @@ rule somatic_gene_fusion_calling_hera_run:
         partition=wf.get_resource("hera", "run", "partition"),
         tmpdir=wf.get_resource("hera", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("hera", "get_args", "run"),
+        args=wf.get_args("hera", "run"),
     log:
         wf.get_log_file("hera", "run"),
     wrapper:
@@ -169,7 +169,7 @@ rule somatic_gene_fusion_calling_star_fusion_run:
         partition=wf.get_resource("star_fusion", "run", "partition"),
         tmpdir=wf.get_resource("star_fusion", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("star_fusion", "get_args", "run"),
+        args=wf.get_args("star_fusion", "run"),
     log:
         wf.get_log_file("star_fusion", "run"),
     wrapper:
@@ -191,7 +191,7 @@ rule somatic_gene_fusion_calling_defuse_run:
         partition=wf.get_resource("defuse", "run", "partition"),
         tmpdir=wf.get_resource("defuse", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("defuse", "get_args", "run"),
+        args=wf.get_args("defuse", "run"),
     log:
         wf.get_log_file("defuse", "run"),
     wrapper:
@@ -213,7 +213,7 @@ rule somatic_gene_fusion_calling_arriba_run:
         partition=wf.get_resource("arriba", "run", "partition"),
         tmpdir=wf.get_resource("arriba", "run", "tmpdir"),
     params:
-        args=wf.substep_dispatch("arriba", "get_args", "run"),
+        args=wf.get_args("arriba", "run"),
     log:
         **wf.get_log_file("arriba", "run"),
     wrapper:

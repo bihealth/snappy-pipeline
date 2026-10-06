@@ -1,19 +1,11 @@
 # -*- coding: utf-8 -*-
-"""CUBI+Snakemake wrapper code for preparing exome kit intervals for PureCN"""
+"""CUBI+Snakemake wrapper code to pull docker container"""
 
 from snakemake import shell
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-container = None
-if "container" in snakemake.params.keys() and snakemake.params["container"]:
-    container = snakemake.params["container"]
-else:
-    step = snakemake.config["pipeline_step"]["name"]
-    config = snakemake.config["step_config"][step]
-    if "container" in config.keys() and config["container"]:
-        container = config["container"]
-assert container, "Missing or illegal container image address"
+container = getattr(snakemake.params, "container")
 
 shell.executable("/bin/bash")
 

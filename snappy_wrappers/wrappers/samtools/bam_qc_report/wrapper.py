@@ -5,6 +5,7 @@ from snakemake import shell
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -33,19 +34,19 @@ trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d
 
 # Validate input
-if [[ "{snakemake.params.args[bam_count]}" -eq  0 ]]; then
+if [[ "{args[bam_count]}" -eq  0 ]]; then
     echo "No BAM files provided!"
     exit 1
-elif [[ "{snakemake.params.args[bam_count]}" -gt  1 ]]; then
+elif [[ "{args[bam_count]}" -gt  1 ]]; then
     echo "Multiple BAM files provided!"
-    echo "{snakemake.params.args[bam]}"
+    echo "{args[bam]}"
     exit 1
 fi
 
 # QC Report
-samtools stats    {snakemake.params.args[bam]} > {snakemake.output.bamstats}
-samtools flagstat {snakemake.params.args[bam]} > {snakemake.output.flagstats}
-samtools idxstats {snakemake.params.args[bam]} > {snakemake.output.idxstats}
+samtools stats    {args[bam]} > {snakemake.output.bamstats}
+samtools flagstat {args[bam]} > {snakemake.output.flagstats}
+samtools idxstats {args[bam]} > {snakemake.output.idxstats}
 
 
 # Build MD5 files for the reports

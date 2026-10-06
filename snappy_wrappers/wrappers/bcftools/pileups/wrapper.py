@@ -1,17 +1,25 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running bcftools mpileup"""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
-if "args" in snakemake.params and "intervals" in snakemake.params["args"]:
-    locii = "-r " + snakemake.params["args"]["intervals"]
+
+args = getattr(snakemake.params, "args", {})
+reference_path = args["reference_path"]
+max_depth = args["max_depth"]
+
+# FIXME: "locii" only ever gets set as the input, never as a parameter in args
+if intervals := args["intervals"]:
+    locii = "-r " + intervals
 elif "locii" in snakemake.input.keys():
     locii = "-R " + snakemake.input.locii
-elif "locii" in config and config["locii"]:
-    locii = "-R " + config["locii"]
+elif locii_arg := args.get("locii"):
+    locii = "-R " + locii_arg
 else:
     locii = ""
 
@@ -32,8 +40,8 @@ conda info > {snakemake.log.conda_info}
 
 bcftools mpileup \
     {locii} \
-    --max-depth {config[max_depth]} \
-    -f {snakemake.config[static_data_config][reference][path]} \
+    --max-depth {max_depth} \
+    -f {reference_path} \
     -a "FORMAT/AD" \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.bam}

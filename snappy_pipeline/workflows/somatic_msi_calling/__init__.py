@@ -127,13 +127,15 @@ class Mantis2StepPart(BaseStepPart):
                 )
             )
             tumor_base_path = (
-                "output/{mapper}.{tumor_library}/out/" "{mapper}.{tumor_library}"
+                "output/{mapper}.{tumor_library}/out/{mapper}.{tumor_library}"
             ).format(**wildcards)
             return {
                 "normal_bam": ngs_mapping(normal_base_path + ".bam"),
                 "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
                 "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
                 "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+                "reference": self.w_config.static_data_config.reference.path,
+                "loci_bed": self.config.loci_bed,
             }
 
         return input_function
@@ -180,8 +182,8 @@ class Mantis2StepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         return ResourceUsage(
-            threads=3,
-            time="08:00:00",  # 8 hours
+            threads=1,  # Because of https://github.com/OSU-SRLab/MANTIS/issues/57
+            time="24:00:00",  # 24 hours
             memory=f"{30 * 1024 * 3}M",
         )
 

@@ -117,8 +117,7 @@ def main(argv=None):
         default=True,
         action="store_false",
         help=(
-            "Do not check config.yaml for existing configuration or change it (IOW: "
-            "leave it alone)"
+            "Do not check config.yaml for existing configuration or change it (IOW: leave it alone)"
         ),
     )
 

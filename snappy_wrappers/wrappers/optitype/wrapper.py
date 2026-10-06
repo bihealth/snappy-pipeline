@@ -5,10 +5,12 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-reads_left = snakemake.params.args["input"]["reads_left"]
-reads_right = snakemake.params.args["input"].get("reads_right", "")
+reads_left = args["input"]["reads_left"]
+reads_right = args["input"].get("reads_right", "")
 
 shell.executable("/bin/bash")
 
@@ -46,7 +48,7 @@ fi
 # First alignment step (filter to candidate HLA reads) --------------------------------------------
 
 data_dir=$(dirname $(readlink -f $(which OptiTypePipeline.py)))/data
-seq_type={snakemake.params.args[seq_type]}
+seq_type={args[seq_type]}
 refname=hla_reference_$seq_type.fasta
 reference=$data_dir/$refname
 
@@ -55,8 +57,10 @@ cp $reference $TMPDIR/yara_index
 yara_indexer -o $TMPDIR/yara_index/$refname $TMPDIR/yara_index/$refname
 
 yara_mapper \
-    -t {snakemake.config[step_config][hla_typing][optitype][num_mapping_threads]} \
-    --error-rate 5 \
+    -t {args[num_mapping_threads]} \
+    --error-rate {args[yara_error_rate]} \
+    --strata-rate {args[yara_strata_rate]} \
+    --sensitivity {args[yara_sensitivity]} \
     --output-format sam \
     $TMPDIR/yara_index/$refname \
     <(zcat --force {reads_left}) \
@@ -65,8 +69,10 @@ yara_mapper \
 
 if [[ $paired -eq 1 ]]; then
     yara_mapper \
-        -t {snakemake.config[step_config][hla_typing][optitype][num_mapping_threads]} \
-        --error-rate 5 \
+        -t {args[num_mapping_threads]} \
+        --error-rate {args[yara_error_rate]} \
+        --strata-rate {args[yara_strata_rate]} \
+        --sensitivity {args[yara_sensitivity]} \
         --output-format sam \
         $TMPDIR/yara_index/$refname \
         <(zcat --force {reads_right}) \
@@ -75,7 +81,7 @@ if [[ $paired -eq 1 ]]; then
 fi
 
 cat $TMPDIR/tmp.d/reads_*.fastq | \
-seqtk sample - {snakemake.config[step_config][hla_typing][optitype][max_reads]} \
+seqtk sample - {args[max_reads]} \
 > $TMPDIR/tmp.d/reads_sampled.fastq
 
 wc -l $TMPDIR/tmp.d/reads_*.fastq
@@ -85,7 +91,7 @@ wc -l $TMPDIR/tmp.d/reads_*.fastq
 cat <<"EOF" >$TMPDIR/tmp.d/optitype.ini
 [mapping]
 razers3=razers3
-threads={snakemake.config[step_config][hla_typing][optitype][num_mapping_threads]}
+threads={args[num_mapping_threads]}
 
 [ilp]
 solver=glpk
@@ -94,7 +100,7 @@ threads=1
 [behavior]
 deletebam=true
 unpaired_weight=0
-use_discordant=false
+use_discordant={args[use_discordant]}
 EOF
 
 mkdir -p $TMPDIR/out.tmp
@@ -125,6 +131,23 @@ tail -n +2 {snakemake.output.tsv} \
     | sort \
     > {snakemake.output.txt}
 md5sum {snakemake.output.txt} > {snakemake.output.txt_md5}
+
+# create final .json file
+echo "{{" > {snakemake.output.json}
+tail -n +2 {snakemake.output.tsv} | head -n 1 \
+    | cut -f 2-3 \
+    | sed -re $"s/^(A\*[0-9]+:[0-9]+)\t(A\*[0-9]+:[0-9]+)/    \"A\": [\"\1\", \"\2\"],/" \
+    >> {snakemake.output.json}
+tail -n +2 {snakemake.output.tsv} | head -n 1 \
+    | cut -f 4-5 \
+    | sed -re $"s/^(B\*[0-9]+:[0-9]+)\t(B\*[0-9]+:[0-9]+)/    \"B\": [\"\1\", \"\2\"],/" \
+    >> {snakemake.output.json}
+tail -n +2 {snakemake.output.tsv} | head -n 1 \
+    | cut -f 6-7 \
+    | sed -re $"s/^(C\*[0-9]+:[0-9]+)\t(C\*[0-9]+:[0-9]+)/    \"C\": [\"\1\", \"\2\"]/" \
+    >> {snakemake.output.json}
+echo "}}" >> {snakemake.output.json}
+md5sum {snakemake.output.json} > {snakemake.output.json_md5}
 """
 )
 

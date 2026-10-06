@@ -329,7 +329,32 @@ def test_arriba_step_part_get_args(somatic_gene_fusion_calling_workflow):
             "reads_right": [
                 "work/input_links/P001-T1-RNA1-mRNA_seq1/FCXXXXXX/L001/out/P001_R2.fastq.gz"
             ],
-        }
+        },
+        "trim_adapters": False,
+        "num_threads_trimming": 2,
+        "num_threads": 8,
+        "path_index": "/path/to/star/index",
+        "star_parameters": [
+            " --outFilterMultimapNmax 50",
+            " --peOverlapNbasesMin 10",
+            " --alignSplicedMateMapLminOverLmate 0.5",
+            " --alignSJstitchMismatchNmax 5 -1 5 5",
+            " --chimSegmentMin 10",
+            " --chimOutType WithinBAM HardClip",
+            " --chimJunctionOverhangMin 10",
+            " --chimScoreDropMax 30",
+            " --chimScoreJunctionNonGTAG 0",
+            " --chimScoreSeparation 1",
+            " --chimSegmentReadGapMax 3",
+            " --chimMultimapNmax 50",
+        ],
+        "reference_path": "/path/to/ref.fa",
+        "features_path": "/path/to/features.gtf",
+        "blacklist": "",
+        "known_fusions": "",
+        "tags": "",
+        "structural_variants": "",
+        "protein_domains": "",
     }
     actual = somatic_gene_fusion_calling_workflow.get_args("arriba", "run")(wildcards)
     assert actual == expected

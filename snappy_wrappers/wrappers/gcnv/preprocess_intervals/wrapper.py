@@ -3,15 +3,14 @@
 
 from snakemake.shell import shell
 
+# NOTE: (valid in snappy 0.3 & 0.4 already. Removing the reference to the config in wrappers should not have created the issue.)
+#       When called from the sv_calling_wgs, the model has no target interval list, 
+#       and target_interval_bed is not defined.
+#       This is probably incorrect, as intervals should not be pre-processed for WGS data.
 
-# Pick the target BED file to use.
-config = snakemake.config["step_config"][snakemake.params.step_key]["gcnv"]
-for item in config["path_target_interval_list_mapping"]:
-    if item["name"] == snakemake.wildcards.library_kit:
-        target_interval_bed = item["path"]
-        break
-else:  # of for, did not break out
-    raise Exception("Found no target intervals for %s" % snakemake.wildcards.library_kit)
+args = getattr(snakemake.params, "args", {})
+if target_interval_bed := args.get("target_interval_bed", None):
+    target_interval_bed = f"-L {target_interval_bed}"
 
 shell(
     r"""
@@ -20,8 +19,8 @@ set -x
 gatk PreprocessIntervals \
     --bin-length 0 \
     --interval-merging-rule OVERLAPPING_ONLY \
-    -R {snakemake.config[static_data_config][reference][path]} \
-    -L {target_interval_bed} \
+    -R {args[reference]} \
+    {target_interval_bed} \
     -O {snakemake.output.interval_list}
 """
 )

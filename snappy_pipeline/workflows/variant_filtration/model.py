@@ -170,13 +170,13 @@ class VariantFiltration(SnappyStepModel):
         score: set[str] = set(self.score_thresholds.keys()) | {"all_scores"}
         het_comp: set[str] = {"passthrough", "intervals500", "tads", "gene"}
         pattern: str = r".".join(
-            f'({"|".join(p)})' for p in [thresholds, inherit, freq, region, score, het_comp]
+            f"({'|'.join(p)})" for p in [thresholds, inherit, freq, region, score, het_comp]
         )
         pattern: re.Pattern[str] = re.compile(pattern)
         for combination in self.filter_combinations:
             if pattern.fullmatch(combination) is None:
                 raise ValueError(
-                    f"Invalid combination: {combination}, " f"must match pattern {pattern.pattern}"
+                    f"Invalid combination: {combination}, must match pattern {pattern.pattern}"
                 )
 
         return self

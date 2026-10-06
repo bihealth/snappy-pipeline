@@ -2,6 +2,8 @@ from snakemake import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 out_gc = snakemake.output.get("gene_counts", "__dummy__")
 out_sj = snakemake.output.get("junctions", "__dummy__")
 out_tx = snakemake.output.get("transcriptome", "__dummy__")
@@ -21,8 +23,8 @@ compute-md5()
 
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-reads_left = snakemake.params.args["input"]["reads_left"]
-reads_right = snakemake.params.args["input"].get("reads_right", "")
+reads_left = args["input"]["reads_left"]
+reads_right = args["input"].get("reads_right", "")
 
 shell(
     r"""
@@ -64,7 +66,7 @@ trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d $TMPDIR/pre.d
 
 # Define some global shortcuts
-INDEX={snakemake.config[step_config][ngs_mapping][star][path_index]}
+INDEX={args[path_index]}
 
 # Define left and right reads as Bash arrays
 declare -a reads_left=({reads_left})
@@ -87,8 +89,8 @@ sort_by_coord()
     set -x
 
     samtools sort -O BAM \
-        -m {snakemake.config[step_config][ngs_mapping][star][memory_bam_sort]} \
-        -@ {snakemake.config[step_config][ngs_mapping][star][num_threads_bam_sort]} \
+        -m {args[memory_bam_sort]} \
+        -@ {args[num_threads_bam_sort]} \
         -
 }}
 
@@ -133,42 +135,42 @@ run_star()
     fi
 
     trim_cmd=""
-    if [[ "{snakemake.config[step_config][ngs_mapping][star][trim_adapters]}" == "True" ]]; then
-        trim_cmd="\"trimadap-mt -p {snakemake.config[step_config][ngs_mapping][star][num_threads_trimming]}\""
+    if [[ "{args[trim_adapters]}" == "True" ]]; then
+        trim_cmd="\"trimadap-mt -p {args[num_threads_trimming]}\""
     else
         trim_cmd="zcat"
     fi
 
     quant_mode=""
-    if [[ -n "{snakemake.config[static_data_config][features][path]}" ]]
+    if [[ -n "{args[features]}" ]]
     then
         quant_mode="$quant_mode GeneCounts"
     fi
-    if [[ "{snakemake.config[step_config][ngs_mapping][star][transcriptome]}" = "True" ]]
+    if [[ "{args[transcriptome]}" = "True" ]]
     then
         quant_mode="$quant_mode TranscriptomeSAM"
     fi
 
     STAR \
         --readFilesIn ${{left_files}} ${{right_files}} \
-        {snakemake.config[step_config][ngs_mapping][star][raw_star_options]} \
+        {args[raw_star_options]} \
         $rg_args \
         --readFilesCommand ${{trim_cmd}} \
-        --alignIntronMax {snakemake.config[step_config][ngs_mapping][star][align_intron_max]} \
-        --alignIntronMin {snakemake.config[step_config][ngs_mapping][star][align_intron_min]} \
-        --alignMatesGapMax {snakemake.config[step_config][ngs_mapping][star][align_mates_gap_max]} \
-        --alignSJDBoverhangMin {snakemake.config[step_config][ngs_mapping][star][align_sjdb_overhang_min]} \
-        --alignSJoverhangMin {snakemake.config[step_config][ngs_mapping][star][align_sj_overhang_min]} \
-        --genomeDir {snakemake.config[step_config][ngs_mapping][star][path_index]} \
-        --genomeLoad {snakemake.config[step_config][ngs_mapping][star][genome_load]} \
+        --alignIntronMax {args[align_intron_max]} \
+        --alignIntronMin {args[align_intron_min]} \
+        --alignMatesGapMax {args[align_mates_gap_max]} \
+        --alignSJDBoverhangMin {args[align_sjdb_overhang_min]} \
+        --alignSJoverhangMin {args[align_sj_overhang_min]} \
+        --genomeDir {args[path_index]} \
+        --genomeLoad {args[genome_load]} \
         --outFileNamePrefix $TMPDIR/pre.d/out. \
-        --outFilterIntronMotifs {snakemake.config[step_config][ngs_mapping][star][out_filter_intron_motifs]} \
-        --outFilterMismatchNmax {snakemake.config[step_config][ngs_mapping][star][out_filter_mismatch_n_max]} \
-        --outFilterMismatchNoverLmax {snakemake.config[step_config][ngs_mapping][star][out_filter_mismatch_n_over_l_max]} \
-        --outFilterMultimapNmax {snakemake.config[step_config][ngs_mapping][star][out_filter_multimap_n_max]} \
-        --outFilterType {snakemake.config[step_config][ngs_mapping][star][out_filter_type]} \
-        --outSAMstrandField {snakemake.config[step_config][ngs_mapping][star][out_sam_strand_field]} \
-        --outSAMunmapped $(if [[ "{snakemake.config[step_config][ngs_mapping][star][include_unmapped]}" == "True" ]]; then \
+        --outFilterIntronMotifs {args[out_filter_intron_motifs]} \
+        --outFilterMismatchNmax {args[out_filter_mismatch_n_max]} \
+        --outFilterMismatchNoverLmax {args[out_filter_mismatch_n_over_l_max]} \
+        --outFilterMultimapNmax {args[out_filter_multimap_n_max]} \
+        --outFilterType {args[out_filter_type]} \
+        --outSAMstrandField {args[out_sam_strand_field]} \
+        --outSAMunmapped $(if [[ "{args[include_unmapped]}" == "True" ]]; then \
                 echo "Within"; \
             else
                 echo "None"; \
@@ -176,15 +178,15 @@ run_star()
         $(if [[ -n "$quant_mode" ]]; then \
             echo "--quantMode $quant_mode"
         fi) \
-        $(if [[ -n "{snakemake.config[static_data_config][features][path]}" ]]; then \
-            echo --sjdbGTFfile "{snakemake.config[static_data_config][features][path]}"
+        $(if [[ -n "{args[features]}" ]]; then \
+            echo --sjdbGTFfile "{args[features]}"
         fi) \
-        $(if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then \
+        $(if [[ "{args[mask_duplicates]}" == "True" ]]; then \
             echo " --outStd SAM " ; \
         else
             echo " --outSAMtype BAM SortedByCoordinate "; \
         fi) \
-        --runThreadN {snakemake.config[step_config][ngs_mapping][star][num_threads_align]} 
+        --runThreadN {args[num_threads_align]} 
 
     >&2 ls -lhR $TMPDIR
 }}
@@ -192,7 +194,7 @@ run_star()
 # Perform Alignment -------------------------------------------------------------------------------
 
 # Run STAR
-if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then
+if [[ "{args[mask_duplicates]}" == "True" ]]; then
     run_star | mask_duplicates | sort_by_coord > {snakemake.output.bam}
 else
     run_star
@@ -208,8 +210,8 @@ compute-md5 {out_sj} {out_sj}.md5
 
 # Optional output: mapping on transcriptome -------------------------------------------------------
 
-if [[ "{snakemake.config[step_config][ngs_mapping][star][transcriptome]}" = "True" ]]; then
-    if [[ "{snakemake.config[step_config][ngs_mapping][star][mask_duplicates]}" == "True" ]]; then
+if [[ "{args[transcriptome]}" = "True" ]]; then
+    if [[ "{args[mask_duplicates]}" == "True" ]]; then
         samtools view -h -S $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam | mask_duplicates | samtools view -h -b - > {out_tx}
     else
         mv $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam {out_tx}

@@ -6,6 +6,8 @@ from snakemake import shell
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 # Define input full path
 input_full_path = os.path.join(os.getcwd(), str(snakemake.input))
 
@@ -14,8 +16,8 @@ prefix = input_full_path.replace("_cluster.txt", "")
 
 # Include user provided MEI Ref if any
 mei_ref_argument = ""
-if snakemake.params.args["mei_refs"]:
-    mei_ref_argument = "--mei-refs " + str(snakemake.params.args["mei_refs"])
+if args["mei_refs"]:
+    mei_ref_argument = "--mei-refs " + str(args["mei_refs"])
 
 shell(
     r"""
@@ -37,13 +39,13 @@ mkdir -p $(dirname {snakemake.output.txt})
 
 # Call tool
 scramble.sh  {mei_ref_argument} \
-  --ref {snakemake.params.args[reference_genome]} \
+  --ref {args[reference_genome]} \
   --out-name {prefix} \
   --cluster-file {input_full_path} \
-  --nCluster {snakemake.params.args[n_cluster]} \
-  --mei-score {snakemake.params.args[mei_score]} \
-  --indel-score {snakemake.params.args[indel_score]} \
-  --poly-a-frac {snakemake.params.args[mei_polya_frac]} \
+  --nCluster {args[n_cluster]} \
+  --mei-score {args[mei_score]} \
+  --indel-score {args[indel_score]} \
+  --poly-a-frac {args[mei_polya_frac]} \
   --eval-meis
 
 # Post-process VCF

@@ -7,7 +7,9 @@ __author__ = "Oliver Stolpe <oliver.stolpe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
-input = snakemake.params.args["input"]
+args = getattr(snakemake.params, "args", {})
+
+input = args["input"]
 if not input:
     raise Exception("No bam found")
 

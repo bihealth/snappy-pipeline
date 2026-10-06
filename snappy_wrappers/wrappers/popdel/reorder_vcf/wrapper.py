@@ -2,6 +2,8 @@ from snakemake.shell import shell
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+args = getattr(snakemake.params, "args", {})
+
 DEF_HELPER_FUNCS = r"""
 compute-md5()
 {
@@ -52,7 +54,7 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Run actual tools --------------------------------------------------------------------------------
 
-echo '{snakemake.params.ped_members}' \
+echo '{args[ped_members]}' \
 | tr ' ' '\n' \
 >$TMPDIR/samples.txt
 

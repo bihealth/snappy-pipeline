@@ -31,10 +31,9 @@ def reference_path() -> str:
 def reference_faidx_region_string(wildcards) -> str:
     chrom = config["reference"].get("chromosome", None)
     region = config["reference"].get("region", None)
-    match chrom, region:
-        case None, None:
-            return ""
-        case chrom, None:
-            return chrom
-        case chrom, region:
-            return chrom + ":" + region
+    if chrom == None and region == None:
+        return ""
+    elif chrom != None and region == None:
+        return chrom
+    elif chrom != None and region != None:
+        return chrom + ":" + region

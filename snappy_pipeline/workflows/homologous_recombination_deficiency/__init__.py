@@ -58,6 +58,7 @@ Available HRD tools
 """
 
 import sys
+from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, is_not_background
 from snakemake.io import expand
@@ -123,6 +124,12 @@ class ScarHRDStepPart(BaseStepPart):
                     action=action, valid=", ".join(self.actions)
                 )
             )
+
+    def get_args(self, action: str) -> dict[str, Any]:
+        self._validate_action(action)
+        return self.config.scarHRD.model_dump(by_alias=True) | {
+            "reference": self.parent.w_config.static_data_config.reference.path,
+        }
 
     @dictify
     def _get_log_file(self, action):

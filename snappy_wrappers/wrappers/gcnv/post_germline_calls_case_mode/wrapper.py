@@ -2,8 +2,10 @@
 
 from snakemake.shell import shell
 
+args = getattr(snakemake.params, "args", {})
+
 paths_calls = " ".join(snakemake.input.calls)
-paths_models = " ".join(snakemake.params.args["model"])
+paths_models = " ".join(args["model"])
 
 shell(
     r"""

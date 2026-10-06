@@ -1,4 +1,0 @@
-name: bedvenn
-description: Create venn diagram from BED file overlaps using Jaccard index
-authors:
-  - Manuel Holtgrewe

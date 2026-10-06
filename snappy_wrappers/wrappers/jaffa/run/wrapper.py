@@ -7,6 +7,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 echo ${{JOB_ID:-unknown}} >$(dirname {snakemake.output.done})/sge_job_id
@@ -22,10 +24,10 @@ inputdir=$workdir/input
 mkdir -p $inputdir
 
 if [[ ! -f "$$inputdir/reads_1.fastq.gz" ]]; then
-    cat {snakemake.params.args[left]} > $inputdir/reads_1.fastq.gz
+    cat {args[left]} > $inputdir/reads_1.fastq.gz
 fi
 if [[ ! -f "$$inputdir/reads_2.fastq.gz" ]]; then
-    cat {snakemake.params.args[right]} > $inputdir/reads_2.fastq.gz
+    cat {args[right]} > $inputdir/reads_2.fastq.gz
 fi
 
 pushd $workdir \

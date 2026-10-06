@@ -31,8 +31,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = (
-            "work/{{mapper}}.{{tool}}.{{ngs_library}}/out/"
-            "{{mapper}}.{{tool}}.{{ngs_library}}{ext}"
+            "work/{{mapper}}.{{tool}}.{{ngs_library}}/out/{{mapper}}.{{tool}}.{{ngs_library}}{ext}"
         )
         # Build shortcut from cancer bio sample name to matched cancer sample
         self.tumor_ngs_library_to_sample_pair = OrderedDict()

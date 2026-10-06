@@ -1,5 +1,95 @@
 # Changelog
 
+## [0.6.2](https://github.com/bihealth/snappy-pipeline/compare/v0.6.1...v0.6.2) (2026-08-19)
+
+
+### Bug Fixes
+
+* Neoepitopes fixes ([#668](https://github.com/bihealth/snappy-pipeline/issues/668)) ([f93d38d](https://github.com/bihealth/snappy-pipeline/commit/f93d38d6094b87481d0a19a7f4da6d96b9ea2e51))
+
+## [0.6.1](https://github.com/bihealth/snappy-pipeline/compare/v0.6.0...v0.6.1) (2026-08-07)
+
+
+### Bug Fixes
+
+* missing f string prefix in arriba wrapper  ([#666](https://github.com/bihealth/snappy-pipeline/issues/666)) ([21b8f4f](https://github.com/bihealth/snappy-pipeline/commit/21b8f4f37c51f8f3a9d4357beecf8ea6e64ea6f5))
+
+## [0.6.0](https://github.com/bihealth/snappy-pipeline/compare/v0.5.0...v0.6.0) (2026-06-26)
+
+
+### Features
+
+* Adding somatic neoepitope preparation workflow ([#495](https://github.com/bihealth/snappy-pipeline/issues/495)) ([10b8b43](https://github.com/bihealth/snappy-pipeline/commit/10b8b43a613cefdb6b3c423b1eb02977ef982e3c))
+
+
+### Bug Fixes
+
+* bcftools_roh wrapper typo ([#662](https://github.com/bihealth/snappy-pipeline/issues/662)) ([80a04c3](https://github.com/bihealth/snappy-pipeline/commit/80a04c300e44cb5f6a6bc227cc1678145ea7233b))
+* general across-the-board fixes before tackling neoepitopes integration ([#659](https://github.com/bihealth/snappy-pipeline/issues/659)) ([a16c153](https://github.com/bihealth/snappy-pipeline/commit/a16c15379f650a27fa3d7ea4f41fd9765f582fa6))
+* one more bcftools roh wrapper typo ([#663](https://github.com/bihealth/snappy-pipeline/issues/663)) ([904647f](https://github.com/bihealth/snappy-pipeline/commit/904647f6ccdd36372f74959ff529b0f1dd21323e))
+
+## [0.5.0](https://github.com/bihealth/snappy-pipeline/compare/v0.4.0...v0.5.0) (2026-04-27)
+
+
+### Features
+
+* add mehari as available tool to somatic variant annotation ([#655](https://github.com/bihealth/snappy-pipeline/issues/655)) ([a576d5e](https://github.com/bihealth/snappy-pipeline/commit/a576d5ee0efa6fa9afd017df4c68d38e8a610ab2))
+* add vembrane as somatic variant filtration tool ([#656](https://github.com/bihealth/snappy-pipeline/issues/656)) ([d827501](https://github.com/bihealth/snappy-pipeline/commit/d827501a205a99038cd4de0c5db87bf5221348c6))
+* allow cbioportal export for tumor only datasets ([#649](https://github.com/bihealth/snappy-pipeline/issues/649)) ([2aea68d](https://github.com/bihealth/snappy-pipeline/commit/2aea68d006caa5ef47316223a14763965c8993cd))
+* move config accesses in wrappers to params ([#536](https://github.com/bihealth/snappy-pipeline/issues/536)) ([1e937d3](https://github.com/bihealth/snappy-pipeline/commit/1e937d38c98978562c345c69d757371c7207dc6e))
+
+
+### Bug Fixes
+
+* wrappers/arriba: properly escape trim_cmd, raise default memory resource usage ([#645](https://github.com/bihealth/snappy-pipeline/issues/645)) ([aeead91](https://github.com/bihealth/snappy-pipeline/commit/aeead91544dc48e1c58815421e015e8558c32a99))
+
+## [0.4.0](https://github.com/bihealth/snappy-pipeline/compare/v0.3.0...v0.4.0) (2025-09-16)
+
+
+### Features
+
+* Add snakemake parameter --ignore-incomplete to snappy-pipeline ([#586](https://github.com/bihealth/snappy-pipeline/issues/586)) ([dbeb3ed](https://github.com/bihealth/snappy-pipeline/commit/dbeb3eda12cde54ca5ac5b5782eafbb107482cbd))
+* end-to-end somatic test ([#639](https://github.com/bihealth/snappy-pipeline/issues/639)) ([3092947](https://github.com/bihealth/snappy-pipeline/commit/3092947a2dc9613556bcf5d8bef14e211bfe0395))
+* put execution of target coverage report under user control ([#623](https://github.com/bihealth/snappy-pipeline/issues/623)) ([2db384b](https://github.com/bihealth/snappy-pipeline/commit/2db384bb0eab0dbea8d7d802d624767d465361b5))
+* Replace mutect2_par wrapper with snakemake scattergather ([#538](https://github.com/bihealth/snappy-pipeline/issues/538)) ([10aa737](https://github.com/bihealth/snappy-pipeline/commit/10aa737c07d12722bcdd43f02e38a68b8ced8340))
+* support Mutect2 tumor-only mode ([#633](https://github.com/bihealth/snappy-pipeline/issues/633)) ([a74b723](https://github.com/bihealth/snappy-pipeline/commit/a74b7239a6ad8db44446f44a4f7d38716aaa39b9))
+* update mehari to v0.35.0 ([#617](https://github.com/bihealth/snappy-pipeline/issues/617)) ([2c63aeb](https://github.com/bihealth/snappy-pipeline/commit/2c63aeba4b32f784b22c1093a373187c67ed8407))
+
+
+### Bug Fixes
+
+* add libboost to manta env definition ([#613](https://github.com/bihealth/snappy-pipeline/issues/613)) ([dc9c020](https://github.com/bihealth/snappy-pipeline/commit/dc9c020eeb7a79445d7753812bb9d5bc42b7d1b9))
+* add step_key params for sv_calling_targeted gcnv_preprocess_intervals ([#612](https://github.com/bihealth/snappy-pipeline/issues/612)) ([bd31935](https://github.com/bihealth/snappy-pipeline/commit/bd3193589910fbf6a96dd2851c48f745d5914f0e))
+* allow BaseStepPart get_resource to (again) deal with input-functions being defined by `get_resource_usage` ([#614](https://github.com/bihealth/snappy-pipeline/issues/614)) ([ebfcd9d](https://github.com/bihealth/snappy-pipeline/commit/ebfcd9dc63866d654f250ca3430c9dad0b2e6bcd))
+* allow bwa_mem2 and mbcs in cbioportal_export model ([#603](https://github.com/bihealth/snappy-pipeline/issues/603)) ([882e869](https://github.com/bihealth/snappy-pipeline/commit/882e869b545e2b8ce08061397b8e15c320f0274f))
+* change type of parameters to adhere to specification of EBFilter ([#580](https://github.com/bihealth/snappy-pipeline/issues/580)) ([42d2c01](https://github.com/bihealth/snappy-pipeline/commit/42d2c0109fb35eff45b1baa696fa07dd333d110c))
+* force normal FORMAT column to be before the tumor in vcf output ([#629](https://github.com/bihealth/snappy-pipeline/issues/629)) ([8aafc26](https://github.com/bihealth/snappy-pipeline/commit/8aafc26dbd493e391df0cf2908d49e0177a9e21d))
+* germline sv calling tools not run ([#626](https://github.com/bihealth/snappy-pipeline/issues/626)) ([#627](https://github.com/bihealth/snappy-pipeline/issues/627)) ([d755194](https://github.com/bihealth/snappy-pipeline/commit/d7551946d3d9206de1b6b329410e8fd49751bef8))
+* python version and pathlib for mehari wrapper ([#631](https://github.com/bihealth/snappy-pipeline/issues/631)) ([1767cc1](https://github.com/bihealth/snappy-pipeline/commit/1767cc19bd80a918a7003cf067e12b46ef7532a3))
+* remove unnecessary inputs for annotate_strucvars ([#592](https://github.com/bihealth/snappy-pipeline/issues/592) ) ([#593](https://github.com/bihealth/snappy-pipeline/issues/593)) ([f49fafb](https://github.com/bihealth/snappy-pipeline/commit/f49fafb91359d5445a0f8430ca34c10519f1eb6a))
+* require hgnc.tsv for mehari annotate seqvars tsv output ([#619](https://github.com/bihealth/snappy-pipeline/issues/619)) ([7c02c4b](https://github.com/bihealth/snappy-pipeline/commit/7c02c4b767868f957e2fe3d17a1d17529d7317b8))
+* restrict pydantic to 2.9.x ([#618](https://github.com/bihealth/snappy-pipeline/issues/618)) ([e62fdd3](https://github.com/bihealth/snappy-pipeline/commit/e62fdd38f86eb5b3c8f29a6aec366f4b2271ee9d))
+* sv_calling_wgs workflow and config fixes ([#615](https://github.com/bihealth/snappy-pipeline/issues/615)) ([5d3118a](https://github.com/bihealth/snappy-pipeline/commit/5d3118aab53a1391c943ee78f7085da85aa6f4d3))
+* update biomedsheets and altamisa ([#638](https://github.com/bihealth/snappy-pipeline/issues/638)) ([1ca318e](https://github.com/bihealth/snappy-pipeline/commit/1ca318e9bf222ffd75e0569baea17cfe91d01e8d))
+* update cbioportal model for study metadata ([#621](https://github.com/bihealth/snappy-pipeline/issues/621)) ([246eb95](https://github.com/bihealth/snappy-pipeline/commit/246eb9520ac18af151089a9474c758858597b987))
+* update expectations for file names in GCNV models with kernel=0.9 and gatk4.6 ([#611](https://github.com/bihealth/snappy-pipeline/issues/611)) ([49f3568](https://github.com/bihealth/snappy-pipeline/commit/49f356809862dc087aca060c473ad0d35fd2e609))
+* update mehari to 0.36.3 and modify default options ([#630](https://github.com/bihealth/snappy-pipeline/issues/630)) ([2009fca](https://github.com/bihealth/snappy-pipeline/commit/2009fcaeaecaf93cd2ab91c65d16fe50c4914de3))
+* various smaller issues ([#636](https://github.com/bihealth/snappy-pipeline/issues/636)) ([101ff78](https://github.com/bihealth/snappy-pipeline/commit/101ff780acfb27f375eedad768fa04b572cebcaa))
+
+## [0.3.0](https://github.com/bihealth/snappy-pipeline/compare/v0.2.2...v0.3.0) (2024-12-09)
+
+
+### Features
+
+* enabled mbcs meta-tool in the ngs_mapping step model ([#545](https://github.com/bihealth/snappy-pipeline/issues/545)) ([625187b](https://github.com/bihealth/snappy-pipeline/commit/625187bd8c3088ece4c8228523dabb1d3f30893a))
+* Update GCNV environment to 0.9 kernel and GATK4.6.1 ([#557](https://github.com/bihealth/snappy-pipeline/issues/557)) ([7239fd0](https://github.com/bihealth/snappy-pipeline/commit/7239fd0b2f636f4cd0fa6bf1f420c38995ec4d07))
+
+
+### Bug Fixes
+
+* extra args check ([#551](https://github.com/bihealth/snappy-pipeline/issues/551)) ([7d6d649](https://github.com/bihealth/snappy-pipeline/commit/7d6d64925be88abc987662ce80793934ec9cea7f))
+* replace vep/run wrapper environment.yaml with symlink to vep environment.yaml ([#555](https://github.com/bihealth/snappy-pipeline/issues/555)) ([6873ffa](https://github.com/bihealth/snappy-pipeline/commit/6873ffaf68b3c95dc5ce2915cca6c3aae3fd0584))
+
 ## [0.2.2](https://github.com/bihealth/snappy-pipeline/compare/v0.2.1...v0.2.2) (2024-11-13)
 
 

@@ -20,8 +20,13 @@ from .. import __version__
 from ..workflows import (
     adapter_trimming,
     cbioportal_export,
+    combine_variants,
+    create_proteome,
     gene_expression_quantification,
     gene_expression_report,
+    germline_variant_annotation,
+    germline_variant_calling,
+    germline_variant_filtration,
     helper_gcnv_model_targeted,
     helper_gcnv_model_wgs,
     hla_typing,
@@ -35,6 +40,7 @@ from ..workflows import (
     somatic_gene_fusion_calling,
     somatic_hla_loh_calling,
     somatic_msi_calling,
+    somatic_neoepitope_prediction,
     somatic_purity_ploidy_estimate,
     somatic_targeted_seq_cnv_calling,
     somatic_variant_annotation,
@@ -70,9 +76,14 @@ SHELL = "/bin/bash"
 #: Mapping from step name to module
 STEP_TO_MODULE = {
     "adapter_trimming": adapter_trimming,
+    "cbioportal_export": cbioportal_export,
+    "combine_variants": combine_variants,
+    "create_proteome": create_proteome,
     "gene_expression_quantification": gene_expression_quantification,
     "gene_expression_report": gene_expression_report,
-    "cbioportal_export": cbioportal_export,
+    "germline_variant_annotation": germline_variant_annotation,
+    "germline_variant_calling": germline_variant_calling,
+    "germline_variant_filtration": germline_variant_filtration,
     "helper_gcnv_model_targeted": helper_gcnv_model_targeted,
     "helper_gcnv_model_wgs": helper_gcnv_model_wgs,
     "hla_typing": hla_typing,
@@ -86,6 +97,7 @@ STEP_TO_MODULE = {
     "somatic_gene_fusion_calling": somatic_gene_fusion_calling,
     "somatic_hla_loh_calling": somatic_hla_loh_calling,
     "somatic_msi_calling": somatic_msi_calling,
+    "somatic_neoepitope_prediction": somatic_neoepitope_prediction,
     "somatic_purity_ploidy_estimate": somatic_purity_ploidy_estimate,
     "somatic_targeted_seq_cnv_calling": somatic_targeted_seq_cnv_calling,
     "somatic_variant_annotation": somatic_variant_annotation,
@@ -154,6 +166,8 @@ def run(wrapper_args):  # noqa: C901
         snakemake_argv.append("--unlock")
     if wrapper_args.rerun_incomplete:
         snakemake_argv.append("--rerun-incomplete")
+    if wrapper_args.ignore_incomplete:
+        snakemake_argv.append("--ignore-incomplete")
     if wrapper_args.touch:
         snakemake_argv.append("--touch")
     if wrapper_args.detailed_summary:
@@ -255,6 +269,9 @@ def main(argv=None):
         "--rerun-incomplete", action="store_true", default=False, help="Rerun incomplete jobs"
     )
     group.add_argument(
+        "--ignore-incomplete", action="store_true", default=False, help="Ignore incomplete jobs"
+    )
+    group.add_argument(
         "--cleanup-metadata",
         action="store_true",
         default=False,
@@ -288,7 +305,7 @@ def main(argv=None):
     )
     group = parser.add_argument_group(
         "Snakemake Verbosity / Debugging",
-        "Arguments from Snakemake that are useful for debugging, such as " "increasing verbosity",
+        "Arguments from Snakemake that are useful for debugging, such as increasing verbosity",
     )
     group.add_argument(
         "-p", "--printshellcmds", action="store_true", default=False, help="Print shell commands"

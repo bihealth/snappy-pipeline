@@ -1,4 +1,9 @@
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -15,8 +20,20 @@ compute-md5()
 }
 """
 
-input_left = snakemake.params.args["input"]["reads_left"]
-input_right = snakemake.params.args["input"].get("reads_right", "")
+args = getattr(snakemake.params, "args", {})
+
+input_left = args["input"]["reads_left"]
+input_right = args["input"].get("reads_right", "")
+
+path_index = args["path_index"]
+trim_adapters = args["trim_adapters"]
+num_threads_trimming = args["num_threads_trimming"]
+mask_duplicates = args["mask_duplicates"]
+num_threads_bam_view = args["num_threads_bam_view"]
+memory_bam_sort = args["memory_bam_sort"]
+num_threads_bam_sort = args["num_threads_bam_sort"]
+num_threads_align = args["num_threads_align"]
+split_as_secondary = args["split_as_secondary"]
 
 shell(
     r"""
@@ -77,8 +94,8 @@ trim_adapters()
 {{
     set -x
 
-    if [[ "{snakemake.config[step_config][ngs_mapping][bwa_mem2][trim_adapters]}" == "True" ]]; then
-        trimadap-mt -p {snakemake.config[step_config][ngs_mapping][bwa_mem2][num_threads_trimming]}
+    if [[ "{trim_adapters}" == "True" ]]; then
+        trimadap-mt -p {num_threads_trimming}
     else
         cat
     fi
@@ -89,7 +106,7 @@ mask_duplicates()
 {{
     set -x
 
-    if [[ "{snakemake.config[step_config][ngs_mapping][bwa_mem2][mask_duplicates]}" == "True" ]]; then
+    if [[ "{mask_duplicates}" == "True" ]]; then
         samblaster --addMateTags
     else
         cat
@@ -103,7 +120,7 @@ run_bwa_mem2()
 
     # Decide whether to write split reads as supplementary or secondary (-M means secondary)
     split_as_supp_flag=
-    if [[ "{snakemake.config[step_config][ngs_mapping][bwa_mem2][split_as_secondary]}" == "True" ]]; then
+    if [[ "{split_as_secondary}" == "True" ]]; then
         split_as_supp_flag="-M"
     fi
 
@@ -114,11 +131,11 @@ run_bwa_mem2()
     fi
 
     bwa-mem2 mem \
-        {snakemake.config[step_config][ngs_mapping][bwa_mem2][path_index]} \
+        {path_index} \
         $split_as_supp_flag \
         $rg_arg \
         -p \
-        -t {snakemake.config[step_config][ngs_mapping][bwa_mem2][num_threads_align]} \
+        -t {num_threads_align} \
         /dev/stdin
 }}
 
@@ -132,8 +149,8 @@ postproc_bam()
 
     samtools sort \
         -T $TMPDIR/sort_bam \
-        -m {snakemake.config[step_config][ngs_mapping][bwa_mem2][memory_bam_sort]} \
-        -@ {snakemake.config[step_config][ngs_mapping][bwa_mem2][num_threads_bam_sort]} \
+        -m {memory_bam_sort} \
+        -@ {num_threads_bam_sort} \
         -O BAM \
         -o /dev/stdout \
         /dev/stdin \

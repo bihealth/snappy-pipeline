@@ -1,16 +1,33 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for BWA: Snakemake wrapper.py"""
 
-from snakemake import shell
+from typing import TYPE_CHECKING
+
+from snakemake.shell import shell
+
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 shell.executable("/bin/bash")
 
+args = getattr(snakemake.params, "args", {})
+
 # Input fastqs are passed through snakemake.params.
 # snakemake.input is a .done file touched after linking files in.
-input_left = snakemake.params.args["input"]["reads_left"]
-input_right = snakemake.params.args["input"].get("reads_right", "")
+input_left = args["input"]["reads_left"]
+input_right = args["input"].get("reads_right", "")
+
+path_bwa_index = args["path_index"]
+trim_adapters = args["trim_adapters"]
+num_threads_trimming = args["num_threads_trimming"]
+mask_duplicates = args["mask_duplicates"]
+num_threads_bam_view = args["num_threads_bam_view"]
+memory_bam_sort = args["memory_bam_sort"]
+num_threads_bam_sort = args["num_threads_bam_sort"]
+num_threads_align = args["num_threads_align"]
+split_as_secondary = args["split_as_secondary"]
 
 shell(
     r"""
@@ -44,7 +61,7 @@ trap "rm -rf $TMPDIR" EXIT
 mkdir -p $TMPDIR/tmp.d
 
 # Define some global shortcuts
-INDEX={snakemake.config[step_config][ngs_mapping][bwa][path_index]}
+INDEX={path_bwa_index}
 
 # Define left and right reads as Bash arrays
 declare -a reads_left=({input_left})
@@ -72,8 +89,8 @@ trim_adapters()
 {{
     set -x
 
-    if [[ "{snakemake.config[step_config][ngs_mapping][bwa][trim_adapters]}" == "True" ]]; then
-        trimadap-mt -p {snakemake.config[step_config][ngs_mapping][bwa][num_threads_trimming]}
+    if [[ "{trim_adapters}" == "True" ]]; then
+        trimadap-mt -p {num_threads_trimming}
     else
         cat  # TODO: can we somehow remove this?
     fi
@@ -84,7 +101,7 @@ mask_duplicates()
 {{
     set -x
 
-    if [[ "{snakemake.config[step_config][ngs_mapping][bwa][mask_duplicates]}" == "True" ]]; then
+    if [[ "{mask_duplicates}" == "True" ]]; then
         samblaster --addMateTags
     else
         cat  # TODO: can we somehow remove this?
@@ -101,11 +118,11 @@ postproc_bam()
     | samtools view \
         -u \
         -Sb \
-        -@ {snakemake.config[step_config][ngs_mapping][bwa][num_threads_bam_view]} \
+        -@ {num_threads_bam_view} \
     | samtools sort \
         -T $TMPDIR/sort_bam \
-        -m {snakemake.config[step_config][ngs_mapping][bwa][memory_bam_sort]} \
-        -@ {snakemake.config[step_config][ngs_mapping][bwa][num_threads_bam_sort]} \
+        -m {memory_bam_sort} \
+        -@ {num_threads_bam_sort} \
         -O BAM \
         -o $out
 }}
@@ -118,12 +135,12 @@ run_bwa_aln()
 
     for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         # Compute suffix array indices for BWA-ALN
-        bwa aln -t {snakemake.config[step_config][ngs_mapping][bwa][num_threads_align]} $INDEX ${{reads_left[$i]}} >$TMPDIR/left.sai
+        bwa aln -t {num_threads_align} $INDEX ${{reads_left[$i]}} >$TMPDIR/left.sai
         if [[ $paired -eq 1 ]]; then
             sai_right=$TMPDIR/right.sai
             fastq_right=${{reads_right[$i]}}
 
-            bwa aln -t {snakemake.config[step_config][ngs_mapping][bwa][num_threads_align]} $INDEX $fastq_right >$sai_right
+            bwa aln -t {num_threads_align} $INDEX $fastq_right >$sai_right
             bwa_cmd=sampe
         else
             sai_right=
@@ -155,7 +172,7 @@ run_bwa_aln()
         | add_rg \
         | samtools view \
             -b \
-            -@ {snakemake.config[step_config][ngs_mapping][bwa][num_threads_bam_view]} \
+            -@ {num_threads_bam_view} \
             -o $TMPDIR/tmp.d/out.$i.bam
     done
 }}
@@ -167,7 +184,7 @@ run_bwa_mem()
 
     # Decide whether to write split reads as supplementary or secondary (-M means secondary)
     split_as_supp_flag=
-    if [[ "{snakemake.config[step_config][ngs_mapping][bwa][split_as_secondary]}" == "True" ]]; then
+    if [[ "{split_as_secondary}" == "True" ]]; then
         split_as_supp_flag="-M"
     fi
 
@@ -195,11 +212,11 @@ run_bwa_mem()
             $split_as_supp_flag \
             $rg_arg \
             -p \
-            -t {snakemake.config[step_config][ngs_mapping][bwa][num_threads_align]} \
+            -t {num_threads_align} \
             /dev/stdin \
         | samtools view \
             -b \
-            -@ {snakemake.config[step_config][ngs_mapping][bwa][num_threads_bam_view]} \
+            -@ {num_threads_bam_view} \
             -o $TMPDIR/tmp.d/out.$i.bam
     done
 }}
@@ -222,14 +239,14 @@ fi
 # Move over a single output file but merge multiple ones
 if [[ ${{#reads_left[@]}} -eq 1 ]]; then
     samtools view \
-        -@ {snakemake.config[step_config][ngs_mapping][bwa][num_threads_bam_view]} \
+        -@ {num_threads_bam_view} \
         -h $TMPDIR/tmp.d/out.0.bam \
     | postproc_bam {snakemake.output.bam}
 else
     # Create merged header
     for f in $TMPDIR/tmp.d/out.*.bam; do
         samtools view \
-            -@ {snakemake.config[step_config][ngs_mapping][bwa][num_threads_bam_view]} \
+            -@ {num_threads_bam_view} \
             -H $f >${{f%.bam}}.hdr.sam
     done
     samtools merge $TMPDIR/merged.hdr.bam $TMPDIR/tmp.d/out.*.hdr.sam

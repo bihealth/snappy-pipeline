@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running bcftools filter over regions defined by a bed file"""
 
+from typing import TYPE_CHECKING
+
 from snakemake.shell import shell
 
-params = dict(snakemake.params)["args"]
-filter_name = params["filter_name"]
-bed = f'^{params["include"]}' if "include" in params else params["exclude"]
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
+
+args = getattr(snakemake.params, "args", {})
+filter_name = args["filter_name"]
+bed = f'^{args["include"]}' if "include" in args else args["exclude"]
 
 # Actually run the script.
 shell(

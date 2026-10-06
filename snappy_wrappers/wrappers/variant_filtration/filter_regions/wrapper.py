@@ -16,8 +16,10 @@ shell.prefix("set -eu -o pipefail -x; ")
 # Get path to this file's (wrapper.py) directory.
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
+args = getattr(snakemake.params, "args", {})
+
 # Short-circuit in case of performing no filtration
-if snakemake.wildcards.regions == "whole_genome":
+if args["filter_mode"] == "whole_genome":
     shell(
         r"""
     # Regions set to "whole_genome", just link out the data.
@@ -32,12 +34,10 @@ if snakemake.wildcards.regions == "whole_genome":
 
 # Actual Filtration -------------------------------------------------------------------------------
 
-if snakemake.wildcards.regions == "whole_genome":
+if args["filter_mode"] == "whole_genome":
     path_bed = "/dev/null"
 else:
-    path_bed = snakemake.config["step_config"]["variant_filtration"]["region_beds"][
-        snakemake.wildcards.regions
-    ]
+    path_bed = args["filter_config"][args["filter_mode"]]
 
 shell(
     r"""
@@ -46,7 +46,7 @@ set -x
 # Load library with helper functions.
 source {base_dir}/../../wgs_sv_filtration/funcs.sh
 
-if [[ "{snakemake.wildcards.regions}" != whole_genome ]]; then
+if [[ "{args[filter_mode]}" != whole_genome ]]; then
     bedtools intersect -u -header -wa -a {snakemake.input.vcf} -b {path_bed} \
     | bcftools norm --remove-duplicates \
     | bcftools sort -o {snakemake.output.vcf} -O z

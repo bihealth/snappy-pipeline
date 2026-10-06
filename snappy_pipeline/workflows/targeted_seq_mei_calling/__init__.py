@@ -165,7 +165,7 @@ class ScrambleStepPart(BaseStepPart):
             name_pattern=name_pattern, action=action
         )
 
-    def get_params(self, action):
+    def get_args(self, action):
         """Get parameters.
 
         :param action: Action, i.e., step being performed.

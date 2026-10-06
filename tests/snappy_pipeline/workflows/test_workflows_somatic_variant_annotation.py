@@ -37,21 +37,33 @@ def minimal_config():
 
           somatic_variant_calling:
             tools:
-            - mutect
-            - scalpel
-            scalpel:
-              path_target_regions: /path/to/target/regions.bed
-            mutect: {}
+            - mutect2
+            mutect2:
+              contamination: {}
+
+          somatic_variant_filtration:
+            path_somatic_variant: /path/to/somatic_variant_calling
+            has_annotation: false
+            filter_list:
+              - bcftools:
+                  include: "depth > min"
 
           somatic_variant_annotation:
-            path_somatic_variant_calling: /path/to/somatic_variant_calling
-            tools: ["jannovar", "vep"]
-            jannovar:
-              dbnsfp: {}
-              flag_off_target: true
-              path_jannovar_ser: /path/to/jannover.ser
+            path_somatic_variant: /path/to/somatic_variant_filtration
+            tools: ["vep", "mehari"]
+            is_filtered: true
             vep:
               cache_dir: /path/to/dir/cache
+              plugins:
+                - {'name': 'local_plugin', 'path': '/path/to/local_plugin.pm'}
+                - {'name': 'remote_plugin', 'url': 'https://to.com/remote_plugin.pm'}
+            mehari:
+              reference: /path/to/ref.fa
+              transcripts: ["/path/to/transcripts.zst"]
+              frequencies: /path/to/frequencies/CURRENT
+              clinvar: /path/to/clinvar/CURRENT
+              pick_transcript: "mane-select"
+              pick_transcript_mode: "all"
 
         data_sets:
           first_batch:
@@ -85,7 +97,7 @@ def somatic_variant_annotation_workflow(
     # can obtain paths from the function as if we really had a NGSMappingPipelineStep there
     dummy_workflow.globals = {
         "ngs_mapping": lambda x: "NGS_MAPPING/" + x,
-        "somatic_variant_calling": lambda x: "SOMATIC_VARIANT_CALLING/" + x,
+        "variant": lambda x: "SOMATIC_VARIANT_FILTRATION/" + x,
     }
     # Construct the workflow object
     return SomaticVariantAnnotationWorkflow(
@@ -97,82 +109,23 @@ def somatic_variant_annotation_workflow(
     )
 
 
-# Tests for JannovarAnnotateSomaticVcfStepPart -----------------------------------------------------
-
-
-def test_jannovar_step_part_get_input_files(somatic_variant_annotation_workflow):
-    """Tests JannovarAnnotateSomaticVcfStepPart.get_input_files()"""
-    base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
-        "{mapper}.{var_caller}.{tumor_library}"
-    )
-    expected = {
-        "vcf": base_out + ".vcf.gz",
-        "vcf_tbi": base_out + ".vcf.gz.tbi",
-    }
-    actual = somatic_variant_annotation_workflow.get_input_files("jannovar", "annotate_somatic_vcf")
-    assert actual == expected
-
-
-def test_jannovar_step_part_get_output_files(somatic_variant_annotation_workflow):
-    """Tests JannovarAnnotateSomaticVcfStepPart.get_output_files()"""
-    base_out = (
-        "work/{mapper}.{var_caller}.jannovar.{tumor_library}/out/"
-        "{mapper}.{var_caller}.jannovar.{tumor_library}"
-    )
-    expected = get_expected_output_vcf_files_dict(base_out=base_out)
-    actual = somatic_variant_annotation_workflow.get_output_files(
-        "jannovar", "annotate_somatic_vcf"
-    )
-    assert actual == expected
-
-
-def test_jannovar_step_part_get_log_file(somatic_variant_annotation_workflow):
-    """Tests JannovarAnnotateSomaticVcfStepPart.get_output_files()"""
-    base_out = (
-        "work/{mapper}.{var_caller}.jannovar.{tumor_library}/log/"
-        "{mapper}.{var_caller}.jannovar.{tumor_library}"
-    )
-    expected = get_expected_log_files_dict(base_out=base_out)
-    actual = somatic_variant_annotation_workflow.get_log_file("jannovar", "annotate_somatic_vcf")
-    assert actual == expected
-
-
-def test_jannovar_step_part_get_params(somatic_variant_annotation_workflow):
-    """Tests JannovarAnnotateSomaticVcfStepPart.get_params()"""
-    wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
-    expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_annotation_workflow.get_params("jannovar", "annotate_somatic_vcf")(
-        wildcards
-    )
-    assert actual == expected
-
-
-def test_jannovar_step_part_get_resource_usage(somatic_variant_annotation_workflow):
-    """Tests JannovarAnnotateSomaticVcfStepPart.get_resource_usage()"""
-    # Define expected
-    expected_dict = {"threads": 2, "time": "4-04:00:00", "memory": "16384M", "partition": "medium"}
-    # Evaluate
-    for resource, expected in expected_dict.items():
-        msg_error = f"Assertion error for resource '{resource}'."
-        actual = somatic_variant_annotation_workflow.get_resource(
-            "jannovar", "annotate_somatic_vcf", resource
-        )()
-        assert actual == expected, msg_error
-
-
 # Tests for VepAnnotateSomaticVcfStepPart ----------------------------------------------------------
 
 
 def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_input_files()"""
     base_out = (
-        "SOMATIC_VARIANT_CALLING/output/{mapper}.{var_caller}.{tumor_library}/out/"
-        "{mapper}.{var_caller}.{tumor_library}"
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.filtered.{tumor_library}"
     )
     expected = {
         "vcf": base_out + ".vcf.gz",
         "vcf_tbi": base_out + ".vcf.gz.tbi",
+        "reference": "/path/to/ref.fa",
+        "plugins": [
+            "work/vep_plugins/out/local_plugin.pm",
+            "work/vep_plugins/out/remote_plugin.pm",
+        ]
     }
     actual = somatic_variant_annotation_workflow.get_input_files("vep", "run")
     assert actual == expected
@@ -181,8 +134,8 @@ def test_vep_step_part_get_input_files(somatic_variant_annotation_workflow):
 def test_vep_step_part_get_output_files(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.vep.{tumor_library}/out/"
-        "{mapper}.{var_caller}.vep.{tumor_library}"
+        "work/{mapper}.{var_caller}.vep.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.vep.filtered.{tumor_library}"
     )
     expected = get_expected_output_vcf_files_dict(base_out=base_out)
     full = {k.replace("vcf", "full"): v.replace(".vcf", ".full.vcf") for k, v in expected.items()}
@@ -194,19 +147,43 @@ def test_vep_step_part_get_output_files(somatic_variant_annotation_workflow):
 def test_vep_step_part_get_log_file(somatic_variant_annotation_workflow):
     """Tests VepAnnotateSomaticVcfStepPart.get_output_files()"""
     base_out = (
-        "work/{mapper}.{var_caller}.vep.{tumor_library}/log/"
-        "{mapper}.{var_caller}.vep.{tumor_library}"
+        "work/{mapper}.{var_caller}.vep.filtered.{tumor_library}/log/"
+        "{mapper}.{var_caller}.vep.filtered.{tumor_library}"
     )
     expected = get_expected_log_files_dict(base_out=base_out)
     actual = somatic_variant_annotation_workflow.get_log_file("vep", "run")
     assert actual == expected
 
 
-def test_vep_step_part_get_params(somatic_variant_annotation_workflow):
-    """Tests VepAnnotateSomaticVcfStepPart.get_params()"""
-    wildcards = Wildcards(fromdict={"tumor_library": "P001-T1-DNA1-WGS1"})
-    expected = {"tumor_library": "P001-T1-DNA1-WGS1", "normal_library": "P001-N1-DNA1-WGS1"}
-    actual = somatic_variant_annotation_workflow.get_params("vep", "run")(wildcards)
+def test_vep_step_part_get_args(somatic_variant_annotation_workflow):
+    """Tests VepAnnotateSomaticVcfStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={})
+    expected = {
+        "config": {
+            "cache_dir": "/path/to/dir/cache",
+            "species": "homo_sapiens",
+            "assembly": "GRCh38",
+            "cache_version": "115",
+            "tx_flag": "gencode_basic",
+            "output_options": ["everything"],
+            "buffer_size": 1000,
+            "num_threads": 8,
+            "pick_order": [
+                "biotype",
+                "mane_select",
+                "mane_plus_clinical",
+                "appris",
+                "tsl",
+                "ccds",
+                "canonical",
+                "rank",
+                "length",
+            ],
+            "plugins": ["local_plugin", "remote_plugin"],
+            "plugins_dir": "work/vep_plugins/out",
+        },
+    }
+    actual = somatic_variant_annotation_workflow.get_args("vep", "run")(wildcards)
     assert actual == expected
 
 
@@ -221,20 +198,101 @@ def test_vep_step_part_get_resource_usage(somatic_variant_annotation_workflow):
         assert actual == expected, msg_error
 
 
+# Tests for MehariAnnotateSomaticVcfStepPart ----------------------------------------------------------
+
+
+def test_mehari_step_part_get_input_files(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_input_files()"""
+    base_out = (
+        "SOMATIC_VARIANT_FILTRATION/output/{mapper}.{var_caller}.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.filtered.{tumor_library}"
+    )
+    expected = {
+        "vcf": base_out + ".vcf.gz",
+        "vcf_tbi": base_out + ".vcf.gz.tbi",
+        "reference": "/path/to/ref.fa",
+        "transcripts": ["/path/to/transcripts.zst"],
+        "frequencies": "/path/to/frequencies/CURRENT",
+        "clinvar": "/path/to/clinvar/CURRENT",
+    }
+    actual = somatic_variant_annotation_workflow.get_input_files("mehari", "run")
+    assert actual == expected
+
+
+def test_mehari_step_part_get_output_files(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_output_files()"""
+    base_out = (
+        "work/{mapper}.{var_caller}.mehari.filtered.{tumor_library}/out/"
+        "{mapper}.{var_caller}.mehari.filtered.{tumor_library}"
+    )
+    expected = get_expected_output_vcf_files_dict(base_out=base_out)
+    actual = somatic_variant_annotation_workflow.get_output_files("mehari", "run")
+    assert actual == expected
+
+
+def test_mehari_step_part_get_log_file(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_output_files()"""
+    base_out = (
+        "work/{mapper}.{var_caller}.mehari.filtered.{tumor_library}/log/"
+        "{mapper}.{var_caller}.mehari.filtered.{tumor_library}"
+    )
+    expected = get_expected_log_files_dict(base_out=base_out)
+    actual = somatic_variant_annotation_workflow.get_log_file("mehari", "run")
+    assert actual == expected
+
+
+def test_mehari_step_part_get_args(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_args()"""
+    wildcards = Wildcards(fromdict={})
+    expected = {
+        "config": {
+            "assembly": "GRCh38",
+            "clinvar": "/path/to/clinvar/CURRENT",
+            "discard_utr_splice_variants": None,
+            "enable_compound_variants": None,
+            "frequencies": "/path/to/frequencies/CURRENT",
+            "in_memory_reference": None,
+            "keep_intergenic": None,
+            "phasing_strategy": None,
+            "pick_transcript": "mane-select",
+            "pick_transcript_mode": "all",
+            "reference": "/path/to/ref.fa",
+            "report_cdna_sequence": None,
+            "report_most_severe_consequence_by": None,
+            "report_protein_sequence": None,
+            "threads": 1,
+            "transcripts": ["/path/to/transcripts.zst"],
+        },
+    }
+    actual = somatic_variant_annotation_workflow.get_args("mehari", "run")(wildcards)
+    assert actual == expected
+
+
+def test_mehari_step_part_get_resource_usage(somatic_variant_annotation_workflow):
+    """Tests MehariAnnotateSomaticVcfStepPart.get_resource_usage()"""
+    # Define expected
+    expected_dict = {"threads": 1, "time": "00:20:00", "memory": "8G", "partition": "medium"}
+    # Evaluate
+    for resource, expected in expected_dict.items():
+        msg_error = f"Assertion error for resource '{resource}'."
+        actual = somatic_variant_annotation_workflow.get_resource("mehari", "run", resource)()
+        assert actual == expected, msg_error
+
+
 # Tests for SomaticVariantAnnotationWorkflow -------------------------------------------------------
 
 
 def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow):
     """Test simple functionality of the workflow"""
     # Check created sub steps
-    expected = ["jannovar", "link_out", "vep"]
+    expected = ["link_out", "mehari", "vep"]
     actual = list(sorted(somatic_variant_annotation_workflow.sub_steps.keys()))
     assert actual == expected
 
     # Check result file construction
     tpl = (
-        "output/{mapper}.{var_caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1/{dir_}/"
-        "{mapper}.{var_caller}.{annotator}.P00{i}-T{t}-DNA1-WGS1.{ext}"
+        "output/{mapper}.{var_caller}.{annotator}.filtered.P00{i}-T{t}-DNA1-WGS1/{dir_}/"
+        "{mapper}.{var_caller}.{annotator}.filtered.P00{i}-T{t}-DNA1-WGS1.{ext}"
     )
     expected = [
         tpl.format(
@@ -243,8 +301,8 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("vcf.gz", "vcf.gz.md5", "vcf.gz.tbi", "vcf.gz.tbi.md5")
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel")
-        for annotator in ("jannovar", "vep")
+        for var_caller in ("mutect2",)
+        for annotator in ("mehari", "vep")
     ]
     expected += [
         tpl.format(
@@ -253,7 +311,7 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
         for i, t in ((1, 1), (2, 1), (2, 2))
         for ext in ("full.vcf.gz", "full.vcf.gz.md5", "full.vcf.gz.tbi", "full.vcf.gz.tbi.md5")
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel")
+        for var_caller in ("mutect2",)
         for annotator in ("vep",)
     ]
     expected += [
@@ -270,9 +328,9 @@ def test_somatic_variant_annotation_workflow(somatic_variant_annotation_workflow
             "log.md5",
         )
         for mapper in ("bwa",)
-        for var_caller in ("mutect", "scalpel")
-        for annotator in ("jannovar", "vep")
+        for var_caller in ("mutect2",)
+        for annotator in ("mehari", "vep")
     ]
-    expected = list(sorted(expected))
-    actual = list(sorted(somatic_variant_annotation_workflow.get_result_files()))
+    expected = sorted(expected)
+    actual = sorted(somatic_variant_annotation_workflow.get_result_files())
     assert expected == actual

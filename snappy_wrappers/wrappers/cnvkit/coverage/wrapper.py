@@ -6,25 +6,7 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
-
-# During panel_of_normals step, the target regions are created by the target substep.
-# During somatic CNV calling (both exome & wgs), the target regions are obtained from the configuration
-if "target" in snakemake.input.keys():
-    target = snakemake.input.target
-elif "path_target" in config.keys():
-    target = config["path_target"]
-else:
-    raise Exception("Unsupported naming")
-
-# Same for antitarget regions
-if "antitarget" in snakemake.input.keys():
-    antitarget = snakemake.input.antitarget
-elif "path_antitarget" in config.keys():
-    antitarget = config["path_antitarget"]
-else:
-    raise Exception("Unsupported naming")
+args = getattr(snakemake.params, "args", {})
 
 shell(
     r"""
@@ -52,8 +34,8 @@ set -x
 coverage()
 {{
     cnvkit.py coverage \
-        --fasta {snakemake.config[static_data_config][reference][path]} \
-        --min-mapq {config[min_mapq]} \
+        --fasta {snakemake.input.reference} \
+        --min-mapq {args[min_mapq]} \
         --processes {snakemake.threads} \
         {snakemake.input.bam} \
         --output $2 $1
@@ -73,10 +55,10 @@ md5()
 
 # -----------------------------------------------------------------------------
 
-coverage {target} {snakemake.output.target}
+coverage {snakemake.input.target} {snakemake.output.target}
 md5 {snakemake.output.target}
 
-coverage {antitarget} {snakemake.output.antitarget}
+coverage {snakemake.input.antitarget} {snakemake.output.antitarget}
 md5 {snakemake.output.antitarget}
 """
 )

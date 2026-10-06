@@ -2,11 +2,15 @@
 """CUBI+Snakemake wrapper code for preparing cbioportal patient metadata table from biomedsheets
 input. Takes a dict from biomedsheets/snappy_pipeline, writes out all_cases_with_mutation_data.txt
 """
-
 import os
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from snakemake.script import snakemake
 
-def write_case_list(args, outfile):
+args = getattr(snakemake.params, "args", {})
+
+def write_case_list(case_list_args, outfile):
     """Takes a biomedsheet and writes a case list for all samples with DNA sequencing data"""
     category = os.path.basename(outfile).replace(".txt", "")
     with open(outfile, "w") as f:
@@ -21,18 +25,16 @@ def write_case_list(args, outfile):
                 "",
             ]
         ).format(
-            cancer_study_id=snakemake.config["step_config"]["cbioportal_export"]["study"][
-                "cancer_study_id"
-            ],
-            stable_id=args["stable_id"],
-            name=args["name"],
-            description=args["description"],
-            category=args["category"],
-            all_samples="\t".join(args["samples"]),
+            cancer_study_id=args["__cancer_study_id"],
+            stable_id=case_list_args["stable_id"],
+            name=case_list_args["name"],
+            description=case_list_args["description"],
+            category=case_list_args["category"],
+            all_samples="\t".join(case_list_args["samples"]),
         )
         f.write(s)
 
 
 for case_list, filename in snakemake.output.items():
-    assert case_list in snakemake.params.keys()
-    write_case_list(snakemake.params[case_list], filename)
+    assert case_list in args.keys()
+    write_case_list(args[case_list], filename)

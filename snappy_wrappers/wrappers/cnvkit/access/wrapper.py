@@ -6,7 +6,8 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-config = snakemake.config["step_config"][snakemake.config["pipeline_step"]["name"]]["access"]
+args = getattr(snakemake.params, "args", {})
+config = args.get("config", {})
 
 exclude = " --exclude " + " -x ".join(config["exclude"]) if config["exclude"] else ""
 
@@ -39,7 +40,7 @@ cnvkit.py access \
         echo --min-gap-size {config[min_gap_size]}
     fi) \
     {exclude} \
-    {snakemake.config[static_data_config][reference][path]}
+    {snakemake.input.reference}
 
 fn=$(basename "{snakemake.output.access}")
 d=$(dirname "{snakemake.output.access}")

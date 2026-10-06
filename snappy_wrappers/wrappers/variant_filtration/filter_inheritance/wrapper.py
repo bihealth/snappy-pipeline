@@ -15,6 +15,8 @@ shell.prefix("set -eu -o pipefail -x; ")
 # Get path to this file's (wrapper.py) directory.
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
+args = getattr(snakemake.params, "args", {})
+
 # Actual Filtration -------------------------------------------------------------------------------
 
 shell(
@@ -25,7 +27,7 @@ set -x
 source {base_dir}/../../wgs_sv_filtration/funcs.sh
 
 # Get name and number of index, father, and mother.
-index={snakemake.wildcards.index_library}
+index={args[index_library]}
 father=$(awk '($2 == "'$index'") {{ print $3; }}' {snakemake.input.ped})
 mother=$(awk '($2 == "'$index'") {{ print $4; }}' {snakemake.input.ped})
 
@@ -39,7 +41,7 @@ if [[ -z "$index_no" ]]; then
     exit 1
 fi
 
-if [[ "{snakemake.wildcards.inheritance}" == de_novo ]]; then
+if [[ "{args[filter_mode]}" == de_novo ]]; then
     # Perform filtration for de novo variants
     #
     # Build the include filter string.
@@ -60,7 +62,7 @@ if [[ "{snakemake.wildcards.inheritance}" == de_novo ]]; then
         -O z \
         -o {snakemake.output.vcf} \
         {snakemake.input.vcf}
-elif [[ "{snakemake.wildcards.inheritance}" == recessive_hom ]]; then
+elif [[ "{args[filter_mode]}" == recessive_hom ]]; then
     # Perform filtration for homozygous variants, heterozygous in both father and mother
     #
     # Build the include filter string.
@@ -79,7 +81,7 @@ elif [[ "{snakemake.wildcards.inheritance}" == recessive_hom ]]; then
 ## TODO: separate mother and father calls?? - easier to combine later on
 ## OR will be used in filtering step 6 --> then separate both?
 ## TODO: this is actually a dominant filtration filter. Should be renamed?
-elif [[ "{snakemake.wildcards.inheritance}" == dominant ]]; then
+elif [[ "{args[filter_mode]}" == dominant ]]; then
     # Perform filtration for de novo variants
     #
     # Build the inclusion filter string (left and rigt hand side separatdly).

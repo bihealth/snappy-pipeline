@@ -6,18 +6,19 @@ from snakemake.shell import shell
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-step = snakemake.config["pipeline_step"]["name"]
-config = snakemake.config["step_config"][step]["cnvkit"]
+args = getattr(snakemake.params, "args", {})
 
-center = config["center"]
-if center:
-    if center in set("mean", "median", "mode", "biweight"):
+if center := args.get("center", None):
+    if center in ("mean", "median", "mode", "biweight"):
         center = " --center " + center
     else:
-        center = " --center-at" + center
+        center = " --center-at " + str(center)
+else:
+    center = ""
 
-gender = " --gender {}".format(config["gender"]) if config["gender"] else ""
-male = " --male-reference" if config["male_reference"] else ""
+gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
+male = " --male-reference" if args.get("male_reference", False) else ""
+purity = " --purity {}".format(args["purity"]) if args.get("purity", 0.0) > 0.0 else ""
 
 shell(
     r"""
@@ -44,16 +45,13 @@ set -x
 
 cnvkit.py call \
     --output {snakemake.output.calls} \
-    --method {config[calling_method]} \
-    --thresholds={config[call_thresholds]} \
-    $(if [[ "{config[filter]}" ]]; then \
-        echo --filter {config[filter]}
+    --method {args[method]} \
+    --thresholds={args[thresholds]} \
+    $(if [[ -n "{args[filter]}" ]]; then \
+        echo --filter {args[filter]}
     fi) \
     {center} {gender} {male} \
-    --ploidy {config[ploidy]} \
-    $(if [[ {config[purity]} -gt 0 ]]; then \
-        echo --purity {config[purity]}
-    fi) \
+    --ploidy {args[ploidy]} {purity} \
     {snakemake.input}
 
 d=$(dirname "{snakemake.output.calls}")

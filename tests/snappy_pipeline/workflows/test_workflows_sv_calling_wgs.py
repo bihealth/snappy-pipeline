@@ -9,7 +9,11 @@ from snakemake.io import Wildcards
 
 from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
 
-from .common import get_expected_output_bcf_files_dict
+from .common import (
+    get_expected_output_bcf_files_dict,
+    get_expected_output_vcf_files_dict,
+    get_expected_log_files_dict,
+)
 from .conftest import patch_module_fs
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -51,7 +55,9 @@ def minimal_config():
                   contig_ploidy: /path/to/ploidy-model
                   model_pattern: "/data/model_*"
             melt:
-              jar_file: /path/to/melt.jar
+              jar_file: /path/to/MELTv2.2.2/MELT.jar
+              genes_file: /path/to/MELTv2.2.2/add_bed_files/1KGP_Hg19/hg19.genes.bed
+              me_refs_path: /path/to/melt/support/files
 
         data_sets:
           first_batch:
@@ -115,6 +121,7 @@ def test_delly2_step_part_get_input_files_call(sv_calling_wgs_workflow):
     ngs_mapping_path = "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/"
     expected = {
         "bam": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam",
+        "bai": ngs_mapping_path + "bwa.P001-N1-DNA1-WGS1.bam.bai",
     }
     actual = sv_calling_wgs_workflow.get_input_files("delly2", "call")(wildcards)
     assert actual == expected
@@ -128,123 +135,126 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
     assert actual == expected
 
 
-# def test_delly2_step_part_get_log_file_call(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart.get_log_file() - call"""
-#     base_name = "work/{mapper}.delly2_call.{library_name}/log/{mapper}.delly2_call.{library_name}"
-#     expected = get_expected_log_files_dict(base_out=base_name)
-#     actual = sv_calling_wgs_workflow.get_log_file("delly2", "call")
-#     assert actual == expected
+def test_delly2_step_part_get_log_file_call(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart.get_log_file() - call"""
+    base_name = "work/{mapper}.delly2_call.{library_name}/log/{mapper}.delly2_call.{library_name}.sv_calling"
+    expected = get_expected_log_files_dict(base_out=base_name, extended=True)
+    actual = sv_calling_wgs_workflow.get_log_file("delly2", "call")
+    assert actual == expected
 
 
-# # Tests for Delly2StepPart (merge_calls) ------------------
+def test_delly2_step_part_get_input_files_merge_calls(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart._get_input_files_merge_calls()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    base_name = (
+        "work/bwa.delly2_call.P00{i}-N1-DNA1-WGS1/out/bwa.delly2_call.P00{i}-N1-DNA1-WGS1.bcf"
+    )
+    expected = {"bcf": [base_name.format(i=i) for i in (1, 2, 3)]}
+    actual = sv_calling_wgs_workflow.get_input_files("delly2", "merge_calls")(wildcards)
+    assert actual == expected
 
 
-# def test_delly2_step_part_get_input_files_merge_calls(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart._get_input_files_merge_calls()"""
-#     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
-#     base_name = (
-#         "work/bwa.delly2_call.P00{i}-N1-DNA1-WGS1/out/bwa.delly2_call.P00{i}-N1-DNA1-WGS1.bcf"
-#     )
-#     expected = [base_name.format(i=i) for i in (1, 2, 3)]
-#     actual = sv_calling_wgs_workflow.get_input_files("delly2", "merge_calls")(wildcards)
-#     assert actual == expected
+def test_delly2_step_part_get_output_files_merge_calls(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart.get_output_files() - merge_calls"""
+    base_name_out = (
+        r"work/{mapper}.delly2_merge_calls.{library_name}/out/"
+        r"{mapper}.delly2_merge_calls.{library_name}"
+    )
+    expected = get_expected_output_bcf_files_dict(base_out=base_name_out)
+    actual = sv_calling_wgs_workflow.get_output_files("delly2", "merge_calls")
+    assert actual == expected
 
 
-# def test_delly2_step_part_get_output_files_merge_calls(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart.get_output_files() - merge_calls"""
-#     base_name_out = (
-#         r"work/{mapper,[^\.]+}.delly2_merge_calls.{index_ngs_library,[^\.]+}/out/"
-#         r"{mapper}.delly2_merge_calls.{index_ngs_library}"
-#     )
-#     expected = get_expected_output_bcf_files_dict(base_out=base_name_out)
-#     actual = sv_calling_wgs_workflow.get_output_files("delly2", "merge_calls")
-#     assert actual == expected
+def test_delly2_step_part_get_log_file_merge_calls(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart.get_log_file() - merge_calls"""
+    base_name = (
+        "work/{mapper}.delly2_merge_calls.{library_name}/log/"
+        "{mapper}.delly2_merge_calls.{library_name}.sv_calling"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name, extended=True)
+    actual = sv_calling_wgs_workflow.get_log_file("delly2", "merge_calls")
+    assert actual == expected
 
 
-# def test_delly2_step_part_get_log_file_merge_calls(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart.get_log_file() - merge_calls"""
-#     base_name = (
-#         "work/{mapper}.delly2_merge_calls.{index_ngs_library}/log/"
-#         "{mapper}.delly2_merge_calls.{index_ngs_library}"
-#     )
-#     expected = get_expected_log_files_dict(base_out=base_name)
-#     actual = sv_calling_wgs_workflow.get_log_file("delly2", "merge_calls")
-#     assert actual == expected
+def test_delly2_step_part_get_input_files_genotype(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart._get_input_files_genotype()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    actual = sv_calling_wgs_workflow.get_input_files("delly2", "genotype")(wildcards)
+    expected = {
+        "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
+        "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
+        "bcf": (
+            "work/bwa.delly2_merge_calls.P001-N1-DNA1-WGS1/out/"
+            "bwa.delly2_merge_calls.P001-N1-DNA1-WGS1.bcf"
+        ),
+    }
+    assert actual == expected
 
 
-# # Tests for Delly2StepPart (genotype) ------------------
+def test_delly2_step_part_get_output_files_genotype(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart._get_output_files_genotype()"""
+    base_name = (
+        "work/{mapper}.delly2_genotype.{library_name}/out/{mapper}.delly2_genotype.{library_name}"
+    )
+    expected = get_expected_output_bcf_files_dict(base_out=base_name)
+    actual = sv_calling_wgs_workflow.get_output_files("delly2", "genotype")
+    assert actual == expected
 
 
-# def test_delly2_step_part_get_input_files_genotype(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart._get_input_files_genotype()"""
-#     wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
-#     actual = sv_calling_wgs_workflow.get_input_files("delly2", "genotype")(wildcards)
-#     expected = {
-#         "bai": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam.bai",
-#         "bam": "NGS_MAPPING/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam",
-#         "bcf": (
-#             "work/bwa.delly2_merge_calls.P001-N1-DNA1-WGS1/out/"
-#             "bwa.delly2_merge_calls.P001-N1-DNA1-WGS1.bcf"
-#         ),
-#     }
-#     assert actual == expected
+def test_delly2_step_part_get_log_file_genotype(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart.get_log_file() - genotype"""
+    base_name = (
+        "work/{mapper}.delly2_genotype.{library_name}/log/{mapper}.delly2_genotype.{library_name}.sv_calling"
+    )
+    expected = get_expected_log_files_dict(base_out=base_name, extended=True)
+    actual = sv_calling_wgs_workflow.get_log_file("delly2", "genotype")
+    assert actual == expected
 
 
-# def test_delly2_step_part_get_output_files_genotype(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart._get_output_files_genotype()"""
-#     base_name = (
-#         "work/{mapper}.delly2_genotype.{library_name}/out/{mapper}.delly2_genotype.{library_name}"
-#     )
-#     expected = get_expected_output_bcf_files_dict(base_out=base_name)
-#     actual = sv_calling_wgs_workflow.get_output_files("delly2", "genotype")
-#     assert actual == expected
+def test_delly2_step_part_get_input_files_merge_genotypes(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart._get_input_files_merge_genotypes()"""
+    wildcards = Wildcards(fromdict={"mapper": "bwa", "library_name": "P001-N1-DNA1-WGS1"})
+    base_name = (
+        "work/bwa.delly2_genotype.P00{i}-N1-DNA1-WGS1/out/"
+        "bwa.delly2_genotype.P00{i}-N1-DNA1-WGS1.bcf"
+    )
+    expected = {"bcf": [base_name.format(i=i) for i in (1, 2, 3)]}
+    actual = sv_calling_wgs_workflow.get_input_files("delly2", "merge_genotypes")(wildcards)
+    assert actual == expected
 
 
-# def test_delly2_step_part_get_log_file_genotype(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart.get_log_file() - genotype"""
-#     base_name = (
-#         "work/{mapper}.delly2_genotype.{library_name}/log/{mapper}.delly2_genotype.{library_name}"
-#     )
-#     expected = get_expected_log_files_dict(base_out=base_name)
-#     actual = sv_calling_wgs_workflow.get_log_file("delly2", "genotype")
-#     assert actual == expected
+def test_delly2_step_part_get_output_files_merge_genotypes(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart._get_output_files_merge_genotypes()"""
+    base_name_out = (
+        r"work/{mapper}.delly2.{library_name}/out/{mapper}.delly2.{library_name}"
+    )
+    vcfs = get_expected_output_vcf_files_dict(base_out=base_name_out)
+    output = [x.replace("work/", "output/") for x in vcfs.values()]
+    logs = [
+        x.replace("work/", "output/")
+        for x in sv_calling_wgs_workflow.get_log_file("delly2", "merge_genotypes").values()
+    ]
+    expected = vcfs | {"output_links": output + logs}
+    actual = sv_calling_wgs_workflow.get_output_files("delly2", "merge_genotypes")
+    assert actual == expected
 
 
-# # Tests for Delly2StepPart (merge_genotypes) ------------------
-
-
-# def test_delly2_step_part_get_input_files_merge_genotypes(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart._get_input_files_merge_genotypes()"""
-#     wildcards = Wildcards(fromdict={"mapper": "bwa", "index_ngs_library": "P001-N1-DNA1-WGS1"})
-#     base_name = (
-#         "work/bwa.delly2_genotype.P00{i}-N1-DNA1-WGS1/out/"
-#         "bwa.delly2_genotype.P00{i}-N1-DNA1-WGS1.bcf"
-#     )
-#     expected = [base_name.format(i=i) for i in (1, 2, 3)]
-#     actual = sv_calling_wgs_workflow.get_input_files("delly2", "merge_genotypes")(wildcards)
-#     assert actual == expected
-
-
-# def test_delly2_step_part_get_output_files_merge_genotypes(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart._get_output_files_merge_genotypes()"""
-#     base_name_out = (
-#         r"work/{mapper}.delly2_merge_genotypes.{index_ngs_library}/out/"
-#         r"{mapper}.delly2_merge_genotypes.{index_ngs_library}"
-#     )
-#     expected = get_expected_output_bcf_files_dict(base_out=base_name_out)
-#     actual = sv_calling_wgs_workflow.get_output_files("delly2", "merge_genotypes")
-#     assert actual == expected
-
-
-# def test_delly2_step_part_get_log_file_merge_genotypes(sv_calling_wgs_workflow):
-#     """Tests Delly2StepPart.get_log_file() - merge_genotypes"""
-#     base_name = (
-#         "work/{mapper}.delly2_merge_genotypes.{index_ngs_library}/log/"
-#         "{mapper}.delly2_merge_genotypes.{index_ngs_library}"
-#     )
-#     expected = get_expected_log_files_dict(base_out=base_name)
-#     actual = sv_calling_wgs_workflow.get_log_file("delly2", "merge_genotypes")
-#     assert actual == expected
+def test_delly2_step_part_get_args(sv_calling_wgs_workflow):
+    """Tests Delly2StepPart.get_args() - all actions"""
+    expected = {
+        "genome": "/path/to/ref.fa",
+        "config": {
+            "path_exclude_tsv": None,
+            "map_qual": 1,
+            "geno_qual": 5,
+            "qual_tra": 20,
+            "mad_cutoff": 9,
+            "skip_libraries": [],
+        },
+    }
+    for action in ("call", "merge_calls", "genotype", "merge_genotypes"):
+      actual = sv_calling_wgs_workflow.get_args("delly2", action)
+      assert actual == expected
 
 
 # # Global RunGcnvWgsStepPart Tests ------------------------------------------------------------------
@@ -293,8 +303,8 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #             assert actual == expected, msg_error
 
 
-# def test_gcnv_get_params(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart.get_params for all actions"""
+# def test_gcnv_get_args(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart.get_args for all actions"""
 #     all_actions = (
 #         "preprocess_intervals",
 #         "annotate_gc",
@@ -309,10 +319,10 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     actions_w_params = ("call_cnvs", "contig_ploidy", "post_germline_calls")
 #     for action in all_actions:
 #         if action in actions_w_params:
-#             sv_calling_wgs_workflow.get_params("gcnv", action)
+#             sv_calling_wgs_workflow.get_args("gcnv", action)
 #         else:
 #             with pytest.raises(UnsupportedActionException):
-#                 sv_calling_wgs_workflow.get_params("gcnv", action)
+#                 sv_calling_wgs_workflow.get_args("gcnv", action)
 
 
 # def test_gcnv_validate_precomputed_model_paths_config(sv_calling_wgs_workflow):
@@ -538,18 +548,18 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     assert actual == expected
 
 
-# def test_gcnv_get_params_ploidy_model(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart._get_params_ploidy_model()"""
+# def test_gcnv_get_args_ploidy_model(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart._get_args_ploidy_model()"""
 #     # Initialise wildcard
 #     wildcards = Wildcards(fromdict={"library_kit": "default"})
 #     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
 #     # Test large cohort - model defined in config
 #     expected = {"model": "/path/to/ploidy-model"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "contig_ploidy")(wildcards)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "contig_ploidy")(wildcards)
 #     assert actual == expected
 #     # Test large cohort - model not defined in config
 #     expected = {"model": "__no_ploidy_model_for_library_in_config__"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "contig_ploidy")(wildcards_fake)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "contig_ploidy")(wildcards_fake)
 #     assert actual == expected
 
 
@@ -592,23 +602,23 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     assert actual == expected
 
 
-# def test_gcnv_get_params_model(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart._get_params_model()"""
+# def test_gcnv_get_args_model(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart._get_args_model()"""
 #     # Initialise wildcard
 #     wildcards_01 = Wildcards(fromdict={"library_kit": "default", "shard": "01"})
 #     wildcards_02 = Wildcards(fromdict={"library_kit": "default", "shard": "02"})
 #     wildcards_fake = Wildcards(fromdict={"library_kit": "__not_a_library_kit__"})
 #     # Test large cohort - model defined in config - shard 01
 #     expected = {"model": "/data/model_01"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "call_cnvs")(wildcards_01)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "call_cnvs")(wildcards_01)
 #     assert actual == expected
 #     # Test large cohort - model defined in config - shard 02
 #     expected = {"model": "/data/model_02"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "call_cnvs")(wildcards_02)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "call_cnvs")(wildcards_02)
 #     assert actual == expected
 #     # Test large cohort - model not defined in config
 #     expected = {"model": "__no_model_for_library_in_config__"}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "call_cnvs")(wildcards_fake)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "call_cnvs")(wildcards_fake)
 #     assert actual == expected
 
 
@@ -643,11 +653,11 @@ def test_delly2_step_part_get_output_files_call(sv_calling_wgs_workflow):
 #     assert actual == expected
 
 
-# def test_gcnv_get_params_post_germline_calls(sv_calling_wgs_workflow):
-#     """Tests RunGcnvWgsStepPart._get_params_post_germline_calls()"""
+# def test_gcnv_get_args_post_germline_calls(sv_calling_wgs_workflow):
+#     """Tests RunGcnvWgsStepPart._get_args_post_germline_calls()"""
 #     wildcards = Wildcards(fromdict={"library_name": "P001-N1-DNA1-WGS1"})
 #     expected = {"model": ["/data/model_01", "/data/model_02", "/data/model_03"]}
-#     actual = sv_calling_wgs_workflow.get_params("gcnv", "post_germline_calls")(wildcards)
+#     actual = sv_calling_wgs_workflow.get_args("gcnv", "post_germline_calls")(wildcards)
 #     assert actual == expected
 
 

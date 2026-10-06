@@ -246,7 +246,7 @@ class AnnotateExpansionHunter:
         md5_file = path + ".md5"
 
         # Generate MD5 checksum
-        md5_hash = hashlib.md5()  # noqa: B303
+        md5_hash = hashlib.md5()
         with open(path, "rb") as in_file:
             content = in_file.read()
         md5_hash.update(content)

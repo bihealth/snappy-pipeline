@@ -2,6 +2,8 @@
 
 from snakemake.shell import shell
 
+args = getattr(snakemake.params, "args", {})
+
 shell(
     r"""
 set -x
@@ -31,7 +33,7 @@ fi
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" ERR EXIT
 
-WINDOW={snakemake.config[step_config][ngs_mapping][bam_collect_doc][window_length]}
+WINDOW={args[window_length]}
 
 # Compute coverage vcf.gz
 
@@ -39,7 +41,7 @@ maelstrom-core \
     bam-collect-doc \
     --in {snakemake.input.bam} \
     --out {snakemake.output.vcf} \
-    --reference {snakemake.config[static_data_config][reference][path]} \
+    --reference {snakemake.input.reference} \
     --window-length $WINDOW
 
 find $(dirname $(dirname {snakemake.output.vcf}))
@@ -64,7 +66,7 @@ bcftools query -f '%CHROM\t%POS[\t%CV]\n' $(basename {snakemake.output.vcf}) \
         prev=$1;
     }}' \
 > $TMPDIR/out_cov.wig
-cut -f 1-2 {snakemake.config[static_data_config][reference][path]}.fai \
+cut -f 1-2 {snakemake.input.reference}.fai \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/out_cov.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.cov_bw})
@@ -84,7 +86,7 @@ bcftools query -f '%CHROM\t%POS[\t%MQ]\n' $(basename {snakemake.output.vcf}) \
         prev=$1;
     }}' \
 > $TMPDIR/out_mq.wig
-cut -f 1-2 {snakemake.config[static_data_config][reference][path]}.fai \
+cut -f 1-2 {snakemake.input.reference}.fai \
 > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/out_mq.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.mq_bw})
