@@ -78,7 +78,7 @@ dev = [
     "pre-commit >=4.0.1,<5"
 ]
 docs = [
-    "sphinx >=7.3.7,<8",
+    "sphinx >=7.3.7,<9",
     "sphinx_rtd_theme >=2.0.0,<3",
     "sphinx-mdinclude >=0.6.0,<1",
 ]
