@@ -679,9 +679,9 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         elif action == "transform":
             transform_ext_names = ("log2", "call", "segments", "cns", "cnr")
             transform_ext_values = (
-                "_gene_log2.txt",
-                "_gene_call.txt",
-                "_segments.txt",
+                ".gene_log2.txt",
+                ".gene_call.txt",
+                ".segments.txt",
                 ".cns",
                 ".cnr",
             )
@@ -831,9 +831,9 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                     ext=[
                         ".ratio.txt",
                         ".ratio.txt.md5",
-                        "_gene_log2.txt",
-                        "_gene_call.txt",
-                        "_segments.txt",
+                        ".gene_log2.txt",
+                        ".gene_call.txt",
+                        ".segments.txt",
                         ".scatter.png",
                         ".heatmap.png",
                         ".diagram.pdf",
