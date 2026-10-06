@@ -13,7 +13,7 @@ from collections import OrderedDict
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
-from functools import lru_cache
+from functools import cached_property, lru_cache
 from io import StringIO
 from typing import Any, Callable
 
@@ -820,6 +820,7 @@ class BaseStep:
 
         self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps: dict[str, BaseStepPart] = {}
+        self._library_dataframe = None
         self.data_set_infos = list(self._load_data_set_infos())
         self.sheets = [info.sheet for info in self.data_set_infos]
 
@@ -989,16 +990,22 @@ class BaseStep:
         self.workflow.onsuccess(on_success)
 
     def build_library_dataframe(self):
-        """Convenience method to build the unified library dataframe for this workflow."""
-        default_relationships = getattr(type(self), "default_relationships", {})
-        config_relationships = getattr(self.config, "relationships", None) or {}
-        relationships = {**default_relationships, **config_relationships}
-        return build_library_dataframe(
-            self.data_set_infos,
-            self.sheets,
-            self.shortcut_sheets,
-            relationships=relationships or None,
-        )
+        """Return the unified library dataframe for this workflow.
+
+        The dataframe is built once per instance and shared by all callers, so callers must not
+        modify it in place.
+        """
+        if self._library_dataframe is None:
+            default_relationships = getattr(type(self), "default_relationships", {})
+            config_relationships = getattr(self.config, "relationships", None) or {}
+            relationships = {**default_relationships, **config_relationships}
+            self._library_dataframe = build_library_dataframe(
+                self.data_set_infos,
+                self.sheets,
+                self.shortcut_sheets,
+                relationships=relationships or None,
+            )
+        return self._library_dataframe
 
     @property
     def effective_group_by(self) -> str | None:
@@ -1020,7 +1027,7 @@ class BaseStep:
             self.config, self.get_task_config, _visited=frozenset({self.task_name})
         )
 
-    @property
+    @cached_property
     def output_entities(self) -> list[str]:
         """Output entity names for this workflow, driven by config.
 
@@ -1028,28 +1035,24 @@ class BaseStep:
         or individual library names otherwise.
         """
         selection = getattr(self.config, "library_selection", None)
-        relationships = getattr(self.config, "relationships", None)
-        return output_entity_names(
-            self.data_set_infos,
-            self.sheets,
-            self.shortcut_sheets,
-            selection,
-            self.effective_group_by,
-            relationships=relationships,
+        return _output_entity_names_from_dataframe(
+            self.build_library_dataframe(), selection, self.effective_group_by
         )
 
-    @property
+    @cached_property
     def cohort_members(self) -> dict[str, list[str]]:
         """Cohort name -> member library names mapping."""
         selection = getattr(self.config, "library_selection", None)
-        relationships = getattr(self.config, "relationships", None)
-        return cohort_members(
-            self.data_set_infos,
-            self.sheets,
-            self.shortcut_sheets,
-            selection,
-            relationships=relationships,
-        )
+        return _cohort_members_from_dataframe(self.build_library_dataframe(), selection)
+
+    @cached_property
+    def _cohort_members_by_library(self) -> dict[str, list[str]]:
+        """Library name -> member library names of its (first) cohort."""
+        result: dict[str, list[str]] = {}
+        for members in self.cohort_members.values():
+            for library_name in members:
+                result.setdefault(library_name, members)
+        return result
 
     def get_cohort_libraries(self, library_name: str) -> list[str]:
         """Return all library names in the same cohort as *library_name*.
@@ -1057,10 +1060,7 @@ class BaseStep:
         Returns ``[library_name]`` when the cohort cannot be found or when
         ``effective_group_by != "cohort"``.
         """
-        for _cohort_name, members in self.cohort_members.items():
-            if library_name in members:
-                return members
-        return [library_name]
+        return self._cohort_members_by_library.get(library_name, [library_name])
 
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
@@ -2016,11 +2016,16 @@ def output_entity_names(
         Optional relationship definitions passed to
         :func:`build_library_dataframe`.
     """
-    import pandas as pd
-
     df = build_library_dataframe(
         data_set_infos, sheets, shortcut_sheets, relationships=relationships
     )
+    return _output_entity_names_from_dataframe(df, selection, group_by)
+
+
+def _output_entity_names_from_dataframe(df, selection: str | None, group_by: str | None):
+    """Implementation of :func:`output_entity_names` on an existing library dataframe."""
+    import pandas as pd
+
     if df.empty:
         return []
 
@@ -2077,6 +2082,11 @@ def cohort_members(
     df = build_library_dataframe(
         data_set_infos, sheets, shortcut_sheets, relationships=relationships
     )
+    return _cohort_members_from_dataframe(df, selection)
+
+
+def _cohort_members_from_dataframe(df, selection: str | None) -> dict[str, list[str]]:
+    """Implementation of :func:`cohort_members` on an existing library dataframe."""
     if df.empty:
         return {}
 
