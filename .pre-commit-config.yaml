@@ -10,3 +10,6 @@ repos:
     rev: v1.1.0 # https://github.com/snakemake/snakefmt/releases
     hooks:
       - id: snakefmt
+        # snakefmt cannot parse `use rule * from <module> as <prefix>*` in the orchestrator;
+        # CI likewise only checks snappy_pipeline/workflows/*/Snakefile.
+        exclude: ^snappy_pipeline/Snakefile$
