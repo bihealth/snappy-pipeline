@@ -831,9 +831,9 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                     ext=[
                         ".ratio.txt",
                         ".ratio.txt.md5",
-                        ".gene_log2.txt",
-                        ".gene_call.txt",
-                        ".segments.txt",
+                        "_gene_log2.txt",
+                        "_gene_call.txt",
+                        "_segments.txt",
                         ".scatter.png",
                         ".heatmap.png",
                         ".diagram.pdf",
