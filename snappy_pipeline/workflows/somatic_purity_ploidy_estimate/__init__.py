@@ -34,7 +34,7 @@ PURITY_PLOIDY_TOOLS = "ascat"
 #: Default configuration for the somatic_gene_fusion_calling step
 
 #: Extensions of output payload files
-EXT_VALUES = ("_goodness_of_fit.txt", "_ploidy.txt", "_segments.txt", "_segments_raw.txt")
+EXT_VALUES = (".goodness_of_fit.txt", ".ploidy.txt", ".segments.txt", ".segments_raw.txt")
 
 
 class AscatStepPart(BaseStepPart):
@@ -157,20 +157,10 @@ class AscatStepPart(BaseStepPart):
         @dictify
         def func(wildcards):
             result = {
-                "baf_tumor": (
-                    "work/ascat_baf_tumor.{tumor_library}/out/ascat_baf_tumor.{tumor_library}.txt"
-                ),
-                "baf_normal": (
-                    "work/ascat_baf_normal.{normal_library}/out/"
-                    "ascat_baf_normal.{normal_library}.txt"
-                ),
-                "cnv_tumor": (
-                    "work/ascat_cnv_tumor.{tumor_library}/out/ascat_cnv_tumor.{tumor_library}.txt"
-                ),
-                "cnv_normal": (
-                    "work/ascat_cnv_normal.{normal_library}/out/"
-                    "ascat_cnv_normal.{normal_library}.txt"
-                ),
+                "baf_tumor": "work/{tumor_library}/out/{tumor_library}.baf_tumor.txt",
+                "baf_normal": "work/{normal_library}/out/{normal_library}.baf_normal.txt",
+                "cnv_tumor": "work/{tumor_library}/out/{tumor_library}.cnv_tumor.txt",
+                "cnv_normal": "work/{normal_library}/out/{normal_library}.cnv_normal.txt",
             }
             normal_library = self.get_normal_lib_name(wildcards)
             for key, value in result.items():
@@ -187,34 +177,22 @@ class AscatStepPart(BaseStepPart):
     @staticmethod
     def _get_output_files_baf_tumor():
         """Return output files for generating BAF file for the tumor."""
-        return {
-            "txt": ("work/ascat_baf_tumor.{tumor_library}/out/ascat_baf_tumor.{tumor_library}.txt")
-        }
+        return {"txt": "work/{tumor_library}/out/{tumor_library}.baf_tumor.txt"}
 
     @staticmethod
     def _get_output_files_baf_normal():
         """Return output files for generating BAF file for the normal."""
-        return {
-            "txt": (
-                "work/ascat_baf_normal.{normal_library}/out/ascat_baf_normal.{normal_library}.txt"
-            )
-        }
+        return {"txt": "work/{normal_library}/out/{normal_library}.baf_normal.txt"}
 
     @staticmethod
     def _get_output_files_cnv_tumor():
         """Return output files for generating BAF file for the tumor."""
-        return {
-            "txt": ("work/ascat_cnv_tumor.{tumor_library}/out/ascat_cnv_tumor.{tumor_library}.txt")
-        }
+        return {"txt": "work/{tumor_library}/out/{tumor_library}.cnv_tumor.txt"}
 
     @staticmethod
     def _get_output_files_cnv_normal():
         """Return output files for generating CNV file for the normal."""
-        return {
-            "txt": (
-                "work/ascat_cnv_normal.{normal_library}/out/ascat_cnv_normal.{normal_library}.txt"
-            )
-        }
+        return {"txt": "work/{normal_library}/out/{normal_library}.cnv_normal.txt"}
 
     @dictify
     def _get_output_files_run_ascat(self):
@@ -222,7 +200,7 @@ class AscatStepPart(BaseStepPart):
         yield "done", touch("work/{tumor_library}/out/.done")
         infixes = ("goodness_of_fit", "ploidy", "segments", "segments_raw")
         for infix in infixes:
-            path = ("work/{tumor_library}/out/{tumor_library}_%s.txt") % infix
+            path = ("work/{tumor_library}/out/{tumor_library}.%s.txt") % infix
             yield infix, path
 
     def get_args(self, action):
@@ -260,19 +238,11 @@ class AscatStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         log_dict = {
-            "baf_tumor": (
-                "work/ascat_baf_tumor.{tumor_library}/log/ascat_baf_tumor.{tumor_library}.log"
-            ),
-            "baf_normal": (
-                "work/ascat_baf_normal.{normal_library}/log/ascat_baf_normal.{normal_library}.log"
-            ),
-            "cnv_tumor": (
-                "work/ascat_cnv_tumor.{tumor_library}/log/ascat_cnv_tumor.{tumor_library}.log"
-            ),
-            "cnv_normal": (
-                "work/ascat_cnv_normal.{normal_library}/log/ascat_cnv_normal.{normal_library}.log"
-            ),
-            "run_ascat": ("work/ascat.{tumor_library}/log/ascat.{tumor_library}.log"),
+            "baf_tumor": "work/{tumor_library}/log/{tumor_library}.baf_tumor.log",
+            "baf_normal": "work/{normal_library}/log/{normal_library}.baf_normal.log",
+            "cnv_tumor": "work/{tumor_library}/log/{tumor_library}.cnv_tumor.log",
+            "cnv_normal": "work/{normal_library}/log/{normal_library}.cnv_normal.log",
+            "run_ascat": "work/{tumor_library}/log/{tumor_library}.run.log",
         }
         return {"log": log_dict[action]}
 
