@@ -20,7 +20,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v3
+      uses: conda-incubator/setup-miniconda@v4.1.0
       with:
         activate-environment: ci_test_conda
         python-version: ${{ inputs.python-version }}
@@ -30,6 +30,7 @@ runs:
         use-mamba: true
         conda-remove-defaults: "true"
         channels: conda-forge,bioconda
+        python-version: "3.12"
 
     - name: Cache conda
       uses: actions/cache@v3
