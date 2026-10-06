@@ -52,7 +52,7 @@ for task in tasks:
 
     if should_target:
         for f in wf_instance.get_result_files():
-            if not f.endswith((".md5", ".tbi", ".txt")):
+            if not f.endswith((".md5", ".tbi")):
                 all_target_files.append(os.path.join("tasks", task_name, f))
 
 for task in tasks:
