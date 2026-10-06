@@ -668,6 +668,11 @@ def run(ctx, directory, slurm, task_name, all_tasks, verbose):
         slurm_profile = os.path.join(os.path.dirname(__file__), "profile-slurm")
         snakemake_argv += ["--workflow-profile", slurm_profile]
 
+    # Without an explicit path, the snkmt logger writes to one database per user, shared by all
+    # projects. The path must be absolute because the logger resolves it against the process
+    # working directory, not against --directory.
+    snakemake_argv += ["--logger-snkmt-db", _snkmt_db_path(directory_path)]
+
     # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
 
@@ -699,7 +704,7 @@ def watch(directory, db_path):
     snappy's workflow profile).
     """
     directory_path = directory() if callable(directory) else directory
-    path = db_path or os.path.join(directory_path, ".snakemake", "log", "snkmt.sqlite")
+    path = db_path or _snkmt_db_path(directory_path)
     if not os.path.exists(path):
         log(
             "snkmt database not found at {path}.\n\n"
@@ -720,6 +725,11 @@ def watch(directory, db_path):
     res = subprocess.run(cmd)
     if res.returncode != 0:
         sys.exit(res.returncode)
+
+
+def _snkmt_db_path(directory_path: str) -> str:
+    """Return the absolute path of the project's snkmt database."""
+    return os.path.join(os.path.abspath(directory_path), ".snakemake", "log", "snkmt.sqlite")
 
 
 def _snkmt_console_cmd(db_path: str) -> list[str]:

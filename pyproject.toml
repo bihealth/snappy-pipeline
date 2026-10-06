@@ -34,6 +34,7 @@ dependencies = [
     # Snakemake is used for providing the actual wrapper calling functionality
     "snakemake >=9.19.0,<10",
     "snakemake-executor-plugin-slurm >=2,<3",
+    "snakemake-logger-plugin-snkmt >=0.1.6",
     # Required for plotting
     "matplotlib >=3.8.4",
     # Library for working with VCF files.
