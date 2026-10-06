@@ -66,11 +66,12 @@ Ready to contribute? Here's how to set up `snappy-pipeline` for local developmen
 
     $ git clone git@github.com:bihealth/snappy-pipeline.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install the development environment with `pixi <https://pixi.sh>`_ (Python 3.12 or newer)
+   and the pre-commit hooks (ruff and snakefmt)::
 
-    $ mkvirtualenv snappy-pipeline
     $ cd snappy-pipeline/
-    $ python setup.py develop
+    $ pixi install --environment dev
+    $ pixi run -e dev pre-commit install
 
 4. Create a branch for local development::
 
@@ -78,18 +79,20 @@ Ready to contribute? Here's how to set up `snappy-pipeline` for local developmen
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
+5. When you're done making changes, format the code and check that the linters and the tests
+   pass::
 
-    $ flake8 snappy-pipeline tests
-    $ python setup.py test or py.test
-    $ tox
+    $ pixi run -e dev srcfmt
+    $ pixi run -e dev lint
+    $ pixi run -e dev test
 
-   To get flake8 and tox, just pip install them into your virtualenv.
+6. Commit your changes and push your branch to GitHub. Use
+   `Conventional Commits <https://www.conventionalcommits.org>`_ for commit messages and pull
+   request titles (e.g. ``fix(cli): ...``, ``feat(ngs_mapping): ...``); CI checks the pull
+   request title::
 
-6. Commit your changes and push your branch to GitHub::
-
-    $ git add .
-    $ git commit -m "Your detailed description of your changes."
+    $ git add <changed files>
+    $ git commit -m "fix(scope): short description of the change"
     $ git push origin name-of-your-bugfix-or-feature
 
 7. Submit a pull request through the GitHub website.
@@ -101,16 +104,19 @@ Before you submit a pull request, check that it meets these guidelines:
 
 1. The pull request should include tests.
 2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
-   feature to the list in README.rst.
-3. The pull request should work for the Python versions from ``setup.py``. Check
-   https://travis-ci.org/holtgrewe/cubi_piepline/pull_requests
-   and make sure that the tests pass for all supported Python versions.
+   your new functionality into a function with a docstring.
+3. Linting and tests pass in CI (``.github/workflows/ci.yml``). Changes to workflows or
+   wrappers are also dry-run and run end to end on the pipelines in ``.tests/``
+   (``.github/workflows/ci-e2e.yml``).
 
 Tips
 ----
 
 To run a subset of tests::
 
-$ py.test tests.test_snappy_pipeline
+$ pixi run -e dev test tests/snappy_pipeline/apps
 
+To dry-run one of the test pipelines::
+
+$ cd .tests/test-workflow/pipelines/snappy-germline_wes
+$ pixi run snappy run -n -- --cores 1
