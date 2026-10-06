@@ -110,12 +110,14 @@ rule cbioportal_export_concatenate_maf:
         **wf.get_input_files("cbioportal_mutations", "run"),
     output:
         wf.get_output_files("cbioportal_mutations", "run"),
+    params:
+        exclude_flag=wf.config.exclude_variant_with_flag,
     shell:
         r"""
         cat \
         <( head -n 1 {input[0]} ) \
         <( tail -q -n +2 {input}) \
-        | (if [[ -n "{exclude_flag}" ]] ; then grep -v {exclude_flag} ; else cat ; fi) \
+        | (if [[ -n {params.exclude_flag:q} ]] ; then grep -v {params.exclude_flag:q} ; else cat ; fi) \
         > {output}
         """
 
