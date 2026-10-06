@@ -219,10 +219,10 @@ class AscatStepPart(BaseStepPart):
     @dictify
     def _get_output_files_run_ascat(self):
         """Return output files for actually running ASCAT."""
-        yield "done", touch("work/ascat.{tumor_library}/out/.done")
+        yield "done", touch("work/{tumor_library}/out/.done")
         infixes = ("goodness_of_fit", "ploidy", "segments", "segments_raw")
         for infix in infixes:
-            path = ("work/ascat.{tumor_library}/out/{tumor_library}_%s.txt") % infix
+            path = ("work/{tumor_library}/out/{tumor_library}_%s.txt") % infix
             yield infix, path
 
     def get_args(self, action):
@@ -322,7 +322,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         """Return local purity/ploidy output paths for downstream consumers."""
         cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"output/ascat.{lib}/out/.done"}
+        return {"done": f"output/{lib}/out/.done"}
 
     def __init__(
         self,
