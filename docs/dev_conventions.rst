@@ -66,6 +66,10 @@ anything but a function.
 Wrappers read the params dict as ``snakemake.params.args``. Snakemake does not allow
 ``unpack()`` in ``params:``, so every rule passes it as the single key ``args``.
 
+Wrappers never read ``snakemake.config``. Every file a wrapper reads, such as the reference
+FASTA, is a rule input, and every other value is a param. Only inputs order the jobs that
+produce them first and trigger reruns when they change.
+
 Defining input files and params
 ===============================
 
