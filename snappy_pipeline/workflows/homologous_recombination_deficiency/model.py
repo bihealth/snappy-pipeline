@@ -42,7 +42,7 @@ class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
 
     ngs_mapping: Annotated[
         str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"somatic"})),
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
 
