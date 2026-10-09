@@ -92,7 +92,7 @@ data_sets:
   trbc:
     file: samplesheet.tsv
     search_patterns:
-      - { left: '*.R1.fastq.gz', right: '*.R2.fastq.gz' }
+      - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
     search_paths:
       - raw
     type: matched_cancer

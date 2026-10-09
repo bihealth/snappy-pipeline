@@ -83,11 +83,8 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkInPathGenerator,
-    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
-    get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -168,25 +165,18 @@ class SalmonStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.cfg: SalmonConfigModel = self.config.salmon
-        self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXTENSIONS["salmon"]
         if self.config.salmon and self.config.salmon.path_transcript_to_gene:
             self.extensions["gene_sf"] = ".gene.sf"
             self.extensions["gene_sf_md5"] = ".gene.sf.md5"
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_set_infos,
-            self.parent.config_lookup_paths,
-            preprocessed_path=self.parent.get_preprocessed_path("reads"),
-        )
 
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files"""
         if self.config.tool != self.name:
             return
-        yield "done", "work/input_links/{library_name}/.done".format(**wildcards)
+        yield "reads", self.parent.reads_input(wildcards.library_name)
         yield "features", self.w_config.static_data_config.features.path
         if self.cfg and self.cfg.path_index:
             yield "indices", self.cfg.path_index
@@ -220,34 +210,13 @@ class SalmonStepPart(BaseStepPart):
 
     def _get_params_run(self, wildcards):
         """Return dict for the wrapper, including the input files"""
-        result = {
-            "input": {
-                "reads_left": list(
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
-                )
-            }
-        }
-        reads_right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-        if reads_right:
+        groups = self.parent.read_groups(wildcards.library_name)
+        result = {"input": {"reads_left": [group.left for group in groups]}}
+        if reads_right := [group.right for group in groups if group.right]:
             result["input"]["reads_right"] = reads_right
         result |= self.config.salmon.model_dump(by_alias=True)
         result["strand"] = self.config.strand
         return result
-
-    def _collect_reads(self, wildcards, library_name, prefix):
-        """Yield the path to reads
-
-        Yields paths to right reads if prefix=='right-'
-        """
-        task_prefix = self.parent.task_path_prefix()
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.parent.get_preprocessed_path("reads"):
-            folder_name = library_name
-        pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
-        for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
-            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
-            path = task_prefix + path
-            yield path
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -573,7 +542,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                 QCStepPartDupradar,
                 QCStepPartRnaseqc,
                 QCStepPartStats,
-                LinkInStepPart,
                 SalmonStepPart,
                 LinkOutStepPart,
             )

@@ -11,7 +11,6 @@ The default configuration is as follows.
 
 """
 
-import os
 from itertools import chain
 from typing import Any
 
@@ -24,11 +23,8 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkInPathGenerator,
-    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
-    get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -78,30 +74,17 @@ class FastQcReportStepPart(BaseStepPart):
 
     default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_in = "work/input_links/{library_name}"
-        #: Path generator for linking in
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_set_infos,
-            self.parent.config_lookup_paths,
-            preprocessed_path=self.parent.get_preprocessed_path("reads"),
-        )
-
     def _get_params_run(self, wildcards):
+        groups = self.parent.read_groups(wildcards.library_name)
         return {
             "num_threads": 1,
             "more_reads": Namedlist(
-                chain(
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, "")),
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")),
-                )
+                chain((g.left for g in groups), (g.right for g in groups if g.right))
             ),
         }
 
     def _get_input_files_run(self, wildcards):
-        return "work/input_links/{library_name}/.done".format(**wildcards)
+        return self.parent.reads_input(wildcards.library_name)
 
     @dictify
     def get_output_files(self, action):
@@ -114,21 +97,6 @@ class FastQcReportStepPart(BaseStepPart):
     def get_log_file(action):
         _ = action
         return "work/{library_name}/log/snakemake.fastqc.log"
-
-    def _collect_reads(self, wildcards, library_name, prefix):
-        """Yield the path to reads
-
-        Yields paths to right reads if prefix=='right-'
-        """
-        task_prefix = self.parent.task_path_prefix()
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.parent.get_preprocessed_path("reads"):
-            folder_name = library_name
-        pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
-        for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
-            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
-            path = task_prefix + path
-            yield path
 
 
 class PicardStepPart(BaseStepPart):
@@ -267,9 +235,7 @@ class NgsDataQcWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        self.register_sub_step_classes(
-            (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
-        )
+        self.register_sub_step_classes((LinkOutStepPart, FastQcReportStepPart, PicardStepPart))
 
     @listify
     def get_result_files(self):

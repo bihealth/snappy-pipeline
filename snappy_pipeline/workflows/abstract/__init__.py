@@ -9,6 +9,7 @@ import os.path
 import re
 import sys
 import tempfile
+import copy
 import typing
 from collections import OrderedDict
 from collections.abc import Mapping, MutableMapping
@@ -35,6 +36,7 @@ from snappy_pipeline.base import (
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
     DATA_SETS,
     DataSignature,
@@ -845,6 +847,54 @@ class BaseStep:
         if self.project.task(source).step == "link_in":
             return self.project.task_configs[source].path
         return self.namespaced_path(source, "output")
+
+    def read_groups(self, library_name: str, source: str | None = None) -> list[ReadGroup]:
+        """Return the FASTQ read groups of ``library_name``, ordered by the path of the left file.
+
+        ``source`` defaults to ``depends_on.reads``:
+        - ``data_sets``: the folder named in the sample sheet, below the data sets' search paths;
+        - a ``link_in`` task: a folder named like the library, below the task's ``path``;
+        - a task that writes FASTQs (``adapter_trimming``): its ``output/<library>/out``, where
+          the files keep the names and sub-directories of the task's own input.
+        """
+        source = self.depends_on.reads if source is None else source
+        if source not in ("", DATA_SETS) and self.project.task(source).step != "link_in":
+            out_dir = self.namespaced_path(source, f"output/{library_name}/out")
+            upstream = self.project.task_configs[source].depends_on.reads
+            return [group.rebased(out_dir) for group in self.read_groups(library_name, upstream)]
+        if source in ("", DATA_SETS):
+            folder_name = get_ngs_library_folder_name(self.sheets, library_name)
+            infos = self.data_set_infos
+        else:
+            folder_name = library_name
+            infos = []
+            for info in self.data_set_infos:
+                info = copy.copy(info)
+                info.search_paths = [self.project.task_configs[source].path]
+                infos.append(info)
+        discovery = self.project.read_discovery
+        groups: list[ReadGroup] = []
+        searched: list[str] = []
+        for info in infos:
+            # Like the former link-in, a search path is searched with the first data set's patterns.
+            roots = [root for root in LinkInPathGenerator._get_shell_cmd_root_paths(info)]
+            roots = [root for root in roots if root not in searched]
+            searched += roots
+            groups += discovery.find(roots, folder_name, info.search_patterns, info.mixed_se_pe)
+        if not groups:
+            raise ValueError(discovery.missing(searched, folder_name))
+        return sorted(groups, key=lambda group: group.relpaths["left"])
+
+    def reads_input(self, library_name: str) -> list[str]:
+        """Return the Snakemake inputs that provide the reads of ``library_name``.
+
+        These are the FASTQ files themselves, or the ``out/.done`` file of the task that writes
+        them.
+        """
+        source = self.depends_on.reads
+        if source not in ("", DATA_SETS) and self.project.task(source).step != "link_in":
+            return [self.namespaced_path(source, f"output/{library_name}/out/.done")]
+        return [path for group in self.read_groups(library_name) for path in group.paths.values()]
 
     def build_library_dataframe(self):
         """Return the unified library dataframe for this workflow.

@@ -7,9 +7,11 @@ import os
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import TYPE_CHECKING, Any
 
 from snappy_pipeline.models import SnappyStepModel
+from snappy_pipeline.reads import ReadDiscovery
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
 from snappy_pipeline.workflows.abstract.protocol import DATA_SETS, DataSignature, select_signature
 
@@ -49,6 +51,8 @@ class Project:
     dependencies: Mapping[str, Mapping[str, str]]
     #: Task name -> the DataSignatures the task produces.
     signatures: Mapping[str, tuple[DataSignature, ...]]
+    #: FASTQ discovery shared by all tasks, so each search path is walked once per run
+    read_discovery: ReadDiscovery = dataclass_field(default_factory=ReadDiscovery, compare=False)
 
     def task(self, name: str) -> TaskModel:
         """Return the task called ``name``."""

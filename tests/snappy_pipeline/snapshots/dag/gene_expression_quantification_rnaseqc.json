@@ -331,23 +331,9 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/rseqc"
  },
  {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/ngs_mapping_star/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "ngs_mapping_star_ngs_mapping_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
-  },
-  "wrapper": null
- },
- {
   "input": [
-   "tasks/ngs_mapping_star/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
   ],
   "log": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log",
@@ -410,7 +396,12 @@
     "genome_load": "NoSharedMemory",
     "include_unmapped": true,
     "input": {
-     "reads_left": []
+     "reads_left": [
+      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz"
+     ],
+     "reads_right": [
+      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
+     ]
     },
     "mask_duplicates": false,
     "memory_bam_sort": "4G",

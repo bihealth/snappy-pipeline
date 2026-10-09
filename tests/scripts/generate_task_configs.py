@@ -23,6 +23,7 @@ import ruamel.yaml as ruamel_yaml
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
 yaml = ruamel_yaml.YAML()
+yaml.preserve_quotes = True
 yaml.default_flow_style = False
 yaml.indent(sequence=4, offset=2)
 
@@ -40,7 +41,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "index": "reference_index_bwa",
     "link_in": "link_in",
     "phased_variants": "variant_phasing",
-    "reads": "link_in",
+    "reads": "data_sets",
     "reference": "reference_download",
     "somatic_variants": "variant_calling_mutect2",
     "structural_variants": "sv_calling_targeted_delly2",

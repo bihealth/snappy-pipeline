@@ -341,6 +341,62 @@ def test_frozen_run_uses_existing_upstream_outputs(
     assert "tasks/variant_calling_gatk4_hc_gvcf/output/" in output
 
 
+def _mapping_job_with_reads_from(
+    source_task: dict[str, Any], generated_task_config: dict[str, Any], tmp_path: Path
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Return the first BWA job and all jobs when ngs_mapping_bwa reads from ``source_task``."""
+    _write_closure_project("ngs_mapping_bwa", generated_task_config, tmp_path)
+    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+    config["tasks"] = [t for t in config["tasks"] if t["name"] != source_task["name"]]
+    config["tasks"].insert(0, source_task)
+    mapping = next(t for t in config["tasks"] if t["name"] == "ngs_mapping_bwa")
+    mapping["config"]["depends_on"]["reads"] = source_task["name"]
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+    dump_path = tmp_path / "dag.json"
+    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
+    cmd += ["--task", "ngs_mapping_bwa", "--output", str(dump_path)]
+    dump = _run(cmd, cwd=generated_task_config["root"])
+    assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
+    jobs = json.loads(dump_path.read_text(encoding="utf-8"))
+    return next(j for j in jobs if j["rule"].endswith("_bwa_run")), jobs
+
+
+@pytest.mark.integration
+def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp_path: Path):
+    trimming = {
+        "step": "adapter_trimming",
+        "name": "trimming",
+        "config": {"depends_on": {"reads": "data_sets"}, "tool": "fastp", "fastp": {}},
+    }
+    job, jobs = _mapping_job_with_reads_from(trimming, generated_task_config, tmp_path)
+    lib = job["wildcards"]["library_name"]
+
+    assert job["input"] == [f"tasks/trimming/output/{lib}/out/.done"]
+    assert job["params"]["args"]["input"]["reads_left"] == [
+        f"tasks/trimming/output/{lib}/out/{lib}.R1.fastq.gz"
+    ]
+    assert any(j["rule"].startswith("trimming_adapter_trimming_fastp") for j in jobs)
+
+
+@pytest.mark.integration
+def test_mapping_reads_from_a_link_in_directory(
+    generated_task_config: dict[str, Any], tmp_path: Path
+):
+    link_in = {
+        "step": "link_in",
+        "name": "external_reads",
+        "config": {"path": str(tmp_path / "raw")},
+    }
+    job, _ = _mapping_job_with_reads_from(link_in, generated_task_config, tmp_path)
+    lib = job["wildcards"]["library_name"]
+
+    assert job["params"]["args"]["input"]["reads_left"] == [
+        str(tmp_path / "raw" / lib / f"{lib}.R1.fastq.gz")
+    ]
+    assert str(tmp_path / "raw" / lib / f"{lib}.R1.fastq.gz") in job["input"]
+
+
 def _check_snapshot(task_name: str, actual: str) -> None:
     """Compare a normalized DAG dump with its snapshot; rewrite it if SNAPPY_UPDATE_SNAPSHOTS is set."""
     snapshot_path = SNAPSHOT_DIR / f"{task_name}.json"

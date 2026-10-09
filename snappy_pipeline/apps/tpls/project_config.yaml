@@ -29,6 +29,8 @@ tasks: []
 # Data Sets ========================================================================
 #
 # Define data sets with sample sheets and search paths/patterns for raw FASTQ files.
+# Search patterns are regular expressions for the path below each library's folder; their
+# (?P<readgroup>...) group pairs the left and right file of each lane.
 #
 # Example
 # -------
@@ -37,7 +39,7 @@ tasks: []
 #   first_batch:
 #     file: samplesheet.tsv
 #     search_patterns:
-#     - {'left': '*_R1.fastq.gz', 'right': '*_R2.fastq.gz'}
+#     - {left: '(?P<readgroup>.+)_R1_001\.fastq\.gz', right: '(?P<readgroup>.+)_R2_001\.fastq\.gz'}
 #     search_paths:
 #     - /path/to/raw/data
 #     type: germline_variants

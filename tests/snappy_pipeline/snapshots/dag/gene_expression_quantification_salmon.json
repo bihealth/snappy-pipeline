@@ -14,21 +14,6 @@
   "wrapper": null
  },
  {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/gene_expression_quantification_salmon/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
-  },
-  "wrapper": null
- },
- {
   "input": [
    "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf"
   ],
@@ -68,7 +53,8 @@
  },
  {
   "input": [
-   "tasks/gene_expression_quantification_salmon/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done",
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/snappy_pipeline/fixtures/star_index"
   ],
@@ -89,7 +75,12 @@
   "params": {
    "args": {
     "input": {
-     "reads_left": []
+     "reads_left": [
+      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz"
+     ],
+     "reads_right": [
+      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
+     ]
     },
     "num_threads": 16,
     "path_index": "<repo>/tests/snappy_pipeline/fixtures/star_index",

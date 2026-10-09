@@ -429,7 +429,6 @@ Fingerprinting (.npz)
 
 import os
 import re
-import sys
 from itertools import chain
 from typing import Any
 
@@ -444,7 +443,6 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     DataSignature,
     LinkInPathGenerator,
-    LinkInStepPart,
     ResourceUsage,
     apply_library_selection,
     get_ngs_library_folder_name,
@@ -591,34 +589,22 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
-        #: Path generator for linking in
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_set_infos,
-            self.parent.config_lookup_paths,
-            preprocessed_path=self.parent.get_preprocessed_path("reads"),
-        )
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        groups = self.parent.read_groups(wildcards.library_name)
         result = {
-            "input": {
-                "reads_left": list(
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
-                )
-            },
+            "input": {"reads_left": [group.left for group in groups]},
             "sample_name": wildcards.library_name,
             "platform": "ILLUMINA",
         }
-        reads_right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-        if reads_right:
+        if reads_right := [group.right for group in groups if group.right]:
             result["input"]["reads_right"] = reads_right
         return result
 
     def _get_input_files_run(self, wildcards):
-        return "work/input_links/{library_name}/.done".format(**wildcards)
+        return self.parent.reads_input(wildcards.library_name)
 
     @dictify
     def get_output_files(self, action):
@@ -672,26 +658,6 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-
-    def _collect_reads(self, wildcards, library_name, prefix):
-        """Yield the path to reads
-
-        Yields paths to right reads if prefix=='right-'
-        """
-        task_prefix = self.parent.task_path_prefix()
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.parent.get_preprocessed_path("reads"):
-            folder_name = library_name
-        pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
-        seen = []
-        for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
-            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
-            path = task_prefix + path
-            if path in seen:
-                print("WARNING: ignoring path seen before %s" % path, file=sys.stderr)
-            else:
-                seen.append(path)
-                yield path
 
 
 class BwaStepPart(ReadMappingStepPart):
@@ -999,6 +965,16 @@ class ExternalStepPart(ReadMappingStepPart):
 
     #: Use wildcard for tool library
     tool_category = "__any__"
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.base_path_in = "work/input_links/{library_name}"
+        self.path_gen = LinkInPathGenerator(
+            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
+        )
+
+    def _get_input_files_run(self, wildcards):
+        return "work/input_links/{library_name}/.done".format(**wildcards)
 
     def _get_params_run(self, wildcards: Wildcards):
         return {
@@ -1414,7 +1390,6 @@ class NgsMappingWorkflow(BaseStep):
         self.register_sub_step_classes(
             (
                 selected_mapper,
-                LinkInStepPart,
                 StrandednessStepPart,
                 TargetCovReportStepPart,
                 BamCollectDocStepPart,
@@ -1501,8 +1476,7 @@ class NgsMappingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample sheets.
         """
         for sub_step in self.sub_steps.values():
-            if sub_step.name not in (LinkInStepPart.name,):
-                yield from sub_step.get_result_files()
+            yield from sub_step.get_result_files()
 
     def validate_project(self, config, sample_sheets_list):
         """Validates project.

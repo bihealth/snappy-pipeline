@@ -1,7 +1,8 @@
 [
  {
   "input": [
-   "tasks/adapter_trimming_fastp/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done",
@@ -69,8 +70,18 @@
      "unqualified_percent_limit": 40
     },
     "input": {
-     "reads_left": {},
-     "reads_right": {}
+     "reads_left": {
+      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz": {
+       "filename": "case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+       "relative_path": "."
+      }
+     },
+     "reads_right": {
+      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz": {
+       "filename": "case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+       "relative_path": "."
+      }
+     }
     },
     "library_name": "case001subregion-T1-DNA1-WES1"
    }
@@ -88,21 +99,6 @@
    "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/fastp/run"
- },
- {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/adapter_trimming_fastp/work/input_links/case001subregion-T1-DNA1-WES1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "adapter_trimming_fastp_adapter_trimming_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-DNA1-WES1"
-  },
-  "wrapper": null
  },
  {
   "input": [

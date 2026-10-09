@@ -23,7 +23,8 @@
  },
  {
   "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
   ],
   "log": [
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
@@ -53,8 +54,12 @@
     "blacklist": "",
     "features_path": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
     "input": {
-     "reads_left": [],
-     "reads_right": []
+     "reads_left": [
+      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz"
+     ],
+     "reads_right": [
+      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
+     ]
     },
     "known_fusions": "",
     "num_threads": 8,
@@ -94,21 +99,6 @@
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/arriba/run"
- },
- {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
-  },
-  "wrapper": null
  },
  {
   "input": [

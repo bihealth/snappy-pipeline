@@ -13,30 +13,10 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-localrules:
-    # Linking the FASTQ files in and linking out the alignments should
-    # be done locally by the Snakemake master process
-    ngs_mapping_link_in_run,
-
-
 rule ngs_mapping_all:
     default_target: True
     input:
         wf.get_result_files(),
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Link in FASTQ files ---------------------------------------------------------
-
-
-rule ngs_mapping_link_in_run:  # localrule
-    input:
-        wf.get_input_files("link_in", "run"),
-    output:
-        wf.get_output_files("link_in", "run"),
-    run:
-        wf.run_locally("link_in", "run", wildcards)
 
 
 # Alignment ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

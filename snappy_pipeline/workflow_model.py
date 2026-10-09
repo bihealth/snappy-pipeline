@@ -1,9 +1,10 @@
 import enum
 from typing import Any, TypedDict
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, field_validator
 
 from snappy_pipeline.models import ResolvablePath, SnappyModel, SnappyStepModel
+from snappy_pipeline.reads import compile_search_pattern
 
 
 class PathModel(SnappyModel):
@@ -24,6 +25,11 @@ class StaticDataConfig(SnappyModel):
 
 
 class SearchPattern(TypedDict):
+    """Regular expressions for the paths below a library's folder, by mate.
+
+    Each needs a ``(?P<readgroup>...)`` group, which pairs the mates of one read group (lane).
+    """
+
     left: str
     right: str | None
 
@@ -42,7 +48,9 @@ class NamingScheme(enum.StrEnum):
 class DataSet(SnappyModel):
     file: str = ""
     search_patterns: list[SearchPattern] = [
-        SearchPattern(left="*.R1.fastq.gz", right="*.R2.fastq.gz")
+        SearchPattern(
+            left=r"(?P<readgroup>.+)\.R1\.fastq\.gz", right=r"(?P<readgroup>.+)\.R2\.fastq\.gz"
+        )
     ]
     search_paths: list[str] = ["../raw"]
     type: DataSetType = DataSetType.MATCHED_CANCER
@@ -52,6 +60,13 @@ class DataSet(SnappyModel):
     sodar_uuid: str | None = None
     sodar_title: str | None = None
     pedigree_field: str | None = None
+
+    @field_validator("search_patterns")
+    @classmethod
+    def check_search_patterns(cls, patterns: list[SearchPattern]) -> list[SearchPattern]:
+        for pattern in patterns:
+            compile_search_pattern(pattern)
+        return patterns
 
 
 class TaskModel(SnappyModel):

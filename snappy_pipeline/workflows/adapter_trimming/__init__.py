@@ -10,10 +10,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkInPathGenerator,
-    LinkInStepPart,
     ResourceUsage,
-    get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -36,19 +33,11 @@ class AdapterTrimmingStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{library_name}"
-        #: Path generator for linking in
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_set_infos,
-            self.parent.config_lookup_paths,
-            preprocessed_path=self.parent.get_preprocessed_path("reads"),
-        )
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        yield "done", "work/input_links/{library_name}/.done".format(**wildcards)
+        yield "reads", self.parent.reads_input(wildcards.library_name)
 
     @dictify
     def get_output_files(self, action):
@@ -84,36 +73,20 @@ class AdapterTrimmingStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     def _get_params_run(self, wildcards):
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.parent.get_preprocessed_path("reads"):
-            folder_name = wildcards.library_name
-        reads_left = self._collect_reads(wildcards, folder_name, "")
-        reads_right = self._collect_reads(wildcards, folder_name, "right-")
+        # The trimmed files keep the sub-directory and name of each input file.
+        reads = {"reads_left": {}, "reads_right": {}}
+        for group in self.parent.read_groups(wildcards.library_name):
+            for mate in ("left", "right"):
+                if mate in group.paths:
+                    reads[f"reads_{mate}"][group.paths[mate]] = {
+                        "relative_path": os.path.dirname(group.relpaths[mate]) or ".",
+                        "filename": os.path.basename(group.relpaths[mate]),
+                    }
         return {
             "library_name": wildcards.library_name,
-            "input": {
-                "reads_left": {key: reads_left[key] for key in sorted(reads_left.keys())},
-                "reads_right": {key: reads_right[key] for key in sorted(reads_right.keys())},
-            },
+            "input": reads,
             "config": dict(self.config.get(self.name)),
         }
-
-    def _collect_reads(self, wildcards, folder_name, prefix):
-        task_prefix = self.parent.task_path_prefix()
-
-        pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
-        path_info = {}
-        for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
-            input_path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
-            input_path = task_prefix + input_path
-
-            assert input_path not in path_info.keys()
-            paths = {
-                "relative_path": path_infix,
-                "filename": filename,
-            }
-            path_info[input_path] = paths
-        return path_info
 
 
 class BbdukStepPart(AdapterTrimmingStepPart):
@@ -203,7 +176,7 @@ class AdapterTrimmingWorkflow(BaseStep):
                 selected = FastpStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((LinkInStepPart, LinkOutFastqStepPart, selected))
+        self.register_sub_step_classes((LinkOutFastqStepPart, selected))
 
     @listify
     def get_result_files(self):

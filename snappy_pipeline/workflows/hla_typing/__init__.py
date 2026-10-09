@@ -68,11 +68,8 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkInPathGenerator,
-    LinkInStepPart,
     LinkOutStepPart,
     ResourceUsage,
-    get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -103,17 +100,8 @@ class OptiTypeStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
-        self.preprocessed_path = self.parent.get_preprocessed_path("reads")
-        #: Path generator for linking in
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_set_infos,
-            self.parent.config_lookup_paths,
-            preprocessed_path=self.preprocessed_path,
-        )
 
     @staticmethod
     def get_output_prefix():
@@ -122,7 +110,7 @@ class OptiTypeStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files"""
-        yield "done", "work/input_links/{library_name}/.done".format(**wildcards)
+        yield "reads", self.parent.reads_input(wildcards.library_name)
 
     @dictify
     def get_output_files(self, action):
@@ -155,16 +143,12 @@ class OptiTypeStepPart(BaseStepPart):
 
     def _get_params_run(self, wildcards):
         """Return dict for the wrapper, including the input files"""
+        groups = self.parent.read_groups(wildcards.library_name)
         result = {
-            "input": {
-                "reads_left": list(
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
-                )
-            },
+            "input": {"reads_left": [group.left for group in groups]},
             "seq_type": self._get_seq_type(wildcards),
         }
-        reads_right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-        if reads_right:
+        if reads_right := [group.right for group in groups if group.right]:
             result["input"]["reads_right"] = reads_right
         result["use_discordant"] = "true" if self.config.optitype.use_discordant else "false"
         result["num_mapping_threads"] = self.config.optitype.num_mapping_threads
@@ -173,21 +157,6 @@ class OptiTypeStepPart(BaseStepPart):
         result["yara_strata_rate"] = self.config.optitype.yara_mapper.strata_rate
         result["yara_sensitivity"] = self.config.optitype.yara_mapper.sensitivity
         return result
-
-    def _collect_reads(self, wildcards, library_name, prefix):
-        """Yield the path to reads
-
-        Yields paths to right reads if prefix=='right-'
-        """
-        task_prefix = self.parent.task_path_prefix()
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.preprocessed_path:
-            folder_name = library_name
-        pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
-        for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
-            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
-            path = task_prefix + path
-            yield path
 
     def _get_seq_type(self, wildcards):
         """Return sequence type for the library name in wildcards"""
@@ -434,7 +403,7 @@ class HlaTypingWorkflow(BaseStep):
                 selected = ArcasHlaStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((LinkInStepPart, LinkOutStepPart, selected))
+        self.register_sub_step_classes((LinkOutStepPart, selected))
         #: Mapping from library name to library object
         self.ngs_library_name_to_ngs_library = OrderedDict()
         for sheet in self.shortcut_sheets:

@@ -241,10 +241,18 @@ For example, after editing ``config.yaml`` to add a mapping and variant calling 
       batch1:
         file: samplesheet.tsv
         search_patterns:
-          - { left: '*.R1.fastq.gz', right: '*.R2.fastq.gz' }
+          - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
         search_paths:
           - raw
         type: matched_cancer
+
+Each library's FASTQ files are in a folder named after the sample sheet's folder name, at any depth
+below a data set's ``search_paths``. ``search_patterns`` are regular expressions that must match
+the whole path below that folder. Their ``(?P<readgroup>...)`` group pairs the ``left`` and
+``right`` file of each read group (usually a lane); read groups are processed in the order of the
+left file's path. The files are found once per ``snappy run``, and tasks read them through
+``depends_on.reads``: ``data_sets`` for these folders, a ``link_in`` task for a directory with one
+folder per library, or an ``adapter_trimming`` task for its trimmed files.
 
 Adding tasks can also be done incrementally with ``snappy task add``:
 

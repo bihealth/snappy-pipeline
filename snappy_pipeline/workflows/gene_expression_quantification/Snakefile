@@ -16,7 +16,6 @@ wf = task_instance(config["__task_name__"])
 
 localrules:
     # Linking files from work/ to output/ should be done locally
-    gene_expression_quantification_link_in_run,
     gene_expression_quantification_link_out_run,
 
 
@@ -27,18 +26,6 @@ rule gene_expression_quantification_all:
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Link in FASTQ files ---------------------------------------------------------
-
-
-rule gene_expression_quantification_link_in_run:
-    input:
-        wf.get_input_files("link_in", "run"),
-    output:
-        wf.get_output_files("link_in", "run"),
-    run:
-        wf.run_locally("link_in", "run", wildcards)
-
 
 # Generic linking out ---------------------------------------------------------
 

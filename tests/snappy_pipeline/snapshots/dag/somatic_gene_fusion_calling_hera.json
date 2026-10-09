@@ -15,7 +15,8 @@
  },
  {
   "input": [
-   "tasks/somatic_gene_fusion_calling_hera/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
   ],
   "log": [
    "tasks/somatic_gene_fusion_calling_hera/work/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
@@ -25,10 +26,14 @@
   ],
   "params": {
    "args": {
-    "left": [],
+    "left": [
+     "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz"
+    ],
     "path_genome": "AUTO",
     "path_index": "AUTO",
-    "right": []
+    "right": [
+     "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
+    ]
    }
   },
   "resources": {
@@ -44,21 +49,6 @@
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/hera/quant"
- },
- {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_hera/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_hera_somatic_gene_fusion_calling_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
-  },
-  "wrapper": null
  },
  {
   "input": [

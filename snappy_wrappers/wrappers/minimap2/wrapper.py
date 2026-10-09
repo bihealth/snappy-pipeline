@@ -14,6 +14,7 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 this_file = __file__
 
 args = getattr(snakemake.params, "args", {})
+reads = " ".join(args["input"]["reads_left"] + args["input"].get("reads_right", []))
 seq_platform = args["extra_infos"]["seqPlatform"]
 library_kit = args["extra_infos"]["libraryKit"]
 
@@ -34,7 +35,7 @@ else
 fi
 
 i=1
-for fname in $(find $(dirname {snakemake.input}) -name '*.bam' -or -name '*.fast?.gz'); do
+for fname in {reads}; do
     basename=$(basename $fname .bam)
 
     if [[ "$fname" == *.bam ]]; then \

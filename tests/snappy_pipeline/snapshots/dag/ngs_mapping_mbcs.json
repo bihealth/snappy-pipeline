@@ -32,38 +32,9 @@
   "wrapper": null
  },
  {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/ngs_mapping_mbcs/work/input_links/case001subregion-N1-DNA1-WES1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "ngs_mapping_mbcs_ngs_mapping_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
-  },
-  "wrapper": null
- },
- {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/ngs_mapping_mbcs/work/input_links/case001subregion-T1-DNA1-WES1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "ngs_mapping_mbcs_ngs_mapping_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-DNA1-WES1"
-  },
-  "wrapper": null
- },
- {
   "input": [
-   "tasks/ngs_mapping_mbcs/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
    "tasks/ngs_mapping_mbcs/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
@@ -121,7 +92,12 @@
      "use_barcodes": false
     },
     "input": {
-     "reads_left": []
+     "reads_left": [
+      "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz"
+     ],
+     "reads_right": [
+      "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
+     ]
     },
     "mapper_config": {
      "extra_args": [],
@@ -156,7 +132,8 @@
  },
  {
   "input": [
-   "tasks/ngs_mapping_mbcs/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
    "tasks/ngs_mapping_mbcs/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log",
@@ -214,7 +191,12 @@
      "use_barcodes": false
     },
     "input": {
-     "reads_left": []
+     "reads_left": [
+      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz"
+     ],
+     "reads_right": [
+      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
+     ]
     },
     "mapper_config": {
      "extra_args": [],

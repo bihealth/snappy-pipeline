@@ -9,7 +9,8 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 
 # Input fastqs are passed through snakemake.params.
-# snakemake.input is a .done file touched after linking files in.
+# snakemake.input are the FASTQ files (or the .done file of the task that wrote them); the
+# wrapper takes the ordered read lists from params.
 library_name = args["library_name"]
 input_left = args["input"]["reads_left"]
 input_right = args["input"]["reads_right"] if args["input"]["reads_right"] else {}
