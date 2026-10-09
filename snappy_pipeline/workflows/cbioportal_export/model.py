@@ -14,7 +14,7 @@ from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVaria
 class ExpectedCopyNumberCalls(BaseModel):
     """Consumer-driven contract for copy-number provider outputs used by cBioPortal export."""
 
-    done: str
+    dnacopy_seg: str
 
 
 class ExpressionTool(enum.StrEnum):

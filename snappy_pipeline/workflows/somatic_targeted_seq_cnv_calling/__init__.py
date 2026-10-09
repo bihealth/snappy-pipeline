@@ -703,8 +703,11 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic targeted CNV output paths for downstream consumers."""
-        lib = kwargs.get("library_name", "{tumor_library}")
-        return {"done": f"output/{lib}/out/.done"}
+        lib = kwargs.get("library_name", "{library_name}")
+        paths = {"dnacopy_seg": f"output/{lib}/out/{lib}_dnacopy.seg"}
+        if config.tool == Tool.sequenza:
+            paths["seqz"] = f"output/{lib}/out/{lib}.seqz.gz"
+        return paths
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

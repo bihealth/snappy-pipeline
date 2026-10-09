@@ -162,6 +162,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import PanelOfNormals as PanelOfNormalsConfigModel
+from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -780,7 +781,19 @@ class PanelOfNormalsWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local panel-of-normals output paths for downstream consumers."""
-        return {"done": f"output/{config.tool}/out/.done"}
+        match config.tool:
+            case Tool.mutect2:
+                return {"genomicsdb": "work/mutect2/out/mutect2.genomicsDB.tar.gz"}
+            case Tool.cnvkit:
+                return {"panel_of_normals": "output/cnvkit/out/cnvkit.panel_of_normals.cnn"}
+            case Tool.purecn:
+                intervals = f"{config.purecn.enrichment_kit_name}_{config.purecn.genome_name}"
+                return {
+                    "panel_of_normals": "output/purecn/out/purecn.panel_of_normals.rds",
+                    "mapping_bias": "output/purecn/out/purecn.mapping_bias.rds",
+                    "intervals": f"output/purecn/out/{intervals}.list",
+                }
+        return {}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

@@ -1274,10 +1274,14 @@ class VariantCallingWorkflow(BaseStep):
                 the ``{library_name}`` wildcard placeholder.
         """
         lib = kwargs.get("library_name", "{library_name}")
-        return {
+        paths = {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
             "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
         }
+        if config.tool == Tool.mutect2:
+            paths["full_vcf"] = f"output/{lib}/out/{lib}.full.vcf.gz"
+            paths["full_vcf_tbi"] = f"output/{lib}/out/{lib}.full.vcf.gz.tbi"
+        return paths
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

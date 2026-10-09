@@ -3,7 +3,7 @@ import enum
 import re
 from typing import Annotated
 
-from pydantic import model_validator
+from pydantic import BaseModel, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
@@ -14,7 +14,6 @@ from snappy_pipeline.workflows.hla_typing.model import (
     MHCIIClassRnaTool,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_annotation.model import ExpectedVariantVcf
 
 
 @dataclasses.dataclass
@@ -435,12 +434,20 @@ class Proteome(ToggleModel):
         return self
 
 
+class ExpectedSomaticVariants(BaseModel):
+    """Consumer-driven contract: the somatic variant calls; ``full_vcf`` only from mutect2 calling."""
+
+    vcf: str
+    vcf_tbi: str
+    full_vcf: str | None = None
+
+
 class SomaticNeoepitopePredictionDependsOn(SnappyModel):
     hla_types: Annotated[str, DataSignature(DataType.TABULAR, frozenset({"hla"}))]
     somatic_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
-        ExpectedPathSchema(ExpectedVariantVcf),
+        ExpectedPathSchema(ExpectedSomaticVariants),
     ] = ""
     alignments: Annotated[
         str,

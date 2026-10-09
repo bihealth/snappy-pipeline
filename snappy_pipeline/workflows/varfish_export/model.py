@@ -2,7 +2,7 @@ from typing import Annotated
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignmentQc
 from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 
@@ -10,7 +10,7 @@ class VarfishExportDependsOn(SnappyModel):
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
+        ExpectedPathSchema(ExpectedAlignmentQc),
     ]
     """Used output of ngs_mapping is alignment quality control data"""
 

@@ -1382,6 +1382,13 @@ class NgsMappingWorkflow(BaseStep):
         return {
             "bam": f"output/{lib}/out/{lib}.bam",
             "bai": f"output/{lib}/out/{lib}.bam.bai",
+            "bamstats": f"output/{lib}/report/bam_qc/{lib}.bam.bamstats.txt",
+            "flagstats": f"output/{lib}/report/bam_qc/{lib}.bam.flagstats.txt",
+            "idxstats": f"output/{lib}/report/bam_qc/{lib}.bam.idxstats.txt",
+            "alfred_qc": f"output/{lib}/report/alfred_qc/{lib}.alfred.json.gz",
+            # RNA libraries: strandedness inference and the gene counts it passes on
+            "gene_counts": f"output/{lib}/out/{lib}.GeneCounts.tab",
+            "strandedness": f"output/{lib}/strandedness/{lib}.decision.json",
         }
 
     #: Default biomed sheet class

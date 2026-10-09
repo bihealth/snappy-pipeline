@@ -424,10 +424,7 @@ class HlaTypingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HLA typing output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {
-            "txt": f"output/{lib}/out/{lib}.txt",
-            "done": f"output/{lib}/out/.done",
-        }
+        return {"txt": f"output/{lib}/out/{lib}.txt", "calls_json": f"output/{lib}/out/{lib}.json"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

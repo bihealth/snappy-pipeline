@@ -727,7 +727,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic WGS CNV output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"output/{lib}/out/.done"}
+        return {"dnacopy_seg": f"output/{lib}/out/{lib}_dnacopy.seg"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

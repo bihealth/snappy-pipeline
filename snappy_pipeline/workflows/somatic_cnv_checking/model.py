@@ -11,7 +11,7 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 class ExpectedSomaticCnvCalls(SnappyModel):
     """Consumer-driven contract: expected output keys from somatic CNV caller steps."""
 
-    vcf: str
+    dnacopy_seg: str
 
 
 class CnvAssayType(enum.StrEnum):

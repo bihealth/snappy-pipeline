@@ -1085,7 +1085,11 @@ class BaseStep:
         }
 
         if dependency.expected_schema is not None:
-            return dependency.expected_schema(**global_paths)
+            # The consumer's schema names what it needs; other outputs of the provider are ignored.
+            fields = dependency.expected_schema.model_fields
+            return dependency.expected_schema(
+                **{key: path for key, path in global_paths.items() if key in fields}
+            )
         return global_paths
 
     def get_input_files(self, sub_step: str, action: str) -> Callable[..., Inputs]:

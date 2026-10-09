@@ -100,8 +100,8 @@ class SvCallingTargetedWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local targeted SV output paths for downstream consumers."""
-        lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"output/{lib}/out/.done"}
+        prefix = f"{config.tool}.{kwargs.get('library_name', '{library_name}')}"
+        return {"vcf": f"output/{prefix}/out/{prefix}.vcf.gz"}
 
     def get_library_count(self, library_kit):
         """Get library count.

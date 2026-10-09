@@ -12,9 +12,16 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class ExpectedPonPaths(BaseModel):
-    """Consumer-driven contract for panel-of-normals provider outputs."""
+    """Consumer-driven contract for panel-of-normals provider outputs; which are set depends on
+    the provider's tool."""
 
-    done: str
+    #: mutect2: the GenomicsDB of the normals
+    genomicsdb: str | None = None
+    #: cnvkit (``.cnn``) and purecn (``.rds``): the panel of normals
+    panel_of_normals: str | None = None
+    #: purecn: mapping bias and interval list
+    mapping_bias: str | None = None
+    intervals: str | None = None
 
 
 class Tool(enum.StrEnum):

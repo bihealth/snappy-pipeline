@@ -25,6 +25,29 @@ class ExpectedAlignments(BaseModel):
     bai: str
 
 
+class ExpectedAlignmentQc(BaseModel):
+    """Consumer-driven contract: the BAM QC reports of an ngs_mapping task."""
+
+    bamstats: str
+    flagstats: str
+    idxstats: str
+    alfred_qc: str
+
+
+class ExpectedRnaAlignments(BaseModel):
+    """Consumer-driven contract: RNA alignments with their strandedness decision."""
+
+    bam: str
+    bai: str
+    strandedness: str
+
+
+class ExpectedGeneCounts(BaseModel):
+    """Consumer-driven contract: the gene counts of an RNA library (STAR ``--quantMode``)."""
+
+    gene_counts: str
+
+
 class NgsMappingDependsOn(SnappyModel):
     #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
     #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
