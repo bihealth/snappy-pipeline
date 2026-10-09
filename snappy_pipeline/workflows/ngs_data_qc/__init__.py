@@ -91,12 +91,12 @@ class FastQcReportStepPart(BaseStepPart):
         """Return output files for the (raw) data QC steps"""
         # Validate action
         self._validate_action(action)
-        yield "fastqc_done", touch("work/{library_name}/report/fastqc/.done")
+        yield "fastqc_done", touch("work/{library_name}/report/.done")
 
     @staticmethod
     def get_log_file(action):
         _ = action
-        return "work/{library_name}/log/snakemake.fastqc.log"
+        return "work/{library_name}/log/{library_name}.log"
 
 
 class PicardStepPart(BaseStepPart):
@@ -120,8 +120,8 @@ class PicardStepPart(BaseStepPart):
     @dictify
     def _get_input_files_metrics(self, wildcards):
         if "CollectHsMetrics" in self.config.picard.programs:
-            yield "baits", "work/static_data/picard/out/baits.interval_list"
-            yield "targets", "work/static_data/picard/out/targets.interval_list"
+            yield "baits", "work/static_data/out/baits.interval_list"
+            yield "targets", "work/static_data/out/targets.interval_list"
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
         )
@@ -132,10 +132,10 @@ class PicardStepPart(BaseStepPart):
         if self.name != self.config.tool:
             return {}
         if action == "prepare":
-            yield "baits", "work/static_data/picard/out/baits.interval_list"
-            yield "targets", "work/static_data/picard/out/targets.interval_list"
+            yield "baits", "work/static_data/out/baits.interval_list"
+            yield "targets", "work/static_data/out/targets.interval_list"
         elif action == "metrics":
-            base_out = "work/{library_name}/report/picard/{library_name}."
+            base_out = "work/{library_name}/report/{library_name}."
             for pgm in self.config.picard.programs:
                 if pgm in MULTIPLE_METRICS.keys():
                     first = MULTIPLE_METRICS[pgm][0]
@@ -153,9 +153,9 @@ class PicardStepPart(BaseStepPart):
     @dictify
     def get_log_file(self, action):
         if action == "prepare":
-            prefix = "work/static_data/picard/log/prepare"
+            prefix = "work/static_data/log/prepare"
         elif action == "metrics":
-            prefix = "work/{library_name}/log/picard/{library_name}"
+            prefix = "work/{library_name}/log/{library_name}"
         else:
             actions_str = ", ".join(self.actions)
             raise UnsupportedActionException(
@@ -231,7 +231,7 @@ class NgsDataQcWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local NGS QC output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"output/{lib}/report/fastqc/.done"}
+        return {"done": f"output/{lib}/report/.done"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -246,14 +246,14 @@ class NgsDataQcWorkflow(BaseStep):
         """
         if self.config.tool == "fastqc":
             yield from self._yield_result_files(
-                tpl="output/{library_name}/report/fastqc/.done",
+                tpl="output/{library_name}/report/.done",
                 allowed_extraction_types=(
                     "dna",
                     "rna",
                 ),
             )
         if self.config.tool == "picard":
-            tpl = "output/{library_name}/report/picard/{library_name}.{ext}"
+            tpl = "output/{library_name}/report/{library_name}.{ext}"
             exts = []
             for pgm in self.config.picard.programs:
                 if pgm in MULTIPLE_METRICS.keys():

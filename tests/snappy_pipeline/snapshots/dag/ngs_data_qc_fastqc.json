@@ -1,7 +1,7 @@
 [
  {
   "input": [
-   "tasks/ngs_data_qc_fastqc/output/case001subregion-T1-DNA1-WES1/report/fastqc/.done"
+   "tasks/ngs_data_qc_fastqc/output/case001subregion-T1-DNA1-WES1/report/.done"
   ],
   "log": [],
   "output": [],
@@ -18,10 +18,10 @@
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
-   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/snakemake.fastqc.log"
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
   "output": [
-   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/fastqc/.done"
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/.done"
   ],
   "params": {
    "args": {
@@ -48,11 +48,11 @@
  },
  {
   "input": [
-   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/fastqc/.done"
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/.done"
   ],
   "log": [],
   "output": [
-   "tasks/ngs_data_qc_fastqc/output/case001subregion-T1-DNA1-WES1/report/fastqc/.done"
+   "tasks/ngs_data_qc_fastqc/output/case001subregion-T1-DNA1-WES1/report/.done"
   ],
   "params": {},
   "resources": {},
@@ -60,8 +60,8 @@
   "threads": 1,
   "wildcards": {
    "ext": "done",
-   "file": "fastqc/",
-   "path": "case001subregion-T1-DNA1-WES1/report"
+   "file": "report/",
+   "path": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": null
  }

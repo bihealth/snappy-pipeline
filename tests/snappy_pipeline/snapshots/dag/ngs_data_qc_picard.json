@@ -1,7 +1,7 @@
 [
  {
   "input": [
-   "tasks/ngs_data_qc_picard/output/case001subregion-T1-DNA1-WES1/report/picard/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
+   "tasks/ngs_data_qc_picard/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
   ],
   "log": [],
   "output": [],
@@ -14,11 +14,11 @@
  },
  {
   "input": [
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/picard/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
   ],
   "log": [],
   "output": [
-   "tasks/ngs_data_qc_picard/output/case001subregion-T1-DNA1-WES1/report/picard/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
+   "tasks/ngs_data_qc_picard/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
   ],
   "params": {},
   "resources": {},
@@ -27,7 +27,7 @@
   "wildcards": {
    "ext": "txt",
    "file": "case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics",
-   "path": "case001subregion-T1-DNA1-WES1/report/picard"
+   "path": "case001subregion-T1-DNA1-WES1/report"
   },
   "wrapper": null
  },
@@ -36,20 +36,20 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam"
   ],
   "log": [
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.wrapper.py",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.wrapper.py.md5",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.log",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.log.md5",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.conda_info.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.conda_list.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.conda_list.txt.md5",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.environment.yaml",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/picard/case001subregion-T1-DNA1-WES1.environment.yaml.md5"
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.wrapper.py",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.wrapper.py.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.environment.yaml",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.environment.yaml.md5"
   ],
   "output": [
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/picard/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/picard/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5"
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5"
   ],
   "params": {
    "args": {
