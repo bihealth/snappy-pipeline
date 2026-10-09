@@ -88,6 +88,7 @@ Project Info
     :hidden:
 
     dev_intro
+    dev_conventions
     dev_somatic_variant_calling
     dev_ngs_mapping
     dev_api
