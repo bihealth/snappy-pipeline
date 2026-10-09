@@ -83,7 +83,7 @@ class _IndexToolStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        prefix = f"work/reference_index/log/reference_index.{self.name}"
+        prefix = "work/reference_index/log/reference_index.index"
         for key, ext in (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -145,7 +145,7 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
 class StarIndexStepPart(_IndexToolStepPart):
     name = "star"
     actions = ("run",)
-    output_suffixes = (".star/.done",)
+    output_suffixes = (".index/.done",)
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -178,7 +178,7 @@ class ReferenceIndexWorkflow(BaseStep):
             "bwa_index_prefix": prefix,
             "bwa_mem2_index_prefix": prefix,
             "minimap2_index": prefix + ".mmi",
-            "star_index_dir": prefix + ".star",
+            "star_index_dir": prefix + ".index",
             "reference_fai": prefix + ".fa.fai",
             "reference_dict": prefix + ".dict",
             "reference_genome": prefix + ".fa.genome",

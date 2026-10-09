@@ -217,7 +217,7 @@
     "out_filter_multimap_n_max": 20,
     "out_filter_type": "BySJout",
     "out_sam_strand_field": "None",
-    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference.star",
+    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference.index",
     "platform": "ILLUMINA",
     "raw_star_options": "",
     "sample_name": "case001subregion-T1-RNA1-mRNA_seq1",

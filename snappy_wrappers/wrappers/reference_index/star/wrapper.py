@@ -15,12 +15,12 @@ ShellWrapper(snakemake).run(
 STAR \\
   --runMode genomeGenerate \\
   --runThreadN {{snakemake.threads}} \\
-  --genomeDir "$(dirname {{snakemake.output.star__done}})" \\
+  --genomeDir "$(dirname {{snakemake.output.index__done}})" \\
   --genomeFastaFiles {{snakemake.input.reference}} \\
   {feature_arg} \\
   {extra_args}
 
-touch {{snakemake.output.star__done}}
+touch {{snakemake.output.index__done}}
 """
 )
 

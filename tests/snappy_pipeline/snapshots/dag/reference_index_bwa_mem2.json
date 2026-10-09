@@ -13,10 +13,10 @@
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.ann",
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.bwt.2bit.64",
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.log",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.conda_info.txt",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.conda_list.txt",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.script"
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.log",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.conda_info.txt",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.conda_list.txt",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.script"
   ],
   "log": [],
   "output": [],
@@ -81,14 +81,14 @@
    "tasks/reference_index_bwa_mem2/work/reference_index/out/reference.fa.genome"
   ],
   "log": [
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.log",
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.log.md5",
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.conda_info.txt",
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.conda_info.txt.md5",
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.conda_list.txt",
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.conda_list.txt.md5",
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.script",
-   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.bwa_mem2.script.md5"
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.log",
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.log.md5",
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.conda_info.txt",
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.conda_info.txt.md5",
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.conda_list.txt",
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.conda_list.txt.md5",
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.script",
+   "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.index.script.md5"
   ],
   "output": [
    "tasks/reference_index_bwa_mem2/work/reference_index/out/reference.0123",
@@ -101,14 +101,14 @@
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.ann",
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.bwt.2bit.64",
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.log",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.log.md5",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.conda_info.txt",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.conda_info.txt.md5",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.conda_list.txt",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.conda_list.txt.md5",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.script",
-   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.bwa_mem2.script.md5"
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.log",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.log.md5",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.conda_info.txt",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.conda_info.txt.md5",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.conda_list.txt",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.conda_list.txt.md5",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.script",
+   "tasks/reference_index_bwa_mem2/output/reference_index/log/reference_index.index.script.md5"
   ],
   "params": {
    "args": {
