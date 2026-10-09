@@ -250,7 +250,6 @@ environments:
       - pypi: git+https://github.com/bihealth/biomedsheets.git?rev=8a86f4c0b94b2c0bde14a22acf552387958ad688#8a86f4c0b94b2c0bde14a22acf552387958ad688
       - pypi: https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4e/32/703c6e20edf3f707c5baeb2b3f44280fabfadcf1f6667aa2f9feb12516f9/vcfpy-0.14.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/51/ac/e5d886f892666d2d1e5cb8c1a41146e1d79ae8896477b1153a21711d3b44/fasteners-0.20-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/55/0f/e7f1ff3a1cabc6c4486a7ee1b0506aedf2f5f8329760ac1f4e8032feef2b/pysam-0.24.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6d/97/a87901aef6b7e7e4a34c6dd6cc17dca8594a592ef9d9dd765fca2b7facf7/rich_click-1.9.8-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/71/7c/45001b1f19af8c4478489fbae4fc657b21c4c669d7a5a036a86882581d85/jsonpath-rw-1.4.0.tar.gz
@@ -524,7 +523,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/42/3d/6b41fe1637cd53c4b10d56e0e6f396546f837973dabf9c4b2a1de44620ac/sphinx_mdinclude-0.6.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4c/07/2ebca9b11fb9be7340a818d8d6f63feaebb146be2c4afbd6061701d6df6e/snowballstemmer-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4e/32/703c6e20edf3f707c5baeb2b3f44280fabfadcf1f6667aa2f9feb12516f9/vcfpy-0.14.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/51/ac/e5d886f892666d2d1e5cb8c1a41146e1d79ae8896477b1153a21711d3b44/fasteners-0.20-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/52/a7/d2782e4e3f77c8450f727ba74a8f12756d5ba823d81b941f1b04da9d033a/sphinxcontrib_serializinghtml-2.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/54/3c/8938447fa81dfe95d1b5ed6a2fdfe8639b2ac4c3c7eb61cf61a9c0ed523b/snakefmt-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/55/0f/e7f1ff3a1cabc6c4486a7ee1b0506aedf2f5f8329760ac1f4e8032feef2b/pysam-0.24.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
@@ -814,7 +812,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/42/3d/6b41fe1637cd53c4b10d56e0e6f396546f837973dabf9c4b2a1de44620ac/sphinx_mdinclude-0.6.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4c/07/2ebca9b11fb9be7340a818d8d6f63feaebb146be2c4afbd6061701d6df6e/snowballstemmer-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4e/32/703c6e20edf3f707c5baeb2b3f44280fabfadcf1f6667aa2f9feb12516f9/vcfpy-0.14.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/51/ac/e5d886f892666d2d1e5cb8c1a41146e1d79ae8896477b1153a21711d3b44/fasteners-0.20-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/52/a7/d2782e4e3f77c8450f727ba74a8f12756d5ba823d81b941f1b04da9d033a/sphinxcontrib_serializinghtml-2.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/55/0f/e7f1ff3a1cabc6c4486a7ee1b0506aedf2f5f8329760ac1f4e8032feef2b/pysam-0.24.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/5d/85/9ebeae2f76e9e77b952f4b274c27238156eae7979c5421fba91a28f4970d/sphinxcontrib_applehelp-2.0.0-py3-none-any.whl
@@ -1083,7 +1080,6 @@ environments:
       - pypi: git+https://github.com/bihealth/biomedsheets.git?rev=8a86f4c0b94b2c0bde14a22acf552387958ad688#8a86f4c0b94b2c0bde14a22acf552387958ad688
       - pypi: https://files.pythonhosted.org/packages/05/7f/798705f5296a58ca505d600456748d1be48078eac8a7050d8a98bc9edb89/decorator-5.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4e/32/703c6e20edf3f707c5baeb2b3f44280fabfadcf1f6667aa2f9feb12516f9/vcfpy-0.14.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/51/ac/e5d886f892666d2d1e5cb8c1a41146e1d79ae8896477b1153a21711d3b44/fasteners-0.20-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/55/0f/e7f1ff3a1cabc6c4486a7ee1b0506aedf2f5f8329760ac1f4e8032feef2b/pysam-0.24.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/60/f1/5a884d2e8e3e7e7d854d3032b777bd22aad1598161cf9aa77ac37d684908/coveralls-4.1.0-py3-none-any.whl
@@ -4698,7 +4694,6 @@ packages:
   requires_dist:
   - altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8
   - biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688
-  - fasteners>=0.17.3,<1
   - jinja2>=3.1.4,<4
   - matplotlib>=3.8.4
   - pydantic>=2.9.0,<3
@@ -4904,11 +4899,6 @@ packages:
   version: 0.14.2
   sha256: 532ea951514ceb1f6a873185d65f7b43fa83130126ebd951621b4dae79c48774
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/51/ac/e5d886f892666d2d1e5cb8c1a41146e1d79ae8896477b1153a21711d3b44/fasteners-0.20-py3-none-any.whl
-  name: fasteners
-  version: '0.20'
-  sha256: 9422c40d1e350e4259f509fb2e608d6bc43c0136f79a00db1b49046029d0b3b7
-  requires_python: '>=3.6'
 - pypi: https://files.pythonhosted.org/packages/52/a7/d2782e4e3f77c8450f727ba74a8f12756d5ba823d81b941f1b04da9d033a/sphinxcontrib_serializinghtml-2.0.0-py3-none-any.whl
   name: sphinxcontrib-serializinghtml
   version: 2.0.0

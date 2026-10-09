@@ -24,8 +24,6 @@ dynamic = ["version"]
 dependencies = [
     # Nice, round-trip enabled YAML parsing
     "ruamel.yaml >=0.18.6,<1",
-    # File-based locks
-    "fasteners >=0.17.3,<1",
     # We're trying to keep the PyPi package up to date, you might have to install
     # from source, though.
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688",
