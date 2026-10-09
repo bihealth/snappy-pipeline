@@ -40,3 +40,29 @@ def test_run_lets_user_arguments_override_snkmt_database(mocker, tmp_path):
     # Snakemake uses the last occurrence of an option, so user arguments must come last.
     assert argv[-2:] == ["--logger-snkmt-db", "/custom.sqlite"]
     assert argv.index("--logger-snkmt-db") < len(argv) - 2
+
+
+def test_run_uses_orchestrator_snakefile_and_default_profile(mocker, tmp_path):
+    argv = _invoke_run(mocker, ["--directory", str(tmp_path)])
+
+    assert argv[argv.index("--snakefile") + 1].endswith(
+        os.path.join("snappy_pipeline", "Snakefile")
+    )
+    profiles = [argv[i + 1] for i, arg in enumerate(argv) if arg == "--workflow-profile"]
+    assert [os.path.basename(p) for p in profiles] == ["profile"]
+    assert "--config" not in argv
+
+
+def test_run_passes_target_selection_as_config(mocker, tmp_path):
+    argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--task", "calling"])
+    assert argv[argv.index("--config") + 1 :][:1] == ["task=calling"]
+
+    argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--all-tasks"])
+    assert argv[argv.index("--config") + 1 :][:1] == ["all_tasks=True"]
+
+
+def test_run_slurm_layers_slurm_profile(mocker, tmp_path):
+    argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--slurm"])
+
+    profiles = [argv[i + 1] for i, arg in enumerate(argv) if arg == "--workflow-profile"]
+    assert [os.path.basename(p) for p in profiles] == ["profile", "profile-slurm"]
