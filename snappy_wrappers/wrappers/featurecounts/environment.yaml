@@ -5,3 +5,4 @@ channels:
 dependencies:
   - subread==1.6.0
   - samtools==1.9
+  - jq==1.8.1

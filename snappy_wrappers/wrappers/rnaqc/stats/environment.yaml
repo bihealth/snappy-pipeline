@@ -4,3 +4,4 @@ channels:
   - nodefaults
 dependencies:
   - samtools==1.19.2
+  - jq==1.8.1

@@ -25,7 +25,7 @@ strand={args[strand]}
 
 if [ ${{strand}} -eq -1 ]
 then
-    strand=$(cat {snakemake.input.decision})
+    strand=$(jq -r '.decision' {snakemake.input.decision})
 fi
 
 # ----------------------------------------------------------------------------
