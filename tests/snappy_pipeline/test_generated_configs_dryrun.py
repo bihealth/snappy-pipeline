@@ -89,7 +89,6 @@ KNOWN_BROKEN = {
     "gene_expression_quantification_rnaseqc": _NEEDS_STRANDEDNESS,
     "gene_expression_quantification_stats": _NEEDS_STRANDEDNESS,
     "igv_session_generation": "still builds tool-prefixed upstream paths (plans.md K3, C3)",
-    "hla_typing_arcashla": "declares a single log file; result files and wrapper expect the standard logs",
 }
 
 _GERMLINE_CALLER_RESULTS = (

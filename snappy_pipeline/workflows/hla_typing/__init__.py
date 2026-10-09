@@ -258,11 +258,19 @@ class ArcasHlaStepPart(BaseStepPart):
     def get_output_prefix(self):
         return ""
 
-    @staticmethod
-    def get_log_file(action):
-        """Return path to log file"""
-        _ = action
-        return "work/{library_name}/log/snakemake.hla_typing.log"
+    @dictify
+    def get_log_file(self, action):
+        """Return dict of log files."""
+        self._validate_action(action)
+        prefix = "work/{library_name}/log/{library_name}"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
+        )
+        for key, ext in key_ext:
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

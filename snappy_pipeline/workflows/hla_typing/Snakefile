@@ -106,7 +106,9 @@ if wf.config.tool == "arcashla":
         output:
             done="work/arcashla.prepare_reference/out/.done",
         log:
-            "work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
+            log="work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
+            conda_list="work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_list.txt",
+            conda_info="work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_info.txt",
         params:
             reference_version="3.24.0",  # See https://github.com/RabadanLab/arcasHLA/pull/132
         wrapper:
@@ -118,7 +120,7 @@ if wf.config.tool == "arcashla":
         output:
             **wf.get_output_files("arcashla", "run"),
         log:
-            wf.get_log_file("arcashla", "run"),
+            **wf.get_log_file("arcashla", "run"),
         threads: wf.get_resource("arcashla", "run", "threads")
         resources:
             runtime=wf.get_resource("arcashla", "run", "runtime"),
