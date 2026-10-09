@@ -1,7 +1,7 @@
 [
  {
   "input": [
-   "tasks/gene_expression_quantification_dupradar/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.dupradar.tsv"
+   "tasks/gene_expression_quantification_dupradar/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv"
   ],
   "log": [],
   "output": [],
@@ -28,8 +28,8 @@
    "tasks/gene_expression_quantification_dupradar/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt.md5"
   ],
   "output": [
-   "tasks/gene_expression_quantification_dupradar/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.dupradar.tsv",
-   "tasks/gene_expression_quantification_dupradar/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.dupradar.tsv.md5"
+   "tasks/gene_expression_quantification_dupradar/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv",
+   "tasks/gene_expression_quantification_dupradar/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv.md5"
   ],
   "params": {
    "args": {
@@ -53,11 +53,11 @@
  },
  {
   "input": [
-   "tasks/gene_expression_quantification_dupradar/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.dupradar.tsv"
+   "tasks/gene_expression_quantification_dupradar/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_dupradar/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.dupradar.tsv"
+   "tasks/gene_expression_quantification_dupradar/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv"
   ],
   "params": {},
   "resources": {},
@@ -65,7 +65,7 @@
   "threads": 1,
   "wildcards": {
    "ext": "tsv",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.dupradar",
+   "file": "case001subregion-T1-RNA1-mRNA_seq1",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null

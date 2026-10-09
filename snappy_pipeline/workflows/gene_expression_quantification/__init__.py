@@ -120,7 +120,7 @@ EXTENSIONS = {
         "dupl_pos": ".pos.DupRate.xls",
         "dupl_pos_md5": ".pos.DupRate.xls.md5",
     },
-    "dupradar": {"dupradar": ".dupradar.tsv", "dupradar_md5": ".dupradar.tsv.md5"},
+    "dupradar": {"dupradar": ".tsv", "dupradar_md5": ".tsv.md5"},
     "rnaseqc": {
         "rnaseqc_metrics": ".metrics.tsv",
         "rnaseqc_metrics_md5": ".metrics.tsv.md5",
@@ -529,6 +529,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                 return {"gene_sf": f"{prefix}.gene.sf", "transcript_sf": f"{prefix}.transcript.sf"}
             case Tool.strandedness:
                 return {"decision": f"{prefix}.decision"}
+            case Tool.dupradar:
+                return {"tsv": f"{prefix}.tsv"}
         return {}
 
     def __init__(self, workflow, project, task_name):
