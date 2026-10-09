@@ -33,13 +33,10 @@ class PreprocessIntervalsCommonMixin:
 
     @dictify
     def _get_output_files_preprocess_intervals(self):
-        ext = "interval_list"
-        name_pattern = "gcnv_preprocess_intervals.{library_kit}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        yield "interval_list", "work/{library_kit}/out/{library_kit}.interval_list"
 
     def _get_log_file_preprocess_intervals(self):
-        name_pattern = "gcnv_preprocess_intervals.{library_kit}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_kit}/log/{library_kit}.preprocess_intervals.log"
 
 
 class CoverageCommonMixin:
@@ -54,10 +51,8 @@ class CoverageCommonMixin:
         :type wildcards: snakemake.io.Wildcards
         """
         # Yield .interval list file.
-        ext = "interval_list"
         library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        name_pattern = f"gcnv_preprocess_intervals.{library_kit}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        yield "interval_list", f"work/{library_kit}/out/{library_kit}.interval_list"
         # Yield input BAM and BAI files
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
@@ -67,37 +62,31 @@ class CoverageCommonMixin:
 
     @dictify
     def _get_output_files_coverage(self):
-        ext = "tsv"
-        name_pattern = "gcnv_coverage.{library_name}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        yield "tsv", "work/{library_name}/out/{library_name}.coverage.tsv"
 
     def _get_log_file_coverage(self):
-        name_pattern = "gcnv_coverage.{library_name}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_name}/log/{library_name}.coverage.log"
 
 
 class ContigPloidyCommonMixin:
     """Mixin used for ``contig_ploidy`` step"""
 
     def _get_log_file_contig_ploidy(self):
-        name_pattern = "gcnv_contig_ploidy.{library_kit}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_kit}/log/{library_kit}.contig_ploidy.log"
 
 
 class CallCnvsCommonMixin:
     """Mixin used for the ``call_cnvs`` step"""
 
     def _get_log_file_call_cnvs(self):
-        name_pattern = "gcnv_call_cnvs.{library_kit}.{shard}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_kit}/log/{library_kit}.{shard}.call_cnvs.log"
 
 
 class GcnvPostGermlineCallsCommonMixin:
     """Mixin used for the ``gcnv_post_germline_calls`` step"""
 
     def _get_log_file_post_germline_calls(self):
-        name_pattern = "gcnv_post_germline_calls.{library_name}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_name}/log/{library_name}.post_germline_calls.log"
 
 
 class GcnvCommonStepPart(

@@ -1,5 +1,4 @@
 import re
-import typing
 from itertools import chain
 from typing import Any
 
@@ -71,13 +70,8 @@ class MeltStepPart(
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     @dictify
-    def _get_log_file_with_infix(self, infix: str, *, suffix: typing.Optional[str] = None):
-        """Return dict of log files in the "log" directory"""
-        if suffix:
-            suffix_str = f"_{suffix}"
-        else:
-            suffix_str = ""
-        prefix = f"work/{infix}/log/{infix}.sv_calling{suffix_str}"
+    def _get_log_file_with_prefix(self, prefix: str):
+        """Return dict of log files whose paths start with ``prefix``"""
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -100,9 +94,8 @@ class MeltStepPart(
 
     @dictify
     def _get_output_files_preprocess(self):
-        # Note that mapper is not part of the output BAM file as MELT infers sample file from BAM
-        # file name instead of using sample name from BAM header.
-        prefix = "work/melt_preprocess.{library_name}/out/{library_name}"
+        # MELT infers the sample name from the BAM file name instead of the BAM header.
+        prefix = "work/{library_name}/out/{library_name}"
         yield "orig_bam", f"{prefix}.bam"
         yield "orig_bai", f"{prefix}.bam.bai"
         yield "disc_bam", f"{prefix}.bam.disc"
@@ -111,24 +104,25 @@ class MeltStepPart(
 
     @dictify
     def _get_log_file_preprocess(self):
-        yield from self._get_log_file_with_infix("melt_preprocess.{library_name}").items()
+        yield from self._get_log_file_with_prefix(
+            "work/{library_name}/log/{library_name}.preprocess"
+        ).items()
 
     @dictify
     def _get_input_files_indiv_analysis(self, wildcards):
-        infix = f"melt_preprocess.{wildcards.library_name}"
-        yield "orig_bam", f"work/{infix}/out/{wildcards.library_name}.bam"
-        yield "disc_bam", f"work/{infix}/out/{wildcards.library_name}.bam.disc"
+        prefix = f"work/{wildcards.library_name}/out/{wildcards.library_name}"
+        yield "orig_bam", f"{prefix}.bam"
+        yield "disc_bam", f"{prefix}.bam.disc"
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_indiv_analysis(self):
-        infix = "melt_indiv_analysis.{library_name}.{me_type}"
-        yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
+        yield "done", touch("work/indiv_analysis.{library_name}.{me_type}/out/.done.{library_name}")
 
     @dictify
     def _get_log_file_indiv_analysis(self):
-        yield from self._get_log_file_with_infix(
-            "melt_indiv_analysis.{library_name}.{me_type}", suffix="_{library_name}"
+        yield from self._get_log_file_with_prefix(
+            "work/indiv_analysis.{library_name}.{me_type}/log/{library_name}.{me_type}"
         ).items()
 
     @listify
@@ -137,12 +131,13 @@ class MeltStepPart(
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
         for member in pedigree.donors:
             if member.dna_ngs_library:
-                infix = f"melt_indiv_analysis.{member.dna_ngs_library.name}.{wildcards.me_type}"
-                yield f"work/{infix}/out/.done.{member.dna_ngs_library.name}"
+                library_name = member.dna_ngs_library.name
+                infix = f"indiv_analysis.{library_name}.{wildcards.me_type}"
+                yield f"work/{infix}/out/.done.{library_name}"
 
     @dictify
     def _get_output_files_group_analysis(self):
-        infix = "melt_group_analysis.{index_library_name}.{me_type}"
+        infix = "group_analysis.{index_library_name}.{me_type}"
         yield "done", touch(f"work/{infix}/out/.done")
         exts = (
             "bed.list",
@@ -156,73 +151,72 @@ class MeltStepPart(
 
     @dictify
     def _get_log_file_group_analysis(self):
-        yield from self._get_log_file_with_infix(
-            "melt_group_analysis.{index_library_name}.{me_type}"
+        yield from self._get_log_file_with_prefix(
+            "work/group_analysis.{index_library_name}.{me_type}/log/{index_library_name}.{me_type}"
         ).items()
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
-        infix_done = f"melt_group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
-        yield "done", f"work/{infix_done}/out/.done".format(**wildcards)
-        infix_bam = f"melt_preprocess.{wildcards.library_name}"
-        yield "bam", f"work/{infix_bam}/out/{wildcards.library_name}.bam"
+        infix_done = f"group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
+        yield "done", f"work/{infix_done}/out/.done"
+        yield "bam", f"work/{wildcards.library_name}/out/{wildcards.library_name}.bam"
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_output_files_genotype(self):
-        infix = "melt_genotype.{index_library_name}.{me_type}"
+        infix = "genotype.{index_library_name}.{me_type}"
         yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
         yield "_more", [f"work/{infix}/out/{{library_name}}.{{me_type}}.tsv"]
 
     @dictify
     def _get_log_file_genotype(self):
-        yield from self._get_log_file_with_infix(
-            "melt_genotype.{index_library_name}.{me_type}", suffix="_{library_name}"
+        yield from self._get_log_file_with_prefix(
+            "work/genotype.{index_library_name}.{me_type}/log/{library_name}.{me_type}"
         ).items()
 
     @dictify
     def _get_input_files_make_vcf(self, wildcards):
-        infix = f"melt_group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
+        infix = f"group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
         yield "group_analysis", f"work/{infix}/out/.done"
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
         paths = []
         for member in pedigree.donors:
             if member.dna_ngs_library:
-                infix = f"melt_genotype.{wildcards.index_library_name}.{wildcards.me_type}"
+                infix = f"genotype.{wildcards.index_library_name}.{wildcards.me_type}"
                 paths.append(f"work/{infix}/out/.done.{member.dna_ngs_library.name}")
         yield "genotype", paths
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
     def _get_log_file_make_vcf(self):
-        yield from self._get_log_file_with_infix(
-            "melt_make_vcf.{index_library_name}.{me_type}"
+        yield from self._get_log_file_with_prefix(
+            "work/make_vcf.{index_library_name}.{me_type}/log/{index_library_name}.{me_type}"
         ).items()
 
     @dictify
     def _get_output_files_make_vcf(self):
-        infix = "melt_make_vcf.{index_library_name}.{me_type}"
-        yield "list_txt", f"work/{infix}/out/list.txt"
-        yield "done", touch(f"work/{infix}/out/.done")
-        yield "vcf", f"work/{infix}/out/{infix}.final_comp.vcf.gz"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.final_comp.vcf.gz.tbi"
+        out_dir = "work/make_vcf.{index_library_name}.{me_type}/out"
+        yield "list_txt", f"{out_dir}/list.txt"
+        yield "done", touch(f"{out_dir}/.done")
+        yield "vcf", f"{out_dir}/{{index_library_name}}.{{me_type}}.final_comp.vcf.gz"
+        yield "vcf_tbi", f"{out_dir}/{{index_library_name}}.{{me_type}}.final_comp.vcf.gz.tbi"
 
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
         vcfs = []
         for me_type in self.config.melt.me_types:
-            infix = f"melt_make_vcf.{wildcards.library_name}.{me_type}"
-            vcfs.append(f"work/{infix}/out/{infix}.final_comp.vcf.gz")
+            out_dir = f"work/make_vcf.{wildcards.library_name}.{me_type}/out"
+            vcfs.append(f"{out_dir}/{wildcards.library_name}.{me_type}.final_comp.vcf.gz")
         yield "vcf", vcfs
 
     @dictify
     def _get_output_files_merge_vcf(self):
-        infix = "melt.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}"
         work_files = {
-            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
-            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
-            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
-            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+            "vcf": f"{prefix}.vcf.gz",
+            "vcf_md5": f"{prefix}.vcf.gz.md5",
+            "vcf_tbi": f"{prefix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
         yield (
@@ -235,7 +229,9 @@ class MeltStepPart(
 
     @dictify
     def _get_log_file_merge_vcf(self):
-        yield from self._get_log_file_with_infix("melt.{library_name}").items()
+        yield from self._get_log_file_with_prefix(
+            "work/{library_name}/log/{library_name}.merge_vcf"
+        ).items()
 
     def _get_params_preprocess(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {

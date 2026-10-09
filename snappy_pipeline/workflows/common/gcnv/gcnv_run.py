@@ -209,13 +209,11 @@ class ContigPloidyMixin:
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         """
-        ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = f"gcnv_coverage.{lib}"
-                tsvs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
-        yield ext, tsvs
+                tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
+        yield "tsv", tsvs
         # Yield path to pedigree file
         peds = []
         for library_name in sorted(self.index_ngs_library_to_pedigree):
@@ -226,9 +224,7 @@ class ContigPloidyMixin:
     @dictify
     def _get_output_files_contig_ploidy(self):
         """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE."""
-        ext = "done"
-        name_pattern = "gcnv_contig_ploidy.{library_kit}"
-        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
+        yield "done", touch("work/{library_kit}/out/{library_kit}.contig_ploidy/.done")
 
     def _get_params_contig_ploidy(self, wildcards: Wildcards):
         """Get ploidy-model parameters.
@@ -261,30 +257,21 @@ class CallCnvsMixin:
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         :type wildcards: snakemake.io.Wildcards
         """
-        # Initialise variables
-        tsv_ext = "tsv"
-        tsv_path_pattern = "gcnv_coverage.{library_name}"
-        ploidy_ext = "ploidy"
-        ploidy_path_pattern = "gcnv_contig_ploidy.{library_kit}"
-
         # Yield coverage tsv files for all library associated with kit
         coverage_files = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = tsv_path_pattern.format(library_name=lib)
-                coverage_files.append(f"work/{name_pattern}/out/{name_pattern}.{tsv_ext}")
-        yield tsv_ext, coverage_files
+                coverage_files.append(f"work/{lib}/out/{lib}.coverage.tsv")
+        yield "tsv", coverage_files
 
         # Yield ploidy files
-        name_pattern = ploidy_path_pattern.format(**wildcards)
-        yield ploidy_ext, f"work/{name_pattern}/out/{name_pattern}/.done"
+        kit = wildcards.library_kit
+        yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy/.done"
 
     @dictify
     def _get_output_files_call_cnvs(self):
         """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
-        ext = "done"
-        name_pattern = "gcnv_call_cnvs.{library_kit}.{shard}"
-        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
+        yield "done", touch("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done")
 
     def _get_params_call_cnvs(self, wildcards):
         """Get model parameters.
@@ -313,14 +300,14 @@ class PostGermlineCallsMixin:
 
     @dictify
     def _get_output_files_post_germline_calls(self):
-        name_pattern = "gcnv_post_germline_calls.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}.post_germline_calls"
         extensions = {
             "ratio_tsv": ".ratio.tsv",
             "itv_vcf": ".interval.vcf.gz",
             "seg_vcf": ".vcf.gz",
         }
         for key, ext in extensions.items():
-            yield key, touch(f"work/{name_pattern}/out/{name_pattern}{ext}")
+            yield key, touch(f"{prefix}{ext}")
 
     @dictify
     def _get_input_files_post_germline_calls(self, wildcards):
@@ -349,19 +336,16 @@ class PostGermlineCallsMixin:
             raise InvalidConfiguration(msg_error)
 
         # Yield cnv calls output
-        name_pattern = f"gcnv_call_cnvs.{library_kit}"
         yield (
             "calls",
             [
-                f"work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done"
+                f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done"
                 for shard in model_dir_dict
             ],
         )
 
         # Yield contig-ploidy output
-        ext = "ploidy"
-        name_pattern = f"gcnv_contig_ploidy.{library_kit}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}/.done"
+        yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
 
     def _get_params_post_germline_calls(self, wildcards):
         """Get post germline model parameters.
@@ -393,18 +377,18 @@ class JointGermlineCnvSegmentationMixin:
 
     @dictify
     def _get_output_files_joint_germline_cnv_segmentation(self):
-        name_pattern = "gcnv_joint_segmentation.{kit}.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}.{kit}.joint_segmentation"
         work_files = {}
         for key, suffix in RESULT_EXTENSIONS.items():
-            work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
+            work_files[key] = f"{prefix}{suffix}"
         yield from work_files.items()
 
     @dictify
     def _get_log_file_joint_germline_cnv_segmentation(self):
         """Return log file **pattern** for the step ``joint_germline_cnv_segmentation``."""
-        name_pattern = "gcnv_joint_segmentation.{kit}.{library_name}"
+        prefix = "work/{library_name}/log/{library_name}.{kit}.joint_segmentation"
         for key, ext in LOG_EXTENSIONS.items():
-            yield key, f"work/{name_pattern}/log/{name_pattern}.joint_germline_segmentation{ext}"
+            yield key, f"{prefix}{ext}"
 
     @dictify
     def _get_input_files_joint_germline_cnv_segmentation(self, wildcards):
@@ -418,12 +402,11 @@ class JointGermlineCnvSegmentationMixin:
         ]
         vcfs = []
         for library_name in sorted(ped_ngs_library_names):
-            name_pattern = f"gcnv_post_germline_calls.{library_name}"
-            vcfs.append(f"work/{name_pattern}/out/{name_pattern}.vcf.gz")
+            vcfs.append(f"work/{library_name}/out/{library_name}.post_germline_calls.vcf.gz")
         yield "vcf", vcfs
         # Yield path to interval list file
-        name_pattern = f"gcnv_preprocess_intervals.{wildcards.kit}"
-        yield "interval_list", f"work/{name_pattern}/out/{name_pattern}.interval_list"
+        kit = wildcards.kit
+        yield "interval_list", f"work/{kit}/out/{kit}.interval_list"
         # Yield path to pedigree file
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
@@ -441,10 +424,10 @@ class MergeMultikitFamiliesMixin:
 
     @dictify
     def _get_output_files_merge_multikit_families(self):
-        name_pattern = "gcnv.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}"
         work_files = {}
         for key, suffix in RESULT_EXTENSIONS.items():
-            work_files[key] = f"work/{name_pattern}/out/{name_pattern}{suffix}"
+            work_files[key] = f"{prefix}{suffix}"
         yield from work_files.items()
         yield (
             "output_links",
@@ -459,9 +442,9 @@ class MergeMultikitFamiliesMixin:
     @dictify
     def _get_log_file_merge_multikit_families(self):
         """Return log file **pattern** for the step ``merge_multikit_families``."""
-        name_pattern = "gcnv.{library_name}"
+        prefix = "work/{library_name}/log/{library_name}.merge_multikit_families"
         for key, ext in LOG_EXTENSIONS.items():
-            yield key, f"work/{name_pattern}/log/{name_pattern}.merge_multikit_families{ext}"
+            yield key, f"{prefix}{ext}"
 
     @dictify
     def _get_input_files_merge_multikit_families(self, wildcards):
@@ -475,9 +458,9 @@ class MergeMultikitFamiliesMixin:
                     kits.append(kit)
         # Yield list of paths to input VCF files
         vcfs = []
+        library_name = wildcards.library_name
         for kit in kits:
-            name_pattern = f"gcnv_joint_segmentation.{kit}.{wildcards.library_name}"
-            vcfs.append(f"work/{name_pattern}/out/{name_pattern}.vcf.gz")
+            vcfs.append(f"work/{library_name}/out/{library_name}.{kit}.joint_segmentation.vcf.gz")
         yield "vcf", vcfs
 
 

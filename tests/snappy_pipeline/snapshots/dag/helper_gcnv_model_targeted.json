@@ -1,9 +1,9 @@
 [
  {
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.ratio.tsv",
-   "tasks/helper_gcnv_model_targeted/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.interval.vcf.gz",
-   "tasks/helper_gcnv_model_targeted/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
   "log": [],
   "output": [],
@@ -16,13 +16,13 @@
  },
  {
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_annotate_gc.default/log/gcnv_annotate_gc.default.log"
+   "tasks/helper_gcnv_model_targeted/work/default/log/default.annotate_gc.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_annotate_gc.default/out/gcnv_annotate_gc.default.tsv"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.annotate_gc.tsv"
   ],
   "params": {
    "step_key": "helper_gcnv_model_targeted"
@@ -43,15 +43,15 @@
  },
  {
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_scatter_intervals.default/out/gcnv_scatter_intervals.default"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.scatter_intervals"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/log/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.log"
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.post_germline_calls.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.ratio.tsv",
-   "tasks/helper_gcnv_model_targeted/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.interval.vcf.gz",
-   "tasks/helper_gcnv_model_targeted/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
   "params": {},
   "resources": {
@@ -70,15 +70,15 @@
  },
  {
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list",
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/log/gcnv_coverage.case001subregion-N1-DNA1-WES1.log"
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv"
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
   "params": {
    "args": {
@@ -104,15 +104,15 @@
  },
  {
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list",
-   "tasks/helper_gcnv_model_targeted/work/gcnv_annotate_gc.default/out/gcnv_annotate_gc.default.tsv",
-   "tasks/helper_gcnv_model_targeted/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list",
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.annotate_gc.tsv",
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_filter_intervals.default/log/gcnv_filter_intervals.default.log"
+   "tasks/helper_gcnv_model_targeted/work/default/log/default.filter_intervals.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_filter_intervals.default/out/gcnv_filter_intervals.default.interval_list"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
   ],
   "params": {},
   "resources": {
@@ -132,10 +132,10 @@
  {
   "input": [],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_preprocess_intervals.default/log/gcnv_preprocess_intervals.default.log"
+   "tasks/helper_gcnv_model_targeted/work/default/log/default.preprocess_intervals.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list"
   ],
   "params": {
    "args": {
@@ -161,13 +161,13 @@
  },
  {
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_filter_intervals.default/out/gcnv_filter_intervals.default.interval_list"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_scatter_intervals.default/log/gcnv_scatter_intervals.default.log"
+   "tasks/helper_gcnv_model_targeted/work/default/log/default.scatter_intervals.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/gcnv_scatter_intervals.default/out/gcnv_scatter_intervals.default"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.scatter_intervals"
   ],
   "params": {},
   "resources": {

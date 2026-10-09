@@ -54,16 +54,12 @@ class SvCallingGetLogFileMixin:
     @dictify
     def get_log_file(self, action: typing.Optional[str] = None):
         """Return dict of log files in the "log" directory"""
-        _ = action
-        if action and action != self.actions[-1]:
-            token = f"{self.name}_{action}"
-        else:
-            token = self.name
+        action = action or self.actions[-1]
         if hasattr(self, f"_get_log_file_infix_{action}"):
             infix = getattr(self, f"_get_log_file_infix_{action}")()
         else:
-            infix = f"{token}.{{library_name}}"
-        prefix = f"work/{infix}/log/{infix}.sv_calling"
+            infix = "{library_name}"
+        prefix = f"work/{infix}/log/{infix}.{action}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),

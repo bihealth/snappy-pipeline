@@ -1,12 +1,12 @@
 [
  {
   "input": [
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log"
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.log"
   ],
   "log": [],
   "output": [],
@@ -106,14 +106,14 @@
  },
  {
   "input": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv",
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.contig_ploidy/.done"
   ],
   "log": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_call_cnvs.default.001/log/gcnv_call_cnvs.default.001.log"
+   "tasks/sv_calling_targeted_gcnv/work/default/log/default.001.call_cnvs.log"
   ],
   "output": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_call_cnvs.default.001/out/gcnv_call_cnvs.default.001/.done"
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.001.call_cnvs/.done"
   ],
   "params": {
    "args": {
@@ -137,14 +137,14 @@
  },
  {
   "input": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv",
    "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
   ],
   "log": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/log/gcnv_contig_ploidy.default.log"
+   "tasks/sv_calling_targeted_gcnv/work/default/log/default.contig_ploidy.log"
   ],
   "output": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done"
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.contig_ploidy/.done"
   ],
   "params": {
    "args": {
@@ -168,15 +168,15 @@
  },
  {
   "input": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list",
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/log/gcnv_coverage.case001subregion-N1-DNA1-WES1.log"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
   ],
   "output": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
   "params": {
    "args": {
@@ -199,27 +199,27 @@
  },
  {
   "input": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list",
    "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
   ],
   "log": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_info.txt",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_info.txt.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_list.txt",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_list.txt.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.wrapper.py",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.wrapper.py.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.environment.yaml",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.environment.yaml.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.log",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.log.md5"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.wrapper.py.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.environment.yaml.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.log",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.log.md5"
   ],
   "output": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -243,39 +243,39 @@
  },
  {
   "input": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz"
   ],
   "log": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log.md5"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.log",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.log.md5"
   ],
   "output": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt.md5",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt.md5",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py.md5",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml.md5",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log",
-   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log.md5"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py.md5",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml.md5",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.log",
+   "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.log.md5"
   ],
   "params": {},
   "resources": {
@@ -294,16 +294,16 @@
  },
  {
   "input": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_call_cnvs.default.001/out/gcnv_call_cnvs.default.001/.done",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done"
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.001.call_cnvs/.done",
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.contig_ploidy/.done"
   ],
   "log": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/log/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.log"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.post_germline_calls.log"
   ],
   "output": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.ratio.tsv",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.interval.vcf.gz",
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
   "params": {
    "args": {
@@ -329,10 +329,10 @@
  {
   "input": [],
   "log": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/log/gcnv_preprocess_intervals.default.log"
+   "tasks/sv_calling_targeted_gcnv/work/default/log/default.preprocess_intervals.log"
   ],
   "output": [
-   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list"
   ],
   "params": {
    "step_key": "sv_calling_targeted"

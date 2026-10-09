@@ -72,12 +72,12 @@ class MantaStepPart(
 
     @dictify
     def _get_output_files_run(self):
-        infix = "manta.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}"
         work_files = {
-            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
-            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
-            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
-            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+            "vcf": f"{prefix}.vcf.gz",
+            "vcf_md5": f"{prefix}.vcf.gz.md5",
+            "vcf_tbi": f"{prefix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
         }
         yield from augment_work_dir_with_output_links(
             work_files, self.get_log_file().values()

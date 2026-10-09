@@ -77,11 +77,11 @@ class Delly2StepPart(
 
     @dictify
     def _get_output_files_call(self):
-        infix = "delly2_call.{library_name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
-        yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
-        yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
-        yield "bcf_csi_md5", f"work/{infix}/out/{infix}.bcf.csi.md5"
+        prefix = "work/{library_name}/out/{library_name}.call"
+        yield "bcf", f"{prefix}.bcf"
+        yield "bcf_md5", f"{prefix}.bcf.md5"
+        yield "bcf_csi", f"{prefix}.bcf.csi"
+        yield "bcf_csi_md5", f"{prefix}.bcf.csi.md5"
 
     @dictify
     def _get_input_files_merge_calls(self, wildcards):
@@ -89,32 +89,32 @@ class Delly2StepPart(
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                infix = f"delly2_call.{donor.dna_ngs_library.name}"
-                bcfs.append(f"work/{infix}/out/{infix}.bcf")
+                library_name = donor.dna_ngs_library.name
+                bcfs.append(f"work/{library_name}/out/{library_name}.call.bcf")
         yield "bcf", bcfs
 
     @dictify
     def _get_output_files_merge_calls(self):
-        infix = "delly2_merge_calls.{library_name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
-        yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
-        yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
-        yield "bcf_csi_md5", f"work/{infix}/out/{infix}.bcf.csi.md5"
+        prefix = "work/{library_name}/out/{library_name}.merge_calls"
+        yield "bcf", f"{prefix}.bcf"
+        yield "bcf_md5", f"{prefix}.bcf.md5"
+        yield "bcf_csi", f"{prefix}.bcf.csi"
+        yield "bcf_csi_md5", f"{prefix}.bcf.csi.md5"
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
         yield from self._get_input_files_call(wildcards).items()
         pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
-        infix = f"delly2_merge_calls.{pedigree.index.dna_ngs_library.name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
+        index_library_name = pedigree.index.dna_ngs_library.name
+        yield "bcf", f"work/{index_library_name}/out/{index_library_name}.merge_calls.bcf"
 
     @dictify
     def _get_output_files_genotype(self):
-        infix = "delly2_genotype.{library_name}"
-        yield "bcf", f"work/{infix}/out/{infix}.bcf"
-        yield "bcf_md5", f"work/{infix}/out/{infix}.bcf.md5"
-        yield "bcf_csi", f"work/{infix}/out/{infix}.bcf.csi"
-        yield "bcf_csi_md5", f"work/{infix}/out/{infix}.bcf.csi.md5"
+        prefix = "work/{library_name}/out/{library_name}.genotype"
+        yield "bcf", f"{prefix}.bcf"
+        yield "bcf_md5", f"{prefix}.bcf.md5"
+        yield "bcf_csi", f"{prefix}.bcf.csi"
+        yield "bcf_csi_md5", f"{prefix}.bcf.csi.md5"
 
     @dictify
     def _get_input_files_merge_genotypes(self, wildcards):
@@ -122,18 +122,18 @@ class Delly2StepPart(
         pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         for donor in pedigree.donors:
             if donor.dna_ngs_library:
-                infix = f"delly2_genotype.{donor.dna_ngs_library.name}"
-                bcfs.append(f"work/{infix}/out/{infix}.bcf")
+                library_name = donor.dna_ngs_library.name
+                bcfs.append(f"work/{library_name}/out/{library_name}.genotype.bcf")
         yield "bcf", bcfs
 
     @dictify
     def _get_output_files_merge_genotypes(self):
-        infix = "delly2.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}"
         work_files = {
-            "vcf": f"work/{infix}/out/{infix}.vcf.gz",
-            "vcf_md5": f"work/{infix}/out/{infix}.vcf.gz.md5",
-            "vcf_tbi": f"work/{infix}/out/{infix}.vcf.gz.tbi",
-            "vcf_tbi_md5": f"work/{infix}/out/{infix}.vcf.gz.tbi.md5",
+            "vcf": f"{prefix}.vcf.gz",
+            "vcf_md5": f"{prefix}.vcf.gz.md5",
+            "vcf_tbi": f"{prefix}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
         }
         yield from augment_work_dir_with_output_links(
             work_files, self.get_log_file("merge_genotypes").values()

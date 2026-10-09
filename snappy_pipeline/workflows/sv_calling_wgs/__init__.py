@@ -112,16 +112,16 @@ class PopDelStepPart(
 
     @dictify
     def _get_output_files_profile(self):
-        infix = "popdel_profile.{library_name}"
-        yield "profile", f"work/{infix}/out/{infix}.profile"
-        yield "profile_md5", f"work/{infix}/out/{infix}.profile.md5"
+        prefix = "work/{library_name}/out/{library_name}"
+        yield "profile", f"{prefix}.profile"
+        yield "profile_md5", f"{prefix}.profile.md5"
 
     @dictify
     def _get_input_files_call(self, wildcards):
         paths = []
         for donor in self._donors_with_dna_ngs_library():
-            infix = f"popdel_profile.{donor.dna_ngs_library.name}"
-            paths.append(f"work/{infix}/out/{infix}.profile")
+            library_name = donor.dna_ngs_library.name
+            paths.append(f"work/{library_name}/out/{library_name}.profile")
         yield "profile", paths
 
     def _donors_with_dna_ngs_library(self):
@@ -134,13 +134,13 @@ class PopDelStepPart(
     @dictify
     def _get_output_files_call(self):
         infix = self._get_log_file_infix_call()
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
+        yield "vcf", f"work/{infix}/out/{infix}.call.vcf.gz"
+        yield "vcf_md5", f"work/{infix}/out/{infix}.call.vcf.gz.md5"
+        yield "vcf_tbi", f"work/{infix}/out/{infix}.call.vcf.gz.tbi"
+        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.call.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_call(self):
-        return "popdel_call.{chrom}-{begin}-{end}"
+        return "{chrom}-{begin}-{end}"
 
     @dictify
     def _get_input_files_concat_calls(self, wildcards):
@@ -157,8 +157,8 @@ class PopDelStepPart(
                 if r.begin == 0:
                     r.begin = 1
                 chrom = escape_dots_dashes(r.chrom)
-                infix = f"popdel_call.{chrom}-{r.begin}-{r.end}"
-                vcfs.append(f"work/{infix}/out/{infix}.vcf.gz")
+                infix = f"{chrom}-{r.begin}-{r.end}"
+                vcfs.append(f"work/{infix}/out/{infix}.call.vcf.gz")
         yield "vcf", vcfs
 
     def _get_fai_path(self):
@@ -170,27 +170,26 @@ class PopDelStepPart(
     @dictify
     def _get_output_files_concat_calls(self):
         infix = self._get_log_file_infix_concat_calls()
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.vcf.gz.md5"
-        yield "vcf_tbi", f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
+        yield "vcf", f"work/{infix}/out/{infix}.concat_calls.vcf.gz"
+        yield "vcf_md5", f"work/{infix}/out/{infix}.concat_calls.vcf.gz.md5"
+        yield "vcf_tbi", f"work/{infix}/out/{infix}.concat_calls.vcf.gz.tbi"
+        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.concat_calls.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_concat_calls(self):
-        return "popdel_concat_calls"
+        return "cohort"
 
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
-        infix = "popdel_concat_calls"
-        yield "vcf", f"work/{infix}/out/{infix}.vcf.gz"
+        yield "vcf", "work/cohort/out/cohort.concat_calls.vcf.gz"
 
     @dictify
     def _get_output_files_reorder_vcf(self):
-        infix = "popdel.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}"
         work_files = {}
-        work_files["vcf"] = f"work/{infix}/out/{infix}.vcf.gz"
-        work_files["vcf_md5"] = f"work/{infix}/out/{infix}.vcf.gz.md5"
-        work_files["vcf_tbi"] = f"work/{infix}/out/{infix}.vcf.gz.tbi"
-        work_files["vcf_tbi_md5"] = f"work/{infix}/out/{infix}.vcf.gz.tbi.md5"
+        work_files["vcf"] = f"{prefix}.vcf.gz"
+        work_files["vcf_md5"] = f"{prefix}.vcf.gz.md5"
+        work_files["vcf_tbi"] = f"{prefix}.vcf.gz.tbi"
+        work_files["vcf_tbi_md5"] = f"{prefix}.vcf.gz.tbi.md5"
         yield from work_files.items()
         yield (
             "output_links",
@@ -285,8 +284,8 @@ class SvCallingWgsWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local WGS SV output paths for downstream consumers."""
-        prefix = f"{config.tool}.{kwargs.get('library_name', '{library_name}')}"
-        return {"vcf": f"output/{prefix}/out/{prefix}.vcf.gz"}
+        library_name = kwargs.get("library_name", "{library_name}")
+        return {"vcf": f"output/{library_name}/out/{library_name}.vcf.gz"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

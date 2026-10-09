@@ -12,19 +12,15 @@ class AnnotateGcMixin:
 
     @dictify
     def _get_input_files_annotate_gc(self, wildcards):
-        name_pattern = f"gcnv_preprocess_intervals.{wildcards.library_kit}"
-        ext = "interval_list"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        kit = wildcards.library_kit
+        yield "interval_list", f"work/{kit}/out/{kit}.interval_list"
 
     @dictify
     def _get_output_files_annotate_gc(self):
-        ext = "tsv"
-        name_pattern = "gcnv_annotate_gc.{library_kit}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        yield "tsv", "work/{library_kit}/out/{library_kit}.annotate_gc.tsv"
 
     def _get_log_file_annotate_gc(self):
-        name_pattern = "gcnv_annotate_gc.{library_kit}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_kit}/log/{library_kit}.annotate_gc.log"
 
 
 class FilterIntervalsMixin:
@@ -33,27 +29,20 @@ class FilterIntervalsMixin:
     @dictify
     def _get_input_files_filter_intervals(self, wildcards):
         yield from self._get_input_files_annotate_gc(wildcards).items()
-        name_pattern = f"gcnv_annotate_gc.{wildcards.library_kit}"
-        ext = "tsv"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
-        key = "covs"
+        kit = wildcards.library_kit
+        yield "tsv", f"work/{kit}/out/{kit}.annotate_gc.tsv"
         covs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = f"gcnv_coverage.{lib}"
-                ext = "tsv"
-                covs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
-        yield key, covs
+                covs.append(f"work/{lib}/out/{lib}.coverage.tsv")
+        yield "covs", covs
 
     @dictify
     def _get_output_files_filter_intervals(self):
-        ext = "interval_list"
-        name_pattern = "gcnv_filter_intervals.{library_kit}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        yield "interval_list", "work/{library_kit}/out/{library_kit}.filter_intervals.interval_list"
 
     def _get_log_file_filter_intervals(self):
-        name_pattern = "gcnv_filter_intervals.{library_kit}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_kit}/log/{library_kit}.filter_intervals.log"
 
 
 class ScatterIntervalsMixin:
@@ -61,17 +50,14 @@ class ScatterIntervalsMixin:
 
     @dictify
     def _get_input_files_scatter_intervals(self, wildcards):
-        ext = "interval_list"
-        name_pattern = f"gcnv_filter_intervals.{wildcards.library_kit}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
+        kit = wildcards.library_kit
+        yield "interval_list", f"work/{kit}/out/{kit}.filter_intervals.interval_list"
 
     def _get_output_files_scatter_intervals(self):
-        name_pattern = "gcnv_scatter_intervals.{library_kit}"
-        return f"work/{name_pattern}/out/{name_pattern}"
+        return "work/{library_kit}/out/{library_kit}.scatter_intervals"
 
     def _get_log_file_scatter_intervals(self):
-        name_pattern = "gcnv_scatter_intervals.{library_kit}"
-        return f"work/{name_pattern}/log/{name_pattern}.log"
+        return "work/{library_kit}/log/{library_kit}.scatter_intervals.log"
 
 
 class ContigPloidyMixin:
@@ -85,16 +71,13 @@ class ContigPloidyMixin:
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         :type wildcards: snakemake.io.Wildcards
         """
-        ext = "interval_list"
-        name_pattern = "gcnv_filter_intervals.{library_kit}"
-        yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
-        ext = "tsv"
+        kit = wildcards.library_kit
+        yield "interval_list", f"work/{kit}/out/{kit}.filter_intervals.interval_list"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                name_pattern = f"gcnv_coverage.{lib}"
-                tsvs.append(f"work/{name_pattern}/out/{name_pattern}.{ext}")
-        yield ext, tsvs
+                tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
+        yield "tsv", tsvs
         # Yield path to pedigree file
         peds = []
         for library_name in sorted(self.index_ngs_library_to_pedigree):
@@ -105,9 +88,7 @@ class ContigPloidyMixin:
     @dictify
     def _get_output_files_contig_ploidy(self):
         """Yield dictionary with output files for ``contig_ploidy`` rule in COHORT MODE."""
-        ext = "done"
-        name_pattern = "gcnv_contig_ploidy.{library_kit}"
-        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
+        yield "done", touch("work/{library_kit}/out/{library_kit}.contig_ploidy/.done")
 
 
 class CallCnvsMixin:
@@ -121,31 +102,24 @@ class CallCnvsMixin:
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         :type wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "gcnv_scatter_intervals.{library_kit}"
-        path_pattern = (
-            f"work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
+        yield (
+            "interval_list_shard",
+            "work/{library_kit}/out/{library_kit}.scatter_intervals/temp_{shard}"
+            "/scattered.interval_list",
         )
-        yield "interval_list_shard", path_pattern
-        ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
-                path_pattern = f"gcnv_coverage.{lib}"
-                tsvs.append(f"work/{path_pattern}/out/{path_pattern}.{ext}")
-        yield ext, tsvs
-        ext = "ploidy"
-        path_pattern = f"gcnv_contig_ploidy.{wildcards.library_kit}"
-        yield ext, f"work/{path_pattern}/out/{path_pattern}/.done"
-        key = "intervals"
-        path_pattern = "gcnv_annotate_gc.{library_kit}"
-        yield key, f"work/{path_pattern}/out/{path_pattern}.tsv"
+                tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
+        yield "tsv", tsvs
+        kit = wildcards.library_kit
+        yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy/.done"
+        yield "intervals", "work/{library_kit}/out/{library_kit}.annotate_gc.tsv"
 
     @dictify
     def _get_output_files_call_cnvs(self):
         """Yield dictionary with output files for ``call_cnvs`` rle in COHORT MODE."""
-        ext = "done"
-        name_pattern = "gcnv_call_cnvs.{library_kit}.{shard}"
-        yield ext, touch(f"work/{name_pattern}/out/{name_pattern}/.{ext}")
+        yield "done", touch("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done")
 
 
 class PostGermlineCallsMixin:
@@ -153,10 +127,10 @@ class PostGermlineCallsMixin:
 
     @dictify
     def _get_output_files_post_germline_calls(self):
-        name_pattern = "gcnv_post_germline_calls.{library_name}"
+        prefix = "work/{library_name}/out/{library_name}.post_germline_calls"
         pairs = {"ratio_tsv": ".ratio.tsv", "itv_vcf": ".interval.vcf.gz", "seg_vcf": ".vcf.gz"}
         for key, ext in pairs.items():
-            yield key, touch(f"work/{name_pattern}/out/{name_pattern}{ext}")
+            yield key, touch(f"{prefix}{ext}")
 
 
 class BuildGcnvModelStepPart(

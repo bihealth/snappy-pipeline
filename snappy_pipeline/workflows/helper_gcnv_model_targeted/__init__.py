@@ -24,29 +24,26 @@ For example, the relevant directories might look as follows:
 ::
 
     work/
-    +-- bwa.gcnv_contig_ploidy.<library_kit_name>
+    `-- <library_kit_name>
         `-- out
-            `-- bwa.gcnv_contig_ploidy.<library_kit_name>
-                |-- SAMPLE_0
-                |   |-- contig_ploidy.tsv
-                |   |-- global_read_depth.tsv
-                |   |-- mu_psi_s_log__.tsv
-                |   |-- sample_name.txt
-                |   `-- std_psi_s_log__.tsv
-                |-- [...]
-                `-- bwa.gcnv_contig_ploidy.<library_kit_name>
-                    `-- ploidy-model
-                        |-- contig_ploidy_prior.tsv
-                        |-- gcnvkernel_version.json
-                        |-- interval_list.tsv
-                        |-- mu_mean_bias_j_lowerbound__.tsv
-                        |-- mu_psi_j_log__.tsv
-                        |-- ploidy_config.json
-                        |-- std_mean_bias_j_lowerbound__.tsv
-                        `-- std_psi_j_log__.tsv
-    +-- bwa.gcnv_call_cnvs.<library_kit_name>.***_of_***
-        `-- out
-            `-- bwa.gcnv_call_cnvs.<library_kit_name>.***_of_***
+            |-- <library_kit_name>.contig_ploidy
+            |   |-- SAMPLE_0
+            |   |   |-- contig_ploidy.tsv
+            |   |   |-- global_read_depth.tsv
+            |   |   |-- mu_psi_s_log__.tsv
+            |   |   |-- sample_name.txt
+            |   |   `-- std_psi_s_log__.tsv
+            |   |-- [...]
+            |   `-- ploidy-model
+            |       |-- contig_ploidy_prior.tsv
+            |       |-- gcnvkernel_version.json
+            |       |-- interval_list.tsv
+            |       |-- mu_mean_bias_j_lowerbound__.tsv
+            |       |-- mu_psi_j_log__.tsv
+            |       |-- ploidy_config.json
+            |       |-- std_mean_bias_j_lowerbound__.tsv
+            |       `-- std_psi_j_log__.tsv
+            `-- <library_kit_name>.***_of_***.call_cnvs
                 |-- cnv_calls-calls
                 |   |-- SAMPLE_0
                 |       `-- [...]
@@ -142,21 +139,11 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        name_pattern = "gcnv_call_cnvs.{library_kit}".format(library_kit=library_kit, **wildcards)
         yield (
             "calls",
-            [
-                "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                    name_pattern=name_pattern, shard=shard
-                )
-                for shard in shards
-            ],
+            [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done" for shard in shards],
         )
-        ext = "ploidy"
-        name_pattern = "gcnv_contig_ploidy.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
-        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+        yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
 
     def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
         gcnv_config = self.parent.get_task_config("helper_gcnv_model_targeted").gcnv
@@ -187,8 +174,8 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
         """Return local helper gCNV model output paths for downstream consumers."""
         kit = kwargs.get("library_kit", "{library_kit}")
         return {
-            "ploidy_done": f"output/gcnv_contig_ploidy.{kit}/out/gcnv_contig_ploidy.{kit}/.done",
-            "calls_done": f"output/gcnv_call_cnvs.{kit}.{{shard}}/out/gcnv_call_cnvs.{kit}.{{shard}}/.done",
+            "ploidy_done": f"output/{kit}/out/{kit}.contig_ploidy/.done",
+            "calls_done": f"output/{kit}/out/{kit}.{{shard}}.call_cnvs/.done",
         }
 
     def __init__(self, workflow, project, task_name):

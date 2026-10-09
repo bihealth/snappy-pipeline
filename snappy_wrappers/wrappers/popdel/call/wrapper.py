@@ -45,8 +45,9 @@ cat >$TMPDIR/header.txt <<EOF
 ##INFO=<ID=SVMETHOD,Number=1,Type=String,Description="Type of approach used to detect SV">
 EOF
 
+# Profile paths no longer carry a dotted prefix, so drop any directory part before splitting.
 for sample in $(bcftools view --header-only $TMPDIR/tmp.vcf | grep '^#CHROM' | cut -f 10-); do
-    echo -e "$sample\t$(echo $sample | rev | cut -d . -f 1 | rev)" >>$TMPDIR/samples.txt
+    echo -e "$sample\t$(basename $sample | rev | cut -d . -f 1 | rev)" >>$TMPDIR/samples.txt
 done
 
 bcftools annotate \

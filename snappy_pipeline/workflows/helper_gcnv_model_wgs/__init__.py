@@ -24,29 +24,26 @@ For example, the relevant directories might look as follows:
 ::
 
     work/
-    +-- bwa.gcnv_contig_ploidy.default
+    `-- default
         `-- out
-            `-- bwa.gcnv_contig_ploidy.default
-                |-- SAMPLE_0
-                |   |-- contig_ploidy.tsv
-                |   |-- global_read_depth.tsv
-                |   |-- mu_psi_s_log__.tsv
-                |   |-- sample_name.txt
-                |   `-- std_psi_s_log__.tsv
-                |-- [...]
-                `-- bwa.gcnv_contig_ploidy.default
-                    `-- ploidy-model
-                        |-- contig_ploidy_prior.tsv
-                        |-- gcnvkernel_version.json
-                        |-- interval_list.tsv
-                        |-- mu_mean_bias_j_lowerbound__.tsv
-                        |-- mu_psi_j_log__.tsv
-                        |-- ploidy_config.json
-                        |-- std_mean_bias_j_lowerbound__.tsv
-                        `-- std_psi_j_log__.tsv
-    +-- bwa.gcnv_call_cnvs.default.***_of_***
-        `-- out
-            `-- bwa.gcnv_call_cnvs.default.***_of_***
+            |-- default.contig_ploidy
+            |   |-- SAMPLE_0
+            |   |   |-- contig_ploidy.tsv
+            |   |   |-- global_read_depth.tsv
+            |   |   |-- mu_psi_s_log__.tsv
+            |   |   |-- sample_name.txt
+            |   |   `-- std_psi_s_log__.tsv
+            |   |-- [...]
+            |   `-- ploidy-model
+            |       |-- contig_ploidy_prior.tsv
+            |       |-- gcnvkernel_version.json
+            |       |-- interval_list.tsv
+            |       |-- mu_mean_bias_j_lowerbound__.tsv
+            |       |-- mu_psi_j_log__.tsv
+            |       |-- ploidy_config.json
+            |       |-- std_mean_bias_j_lowerbound__.tsv
+            |       `-- std_psi_j_log__.tsv
+            `-- default.***_of_***.call_cnvs
                 |-- cnv_calls-calls
                 |   |-- SAMPLE_0
                 |       `-- [...]
@@ -126,32 +123,16 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa').
         :type wildcards: snakemake.io.Wildcards
         """
-        path_pattern = (
-            "work/{name_pattern}/out/{name_pattern}/temp_{{shard}}/scattered.interval_list"
+        yield (
+            "interval_list_shard",
+            "work/default/out/default.scatter_intervals/temp_{shard}/scattered.interval_list",
         )
-        name_pattern = "gcnv_scatter_intervals.default"
-        yield "interval_list_shard", path_pattern.format(name_pattern=name_pattern)
-        ext = "tsv"
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
-            path_pattern = "gcnv_coverage.{library_name}".format(library_name=lib)
-            tsvs.append(
-                "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                    name_pattern=path_pattern, ext=ext
-                )
-            )
-        yield ext, tsvs
-        ext = "ploidy"
-        path_pattern = "gcnv_contig_ploidy.default".format(**wildcards)
-        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=path_pattern)
-        key = "intervals"
-        path_pattern = "gcnv_annotate_gc.default"
-        yield (
-            key,
-            "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                name_pattern=path_pattern, ext="tsv"
-            ),
-        )
+            tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
+        yield "tsv", tsvs
+        yield "ploidy", "work/default/out/default.contig_ploidy/.done"
+        yield "intervals", "work/default/out/default.annotate_gc.tsv"
 
     @dictify
     def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
@@ -164,21 +145,11 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
                 glob_wildcards(os.path.join(scatter_out, "temp_{shard}/{file}")).shard,
             )
         )
-        name_pattern = "gcnv_call_cnvs.{library_kit}".format(library_kit=library_kit, **wildcards)
         yield (
             "calls",
-            [
-                "work/{name_pattern}.{shard}/out/{name_pattern}.{shard}/.done".format(
-                    name_pattern=name_pattern, shard=shard
-                )
-                for shard in shards
-            ],
+            [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done" for shard in shards],
         )
-        ext = "ploidy"
-        name_pattern = "gcnv_contig_ploidy.{library_kit}".format(
-            library_kit=library_kit, **wildcards
-        )
-        yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
+        yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
 
     def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
         gcnv_config = self.parent.get_task_config("helper_gcnv_model_wgs").gcnv
@@ -231,8 +202,8 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
         """Return local helper gCNV WGS model output paths for downstream consumers."""
         _ = kwargs
         return {
-            "ploidy_done": "output/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done",
-            "calls_done": "output/gcnv_call_cnvs.default.{shard}/out/gcnv_call_cnvs.default.{shard}/.done",
+            "ploidy_done": "output/default/out/default.contig_ploidy/.done",
+            "calls_done": "output/default/out/default.{shard}.call_cnvs/.done",
         }
 
     def __init__(self, workflow, project, task_name):
