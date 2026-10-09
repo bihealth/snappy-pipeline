@@ -164,7 +164,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             raw_path_tpls = self._get_output_files_bam_qc().values()
         # Derive output/ paths from work/ paths (the link_out step handles the symlinking).
         work_path_tpls = [tpl for tpl in flatten(raw_path_tpls) if tpl.startswith("work/")]
-        path_tpls = {re.sub(r"^work/", "output/", tpl) for tpl in work_path_tpls}
+        path_tpls = dict.fromkeys(re.sub(r"^work/", "output/", tpl) for tpl in work_path_tpls)
 
         # Create concrete paths for all pedigrees in the sample sheet.
         index_ngs_libraries = self._get_index_ngs_libraries(
