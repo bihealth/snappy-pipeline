@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyModel, ResolvablePath, ResolvablePathList
+from snappy_pipeline.models import ResolvablePath, ResolvablePathList, SnappyModel
 
 
 class VepTxFlag(enum.StrEnum):

@@ -1,7 +1,5 @@
 from typing import Annotated
 
-from pydantic import Field
-
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
@@ -12,13 +10,11 @@ class TumorMutationalBurdenDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
         ExpectedPathSchema(ExpectedSomaticVariants),
-    ] = "somatic_variant"
+    ]
 
 
 class TumorMutationalBurden(SnappyStepModel):
-    depends_on: TumorMutationalBurdenDependsOn = Field(
-        default_factory=TumorMutationalBurdenDependsOn
-    )
+    depends_on: TumorMutationalBurdenDependsOn
 
     target_regions: str
     """Path to target_regions file (bed format)"""

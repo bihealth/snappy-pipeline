@@ -121,11 +121,11 @@ class SvCallingWgsDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class SvCallingWgs(SnappyStepModel):
-    depends_on: SvCallingWgsDependsOn = Field(default_factory=SvCallingWgsDependsOn)
+    depends_on: SvCallingWgsDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.delly2)]
 

@@ -24,6 +24,7 @@ def _config(*tasks):
 
 
 def _mapping(name="mapping", **config):
+    config = {"depends_on": {"reads": "data_sets"}, **config}
     return ("ngs_mapping", name, {"tool": "bwa", "bwa": {"path_index": "/refs/genome"}, **config})
 
 
@@ -137,7 +138,7 @@ def test_load_project_rejects_germline_variants_for_tmb():
 def test_load_project_rejects_rna_alignments_for_variant_calling(tmp_path):
     for index_file in ("Genome", "SA", "SAindex"):
         (tmp_path / index_file).touch()
-    star = ("ngs_mapping", "star", {"tool": "star", "star": {"path_index": str(tmp_path)}})
+    star = _mapping("star", tool="star", star={"path_index": str(tmp_path)})
     with pytest.raises(
         ValueError,
         match=r"Task 'calling': depends_on.alignments requires alignments \[dna\], "
@@ -156,6 +157,15 @@ def test_load_project_rejects_dna_alignments_for_expression_quantification():
         r"but task 'mapping' produces alignments \[dna\]",
     ):
         load_project(_config(_mapping(), expression), WORK_DIR)
+
+
+def test_load_project_requires_depends_on_keys():
+    # No default task name such as "ngs_mapping" fills in a missing key.
+    calling = ("variant_calling", "calling", {"tool": "mutect2", "mutect2": {"contamination": {}}})
+    with pytest.raises(pydantic.ValidationError, match="depends_on\n  Field required"):
+        load_project(_config(_mapping(), calling), WORK_DIR)
+    with pytest.raises(pydantic.ValidationError, match="depends_on.reads\n  Field required"):
+        load_project(_config(_mapping(depends_on={})), WORK_DIR)
 
 
 def test_load_project_accepts_reads_from_data_sets():

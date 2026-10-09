@@ -831,7 +831,8 @@ class BaseStep:
         if upstream is None:
             fields = list(type(self.depends_on).model_fields) if self.depends_on else []
             raise ValueError(
-                f"Task {self.task_name!r}: depends_on.{name} is not set; depends_on fields: {fields}"
+                f"Task {self.task_name!r}: depends_on.{name} names no task; "
+                f"depends_on fields: {fields}"
             )
         return self.project.task_configs[upstream]
 

@@ -743,6 +743,7 @@ class TestModelValidation:
         from snappy_pipeline.workflows.variant_calling.model import VariantCalling
 
         config = VariantCalling(
+            depends_on={"alignments": "mapping"},
             tool="gatk4_hc_gvcf",
             gatk4_hc_gvcf={},
             relationships={
@@ -759,7 +760,9 @@ class TestModelValidation:
     def test_config_without_relationships(self):
         from snappy_pipeline.workflows.variant_calling.model import VariantCalling
 
-        config = VariantCalling(tool="gatk4_hc_gvcf", gatk4_hc_gvcf={})
+        config = VariantCalling(
+            depends_on={"alignments": "mapping"}, tool="gatk4_hc_gvcf", gatk4_hc_gvcf={}
+        )
         assert config.relationships is None
         assert config.library_selection is None
         assert config.group_by is None

@@ -1,8 +1,6 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
-
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -38,19 +36,17 @@ class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
-    ] = "somatic_targeted_seq_cnv_calling"
+    ]
 
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class HomologousRecombinationDeficiency(SnappyStepModel):
-    depends_on: HomologousRecombinationDeficiencyDependsOn = Field(
-        default_factory=HomologousRecombinationDeficiencyDependsOn
-    )
+    depends_on: HomologousRecombinationDeficiencyDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.scarHRD)]
 

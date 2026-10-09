@@ -37,13 +37,11 @@ class TargetedSeqMeiCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class TargetedSeqMeiCalling(SnappyStepModel):
-    depends_on: TargetedSeqMeiCallingDependsOn = Field(
-        default_factory=TargetedSeqMeiCallingDependsOn
-    )
+    depends_on: TargetedSeqMeiCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.scramble)]
 

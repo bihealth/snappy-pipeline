@@ -77,7 +77,6 @@ import os
 from typing import Any
 
 import pandas as pd
-
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.iocontainers import InputFiles, Wildcards
 
@@ -93,16 +92,14 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
+from .model import MHC_CLASS, MHC_CLASS_I, MHC_CLASS_II, SupportedPredictionTool
+from .model import NetChop as NetChopModel
+from .model import PVACfuse as PVACfuseModel
+from .model import PVACseq as PVACseqModel
+from .model import PVACsplice as PVACspliceModel
 from .model import (
     SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel,
 )
-from .model import SupportedPredictionTool
-from .model import PVACseq as PVACseqModel
-from .model import PVACfuse as PVACfuseModel
-from .model import PVACsplice as PVACspliceModel
-from .model import NetChop as NetChopModel
-from .model import MHC_CLASS, MHC_CLASS_I, MHC_CLASS_II
-
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"

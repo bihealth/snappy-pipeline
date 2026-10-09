@@ -768,6 +768,34 @@ PREFERRED_DEFAULT_TOOLS: dict[str, str] = {
 }
 
 
+def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
+    """Return the ``depends_on`` mapping of a generated task."""
+    depends_on: dict[str, str] = {}
+    for field in dependency_fields(WORKFLOW_REGISTRY[step_name]):
+        upstream = STEP_DEPENDENCY_TASKS.get((step_name, field), DEPENDENCY_TASKS.get(field))
+        if upstream:
+            depends_on[field] = upstream
+
+    # Expression quantifiers read the strandedness decision of the strandedness task.
+    if step_name == "gene_expression_quantification" and tool in (
+        "featurecounts",
+        "dupradar",
+        "duplication",
+        "rnaseqc",
+        "stats",
+    ):
+        depends_on["strandedness"] = "gene_expression_quantification_strandedness"
+
+    # The purecn panel of normals builds on the mutect2 one.
+    if step_name == "panel_of_normals" and tool == "purecn":
+        depends_on["panel_of_normals"] = f"{step_name}_mutect2"
+
+    # cnvkit and purecn read the panel of normals built with the same tool.
+    if step_name == "somatic_targeted_seq_cnv_calling" and tool in ("cnvkit", "purecn"):
+        depends_on["panel_of_normals"] = f"panel_of_normals_{tool}"
+    return depends_on
+
+
 def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list[dict[str, Any]]:
     workflow_items = sorted(WORKFLOW_REGISTRY.items())
 
@@ -785,6 +813,8 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 step_config = bootstrap_step_config(
                     step_name, step_config, base_config, base_config_path
                 )
+                if depends_on := wire_dependencies(step_name, tool_name):
+                    step_config["depends_on"] = depends_on
                 if step_name == "link_in" and "path" not in step_config:
                     step_config["path"] = infer_link_in_path(base_config, base_config_path)
 
@@ -813,6 +843,8 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             step_config = bootstrap_step_config(
                 step_name, step_config, base_config, base_config_path
             )
+            if depends_on := wire_dependencies(step_name, step_config.get("tool")):
+                step_config["depends_on"] = depends_on
             if step_name == "link_in" and "path" not in step_config:
                 step_config["path"] = infer_link_in_path(base_config, base_config_path)
 
@@ -832,51 +864,11 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 }
             )
 
+    # Validation dumps every depends_on field; keep only the wired ones.
     for task in tasks:
-        step_name = task["step"]
-        cls = WORKFLOW_REGISTRY[step_name]
-        depends_on: dict[str, str] = {}
-
-        for field in dependency_fields(cls):
-            upstream = STEP_DEPENDENCY_TASKS.get((step_name, field), DEPENDENCY_TASKS.get(field))
-            if upstream:
-                depends_on[field] = upstream
-
-        # Expression quantifiers read the strandedness decision of the strandedness task.
-        if (
-            step_name == "gene_expression_quantification"
-            and isinstance(task.get("config"), dict)
-            and task["config"].get("tool")
-            in ("featurecounts", "dupradar", "duplication", "rnaseqc", "stats")
-        ):
-            depends_on["strandedness"] = "gene_expression_quantification_strandedness"
-
-        # Special handling for panel_of_normals:
-        # - For purecn: depends_on.panel_of_normals must point to the mutect2 variant
-        # - For other tools: remove any panel_of_normals dependency (it's only for purecn)
-        task_config = task.get("config", {})
-        if step_name == "panel_of_normals" and isinstance(task_config, dict):
-            if task_config.get("tool") == "purecn":
-                depends_on["panel_of_normals"] = f"{step_name}_mutect2"
-            else:
-                # Remove panel_of_normals dependency for non-purecn tools
-                depends_on.pop("panel_of_normals", None)
-
-        # Special handling for somatic_targeted_seq_cnv_calling:
-        # - For cnvkit: depends_on.panel_of_normals -> panel_of_normals_cnvkit
-        # - For purecn: depends_on.panel_of_normals -> panel_of_normals_purecn
-        # - For sequenza: no panel_of_normals dependency needed
-        if step_name == "somatic_targeted_seq_cnv_calling" and isinstance(task_config, dict):
-            tool_val = task_config.get("tool")
-            if tool_val in ("cnvkit", "purecn"):
-                depends_on["panel_of_normals"] = f"panel_of_normals_{tool_val}"
-            else:
-                depends_on.pop("panel_of_normals", None)
-
+        depends_on = wire_dependencies(task["step"], task["config"].get("tool"))
         if depends_on:
-            task_config = task.get("config", {})
-            if isinstance(task_config, dict):
-                task_config["depends_on"] = depends_on
+            task["config"]["depends_on"] = depends_on
 
     if generation_notes:
         print("Generation notes:")

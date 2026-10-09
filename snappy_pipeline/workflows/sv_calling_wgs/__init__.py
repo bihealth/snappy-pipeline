@@ -30,7 +30,8 @@ from snappy_pipeline.workflows.common.sv_calling import (
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_wrappers.tools.genome_windows import yield_regions
 
-from .model import SvCallingWgs as SvCallingWgsConfigModel, Tool
+from .model import SvCallingWgs as SvCallingWgsConfigModel
+from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 

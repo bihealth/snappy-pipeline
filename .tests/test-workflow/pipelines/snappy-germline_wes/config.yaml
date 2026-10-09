@@ -8,6 +8,8 @@ tasks:
   - name: mapping
     step: ngs_mapping
     config:
+      depends_on:
+        reads: data_sets
       tool: bwa
       bwa:
         path_index: ../../resources/refs/subregion

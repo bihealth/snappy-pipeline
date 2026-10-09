@@ -147,11 +147,11 @@ class VariantCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class VariantCalling(SnappyStepModel):
-    depends_on: VariantCallingDependsOn = Field(default_factory=VariantCallingDependsOn)
+    depends_on: VariantCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.gatk4_hc_gvcf)]
 

@@ -136,9 +136,9 @@ def test_get_upstream_paths_errors(field, error):
 # get_task_config --------------------------------------------------------------------------------
 
 
-def _mapping_step(*tasks, reads=""):
+def _mapping_step(*tasks, reads="data_sets"):
     """Return the workflow object of task "mapping" in a loaded project with ``tasks``."""
-    mapping = _mapping(depends_on={"reads": reads}) if reads else _mapping()
+    mapping = _mapping(depends_on={"reads": reads})
     return _step(load_project(_config(*tasks, mapping), WORK_DIR), "mapping")
 
 
@@ -158,13 +158,13 @@ def test_get_task_config_follows_depends_on():
 
 
 def test_get_task_config_does_not_guess_unset_dependencies():
-    # "raw" is the only link_in task, but depends_on.reads is not set.
-    with pytest.raises(ValueError, match="depends_on.reads is not set"):
+    # "raw" is the only link_in task, but depends_on.reads is data_sets.
+    with pytest.raises(ValueError, match="depends_on.reads names no task"):
         _mapping_step(RAW).get_task_config("reads")
 
 
 def test_get_task_config_rejects_unknown_fields():
-    with pytest.raises(ValueError, match="depends_on.variant is not set; depends_on fields"):
+    with pytest.raises(ValueError, match="depends_on.variant names no task; depends_on fields"):
         _mapping_step().get_task_config("variant")
 
 

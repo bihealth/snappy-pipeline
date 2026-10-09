@@ -3,7 +3,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import ConfigDict, Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -186,12 +186,12 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
         ExpectedPathSchema(ExpectedSomaticVariants),
-    ] = "somatic_variants"
+    ] = ""
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
     panel_of_normals: Annotated[
         str,
         DataSignature(DataType.MODELS, frozenset({"pon"})),
@@ -205,10 +205,13 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     """
 
 
+#: The ``depends_on`` fields each tool reads besides ``alignments``; see also
+#: ``validate_panel_of_normals_dependency``.
+TOOL_DEPENDENCIES = {Tool.purecn: ("variants",)}
+
+
 class SomaticTargetedSeqCnvCalling(SnappyStepModel):
-    depends_on: SomaticTargetedSeqCnvCallingDependsOn = Field(
-        default_factory=SomaticTargetedSeqCnvCallingDependsOn
-    )
+    depends_on: SomaticTargetedSeqCnvCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvkit)]
 
@@ -231,4 +234,9 @@ class SomaticTargetedSeqCnvCalling(SnappyStepModel):
                     "name the upstream panel_of_normals task that produced the matching PON "
                     f"(e.g. 'panel_of_normals_{self.tool}')"
                 )
+        return self
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
         return self

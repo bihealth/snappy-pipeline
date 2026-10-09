@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 from typing import Annotated, Any, TypedDict
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
@@ -95,21 +95,21 @@ class CbioportalExportDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ] = ""
     copy_number: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedCopyNumberCalls),
-    ] = "copy_number"
+    ] = ""
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
         ExpectedPathSchema(ExpectedSomaticVariants),
-    ] = "somatic_variant"
+    ]
 
 
 class CbioportalExport(SnappyStepModel):
-    depends_on: CbioportalExportDependsOn = Field(default_factory=CbioportalExportDependsOn)
+    depends_on: CbioportalExportDependsOn
 
     model_config = ConfigDict(
         extra="forbid",
@@ -130,6 +130,14 @@ class CbioportalExport(SnappyStepModel):
 
     copy_number_alteration: CNA = CNA()
     """Include copy number alteration results"""
+
+    @model_validator(mode="after")
+    def validate_optional_dependencies(self):
+        if self.copy_number_alteration.enabled and not self.depends_on.copy_number:
+            raise ValueError("copy_number_alteration needs depends_on.copy_number")
+        if self.expression.enabled and not self.depends_on.alignments:
+            raise ValueError("expression needs depends_on.alignments")
+        return self
 
     study: Study
 

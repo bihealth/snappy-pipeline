@@ -6,12 +6,12 @@ from typing import Annotated
 from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import (
+    ResolvablePath,
+    ResolvablePathPrefix,
     SizeString,
     SnappyModel,
     SnappyStepModel,
     ToggleModel,
-    ResolvablePathPrefix,
-    ResolvablePath,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
@@ -32,7 +32,7 @@ class NgsMappingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
-    ] = ""
+    ]
 
     # Optional upstream index provider task.
     index: Annotated[
@@ -328,7 +328,7 @@ class Mbcs(SnappyModel):
 
 
 class NgsMapping(SnappyStepModel):
-    depends_on: NgsMappingDependsOn = Field(default_factory=NgsMappingDependsOn)
+    depends_on: NgsMappingDependsOn
 
     tool: Tool
     """Aligner to use for the NGS library"""

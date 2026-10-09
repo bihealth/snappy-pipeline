@@ -3,7 +3,7 @@ from typing import Any, TypedDict
 
 from pydantic import ConfigDict, Field
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel, ResolvablePath
+from snappy_pipeline.models import ResolvablePath, SnappyModel, SnappyStepModel
 
 
 class PathModel(SnappyModel):

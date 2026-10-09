@@ -1,7 +1,5 @@
 from typing import Annotated
 
-from pydantic import Field
-
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -13,14 +11,14 @@ class VarfishExportDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
     """Used output of ngs_mapping is alignment quality control data"""
 
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         ExpectedPathSchema(ExpectedGermlineVariants),
-    ] = "variant_calling"
+    ]
     """Used output of variant_calling is variant calls"""
 
     structural_variants: Annotated[
@@ -33,7 +31,7 @@ class VarfishExportDependsOn(SnappyModel):
 class VarfishExport(SnappyStepModel):
     """Configuration of the input path enables export from the corresponding pipeline step."""
 
-    depends_on: VarfishExportDependsOn = Field(default_factory=VarfishExportDependsOn)
+    depends_on: VarfishExportDependsOn
 
     # Optionally, you can override the exported mappers and variant callers by setting
     # the following variables.

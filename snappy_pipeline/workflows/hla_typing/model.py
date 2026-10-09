@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -86,7 +86,7 @@ class HlaTypingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ] = ""
     #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
     #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
     reads: Annotated[
@@ -94,6 +94,10 @@ class HlaTypingDependsOn(SnappyModel):
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
     ] = ""
+
+
+#: The ``depends_on`` fields each tool reads.
+TOOL_DEPENDENCIES = {Tool.optitype: ("reads",), Tool.arcashla: ("alignments",)}
 
 
 class HlaTyping(SnappyStepModel):
@@ -106,3 +110,8 @@ class HlaTyping(SnappyStepModel):
     optitype: Optitype = Optitype()
 
     arcashla: ArcasHla = ArcasHla()
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
+        return self

@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
@@ -106,7 +106,7 @@ class PanelOfNormalsDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ] = ""
 
     panel_of_normals: Annotated[
         str,
@@ -118,6 +118,14 @@ class PanelOfNormalsDependsOn(SnappyModel):
     Must name the upstream ``panel_of_normals`` task that was run with ``tool: mutect2``
     to produce the Mutect2 genomicsDB used by PureCN's NormalDB.R step.
     """
+
+
+#: The ``depends_on`` fields each tool reads; see also ``validate_purecn_dependencies``.
+TOOL_DEPENDENCIES = {
+    Tool.mutect2: ("alignments",),
+    Tool.cnvkit: ("alignments",),
+    Tool.purecn: ("alignments",),
+}
 
 
 class PanelOfNormals(SnappyStepModel):
@@ -173,4 +181,9 @@ class PanelOfNormals(SnappyStepModel):
                     "name the upstream panel_of_normals task that ran with tool='mutect2' "
                     "to produce the Mutect2 genomicsDB required by PureCN"
                 )
+        return self
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
         return self

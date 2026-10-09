@@ -17,11 +17,11 @@ class SomaticMsiCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class SomaticMsiCalling(SnappyStepModel):
-    depends_on: SomaticMsiCallingDependsOn = Field(default_factory=SomaticMsiCallingDependsOn)
+    depends_on: SomaticMsiCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.mantis_msi2)]
 

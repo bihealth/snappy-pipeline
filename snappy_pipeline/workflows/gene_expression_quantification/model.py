@@ -66,14 +66,17 @@ class Tool(enum.StrEnum):
     stats = "stats"
 
 
-#: Tools that read the strandedness decision of a ``tool: strandedness`` task.
-TOOLS_NEEDING_STRANDEDNESS = (
-    Tool.featurecounts,
-    Tool.dupradar,
-    Tool.duplication,
-    Tool.rnaseqc,
-    Tool.stats,
-)
+#: The ``depends_on`` fields each tool reads. ``strandedness`` is the decision of a
+#: ``tool: strandedness`` task.
+TOOL_DEPENDENCIES = {
+    Tool.strandedness: ("alignments",),
+    Tool.featurecounts: ("alignments", "strandedness"),
+    Tool.dupradar: ("alignments", "strandedness"),
+    Tool.duplication: ("alignments", "strandedness"),
+    Tool.rnaseqc: ("alignments", "strandedness"),
+    Tool.stats: ("alignments", "strandedness"),
+    Tool.salmon: ("reads",),
+}
 
 
 class ExpectedStrandedness(SnappyModel):
@@ -87,7 +90,7 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ] = ""
 
     #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
     #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
@@ -105,7 +108,7 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
     ] = ""
 
 
-class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):
+class GeneExpressionQuantification(SnappyStepModel):
     depends_on: GeneExpressionQuantificationDependsOn = Field(
         default_factory=GeneExpressionQuantificationDependsOn
     )
@@ -130,10 +133,6 @@ class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):
     salmon: Salmon | None = None
 
     @model_validator(mode="after")
-    def validate_strandedness_dependency(self):
-        if self.tool in TOOLS_NEEDING_STRANDEDNESS and not self.depends_on.strandedness:
-            raise ValueError(
-                f"tool={self.tool} needs depends_on.strandedness: a gene_expression_quantification "
-                "task with tool: strandedness"
-            )
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
         return self

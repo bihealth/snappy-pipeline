@@ -1,7 +1,5 @@
 from typing import Annotated
 
-from pydantic import Field
-
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.models.gcnv import TargetIntervalEntry
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
@@ -30,12 +28,10 @@ class HelperGcnvModelTargetedDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class HelperGcnvModelTargeted(SnappyStepModel):
-    depends_on: HelperGcnvModelTargetedDependsOn = Field(
-        default_factory=HelperGcnvModelTargetedDependsOn
-    )
+    depends_on: HelperGcnvModelTargetedDependsOn
 
     gcnv: Gcnv

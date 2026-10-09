@@ -1,9 +1,7 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, model_validator
-
-from pydantic import Field
+from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import ResolvablePath, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema

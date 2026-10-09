@@ -1,8 +1,6 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
-
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -13,7 +11,7 @@ class RepeatExpansionDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class Tool(enum.StrEnum):
@@ -21,7 +19,7 @@ class Tool(enum.StrEnum):
 
 
 class RepeatExpansion(SnappyStepModel):
-    depends_on: RepeatExpansionDependsOn = Field(default_factory=RepeatExpansionDependsOn)
+    depends_on: RepeatExpansionDependsOn
 
     tool: Tool = Tool.expansionhunter
     """Tool to use for repeat expansion"""

@@ -5,14 +5,13 @@ Replaces the previous multi-script CLI entry points with a single `snappy` comma
 """
 
 import datetime
+import enum
 import io
 import logging
 import os
 import shutil
 import subprocess
 import sys
-
-import enum
 
 import rich_click as click
 import ruamel.yaml as ruamel_yaml

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
@@ -15,7 +15,7 @@ class IgvSessionGenerationDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
     phased_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"})),
@@ -34,7 +34,7 @@ class IgvSessionGenerationDependsOn(SnappyModel):
 
 
 class IgvSessionGeneration(SnappyStepModel):
-    depends_on: IgvSessionGenerationDependsOn = Field(default_factory=IgvSessionGenerationDependsOn)
+    depends_on: IgvSessionGenerationDependsOn
 
     @model_validator(mode="after")
     def ensure_at_least_one_dependency_is_specified(self):

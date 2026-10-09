@@ -1,23 +1,16 @@
-import pydantic
-from pydantic import BaseModel
+from collections.abc import Mapping
+
+from snappy_pipeline.models import SnappyStepModel
 
 
-def validate_ngs_mapping_or_link():
-    def validate_depends_on_inputs(instance):
-        depends_on = getattr(instance, "depends_on", None)
-        if depends_on is None:
-            raise ValueError("depends_on configuration is required")
+def require_tool_dependencies(model: SnappyStepModel, required: Mapping[str, tuple[str, ...]]):
+    """Raise ``ValueError`` unless every ``depends_on`` field that ``model.tool`` reads is set.
 
-        if not getattr(depends_on, "alignments", "") and not getattr(depends_on, "reads", ""):
-            raise ValueError("Either depends_on.alignments or depends_on.reads must be set")
-        return instance
-
-    return pydantic.model_validator(mode="after")(validate_depends_on_inputs)
-
-
-class NgsMappingMixin(BaseModel):
+    ``required`` maps a tool to the ``depends_on`` fields it reads.
     """
-    Validate contract-based upstream mapping/raw-provider dependencies.
-    """
-
-    _validate_ngs_mapping_or_link = validate_ngs_mapping_or_link()
+    missing = [
+        field for field in required.get(model.tool, ()) if not getattr(model.depends_on, field)
+    ]
+    if missing:
+        fields = " and ".join(f"depends_on.{field}" for field in missing)
+        raise ValueError(f"tool={model.tool} needs {fields}")

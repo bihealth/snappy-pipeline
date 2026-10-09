@@ -21,6 +21,7 @@ from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -30,10 +31,11 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.models import RelationshipDefinition
 
 from .model import (
     Ebfilter as EbfilterConfig,
+)
+from .model import (
     VariantFiltration as VariantFiltrationConfigModel,
 )
 

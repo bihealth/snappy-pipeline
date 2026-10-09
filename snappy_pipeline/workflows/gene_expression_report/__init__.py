@@ -13,7 +13,6 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import Expec
 
 from .model import GeneExpressionReport as GeneExpressionReportConfigModel
 
-
 #: Names of the files to create for the extension (snakemake output)
 EXT_NAMES = ("tsv",)
 

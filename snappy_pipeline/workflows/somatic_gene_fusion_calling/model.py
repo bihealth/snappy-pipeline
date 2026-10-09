@@ -104,13 +104,11 @@ class SomaticGeneFusionCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
-    ] = ""
+    ]
 
 
 class SomaticGeneFusionCalling(SnappyStepModel):
-    depends_on: SomaticGeneFusionCallingDependsOn = Field(
-        default_factory=SomaticGeneFusionCallingDependsOn
-    )
+    depends_on: SomaticGeneFusionCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.fusioncatcher)]
 

@@ -882,7 +882,7 @@ class AdapterTrimmingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
-    ] = ""
+    ]
 
 
 class ExpectedTrimmedRawFastq(BaseModel):
@@ -892,7 +892,7 @@ class ExpectedTrimmedRawFastq(BaseModel):
 
 
 class AdapterTrimming(SnappyStepModel):
-    depends_on: AdapterTrimmingDependsOn = Field(default_factory=AdapterTrimmingDependsOn)
+    depends_on: AdapterTrimmingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.FASTP)]
     bbduk: Bbduk | None = None

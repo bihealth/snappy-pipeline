@@ -1,7 +1,5 @@
 from typing import Annotated
 
-from pydantic import Field
-
 from snappy_pipeline.models import KeepTmpdir, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -66,16 +64,16 @@ class VariantPhasingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
         ExpectedPathSchema(ExpectedAnnotatedVariants),
-    ] = "variant_annotation"
+    ]
 
 
 class VariantPhasing(SnappyStepModel):
-    depends_on: VariantPhasingDependsOn = Field(default_factory=VariantPhasingDependsOn)
+    depends_on: VariantPhasingDependsOn
 
     phasings: list[str] = ["gatk_phasing_both"]
 

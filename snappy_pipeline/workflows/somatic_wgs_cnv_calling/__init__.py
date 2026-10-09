@@ -80,6 +80,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -88,9 +89,9 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.models import RelationshipDefinition
 
-from .model import SomaticWgsCnvCalling as SomaticWgsCnvCallingConfigModel, Tool
+from .model import SomaticWgsCnvCalling as SomaticWgsCnvCallingConfigModel
+from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 

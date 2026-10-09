@@ -101,11 +101,11 @@ class SvCallingTargetedDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class SvCallingTargeted(SnappyStepModel):
-    depends_on: SvCallingTargetedDependsOn = Field(default_factory=SvCallingTargetedDependsOn)
+    depends_on: SvCallingTargetedDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.gcnv)]
 

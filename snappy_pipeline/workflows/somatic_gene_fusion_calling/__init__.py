@@ -65,7 +65,8 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
-from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel, Tool
+from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel
+from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 

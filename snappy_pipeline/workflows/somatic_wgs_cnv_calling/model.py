@@ -1,8 +1,6 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
-
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import Cnvkit
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
@@ -85,11 +83,11 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
 
 
 class SomaticWgsCnvCalling(SnappyStepModel):
-    depends_on: SomaticWgsCnvCallingDependsOn = Field(default_factory=SomaticWgsCnvCallingDependsOn)
+    depends_on: SomaticWgsCnvCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvetti)]
 

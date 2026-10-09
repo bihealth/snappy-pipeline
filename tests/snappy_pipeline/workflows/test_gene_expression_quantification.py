@@ -70,10 +70,15 @@ def _tool_section(tool):
 
 @pytest.mark.parametrize("tool", ["featurecounts", "dupradar", "duplication", "rnaseqc", "stats"])
 def test_quantifiers_require_a_strandedness_task(tool):
+    section = {tool: _tool_section(tool)}
     with pytest.raises(pydantic.ValidationError, match="needs depends_on.strandedness"):
-        GeneExpressionQuantification(tool=tool, **{tool: _tool_section(tool)})
+        GeneExpressionQuantification(tool=tool, depends_on={"alignments": "mapping"}, **section)
 
-    config = GeneExpressionQuantification(
-        tool=tool, depends_on={"strandedness": "strandedness"}, **{tool: _tool_section(tool)}
-    )
+    depends_on = {"alignments": "mapping", "strandedness": "strandedness"}
+    config = GeneExpressionQuantification(tool=tool, depends_on=depends_on, **section)
     assert config.depends_on.strandedness == "strandedness"
+
+
+def test_salmon_requires_reads():
+    with pytest.raises(pydantic.ValidationError, match="tool=salmon needs depends_on.reads"):
+        GeneExpressionQuantification(tool="salmon", salmon=_tool_section("salmon"))

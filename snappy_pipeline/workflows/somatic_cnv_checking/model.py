@@ -24,16 +24,16 @@ class SomaticCnvCheckingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
-    ] = "ngs_mapping"
+    ]
     copy_number: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
-    ] = "cnv_calling"
+    ] = ""
 
 
 class SomaticCnvChecking(SnappyStepModel):
-    depends_on: SomaticCnvCheckingDependsOn = Field(default_factory=SomaticCnvCheckingDependsOn)
+    depends_on: SomaticCnvCheckingDependsOn
 
     cnv_assay_type: CnvAssayType | None = None
     """

@@ -1,8 +1,7 @@
 import enum
 
-from pydantic import model_validator
-
 from biomedsheets.io_tsv.base import EXTRACTION_TYPE_DNA, EXTRACTION_TYPE_RNA, LIBRARY_TYPES
+from pydantic import model_validator
 
 
 class ExtractionType(enum.StrEnum):

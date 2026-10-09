@@ -19,7 +19,8 @@ from snappy_pipeline.workflows.abstract import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
-from .model import VariantAnnotation as VariantAnnotationConfigModel, ExpectedVariantVcf
+from .model import ExpectedVariantVcf
+from .model import VariantAnnotation as VariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 

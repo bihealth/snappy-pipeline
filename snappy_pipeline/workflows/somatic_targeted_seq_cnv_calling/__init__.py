@@ -86,8 +86,8 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import Cnvkit as CnvkitModel
-from .model import SequenzaExtraArgs, SequenzaExtractExtraArgs, SequenzaFitExtraArgs
-from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingConfigModel, Tool
+from .model import SequenzaExtraArgs, SequenzaExtractExtraArgs, SequenzaFitExtraArgs, Tool
+from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
