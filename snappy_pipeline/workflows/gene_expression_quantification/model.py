@@ -86,7 +86,7 @@ class ExpectedStrandedness(SnappyModel):
 class GeneExpressionQuantificationDependsOn(SnappyModel):
     ngs_mapping: Annotated[
         str,
-        DataSignature(DataType.ALIGNMENTS),
+        DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
 

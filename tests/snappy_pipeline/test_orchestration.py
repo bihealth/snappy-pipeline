@@ -146,6 +146,18 @@ def test_load_project_rejects_rna_alignments_for_variant_calling(tmp_path):
         load_project(_config(star, _calling(mapping="star")), WORK_DIR)
 
 
+def test_load_project_rejects_dna_alignments_for_expression_quantification():
+    strandedness = {"tool": "strandedness", "strandedness": {"path_exon_bed": "/refs/exons.bed"}}
+    expression = ("gene_expression_quantification", "expression", strandedness)
+    expression[2]["depends_on"] = {"ngs_mapping": "mapping"}
+    with pytest.raises(
+        ValueError,
+        match=r"Task 'expression': depends_on.ngs_mapping requires alignments \[rna\], "
+        r"but task 'mapping' produces alignments \[dna\]",
+    ):
+        load_project(_config(_mapping(), expression), WORK_DIR)
+
+
 # create_task_instances ---------------------------------------------------------------------------
 
 

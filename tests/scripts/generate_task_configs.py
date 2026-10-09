@@ -926,6 +926,10 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
         if step_name == "combine_variants":
             depends_on["germline_variant"] = step_to_default_task["variant_filtration"]
 
+        # Expression quantification needs RNA alignments.
+        if step_name == "gene_expression_quantification":
+            depends_on["ngs_mapping"] = "ngs_mapping_star"
+
         # Expression quantifiers read the strandedness decision of the strandedness task.
         if (
             step_name == "gene_expression_quantification"
