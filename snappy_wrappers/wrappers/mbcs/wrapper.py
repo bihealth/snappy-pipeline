@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
-from snappy_wrappers.wrapper_parallel import run_snakemake  # noqa: E402
+from snappy_wrappers.nested_snakemake import run_snakemake  # noqa: E402
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 

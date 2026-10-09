@@ -67,7 +67,6 @@ from typing import Any
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -245,6 +244,20 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
 
 
 class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
+    """Read-backed phasing, scattered over chunks of the genome and gathered per index."""
+
+    #: Class available actions
+    actions = ("scatter", "run", "gather")
+
+    resource_usage = {
+        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
+        "run": ResourceUsage(threads=1, runtime="4h", mem="14336MB"),
+        "gather": ResourceUsage(threads=1, runtime="4h", mem="2048MB"),
+    }
+
+    #: Name in the Snakefile's ``scattergather`` directive
+    scattergather = "gatk_read_backed_phasing"
+
     def __init__(self, parent):
         super().__init__(parent)
         # Build shortcut from library name to pedigree
@@ -253,6 +266,11 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
             for donor in sheet.donors:
                 if donor.dna_ngs_library:
                     self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
+        self.region_tpl = f"work/{self.name_pattern}.scatter/{{scatteritem}}.region.bed"
+        self.chunk_tpl = f"work/{{index_library}}/out/{self.name_pattern}.{{index_library}}.chunks/{{scatteritem}}"
+
+    def _scattergather(self, kind):
+        return getattr(self.parent.workflow.globals.get(kind), self.scattergather)
 
     def _yield_bams(self, wildcards):
         """Helper function used in subclass input_function"""
@@ -281,29 +299,61 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         yield "bam", bams
         yield "bai", bais
 
-    def _get_params_run(self, wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
+    def _yield_vcf(self, wildcards):
+        """Yield the VCF to phase and its index"""
+        raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
+    def _get_input_files_scatter(self, wildcards):
+        return {"fai": self.parent.get_upstream_paths("reference").fasta + ".fai"}
 
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from self._yield_bams(wildcards)
+        yield from self._yield_vcf(wildcards)
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "region", self.region_tpl.format(**wildcards)
 
-        :return: Returns ResourceUsage for step.
+    def _get_input_files_gather(self, wildcards):
+        gather = self._scattergather("gather")
+        chunk = self.chunk_tpl.replace("{scatteritem}", "{{scatteritem}}").format(**wildcards)
+        return {"vcf": gather(chunk + ".vcf.gz"), "vcf_tbi": gather(chunk + ".vcf.gz.tbi")}
 
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        mem_mb = 8 * 1024
-        return ResourceUsage(
-            threads=1,
-            runtime="1d",  # 1 day
-            mem=f"{mem_mb}MB",
+    def _get_params_scatter(self, wildcards):
+        return {"ignore_chroms": self.config.ignore_chroms, "padding": 0}
+
+    def _get_params_run(self, wildcards):
+        return {
+            "phase_quality_threshold": self.config.gatk_read_backed_phasing.phase_quality_threshold
+        }
+
+    @dictify
+    def get_output_files(self, action):
+        self._validate_action(action)
+        if action == "scatter":
+            yield "regions", self._scattergather("scatter")(self.region_tpl)
+        elif action == "run":
+            for key, ext in zip(EXT_NAMES, EXT_VALUES):
+                yield key, self.chunk_tpl + ext
+        else:
+            for key, ext in zip(EXT_NAMES, EXT_VALUES):
+                yield key, self.base_path_out + ext
+
+    @dictify
+    def _get_log_file(self, action):
+        self._validate_action(action)
+        if action == "scatter":
+            prefix = f"work/{self.name_pattern}.scatter/log"
+        elif action == "run":
+            prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.chunks/{{scatteritem}}"
+        else:
+            prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}"
+        key_ext = (
+            ("log", ".log"),
+            ("conda_info", ".conda_info.txt"),
+            ("conda_list", ".conda_list.txt"),
         )
+        for key, ext in key_ext:
+            yield key, prefix + ext
 
 
 class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
@@ -311,6 +361,7 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
 
     #: Name of the step in the pipeline.
     name = "gatk_read_backed_phasing_only"
+
     #: The file name token.
     name_pattern = "gatk_rbp"
 
@@ -318,11 +369,8 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
         super().__init__(parent)
         self.base_path_out = "work/{index_library}/out/gatk_rbp.{index_library}"
 
-    @dictify
-    def _get_input_files_run(self, wildcards):
+    def _yield_vcf(self, wildcards):
         real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
-        # BAM files from ngs_mapping step.
-        yield from self._yield_bams(wildcards)
         # Annotated variant file resolved via CDC broker
         upstream_vcf = self.parent.get_upstream_paths(
             self.parent.previous_step, library_name=real_index.dna_ngs_library.name
@@ -342,6 +390,7 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
 
     #: Name of the step in the pipeline.
     name = "gatk_read_backed_phasing_also"
+
     #: The file name token.
     name_pattern = "gatk_pbt.gatk_rbp"
 
@@ -349,10 +398,7 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
         super().__init__(parent)
         self.base_path_out = "work/{index_library}/out/gatk_pbt.gatk_rbp.{index_library}"
 
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        # BAM files from ngs_mapping step.
-        yield from self._yield_bams(wildcards)
+    def _yield_vcf(self, wildcards):
         # Result of PhaseByTransmission step
         infix = "work/{index_library}/out/gatk_pbt.{index_library}"
         base_in = infix.format(**wildcards)

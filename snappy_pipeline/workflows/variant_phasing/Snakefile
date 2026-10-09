@@ -75,7 +75,34 @@ rule variant_phasing_gatk_phase_by_transmission_run:
         wf.wrapper_path("gatk_phase_by_transmission")
 
 
+# GATK ReadBackedPhasing, scattered over chunks of the genome -----------------
+
+
+scattergather:
+    gatk_read_backed_phasing=wf.config.gatk_read_backed_phasing.num_jobs,
+
+
 # GATK ReadBackedPhasing (only) -----------------------------------------------
+
+
+rule variant_phasing_gatk_read_backed_phasing_only_scatter:
+    input:
+        unpack(wf.get_input_files("gatk_read_backed_phasing_only", "scatter")),
+    output:
+        **wf.get_output_files("gatk_read_backed_phasing_only", "scatter"),
+    log:
+        **wf.get_log_file("gatk_read_backed_phasing_only", "scatter"),
+    localrule: True
+    threads: wf.get_resource("gatk_read_backed_phasing_only", "scatter", "threads")
+    resources:
+        runtime=wf.get_resource("gatk_read_backed_phasing_only", "scatter", "runtime"),
+        mem=wf.get_resource("gatk_read_backed_phasing_only", "scatter", "mem"),
+        partition=wf.get_resource("gatk_read_backed_phasing_only", "scatter", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_only", "scatter", "tmpdir"),
+    params:
+        args=wf.get_params("gatk_read_backed_phasing_only", "scatter"),
+    wrapper:
+        wf.wrapper_path("split_regions")
 
 
 rule variant_phasing_gatk_read_backed_phasing_only_run:
@@ -94,10 +121,47 @@ rule variant_phasing_gatk_read_backed_phasing_only_run:
     params:
         args=wf.get_params("gatk_read_backed_phasing_only", "run"),
     wrapper:
-        wf.wrapper_path("gatk_read_backed_phasing_par")
+        wf.wrapper_path("gatk_read_backed_phasing")
+
+
+rule variant_phasing_gatk_read_backed_phasing_only_gather:
+    input:
+        unpack(wf.get_input_files("gatk_read_backed_phasing_only", "gather")),
+    output:
+        **wf.get_output_files("gatk_read_backed_phasing_only", "gather"),
+    log:
+        **wf.get_log_file("gatk_read_backed_phasing_only", "gather"),
+    threads: wf.get_resource("gatk_read_backed_phasing_only", "gather", "threads")
+    resources:
+        runtime=wf.get_resource("gatk_read_backed_phasing_only", "gather", "runtime"),
+        mem=wf.get_resource("gatk_read_backed_phasing_only", "gather", "mem"),
+        partition=wf.get_resource("gatk_read_backed_phasing_only", "gather", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_only", "gather", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("bcftools/concat")
 
 
 # GATK ReadBackedPhasing (after PhaseByTransmission) --------------------------
+
+
+rule variant_phasing_gatk_read_backed_phasing_also_scatter:
+    input:
+        unpack(wf.get_input_files("gatk_read_backed_phasing_also", "scatter")),
+    output:
+        **wf.get_output_files("gatk_read_backed_phasing_also", "scatter"),
+    log:
+        **wf.get_log_file("gatk_read_backed_phasing_also", "scatter"),
+    localrule: True
+    threads: wf.get_resource("gatk_read_backed_phasing_also", "scatter", "threads")
+    resources:
+        runtime=wf.get_resource("gatk_read_backed_phasing_also", "scatter", "runtime"),
+        mem=wf.get_resource("gatk_read_backed_phasing_also", "scatter", "mem"),
+        partition=wf.get_resource("gatk_read_backed_phasing_also", "scatter", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_also", "scatter", "tmpdir"),
+    params:
+        args=wf.get_params("gatk_read_backed_phasing_also", "scatter"),
+    wrapper:
+        wf.wrapper_path("split_regions")
 
 
 rule variant_phasing_gatk_read_backed_phasing_also_run:
@@ -116,4 +180,21 @@ rule variant_phasing_gatk_read_backed_phasing_also_run:
     params:
         args=wf.get_params("gatk_read_backed_phasing_also", "run"),
     wrapper:
-        wf.wrapper_path("gatk_read_backed_phasing_par")
+        wf.wrapper_path("gatk_read_backed_phasing")
+
+
+rule variant_phasing_gatk_read_backed_phasing_also_gather:
+    input:
+        unpack(wf.get_input_files("gatk_read_backed_phasing_also", "gather")),
+    output:
+        **wf.get_output_files("gatk_read_backed_phasing_also", "gather"),
+    log:
+        **wf.get_log_file("gatk_read_backed_phasing_also", "gather"),
+    threads: wf.get_resource("gatk_read_backed_phasing_also", "gather", "threads")
+    resources:
+        runtime=wf.get_resource("gatk_read_backed_phasing_also", "gather", "runtime"),
+        mem=wf.get_resource("gatk_read_backed_phasing_also", "gather", "mem"),
+        partition=wf.get_resource("gatk_read_backed_phasing_also", "gather", "partition"),
+        tmpdir=wf.get_resource("gatk_read_backed_phasing_also", "gather", "tmpdir"),
+    wrapper:
+        wf.wrapper_path("bcftools/concat")

@@ -467,6 +467,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         },
     },
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
+    ("variant_phasing", None): {"gatk_read_backed_phasing": {"num_jobs": Overwrite(2)}},
     ("variant_filtration", "bcftools"): {"bcftools": {"exclude": "FILTER ~ 'low_depth'"}},
     ("variant_filtration", "regions"): {"regions": {"exclude": "FILTER ~ 'low_depth'"}},
     ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},

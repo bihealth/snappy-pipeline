@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running GATK ReadBackedPhasing in parallel, genome is split into windows"""
+"""Wrapper for running GATK ReadBackedPhasing on one chunk (``input.region``) of the genome"""
 
 from typing import TYPE_CHECKING
 
@@ -24,7 +24,7 @@ PER10K=100
 
 # Generate variant counts of 10kbp intervals
 bcftools query \
-    -r $(echo {args[intervals]} | tr -d ',' | tr ' ' ',') \
+    -R {snakemake.input.region} \
     -f "%CHROM\t%POS\n" \
     {snakemake.input.vcf} \
 | awk -F $'\t' '
@@ -110,12 +110,12 @@ gatk_nonfree \
     -Djava.io.tmpdir=$TMPDIR \
     --analysis_type ReadBackedPhasing \
     -nct 1 \
-    --phaseQualityThresh {snakemake.config[step_config][variant_phasing][gatk_read_backed_phasing][phase_quality_threshold]} \
+    --phaseQualityThresh {args[phase_quality_threshold]} \
     --variant $TMPDIR/intervals.pos.nofilter.vcf.gz \
     --out $TMPDIR/phased.nofilter.vcf.gz \
     $(for bam in {snakemake.input.bam}; do echo -I $bam; done) \
-    --reference_sequence {args[reference]} \
-    -L $(echo {args[intervals]} | tr -d ',' | tr ' ' ',')
+    --reference_sequence {snakemake.input.reference} \
+    -L {snakemake.input.region}
 
 snappy-vcf_filter_from_info \
     --input-vcf $TMPDIR/phased.nofilter.vcf.gz \
