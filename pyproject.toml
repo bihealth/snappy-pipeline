@@ -188,6 +188,17 @@ line_length = 100
 include = "\\.smk$|\\.rules$|^Snakefile"
 exclude = "snappy_pipeline/Snakefile"
 
+[tool.rumdl.MD013]
+# One sentence per line, no line length limit
+reflow = true
+reflow-mode = "sentence-per-line"
+line-length = 0
+
+[tool.rumdl.MD060]
+# Aligned tables
+enabled = true
+style = "aligned"
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--cov=snappy_pipeline --cov-report=xml -n auto"
