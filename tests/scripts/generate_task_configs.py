@@ -31,7 +31,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "annotated_variants": "variant_annotation_vep",
     "combined_variants": "combine_variants",
     "copy_number": "somatic_wgs_cnv_calling_cnvkit",
-    "expression": "gene_expression_quantification_strandedness",
+    "expression": "gene_expression_quantification_featurecounts",
     "fusions": "somatic_gene_fusion_calling_fusioncatcher",
     "germline_variants": "variant_filtration_bcftools",
     "hla_types": "hla_typing_optitype",

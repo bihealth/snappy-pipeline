@@ -92,12 +92,16 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
-from .model import ExpectedStrandedness
+from .model import ExpectedStrandedness, Tool
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
 from .model import Salmon as SalmonConfigModel
 
 #: Signature of the strandedness decision of a ``tool: strandedness`` task
 STRANDEDNESS_SIGNATURE = DataSignature(DataType.QC, frozenset({"strandedness"}))
+#: Signature of the expression values of ``featurecounts`` and ``salmon`` tasks
+EXPRESSION_SIGNATURE = DataSignature(DataType.EXPRESSION, frozenset({"rna"}))
+#: Signature of the QC tools (dupradar, duplication, rnaseqc, stats)
+RNA_QC_SIGNATURE = DataSignature(DataType.QC, frozenset({"rna"}))
 
 # Extensions
 EXTENSIONS = {
@@ -529,21 +533,34 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
     config_model_class = GeneExpressionQuantificationConfigModel
 
-    produces = [
-        DataSignature(DataType.EXPRESSION, frozenset({"rna"})),
-        STRANDEDNESS_SIGNATURE,
-    ]
+    produces = [EXPRESSION_SIGNATURE, STRANDEDNESS_SIGNATURE, RNA_QC_SIGNATURE]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
+    def task_produces(cls, config, upstream):
+        """Expression for featurecounts and salmon, the strandedness decision, or RNA QC."""
+        match config.tool:
+            case Tool.featurecounts | Tool.salmon:
+                return (EXPRESSION_SIGNATURE,)
+            case Tool.strandedness:
+                return (STRANDEDNESS_SIGNATURE,)
+        return (RNA_QC_SIGNATURE,)
+
+    @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local expression or strandedness output paths for downstream consumers."""
+        """Return the local paths of the expression or strandedness outputs of the task's tool."""
         lib = kwargs.get("library_name", "{library_name}")
-        if signature is not None and signature.satisfies(STRANDEDNESS_SIGNATURE):
-            return {"decision": f"output/{lib}/out/{lib}.decision"}
-        return {"tsv": f"output/{lib}/out/{lib}.tsv"}
+        prefix = f"output/{lib}/out/{lib}"
+        match config.tool:
+            case Tool.featurecounts:
+                return {"tsv": f"{prefix}.tsv"}
+            case Tool.salmon:
+                return {"gene_sf": f"{prefix}.gene.sf", "transcript_sf": f"{prefix}.transcript.sf"}
+            case Tool.strandedness:
+                return {"decision": f"{prefix}.decision"}
+        return {}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
