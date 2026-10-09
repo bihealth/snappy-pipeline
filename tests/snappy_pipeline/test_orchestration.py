@@ -1,47 +1,156 @@
 # -*- coding: utf-8 -*-
-"""Tests for target selection in ``snappy_pipeline.orchestration``."""
+"""Tests for loading a project and selecting targets in ``snappy_pipeline.orchestration``."""
 
+import logging
+
+import pydantic
 import pytest
 
-from snappy_pipeline.orchestration import select_target_tasks
+from snappy_pipeline.orchestration import Project, load_project, select_target_tasks
+from snappy_pipeline.workflow_model import ConfigModel
+
+WORK_DIR = "/projects/p1"
 
 
-def _task(name, **depends_on):
-    return {"step": "dummy", "name": name, "config": {"depends_on": depends_on}}
+def _config(*tasks):
+    return {
+        "static_data_config": {"reference": {"path": "/refs/genome.fa"}},
+        "tasks": [{"step": step, "name": name, "config": config} for step, name, config in tasks],
+        "data_sets": {},
+    }
+
+
+def _mapping(name="mapping", **config):
+    return ("ngs_mapping", name, {"tool": "bwa", "bwa": {"path_index": "/refs/genome"}, **config})
+
+
+def _calling(name="calling", mapping="mapping"):
+    config = {"depends_on": {"ngs_mapping": mapping}, "tool": "mutect2"}
+    return ("variant_calling", name, config | {"mutect2": {"contamination": {}}})
+
+
+def _annotation(name="annotation", variant="calling"):
+    return (
+        "variant_annotation",
+        name,
+        {"depends_on": {"variant": variant}, "tool": "vep", "vep": {}},
+    )
+
+
+def _filtration(name="filtration", variant="annotation"):
+    config = {"depends_on": {"variant": variant}, "tool": "bcftools"}
+    config["bcftools"] = {"include": "QUAL > 10"}
+    return ("variant_filtration", name, config)
+
+
+# load_project ------------------------------------------------------------------------------------
+
+
+def test_load_project_resolves_dependencies_and_orders_tasks():
+    # Listed out of order on purpose.
+    project = load_project(_config(_filtration(), _annotation(), _calling(), _mapping()), WORK_DIR)
+
+    assert [task.name for task in project.tasks] == [
+        "mapping",
+        "calling",
+        "annotation",
+        "filtration",
+    ]
+    assert project.dependencies["filtration"] == {"variant": "annotation"}
+    assert project.dependencies["mapping"] == {}
+    assert project.task_configs["calling"].tool == "mutect2"
+    assert project.lookup_paths == (WORK_DIR, "/projects")
+    assert project.config_paths == (f"{WORK_DIR}/config.yaml",)
+
+
+def test_load_project_rejects_unknown_step():
+    with pytest.raises(ValueError, match="unknown step 'variant_caling'"):
+        load_project(_config(("variant_caling", "calling", {})), WORK_DIR)
+
+
+def test_load_project_rejects_duplicate_task_names():
+    with pytest.raises(ValueError, match="duplicates: mapping"):
+        load_project(_config(_mapping(), _mapping()), WORK_DIR)
+
+
+def test_load_project_rejects_dependency_on_missing_task():
+    with pytest.raises(
+        ValueError, match="depends_on.ngs_mapping is 'mapping2', which is not a task"
+    ):
+        load_project(_config(_mapping(), _calling(mapping="mapping2")), WORK_DIR)
+
+
+def test_load_project_rejects_dependency_cycles():
+    tasks = (_annotation(variant="filtration"), _filtration(variant="annotation"))
+    with pytest.raises(ValueError, match="Dependency cycle between tasks"):
+        load_project(_config(*tasks), WORK_DIR)
+
+
+def test_load_project_uses_defaults_for_keys_without_value(caplog):
+    with caplog.at_level(logging.INFO, logger="snappy_pipeline.orchestration"):
+        mapping = _mapping(bwa={"path_index": "/refs/genome", "mask_duplicates": None})
+        project = load_project(_config(mapping), WORK_DIR)
+
+    assert project.task_configs["mapping"].bwa.mask_duplicates is True
+    assert "tasks[0].config.bwa.mask_duplicates has no value" in caplog.text
+
+
+def test_load_project_validates_step_configs():
+    with pytest.raises(pydantic.ValidationError, match="contamination"):
+        load_project(
+            _config(("variant_calling", "calling", {"tool": "mutect2", "mutect2": {}})), WORK_DIR
+        )
+
+
+# select_target_tasks -----------------------------------------------------------------------------
+
+
+def _project(**dependencies):
+    """Return a project with the given task -> {field: upstream} dependencies."""
+    tasks = [{"step": "dummy", "name": name, "config": {}} for name in dependencies]
+    model = ConfigModel(
+        static_data_config={"reference": {"path": "/refs/genome.fa"}}, tasks=tasks, data_sets={}
+    )
+    return Project(
+        config={},
+        model=model,
+        work_dir=WORK_DIR,
+        lookup_paths=(WORK_DIR,),
+        config_paths=(),
+        tasks=tuple(model.tasks),
+        task_configs={},
+        dependencies=dependencies,
+    )
 
 
 #: mapping -> calling -> annotation -> filtration, plus a QC task on the mapping.
-TASKS = [
-    _task("mapping"),
-    _task("calling", ngs_mapping="mapping"),
-    _task("annotation", variant="calling"),
-    _task("filtration", variant="annotation", ngs_mapping="mapping"),
-    _task("qc", ngs_mapping="mapping"),
-]
+CHAIN = _project(
+    mapping={},
+    calling={"ngs_mapping": "mapping"},
+    annotation={"variant": "calling"},
+    filtration={"variant": "annotation", "ngs_mapping": "mapping"},
+    qc={"ngs_mapping": "mapping"},
+)
 
 
 def test_default_targets_leaf_tasks_in_config_order():
-    assert select_target_tasks(TASKS) == ["filtration", "qc"]
-
-
-def test_unset_optional_dependencies_do_not_count():
-    tasks = [_task("mapping"), _task("calling", ngs_mapping="mapping", adapter_trimming="")]
-    assert select_target_tasks(tasks) == ["calling"]
-
-
-def test_tasks_without_depends_on_are_leaves_unless_depended_on():
-    tasks = [{"step": "dummy", "name": "a"}, {"step": "dummy", "name": "b", "config": {}}]
-    assert select_target_tasks(tasks) == ["a", "b"]
+    assert select_target_tasks(CHAIN) == ["filtration", "qc"]
 
 
 def test_single_task():
-    assert select_target_tasks(TASKS, target_task="calling") == ["calling"]
+    assert select_target_tasks(CHAIN, target_task="calling") == ["calling"]
 
 
 def test_unknown_single_task_raises():
     with pytest.raises(ValueError, match="Unknown task 'calls'"):
-        select_target_tasks(TASKS, target_task="calls")
+        select_target_tasks(CHAIN, target_task="calls")
 
 
 def test_all_tasks():
-    assert select_target_tasks(TASKS, all_tasks=True) == [t["name"] for t in TASKS]
+    assert select_target_tasks(CHAIN, all_tasks=True) == [
+        "mapping",
+        "calling",
+        "annotation",
+        "filtration",
+        "qc",
+    ]
