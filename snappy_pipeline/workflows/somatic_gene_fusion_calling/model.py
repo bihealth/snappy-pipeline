@@ -6,7 +6,6 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
 from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 
 
@@ -99,16 +98,12 @@ class Arriba(SnappyModel):
 
 
 class SomaticGeneFusionCallingDependsOn(SnappyModel):
-    # Optional external/in-pipeline FASTQ source.
-    link_in: Annotated[
+    #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
+    reads: Annotated[
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
-    ] = ""
-    adapter_trimming: Annotated[
-        str,
-        DataSignature(DataType.RAW, frozenset({"trimmed"})),
-        ExpectedPathSchema(ExpectedTrimmedRawFastq),
     ] = ""
 
 

@@ -28,7 +28,7 @@ class ExpectedAnnotatedVariants(SnappyModel):
 
 
 class VariantAnnotationDependsOn(SnappyModel):
-    variant: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedVariantVcf),

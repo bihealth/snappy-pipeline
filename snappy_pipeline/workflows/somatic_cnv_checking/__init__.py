@@ -110,7 +110,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
 
     def _get_input_files_normal(self, wildcards):
         base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-        ngs = self.parent.upstream("ngs_mapping")
+        ngs = self.parent.upstream("alignments")
         return {
             "bam": ngs(base_path + ".bam"),
             "bai": ngs(base_path + ".bam.bai"),
@@ -118,7 +118,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
 
     def _get_input_files_tumor(self, wildcards):
         base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-        ngs = self.parent.upstream("ngs_mapping")
+        ngs = self.parent.upstream("alignments")
         normal_lib = self.parent._get_normal_lib(wildcards.tumor_library)
         return {
             "locii": "work/{normal_library}/out/{normal_library}.normal.vcf.gz".format(
@@ -183,7 +183,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         filenames["tumor"] = tpl.format(**wildcards)
         filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
         base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-        filenames["cnv"] = self.parent.upstream("cnv_calling")(base_path + "_dnacopy.seg")
+        filenames["cnv"] = self.parent.upstream("copy_number")(base_path + "_dnacopy.seg")
         return filenames
 
     @dictify
@@ -282,7 +282,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        self.has_cnv_calling = bool(self.config.depends_on.cnv_calling)
+        self.has_cnv_calling = bool(self.config.depends_on.copy_number)
         # Register sub step classes so the sub steps are available
         sub_steps = [SomaticCnvCheckingPileupStepPart]
         if self.has_cnv_calling:

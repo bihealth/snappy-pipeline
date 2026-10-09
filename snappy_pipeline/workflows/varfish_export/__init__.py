@@ -26,7 +26,8 @@ Step Input
 The step will read in
 
 - quality control data from ``ngs_mapping``
-- variant call output data from ``variant_calling`` and ``sv_calling_targeted``
+- variant call output data from ``variant_calling`` and, optionally, ``sv_calling_targeted`` or
+  ``sv_calling_wgs``
 
 ===========
 Step Output
@@ -38,11 +39,9 @@ TODO
 Configuration
 =============
 
-By default, input from ``ngs_mapping`` and ``variant_calling`` is enabled by setting the
-appropriate input paths.
-
-You should enable ``sv_calling_targeted`` or ``sv_calling_wgs`` if you used the corresponding
-steps (and have the corresponding data types).
+Set ``depends_on.alignments`` and ``depends_on.variants`` to the mapping and variant calling
+tasks. To also export structural variants, set ``depends_on.structural_variants`` to an
+``sv_calling_targeted`` or ``sv_calling_wgs`` task.
 
 =====================
 Default Configuration
@@ -133,20 +132,22 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             mem="14GB",
         )
 
+    def _sv_calling_is_targeted(self) -> bool:
+        """Whether ``depends_on.structural_variants`` names an ``sv_calling_targeted`` task."""
+        task_name = self.parent.config.depends_on.structural_variants
+        return self.parent.project.task(task_name).step == "sv_calling_targeted"
+
     @listify
     def get_result_files(self, action):
         # Collect work paths from the output files method, then derive output paths.
         if action == "annotate_seqvars":
             raw_path_tpls = self._get_output_files_annotate_seqvars().values()
         elif action == "annotate_strucvars":
-            if not (
-                self.parent.config.depends_on.sv_calling_targeted
-                or self.parent.config.depends_on.sv_calling_wgs
-            ):
+            if not self.parent.config.depends_on.structural_variants:
                 return
             raw_path_tpls = self._get_output_files_annotate_strucvars().values()
         elif action == "bam_qc":
-            if not self.parent.get_task_config("ngs_mapping").target_coverage_report.enabled:
+            if not self.parent.get_task_config("alignments").target_coverage_report.enabled:
                 return
             raw_path_tpls = self._get_output_files_bam_qc().values()
         # Derive output/ paths from work/ paths (the link_out step handles the symlinking).
@@ -156,8 +157,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         # Create concrete paths for all pedigrees in the sample sheet.
         index_ngs_libraries = self._get_index_ngs_libraries(
             require_consistent_pedigree_kits=(
-                bool(self.parent.config.depends_on.sv_calling_targeted)
-                and (action == "annotate_strucvars")
+                action == "annotate_strucvars" and self._sv_calling_is_targeted()
             )
         )
         kwargs = {
@@ -209,7 +209,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
 
         calling = self.parent.get_upstream_paths(
-            "variant_calling",
+            "variants",
             library_name=wildcards.index_ngs_library,
         )
         yield "vcf", [calling.vcf]
@@ -264,26 +264,13 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             ),
         )
 
-        if self.parent.config.depends_on.sv_calling_targeted:
-            sv_dep = "sv_calling_targeted"
-            sv_callers = [str(self.parent.get_task_config("sv_calling_targeted").tool)]
-            skip_libraries = {
-                sv_caller: getattr(
-                    self.parent.get_task_config("sv_calling_targeted"), sv_caller
-                ).skip_libraries
-                for sv_caller in sv_callers
-            }
-        elif self.parent.config.depends_on.sv_calling_wgs:
-            sv_dep = "sv_calling_wgs"
-            sv_callers = [str(self.parent.get_task_config("sv_calling_wgs").tool)]
-            skip_libraries = {
-                sv_caller: getattr(
-                    self.parent.get_task_config("sv_calling_wgs"), sv_caller
-                ).skip_libraries
-                for sv_caller in sv_callers
-            }
-        else:
-            raise RuntimeError("Neither targeted nor WGS SV calling configured")
+        if not self.parent.config.depends_on.structural_variants:
+            raise RuntimeError("depends_on.structural_variants is not set")
+        sv_config = self.parent.get_task_config("structural_variants")
+        sv_callers = [str(sv_config.tool)]
+        skip_libraries = {
+            sv_caller: getattr(sv_config, sv_caller).skip_libraries for sv_caller in sv_callers
+        }
 
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         library_names = [
@@ -316,7 +303,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                     continue
 
             vcfs.append(
-                self.parent.upstream(sv_dep)(
+                self.parent.upstream("structural_variants")(
                     path.format(
                         sv_caller=sv_caller,
                         index_ngs_library=wildcards.index_ngs_library,
@@ -345,7 +332,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_bam_qc(self, wildcards):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
         for donor in pedigree.donors:
@@ -434,7 +421,7 @@ class VarfishExportWorkflow(BaseStep):
     @dictify
     def _build_ngs_library_to_kit(self):
         """Build mapping of NGS library to kit based on the ``ngs_mapping`` configuration"""
-        cov_config = self.get_task_config("ngs_mapping").target_coverage_report
+        cov_config = self.get_task_config("alignments").target_coverage_report
         regexes = {
             item.pattern: item.name
             for item in cov_config.path_target_interval_list_mapping

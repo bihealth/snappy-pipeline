@@ -20,7 +20,7 @@ class SvCallingGetResultFilesMixin:
         if self.name != self.config.tool:
             return  # tool not enabled, no result files
 
-        ngs_mapping_config = self.parent.get_task_config("ngs_mapping")
+        ngs_mapping_config = self.parent.get_task_config("alignments")
         ngs_mapping_tool = ngs_mapping_config.tool
         is_dna = (
             ngs_mapping_tool.is_dna()

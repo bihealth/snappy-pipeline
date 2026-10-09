@@ -11,22 +11,22 @@ from snappy_pipeline.workflows.variant_phasing.model import ExpectedPhasedVarian
 
 
 class IgvSessionGenerationDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
-    variant_phasing: Annotated[
+    phased_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"})),
         ExpectedPathSchema(ExpectedPhasedVariants),
     ] = ""
-    variant_annotation: Annotated[
+    annotated_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
         ExpectedPathSchema(ExpectedAnnotatedVariants),
     ] = ""
-    variant_calling: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         ExpectedPathSchema(ExpectedGermlineVariants),
@@ -40,7 +40,7 @@ class IgvSessionGeneration(SnappyStepModel):
     def ensure_at_least_one_dependency_is_specified(self):
         if not any(
             getattr(self.depends_on, path)
-            for path in ("variant_phasing", "variant_annotation", "variant_calling")
+            for path in ("phased_variants", "annotated_variants", "variants")
         ):
             raise ValueError("No dependency specified for variant phasing, annotation or calling")
         return self

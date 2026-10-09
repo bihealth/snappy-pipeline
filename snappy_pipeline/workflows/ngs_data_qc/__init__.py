@@ -86,7 +86,7 @@ class FastQcReportStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.parent.get_preprocessed_path(),
+            preprocessed_path=self.parent.get_preprocessed_path("reads"),
         )
 
     def _get_params_run(self, wildcards):
@@ -122,7 +122,7 @@ class FastQcReportStepPart(BaseStepPart):
         """
         task_prefix = self.parent.task_path_prefix()
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.parent.get_preprocessed_path():
+        if self.parent.get_preprocessed_path("reads"):
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -157,7 +157,7 @@ class PicardStepPart(BaseStepPart):
         infix = f"{wildcards.library_name}"
         yield (
             "bam",
-            self.parent.upstream("ngs_mapping")(f"output/{infix}/out/{infix}.bam"),
+            self.parent.upstream("alignments")(f"output/{infix}/out/{infix}.bam"),
         )
 
     @dictify

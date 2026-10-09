@@ -111,6 +111,15 @@ A task's outputs are described by ``DataSignature`` objects: a data type plus ta
   its inputs, the step overrides the classmethod ``task_produces(config, upstream)``. For
   example, ``ngs_mapping`` produces ``alignments [rna]`` for STAR, and ``variant_filtration``
   adds ``filtered`` to the tags of its input.
+- ``depends_on`` keys are named after the data they bring in, not after the step that produces
+  it: ``reads``, ``alignments``, ``variants``, ``copy_number``, ``structural_variants``,
+  ``fusions``, ``expression``, ``hla_types``, ``strandedness``, ``panel_of_normals``,
+  ``reference`` and ``index``. A step with two inputs of one kind qualifies them by role, such
+  as ``somatic_variants`` and ``germline_variants``. ``test_depends_on_keys_use_the_vocabulary``
+  checks this.
+- ``reads`` names a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+  ``adapter_trimming``), or the reserved value ``data_sets``, which searches the FASTQs in the
+  data sets' search paths. No task may be called ``data_sets``.
 - Each ``depends_on`` field states what it requires with a ``DataSignature`` in its
   ``Annotated`` metadata. This annotation is the only place a requirement is declared.
 - ``load_project()`` computes the signatures of every task in dependency order and checks

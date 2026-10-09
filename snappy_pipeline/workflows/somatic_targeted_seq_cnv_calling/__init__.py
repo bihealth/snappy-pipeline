@@ -208,7 +208,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         tumor_library = self._resolve_library_name(wildcards.tumor_library)
         normal_base_path = "output/{normal_library}/out/{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
@@ -349,7 +349,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         )
         pon = self.parent.upstream("panel_of_normals")
         somatic_vcf = self.parent.get_upstream_paths(
-            "somatic_variants", library_name=wildcards.tumor_library
+            "variants", library_name=wildcards.tumor_library
         )
         yield "vcf", getattr(somatic_vcf, "full_vcf", None) or getattr(somatic_vcf, "vcf", None)
         purecn_cfg = self.config.purecn
@@ -364,7 +364,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         pon = self.parent.upstream("panel_of_normals")
         name_pattern = "{tumor_library}".format(**wildcards)
         base_path = os.path.join("output", name_pattern, "out", name_pattern)
@@ -408,7 +408,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return self._get_params_all
 
     def _get_params_all(self, wildcards):
-        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("alignments").tool)
         config_dump = self.config.get(self.name).model_dump(by_alias=True)
         # Inject PON file paths resolved from the panel_of_normals dependency so that
         # the wrapper can access them via config["path_*"] as before.
@@ -475,7 +475,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),

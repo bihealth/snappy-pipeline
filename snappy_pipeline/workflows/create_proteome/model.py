@@ -12,7 +12,7 @@ class ExpectedVariantVcf(BaseModel):
 
 
 class CreateProteomeDependsOn(SnappyModel):
-    variant: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedVariantVcf),

@@ -107,7 +107,7 @@ class PopDelStepPart(
         infix = wildcards.library_name
         yield (
             "bam",
-            self.parent.upstream("ngs_mapping")(f"output/{infix}/out/{infix}.bam"),
+            self.parent.upstream("alignments")(f"output/{infix}/out/{infix}.bam"),
         )
 
     @dictify
@@ -247,7 +247,7 @@ class Sniffles2StepPart(BaseStepPart):
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=wildcards.library_name
+            "alignments", library_name=wildcards.library_name
         )
         yield "bam", alignments.bam
 

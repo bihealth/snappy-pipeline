@@ -123,7 +123,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
         normal_base_path = "output/{normal_library}/out/{normal_library}".format(
@@ -230,7 +230,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_input_files_coverage(self, wildcards):
         """Return input files that "cnvetti coverage" needs"""
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         # Yield input BAM and BAI file
         bam_tpl = "output/{library_name}/out/{library_name}{ext}"
         for ext in (".bam", ".bam.bai"):
@@ -415,7 +415,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),

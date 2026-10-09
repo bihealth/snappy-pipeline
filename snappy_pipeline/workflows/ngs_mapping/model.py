@@ -14,7 +14,6 @@ from snappy_pipeline.models import (
     ResolvablePath,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
 from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 from snappy_pipeline.workflows.reference_index.model import ExpectedReferenceIndexFiles
 
@@ -27,22 +26,16 @@ class ExpectedAlignments(BaseModel):
 
 
 class NgsMappingDependsOn(SnappyModel):
-    # External FASTQ source. Usually points to a dedicated link_in task.
-    link_in: Annotated[
+    #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
+    reads: Annotated[
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
     ] = ""
 
-    # Optional in-pipeline FASTQ source, e.g. adapter_trimming output.
-    adapter_trimming: Annotated[
-        str,
-        DataSignature(DataType.RAW, frozenset({"trimmed"})),
-        ExpectedPathSchema(ExpectedTrimmedRawFastq),
-    ] = ""
-
     # Optional upstream index provider task.
-    reference_index: Annotated[
+    index: Annotated[
         str,
         DataSignature(
             DataType.INDEX,

@@ -124,13 +124,13 @@ _BAM_TOOLS: frozenset[str] = frozenset({"dkfz", "ebfilter"})
 
 
 class VariantFiltrationDependsOn(SnappyModel):
-    variant: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedVariantVcf),
     ]
 
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
@@ -151,8 +151,8 @@ class VariantFiltration(SnappyStepModel):
 
     @model_validator(mode="after")
     def validate_config(self) -> Self:
-        if not self.depends_on.variant:
-            raise ValueError("depends_on.variant must be set")
+        if not self.depends_on.variants:
+            raise ValueError("depends_on.variants must be set")
 
         if self.tool != "dkfz":
             tool_cfg = getattr(self, self.tool, None)
@@ -161,7 +161,7 @@ class VariantFiltration(SnappyStepModel):
                     f"Configuration block '{self.tool}:' must be provided when tool is '{self.tool}'"
                 )
 
-        if self.tool in _BAM_TOOLS and not self.depends_on.ngs_mapping:
-            raise ValueError(f"depends_on.ngs_mapping is required when tool is '{self.tool}'")
+        if self.tool in _BAM_TOOLS and not self.depends_on.alignments:
+            raise ValueError(f"depends_on.alignments is required when tool is '{self.tool}'")
 
         return self

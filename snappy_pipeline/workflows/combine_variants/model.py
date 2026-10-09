@@ -23,12 +23,12 @@ class ExpectedGermlineVariant(BaseModel):
 
 
 class CombineVariantsDependsOn(SnappyModel):
-    somatic_variant: Annotated[
+    somatic_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedSomaticVariant),
     ]
-    germline_variant: Annotated[
+    germline_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedGermlineVariant),

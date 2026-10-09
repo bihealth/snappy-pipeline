@@ -91,7 +91,7 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         # TODO: For instance, given pedigree (P001, P002, P003) it will return three runtime the
         # TODO: same value: '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
-        return self.parent.upstream("ngs_mapping")(
+        return self.parent.upstream("alignments")(
             "output/{index_library}/out/{index_library}.bam".format(**wildcards)
         )
 
@@ -189,7 +189,7 @@ class IgvSessionGenerationWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
+        for prev in ("phased_variants", "annotated_variants", "variants"):
             if getattr(self.config.depends_on, prev, None):
                 self.previous_step = prev
                 break
@@ -197,9 +197,9 @@ class IgvSessionGenerationWorkflow(BaseStep):
             raise Exception("No previous step given!")  # pragma: no cover
         #: Name token for input
         self.prev_token = {
-            "variant_phasing": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
-            "variant_annotation": "jannovar_annotate_vcf.",
-            "variant_calling": "",
+            "phased_variants": "jannovar_annotate_vcf.gatk_pbt.gatk_rbp.",
+            "annotated_variants": "jannovar_annotate_vcf.",
+            "variants": "",
         }[self.previous_step]
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WriteIgvSessionFileStepPart, LinkOutStepPart))

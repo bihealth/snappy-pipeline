@@ -86,7 +86,7 @@ rule somatic_cnv_checking_pileup_tumor:
 
 # Add CNV status at the locii -------------------------------------------------
 
-if wf.depends_on.get("cnv_calling"):
+if wf.depends_on.get("copy_number"):
 
     rule somatic_cnv_checking_cnv_run:
         input:

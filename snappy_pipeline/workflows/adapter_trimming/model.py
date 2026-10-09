@@ -876,8 +876,9 @@ class Bbduk(SnappyModel):
 
 
 class AdapterTrimmingDependsOn(SnappyModel):
-    # External FASTQ source. Usually points to a dedicated link_in task.
-    link_in: Annotated[
+    #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
+    reads: Annotated[
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),

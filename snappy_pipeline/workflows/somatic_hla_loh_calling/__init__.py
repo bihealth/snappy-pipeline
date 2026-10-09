@@ -57,13 +57,13 @@ class LohhlaStepPart(BaseStepPart):
         normal_lib = self.get_normal_lib_name(wildcards)
         tumor_lib = wildcards.tumor_library
         normal: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=normal_lib
+            "alignments", library_name=normal_lib
         )
         tumor: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=tumor_lib
+            "alignments", library_name=tumor_lib
         )
         hla_typing: ExpectedHlaTyping = self.parent.get_upstream_paths(
-            "hla_typing", library_name=normal_lib
+            "hla_types", library_name=normal_lib
         )
         return {
             "normal_bam": normal.bam,

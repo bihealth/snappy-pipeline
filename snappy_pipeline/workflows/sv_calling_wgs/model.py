@@ -117,7 +117,7 @@ class Sniffles2(SnappyModel):
 
 
 class SvCallingWgsDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),

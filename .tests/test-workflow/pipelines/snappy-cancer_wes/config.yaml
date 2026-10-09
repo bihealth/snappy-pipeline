@@ -26,7 +26,7 @@ tasks:
     step: variant_calling
     config:
       depends_on:
-        ngs_mapping: mapping
+        alignments: mapping
       tool: mutect2
       mutect2:
         extra_arguments: [ ]
@@ -37,7 +37,7 @@ tasks:
     step: variant_annotation
     config:
       depends_on:
-        variant: variant_calling
+        variants: variant_calling
       tool: "mehari"
       mehari:
         transcripts:
@@ -50,15 +50,15 @@ tasks:
     config:
       tool: dkfz
       depends_on:
-        variant: annotation
-        ngs_mapping: mapping
+        variants: annotation
+        alignments: mapping
 
   - name: filtration_AGAIN
     step: variant_filtration
     config:
       tool: bcftools
       depends_on:
-        variant: filtration_dkfz
+        variants: filtration_dkfz
       bcftools:
         # Tags low support events, but does not remove records yet.
         exclude: "FORMAT/DP[1]<=50 | AD[1:1]<5 | AD[1:1]/(AD[1:0]+AD[1:1])<0.025"
@@ -68,7 +68,7 @@ tasks:
     config:
       tool: vembrane
       depends_on:
-        variant: filtration_AGAIN
+        variants: filtration_AGAIN
       vembrane:
         mode: tag
         expressions:
@@ -80,7 +80,7 @@ tasks:
     config:
       tool: vembrane
       depends_on:
-        variant: tag_complex
+        variants: tag_complex
       vembrane:
         mode: filter
         expression: '"modifier" not in FILTER'

@@ -365,7 +365,7 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
         for _, row in df_target.iterrows():
             infix = row["library_name"]
             aln: ExpectedAlignments = self.parent.get_upstream_paths(
-                "ngs_mapping", library_name=infix
+                "alignments", library_name=infix
             )
             bams.append(getattr(aln, "bam", aln["bam"]))
         yield "bam", bams
@@ -516,7 +516,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         yield "dbsnp", self.w_config.static_data_config.dbsnp.path
         infix = wildcards.library_name
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=infix
+            "alignments", library_name=infix
         )
         yield "bam", getattr(alignments, "bam", None) or alignments.bam
 
@@ -880,7 +880,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         tumor_base_path = ("output/{library_name}/out/{library_name}").format(**wildcards)
 
         input_files = {
@@ -1028,7 +1028,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             )
         )
 
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         input_files = {
             "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
             "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
@@ -1093,7 +1093,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return input_files
 
     def _get_input_files_pileup_normal(self, wildcards):
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         base_path = "output/{normal_library}/out/{normal_library}".format(
             normal_library=self.get_normal_lib_name(wildcards), **wildcards
         )
@@ -1105,7 +1105,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def _get_input_files_pileup_tumor(self, wildcards):
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),

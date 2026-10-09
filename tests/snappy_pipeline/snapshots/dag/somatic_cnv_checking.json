@@ -280,8 +280,8 @@
    "args": {
     "cnv_assay_type": null,
     "depends_on": {
-     "cnv_calling": "somatic_wgs_cnv_calling_cnvkit",
-     "ngs_mapping": "ngs_mapping_bwa"
+     "alignments": "ngs_mapping_bwa",
+     "copy_number": "somatic_wgs_cnv_calling_cnvkit"
     },
     "excluded_regions": "",
     "group_by": null,

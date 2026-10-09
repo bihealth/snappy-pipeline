@@ -21,7 +21,7 @@ tasks:
     name: index_minimap2
     config:
       depends_on:
-        reference_download: download_chrmt
+        reference: download_chrmt
       tool: minimap2
       minimap2:
         extra_args: []

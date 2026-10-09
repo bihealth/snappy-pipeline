@@ -26,22 +26,34 @@ The ``adapter_trimming`` step provides 2 advanced tools (``bbduk`` & ``fastp``) 
 It is important to note that, unlike other pipeline steps, ``adapter_trimming`` produces ``fastq`` files.
 This means that any subsequent pipeline step relying on ``fastq`` files for its input should be using the ``adapter_trimming`` output, not the file found in the standard way.
 
-The configuration option ``path_link_in`` available for the ``ngs_mapping``, ``hla_typing`` ``ngs_data_qc`` & ``somatic_gene_fusion_calling`` steps must be used after ``adapter_trimming``.
+Steps that read ``fastq`` files (``ngs_mapping``, ``hla_typing``, ``ngs_data_qc``,
+``gene_expression_quantification`` & ``somatic_gene_fusion_calling``) use the ``adapter_trimming``
+output when their ``depends_on.reads`` names the ``adapter_trimming`` task.
 
 The configuration snippet would then be similar to:
 
 .. code-block:: yaml
 
-    step_config:
-      adapter_trimming:
-        tools: [bbduk]
-    
-      ngs_mapping:
-        path_link_in: <Absolute path to project folder>/adapter_trimming/output/bbduk
-        ...
+    tasks:
+      - name: trimming
+        step: adapter_trimming
+        config:
+          depends_on:
+            reads: data_sets
+          tool: bbduk
+          ...
 
-``path_link_in`` is substituted to the ``search_path`` entries from the ``data_sets`` sections. 
-The pattern matching remains unchainged, as the ``adapter_trimming`` step does **not** rename any of the ``fastq`` files.
+      - name: mapping
+        step: ngs_mapping
+        config:
+          depends_on:
+            reads: trimming
+          tool: bwa
+          ...
+
+The ``fastq`` files are then searched in the ``output/`` directory of the ``trimming`` task instead
+of the ``search_paths`` of the ``data_sets``. The pattern matching remains unchanged, as the
+``adapter_trimming`` step does **not** rename any of the ``fastq`` files.
 
 Barcodes & UMIs
 ===============

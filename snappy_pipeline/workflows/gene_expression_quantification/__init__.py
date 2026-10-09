@@ -30,7 +30,7 @@ the strandedness of each library. It comes from a separate task of this step wit
         name: strandedness
         config:
           depends_on:
-            ngs_mapping: mapping
+            alignments: mapping
           tool: strandedness
           strandedness:
             path_exon_bed: /path/to/exons.bed
@@ -38,7 +38,7 @@ the strandedness of each library. It comes from a separate task of this step wit
         name: counts
         config:
           depends_on:
-            ngs_mapping: mapping
+            alignments: mapping
             strandedness: strandedness
           tool: featurecounts
           featurecounts:
@@ -174,7 +174,7 @@ class SalmonStepPart(BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.parent.get_preprocessed_path(),
+            preprocessed_path=self.parent.get_preprocessed_path("reads"),
         )
 
     @dictify
@@ -237,7 +237,7 @@ class SalmonStepPart(BaseStepPart):
         """
         task_prefix = self.parent.task_path_prefix()
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.parent.get_preprocessed_path():
+        if self.parent.get_preprocessed_path("reads"):
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         for _, path_infix, filename in self.path_gen.run(folder_name, pattern_set_keys):
@@ -275,7 +275,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards: Wildcards):
         """Resolve alignment inputs through the typed upstream contract broker."""
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=wildcards.library_name
+            "alignments", library_name=wildcards.library_name
         )
         input_files = {
             "bam": alignments.bam,

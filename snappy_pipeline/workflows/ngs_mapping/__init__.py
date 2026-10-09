@@ -599,7 +599,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             self.parent.work_dir,
             self.parent.data_set_infos,
             self.parent.config_lookup_paths,
-            preprocessed_path=self.parent.get_preprocessed_path(),
+            preprocessed_path=self.parent.get_preprocessed_path("reads"),
         )
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -680,7 +680,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         """
         task_prefix = self.parent.task_path_prefix()
         folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.parent.get_preprocessed_path():
+        if self.parent.get_preprocessed_path("reads"):
             folder_name = library_name
         pattern_set_keys = ("right",) if prefix.startswith("right-") else ("left",)
         seen = []
@@ -1433,9 +1433,9 @@ class NgsMappingWorkflow(BaseStep):
 
     def get_index_path(self, tool_name: str) -> str:
         """Resolve mapper index paths with optional reference_index dependency override."""
-        dep_task = getattr(self.config.depends_on, "reference_index", "")
+        dep_task = getattr(self.config.depends_on, "index", "")
         if dep_task:
-            index_paths = self.get_upstream_paths("reference_index")
+            index_paths = self.get_upstream_paths("index")
             key_by_tool = {
                 "bwa": "bwa_index_prefix",
                 "bwa_mem2": "bwa_mem2_index_prefix",
@@ -1451,7 +1451,7 @@ class NgsMappingWorkflow(BaseStep):
         if cfg is None or not getattr(cfg, "path_index", ""):
             raise InvalidConfiguration(
                 f"No index path configured for ngs_mapping tool '{tool_name}'. "
-                "Set config.<tool>.path_index or configure depends_on.reference_index."
+                "Set config.<tool>.path_index or configure depends_on.index."
             )
         return cfg.path_index
 

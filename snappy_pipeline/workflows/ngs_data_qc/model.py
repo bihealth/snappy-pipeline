@@ -78,17 +78,18 @@ class Fastqc(SnappyModel):
 
 
 class NgsDataQcDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
-    link_in: Annotated[
-        str | None,
+    #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
+    reads: Annotated[
+        str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
-    ] = None
-    """Optional: name of the ``link_in`` task to use as the preprocessed FASTQ source."""
+    ] = ""
 
 
 class NgsDataQc(SnappyStepModel):

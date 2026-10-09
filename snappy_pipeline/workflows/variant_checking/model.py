@@ -13,7 +13,7 @@ class Tool(enum.StrEnum):
 
 
 class VariantCheckingDependsOn(SnappyModel):
-    variant_calling: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         ExpectedPathSchema(ExpectedGermlineVariants),

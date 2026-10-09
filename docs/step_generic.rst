@@ -78,7 +78,7 @@ Each task entry references a step type (e.g. ``ngs_mapping``, ``variant_calling`
         config:
           tool: strelka
           depends_on:
-            ngs_mapping: bwa_mapping
+            alignments: bwa_mapping
 
 Relative paths in ``static_data_config`` (e.g., ``reference.path``) and in task configuration are resolved relative to the **config file's directory** at validation time.
 Absolute paths are also supported and will not be modified.

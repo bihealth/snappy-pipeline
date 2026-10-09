@@ -62,12 +62,12 @@ class ExpectedPhasedVariants(SnappyModel):
 
 
 class VariantPhasingDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
-    variant_annotation: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
         ExpectedPathSchema(ExpectedAnnotatedVariants),

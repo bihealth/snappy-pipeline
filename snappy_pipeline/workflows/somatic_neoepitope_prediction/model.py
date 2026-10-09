@@ -436,25 +436,23 @@ class Proteome(ToggleModel):
 
 
 class SomaticNeoepitopePredictionDependsOn(SnappyModel):
-    hla_typing: Annotated[str, DataSignature(DataType.TABULAR, frozenset({"hla"}))]
-    somatic_variant_annotation: Annotated[
+    hla_types: Annotated[str, DataSignature(DataType.TABULAR, frozenset({"hla"}))]
+    somatic_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedVariantVcf),
     ] = ""
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
     ] = ""
-    gene_expression_quantification: Annotated[
-        str, DataSignature(DataType.EXPRESSION, frozenset({"rna"}))
-    ] = ""
-    combine_variants: Annotated[str, DataSignature(DataType.VARIANTS)] = ""
-    somatic_gene_fusion_calling: Annotated[
+    expression: Annotated[str, DataSignature(DataType.EXPRESSION, frozenset({"rna"}))] = ""
+    combined_variants: Annotated[str, DataSignature(DataType.VARIANTS)] = ""
+    fusions: Annotated[
         str, DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))
     ] = ""
-    germline_variant: Annotated[str, DataSignature(DataType.VARIANTS)] = ""
+    germline_variants: Annotated[str, DataSignature(DataType.VARIANTS)] = ""
 
 
 class SomaticNeoepitopePrediction(SnappyStepModel):
@@ -485,30 +483,28 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
         deps = self.depends_on
 
         # HLA typing is mandatory across all prediction tools
-        if not deps.hla_typing:
+        if not deps.hla_types:
             raise ValueError(
-                f"depends_on.hla_typing is required for neoepitope prediction (tool: {self.tool!r})"
+                f"depends_on.hla_types is required for neoepitope prediction (tool: {self.tool!r})"
             )
 
         match self.tool:
             case SupportedPredictionTool.PVACSEQ:
-                if not deps.somatic_variant_annotation:
+                if not deps.somatic_variants:
                     raise ValueError(
-                        "depends_on.somatic_variant_annotation is required when tool is 'pvacseq'"
+                        "depends_on.somatic_variants is required when tool is 'pvacseq'"
                     )
 
             case SupportedPredictionTool.PVACSPLICE:
-                if not deps.somatic_variant_annotation:
+                if not deps.somatic_variants:
                     raise ValueError(
-                        "depends_on.somatic_variant_annotation is required when tool is 'pvacsplice'"
+                        "depends_on.somatic_variants is required when tool is 'pvacsplice'"
                     )
-                if not deps.ngs_mapping:
-                    raise ValueError("depends_on.ngs_mapping is required when tool is 'pvacsplice'")
+                if not deps.alignments:
+                    raise ValueError("depends_on.alignments is required when tool is 'pvacsplice'")
 
             case SupportedPredictionTool.PVACFUSE:
-                if not deps.somatic_gene_fusion_calling:
-                    raise ValueError(
-                        "depends_on.somatic_gene_fusion_calling is required when tool is 'pvacfuse'"
-                    )
+                if not deps.fusions:
+                    raise ValueError("depends_on.fusions is required when tool is 'pvacfuse'")
 
         return self

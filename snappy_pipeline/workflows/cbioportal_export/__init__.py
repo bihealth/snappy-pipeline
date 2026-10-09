@@ -234,7 +234,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards):
         """Return input vcf for each output maf"""
         tpl = os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
-        yield "vcf", self.parent.upstream("somatic_variant")(tpl.format(**wildcards))
+        yield "vcf", self.parent.upstream("variants")(tpl.format(**wildcards))
 
     @dictify
     def get_log_file(self, action):
@@ -526,7 +526,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             ).format(library_name=lib.name)
             yield (
                 lib.test_sample.bio_sample.name,
-                self.parent.upstream("ngs_mapping")(local_path),
+                self.parent.upstream("alignments")(local_path),
             )
 
     def _get_params_run(self, wildcards):

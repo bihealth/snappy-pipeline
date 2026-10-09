@@ -143,9 +143,9 @@
       "enabled": false
      },
      "depends_on": {
+      "alignments": "ngs_mapping_bwa",
       "copy_number": "somatic_wgs_cnv_calling_cnvkit",
-      "ngs_mapping": "ngs_mapping_bwa",
-      "somatic_variant": "variant_calling_mutect2"
+      "variants": "variant_calling_mutect2"
      },
      "exclude_variant_with_flag": "",
      "expression": {

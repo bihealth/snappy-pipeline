@@ -83,7 +83,7 @@ class PeddyStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.variant_tool = str(self.parent.get_task_config("variant_calling").tool)
+        self.variant_tool = str(self.parent.get_task_config("variants").tool)
         self.base_path_out = "work/{index_ngs_library}/out/.done"
         self.log_path = "work/{index_ngs_library}/log/snakemake.filter.log"
 
@@ -94,7 +94,7 @@ class PeddyStepPart(BaseStepPart):
         yield "ped", f"work/write_pedigree.{index}/out/{index}.ped"
 
         calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
-            "variant_calling",
+            "variants",
             library_name=index,
         )
         yield "vcf", calling.vcf

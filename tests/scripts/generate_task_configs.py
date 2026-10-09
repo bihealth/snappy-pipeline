@@ -2,9 +2,8 @@
 """Generate task-based config files that include all registered workflows.
 
 The generator builds one task per workflow step, derives each task's config from
-`default_config_yaml()`, and wires `depends_on` mappings systematically using:
-1) typed `depends_on` defaults from each step config model, and
-2) explicit logical-name aliases and per-step wiring for non-step dependency names.
+`default_config_yaml()`, and wires `depends_on` from an explicit table of upstream tasks per field, with per-step and
+per-tool exceptions.
 """
 
 from __future__ import annotations
@@ -26,18 +25,42 @@ yaml.default_flow_style = False
 yaml.indent(sequence=4, offset=2)
 
 
-# Logical dependency names that are not step names but commonly appear in depends_on models.
-LOGICAL_DEP_ALIASES: dict[str, str] = {
-    "somatic_variant_annotation": "variant_annotation",
-    "cnv_calling": "somatic_wgs_cnv_calling",
-    "copy_number": "somatic_wgs_cnv_calling",
+#: Upstream task of each ``depends_on`` field.
+DEPENDENCY_TASKS: dict[str, str] = {
+    "alignments": "ngs_mapping_bwa",
+    "annotated_variants": "variant_annotation_vep",
+    "combined_variants": "combine_variants",
+    "copy_number": "somatic_wgs_cnv_calling_cnvkit",
+    "expression": "gene_expression_quantification_strandedness",
+    "fusions": "somatic_gene_fusion_calling_fusioncatcher",
+    "germline_variants": "variant_filtration_bcftools",
+    "hla_types": "hla_typing_optitype",
+    "index": "reference_index_bwa",
+    "link_in": "link_in",
+    "phased_variants": "variant_phasing",
+    "reads": "link_in",
+    "reference": "reference_download",
+    "somatic_variants": "variant_calling_mutect2",
+    "structural_variants": "sv_calling_targeted_delly2",
+    "variants": "variant_calling_gatk4_hc_gvcf",
 }
 
-# Logical dependency names that need one particular task, e.g. a somatic instead of the default
-# germline variant caller.
-LOGICAL_DEP_TASKS: dict[str, str] = {
-    "somatic_variant": "variant_calling_mutect2",
-    "somatic_variants": "variant_calling_mutect2",
+#: Exceptions to ``DEPENDENCY_TASKS``: (step, field) -> upstream task, or ``None`` to leave the
+#: field unset. ``strandedness`` and ``panel_of_normals`` are wired per tool in build_all_tasks.
+STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
+    ("cbioportal_export", "variants"): "variant_calling_mutect2",
+    ("create_proteome", "variants"): "variant_annotation_vep",
+    ("gene_expression_quantification", "alignments"): "ngs_mapping_star",
+    ("homologous_recombination_deficiency", "copy_number"): (
+        "somatic_targeted_seq_cnv_calling_sequenza"
+    ),
+    ("somatic_neoepitope_prediction", "germline_variants"): None,
+    ("somatic_neoepitope_prediction", "somatic_variants"): "variant_annotation_vep",
+    ("somatic_targeted_seq_cnv_calling", "variants"): "variant_calling_mutect2",
+    ("somatic_variant_signatures", "variants"): "variant_calling_mutect2",
+    ("tumor_mutational_burden", "variants"): "variant_calling_mutect2",
+    ("variant_filtration", "variants"): "variant_annotation_vep",
+    ("variant_phasing", "variants"): "variant_annotation_vep",
 }
 
 
@@ -275,27 +298,10 @@ def infer_link_in_path(base_config: dict[str, Any], base_config_path: Path) -> s
     return str(base_config_path.parent)
 
 
-def get_dep_defaults(workflow_cls: type) -> dict[str, str | None]:
-    config_model = getattr(workflow_cls, "config_model_class", None)
-    if not config_model:
-        return {}
-
-    model_fields = getattr(config_model, "model_fields", {})
-    dep_field = model_fields.get("depends_on")
-    if dep_field is None:
-        return {}
-
-    dep_model = dep_field.annotation
-    dep_dict = {}
-    from pydantic_core import PydanticUndefined
-
-    for name, field in getattr(dep_model, "model_fields", {}).items():
-        val = field.default
-        if val is PydanticUndefined:
-            dep_dict[name] = ""
-        else:
-            dep_dict[name] = val
-    return dep_dict
+def dependency_fields(workflow_cls: type) -> list[str]:
+    """Return the names of the ``depends_on`` fields of a step."""
+    dep_field = workflow_cls.config_model_class.model_fields.get("depends_on")
+    return [] if dep_field is None else list(dep_field.annotation.model_fields)
 
 
 def _guess_bwa_index_from_reference(base_config: dict[str, Any]) -> str:
@@ -762,55 +768,8 @@ PREFERRED_DEFAULT_TOOLS: dict[str, str] = {
 }
 
 
-def get_default_tool(step_name: str, workflow_cls: type) -> str | None:
-    preferred = PREFERRED_DEFAULT_TOOLS.get(step_name)
-    if preferred:
-        possible = get_possible_tools(workflow_cls)
-        if preferred in possible:
-            return preferred
-
-    config_model = getattr(workflow_cls, "config_model_class", None)
-    if not config_model:
-        return None
-    model_fields = getattr(config_model, "model_fields", {})
-    tool_field = model_fields.get("tool")
-    if tool_field is None:
-        return None
-    default_val = tool_field.default
-    from pydantic_core import PydanticUndefined
-
-    if default_val is PydanticUndefined:
-        default_val = None
-    if default_val is not None:
-        if isinstance(default_val, enum.Enum):
-            return str(default_val.value)
-        if isinstance(default_val, str):
-            return default_val
-    possible = get_possible_tools(workflow_cls)
-    if possible:
-        return possible[0]
-    return None
-
-
-def get_default_task_name(step_name: str, workflow_cls: type) -> str:
-    """Return the task name for the default tool of a step.
-
-    Uses the actual tool name (e.g., 'mutect2', 'bwa') instead of the generic '_default' suffix.
-    This makes task names explicit and easier to debug.
-    """
-    default_tool = get_default_tool(step_name, workflow_cls)
-    if default_tool:
-        return f"{step_name}_{default_tool}"
-    return step_name
-
-
 def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list[dict[str, Any]]:
     workflow_items = sorted(WORKFLOW_REGISTRY.items())
-    all_steps = {name for name, _ in workflow_items}
-
-    step_to_default_task: dict[str, str] = {}
-    for name, cls in workflow_items:
-        step_to_default_task[name] = get_default_task_name(name, cls)
 
     generation_notes: list[str] = []
     tasks: list[dict[str, Any]] = []
@@ -878,57 +837,10 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
         cls = WORKFLOW_REGISTRY[step_name]
         depends_on: dict[str, str] = {}
 
-        # 1) Use typed depends_on defaults first (if available).
-        dep_defaults = get_dep_defaults(cls)
-        for logical_name, default_target in dep_defaults.items():
-            if logical_name == "variant":
-                if step_name == "variant_annotation":
-                    depends_on["variant"] = step_to_default_task["variant_calling"]
-                elif step_name == "variant_filtration":
-                    depends_on["variant"] = step_to_default_task["variant_annotation"]
-                elif step_name == "create_proteome":
-                    depends_on["variant"] = step_to_default_task["variant_annotation"]
-            elif (
-                isinstance(default_target, str)
-                and default_target
-                and default_target in all_steps
-                and default_target != step_name
-            ):
-                if (
-                    step_name == "homologous_recombination_deficiency"
-                    and default_target == "somatic_targeted_seq_cnv_calling"
-                ):
-                    depends_on[logical_name] = "somatic_targeted_seq_cnv_calling_sequenza"
-                else:
-                    depends_on[logical_name] = step_to_default_task[default_target]
-            elif logical_name in all_steps and logical_name != step_name:
-                if (
-                    step_name == "homologous_recombination_deficiency"
-                    and logical_name == "somatic_targeted_seq_cnv_calling"
-                ):
-                    depends_on[logical_name] = "somatic_targeted_seq_cnv_calling_sequenza"
-                else:
-                    depends_on[logical_name] = step_to_default_task[logical_name]
-            elif logical_name in LOGICAL_DEP_TASKS:
-                depends_on[logical_name] = LOGICAL_DEP_TASKS[logical_name]
-            elif logical_name in LOGICAL_DEP_ALIASES:
-                alias_target = LOGICAL_DEP_ALIASES[logical_name]
-                if alias_target in all_steps and alias_target != step_name:
-                    if (
-                        step_name == "homologous_recombination_deficiency"
-                        and alias_target == "somatic_targeted_seq_cnv_calling"
-                    ):
-                        depends_on[logical_name] = "somatic_targeted_seq_cnv_calling_sequenza"
-                    else:
-                        depends_on[logical_name] = step_to_default_task[alias_target]
-
-        # 2) combine_variants merges somatic calls with filtered germline calls.
-        if step_name == "combine_variants":
-            depends_on["germline_variant"] = step_to_default_task["variant_filtration"]
-
-        # Expression quantification needs RNA alignments.
-        if step_name == "gene_expression_quantification":
-            depends_on["ngs_mapping"] = "ngs_mapping_star"
+        for field in dependency_fields(cls):
+            upstream = STEP_DEPENDENCY_TASKS.get((step_name, field), DEPENDENCY_TASKS.get(field))
+            if upstream:
+                depends_on[field] = upstream
 
         # Expression quantifiers read the strandedness decision of the strandedness task.
         if (
@@ -939,7 +851,7 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
         ):
             depends_on["strandedness"] = "gene_expression_quantification_strandedness"
 
-        # 3) Special handling for panel_of_normals:
+        # Special handling for panel_of_normals:
         # - For purecn: depends_on.panel_of_normals must point to the mutect2 variant
         # - For other tools: remove any panel_of_normals dependency (it's only for purecn)
         task_config = task.get("config", {})
@@ -950,7 +862,7 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 # Remove panel_of_normals dependency for non-purecn tools
                 depends_on.pop("panel_of_normals", None)
 
-        # 4) Special handling for somatic_targeted_seq_cnv_calling:
+        # Special handling for somatic_targeted_seq_cnv_calling:
         # - For cnvkit: depends_on.panel_of_normals -> panel_of_normals_cnvkit
         # - For purecn: depends_on.panel_of_normals -> panel_of_normals_purecn
         # - For sequenza: no panel_of_normals dependency needed

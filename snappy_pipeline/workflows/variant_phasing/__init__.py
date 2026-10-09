@@ -273,9 +273,7 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         bams = []
         bais = []
         for lib in trio_libs:
-            aln: ExpectedAlignments = self.parent.get_upstream_paths(
-                "ngs_mapping", library_name=lib
-            )
+            aln: ExpectedAlignments = self.parent.get_upstream_paths("alignments", library_name=lib)
             bam = getattr(aln, "bam", None) or aln["bam"]
             bai = getattr(aln, "bai", None) or aln["bai"]
             bams.append(bam)
@@ -386,12 +384,7 @@ class VariantPhasingWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
 
-        for prev in ("variant_annotation", "variant_calling"):
-            if getattr(self.config.depends_on, prev, None):
-                self.previous_step = prev
-                break
-        else:
-            self.previous_step = "variant_annotation"
+        self.previous_step = "variants"
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

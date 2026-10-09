@@ -104,7 +104,7 @@ def _filtration_step(**depends_on):
 
 
 def test_get_upstream_paths_namespaces_and_wraps_in_schema():
-    paths = _filtration_step().get_upstream_paths("variant", library_name="L1")
+    paths = _filtration_step().get_upstream_paths("variants", library_name="L1")
 
     assert paths == ExpectedVariantVcf(
         vcf="tasks/annotation/output/L1/out/L1.vcf.gz",
@@ -113,7 +113,7 @@ def test_get_upstream_paths_namespaces_and_wraps_in_schema():
 
 
 def test_get_upstream_paths_keeps_wildcards_without_identifiers():
-    paths = _filtration_step(ngs_mapping="mapping").get_upstream_paths("ngs_mapping")
+    paths = _filtration_step(alignments="mapping").get_upstream_paths("alignments")
 
     assert paths == ExpectedAlignments(
         bam="tasks/mapping/output/{library_name}/out/{library_name}.bam",
@@ -125,7 +125,7 @@ def test_get_upstream_paths_keeps_wildcards_without_identifiers():
     "field, error",
     [
         ("unknown_field", "no depends_on field named 'unknown_field'"),
-        ("ngs_mapping", r"depends_on.ngs_mapping is empty or unset"),
+        ("alignments", r"depends_on.alignments is empty or unset"),
     ],
 )
 def test_get_upstream_paths_errors(field, error):
@@ -136,9 +136,9 @@ def test_get_upstream_paths_errors(field, error):
 # get_task_config --------------------------------------------------------------------------------
 
 
-def _mapping_step(*tasks, link_in=""):
+def _mapping_step(*tasks, reads=""):
     """Return the workflow object of task "mapping" in a loaded project with ``tasks``."""
-    mapping = _mapping(depends_on={"link_in": link_in}) if link_in else _mapping()
+    mapping = _mapping(depends_on={"reads": reads}) if reads else _mapping()
     return _step(load_project(_config(*tasks, mapping), WORK_DIR), "mapping")
 
 
@@ -153,16 +153,37 @@ def test_get_task_config_returns_own_config():
 
 
 def test_get_task_config_follows_depends_on():
-    step = _mapping_step(TRIMMED, RAW, link_in="trimmed")
-    assert step.get_task_config("link_in") == LinkIn(path="/data/trimmed")
+    step = _mapping_step(TRIMMED, RAW, reads="trimmed")
+    assert step.get_task_config("reads") == LinkIn(path="/data/trimmed")
 
 
 def test_get_task_config_does_not_guess_unset_dependencies():
-    # "raw" is the only link_in task, but depends_on.link_in is not set.
-    with pytest.raises(ValueError, match="depends_on.link_in is not set"):
-        _mapping_step(RAW).get_task_config("link_in")
+    # "raw" is the only link_in task, but depends_on.reads is not set.
+    with pytest.raises(ValueError, match="depends_on.reads is not set"):
+        _mapping_step(RAW).get_task_config("reads")
 
 
 def test_get_task_config_rejects_unknown_fields():
     with pytest.raises(ValueError, match="depends_on.variant is not set; depends_on fields"):
         _mapping_step().get_task_config("variant")
+
+
+# get_preprocessed_path --------------------------------------------------------------------------
+
+TRIMMING = (
+    "adapter_trimming",
+    "trimming",
+    {"tool": "fastp", "fastp": {}, "depends_on": {"reads": "raw"}},
+)
+
+
+@pytest.mark.parametrize(
+    "reads, expected",
+    [
+        ("raw", "/data/raw"),
+        ("trimming", "tasks/trimming/output"),
+        ("data_sets", ""),
+    ],
+)
+def test_get_preprocessed_path_follows_reads(reads, expected):
+    assert _mapping_step(RAW, TRIMMING, reads=reads).get_preprocessed_path("reads") == expected

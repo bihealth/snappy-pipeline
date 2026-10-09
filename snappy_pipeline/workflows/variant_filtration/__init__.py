@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Implementation of the unified ``variant_filtration`` step.
 
-One task = one filter tool.  Chain multiple tasks via ``depends_on.variant``
+One task = one filter tool.  Chain multiple tasks via ``depends_on.variants``
 to build a sequential filter pipeline.
 
 Supported tools
@@ -70,7 +70,7 @@ class VariantFiltrationStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         lib = wildcards.tumor_library
-        variant = self.parent.get_upstream_paths("variant", library_name=lib)
+        variant = self.parent.get_upstream_paths("variants", library_name=lib)
         # Accept both typed schema and plain dict
         if isinstance(variant, dict):
             yield "vcf", variant["vcf"]
@@ -128,7 +128,7 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
 
         lib = wildcards.tumor_library
         tumor_aln: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=lib
+            "alignments", library_name=lib
         )
         if isinstance(tumor_aln, dict):
             yield "bam", tumor_aln["bam"]
@@ -142,7 +142,7 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
             normal_lib = tumor_df.iloc[0].get("matched_normal_lib") or None
         if normal_lib:
             normal_aln: ExpectedAlignments = self.parent.get_upstream_paths(
-                "ngs_mapping", library_name=normal_lib
+                "alignments", library_name=normal_lib
             )
             if isinstance(normal_aln, dict):
                 yield "normal", normal_aln["bam"]
@@ -256,7 +256,7 @@ class EbfilterStepPart(_BamAwareStepPart):
         random.shuffle(libraries)
         for lib_name in libraries[: cfg.panel_of_normals_size]:
             aln: ExpectedAlignments = self.parent.get_upstream_paths(
-                "ngs_mapping", library_name=lib_name
+                "alignments", library_name=lib_name
             )
             if isinstance(aln, dict):
                 yield aln["bam"]
@@ -287,7 +287,7 @@ class VariantFiltrationWorkflow(BaseStep):
 
     Supports somatic-specific tools (dkfz, ebfilter) as well as generic tools
     (bcftools, vembrane, regions). Use multiple tasks with
-    ``depends_on.variant`` to compose a sequential filter pipeline.
+    ``depends_on.variants`` to compose a sequential filter pipeline.
     """
 
     name = "variant_filtration"
@@ -297,7 +297,7 @@ class VariantFiltrationWorkflow(BaseStep):
     def task_produces(cls, config, upstream):
         """The variants of the ``variant`` task, tagged ``filtered``."""
         return tuple(
-            s.with_tags("filtered") for s in upstream["variant"] if s.type == DataType.VARIANTS
+            s.with_tags("filtered") for s in upstream["variants"] if s.type == DataType.VARIANTS
         )
 
     config_model_class = VariantFiltrationConfigModel

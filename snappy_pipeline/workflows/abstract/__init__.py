@@ -35,7 +35,11 @@ from snappy_pipeline.base import (
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DATA_SETS,
+    DataSignature,
+    ExpectedPathSchema,
+)
 
 if typing.TYPE_CHECKING:
     from snappy_pipeline.orchestration import Project
@@ -268,7 +272,7 @@ class WritePedigreeStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards):
         """Return the input BAM files of the cohort.
 
-        The list is empty if the parent step does not define an ``"ngs_mapping"`` workflow.
+        The list is empty if the parent step does not set ``depends_on.alignments``.
         """
         df = self.parent.build_library_dataframe()
         if df.empty:
@@ -295,7 +299,7 @@ class WritePedigreeStepPart(BaseStepPart):
                 ext=".bam",
                 **wildcards,
             )
-            yield self.parent.upstream("ngs_mapping")(path)
+            yield self.parent.upstream("alignments")(path)
 
     def get_output_files(self, action):
         self._validate_action(action=action)
@@ -831,48 +835,19 @@ class BaseStep:
             )
         return self.project.task_configs[upstream]
 
-    def get_preprocessed_path(self) -> str:
-        """Return a preprocessed FASTQ directory from configured RAW dependencies.
+    def get_preprocessed_path(self, field: str) -> str:
+        """Return the directory in which ``depends_on.<field>`` provides input files.
 
-        Resolution order:
-
-        1. The ``link_in`` dependency, if configured, using its explicit ``path`` value.
-        2. Any other configured ``depends_on`` field annotated with ``DataSignature(DataType.RAW)``,
-           interpreted as an in-pipeline task that exposes FASTQs under
-           ``tasks/<upstream_task_name>/output`` (e.g. ``adapter_trimming``).
-
-        Returns an empty string if no matching RAW provider dependency is configured.
+        The field names a ``link_in`` task (returns its ``path``) or a task whose ``output/``
+        directory holds the files, such as ``adapter_trimming``. Returns ``""`` when the field
+        is empty or ``data_sets``; the files are then searched in the data sets' search paths.
         """
-        if self.depends_on is None:
+        source = getattr(self.depends_on, field)
+        if source in ("", DATA_SETS):
             return ""
-
-        # Prefer explicit external path from link_in, if available.
-        link_in_task_name = getattr(self.depends_on, "link_in", "")
-        if link_in_task_name:
-            try:
-                upstream_config = self.get_task_config("link_in")
-                explicit_path = getattr(upstream_config, "path", "") or ""
-                if explicit_path:
-                    return explicit_path
-            except Exception:
-                pass
-
-        # Fallback: any configured RAW dependency task with standard output layout.
-        for field_name, field_info in type(self.depends_on).model_fields.items():
-            dep_task_name = getattr(self.depends_on, field_name, "")
-            if not dep_task_name:
-                continue
-            is_raw_dep = any(
-                isinstance(meta, DataSignature) and meta.type.value == "raw"
-                for meta in field_info.metadata
-            )
-            if not is_raw_dep:
-                continue
-            if field_name == "link_in":
-                continue
-            return self.namespaced_path(dep_task_name, "output")
-
-        return ""
+        if self.project.task(source).step == "link_in":
+            return self.project.task_configs[source].path
+        return self.namespaced_path(source, "output")
 
     def build_library_dataframe(self):
         """Return the unified library dataframe for this workflow.
@@ -1035,7 +1010,7 @@ class BaseStep:
 
         Usage::
 
-            ngs = self.parent.upstream("ngs_mapping")
+            ngs = self.parent.upstream("alignments")
             bam = ngs(f"output/{lib}/out/{lib}.bam")
             bai = ngs(f"output/{lib}/out/{lib}.bam.bai")
 
@@ -1077,7 +1052,7 @@ class BaseStep:
 
             # in a step part's _get_input_files_run method
             alignments: ExpectedAlignments = self.parent.get_upstream_paths(
-                "ngs_mapping", library_name=wildcards.library_name
+                "alignments", library_name=wildcards.library_name
             )
             bam = alignments.bam
             bai = alignments.bai
@@ -2249,10 +2224,13 @@ class LinkInStepPart(BaseStepPart):
 
     actions = ("run",)
 
+    #: The ``depends_on`` field that names the source of the files
+    source_field = "reads"
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_pattern_out = "work/input_links/{library_name}/.done"
-        self.preprocessed_path = self.parent.get_preprocessed_path()
+        self.preprocessed_path = self.parent.get_preprocessed_path(self.source_field)
 
         # Path generator.
         self.path_gen = LinkInPathGenerator(
@@ -2366,6 +2344,9 @@ class LinkInVcfExternalStepPart(LinkInStepPart):
 
     #: Step name
     name = "link_in_vcf_external"
+
+    #: External VCF and BAM files are searched in the path of a ``link_in`` task
+    source_field = "link_in"
 
     #: Class available actions
     actions = ("run",)

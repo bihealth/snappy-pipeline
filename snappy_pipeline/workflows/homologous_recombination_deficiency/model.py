@@ -34,13 +34,13 @@ class ScarHRD(SnappyModel):
 
 
 class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
-    cnv_calling: Annotated[
+    copy_number: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
     ] = "somatic_targeted_seq_cnv_calling"
 
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),

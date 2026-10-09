@@ -235,7 +235,7 @@ For example, after editing ``config.yaml`` to add a mapping and variant calling 
         config:
           tool: strelka
           depends_on:
-            ngs_mapping: bwa_mapping
+            alignments: bwa_mapping
 
     data_sets:
       batch1:

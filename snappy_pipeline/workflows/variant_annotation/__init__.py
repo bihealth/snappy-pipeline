@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Implementation of the unified ``variant_annotation`` step.
 
-One task = one annotation tool. Chain via ``depends_on.variant`` to annotate
+One task = one annotation tool. Chain via ``depends_on.variants`` to annotate
 somatic or germline VCF inputs with either VEP or Mehari.
 """
 
@@ -40,7 +40,7 @@ class VariantAnnotationStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards):
         lib = wildcards.library_name
         variant = ExpectedVariantVcf.model_validate(
-            self.parent.get_upstream_paths("variant", library_name=lib)
+            self.parent.get_upstream_paths("variants", library_name=lib)
         )
         yield "vcf", variant.vcf
         yield "vcf_tbi", variant.vcf_tbi
@@ -120,7 +120,7 @@ class VariantAnnotationWorkflow(BaseStep):
     def task_produces(cls, config, upstream):
         """The variants of the ``variant`` task, tagged ``annotated``."""
         return tuple(
-            s.with_tags("annotated") for s in upstream["variant"] if s.type == DataType.VARIANTS
+            s.with_tags("annotated") for s in upstream["variants"] if s.type == DataType.VARIANTS
         )
 
     config_model_class = VariantAnnotationConfigModel

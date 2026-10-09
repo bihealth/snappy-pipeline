@@ -34,7 +34,7 @@ class CombineVariantsStepPart(BaseStepPart):
         yield "reference", self.w_config.static_data_config.reference.path
 
         somatic = self.parent.get_upstream_paths(
-            "somatic_variant", library_name=wildcards.tumor_library
+            "somatic_variants", library_name=wildcards.tumor_library
         )
         yield "somatic_vcf", somatic.vcf
 
@@ -44,7 +44,7 @@ class CombineVariantsStepPart(BaseStepPart):
         if not tumor_df.empty:
             normal_lib = tumor_df.iloc[0].get("matched_normal_lib") or None
         if normal_lib:
-            germline = self.parent.get_upstream_paths("germline_variant", library_name=normal_lib)
+            germline = self.parent.get_upstream_paths("germline_variants", library_name=normal_lib)
             yield "germline_vcf", germline.vcf
 
     def get_output_files(self, action: str) -> dict[str, Any]:

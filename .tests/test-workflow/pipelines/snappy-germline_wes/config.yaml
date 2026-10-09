@@ -28,7 +28,7 @@ tasks:
     step: variant_calling
     config:
       depends_on:
-        ngs_mapping: mapping
+        alignments: mapping
       group_by: cohort
       tool: gatk4_hc_gvcf
       gatk4_hc_gvcf: {}
@@ -37,7 +37,7 @@ tasks:
     step: variant_annotation
     config:
       depends_on:
-        variant: variant_calling
+        variants: variant_calling
       tool: "mehari"
       mehari:
         transcripts:
@@ -50,7 +50,7 @@ tasks:
     config:
       tool: vembrane
       depends_on:
-        variant: annotation
+        variants: annotation
       vembrane:
         mode: filter
         expression: 'QUAL > 10'

@@ -267,7 +267,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             ),
         )
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=wildcards.library_name
+            "alignments", library_name=wildcards.library_name
         )
         yield "bam", alignments.bam
 
@@ -321,7 +321,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     _get_params_create_panel = _get_params_install
 
     def _get_params_coverage(self, wildcards):
-        mapper = str(self.parent.get_task_config("ngs_mapping").tool)
+        mapper = str(self.parent.get_task_config("alignments").tool)
         return {
             "config": self.config.get(self.name).model_dump(by_alias=True),
             "mapper": mapper,
@@ -382,7 +382,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         tpl = "output/{normal_library}/out/{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         scatteritem_base_path = "work/{normal_library}/par/scatter/{scatteritem}.region.bed"
@@ -583,7 +583,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
                 input_files["annotate"] = self.config.cnvkit.path_annotation
             return input_files
         tpl = "output/{normal_library}/out/{normal_library}.bam"
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         bams = [ngs_mapping(tpl.format(normal_library=x)) for x in self.normal_libraries]
         bais = [x + ".bai" for x in bams]
         input_files = {
@@ -610,7 +610,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         """Helper wrapper function for computing coverage"""
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         tpl = "output/{normal_library}/out/{normal_library}.bam"
         bam = ngs_mapping(tpl.format(**wildcards))
         return {

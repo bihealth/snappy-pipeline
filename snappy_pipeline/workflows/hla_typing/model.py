@@ -82,17 +82,18 @@ class ExpectedHlaTyping(SnappyModel):
 
 
 class HlaTypingDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
-    link_in: Annotated[
+    #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
+    reads: Annotated[
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
     ] = ""
-    """Optional: name of the ``link_in`` task to use as the preprocessed FASTQ source."""
 
 
 class HlaTyping(SnappyStepModel):

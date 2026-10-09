@@ -97,13 +97,13 @@ class ScarHRDStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        aligner_tool = str(self.parent.get_task_config("ngs_mapping").tool)
-        cnv_tool = str(self.parent.get_task_config("cnv_calling").tool)
+        aligner_tool = str(self.parent.get_task_config("alignments").tool)
+        cnv_tool = str(self.parent.get_task_config("copy_number").tool)
         base_name = f"{aligner_tool}.{cnv_tool}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
         yield (
             "seqz",
-            self.parent.upstream("cnv_calling")(f"output/{base_name}/out/{base_name}.seqz.gz"),
+            self.parent.upstream("copy_number")(f"output/{base_name}/out/{base_name}.seqz.gz"),
         )
 
     def get_output_files(self, action):
@@ -210,10 +210,10 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
         ``scarHRD`` can currently only consume ``sequenza`` copy number output.
         """
-        tool = self.get_task_config("cnv_calling").tool
+        tool = self.get_task_config("copy_number").tool
         if tool != "sequenza":
             raise InvalidConfiguration(
-                f"Tool '{tool}' of the depends_on.cnv_calling task "
-                f"'{self.project.dependencies[self.task_name]['cnv_calling']}' is not supported by "
+                f"Tool '{tool}' of the depends_on.copy_number task "
+                f"'{self.project.dependencies[self.task_name]['copy_number']}' is not supported by "
                 "'homologous_recombination_deficiency'; expected 'sequenza'"
             )

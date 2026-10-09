@@ -24,7 +24,7 @@ ALIGNMENTS = {"bam": "tasks/mapping/output/L1.bam", "bai": "tasks/mapping/output
 DECISION = {"decision": "tasks/strandedness/output/L1/out/L1.decision"}
 
 UPSTREAM = {
-    "ngs_mapping": ExpectedAlignments(**ALIGNMENTS),
+    "alignments": ExpectedAlignments(**ALIGNMENTS),
     "strandedness": ExpectedStrandedness(**DECISION),
 }
 

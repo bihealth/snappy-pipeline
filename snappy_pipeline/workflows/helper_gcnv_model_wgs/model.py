@@ -18,7 +18,7 @@ class Gcnv(SnappyModel):
 
 
 class HelperGcnvModelWgsDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),

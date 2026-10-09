@@ -75,7 +75,7 @@ class AscatStepPart(BaseStepPart):
 
     def _get_input_files_baf_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),
@@ -84,7 +84,7 @@ class AscatStepPart(BaseStepPart):
 
     def _get_input_files_baf_normal(self, wildcards):
         """Return input files for generating BAF file for the normal."""
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         base_path = ("output/{normal_library}/out/{normal_library}").format(**wildcards)
         return {
             "bam": ngs_mapping(base_path + ".bam"),

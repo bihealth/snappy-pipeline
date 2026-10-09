@@ -8,7 +8,7 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import Expec
 
 
 class GeneExpressionReportDependsOn(SnappyModel):
-    gene_expression_quantification: Annotated[
+    expression: Annotated[
         str,
         DataSignature(DataType.EXPRESSION, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedExpression),

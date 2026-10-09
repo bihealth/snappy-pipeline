@@ -159,7 +159,7 @@ class ScrambleStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=wildcards.library_name
+            "alignments", library_name=wildcards.library_name
         )
         yield alignments.bam
 

@@ -82,9 +82,9 @@ For the second ``mutect2`` run, create a separate task in ``config.yaml`` under 
 
       - name: purecn_calling
         step: somatic_targeted_seq_cnv_calling
-        depends_on:
-          variant_calling: mutect2_for_purecn
         config:
+          depends_on:
+            variants: mutect2_for_purecn
           tool: purecn
           purecn:
             genome_name: "hg19"

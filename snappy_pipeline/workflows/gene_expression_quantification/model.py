@@ -5,7 +5,6 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.adapter_trimming.model import ExpectedTrimmedRawFastq
 from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -84,22 +83,18 @@ class ExpectedStrandedness(SnappyModel):
 
 
 class GeneExpressionQuantificationDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
 
-    # Optional external/in-pipeline FASTQ source for salmon mode.
-    link_in: Annotated[
+    #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
+    reads: Annotated[
         str,
         DataSignature(DataType.RAW),
         ExpectedPathSchema(ExpectedLinkedRawFastq),
-    ] = ""
-    adapter_trimming: Annotated[
-        str,
-        DataSignature(DataType.RAW, frozenset({"trimmed"})),
-        ExpectedPathSchema(ExpectedTrimmedRawFastq),
     ] = ""
 
     # Task of this step with tool: strandedness; required for TOOLS_NEEDING_STRANDEDNESS.

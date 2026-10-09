@@ -9,7 +9,7 @@ Germline Variant Filtration
 Overview
 ========
 
-The ``variant_filtration`` step has been unified to support both germline and somatic workflows under a task-based model. Each configured task executes a single filtration tool. Complex pipelines are built by chaining tasks using the ``depends_on.variant`` parameter.
+The ``variant_filtration`` step has been unified to support both germline and somatic workflows under a task-based model. Each configured task executes a single filtration tool. Complex pipelines are built by chaining tasks using the ``depends_on.variants`` parameter.
 
 Supported Tools
 ===============
@@ -40,9 +40,9 @@ Here is an example config chaining a quality filter (using vembrane in ``tag`` m
     tasks:
       - step: variant_filtration
         name: quality_tagging
-        depends_on:
-          variant: variant_annotation_vep
         config:
+          depends_on:
+            variants: variant_annotation_vep
           tool: vembrane
           vembrane:
             mode: tag
@@ -52,9 +52,9 @@ Here is an example config chaining a quality filter (using vembrane in ``tag`` m
 
       - step: variant_filtration
         name: hard_filtration
-        depends_on:
-          variant: quality_tagging
         config:
+          depends_on:
+            variants: quality_tagging
           tool: vembrane
           vembrane:
             mode: filter

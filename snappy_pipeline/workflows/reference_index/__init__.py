@@ -196,9 +196,9 @@ class ReferenceIndexWorkflow(BaseStep):
         self.register_sub_step_classes((BuildReferenceCommonStepPart, selected_tool_class))
 
     def get_reference_path(self) -> str:
-        dep_task = getattr(self.config.depends_on, "reference_download", "")
+        dep_task = getattr(self.config.depends_on, "reference", "")
         if dep_task:
-            upstream = self.get_upstream_paths("reference_download")
+            upstream = self.get_upstream_paths("reference")
             if getattr(upstream, "fasta", ""):
                 return upstream.fasta
         return self.config.path_reference or self.w_config.static_data_config.reference.path

@@ -9,7 +9,7 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class RepeatExpansionDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),

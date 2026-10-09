@@ -147,7 +147,7 @@ class PvacToolsStepPart(BaseStepPart):
                     if extraction_type not in self.hla_tools:
                         self.hla_tools[extraction_type] = {}
                     try:
-                        hla_config = self.parent.get_task_config("hla_typing")
+                        hla_config = self.parent.get_task_config("hla_types")
                         mapper = getattr(hla_config, "mapper", None)
                     except Exception:
                         mapper = None
@@ -166,12 +166,12 @@ class PvacToolsStepPart(BaseStepPart):
 
     def _get_input_files_normalize(self, wildcards: Wildcards) -> dict[str, str]:
         tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variant_annotation")
+        annotation = self.parent.upstream("somatic_variants")
         return {"annotated": annotation(tpl)}
 
     def _get_input_files_normalize_full(self, wildcards: Wildcards) -> dict[str, str]:
         tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variant_annotation")
+        annotation = self.parent.upstream("somatic_variants")
         return {"annotated": annotation(tpl)}
 
     def get_output_files(self, action):
@@ -237,7 +237,7 @@ class PvacToolsStepPart(BaseStepPart):
 
     @listify
     def _get_hla_files(self, wildcards: Wildcards):
-        hla_typing = self.parent.upstream("hla_typing")
+        hla_typing = self.parent.upstream("hla_types")
         tumor_dna = wildcards.tumor_dna
         normal_dna = self.parent.tumor_dna.get(tumor_dna, None)
         tumor_rna = self.parent.tumor_rna.get(tumor_dna, None)
@@ -342,7 +342,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
 
     def _get_input_files_pileup(self, wildcards: Wildcards) -> dict[str, str]:
         alignments = self.parent.get_upstream_paths(
-            "ngs_mapping", library_name=self.parent.tumor_rna[wildcards.tumor_dna]
+            "alignments", library_name=self.parent.tumor_rna[wildcards.tumor_dna]
         )
         input_files = {"bam": alignments.bam}
 
@@ -350,7 +350,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
             tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
         else:
             tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variant_annotation")
+        annotation = self.parent.upstream("somatic_variants")
         input_files["loci"] = annotation(tpl)
         input_files["reference"] = self.w_config.static_data_config.reference.path
         return input_files
@@ -369,9 +369,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
         if self.config.quantification.enabled and (
             library := self.parent.tumor_rna.get(wildcards.tumor_dna, None)
         ):
-            quantification = self.parent.get_upstream_paths(
-                "gene_expression_quantification", library_name=library
-            )
+            quantification = self.parent.get_upstream_paths("expression", library_name=library)
             input_files["gene_tpms"] = quantification["tsv"]
             input_files["transcript_tpms"] = quantification["tsv"]
 
@@ -525,9 +523,7 @@ class PvacFuseStepPart(PvacToolsStepPart):
 
         library = self.parent.tumor_rna.get(wildcards.tumor_dna)
         if library:
-            fusions = self.parent.get_upstream_paths(
-                "somatic_gene_fusion_calling", library_name=library
-            )
+            fusions = self.parent.get_upstream_paths("fusions", library_name=library)
             fusion_path = getattr(fusions, "tsv", fusions.get("tsv", ""))
             if fusion_path:
                 input_files["fusions"] = fusion_path
@@ -612,14 +608,14 @@ class PvacSpliceStepPart(PvacToolsStepPart):
             tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
         else:
             tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variant_annotation")
+        annotation = self.parent.upstream("somatic_variants")
         input_files["annotated"] = annotation(tpl)
 
         rna_lib = self.parent.tumor_rna[wildcards.tumor_dna]
-        alignments = self.parent.get_upstream_paths("ngs_mapping", library_name=rna_lib)
+        alignments = self.parent.get_upstream_paths("alignments", library_name=rna_lib)
         input_files["bam"] = alignments.bam
 
-        ngs_mapping = self.parent.upstream("ngs_mapping")
+        ngs_mapping = self.parent.upstream("alignments")
         input_files["strandedness"] = ngs_mapping(
             f"output/{rna_lib}/strandedness/{rna_lib}.decision.json"
         )
@@ -741,11 +737,11 @@ class PhasingStepPart(BaseStepPart):
         yield "reference", self.w_config.static_data_config.reference.path
 
         combined = self.parent.get_upstream_paths(
-            "combine_variants", library_name=wildcards.tumor_dna
+            "combined_variants", library_name=wildcards.tumor_dna
         )
         yield "vcf", combined["vcf"]
 
-        alignments = self.parent.get_upstream_paths("ngs_mapping", library_name=wildcards.tumor_dna)
+        alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.tumor_dna)
         yield "bam", alignments.bam
 
     def get_output_files(self, action: str) -> dict[str, Any]:
@@ -822,7 +818,7 @@ class NetChopStepPart(BaseStepPart):
 
         if self.config.phasing.enabled:
             combined = self.parent.get_upstream_paths(
-                "combine_variants", library_name=wildcards.tumor_dna
+                "combined_variants", library_name=wildcards.tumor_dna
             )
             yield "vcf", combined["vcf"]
         else:

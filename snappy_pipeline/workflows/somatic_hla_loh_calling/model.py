@@ -9,12 +9,12 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class SomaticHlaLohCallingDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
-    hla_typing: Annotated[
+    hla_types: Annotated[
         str,
         DataSignature(DataType.TABULAR, frozenset({"hla"})),
         ExpectedPathSchema(ExpectedHlaTyping),

@@ -49,7 +49,7 @@ class Star(SnappyModel):
 
 
 class ReferenceIndexDependsOn(SnappyModel):
-    reference_download: Annotated[
+    reference: Annotated[
         str,
         DataSignature(DataType.RAW, frozenset({"reference", ("dna", "rna")})),
         ExpectedPathSchema(ExpectedReferenceDownloadFiles),

@@ -20,12 +20,12 @@ class CnvAssayType(enum.StrEnum):
 
 
 class SomaticCnvCheckingDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
-    cnv_calling: Annotated[
+    copy_number: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),

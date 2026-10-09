@@ -55,7 +55,7 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                 if lib.extra_infos["libraryType"] == "mRNA_seq":
                                     rna_library = lib.name
                                     expression: ExpectedExpression = self.parent.get_upstream_paths(
-                                        "gene_expression_quantification", library_name=rna_library
+                                        "expression", library_name=rna_library
                                     )
                                     yield expression.tsv
 

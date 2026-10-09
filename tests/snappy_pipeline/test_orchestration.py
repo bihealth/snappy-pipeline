@@ -28,27 +28,27 @@ def _mapping(name="mapping", **config):
 
 
 def _calling(name="calling", mapping="mapping", tool="mutect2"):
-    config = {"depends_on": {"ngs_mapping": mapping}, "tool": tool}
+    config = {"depends_on": {"alignments": mapping}, "tool": tool}
     config[tool] = {"contamination": {}} if tool == "mutect2" else {}
     return ("variant_calling", name, config)
 
 
-def _annotation(name="annotation", variant="calling"):
+def _annotation(name="annotation", variants="calling"):
     return (
         "variant_annotation",
         name,
-        {"depends_on": {"variant": variant}, "tool": "vep", "vep": {}},
+        {"depends_on": {"variants": variants}, "tool": "vep", "vep": {}},
     )
 
 
-def _filtration(name="filtration", variant="annotation", **depends_on):
-    config = {"depends_on": {"variant": variant, **depends_on}, "tool": "bcftools"}
+def _filtration(name="filtration", variants="annotation", **depends_on):
+    config = {"depends_on": {"variants": variants, **depends_on}, "tool": "bcftools"}
     config["bcftools"] = {"include": "QUAL > 10"}
     return ("variant_filtration", name, config)
 
 
-def _tmb(name="tmb", somatic_variant="filtration"):
-    config = {"depends_on": {"somatic_variant": somatic_variant}}
+def _tmb(name="tmb", variants="filtration"):
+    config = {"depends_on": {"variants": variants}}
     return ("tumor_mutational_burden", name, config | {"target_regions": "/refs/regions.bed"})
 
 
@@ -65,7 +65,7 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
         "annotation",
         "filtration",
     ]
-    assert project.dependencies["filtration"] == {"variant": "annotation"}
+    assert project.dependencies["filtration"] == {"variants": "annotation"}
     assert project.dependencies["mapping"] == {}
     assert project.task_configs["calling"].tool == "mutect2"
     assert project.lookup_paths == (WORK_DIR, "/projects")
@@ -84,13 +84,13 @@ def test_load_project_rejects_duplicate_task_names():
 
 def test_load_project_rejects_dependency_on_missing_task():
     with pytest.raises(
-        ValueError, match="depends_on.ngs_mapping is 'mapping2', which is not a task"
+        ValueError, match="depends_on.alignments is 'mapping2', which is not a task"
     ):
         load_project(_config(_mapping(), _calling(mapping="mapping2")), WORK_DIR)
 
 
 def test_load_project_rejects_dependency_cycles():
-    tasks = (_annotation(variant="filtration"), _filtration(variant="annotation"))
+    tasks = (_annotation(variants="filtration"), _filtration(variants="annotation"))
     with pytest.raises(ValueError, match="Dependency cycle between tasks"):
         load_project(_config(*tasks), WORK_DIR)
 
@@ -128,7 +128,7 @@ def test_load_project_rejects_germline_variants_for_tmb():
     tasks = (_mapping(), _calling(tool="gatk4_hc_gvcf"), _annotation(), _filtration(), _tmb())
     with pytest.raises(
         ValueError,
-        match=r"Task 'tmb': depends_on.somatic_variant requires variants \[somatic\], "
+        match=r"Task 'tmb': depends_on.variants requires variants \[somatic\], "
         r"but task 'filtration' produces variants \[annotated, filtered, germline, indel, snv\]",
     ):
         load_project(_config(*tasks), WORK_DIR)
@@ -140,7 +140,7 @@ def test_load_project_rejects_rna_alignments_for_variant_calling(tmp_path):
     star = ("ngs_mapping", "star", {"tool": "star", "star": {"path_index": str(tmp_path)}})
     with pytest.raises(
         ValueError,
-        match=r"Task 'calling': depends_on.ngs_mapping requires alignments \[dna\], "
+        match=r"Task 'calling': depends_on.alignments requires alignments \[dna\], "
         r"but task 'star' produces alignments \[rna\]",
     ):
         load_project(_config(star, _calling(mapping="star")), WORK_DIR)
@@ -149,13 +149,27 @@ def test_load_project_rejects_rna_alignments_for_variant_calling(tmp_path):
 def test_load_project_rejects_dna_alignments_for_expression_quantification():
     strandedness = {"tool": "strandedness", "strandedness": {"path_exon_bed": "/refs/exons.bed"}}
     expression = ("gene_expression_quantification", "expression", strandedness)
-    expression[2]["depends_on"] = {"ngs_mapping": "mapping"}
+    expression[2]["depends_on"] = {"alignments": "mapping"}
     with pytest.raises(
         ValueError,
-        match=r"Task 'expression': depends_on.ngs_mapping requires alignments \[rna\], "
+        match=r"Task 'expression': depends_on.alignments requires alignments \[rna\], "
         r"but task 'mapping' produces alignments \[dna\]",
     ):
         load_project(_config(_mapping(), expression), WORK_DIR)
+
+
+def test_load_project_accepts_reads_from_data_sets():
+    project = load_project(_config(_mapping(depends_on={"reads": "data_sets"})), WORK_DIR)
+    assert project.dependencies["mapping"] == {}
+
+
+def test_load_project_reserves_data_sets_for_reads():
+    with pytest.raises(
+        ValueError, match="depends_on.alignments is 'data_sets', which is not a task"
+    ):
+        load_project(_config(_mapping(), _calling(mapping="data_sets")), WORK_DIR)
+    with pytest.raises(ValueError, match="Task name 'data_sets' is reserved"):
+        load_project(_config(_mapping(name="data_sets")), WORK_DIR)
 
 
 # create_task_instances ---------------------------------------------------------------------------
@@ -202,10 +216,10 @@ def _project(**dependencies):
 #: mapping -> calling -> annotation -> filtration, plus a QC task on the mapping.
 CHAIN = _project(
     mapping={},
-    calling={"ngs_mapping": "mapping"},
-    annotation={"variant": "calling"},
-    filtration={"variant": "annotation", "ngs_mapping": "mapping"},
-    qc={"ngs_mapping": "mapping"},
+    calling={"alignments": "mapping"},
+    annotation={"variants": "calling"},
+    filtration={"variants": "annotation", "alignments": "mapping"},
+    qc={"alignments": "mapping"},
 )
 
 

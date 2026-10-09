@@ -161,3 +161,37 @@ def test_step_snakefiles_fetch_their_workflow_object():
         ):
             found.append(str(path.relative_to(REPO)))
     assert not found, f"use wf = task_instance(config['__task_name__']) only: {found}"
+
+
+#: Allowed ``depends_on`` keys: named after the data, with role prefixes where a step needs two
+#: inputs of one kind. ``link_in`` remains for the external-file export steps until plans.md F1.
+DEPENDS_ON_KEYS = {
+    "reads",
+    "alignments",
+    "variants",
+    "somatic_variants",
+    "germline_variants",
+    "combined_variants",
+    "annotated_variants",
+    "phased_variants",
+    "copy_number",
+    "structural_variants",
+    "fusions",
+    "expression",
+    "hla_types",
+    "strandedness",
+    "panel_of_normals",
+    "reference",
+    "index",
+    "link_in",
+}
+
+
+def test_depends_on_keys_use_the_vocabulary():
+    found = []
+    for step, workflow_cls in WORKFLOW_REGISTRY.items():
+        depends_on = workflow_cls.config_model_class.model_fields.get("depends_on")
+        if depends_on is not None:
+            keys = set(depends_on.annotation.model_fields) - DEPENDS_ON_KEYS
+            found += [f"{step}.{key}" for key in sorted(keys)]
+    assert not found, f"depends_on keys outside the vocabulary in docs/dev_conventions.rst: {found}"

@@ -34,7 +34,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
-            "somatic_variant", library_name=wildcards.tumor_library
+            "variants", library_name=wildcards.tumor_library
         )
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi

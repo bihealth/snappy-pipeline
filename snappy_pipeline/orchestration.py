@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature
+from snappy_pipeline.workflows.abstract.protocol import DATA_SETS, DataSignature
 
 if TYPE_CHECKING:
     from snakemake.api import Workflow
@@ -73,6 +73,8 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
     duplicates = sorted({name for name in names if names.count(name) > 1})
     if duplicates:
         raise ValueError(f"Task names must be unique; duplicates: {', '.join(duplicates)}")
+    if DATA_SETS in names:
+        raise ValueError(f"Task name {DATA_SETS!r} is reserved for depends_on.reads")
 
     task_configs: dict[str, SnappyStepModel] = {}
     dependencies: dict[str, dict[str, str]] = {}
@@ -168,13 +170,16 @@ def _without_nulls(data: Any, path: str = "") -> Any:
 def _resolve_dependencies(
     task_name: str, task_config: SnappyStepModel, names: list[str]
 ) -> dict[str, str]:
-    """Return ``depends_on`` field -> upstream task name for the set fields of one task."""
+    """Return ``depends_on`` field -> upstream task name for the set fields of one task.
+
+    ``reads: data_sets`` names no task, so it is not a dependency.
+    """
     depends_on = getattr(task_config, "depends_on", None)
     if depends_on is None:
         return {}
     result = {}
     for field, upstream in depends_on.model_dump().items():
-        if not upstream:
+        if not upstream or (field == "reads" and upstream == DATA_SETS):
             continue
         if upstream == task_name:
             raise ValueError(f"Task {task_name!r}: depends_on.{field} names the task itself")

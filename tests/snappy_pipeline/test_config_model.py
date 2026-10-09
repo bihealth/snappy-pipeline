@@ -36,7 +36,7 @@ def test_depends_on_belongs_into_the_task_config():
     task = {
         "step": "variant_calling",
         "name": "calling",
-        "depends_on": {"ngs_mapping": "mapping"},
+        "depends_on": {"alignments": "mapping"},
         "config": {},
     }
     with pytest.raises(pydantic.ValidationError, match="depends_on"):

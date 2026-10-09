@@ -91,7 +91,7 @@ class ExtraInfos(TypedDict):
 
 
 class CbioportalExportDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
@@ -101,7 +101,7 @@ class CbioportalExportDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedCopyNumberCalls),
     ] = "copy_number"
-    somatic_variant: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
         ExpectedPathSchema(ExpectedSomaticVariants),

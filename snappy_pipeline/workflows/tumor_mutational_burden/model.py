@@ -8,7 +8,7 @@ from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVaria
 
 
 class TumorMutationalBurdenDependsOn(SnappyModel):
-    somatic_variant: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
         ExpectedPathSchema(ExpectedSomaticVariants),

@@ -9,31 +9,25 @@ from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVari
 
 
 class VarfishExportDependsOn(SnappyModel):
-    ngs_mapping: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
     """Used output of ngs_mapping is alignment quality control data"""
 
-    variant_calling: Annotated[
+    variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         ExpectedPathSchema(ExpectedGermlineVariants),
     ] = "variant_calling"
     """Used output of variant_calling is variant calls"""
 
-    sv_calling_targeted: Annotated[
+    structural_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})),
     ] = ""
-    """Used output of targeted SV calling is variant calls"""
-
-    sv_calling_wgs: Annotated[
-        str,
-        DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})),
-    ] = ""
-    """Used output of WGS SV calling is variant calls"""
+    """Optional ``sv_calling_targeted`` or ``sv_calling_wgs`` task whose calls are exported"""
 
 
 class VarfishExport(SnappyStepModel):

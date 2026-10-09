@@ -106,7 +106,7 @@ class OptiTypeStepPart(BaseStepPart):
         self.base_path_in = "work/input_links/{library_name}"
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
-        self.preprocessed_path = self.parent.get_preprocessed_path()
+        self.preprocessed_path = self.parent.get_preprocessed_path("reads")
         #: Path generator for linking in
         self.path_gen = LinkInPathGenerator(
             self.parent.work_dir,
@@ -243,7 +243,7 @@ class ArcasHlaStepPart(BaseStepPart):
         tpl = "output/{library_name}/out/{library_name}.bam"
         yield (
             "bam",
-            self.parent.upstream("ngs_mapping")(tpl.format(mapper=self.mapper, **wildcards)),
+            self.parent.upstream("alignments")(tpl.format(mapper=self.mapper, **wildcards)),
         )
 
     @dictify

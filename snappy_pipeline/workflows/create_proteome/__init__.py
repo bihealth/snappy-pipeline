@@ -37,7 +37,7 @@ class CreateProteomeStepPart(BaseStepPart):
         if self.config.path_proteome:
             yield "proteome", self.config.path_proteome
 
-        variant = self.parent.get_upstream_paths("variant", library_name=wildcards.library_name)
+        variant = self.parent.get_upstream_paths("variants", library_name=wildcards.library_name)
         yield "vcf", getattr(variant, "vcf", None) or variant["vcf"]
 
     def get_output_files(self, action: str) -> dict[str, Any]:
