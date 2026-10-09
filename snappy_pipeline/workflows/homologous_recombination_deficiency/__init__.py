@@ -97,14 +97,11 @@ class ScarHRDStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        aligner_tool = str(self.parent.get_task_config("alignments").tool)
-        cnv_tool = str(self.parent.get_task_config("copy_number").tool)
-        base_name = f"{aligner_tool}.{cnv_tool}.{wildcards.library_name}"
         yield "done", "work/R_packages/out/scarHRD.done"
-        yield (
-            "seqz",
-            self.parent.upstream("copy_number")(f"output/{base_name}/out/{base_name}.seqz.gz"),
+        copy_number = self.parent.get_upstream_paths(
+            "copy_number", library_name=wildcards.library_name
         )
+        yield "seqz", copy_number.seqz
 
     def get_output_files(self, action):
         if action == "install":

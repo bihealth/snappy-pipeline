@@ -135,7 +135,7 @@
  {
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/out/scarHRD.done",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/bwa.sequenza.case001subregion-T1-DNA1-WES1/out/bwa.sequenza.case001subregion-T1-DNA1-WES1.seqz.gz"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
   ],
   "log": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/log/scarHRD.case001subregion-T1-DNA1-WES1.log",
@@ -365,11 +365,11 @@
  },
  {
   "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/out/bwa.sequenza.case001subregion-T1-DNA1-WES1.seqz.gz"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/bwa.sequenza.case001subregion-T1-DNA1-WES1/out/bwa.sequenza.case001subregion-T1-DNA1-WES1.seqz.gz"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
   ],
   "params": {},
   "resources": {},
@@ -377,8 +377,8 @@
   "threads": 1,
   "wildcards": {
    "ext": "gz",
-   "file": "bwa.sequenza.case001subregion-T1-DNA1-WES1.seqz",
-   "path": "bwa.sequenza.case001subregion-T1-DNA1-WES1/out"
+   "file": "case001subregion-T1-DNA1-WES1.seqz",
+   "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
  },
@@ -391,16 +391,16 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/log/bwa.sequenza.case001subregion-T1-DNA1-WES1.coverage.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/log/bwa.sequenza.case001subregion-T1-DNA1-WES1.coverage.log.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/log/bwa.sequenza.case001subregion-T1-DNA1-WES1.coverage.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/log/bwa.sequenza.case001subregion-T1-DNA1-WES1.coverage.conda_info.txt.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/log/bwa.sequenza.case001subregion-T1-DNA1-WES1.coverage.conda_list.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/log/bwa.sequenza.case001subregion-T1-DNA1-WES1.coverage.conda_list.txt.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt.md5"
   ],
   "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/out/bwa.sequenza.case001subregion-T1-DNA1-WES1.seqz.gz",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/bwa.sequenza.case001subregion-T1-DNA1-WES1/out/bwa.sequenza.case001subregion-T1-DNA1-WES1.seqz.gz.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz.md5"
   ],
   "params": {
    "args": {
@@ -434,7 +434,7 @@
   "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_sequenza_coverage",
   "threads": 1,
   "wildcards": {
-   "tumor_library": "bwa.sequenza.case001subregion-T1-DNA1-WES1"
+   "tumor_library": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/coverage"
  },
