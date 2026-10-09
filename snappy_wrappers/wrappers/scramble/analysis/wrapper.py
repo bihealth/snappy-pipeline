@@ -14,7 +14,7 @@ args = getattr(snakemake.params, "args", {})
 input_full_path = os.path.join(os.getcwd(), str(snakemake.input))
 
 # Define prefix based on input
-prefix = input_full_path.replace("_cluster.txt", "")
+prefix = input_full_path.replace(".cluster.txt", "")
 
 # Include user provided MEI Ref if any
 mei_ref_argument = ""
@@ -36,6 +36,9 @@ scramble.sh  {mei_ref_argument} \
   --indel-score {args[indel_score]} \
   --poly-a-frac {args[mei_polya_frac]} \
   --eval-meis
+
+# Scramble names its table {{prefix}}_MEIs.txt, the declared name is {{prefix}}.MEIs.txt
+mv {prefix}_MEIs.txt {snakemake.output.txt}
 
 # Post-process VCF
 bgzip --stdout {snakemake.output.vcf} > {snakemake.output.vcf_gz}

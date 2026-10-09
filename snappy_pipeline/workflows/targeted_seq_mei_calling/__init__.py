@@ -147,7 +147,7 @@ class ScrambleStepPart(BaseStepPart):
             return "work/{name_pattern}/log/{name_pattern}.log".format(
                 name_pattern=name_pattern_annotated
             )
-        return "work/{name_pattern}/log/{name_pattern}_{action}.log".format(
+        return "work/{name_pattern}/log/{name_pattern}.{action}.log".format(
             name_pattern=name_pattern, action=action
         )
 
@@ -171,7 +171,7 @@ class ScrambleStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         name_pattern = "{library_name}"
-        base_name_out = "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
+        base_name_out = "work/{name_pattern}/out/{name_pattern}.cluster.{ext}".format(
             name_pattern=name_pattern, ext="txt"
         )
         yield base_name_out.format(**wildcards)
@@ -184,7 +184,7 @@ class ScrambleStepPart(BaseStepPart):
         ext = "txt"
         yield (
             ext,
-            "work/{name_pattern}/out/{name_pattern}_cluster.{ext}".format(
+            "work/{name_pattern}/out/{name_pattern}.cluster.{ext}".format(
                 name_pattern=name_pattern, ext=ext
             ),
         )
@@ -195,8 +195,8 @@ class ScrambleStepPart(BaseStepPart):
         """Yield output files' patterns for scramble call."""
         name_pattern = "{library_name}"
         ext_dict = {
-            "txt": "_MEIs.txt",
-            "txt_md5": "_MEIs.txt.md5",
+            "txt": ".MEIs.txt",
+            "txt_md5": ".MEIs.txt.md5",
             "vcf": ".vcf",
             "vcf_gz": ".vcf.gz",
             "vcf_gz_md5": ".vcf.gz.md5",
