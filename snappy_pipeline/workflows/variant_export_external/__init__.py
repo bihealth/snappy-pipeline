@@ -121,8 +121,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
             self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
         )
 
-    @staticmethod
-    def _get_input_files_bam_qc(wildcards):
+    def _get_input_files_bam_qc(self, wildcards):
         yield f"work/input_links/{wildcards.library_name}/.done_bam_external"
         yield f"work/input_links/{wildcards.library_name}/.done_bai_external"
 

@@ -944,7 +944,7 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 class Mutect2StepPart(SomaticVariantCallingStepPart):
     name = "mutect2"
 
-    actions = [
+    actions = (
         "scatter",
         "run",
         "gather",
@@ -952,7 +952,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         "contamination",
         "pileup_normal",
         "pileup_tumor",
-    ]
+    )
 
     resource_usage_dict = {
         "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),

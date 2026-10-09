@@ -94,9 +94,6 @@ class cbioportalExportStepPart(BaseStepPart):
       The template can be changed by derived classes.
     """
 
-    #: Class available actions
-    actions = None
-
     #: Extraction type, must be instantiated in sub-class
     extraction_type = None
 

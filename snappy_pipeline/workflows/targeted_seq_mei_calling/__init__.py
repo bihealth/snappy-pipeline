@@ -164,9 +164,8 @@ class ScrambleStepPart(BaseStepPart):
         )
         yield alignments.bam
 
-    @staticmethod
     @listify
-    def _get_input_files_analysis(wildcards):
+    def _get_input_files_analysis(self, wildcards):
         """Yield input files' pattern for rule `annotate` - based on scramble call results.
 
         :param wildcards: Snakemake rule wildcards.
