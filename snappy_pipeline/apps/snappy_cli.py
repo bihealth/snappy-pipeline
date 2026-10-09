@@ -620,10 +620,21 @@ def task_steps():
         "By default only leaf tasks (tasks not depended on by any other task) are targeted."
     ),
 )
+@click.option(
+    "--frozen",
+    is_flag=True,
+    default=False,
+    help=(
+        "With --task: run only that task's rules. Outputs of upstream tasks must already exist; "
+        "they are used as input files and never rebuilt."
+    ),
+)
 @click.option("--verbose", is_flag=True, help="Increase verbosity level")
 @click.pass_context
-def run(ctx, directory, slurm, task_name, all_tasks, verbose):
+def run(ctx, directory, slurm, task_name, all_tasks, frozen, verbose):
     """Run snappy pipeline workflows."""
+    if frozen and not task_name:
+        raise click.UsageError("--frozen requires --task")
     directory_path = directory() if callable(directory) else directory
     setup_logging(verbose)
     if task_name:
@@ -652,6 +663,8 @@ def run(ctx, directory, slurm, task_name, all_tasks, verbose):
         config_args.append(f"task={task_name}")
     if all_tasks:
         config_args.append("all_tasks=True")
+    if frozen:
+        config_args.append("frozen=True")
     if verbose:
         config_args.append("dump_orchestrator=True")
 

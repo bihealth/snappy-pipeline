@@ -105,13 +105,20 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
     )
 
 
-def create_task_instances(workflow: Workflow, project: Project) -> dict[str, BaseStep]:
-    """Create the workflow object of every task once and register it for the step Snakefiles."""
+def create_task_instances(
+    workflow: Workflow, project: Project, task_names: list[str] | None = None
+) -> dict[str, BaseStep]:
+    """Create the workflow object of every task once and register it for the step Snakefiles.
+
+    ``task_names`` limits this to some tasks (``snappy run --frozen``); upstream tasks still
+    resolve through the project, so their output paths can be computed.
+    """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     _TASK_INSTANCES.clear()
     for task in project.tasks:
-        _TASK_INSTANCES[task.name] = WORKFLOW_REGISTRY[task.step](workflow, project, task.name)
+        if task_names is None or task.name in task_names:
+            _TASK_INSTANCES[task.name] = WORKFLOW_REGISTRY[task.step](workflow, project, task.name)
     return dict(_TASK_INSTANCES)
 
 

@@ -218,22 +218,10 @@ def dependency_closure(task_name: str, tasks_by_name: dict[str, dict[str, Any]])
     return seen
 
 
-@pytest.mark.integration
-@pytest.mark.slow
-@pytest.mark.parametrize(
-    "task_name",
-    [
-        pytest.param(name, marks=pytest.mark.xfail(reason=KNOWN_BROKEN[name], strict=True))
-        if name in KNOWN_BROKEN
-        else name
-        for name in TASK_NAMES
-    ],
-    ids=TASK_NAMES,
-)
-def test_generated_config_task_closure_passes(
+def _write_closure_project(
     task_name: str, generated_task_config: dict[str, Any], tmp_path: Path
 ) -> None:
-    root = generated_task_config["root"]
+    """Write the config of ``task_name`` and its upstream tasks, with dummy FASTQs, to tmp_path."""
     config_path = generated_task_config["config_path"]
 
     # Load config.yaml
@@ -287,6 +275,25 @@ def test_generated_config_task_closure_passes(
         ) from e
     assert isinstance(reloaded, dict), f"Generated closure config is not a mapping for {task_name}"
 
+
+@pytest.mark.integration
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "task_name",
+    [
+        pytest.param(name, marks=pytest.mark.xfail(reason=KNOWN_BROKEN[name], strict=True))
+        if name in KNOWN_BROKEN
+        else name
+        for name in TASK_NAMES
+    ],
+    ids=TASK_NAMES,
+)
+def test_generated_config_task_closure_passes(
+    task_name: str, generated_task_config: dict[str, Any], tmp_path: Path
+) -> None:
+    root = generated_task_config["root"]
+    _write_closure_project(task_name, generated_task_config, tmp_path)
+
     # Build the DAG that `snappy run --task <task_name>` would build. A broken DAG fails here,
     # like a dry-run would; the job list (paths, params, resources, wrappers) must match the
     # committed snapshot.
@@ -316,6 +323,22 @@ def test_generated_config_task_closure_passes(
     for path, placeholder in ((str(tmp_path), "<project>"), (str(root), "<repo>")):
         actual = actual.replace(path, placeholder)
     _check_snapshot(task_name, actual)
+
+
+@pytest.mark.integration
+def test_frozen_run_uses_existing_upstream_outputs(
+    generated_task_config: dict[str, Any], tmp_path: Path
+) -> None:
+    """``snappy run --task X --frozen`` loads only X's rules; missing upstream files fail fast."""
+    _write_closure_project("variant_annotation_vep", generated_task_config, tmp_path)
+    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
+    cmd += ["--task", "variant_annotation_vep", "--output", str(tmp_path / "dag.json"), "--frozen"]
+    dump = _run(cmd, cwd=generated_task_config["root"])
+    output = (dump.stdout or "") + (dump.stderr or "")
+
+    assert dump.returncode != 0
+    assert "MissingInputException" in output
+    assert "tasks/variant_calling_gatk4_hc_gvcf/output/" in output
 
 
 def _check_snapshot(task_name: str, actual: str) -> None:

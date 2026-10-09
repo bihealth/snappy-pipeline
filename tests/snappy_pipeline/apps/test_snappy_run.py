@@ -61,6 +61,18 @@ def test_run_passes_target_selection_as_config(mocker, tmp_path):
     assert argv[argv.index("--config") + 1 :][:1] == ["all_tasks=True"]
 
 
+def test_run_passes_frozen_mode_as_config(mocker, tmp_path):
+    argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--task", "annotation", "--frozen"])
+    assert argv[argv.index("--config") + 1 :][:2] == ["task=annotation", "frozen=True"]
+
+
+def test_run_frozen_requires_a_task(mocker, tmp_path):
+    mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", return_value=0)
+    result = CliRunner().invoke(snappy_cli.main, ["run", "--directory", str(tmp_path), "--frozen"])
+    assert result.exit_code != 0
+    assert "--frozen requires --task" in result.output
+
+
 def test_run_slurm_layers_slurm_profile(mocker, tmp_path):
     argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--slurm"])
 

@@ -56,13 +56,13 @@ def _job_record(job) -> dict[str, Any]:
     }
 
 
-def dump_dag(directory: Path, task: str) -> list[dict[str, Any]]:
-    """Return the job records of the DAG that ``snappy run --task <task>`` would build."""
+def dump_dag(directory: Path, task: str, frozen: bool = False) -> list[dict[str, Any]]:
+    """Return the job records of the DAG that ``snappy run --task <task> [--frozen]`` would build."""
     snakefile = Path(snappy_pipeline.__file__).parent / "Snakefile"
     with SnakemakeApi(OutputSettings()) as api:
         workflow_api = api.workflow(
             resource_settings=ResourceSettings(cores=1),
-            config_settings=ConfigSettings(config={"task": task}),
+            config_settings=ConfigSettings(config={"task": task, "frozen": frozen}),
             snakefile=snakefile,
             workdir=directory,
         )
@@ -80,9 +80,10 @@ def main() -> None:
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--task", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--frozen", action="store_true")
     args = parser.parse_args()
 
-    records = dump_dag(args.directory.resolve(), args.task)
+    records = dump_dag(args.directory.resolve(), args.task, args.frozen)
     args.output.write_text(json.dumps(records, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
 

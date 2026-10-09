@@ -308,6 +308,7 @@ To run the pipeline, use ``snappy run``:
     $ cd somatic_project
     $ snappy run                    # run all leaf tasks
     $ snappy run --task bwa_mapping  # run only bwa_mapping
+    $ snappy run --task calling --frozen  # use the existing mapping, never rerun it
 
 For cluster execution with SLURM:
 
