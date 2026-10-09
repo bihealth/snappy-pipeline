@@ -1,6 +1,9 @@
 [
  {
-  "input": [],
+  "input": [
+   "tasks/somatic_gene_fusion_calling_defuse/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done",
+   "tasks/somatic_gene_fusion_calling_defuse/output/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
+  ],
   "log": [],
   "output": [],
   "params": {},
@@ -8,6 +11,90 @@
   "rule": "all",
   "threads": 1,
   "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_gene_fusion_calling_defuse/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+  ],
+  "log": [
+   "tasks/somatic_gene_fusion_calling_defuse/work/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
+  ],
+  "output": [
+   "tasks/somatic_gene_fusion_calling_defuse/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+  ],
+  "params": {
+   "args": {
+    "left": [],
+    "path_dataset_directory": "AUTO",
+    "right": []
+   }
+  },
+  "resources": {
+   "mem": "81.92 GB",
+   "mem_mb": 81920,
+   "mem_mib": 78125,
+   "partition": "medium",
+   "runtime": 7200
+  },
+  "rule": "somatic_gene_fusion_calling_defuse_somatic_gene_fusion_calling_defuse_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/defuse"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/somatic_gene_fusion_calling_defuse/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_gene_fusion_calling_defuse_somatic_gene_fusion_calling_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_gene_fusion_calling_defuse/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_gene_fusion_calling_defuse/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_gene_fusion_calling_defuse_somatic_gene_fusion_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "done",
+   "file": "out/",
+   "path": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_gene_fusion_calling_defuse/work/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_gene_fusion_calling_defuse/output/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_gene_fusion_calling_defuse_somatic_gene_fusion_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "log",
+   "file": "snakemake.gene_fusion_calling",
+   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
+  },
   "wrapper": null
  }
 ]

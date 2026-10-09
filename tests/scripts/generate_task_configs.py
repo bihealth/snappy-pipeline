@@ -551,6 +551,7 @@ def bootstrap_step_config(
     if step_name == "somatic_gene_fusion_calling":
         tool = cfg.get("tool") or "arriba"
         cfg["tool"] = tool
+        cfg.setdefault("library_selection", "extraction_type == 'rna'")
         cfg.setdefault(tool, {})
         if tool == "arriba" and isinstance(cfg["arriba"], dict):
             cfg["arriba"].setdefault("path_index", _star_index_fixture_dir())
@@ -642,12 +643,21 @@ def bootstrap_step_config(
     if step_name == "gene_expression_quantification":
         tool = cfg.get("tool") or "salmon"
         cfg["tool"] = tool
+        cfg.setdefault("library_selection", "extraction_type == 'rna'")
         cfg.setdefault(tool, {})
+        if tool in ("dupradar", "rnaseqc") and isinstance(cfg[tool], dict):
+            cfg[tool].setdefault(f"{tool}_path_annotation_gtf", _existing_placeholder_file())
         if tool == "salmon" and isinstance(cfg["salmon"], dict):
             placeholder_file = _existing_placeholder_file()
             placeholder_dir = _star_index_fixture_dir()
             cfg["salmon"].setdefault("path_index", placeholder_dir)
             cfg["salmon"].setdefault("path_transcript_to_gene", placeholder_file)
+
+    if step_name == "gene_expression_report":
+        cfg.setdefault("library_selection", "extraction_type == 'rna'")
+
+    if step_name == "hla_typing" and cfg.get("tool") == "arcashla":
+        cfg.setdefault("library_selection", "extraction_type == 'rna'")
 
     if step_name == "somatic_neoepitope_prediction":
         cfg.setdefault(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import difflib
+import json
 import os
 import re
 import subprocess
@@ -61,6 +62,54 @@ RNA_TASKS = {
     "somatic_neoepitope_prediction_pvacfuse",
     "somatic_neoepitope_prediction_pvacsplice",
     "create_proteome",
+    "hla_typing_arcashla",
+}
+
+#: Tasks that need a germline trio: germline callers and their pedigree-based consumers.
+GERMLINE_TASKS = {
+    "variant_calling_bcftools_call",
+    "variant_calling_gatk3_hc",
+    "variant_calling_gatk3_ug",
+    "variant_calling_gatk4_hc_gvcf",
+    "variant_calling_gatk4_hc_joint",
+    "variant_phasing",
+    "igv_session_generation",
+}
+
+
+_NEEDS_STRANDEDNESS = (
+    "needs the strandedness .decision file, which only the strandedness tool declares as output"
+)
+
+#: Closures whose DAG cannot be built yet, with the reason. Strict xfail, so a fix shows up.
+KNOWN_BROKEN = {
+    "gene_expression_quantification_duplication": _NEEDS_STRANDEDNESS,
+    "gene_expression_quantification_dupradar": _NEEDS_STRANDEDNESS,
+    "gene_expression_quantification_featurecounts": _NEEDS_STRANDEDNESS,
+    "gene_expression_quantification_rnaseqc": _NEEDS_STRANDEDNESS,
+    "gene_expression_quantification_stats": _NEEDS_STRANDEDNESS,
+    "igv_session_generation": "still builds tool-prefixed upstream paths (plans.md K3, C3)",
+    "somatic_gene_fusion_calling_pizzly": "reads config field annotation_gtf; the model has annotations_gtf",
+    "hla_typing_arcashla": "declares a single log file; result files and wrapper expect the standard logs",
+}
+
+_GERMLINE_CALLER_RESULTS = (
+    "germline callers declare only work/ outputs, and get_result_files keeps only output/ paths "
+    "(plans.md W1)"
+)
+
+#: Closures that target no files, with the reason. Every other closure must target at least one
+#: file, otherwise its snapshot checks nothing.
+EXPECTED_EMPTY = {
+    "link_in": "configuration carrier without outputs",
+    "ngs_data_qc_fastqc": "compares extraction types upper-case; the library dataframe stores them lower-case",
+    "ngs_data_qc_picard": "compares extraction types upper-case; the library dataframe stores them lower-case",
+    "ngs_mapping_minimap2": "minimap2 maps only long-read libraries; there is no long-read fixture",
+    "variant_calling_bcftools_call": _GERMLINE_CALLER_RESULTS,
+    "variant_calling_gatk3_hc": _GERMLINE_CALLER_RESULTS,
+    "variant_calling_gatk3_ug": _GERMLINE_CALLER_RESULTS,
+    "variant_calling_gatk4_hc_gvcf": _GERMLINE_CALLER_RESULTS,
+    "variant_calling_gatk4_hc_joint": _GERMLINE_CALLER_RESULTS,
 }
 
 
@@ -69,11 +118,20 @@ def _fixture_dir() -> Path:
 
 
 def _task_sample_sheet(task_name: str) -> Path:
-    fixture_name = "samplesheet_rna.tsv" if task_name in RNA_TASKS else "samplesheet.tsv"
-    return _fixture_dir() / fixture_name
+    if task_name in RNA_TASKS:
+        return _fixture_dir() / "samplesheet_rna.tsv"
+    if task_name in GERMLINE_TASKS:
+        return _fixture_dir() / "samplesheet_germline.tsv"
+    return _fixture_dir() / "samplesheet.tsv"
 
 
 def _task_raw_folders(task_name: str) -> tuple[str, ...]:
+    if task_name in GERMLINE_TASKS:
+        return (
+            "case001subregion-N1-DNA1-WES1",
+            "case001subregionFather-N1-DNA1-WES1",
+            "case001subregionMother-N1-DNA1-WES1",
+        )
     if task_name in RNA_TASKS:
         return (
             "case001subregion-N1-DNA1-WES1",
@@ -175,7 +233,16 @@ def dependency_closure(task_name: str, tasks_by_name: dict[str, dict[str, Any]])
 
 @pytest.mark.integration
 @pytest.mark.slow
-@pytest.mark.parametrize("task_name", TASK_NAMES, ids=TASK_NAMES)
+@pytest.mark.parametrize(
+    "task_name",
+    [
+        pytest.param(name, marks=pytest.mark.xfail(reason=KNOWN_BROKEN[name], strict=True))
+        if name in KNOWN_BROKEN
+        else name
+        for name in TASK_NAMES
+    ],
+    ids=TASK_NAMES,
+)
 def test_generated_config_task_closure_passes(
     task_name: str, generated_task_config: dict[str, Any], tmp_path: Path
 ) -> None:
@@ -205,6 +272,8 @@ def test_generated_config_task_closure_passes(
         for ds_name, ds_config in closure_config["data_sets"].items():
             if isinstance(ds_config, dict):
                 ds_config["file"] = str(_task_sample_sheet(task_name))
+                if task_name in GERMLINE_TASKS:
+                    ds_config["type"] = "germline_variants"
                 ds_config["search_paths"] = [str(raw_dir)]
 
     # Touch dummy FASTQ files
@@ -252,6 +321,11 @@ def test_generated_config_task_closure_passes(
         f"building the DAG failed for {task_name}\nstdout/stderr excerpt:\n{dump_output}"
     )
     actual = dump_path.read_text(encoding="utf-8")
+    targets = next(job["input"] for job in json.loads(actual) if job["rule"] == "all")
+    if task_name in EXPECTED_EMPTY:
+        assert not targets, f"{task_name} now targets files; remove it from EXPECTED_EMPTY"
+    else:
+        assert targets, f"{task_name} targets no files, so its snapshot would check nothing"
     for path, placeholder in ((str(tmp_path), "<project>"), (str(root), "<repo>")):
         actual = actual.replace(path, placeholder)
     _check_snapshot(task_name, actual)

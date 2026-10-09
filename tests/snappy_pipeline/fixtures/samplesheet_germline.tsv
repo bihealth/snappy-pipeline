@@ -1,0 +1,16 @@
+[Metadata]
+schema	germline_variants
+schema_version	v1
+title	TRCB_germline_trio
+description	Germline testing dataset with fake trio
+
+[Custom Fields]
+key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
+extractionType	bioSample	extraction type	string	0	0	0	0	0
+libraryKit	ngsLibrary	exome enrichment kit	string	0	0	0	0	0
+
+[Data]
+patientName	fatherName	motherName	sex	isAffected	extractionType	libraryType	folderName	libraryKit	hpoTerms
+case001subregion	case001subregionFather	case001subregionMother	M	Y	DNA	WES	case001subregion-N1-DNA1-WES1	MedExome	HP:0000001
+case001subregionFather	0	0	M	N	DNA	WES	case001subregionFather-N1-DNA1-WES1	MedExome	.
+case001subregionMother	0	0	F	N	DNA	WES	case001subregionMother-N1-DNA1-WES1	MedExome	.

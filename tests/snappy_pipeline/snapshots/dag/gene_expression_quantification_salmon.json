@@ -1,6 +1,9 @@
 [
  {
-  "input": [],
+  "input": [
+   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
+   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf"
+  ],
   "log": [],
   "output": [],
   "params": {},
@@ -9,5 +12,104 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": null
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_salmon/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "sf",
+   "file": "case001subregion-T1-RNA1-mRNA_seq1.gene",
+   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "sf",
+   "file": "case001subregion-T1-RNA1-mRNA_seq1.transcript",
+   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/gene_expression_quantification_salmon/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/snappy_pipeline/fixtures/star_index"
+  ],
+  "log": [
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log.md5",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt.md5",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf.md5",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf.md5"
+  ],
+  "params": {
+   "args": {
+    "input": {
+     "reads_left": []
+    },
+    "num_threads": 16,
+    "path_index": "<repo>/tests/snappy_pipeline/fixtures/star_index",
+    "path_transcript_to_gene": "<repo>/tests/scripts/generate_task_configs.py",
+    "salmon_params": " --gcBias --validateMappings",
+    "strand": -1
+   }
+  },
+  "resources": {
+   "mem": "32 GB",
+   "mem_mb": 32000,
+   "mem_mib": 30518,
+   "partition": "medium",
+   "runtime": 240
+  },
+  "rule": "gene_expression_quantification_salmon_gene_expression_quantification_salmon_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/salmon"
  }
 ]
