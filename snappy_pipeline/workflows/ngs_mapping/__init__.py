@@ -96,22 +96,20 @@ a paired read set.
 Mapping after adapter trimming
 ------------------------------
 
-When the data is trimmed prior to mapping, the step must take its input from the output of the ``adapter_trimming`` step,
-rather than from the raw ``fastq`` files.
-When not empty, the configuration option ``path_link_in`` overrides the search paths defined in the ``data_sets`` section.
-In the following example, the input fastq files are taken from the output of the ``adapter_trimming`` step, after the
-latter has been run with the ``bbduk`` adapter trimming tool:
+When the data is trimmed prior to mapping, the step reads the trimmed files of an ``adapter_trimming``
+task instead of the raw ``fastq`` files. ``depends_on.reads`` names that task:
 
 .. code-block:: yaml
 
-    ngs_mapping:
-      path_link_in: <absolute path to adapter_trimming/output/bbduk>
-      tools:
-        dna: [bwa]
-      [...]
+    - name: mapping
+      step: ngs_mapping
+      config:
+        depends_on:
+          reads: trimming
+        tool: bwa
+        [...]
 
-Note that only the search paths are overriden, the search patterns defined in the ``data_sets`` section are still used
-to find the input files. The adapter trimming tools do not rename fastq files.
+The adapter trimming tools keep the names and sub-directories of the input files.
 
 --------------------------------------
 Mixing Single-End and Paired-End Reads
@@ -427,7 +425,6 @@ Fingerprinting (.npz)
   fingerprints can detect contamination in samples.
 """
 
-import os
 import re
 from itertools import chain
 from typing import Any
@@ -442,10 +439,8 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     DataSignature,
-    LinkInPathGenerator,
     ResourceUsage,
     apply_library_selection,
-    get_ngs_library_folder_name,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataType
 
@@ -957,63 +952,6 @@ class Minimap2StepPart(ReadMappingStepPart):
         return params
 
 
-class ExternalStepPart(ReadMappingStepPart):
-    """Support for linking in external BAM files"""
-
-    #: Step name
-    name = "external"
-
-    #: Use wildcard for tool library
-    tool_category = "__any__"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_in = "work/input_links/{library_name}"
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_set_infos, self.parent.config_lookup_paths
-        )
-
-    def _get_input_files_run(self, wildcards):
-        return "work/input_links/{library_name}/.done".format(**wildcards)
-
-    def _get_params_run(self, wildcards: Wildcards):
-        return {
-            "input": self._collect_bams(wildcards, wildcards.library_name),
-            "sample_name": wildcards.library_name,
-            "platform": "EXTERNAL",
-        }
-
-    @listify
-    def _collect_bams(self, wildcards, library_name):
-        """Yield the path to bam files"""
-        _ = library_name
-        task_prefix = self.parent.task_path_prefix()
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        for _, path_infix, filename in self.path_gen.run(folder_name, ("bam",)):
-            path = os.path.join(self.base_path_in, path_infix, filename).format(**wildcards)
-            yield task_prefix + path
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=1,
-            runtime="10m",  # 10 minutes
-            mem="1GB",
-        )
-
-
 class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Build target coverage report"""
 
@@ -1379,8 +1317,6 @@ class NgsMappingWorkflow(BaseStep):
                 selected_mapper = BwaMem2StepPart
             case "mbcs":
                 selected_mapper = MBCsStepPart
-            case "external":
-                selected_mapper = ExternalStepPart
             case "minimap2":
                 selected_mapper = Minimap2StepPart
             case "star":

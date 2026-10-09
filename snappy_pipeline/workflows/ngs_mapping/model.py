@@ -48,7 +48,7 @@ class ExpectedGeneCounts(BaseModel):
 
 
 class NgsMappingDependsOn(SnappyModel):
-    #: FASTQ source: a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+    #: FASTQ source: an ``external_data`` task, a task whose ``output/`` holds FASTQs (such as
     #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
     reads: Annotated[
         str,

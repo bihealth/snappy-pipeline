@@ -21,33 +21,6 @@ rule ngs_mapping_all:
 
 # Alignment ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Run link in external bam files ----------------------------------------------
-
-
-if wf.config.tool == "external":
-
-    rule ngs_mapping_external_run:
-        input:
-            wf.get_input_files("external", "run"),
-        output:
-            **wf.get_output_files("external", "run"),
-        log:
-            **wf.get_log_file("external", "run"),
-        threads: wf.get_resource("external", "run", "threads")
-        resources:
-            runtime=wf.get_resource("external", "run", "runtime"),
-            mem=wf.get_resource("external", "run", "mem"),
-            partition=wf.get_resource("external", "run", "partition"),
-            tmpdir=wf.get_resource("external", "run", "tmpdir"),
-        params:
-            args=wf.get_params("external", "run"),
-        wrapper:
-            wf.wrapper_path("link_in_bam")
-
-
-# Run BWA ---------------------------------------------------------------------
-
-
 if wf.config.tool == "bwa":
 
     rule ngs_mapping_bwa_run:

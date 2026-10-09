@@ -11,7 +11,7 @@ import sys
 import tempfile
 import typing
 from collections import OrderedDict
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import cached_property, lru_cache
@@ -25,14 +25,12 @@ from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import ShortcutSampleSheet
 from snakemake.api import Workflow
-from snakemake.io import touch
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
     UnsupportedActionException,
     merge_kwargs,
 )
-from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.reads import ReadGroup
@@ -629,17 +627,6 @@ class DataSetInfo:
 
 
 @dataclass(frozen=True)
-class DataSearchInfo:
-    """Data search information - simplified version of ``DataSetInfo``."""
-
-    sheet_path: str
-    base_paths: list
-    search_paths: list
-    search_patterns: list
-    mixed_se_pe: bool
-
-
-@dataclass(frozen=True)
 class ResolvedDependency:
     """Normalized dependency resolution result for one ``depends_on`` field."""
 
@@ -845,20 +832,6 @@ class BaseStep:
             )
         return self.project.task_configs[upstream]
 
-    def get_preprocessed_path(self, field: str) -> str:
-        """Return the directory in which ``depends_on.<field>`` provides input files.
-
-        The field names a ``link_in`` task (returns its ``path``) or a task whose ``output/``
-        directory holds the files, such as ``adapter_trimming``. Returns ``""`` when the field
-        is empty or ``data_sets``; the files are then searched in the data sets' search paths.
-        """
-        source = getattr(self.depends_on, field)
-        if source in ("", DATA_SETS):
-            return ""
-        if self.project.task(source).step == "link_in":
-            return self.project.task_configs[source].path
-        return self.namespaced_path(source, "output")
-
     def read_groups(self, library_name: str, source: str | None = None) -> list[ReadGroup]:
         """Return the FASTQ read groups of ``library_name``, ordered by the path of the left file.
 
@@ -887,7 +860,7 @@ class BaseStep:
         searched: list[str] = []
         for info in infos:
             # Like the former link-in, a search path is searched with the first data set's patterns.
-            roots = [root for root in LinkInPathGenerator._get_shell_cmd_root_paths(info)]
+            roots = list(_search_roots(info))
             roots = [root for root in roots if root not in searched]
             searched += roots
             groups += discovery.find(roots, folder_name, info.search_patterns, info.mixed_se_pe)
@@ -1260,17 +1233,6 @@ class BaseStep:
                 data_set.sodar_uuid,
                 data_set.sodar_title,
                 data_set.pedigree_field,
-            )
-
-    def _load_data_search_infos(self) -> typing.Generator[DataSearchInfo, None, None]:
-        """Use workflow and step configuration to yield ``DataSearchInfo`` objects"""
-        for _, data_set in self.w_config.data_sets.items():
-            yield DataSearchInfo(
-                sheet_path=data_set.file,
-                base_paths=self.config_lookup_paths,
-                search_paths=self.config.search_paths,
-                search_patterns=self.config.search_patterns,
-                mixed_se_pe=False,
             )
 
     @classmethod
@@ -2079,168 +2041,13 @@ def _cohort_members_from_dataframe(df, selection: str | None) -> dict[str, list[
     return result
 
 
-class LinkInPathGenerator:
-    """Helper class for generating paths to link in"""
-
-    def __init__(
-        self,
-        work_dir,
-        data_set_infos,
-        config_paths,
-        cache_file_name=".snappy_path_cache",
-        preprocessed_path="",
-    ):
-        #: Working directory
-        self.work_dir = work_dir
-        #: Data set info list from configuration
-        if preprocessed_path:
-            self.data_set_infos = [
-                self._update_datasetinfo(x, preprocessed_path) for x in data_set_infos
-            ]
-        else:
-            self.data_set_infos = data_set_infos
-        #: Path to configuration files, used for invalidating cache
-        self.config_paths = config_paths
-        #: Name of cache file to create
-        self.cache_file_name = cache_file_name
-        #: File system crawler to use
-        invalidate_paths_list = self._merge_cache_invalidate_paths(self.data_set_infos)
-        invalidate_paths_list += config_paths
-        self.crawler = FileSystemCrawler(
-            os.path.join(self.work_dir, self.cache_file_name), invalidate_paths_list
-        )
-
-    def run(
-        self,
-        folder_name,
-        pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam"),
-    ):
-        """Yield (src_path, path_infix, filename) one-by-one
-
-        Cache is saved after the last iteration
-        """
-        # Iterate over data set infos and crawl file system
-        filenames = set([])
-        # TODO: crawling the actual data sheet of the current data set is enough!
-        seen_root_paths = set()
-        for info in self.data_set_infos:
-            patterns = []
-            # Build PatternSet objects, based on types in configuration
-            for pat in info.search_patterns:
-                if not isinstance(pat, (dict, MutableMapping)):
-                    raise ValueError("search_patterns must be a dict!")  # pragma: no cover
-                # Add patterns as found in configuration file: DataSetInfo.search_patterns
-                patterns.append(PatternSet(pat.values(), names=pat.keys()))
-                # Add MD5 files to search file as default
-                pat_md5 = [pattern + ".md5" for pattern in pat.values()]
-                pat_names_md5 = [pattern + "_md5" for pattern in pat.keys()]
-                patterns.append(PatternSet(pat_md5, names=pat_names_md5))
-            # Crawl all root paths, link in the resulting files
-            for root_path in self._get_shell_cmd_root_paths(info):
-                if root_path in seen_root_paths:
-                    continue  # skip this root path
-                seen_root_paths.add(root_path)
-                for result in self.crawler.run(root_path, folder_name, patterns, info.mixed_se_pe):
-                    res_dict = result.to_dict()
-                    for key in pattern_set_keys:
-                        if key not in res_dict:
-                            continue  # skip if not found
-                        path_infix = os.path.relpath(
-                            os.path.dirname(res_dict[key]), result.base_folder
-                        )
-                        filename = os.path.basename(res_dict[key])
-                        if res_dict[key] in filenames:
-                            raise ValueError("Detected double link-in {}".format(filename))
-                        filenames.add(filename)
-                        src_dir = os.path.dirname(res_dict[key])
-                        yield src_dir, path_infix, filename
-        # Finally, save the cache
-        self.crawler.save_cache()
-
-    def _update_datasetinfo(self, data_set_info, preprocessed_path=""):
-        return DataSetInfo(
-            name=data_set_info.name,
-            sheet_path=data_set_info.sheet_path,
-            base_paths=data_set_info.base_paths,
-            search_paths=[preprocessed_path] if preprocessed_path else data_set_info.search_paths,
-            search_patterns=data_set_info.search_patterns,
-            sheet_type=data_set_info.sheet_type,
-            is_background=data_set_info.is_background,
-            naming_scheme=data_set_info.naming_scheme,
-            mixed_se_pe=data_set_info.mixed_se_pe,
-            sodar_uuid=data_set_info.sodar_uuid,
-            sodar_title=data_set_info.sodar_title,
-        )
-
-    @classmethod
-    def _get_shell_cmd_root_paths(cls, info):
-        for base_path in info.base_paths:
-            if not os.path.exists(os.path.join(base_path, info.sheet_path)):
-                continue  # skip this one
+def _search_roots(info: DataSetInfo):
+    """Yield the absolute search paths of a data set, relative to its sample sheet's directory."""
+    for base_path in info.base_paths:
+        sheet_path = os.path.join(base_path, info.sheet_path)
+        if os.path.exists(sheet_path):
             for search_path in info.search_paths:
-                yield os.path.abspath(
-                    os.path.join(
-                        os.path.dirname(os.path.join(base_path, info.sheet_path)),
-                        search_path,
-                    )
-                )
-
-    @classmethod
-    def _merge_cache_invalidate_paths(cls, data_set_infos):
-        """
-        :param data_set_infos: List of DataSetInfo objects.
-        :type data_set_infos: list
-
-        :return: Returns list with paths that should be used to potentially
-        invalidate a cache file based on the DataSetInfo. Method merges paths
-        to a project tsv file as well as the search paths into a single list of strings.
-        """
-        # Initialise variable
-        out_list = []
-        # Iterate over DataSetInfo objects
-        for info in data_set_infos:
-            # Search paths - expects a list already
-            out_list.extend(info.search_paths)
-
-            # Sheet path
-            # Only name of file is stored in config file (relative path used),
-            # hence we need to find it in the base paths
-            sheet_file_name = info.sheet_path  # expects a string
-            base_paths = info.base_paths  # expects a list
-            sheet_path = cls._find_sheet_file(sheet_file_name, base_paths)
-            # Append if not None
-            if sheet_path:
-                out_list.append(sheet_path)
-
-        # Return
-        return out_list
-
-    @classmethod
-    def _find_sheet_file(cls, sheet_file_name, base_paths):
-        """Method searches for sheet file in base paths.
-
-        :param sheet_file_name: Sheet file name.
-        :type sheet_file_name: str
-
-        :param base_paths: List of strings with base paths.
-        :type base_paths: list
-
-        :return: Returns path to sheet file.
-        """
-        # Check if full path already
-        if os.path.exists(sheet_file_name):
-            return sheet_file_name
-        # Iterate over base paths
-        # Assumption: sheet file stored in the same level as config file,
-        # i.e., one of the base paths.
-        for base_p in base_paths:
-            dir_path = os.path.realpath(base_p)
-            # Find all files
-            for item in os.listdir(dir_path):
-                if sheet_file_name == item:
-                    return os.path.join(dir_path, sheet_file_name)
-        # If not found: None
-        return None
+                yield os.path.abspath(os.path.join(os.path.dirname(sheet_path), search_path))
 
 
 def get_ngs_library_folder_name(sheets, library_name):
@@ -2260,259 +2067,6 @@ def get_ngs_library_folder_name(sheets, library_name):
             except AttributeError:
                 raise ValueError("No folderName extraInfos entry for {}".format(ngs_library.name))
     raise ValueError("Found no folders for NGS library of name {}".format(library_name))
-
-
-class LinkInStepPart(BaseStepPart):
-    """Link in the raw files, e.g. FASTQ files
-
-    Depending on the configuration, the files are linked out after postprocessing
-    """
-
-    name = "link_in"
-
-    actions = ("run",)
-
-    #: The ``depends_on`` field that names the source of the files
-    source_field = "reads"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_pattern_out = "work/input_links/{library_name}/.done"
-        self.preprocessed_path = self.parent.get_preprocessed_path(self.source_field)
-
-        # Path generator.
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_set_infos,
-            self.parent.config_lookup_paths,
-            cache_file_name=".snappy_path_cache",
-            preprocessed_path=self.preprocessed_path,
-        )
-
-    def _get_input_files_run(self, wildcards):
-        """Return no input files: linking in reads only from the data set search paths"""
-        return []
-
-    def get_output_files(self, action):
-        assert action == "run", "Unsupported action"
-        return touch(self.base_pattern_out)
-
-    def get_shell_cmd(self, action, wildcards):
-        """Return call for linking in the files"""
-        assert action == "run", "Unsupported action"
-        task_prefix = self.parent.task_path_prefix()
-        # Get base out path with the task prefix prepended
-        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
-        # Get folder name of first library candidate
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.preprocessed_path:
-            folder_name = wildcards.library_name
-        # Perform the command generation
-        lines = []
-        tpl = (
-            "mkdir -p {out_path}/{path_infix} && "
-            "{{{{ test -h {out_path}/{path_infix}/{filename} || "
-            "ln -sr {src_path}/{filename} {out_path}/{path_infix}; }}}}"
-        )
-        filenames = {}  # generated so far
-        for src_path, path_infix, filename in self.path_gen.run(folder_name):
-            new_path = os.path.join(out_path, path_infix, filename)
-            if new_path in filenames:
-                if filenames[new_path] == src_path:
-                    continue  # ignore TODO: better correct this
-                msg = "WARNING: Detected double output path {}"
-                print(msg.format(filename), file=sys.stderr)
-            filenames[new_path] = src_path
-            lines.append(
-                tpl.format(
-                    src_path=src_path,
-                    out_path=out_path,
-                    path_infix=path_infix,
-                    filename=filename,
-                )
-            )
-        if not lines:
-            msg = "Found no files to link in for {}".format(dict(**wildcards))
-            print(msg, file=sys.stderr)
-            raise Exception(msg)
-        return "\n".join(lines)
-
-    def run_locally(self, action, wildcards):
-        """Links fastq files"""
-        assert action == "run", "Unsupported action"
-
-        task_prefix = self.parent.task_path_prefix()
-        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
-
-        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-        if self.preprocessed_path:
-            folder_name = wildcards.library_name
-
-        filenames = self._create_all_symlinks(self.path_gen, folder_name, out_path)
-        if not filenames:
-            msg = "Found no files to link in for {}".format(dict(**wildcards))
-            print(msg, file=sys.stderr)
-            raise Exception(msg)
-
-    @staticmethod
-    def _create_all_symlinks(
-        path_generator,
-        folder_name,
-        out_path,
-        pattern_set_keys=("left", "right", "left_md5", "right_md5", "bam"),
-    ):
-        filenames = {}  # generated so far
-        for src_path, path_infix, filename in path_generator.run(folder_name, pattern_set_keys):
-            new_path = os.path.join(out_path, path_infix, filename)
-            if new_path in filenames:
-                if filenames[new_path] == src_path:
-                    continue  # ignore TODO: better correct this
-                msg = "WARNING: Detected double output path {}"
-                print(msg.format(filename), file=sys.stderr)
-            filenames[new_path] = src_path
-            # Create the symlink
-            d = os.path.realpath(os.path.join(out_path, path_infix))
-            link = os.path.join(d, filename)
-            os.makedirs(d, exist_ok=True)
-            if not os.path.islink(link):
-                target = os.path.relpath(
-                    os.path.join(os.path.realpath(src_path), filename), start=d
-                )
-                os.symlink(target, link)
-        return filenames
-
-    def run(self, action, wildcards):
-        raise ImplementationUnavailableError(
-            "run() not implemented for linking in reads"
-        )  # pragma: no cover
-
-
-class LinkInVcfExternalStepPart(LinkInStepPart):
-    """Link in the external VCF files."""
-
-    #: Step name
-    name = "link_in_vcf_external"
-
-    #: External VCF and BAM files are searched in the path of a ``link_in`` task
-    source_field = "link_in"
-
-    #: Class available actions
-    actions = ("run",)
-
-    #: Patterns set keys
-    pattern_set_keys = ("vcf", "vcf_md5")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def get_shell_cmd(self, action, wildcards):
-        """Return call for linking in the files
-
-        The files are linked, keeping their relative paths to the item matching the "folderName"
-        intact.
-        """
-        self._validate_action(action)
-        task_prefix = self.parent.task_path_prefix()
-        # Define path generator
-        path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_search_infos,
-            self.parent.config_lookup_paths,
-        )
-        # Get base out path with the task prefix prepended
-        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
-        # Perform the command generation
-        lines = []
-        tpl = (
-            "mkdir -p {out_path}/{path_infix} && "
-            "{{{{ test -h {out_path}/{path_infix}/{filename} || "
-            "ln -sr {src_path}/{filename} {out_path}/{path_infix}; }}}}"
-        )
-        filenames = {}
-        for src_path, path_infix, filename in path_gen.run(
-            folder_name=wildcards.library_name, pattern_set_keys=self.pattern_set_keys
-        ):
-            new_path = os.path.join(out_path, path_infix, filename)
-            if new_path in filenames:
-                if filenames[new_path] == src_path:
-                    continue  # ignore TODO: better correct this
-                msg = "WARNING: Detected double output path {}"
-                print(msg.format(filename), file=sys.stderr)
-            filenames[new_path] = src_path
-            lines.append(
-                tpl.format(
-                    src_path=src_path,
-                    out_path=out_path,
-                    path_infix=path_infix,
-                    filename=filename,
-                )
-            )
-        if not lines:
-            msg = "Found no files to link in for {}".format(dict(**wildcards))
-            print(msg, file=sys.stderr)
-            raise Exception(msg)
-        return "\n".join(lines)
-
-    def run_locally(self, action, wildcards):
-        """Links fastq files
-
-        The files are linked, keeping their relative paths to the item matching the "folderName"
-        intact.
-        """
-        self._validate_action(action)
-        task_prefix = self.parent.task_path_prefix()
-        # Define path generator
-        path_gen = LinkInPathGenerator(
-            self.parent.work_dir,
-            self.parent.data_search_infos,
-            self.parent.config_lookup_paths,
-        )
-        # Get base out path with the task prefix prepended
-        out_path = os.path.dirname(task_prefix + self.base_pattern_out.format(**wildcards))
-        filenames = self._create_all_symlinks(
-            path_generator=path_gen,
-            folder_name=wildcards.library_name,
-            out_path=out_path,
-            pattern_set_keys=self.pattern_set_keys,
-        )
-        if not filenames:
-            msg = "Found no files to link in for {}".format(dict(**wildcards))
-            print(msg, file=sys.stderr)
-            raise Exception(msg)
-
-
-class LinkInBamExternalStepPart(LinkInVcfExternalStepPart):
-    """Link in the external BAM files."""
-
-    #: Step name
-    name = "link_in_bam_external"
-
-    #: Class available actions
-    actions = ("run",)
-
-    #: Patterns set keys
-    pattern_set_keys = ("bam", "bam_md5")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_pattern_out = "work/input_links/{library_name}/.done_bam_external"
-
-
-class LinkInBaiExternalStepPart(LinkInVcfExternalStepPart):
-    """Link in the external BAI files."""
-
-    #: Step name
-    name = "link_in_bai_external"
-
-    #: Class available actions
-    actions = ("run",)
-
-    #: Patterns set keys
-    pattern_set_keys = ("bai", "bai_md5")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_pattern_out = "work/input_links/{library_name}/.done_bai_external"
 
 
 class InputFilesStepPartMixin:

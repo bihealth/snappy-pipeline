@@ -11,11 +11,11 @@ snappy_pipeline.base
 .. automodule:: snappy_pipeline.base
     :members:
 
--------------------------
-snappy_pipeline.find_file
--------------------------
+----------------------
+snappy_pipeline.reads
+----------------------
 
-.. automodule:: snappy_pipeline.find_file
+.. automodule:: snappy_pipeline.reads
     :members:
 
 ---------------------

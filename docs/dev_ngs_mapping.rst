@@ -22,6 +22,6 @@ Most steps work on the results of the NGS read mapping step or even further down
     After reading this chapter, you should
 
     - know how to work with raw FASTQ file input
-    - know how to use the using the :py:class:`LinkInStep <snappy_pipeline.workflows.abstract.LinkInStep>`
+    - know how to read FASTQ files from an ``external_data`` task
 
 **This is still TODO, just look at the code for now ;)**
