@@ -59,12 +59,10 @@ ShellWrapper(snakemake).run(
 # Rename PureCN files to snappy conventions
 rename() {{
     to=$1
+    from=$2
     d=$(dirname $to)
-    f=$(basename $to)
-    echo $f | grep -q "^{args[mapper]}.purecn.{args[library_name]}"
-    from=$(echo $f | sed -e "s/^{args[mapper]}.purecn.//")
-    test -e $d/$from
-    mv $d/$from $to
+    test -e $d/{args[library_name]}$from
+    [ "$d/{args[library_name]}$from" = "$to" ] || mv $d/{args[library_name]}$from $to
 }}
 
 outdir=$(dirname {snakemake.output.segments})
@@ -85,12 +83,12 @@ cmd="/usr/local/bin/Rscript /opt/PureCN/PureCN.R \
 "
 apptainer exec --home $PWD {bindings} {config[path_container]} $cmd
 
-rename {snakemake.output.segments}
-rename {snakemake.output.ploidy}
-rename {snakemake.output.pvalues}
-rename {snakemake.output.vcf}
-rename {snakemake.output.vcf_tbi}
-rename {snakemake.output.loh}
+rename {snakemake.output.segments} _dnacopy.seg
+rename {snakemake.output.ploidy} .csv
+rename {snakemake.output.pvalues} _amplification_pvalues.csv
+rename {snakemake.output.vcf} .vcf.gz
+rename {snakemake.output.vcf_tbi} .vcf.gz.tbi
+rename {snakemake.output.loh} _loh.csv
 
 # Fix chromosome names (https://github.com/lima1/PureCN/issues/331)
 vcf_chrnames=$(zgrep '^##contig=<ID=' {snakemake.input.vcf} | sed -re "s/^##contig=<ID=([^,]*),.*/\1/" | sort | uniq | grep -E "^(chr)?([0-9]+|[XY])$")

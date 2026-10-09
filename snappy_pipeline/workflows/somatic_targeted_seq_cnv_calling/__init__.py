@@ -24,19 +24,15 @@ Step Output
 There is no widely used standard to report copy number alterations.
 In absence of a better solution, all CNV tools implemented in somatic pipeline output the segmentation table loosely following the `DNAcopy format <https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf>`_.`
 The copy number call may or may not be present, and the chromosome number is replaced by its name.
-The segmentation output is in file ``output/<mapper>.<cnv caller>.<lib name>/out/<mapper>.<cnv caller>.<lib name>_dnacopy.seg``.
+The segmentation output is in file ``output/<lib name>/out/<lib name>.dnacopy.seg``.
 
 ::
 
     output/
-    +-- bwa.cnvkit.P001-N1-DNA1-WES1
+    +-- P001-N1-DNA1-WES1
     |   |-- out
-    |   |   |-- bwa.cnvkitP001-N1-DNA1-WES1_dnacopy.seg
+    |   |   |-- P001-N1-DNA1-WES1.dnacopy.seg
             [...]
-
-Note that tool ``cnvetti`` doesn't follow the snappy convention above:
-the tool name is followed by an underscore & the action, where the action is one of ``coverage``, ``segment`` and ``postprocess``.
-For example, the output directory would contain a directory named ``bwa.cnvetti_coverage.P002-T1-DNA1-WES1``.
 
 .. note:: Tool-Specific Output
 
@@ -215,7 +211,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         tumor = self.parent.get_upstream_paths("alignments", library_name=tumor_library)
         yield (
             "gc",
-            "work/static_data/out/sequenza.{length}.wig.gz".format(
+            "work/static_data/out/gc.{length}.wig.gz".format(
                 length=self.config.sequenza.length,
             ),
         )
@@ -226,16 +222,16 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        yield "packages", "work/R_packages/out/sequenza.done"
+        yield "packages", "work/R_packages/out/packages.done"
         name_pattern = "{tumor_library}"
         yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
 
     def get_output_files(self, action):
         if action == "install":
-            return {"done": "work/R_packages/out/sequenza.done"}
+            return {"done": "work/R_packages/out/packages.done"}
         elif action == "gcreference":
             return {
-                "gc": "work/static_data/out/sequenza.{length}.wig.gz".format(
+                "gc": "work/static_data/out/gc.{length}.wig.gz".format(
                     length=self.config.sequenza.length,
                 )
             }
@@ -248,8 +244,8 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         elif action == "run":
             name_pattern = "{tumor_library}"
             return {
-                "seg": f"work/{name_pattern}/out/{name_pattern}_dnacopy.seg",
-                "seg_md5": f"work/{name_pattern}/out/{name_pattern}_dnacopy.seg.md5",
+                "seg": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg",
+                "seg_md5": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg.md5",
                 "done": f"work/{name_pattern}/report/.done",
             }
         else:
@@ -301,9 +297,9 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
         if action == "install":
-            prefix = "work/R_packages/log/sequenza"
+            prefix = "work/R_packages/log/packages"
         elif action == "gcreference":
-            prefix = "work/static_data/log/sequenza.{length}".format(
+            prefix = "work/static_data/log/gc.{length}".format(
                 length=self.config.sequenza.length,
             )
         else:
@@ -343,7 +339,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 "work",
                 name_pattern,
                 "out",
-                name_pattern + "_coverage_loess.txt.gz",
+                name_pattern + ".coverage_loess.txt.gz",
             ).format(**wildcards),
         )
         pon = self.parent.get_upstream_paths("panel_of_normals")
@@ -371,20 +367,20 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         name_pattern = "{tumor_library}"
         prefix = os.path.join("work", name_pattern, "out", name_pattern)
         action_mapping = {
-            "coverage": {"coverage": prefix + "_coverage_loess.txt.gz"},
+            "coverage": {"coverage": prefix + ".coverage_loess.txt.gz"},
             "run": {
-                "segments": prefix + "_dnacopy.seg",
+                "segments": prefix + ".dnacopy.seg",
                 "ploidy": prefix + ".csv",
-                "pvalues": prefix + "_amplification_pvalues.csv",
+                "pvalues": prefix + ".amplification_pvalues.csv",
                 "vcf": prefix + ".vcf.gz",
                 "vcf_tbi": prefix + ".vcf.gz.tbi",
-                "loh": prefix + "_loh.csv",
-                "segments_md5": prefix + "_dnacopy.seg.md5",
+                "loh": prefix + ".loh.csv",
+                "segments_md5": prefix + ".dnacopy.seg.md5",
                 "ploidy_md5": prefix + ".csv.md5",
-                "pvalues_md5": prefix + "_amplification_pvalues.csv.md5",
+                "pvalues_md5": prefix + ".amplification_pvalues.csv.md5",
                 "vcf_md5": prefix + ".vcf.gz.md5",
                 "vcf_tbi_md5": prefix + ".vcf.gz.tbi.md5",
-                "loh_md5": prefix + "_loh.csv.md5",
+                "loh_md5": prefix + ".loh.csv.md5",
             },
         }
         return action_mapping[action]
@@ -594,7 +590,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     @staticmethod
     def _get_output_files_postprocess():
         name_pattern = "{tumor_library}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + "_dnacopy.seg")
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".dnacopy.seg")
         return {
             "final": tpl,
             "final_md5": tpl + ".md5",
@@ -686,7 +682,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic targeted CNV output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        paths = {"dnacopy_seg": f"output/{lib}/out/{lib}_dnacopy.seg"}
+        paths = {"dnacopy_seg": f"output/{lib}/out/{lib}.dnacopy.seg"}
         if config.tool == Tool.sequenza:
             paths["seqz"] = f"output/{lib}/out/{lib}.seqz.gz"
         return paths

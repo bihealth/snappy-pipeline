@@ -170,7 +170,7 @@ class PureCn(SnappyModel):
     """Recommended extra arguments for PureCN, extra_commands: {} to clear them all"""
 
     path_container: Annotated[
-        str, Field(examples=["../panel_of_normals/work/containers/out/purecn.simg"])
+        str, Field(examples=["../panel_of_normals/work/containers/out/container.simg"])
     ]
     """Path to the PureCN apptainer/singularity container image"""
 

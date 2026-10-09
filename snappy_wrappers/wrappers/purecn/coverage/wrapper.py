@@ -62,9 +62,8 @@ apptainer exec --home $PWD {bindings} {container} $cmd
 
 # Rename coverage file name
 d=$(dirname {snakemake.output.coverage})
-mapper="{args[mapper]}"
-libname="{args[library_name]}"
-fn="$d/$mapper.${{libname}}_coverage_loess.txt.gz"
+bam_name=$(basename {snakemake.input.bam} .bam)
+fn="$d/${{bam_name}}_coverage_loess.txt.gz"
 
 test -e $fn
 mv $fn {snakemake.output.coverage}

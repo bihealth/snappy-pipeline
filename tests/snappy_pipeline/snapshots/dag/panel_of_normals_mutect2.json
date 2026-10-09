@@ -1,11 +1,11 @@
 [
  {
   "input": [
-   "tasks/panel_of_normals_mutect2/output/mutect2/out/mutect2.panel_of_normals.vcf.gz",
-   "tasks/panel_of_normals_mutect2/output/mutect2/out/mutect2.genomicsDB.tar.gz",
-   "tasks/panel_of_normals_mutect2/output/mutect2/log/mutect2.panel_of_normals.log",
-   "tasks/panel_of_normals_mutect2/output/mutect2/log/mutect2.panel_of_normals.conda_list.txt",
-   "tasks/panel_of_normals_mutect2/output/mutect2/log/mutect2.panel_of_normals.conda_info.txt"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.vcf.gz",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/log/panel_of_normals.log",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/log/panel_of_normals.conda_list.txt",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/log/panel_of_normals.conda_info.txt"
   ],
   "log": [],
   "output": [],
@@ -105,11 +105,11 @@
  },
  {
   "input": [
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.log"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.log"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_mutect2/output/mutect2/log/mutect2.panel_of_normals.log"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/log/panel_of_normals.log"
   ],
   "params": {},
   "resources": {},
@@ -117,18 +117,18 @@
   "threads": 1,
   "wildcards": {
    "ext": "log",
-   "file": "mutect2.panel_of_normals",
-   "path": "mutect2/log"
+   "file": "panel_of_normals",
+   "path": "panel_of_normals/log"
   },
   "wrapper": null
  },
  {
   "input": [
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.conda_info.txt"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.conda_info.txt"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_mutect2/output/mutect2/log/mutect2.panel_of_normals.conda_info.txt"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/log/panel_of_normals.conda_info.txt"
   ],
   "params": {},
   "resources": {},
@@ -136,18 +136,18 @@
   "threads": 1,
   "wildcards": {
    "ext": "txt",
-   "file": "mutect2.panel_of_normals.conda_info",
-   "path": "mutect2/log"
+   "file": "panel_of_normals.conda_info",
+   "path": "panel_of_normals/log"
   },
   "wrapper": null
  },
  {
   "input": [
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.conda_list.txt"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.conda_list.txt"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_mutect2/output/mutect2/log/mutect2.panel_of_normals.conda_list.txt"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/log/panel_of_normals.conda_list.txt"
   ],
   "params": {},
   "resources": {},
@@ -155,18 +155,18 @@
   "threads": 1,
   "wildcards": {
    "ext": "txt",
-   "file": "mutect2.panel_of_normals.conda_list",
-   "path": "mutect2/log"
+   "file": "panel_of_normals.conda_list",
+   "path": "panel_of_normals/log"
   },
   "wrapper": null
  },
  {
   "input": [
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.genomicsDB.tar.gz"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_mutect2/output/mutect2/out/mutect2.genomicsDB.tar.gz"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
   ],
   "params": {},
   "resources": {},
@@ -174,18 +174,18 @@
   "threads": 1,
   "wildcards": {
    "ext": "gz",
-   "file": "mutect2.genomicsDB.tar",
-   "path": "mutect2/out"
+   "file": "panel_of_normals.genomicsDB.tar",
+   "path": "panel_of_normals/out"
   },
   "wrapper": null
  },
  {
   "input": [
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.panel_of_normals.vcf.gz"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_mutect2/output/mutect2/out/mutect2.panel_of_normals.vcf.gz"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.vcf.gz"
   ],
   "params": {},
   "resources": {},
@@ -193,8 +193,8 @@
   "threads": 1,
   "wildcards": {
    "ext": "gz",
-   "file": "mutect2.panel_of_normals.vcf",
-   "path": "mutect2/out"
+   "file": "panel_of_normals.vcf",
+   "path": "panel_of_normals/out"
   },
   "wrapper": null
  },
@@ -205,20 +205,20 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.conda_list.txt",
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.conda_list.txt.md5",
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.conda_info.txt",
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.conda_info.txt.md5",
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.log",
-   "tasks/panel_of_normals_mutect2/work/mutect2/log/mutect2.panel_of_normals.log.md5"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.conda_list.txt",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.conda_list.txt.md5",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.conda_info.txt",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.conda_info.txt.md5",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.log",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.log.md5"
   ],
   "output": [
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.panel_of_normals.vcf.gz",
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.panel_of_normals.vcf.gz.md5",
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.panel_of_normals.vcf.gz.tbi",
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.panel_of_normals.vcf.gz.tbi.md5",
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.genomicsDB.tar.gz",
-   "tasks/panel_of_normals_mutect2/work/mutect2/out/mutect2.genomicsDB.tar.gz.md5"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.md5",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi.md5",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz.md5"
   ],
   "params": {
    "args": {

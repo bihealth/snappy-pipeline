@@ -5,7 +5,7 @@
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.log",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.conda_info.txt",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.conda_list.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.log",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.conda_info.txt",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.conda_list.txt",
@@ -239,16 +239,16 @@
  {
   "input": [],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.antitarget.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.antitarget.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.antitarget.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.antitarget.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.antitarget.log",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.antitarget.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.log",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.log.md5"
   ],
   "output": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.antitarget.bed",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.antitarget.bed.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed.md5"
   ],
   "params": {
    "args": {
@@ -270,25 +270,25 @@
  },
  {
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.target.bed",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.antitarget.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.log",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log.md5"
   ],
   "output": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn.md5"
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn.md5",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn.md5"
   ],
   "params": {
    "args": {
@@ -312,26 +312,26 @@
  },
  {
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.log",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt",
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.panel_of_normals.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.panel_of_normals.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.panel_of_normals.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.panel_of_normals.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.panel_of_normals.log",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.panel_of_normals.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_list.txt",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_list.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_info.txt",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_info.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log.md5"
   ],
   "output": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.panel_of_normals.cnn",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.panel_of_normals.cnn.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.merged.tar.gz",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.merged.tar.gz.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.merged.tar.gz",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.merged.tar.gz.md5"
   ],
   "params": {
    "args": {
@@ -361,16 +361,16 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.target.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.target.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.target.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.target.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.target.log",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/log/cnvkit.target.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_list.txt",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_list.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_info.txt",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_info.txt.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log.md5"
   ],
   "output": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.target.bed",
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.target.bed.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed.md5"
   ],
   "params": {
    "args": {
@@ -393,11 +393,11 @@
  },
  {
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/cnvkit/out/cnvkit.panel_of_normals.cnn"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_cnvkit/output/cnvkit/out/cnvkit.panel_of_normals.cnn"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.cnn"
   ],
   "params": {},
   "resources": {},
@@ -405,8 +405,8 @@
   "threads": 1,
   "wildcards": {
    "ext": "cnn",
-   "file": "cnvkit.panel_of_normals",
-   "path": "cnvkit/out"
+   "file": "panel_of_normals",
+   "path": "panel_of_normals/out"
   },
   "wrapper": null
  },
@@ -538,7 +538,7 @@
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.targetcoverage.cnn",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/output/cnvkit/out/cnvkit.panel_of_normals.cnn"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.cnn"
   ],
   "log": [
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.log",
@@ -675,8 +675,8 @@
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
   ],
   "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg",
-   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5"
   ],
   "params": {
    "args": {}
@@ -1138,6 +1138,25 @@
  },
  {
   "input": [
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_somatic_targeted_seq_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "seg",
+   "file": "case001subregion-T1-DNA1-WES1.dnacopy",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
   "log": [],
@@ -1151,25 +1170,6 @@
   "wildcards": {
    "ext": "gz",
    "file": "case001subregion-T1-DNA1-WES1.vcf",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
-  "wrapper": null
- },
- {
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_somatic_targeted_seq_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "seg",
-   "file": "case001subregion-T1-DNA1-WES1_dnacopy",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

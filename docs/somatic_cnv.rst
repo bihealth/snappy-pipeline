@@ -24,7 +24,7 @@ Output files
 There is no widely used standard to report copy number alterations. 
 In absence of a better solution, all CNV tools implemented in somatic pipeline output the segmentation table loosely following the `DNAcopy format <https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf>`_.`
 The copy number call may or may not be present, and the chromosome number is replaced by its name.
-The segmentation output is in file ``output/<mapper>.<cnv caller>.<lib name>/out/<mapper>.<cnv caller>.<lib name>_dnacopy.seg``.
+The segmentation output is in file ``output/<lib name>/out/<lib name>.dnacopy.seg``.
 
 Genome support
 --------------

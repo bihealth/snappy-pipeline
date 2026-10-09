@@ -69,7 +69,7 @@ First, the generation of the access file:
         exclude:
         - <path to mappability file>
 
-This create an access file in ``output/cnvkit.access/out/cnvkit.access.bed``.
+This create an access file in ``output/panel_of_normals/out/panel_of_normals.accessible.bed``.
 
 Then, the panel can be created:
 
