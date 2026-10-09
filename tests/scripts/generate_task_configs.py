@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""Generate task-based config files that include all registered workflows.
+"""Generate a task-based config with one task per workflow step and tool.
 
-The generator builds one task per workflow step, derives each task's config from
-`default_config_yaml()`, and wires `depends_on` from an explicit table of upstream tasks per field, with per-step and
-per-tool exceptions.
+Each task starts from the step's `default_config_yaml()`. Three tables complete it:
+- `TASK_CONFIG` fills config values and fixture paths per step and tool;
+- `DEPENDENCY_TASKS` and `STEP_DEPENDENCY_TASKS` name the upstream task of each `depends_on` key,
+  with per-tool rules in `wire_dependencies()`;
+- `validate_and_autofill_step_config()` puts placeholders into required fields that remain unset.
 """
 
 from __future__ import annotations
 
 import argparse
-import copy
 import enum
+import copy
+from dataclasses import dataclass
 from pathlib import Path
-import typing
-from typing import Any, get_args, get_origin
+from typing import Any, Literal, get_args, get_origin
 
 import pydantic
 import ruamel.yaml as ruamel_yaml
@@ -57,6 +59,7 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
         "somatic_targeted_seq_cnv_calling_sequenza"
     ),
     ("somatic_neoepitope_prediction", "germline_variants"): None,
+    # Annotation of germline calls; revisit with the neoepitope backlog item in plans.md.
     ("somatic_neoepitope_prediction", "somatic_variants"): "variant_annotation_vep",
     ("somatic_targeted_seq_cnv_calling", "variants"): "variant_calling_mutect2",
     ("somatic_variant_signatures", "variants"): "variant_calling_mutect2",
@@ -306,468 +309,196 @@ def dependency_fields(workflow_cls: type) -> list[str]:
     return [] if dep_field is None else list(dep_field.annotation.model_fields)
 
 
-def _guess_bwa_index_from_reference(base_config: dict[str, Any]) -> str:
-    static_data = base_config.get("static_data_config", {})
-    if isinstance(static_data, dict):
-        ref = static_data.get("reference", {})
-        if isinstance(ref, dict):
-            path = ref.get("path")
-            if isinstance(path, str) and path:
-                return path
-    return "AUTO"
+#: Test fixtures (index directories, BED files, gCNV models)
+FIXTURES = Path(__file__).resolve().parents[1] / "snappy_pipeline" / "fixtures"
+
+#: An existing file for config fields that must name one but whose content is never read
+PLACEHOLDER_FILE = str(Path(__file__).resolve())
 
 
-def _existing_placeholder_file() -> str:
-    repo_root = Path(__file__).resolve().parent.parent
-    candidate = repo_root / "test.fai"
-    if candidate.exists():
-        return str(candidate)
-    return str(__file__)
+@dataclass(frozen=True)
+class Fixture:
+    """A path that ``fixture_paths()`` resolves for the base config."""
+
+    name: str
 
 
-def _star_index_fixture_dir() -> str:
-    repo_root = Path(__file__).resolve().parent.parent
-    candidate = repo_root / "snappy_pipeline" / "fixtures" / "star_index"
-    if candidate.exists():
-        return str(candidate)
-    return str(repo_root)
+@dataclass(frozen=True)
+class Overwrite:
+    """A value that replaces the default config's value instead of filling an unset one."""
+
+    value: Any
 
 
-def _cnvkit_targets_bed() -> str:
-    """Return path to cnvkit target regions fixture BED file."""
-    repo_root = Path(__file__).resolve().parent.parent
-    candidate = repo_root / "snappy_pipeline" / "fixtures" / "cnvkit_targets.bed"
-    if candidate.exists():
-        return str(candidate)
-    # Also check test fixture directory
-    candidate2 = repo_root / "tests" / "snappy_pipeline" / "fixtures" / "cnvkit_targets.bed"
-    if candidate2.exists():
-        return str(candidate2)
-    return str(__file__)
+def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[str, Any]:
+    """Return the fixture and reference paths that ``TASK_CONFIG`` refers to."""
+    reference = base_config.get("static_data_config", {}).get("reference", {}).get("path")
+    reference = reference or PLACEHOLDER_FILE
+
+    def resolve(path: str) -> str:
+        return path if path.startswith("/") else str((base_config_path.parent / path).resolve())
+
+    def gcnv_models(library: str) -> list[dict[str, str]]:
+        models = FIXTURES / "gcnv_models"
+        return [
+            {
+                "library": library,
+                "contig_ploidy": str(models / "ploidy_model"),
+                "model_pattern": str(models / "call_model_*"),
+            }
+        ]
+
+    return {
+        "reference": resolve(reference),
+        "exon_bed": resolve(reference.replace(".fa", ".exon.bed")),
+        "star_index": str(FIXTURES / "star_index"),
+        "cnvkit_targets": str(FIXTURES / "cnvkit_targets.bed"),
+        "cnvkit_antitargets": str(FIXTURES / "cnvkit_antitargets.bed"),
+        "gcnv_targeted": gcnv_models("default"),
+        "gcnv_wgs": gcnv_models("wgs"),
+        "placeholder_file": PLACEHOLDER_FILE,
+    }
 
 
-def _cnvkit_antitargets_bed() -> str:
-    """Return path to cnvkit antitarget regions fixture BED file."""
-    repo_root = Path(__file__).resolve().parent.parent
-    candidate = repo_root / "snappy_pipeline" / "fixtures" / "cnvkit_antitargets.bed"
-    if candidate.exists():
-        return str(candidate)
-    # Also check test fixture directory
-    candidate2 = repo_root / "tests" / "snappy_pipeline" / "fixtures" / "cnvkit_antitargets.bed"
-    if candidate2.exists():
-        return str(candidate2)
-    return str(__file__)
+DNA = "extraction_type == 'dna'"
+RNA = "extraction_type == 'rna'"
+REFERENCE = Fixture("reference")
+PLACEHOLDER = Fixture("placeholder_file")
+VARIANT_EXPORT_EXTERNAL = {
+    "search_paths": ["/tmp"],
+    "search_patterns": [{"vcf": "*.vcf.gz"}],
+    "path_refseq_ser": PLACEHOLDER,
+    "path_ensembl_ser": PLACEHOLDER,
+    "path_db": PLACEHOLDER,
+}
 
-
-def _gcnv_ploidy_model_dir() -> str:
-    """Return path to gCNV ploidy model fixture."""
-    repo_root = Path(__file__).resolve().parent.parent
-    candidate = repo_root / "snappy_pipeline" / "fixtures" / "gcnv_models" / "ploidy_model"
-    if candidate.exists():
-        return str(candidate)
-    return str(repo_root)
-
-
-def _gcnv_call_model_pattern() -> str:
-    """Return path pattern for gCNV call model fixtures."""
-    repo_root = Path(__file__).resolve().parent.parent
-    candidate = repo_root / "snappy_pipeline" / "fixtures" / "gcnv_models" / "call_model_*"
-    # Return the base directory, the pattern will be expanded by get_model_dir_list
-    return str(candidate)
-
-
-def _get_gcnv_precomputed_models(workflow_type: str = "targeted") -> list[dict[str, str]]:
-    """Generate precomputed model paths for gCNV testing.
-
-    Args:
-        workflow_type: Either "targeted" (uses "default" library name) or "wgs" (uses "wgs" library name)
-    """
-    library_name = "wgs" if workflow_type == "wgs" else "default"
-    return [
-        {
-            "library": library_name,
-            "contig_ploidy": _gcnv_ploidy_model_dir(),
-            "model_pattern": _gcnv_call_model_pattern(),
+#: Config of the generated tasks, by (step, tool); (step, None) applies to every tool of a step.
+#: Values fill keys that the default config leaves unset (missing, None, "", "AUTO", [] or
+#: ["AUTO"]); ``Overwrite`` values replace whatever is there.
+TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
+    ("gene_expression_quantification", None): {"library_selection": RNA},
+    ("gene_expression_quantification", "dupradar"): {
+        "dupradar": {"dupradar_path_annotation_gtf": PLACEHOLDER}
+    },
+    ("gene_expression_quantification", "rnaseqc"): {
+        "rnaseqc": {"rnaseqc_path_annotation_gtf": PLACEHOLDER}
+    },
+    ("gene_expression_quantification", "salmon"): {
+        "salmon": {"path_index": Fixture("star_index"), "path_transcript_to_gene": PLACEHOLDER}
+    },
+    ("gene_expression_report", None): {"library_selection": RNA},
+    ("hla_typing", "arcashla"): {"library_selection": RNA},
+    ("ngs_data_qc", "picard"): {"picard": {"programs": ["CollectAlignmentSummaryMetrics"]}},
+    ("ngs_mapping", None): {
+        "target_coverage_report": {"enabled": False, "path_target_interval_list_mapping": []}
+    },
+    ("ngs_mapping", "bwa"): {"library_selection": DNA, "bwa": {"path_index": REFERENCE}},
+    ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA, "bwa_mem2": {"path_index": REFERENCE}},
+    ("ngs_mapping", "minimap2"): {"library_selection": DNA, "minimap2": {"path_index": REFERENCE}},
+    ("ngs_mapping", "mbcs"): {
+        "library_selection": DNA,
+        "mbcs": {"mapping_tool": "bwa"},
+        "bwa": {"path_index": REFERENCE},
+        "bqsr": {"common_variants": REFERENCE},
+    },
+    ("ngs_mapping", "star"): {
+        "library_selection": RNA,
+        "star": {"path_index": Fixture("star_index")},
+        "strandedness": {"path_exon_bed": Fixture("exon_bed"), "strand": -1, "threshold": 0.85},
+    },
+    ("panel_of_normals", "cnvkit"): {"cnvkit": {"path_target": Overwrite("")}},
+    ("panel_of_normals", "mutect2"): {"mutect2": {"germline_resource": REFERENCE}},
+    ("panel_of_normals", "purecn"): {
+        "purecn": {"path_bait_regions": REFERENCE, "path_normals_list": Overwrite("")}
+    },
+    ("reference_index", "star"): {"reference_molecule": Overwrite("rna")},
+    ("repeat_expansion", None): {"repeat_catalog": REFERENCE, "repeat_annotation": REFERENCE},
+    ("somatic_gene_fusion_calling", None): {"library_selection": RNA},
+    ("somatic_gene_fusion_calling", "arriba"): {"arriba": {"path_index": Fixture("star_index")}},
+    ("somatic_msi_calling", None): {"loci_bed": REFERENCE},
+    ("somatic_neoepitope_prediction", None): {
+        "tool_hla_typing": {
+            "dna": {"class_i": "optitype", "class_ii": None},
+            "rna": {"class_i": None, "class_ii": None},
         }
-    ]
+    },
+    ("somatic_targeted_seq_cnv_calling", "cnvkit"): {
+        "cnvkit": {
+            "path_target": Fixture("cnvkit_targets"),
+            "path_antitarget": Fixture("cnvkit_antitargets"),
+        }
+    },
+    ("somatic_targeted_seq_cnv_calling", "purecn"): {"purecn": {"path_container": PLACEHOLDER}},
+    ("sv_calling_targeted", "gcnv"): {
+        "gcnv": {"precomputed_model_paths": Fixture("gcnv_targeted")}
+    },
+    ("sv_calling_wgs", "gcnv"): {"gcnv": {"precomputed_model_paths": Fixture("gcnv_wgs")}},
+    ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},
+    ("variant_annotation", "mehari"): {
+        "mehari": {"reference": REFERENCE, "transcripts": [PLACEHOLDER]}
+    },
+    ("variant_calling", None): {
+        "baf_file_generation": {"enabled": False, "min_dp": 10},
+        "bcftools_stats": {"enabled": False},
+        "jannovar_stats": {"enabled": False, "path_ser": "AUTO"},
+        "bcftools_roh": {
+            "enabled": False,
+            "path_af_file": "AUTO",
+            "path_targets": None,
+            "ignore_homref": False,
+            "skip_indels": False,
+            "rec_rate": 1e-8,
+        },
+    },
+    ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
+    ("variant_filtration", "bcftools"): {"bcftools": {"exclude": "FILTER ~ 'low_depth'"}},
+    ("variant_filtration", "regions"): {"regions": {"exclude": "FILTER ~ 'low_depth'"}},
+    ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},
+    ("wgs_cnv_export_external", None): VARIANT_EXPORT_EXTERNAL,
+    ("wgs_sv_export_external", None): VARIANT_EXPORT_EXTERNAL,
+}
 
 
-def _guess_reference_from_static_data(base_config: dict[str, Any]) -> str:
-    static_data = base_config.get("static_data_config", {})
-    if isinstance(static_data, dict):
-        ref = static_data.get("reference", {})
-        if isinstance(ref, dict):
-            path = ref.get("path")
-            if isinstance(path, str) and path:
-                return path
-    return _existing_placeholder_file()
+def _unset(value: Any) -> bool:
+    return value is None or value in ("", "AUTO") or value in ([], ["AUTO"])
 
 
-def _resolve_path(path: str, base_config_path: Path | None) -> str:
-    """Resolve a path to absolute if it's relative and base_config_path is provided."""
-    if not path or path.startswith("/") or path.startswith("AUTO"):
-        return path
-    if base_config_path is None:
-        return path
-    return str((base_config_path.parent / path).resolve())
+def _resolve(value: Any, fixtures: dict[str, Any]) -> Any:
+    if isinstance(value, Fixture):
+        return copy.deepcopy(fixtures[value.name])
+    if isinstance(value, list):
+        return [_resolve(item, fixtures) for item in value]
+    if isinstance(value, dict):
+        return {key: _resolve(item, fixtures) for key, item in value.items()}
+    return value
 
 
-def bootstrap_step_config(
-    step_name: str,
-    step_config: dict[str, Any],
-    base_config: dict[str, Any],
-    base_config_path: Path | None = None,
-) -> dict[str, Any]:
-    cfg = copy.deepcopy(step_config)
-
-    if step_name == "reference_index":
-        tool = cfg.get("tool") or "bwa"
-        cfg["tool"] = tool
-        if tool == "star":
-            cfg["reference_molecule"] = "rna"
-
-    if step_name == "ngs_mapping":
-        tool = cfg.get("tool") or "bwa"
-        cfg["tool"] = tool
-        cfg.setdefault(
-            "target_coverage_report",
-            {"enabled": False, "path_target_interval_list_mapping": []},
-        )
-        cfg.setdefault(tool, {})
-
-        if tool == "star":
-            cfg.setdefault("library_selection", "extraction_type == 'rna'")
-            cfg["star"].setdefault("path_index", _star_index_fixture_dir())
-            cfg.setdefault("strandedness", {})
-            if isinstance(cfg["strandedness"], dict):
-                ref_path = _guess_reference_from_static_data(base_config).replace(
-                    ".fa", ".exon.bed"
-                )
-                cfg["strandedness"].setdefault(
-                    "path_exon_bed",
-                    _resolve_path(ref_path, base_config_path),
-                )
-                cfg["strandedness"].setdefault("strand", -1)
-                cfg["strandedness"].setdefault("threshold", 0.85)
-        elif tool in ("bwa", "bwa_mem2", "minimap2", "bowtie2"):
-            cfg.setdefault("library_selection", "extraction_type == 'dna'")
-            if isinstance(cfg[tool], dict):
-                cfg[tool].setdefault(
-                    "path_index",
-                    _resolve_path(_guess_bwa_index_from_reference(base_config), base_config_path),
-                )
-        elif tool == "mbcs":
-            cfg.setdefault("library_selection", "extraction_type == 'dna'")
-            if isinstance(cfg["mbcs"], dict):
-                cfg["mbcs"].setdefault("mapping_tool", "bwa")
-            cfg.setdefault("bwa", {})
-            if isinstance(cfg["bwa"], dict):
-                cfg["bwa"].setdefault(
-                    "path_index",
-                    _resolve_path(_guess_bwa_index_from_reference(base_config), base_config_path),
-                )
-            cfg.setdefault("bqsr", {})
-            if isinstance(cfg["bqsr"], dict):
-                ref_path = _guess_reference_from_static_data(base_config)
-                cfg["bqsr"].setdefault("common_variants", _resolve_path(ref_path, base_config_path))
-
-    if step_name == "ngs_data_qc":
-        tool = cfg.get("tool") or "fastqc"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        if tool == "picard" and isinstance(cfg["picard"], dict):
-            programs = cfg["picard"].get("programs")
-            if not isinstance(programs, list) or not programs:
-                cfg["picard"]["programs"] = ["CollectAlignmentSummaryMetrics"]
-
-    if step_name == "somatic_targeted_seq_cnv_calling":
-        # HRD requires sequenza; sequenza also produces _dnacopy.seg used by cnv_checking
-        tool = cfg.get("tool") or "sequenza"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        if tool == "cnvkit" and isinstance(cfg.get("cnvkit"), dict):
-            # Use fixture BED files for target/antitarget regions
-            if cfg["cnvkit"].get("path_target") in (None, "", "AUTO"):
-                cfg["cnvkit"]["path_target"] = _cnvkit_targets_bed()
-            if cfg["cnvkit"].get("path_antitarget") in (None, "", "AUTO"):
-                cfg["cnvkit"]["path_antitarget"] = _cnvkit_antitargets_bed()
-            # path_panel_of_normals is no longer a config field; it comes from depends_on.panel_of_normals
-        elif tool == "purecn" and isinstance(cfg.get("purecn"), dict):
-            # path_panel_of_normals / path_intervals / path_mapping_bias are no longer config fields;
-            # they come from depends_on.panel_of_normals resolved at runtime.
-            if not isinstance(cfg["purecn"].get("path_container"), str) or cfg["purecn"].get(
-                "path_container"
-            ) in ("", "AUTO"):
-                cfg["purecn"]["path_container"] = _existing_placeholder_file()
-
-    if step_name == "somatic_wgs_cnv_calling":
-        # cnvkit produces _dnacopy.seg expected by somatic_cnv_checking
-        tool = cfg.get("tool") or "cnvkit"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-
-    if step_name == "sv_calling_targeted":
-        tool = cfg.get("tool") or "delly2"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        if tool == "gcnv" and isinstance(cfg.get("gcnv"), dict):
-            cfg["gcnv"].setdefault(
-                "precomputed_model_paths", _get_gcnv_precomputed_models("targeted")
-            )
-
-    if step_name == "sv_calling_wgs":
-        tool = cfg.get("tool") or "delly2"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        if tool == "gcnv" and isinstance(cfg.get("gcnv"), dict):
-            cfg["gcnv"].setdefault("precomputed_model_paths", _get_gcnv_precomputed_models("wgs"))
-
-    if step_name == "repeat_expansion":
-        placeholder = _guess_reference_from_static_data(base_config)
-        placeholder = _resolve_path(placeholder, base_config_path)
-        if not isinstance(cfg.get("repeat_catalog"), str) or cfg.get("repeat_catalog") in (
-            "",
-            "AUTO",
-        ):
-            cfg["repeat_catalog"] = placeholder
-        if not isinstance(cfg.get("repeat_annotation"), str) or cfg.get("repeat_annotation") in (
-            "",
-            "AUTO",
-        ):
-            cfg["repeat_annotation"] = placeholder
-
-    if step_name == "panel_of_normals":
-        tool = cfg.get("tool") or "mutect2"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        if tool == "mutect2" and isinstance(cfg["mutect2"], dict):
-            if not isinstance(cfg["mutect2"].get("germline_resource"), str) or cfg["mutect2"].get(
-                "germline_resource"
-            ) in ("", "AUTO"):
-                ref_path = _guess_reference_from_static_data(base_config)
-                cfg["mutect2"]["germline_resource"] = _resolve_path(ref_path, base_config_path)
-        elif tool == "cnvkit" and isinstance(cfg["cnvkit"], dict):
-            # Empty target path puts CNVkit into WGS mode and avoids unresolved external target BEDs.
-            cfg["cnvkit"]["path_target"] = ""
-        elif tool == "purecn" and isinstance(cfg["purecn"], dict):
-            if not isinstance(cfg["purecn"].get("path_bait_regions"), str) or cfg["purecn"].get(
-                "path_bait_regions"
-            ) in ("", "AUTO"):
-                ref_path = _guess_reference_from_static_data(base_config)
-                cfg["purecn"]["path_bait_regions"] = _resolve_path(ref_path, base_config_path)
-            cfg["purecn"]["path_normals_list"] = ""
-            # path_genomicsDB removed: the genomicsDB is now a tracked Snakemake input derived
-            # from depends_on.panel_of_normals, not a bare config path.
-
-    if step_name == "somatic_gene_fusion_calling":
-        tool = cfg.get("tool") or "arriba"
-        cfg["tool"] = tool
-        cfg.setdefault("library_selection", "extraction_type == 'rna'")
-        cfg.setdefault(tool, {})
-        if tool == "arriba" and isinstance(cfg["arriba"], dict):
-            cfg["arriba"].setdefault("path_index", _star_index_fixture_dir())
-
-    if step_name == "variant_annotation":
-        tool = cfg.get("tool") or "vep"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        if tool == "mehari" and isinstance(cfg["mehari"], dict):
-            if not isinstance(cfg["mehari"].get("reference"), str) or cfg["mehari"].get(
-                "reference"
-            ) in ("", "AUTO"):
-                ref_path = _guess_reference_from_static_data(base_config)
-                cfg["mehari"]["reference"] = _resolve_path(ref_path, base_config_path)
-            if not isinstance(cfg["mehari"].get("transcripts"), list):
-                cfg["mehari"]["transcripts"] = [_existing_placeholder_file()]
-            elif cfg["mehari"].get("transcripts") == ["AUTO"]:
-                cfg["mehari"]["transcripts"] = [_existing_placeholder_file()]
-
-    if step_name == "somatic_msi_calling":
-        tool = cfg.get("tool") or "mantis_msi2"
-        cfg["tool"] = tool
-        if not isinstance(cfg.get("loci_bed"), str) or cfg.get("loci_bed") in ("", "AUTO"):
-            ref_path = _guess_reference_from_static_data(base_config)
-            cfg["loci_bed"] = _resolve_path(ref_path, base_config_path)
-
-    if step_name == "targeted_seq_mei_calling":
-        tool = cfg.get("tool") or "scramble"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        if tool == "scramble" and isinstance(cfg["scramble"], dict):
-            if not isinstance(cfg["scramble"].get("blast_ref"), str) or cfg["scramble"].get(
-                "blast_ref"
-            ) in ("", "AUTO"):
-                ref_path = _guess_reference_from_static_data(base_config)
-                cfg["scramble"]["blast_ref"] = _resolve_path(ref_path, base_config_path)
-
-    if step_name in (
-        "variant_export_external",
-        "wgs_cnv_export_external",
-        "wgs_sv_export_external",
-    ):
-        # These require list-typed non-empty search config and existing DB/serializer files.
-        if not isinstance(cfg.get("search_paths"), list) or not cfg.get("search_paths"):
-            cfg["search_paths"] = ["/tmp"]
-        if not isinstance(cfg.get("search_patterns"), list) or not cfg.get("search_patterns"):
-            cfg["search_patterns"] = [{"vcf": "*.vcf.gz"}]
-        placeholder_file = _existing_placeholder_file()
-        for key in ("path_refseq_ser", "path_ensembl_ser", "path_db"):
-            value = cfg.get(key)
-            if not isinstance(value, str) or not value or value == "AUTO":
-                cfg[key] = placeholder_file
-
-    if step_name == "variant_calling":
-        tool = cfg.get("tool") or "bcftools_call"
-        cfg["tool"] = tool
-        cfg.setdefault(tool, {})
-        cfg.setdefault("baf_file_generation", {"enabled": False, "min_dp": 10})
-        cfg.setdefault("bcftools_stats", {"enabled": False})
-        cfg.setdefault("jannovar_stats", {"enabled": False, "path_ser": "AUTO"})
-        cfg.setdefault(
-            "bcftools_roh",
-            {
-                "enabled": False,
-                "path_af_file": "AUTO",
-                "path_targets": None,
-                "ignore_homref": False,
-                "skip_indels": False,
-                "rec_rate": 1e-8,
-            },
-        )
-
-    if step_name == "variant_filtration":
-        tool = cfg.get("tool") or "bcftools"
-        cfg["tool"] = tool
-        if tool == "bcftools":
-            cfg.setdefault("bcftools", {})
-            if isinstance(cfg["bcftools"], dict):
-                cfg["bcftools"].setdefault("exclude", "FILTER ~ 'low_depth'")
-        elif tool == "regions":
-            cfg.setdefault("regions", {})
-            if isinstance(cfg["regions"], dict):
-                cfg["regions"].setdefault("exclude", "FILTER ~ 'low_depth'")
-        elif tool == "vembrane":
-            cfg.setdefault("vembrane", {})
-            if isinstance(cfg["vembrane"], dict):
-                cfg["vembrane"].setdefault("expressions", {"some_filter": "True"})
-
-    if step_name == "gene_expression_quantification":
-        tool = cfg.get("tool") or "salmon"
-        cfg["tool"] = tool
-        cfg.setdefault("library_selection", "extraction_type == 'rna'")
-        cfg.setdefault(tool, {})
-        if tool in ("dupradar", "rnaseqc") and isinstance(cfg[tool], dict):
-            cfg[tool].setdefault(f"{tool}_path_annotation_gtf", _existing_placeholder_file())
-        if tool == "salmon" and isinstance(cfg["salmon"], dict):
-            placeholder_file = _existing_placeholder_file()
-            placeholder_dir = _star_index_fixture_dir()
-            cfg["salmon"].setdefault("path_index", placeholder_dir)
-            cfg["salmon"].setdefault("path_transcript_to_gene", placeholder_file)
-
-    if step_name == "gene_expression_report":
-        cfg.setdefault("library_selection", "extraction_type == 'rna'")
-
-    if step_name == "hla_typing" and cfg.get("tool") == "arcashla":
-        cfg.setdefault("library_selection", "extraction_type == 'rna'")
-
-    if step_name == "somatic_neoepitope_prediction":
-        cfg.setdefault(
-            "tool_hla_typing",
-            {
-                "dna": {"class_i": "optitype", "class_ii": None},
-                "rna": {"class_i": None, "class_ii": None},
-            },
-        )
-
-    return cfg
-
-
-def ensure_explicit_selected_tool_config(
-    step_name: str,
-    workflow_cls: type,
-    step_config: dict[str, Any],
-) -> tuple[dict[str, Any], list[str]]:
-    config_model = getattr(workflow_cls, "config_model_class", None)
-    if not config_model:
-        return step_config, []
-
-    model_fields = getattr(config_model, "model_fields", {})
-    if "tool" not in model_fields:
-        return step_config, []
-
-    tool_field = model_fields.get("tool")
-    selected_tool = step_config.get("tool")
-    if selected_tool is None and tool_field is not None:
-        selected_tool = tool_field.default
-    if isinstance(selected_tool, enum.Enum):
-        selected_tool = selected_tool.value
-    if not isinstance(selected_tool, str) or not selected_tool:
-        return step_config, []
-
-    # Most workflow models name the tool-specific section after the tool value.
-    if selected_tool not in model_fields:
-        return step_config, []
-
-    cfg = copy.deepcopy(step_config)
-    if "tool" not in cfg:
-        cfg["tool"] = selected_tool
-        note = f"{step_name}: added explicit tool selection tool: {selected_tool}"
-    else:
-        note = None
-
-    if selected_tool in cfg:
-        return cfg, ([note] if note else [])
-
-    cfg[selected_tool] = {}
-    notes = [f"{step_name}: added explicit selected-tool section {selected_tool}: {{}}"]
-    if note:
-        notes.insert(0, note)
-    return cfg, notes
+def fill_config(config: dict[str, Any], fragment: dict[str, Any], fixtures: dict[str, Any]) -> None:
+    """Fill the unset keys of ``config`` from ``fragment``; dicts are sections to recurse into."""
+    for key, value in fragment.items():
+        if isinstance(value, Overwrite):
+            config[key] = _resolve(value.value, fixtures)
+        elif isinstance(value, dict):
+            if not isinstance(config.get(key), dict):
+                config[key] = {}
+            fill_config(config[key], value, fixtures)
+        elif _unset(config.get(key)):
+            config[key] = _resolve(value, fixtures)
 
 
 def get_possible_tools(workflow_cls: type) -> list[str]:
-    config_model = getattr(workflow_cls, "config_model_class", None)
-    if not config_model:
-        return []
-    model_fields = getattr(config_model, "model_fields", {})
-    tool_field = model_fields.get("tool")
+    """Return the values of a step's ``tool`` enum; empty for steps without a tool."""
+    tool_field = workflow_cls.config_model_class.model_fields.get("tool")
     if tool_field is None:
         return []
-
-    ann = tool_field.annotation
-    # Unwrap Annotated, Union, Optional
-    while True:
-        origin = get_origin(ann)
-        args = get_args(ann)
-        if origin is not None and getattr(origin, "__name__", None) == "Annotated":
-            ann = args[0]
-            continue
-        if origin is typing.Union or (
-            origin is not None and getattr(origin, "__name__", None) in ("Union", "UnionType")
-        ):
-            non_none_args = [a for a in args if a is not type(None)]
-            if non_none_args:
-                ann = non_none_args[0]
-                continue
-        break
-
-    # Now check if ann is Enum or Literal
-    origin = get_origin(ann)
-    if origin is typing.Literal or getattr(origin, "__name__", None) == "Literal":
-        return [str(val) for val in get_args(ann)]
-
-    if isinstance(ann, type) and issubclass(ann, enum.Enum):
-        return [str(item.value) for item in ann]
-
+    annotation = tool_field.annotation
+    while get_origin(annotation) not in (None, Literal):  # Annotated[...], X | None
+        annotation = next(a for a in get_args(annotation) if a is not type(None))
+    if get_origin(annotation) is Literal:
+        return [str(value) for value in get_args(annotation)]
+    if isinstance(annotation, type) and issubclass(annotation, enum.Enum):
+        return [str(item.value) for item in annotation]
     return []
-
-
-PREFERRED_DEFAULT_TOOLS: dict[str, str] = {
-    # Prefer configs that can dryrun without heavy precomputed models.
-    "somatic_targeted_seq_cnv_calling": "sequenza",
-    "somatic_wgs_cnv_calling": "cnvkit",
-    "sv_calling_targeted": "delly2",
-}
 
 
 def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
@@ -799,78 +530,33 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
 
 
 def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list[dict[str, Any]]:
-    workflow_items = sorted(WORKFLOW_REGISTRY.items())
-
+    """Return one task per step and tool, with filled config and wired dependencies."""
+    fixtures = fixture_paths(base_config, base_config_path)
     generation_notes: list[str] = []
     tasks: list[dict[str, Any]] = []
-    for step_name, cls in workflow_items:
-        tools = get_possible_tools(cls)
+    for step_name, cls in sorted(WORKFLOW_REGISTRY.items()):
+        for tool in get_possible_tools(cls) or [None]:
+            config = parse_default_step_config(cls, step_name)
+            if tool is not None:
+                config["tool"] = tool
+                # The selected tool's section must be present, even if empty.
+                if tool in cls.config_model_class.model_fields:
+                    config.setdefault(tool, {})
+            fill_config(config, TASK_CONFIG.get((step_name, None), {}), fixtures)
+            if tool is not None:
+                fill_config(config, TASK_CONFIG.get((step_name, tool), {}), fixtures)
+            if step_name == "link_in":
+                config.setdefault("path", infer_link_in_path(base_config, base_config_path))
+            if depends_on := wire_dependencies(step_name, tool):
+                config["depends_on"] = depends_on
 
-        if tools:
-            for tool_name in tools:
-                task_name = f"{step_name}_{tool_name}"
-
-                step_config = parse_default_step_config(cls, step_name)
-                step_config["tool"] = tool_name
-                step_config = bootstrap_step_config(
-                    step_name, step_config, base_config, base_config_path
-                )
-                if depends_on := wire_dependencies(step_name, tool_name):
-                    step_config["depends_on"] = depends_on
-                if step_name == "link_in" and "path" not in step_config:
-                    step_config["path"] = infer_link_in_path(base_config, base_config_path)
-
-                step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
-                generation_notes.extend(notes)
-                step_config, notes = ensure_explicit_selected_tool_config(
-                    step_name, cls, step_config
-                )
-                generation_notes.extend(notes)
-                if notes:
-                    step_config, notes = validate_and_autofill_step_config(
-                        step_name, cls, step_config
-                    )
-                    generation_notes.extend(notes)
-
-                tasks.append(
-                    {
-                        "step": step_name,
-                        "name": task_name,
-                        "config": step_config,
-                    }
-                )
-        else:
-            task_name = step_name
-            step_config = parse_default_step_config(cls, step_name)
-            step_config = bootstrap_step_config(
-                step_name, step_config, base_config, base_config_path
-            )
-            if depends_on := wire_dependencies(step_name, step_config.get("tool")):
-                step_config["depends_on"] = depends_on
-            if step_name == "link_in" and "path" not in step_config:
-                step_config["path"] = infer_link_in_path(base_config, base_config_path)
-
-            step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
+            config, notes = validate_and_autofill_step_config(step_name, cls, config)
             generation_notes.extend(notes)
-            step_config, notes = ensure_explicit_selected_tool_config(step_name, cls, step_config)
-            generation_notes.extend(notes)
-            if notes:
-                step_config, notes = validate_and_autofill_step_config(step_name, cls, step_config)
-                generation_notes.extend(notes)
-
-            tasks.append(
-                {
-                    "step": step_name,
-                    "name": task_name,
-                    "config": step_config,
-                }
-            )
-
-    # Validation dumps every depends_on field; keep only the wired ones.
-    for task in tasks:
-        depends_on = wire_dependencies(task["step"], task["config"].get("tool"))
-        if depends_on:
-            task["config"]["depends_on"] = depends_on
+            if depends_on:
+                # Validation dumps every depends_on field; keep only the wired ones.
+                config["depends_on"] = depends_on
+            name = f"{step_name}_{tool}" if tool else step_name
+            tasks.append({"step": step_name, "name": name, "config": config})
 
     if generation_notes:
         print("Generation notes:")
@@ -934,7 +620,7 @@ def build_config(
         if isinstance(ref_obj, dict) and ref_obj.get("path"):
             ref_path = ref_obj["path"]
         else:
-            ref_path = _existing_placeholder_file()
+            ref_path = PLACEHOLDER_FILE
 
         for key in ("cosmic", "dbsnp", "dbnsfp", "features"):
             if key not in static_data or static_data[key] is None:
