@@ -5,7 +5,7 @@
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.peddy.ped",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv"
   ],
   "log": [],
@@ -465,7 +465,7 @@
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.peddy.ped",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv"
   ],
   "params": {},

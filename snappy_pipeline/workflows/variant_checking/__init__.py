@@ -111,7 +111,7 @@ class PeddyStepPart(BaseStepPart):
             "het_check": ".het_check.csv",
             "html": ".html",
             "ped_check": ".ped_check.csv",
-            "ped": ".peddy.ped",
+            "ped": ".ped",
             "sex_check": ".sex_check.csv",
         }
         for key, ext in key_ext.items():
