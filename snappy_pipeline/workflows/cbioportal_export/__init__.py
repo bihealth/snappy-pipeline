@@ -498,23 +498,12 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-        name_pattern = self.config.expression.expression_tool + ".{library_name}"
-        self._expr_name_pattern = name_pattern
-
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
         for lib in self._yield_libraries():
-            local_path = os.path.join(
-                "output",
-                self._expr_name_pattern,
-                "out",
-                self._expr_name_pattern + ".GeneCounts.tab",
-            ).format(library_name=lib.name)
-            yield (
-                lib.test_sample.bio_sample.name,
-                self.parent.upstream("alignments")(local_path),
-            )
+            counts = self.parent.get_upstream_paths("alignments", library_name=lib.name)
+            yield lib.test_sample.bio_sample.name, counts.gene_counts
 
     def _get_params_run(self, wildcards):
         return {

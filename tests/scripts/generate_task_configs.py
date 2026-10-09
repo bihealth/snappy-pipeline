@@ -48,6 +48,8 @@ DEPENDENCY_TASKS: dict[str, str] = {
 #: Exceptions to ``DEPENDENCY_TASKS``: (step, field) -> upstream task, or ``None`` to leave the
 #: field unset. ``strandedness`` and ``panel_of_normals`` are wired per tool in build_all_tasks.
 STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
+    # Expression export is off in the generated config, so it needs no RNA mapping task.
+    ("cbioportal_export", "alignments"): None,
     ("cbioportal_export", "variants"): "variant_calling_mutect2",
     ("create_proteome", "variants"): "variant_annotation_vep",
     ("gene_expression_quantification", "alignments"): "ngs_mapping_star",

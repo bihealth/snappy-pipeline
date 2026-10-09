@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedGeneCounts
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
@@ -15,10 +15,6 @@ class ExpectedCopyNumberCalls(BaseModel):
     """Consumer-driven contract for copy-number provider outputs used by cBioPortal export."""
 
     dnacopy_seg: str
-
-
-class ExpressionTool(enum.StrEnum):
-    STAR = "star"
 
 
 class VariantAnnotationTool(enum.StrEnum):
@@ -57,9 +53,8 @@ class GenomeName(enum.StrEnum):
 
 
 class Expression(ToggleModel):
-    """When missing, no expression data is uploaded to cBioPortal"""
-
-    expression_tool: ExpressionTool = ExpressionTool.STAR
+    """When missing, no expression data is uploaded to cBioPortal. The gene counts come from the
+    STAR task in ``depends_on.alignments``."""
 
 
 class CNA(ToggleModel):
@@ -91,10 +86,11 @@ class ExtraInfos(TypedDict):
 
 
 class CbioportalExportDependsOn(SnappyModel):
+    #: RNA mapping task whose gene counts the expression export reads
     alignments: Annotated[
         str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
+        DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
+        ExpectedPathSchema(ExpectedGeneCounts),
     ] = ""
     copy_number: Annotated[
         str,
