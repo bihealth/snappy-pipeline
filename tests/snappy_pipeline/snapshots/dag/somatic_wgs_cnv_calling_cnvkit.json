@@ -4,7 +4,7 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns",
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed",
-   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.breaks.txt",
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.genemetrics.txt",
@@ -239,8 +239,8 @@
   "output": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed.md5",
-   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg",
-   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
@@ -588,6 +588,25 @@
  },
  {
   "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "seg",
+   "file": "case001subregion-T1-DNA1-WES1.dnacopy",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
   "log": [],
@@ -601,25 +620,6 @@
   "wildcards": {
    "ext": "gz",
    "file": "case001subregion-T1-DNA1-WES1.vcf",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
-  "wrapper": null
- },
- {
-  "input": [
-   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "seg",
-   "file": "case001subregion-T1-DNA1-WES1_dnacopy",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

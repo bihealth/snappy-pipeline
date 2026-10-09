@@ -250,17 +250,17 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             key = "{}_bcf".format(kind)
             yield (
                 key,
-                f"work/cnvetti_coverage.{library_name}/out/cnvetti_coverage.{library_name}.bcf",
+                f"work/{library_name}/out/{library_name}.coverage.bcf",
             )
 
     @dictify
     def _get_input_files_segment(self, wildcards):
         """Return input files that "cnvetti segment" needs"""
         for key, ext in self.bcf_dict.items():
-            name_pattern = "cnvetti_tumor_normal_ratio.{tumor_library}".format(**wildcards)
+            name_pattern = "{tumor_library}".format(**wildcards)
             yield (
                 key,
-                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                "work/{name_pattern}/out/{name_pattern}.tumor_normal_ratio{ext}".format(
                     name_pattern=name_pattern, ext=ext
                 ),
             )
@@ -274,10 +274,10 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_coverage(self):
         for key, ext in self.bcf_dict.items():
-            name_pattern = "cnvetti_coverage.{library_name}"
+            name_pattern = "{library_name}"
             yield (
                 key,
-                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                "work/{name_pattern}/out/{name_pattern}.coverage{ext}".format(
                     name_pattern=name_pattern, ext=ext
                 ),
             )
@@ -285,10 +285,10 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_output_files_tumor_normal_ratio(self):
         for key, ext in self.bcf_dict.items():
-            name_pattern = "cnvetti_tumor_normal_ratio.{library_name}"
+            name_pattern = "{library_name}"
             yield (
                 key,
-                "work/{name_pattern}/out/{name_pattern}{ext}".format(
+                "work/{name_pattern}/out/{name_pattern}.tumor_normal_ratio{ext}".format(
                     name_pattern=name_pattern, ext=ext
                 ),
             )
@@ -347,8 +347,8 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         wildcard_name = (
             "library_name" if action in {"coverage", "tumor_normal_ratio"} else "tumor_library"
         )
-        name_pattern = f"cnvetti_{action}.{{{{{wildcard_name}}}}}"
-        prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
+        name_pattern = f"{{{wildcard_name}}}"
+        prefix = f"work/{name_pattern}/log/{name_pattern}.{action}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),
@@ -544,7 +544,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_export():
         exports = (
             ("bed", ".bed"),
-            ("seg", "_dnacopy.seg"),
+            ("seg", ".dnacopy.seg"),
             ("vcf", ".vcf.gz"),
             ("tbi", ".vcf.gz.tbi"),
         )
@@ -725,7 +725,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic WGS CNV output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"dnacopy_seg": f"output/{lib}/out/{lib}_dnacopy.seg"}
+        return {"dnacopy_seg": f"output/{lib}/out/{lib}.dnacopy.seg"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -776,7 +776,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                     ],
                 )
             elif tool == "cnvkit":
-                exts = (".cnr", ".cns", ".bed", "_dnacopy.seg", ".vcf.gz", ".vcf.gz.tbi")
+                exts = (".cnr", ".cns", ".bed", ".dnacopy.seg", ".vcf.gz", ".vcf.gz.tbi")
                 yield from expand(
                     os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
                     tumor_library=[entity],

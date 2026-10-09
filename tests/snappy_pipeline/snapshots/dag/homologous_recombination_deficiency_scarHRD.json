@@ -366,7 +366,7 @@
  },
  {
   "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/out/sequenza.50.wig.gz",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/out/gc.50.wig.gz",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
@@ -423,15 +423,15 @@
  {
   "input": [],
   "log": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/sequenza.50.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/sequenza.50.log.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/sequenza.50.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/sequenza.50.conda_info.txt.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/sequenza.50.conda_list.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/sequenza.50.conda_list.txt.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.log",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.log.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_info.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_info.txt.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_list.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_list.txt.md5"
   ],
   "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/out/sequenza.50.wig.gz"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/out/gc.50.wig.gz"
   ],
   "params": {
    "args": {

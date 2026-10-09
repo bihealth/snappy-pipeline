@@ -193,15 +193,15 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.{case001subregion-N1-DNA1-WES1}/log/cnvetti_coverage.{case001subregion-N1-DNA1-WES1}.log",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.{case001subregion-N1-DNA1-WES1}/log/cnvetti_coverage.{case001subregion-N1-DNA1-WES1}.conda_info.txt",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.{case001subregion-N1-DNA1-WES1}/log/cnvetti_coverage.{case001subregion-N1-DNA1-WES1}.conda_list.txt"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt"
   ],
   "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-N1-DNA1-WES1/out/cnvetti_coverage.case001subregion-N1-DNA1-WES1.bcf",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-N1-DNA1-WES1/out/cnvetti_coverage.case001subregion-N1-DNA1-WES1.bcf.csi",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-N1-DNA1-WES1/out/cnvetti_coverage.case001subregion-N1-DNA1-WES1.bcf.md5",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-N1-DNA1-WES1/out/cnvetti_coverage.case001subregion-N1-DNA1-WES1.bcf.csi.md5"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.bcf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.bcf.csi.md5"
   ],
   "params": {
    "args": {
@@ -231,15 +231,15 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
   ],
   "log": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.{case001subregion-T1-DNA1-WES1}/log/cnvetti_coverage.{case001subregion-T1-DNA1-WES1}.log",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.{case001subregion-T1-DNA1-WES1}/log/cnvetti_coverage.{case001subregion-T1-DNA1-WES1}.conda_info.txt",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.{case001subregion-T1-DNA1-WES1}/log/cnvetti_coverage.{case001subregion-T1-DNA1-WES1}.conda_list.txt"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt"
   ],
   "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-T1-DNA1-WES1/out/cnvetti_coverage.case001subregion-T1-DNA1-WES1.bcf",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-T1-DNA1-WES1/out/cnvetti_coverage.case001subregion-T1-DNA1-WES1.bcf.csi",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-T1-DNA1-WES1/out/cnvetti_coverage.case001subregion-T1-DNA1-WES1.bcf.md5",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-T1-DNA1-WES1/out/cnvetti_coverage.case001subregion-T1-DNA1-WES1.bcf.csi.md5"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage.bcf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage.bcf.csi.md5"
   ],
   "params": {
    "args": {
@@ -265,15 +265,15 @@
  },
  {
   "input": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf.csi",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf.md5",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf.csi.md5"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf.csi.md5"
   ],
   "log": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_segment.{case001subregion-T1-DNA1-WES1}/log/cnvetti_segment.{case001subregion-T1-DNA1-WES1}.log",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_segment.{case001subregion-T1-DNA1-WES1}/log/cnvetti_segment.{case001subregion-T1-DNA1-WES1}.conda_info.txt",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_segment.{case001subregion-T1-DNA1-WES1}/log/cnvetti_segment.{case001subregion-T1-DNA1-WES1}.conda_list.txt"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.segment.log",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.segment.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.segment.conda_list.txt"
   ],
   "output": [
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf",
@@ -302,19 +302,19 @@
  },
  {
   "input": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-T1-DNA1-WES1/out/cnvetti_coverage.case001subregion-T1-DNA1-WES1.bcf",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_coverage.case001subregion-N1-DNA1-WES1/out/cnvetti_coverage.case001subregion-N1-DNA1-WES1.bcf"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.bcf"
   ],
   "log": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.{case001subregion-T1-DNA1-WES1}/log/cnvetti_tumor_normal_ratio.{case001subregion-T1-DNA1-WES1}.log",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.{case001subregion-T1-DNA1-WES1}/log/cnvetti_tumor_normal_ratio.{case001subregion-T1-DNA1-WES1}.conda_info.txt",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.{case001subregion-T1-DNA1-WES1}/log/cnvetti_tumor_normal_ratio.{case001subregion-T1-DNA1-WES1}.conda_list.txt"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.log",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.conda_list.txt"
   ],
   "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf.csi",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf.md5",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1/out/cnvetti_tumor_normal_ratio.case001subregion-T1-DNA1-WES1.bcf.csi.md5"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor_normal_ratio.bcf.csi.md5"
   ],
   "params": {},
   "resources": {
