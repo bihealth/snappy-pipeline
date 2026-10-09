@@ -315,7 +315,7 @@ class VariantFiltrationWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local filtered-variant output paths for downstream consumers."""
-        lib = kwargs.get("tumor_library", "{tumor_library}")
+        lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",
             "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
