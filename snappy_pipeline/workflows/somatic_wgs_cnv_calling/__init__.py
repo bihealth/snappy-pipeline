@@ -122,26 +122,19 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}{ext}"
 
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        @dictify
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            ngs_mapping = self.parent.upstream("ngs_mapping")
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
-                normal_library=self.get_normal_lib_name(wildcards), **wildcards
-            )
-            cancer_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-            yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
-            yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
-            yield "tumor_bam", ngs_mapping(cancer_base_path + ".bam")
-            yield "tumor_bai", ngs_mapping(cancer_base_path + ".bam.bai")
-
-        return input_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        )
+        cancer_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
+        yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
+        yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
+        yield "tumor_bam", ngs_mapping(cancer_base_path + ".bam")
+        yield "tumor_bai", ngs_mapping(cancer_base_path + ".bam.bai")
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -206,15 +199,10 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             mem=f"{int(3.75 * 1024 * 16)}MB",
         )
 
-    def get_params(self, action):
-        self._validate_action(action)
-
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            return self.config.canvas.model_dump(by_alias=True) | {
-                "tumor_library": wildcards.tumor_library
-            }
-
-        return args_fn
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self.config.canvas.model_dump(by_alias=True) | {
+            "tumor_library": wildcards.tumor_library
+        }
 
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
@@ -240,16 +228,9 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "segment": ("segmentation",),
     }
 
-    def get_input_files(self, action):
-        """Return input function for CNVetti rule"""
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_input_files_{}".format(action))
-
     @dictify
-    def _get_input_files_coverage(self, wildcards, **kwargs):
+    def _get_input_files_coverage(self, wildcards):
         """Return input files that "cnvetti coverage" needs"""
-        _ = kwargs
         ngs_mapping = self.parent.upstream("ngs_mapping")
         # Yield input BAM and BAI file
         bam_tpl = "output/{library_name}/out/{library_name}{ext}"
@@ -257,8 +238,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             yield ext.split(".")[-1], ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
 
     @dictify
-    def _get_input_files_tumor_normal_ratio(self, wildcards, **kwargs):
-        _ = kwargs
+    def _get_input_files_tumor_normal_ratio(self, wildcards):
         tumor_library = getattr(wildcards, "library_name", None) or getattr(
             wildcards, "tumor_library", None
         )
@@ -274,9 +254,8 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             )
 
     @dictify
-    def _get_input_files_segment(self, wildcards, **kwargs):
+    def _get_input_files_segment(self, wildcards):
         """Return input files that "cnvetti segment" needs"""
-        _ = kwargs
         for key, ext in self.bcf_dict.items():
             name_pattern = "cnvetti_tumor_normal_ratio.{tumor_library}".format(**wildcards)
             yield (
@@ -325,11 +304,17 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                 ),
             )
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        """Return args (params) that CNVetti creates for the given action"""
-        # Validate action
-        self._validate_action(action)
+    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_params("coverage")
 
+    def _get_params_tumor_normal_ratio(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_params("tumor_normal_ratio")
+
+    def _get_params_segment(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_params("segment")
+
+    def _get_params(self, action: str) -> dict[str, Any]:
+        """Return args (params) that CNVetti creates for the given action"""
         cfg = getattr(self.config, self.name)
 
         preset_cfg = cfg.presets.get(cfg.preset)
@@ -429,22 +414,6 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action):
-        """Return input paths input function, dependent on rule"""
-        # Validate action
-        self._validate_action(action)
-        method_mapping = {
-            "coverage": self._get_input_files_coverage,
-            "call": self._get_input_files_call,
-            "fix": self._get_input_files_fix,
-            "segment": self._get_input_files_segment,
-            "postprocess": self._get_input_files_postprocess,
-            "export": self._get_input_files_export,
-            "plot": self._get_input_files_plot,
-            "report": self._get_input_files_report,
-        }
-        return method_mapping[action]
-
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
         ngs_mapping = self.parent.upstream("ngs_mapping")
@@ -454,8 +423,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "bai": ngs_mapping(base_path + ".bam.bai"),
         }
 
-    @staticmethod
-    def _get_input_files_fix(wildcards):
+    def _get_input_files_fix(self, wildcards):
         tpl_base = "{library_name}"
         tpl = "work/" + tpl_base + "/out/" + tpl_base + ".{target}coverage.cnn"
         input_files = {
@@ -464,32 +432,27 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         }
         return input_files
 
-    @staticmethod
-    def _get_input_files_segment(wildcards):
+    def _get_input_files_segment(self, wildcards):
         cnr_pattern = "work/{library_name}/out/{library_name}.cnr"
         input_files = {"cnr": cnr_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_call(wildcards):
+    def _get_input_files_call(self, wildcards):
         segment_pattern = "work/{library_name}/out/{library_name}.segment.cns"
         input_files = {"segment": segment_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_postprocess(wildcards):
+    def _get_input_files_postprocess(self, wildcards):
         segment_pattern = "work/{library_name}/out/{library_name}.call.cns"
         input_files = {"call": segment_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_export(wildcards):
+    def _get_input_files_export(self, wildcards):
         cns_pattern = "work/{library_name}/out/{library_name}.call.cns"
         input_files = {"cns": cns_pattern.format(**wildcards)}
         return input_files
 
-    @staticmethod
-    def _get_input_files_plot(wildcards):
+    def _get_input_files_plot(self, wildcards):
         tpl = "work/{library_name}/out/{library_name}.{ext}"
         input_files = {
             "cnr": tpl.format(ext="cnr", **wildcards),
@@ -702,11 +665,6 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             )
 
         return result
-
-    def get_params(self, action: str):
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec

@@ -205,7 +205,7 @@ rule gene_expression_quantification_featurecounts_run:
 
 rule gene_expression_quantification_salmon_run:
     input:
-        **wf.get_input_files("salmon", "run"),
+        unpack(wf.get_input_files("salmon", "run")),
     output:
         **wf.get_output_files("salmon", "run"),
     log:

@@ -119,12 +119,10 @@ class OptiTypeStepPart(BaseStepPart):
     def get_output_prefix():
         return ""
 
-    @classmethod
     @dictify
-    def get_input_files(cls, action):
+    def _get_input_files_run(self, wildcards):
         """Return input files"""
-        assert action == "run"
-        yield "done", "work/input_links/{library_name}/.done"
+        yield "done", "work/input_links/{library_name}/.done".format(**wildcards)
 
     @dictify
     def get_output_files(self, action):
@@ -155,33 +153,26 @@ class OptiTypeStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            result = {
-                "input": {
-                    "reads_left": list(
-                        sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
-                    )
-                },
-                "seq_type": self._get_seq_type(wildcards),
-            }
-            reads_right = list(
-                sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
-            )
-            if reads_right:
-                result["input"]["reads_right"] = reads_right
-            result["use_discordant"] = "true" if self.config.optitype.use_discordant else "false"
-            result["num_mapping_threads"] = self.config.optitype.num_mapping_threads
-            result["max_reads"] = self.config.optitype.max_reads
-            result["yara_error_rate"] = self.config.optitype.yara_mapper.error_rate
-            result["yara_strata_rate"] = self.config.optitype.yara_mapper.strata_rate
-            result["yara_sensitivity"] = self.config.optitype.yara_mapper.sensitivity
-            return result
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+    def _get_params_run(self, wildcards):
+        """Return dict for the wrapper, including the input files"""
+        result = {
+            "input": {
+                "reads_left": list(
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
+                )
+            },
+            "seq_type": self._get_seq_type(wildcards),
+        }
+        reads_right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
+        if reads_right:
+            result["input"]["reads_right"] = reads_right
+        result["use_discordant"] = "true" if self.config.optitype.use_discordant else "false"
+        result["num_mapping_threads"] = self.config.optitype.num_mapping_threads
+        result["max_reads"] = self.config.optitype.max_reads
+        result["yara_error_rate"] = self.config.optitype.yara_mapper.error_rate
+        result["yara_strata_rate"] = self.config.optitype.yara_mapper.strata_rate
+        result["yara_sensitivity"] = self.config.optitype.yara_mapper.sensitivity
+        return result
 
     def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
@@ -245,20 +236,15 @@ class ArcasHlaStepPart(BaseStepPart):
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
         self.extensions = EXT_VALUES
 
-    def get_input_files(self, action):
+    @dictify
+    def _get_input_files_run(self, wildcards):
         """Return input files"""
-
-        @dictify
-        def input_function(wildcards):
-            yield "ref_done", "work/arcashla.prepare_reference/out/.done"
-            tpl = "output/{library_name}/out/{library_name}.bam"
-            yield (
-                "bam",
-                self.parent.upstream("ngs_mapping")(tpl.format(mapper=self.mapper, **wildcards)),
-            )
-
-        assert action == "run"
-        return input_function
+        yield "ref_done", "work/arcashla.prepare_reference/out/.done"
+        tpl = "output/{library_name}/out/{library_name}.bam"
+        yield (
+            "bam",
+            self.parent.upstream("ngs_mapping")(tpl.format(mapper=self.mapper, **wildcards)),
+        )
 
     @dictify
     def get_output_files(self, action):
@@ -332,11 +318,6 @@ class HlaLaStepPart(BaseStepPart):
             ),
         )
 
-    def get_input_files(self, action):
-        """Return input files"""
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @dictify
     def _get_input_files_prepare_reference(self, wildcards: Wildcards):
         yield "path_graph", self.path_graph
@@ -371,10 +352,6 @@ class HlaLaStepPart(BaseStepPart):
 
     def get_output_prefix(self):
         return "%s." % self.mapper
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_prepare_reference(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"start": self.config.hla_la.start, "end": self.config.hla_la.end}

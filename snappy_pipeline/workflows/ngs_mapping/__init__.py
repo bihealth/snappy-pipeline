@@ -601,11 +601,6 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-        assert action == "run", "Unsupported actions"
-        return getattr(self, f"_get_params_{action}")
-
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         result = {
             "input": {
@@ -621,13 +616,8 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             result["input"]["reads_right"] = reads_right
         return result
 
-    def get_input_files(self, action):
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            return "work/input_links/{library_name}/.done".format(**wildcards)
-
-        assert action == "run", "Unsupported actions"
-        return input_function
+    def _get_input_files_run(self, wildcards):
+        return "work/input_links/{library_name}/.done".format(**wildcards)
 
     @dictify
     def get_output_files(self, action):
@@ -866,16 +856,17 @@ class StrandednessStepPart(BaseStepPart):
     name = "strandedness"
     actions = ("infer", "counts")
 
-    def get_input_files(self, action):
-        self._validate_action(action)
-        if action == "infer":
-            # Must reference the mapper-specific work directory
-            return {"bam": "work/{library_name}/out/{library_name}.bam"}
-        elif action == "counts":
-            return {
-                "counts": "work/{library_name}/out/{library_name}.GeneCounts.tab",
-                "decision": "work/{library_name}/strandedness/{library_name}.decision.json",
-            }
+    def _get_input_files_infer(self, wildcards):
+        # Must reference the mapper-specific work directory
+        return {"bam": "work/{library_name}/out/{library_name}.bam".format(**wildcards)}
+
+    def _get_input_files_counts(self, wildcards):
+        return {
+            "counts": "work/{library_name}/out/{library_name}.GeneCounts.tab".format(**wildcards),
+            "decision": "work/{library_name}/strandedness/{library_name}.decision.json".format(
+                **wildcards
+            ),
+        }
 
     @dictify
     def get_output_files(self, action):
@@ -950,18 +941,15 @@ class StrandednessStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_params(self, action: str):
-        self._validate_action(action)
+    def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
+        cfg = getattr(self.config, "strandedness", None)
+        config_dump = cfg.model_dump(by_alias=True) if cfg else {}
+        return {
+            "config": config_dump,
+            "library_name": wildcards.library_name,
+        }
 
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            cfg = getattr(self.config, "strandedness", None)
-            config_dump = cfg.model_dump(by_alias=True) if cfg else {}
-            return {
-                "config": config_dump,
-                "library_name": wildcards.library_name,
-            }
-
-        return args_fn
+    _get_params_counts = _get_params_infer
 
 
 class Minimap2StepPart(ReadMappingStepPart):
@@ -1071,13 +1059,8 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
             or super().skip_result_files_for_library(library_name)
         )
 
-    def get_input_files(self, action):
-        """Return required input files"""
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @dictify
-    def _get_input_files_run(self, wildcards, **kwargs):
+    def _get_input_files_run(self, wildcards):
         mapper_lib = f"{self.config.tool}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
@@ -1140,10 +1123,6 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         else:
             yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
 
-    def get_params(self, action):
-        assert action == "run", "Parameters only available for action 'run'."
-        return self._get_params_run
-
     def _get_params_run(self, wildcards):
         # Find bed file associated with library kit
         library_name = wildcards.library_name
@@ -1202,10 +1181,6 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action):
-        self._check_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     def _check_action(self, action):
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
@@ -1214,9 +1189,9 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
             )
 
     @dictify
-    def _get_input_files_run(self):
-        yield "bam", "work/{library_name}/out/{library_name}.bam"
-        yield "bai", "work/{library_name}/out/{library_name}.bam.bai"
+    def _get_input_files_run(self, wildcards):
+        yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
+        yield "bai", "work/{library_name}/out/{library_name}.bam.bai".format(**wildcards)
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify
@@ -1235,8 +1210,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
             ],
         )
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._check_action(action)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "window_length": self.config.bam_collect_doc.window_length,
         }
@@ -1301,10 +1275,6 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def skip_result_files_for_library(self, library_name: str) -> bool:
         return not self.config.ngs_chew_fingerprint.enabled
 
-    def get_input_files(self, action):
-        self._check_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     def _check_action(self, action):
         if action not in self.actions:
             actions_str = ", ".join(self.actions)
@@ -1313,8 +1283,8 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             )
 
     @dictify
-    def _get_input_files_fingerprint(self):
-        yield "bam", "work/{library_name}/out/{library_name}.bam"
+    def _get_input_files_fingerprint(self, wildcards):
+        yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
 
     @dictify
     def get_output_files(self, action):
@@ -1358,8 +1328,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_fingerprint(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"reference": self.parent.w_config.static_data_config.reference.path}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:

@@ -116,19 +116,6 @@ class ScrambleStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action):
-        """Return input function for scramble rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns input function for scramble rule based on inputted action.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        self._validate_action(action=action)
-        return getattr(self, "_get_input_files_{}".format(action))
-
     def get_output_files(self, action):
         """Return output function for scramble rules.
 
@@ -164,17 +151,6 @@ class ScrambleStepPart(BaseStepPart):
         return "work/{name_pattern}/log/{name_pattern}_{action}.log".format(
             name_pattern=name_pattern, action=action
         )
-
-    def get_params(self, action):
-        """Get parameters.
-
-        :param action: Action, i.e., step being performed.
-        :type action: str
-
-        :return: Returns method to get files required to run analysis part of scramble.
-        """
-        assert action == "analysis", "Parameters are only available for action 'analysis'."
-        return self._get_analysis_parameters
 
     @listify
     def _get_input_files_cluster(self, wildcards):
@@ -237,11 +213,11 @@ class ScrambleStepPart(BaseStepPart):
                 ),
             )
 
-    def _get_analysis_parameters(self, _wildcards):
+    def _get_params_analysis(self, wildcards):
         """Get parameters.
 
-        :param _wildcards: Snakemake rule wildcards (unused).
-        :type _wildcards: snakemake.io.Wildcards
+        :param wildcards: Snakemake rule wildcards (unused).
+        :type wildcards: snakemake.io.Wildcards
 
         :return: Returns parameters required to run analysis part of scramble.
 

@@ -251,19 +251,11 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         ),
     }
 
-    def get_input_files(self, action):
-        if self.name != self.config.tool:
-            return {}
-        self._validate_action(action)
-        if action == "prepare":
-            return {
-                "container": "work/containers/out/purecn.simg",
-                "reference": self.w_config.static_data_config.reference.path,
-            }
-        if action == "coverage":
-            return self._get_input_files_coverage
-        if action == "create_panel":
-            return self._get_input_files_create
+    def _get_input_files_prepare(self, wildcards):
+        return {
+            "container": "work/containers/out/purecn.simg",
+            "reference": self.w_config.static_data_config.reference.path,
+        }
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
@@ -281,7 +273,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         yield "bam", alignments.bam
 
     @dictify
-    def _get_input_files_create(self, wildcards):
+    def _get_input_files_create_panel(self, wildcards):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/purecn/out/{library_name}_coverage_loess.txt.gz"
         yield "normals", [tpl.format(library_name=lib) for lib in self.normal_libraries]
@@ -323,12 +315,11 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 "plot": "work/purecn/out/purecn.interval_weights.png",
             }
 
-    def get_params(self, action):
-        self._validate_action(action)
-        if action == "coverage":
-            return getattr(self, f"_get_params_{action}")
-        else:
-            return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+    def _get_params_install(self, wildcards):
+        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+
+    _get_params_prepare = _get_params_install
+    _get_params_create_panel = _get_params_install
 
     def _get_params_coverage(self, wildcards):
         mapper = str(self.parent.get_task_config("ngs_mapping").tool)
@@ -386,12 +377,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             mem="30GB",
         ),
     }
-
-    def get_input_files(self, action):
-        """Return input files for mutect2 variant calling"""
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
 
     def _get_input_files_scatter(self, wildcards):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
@@ -456,10 +441,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             output_files["db"] = "work/mutect2/out/mutect2.genomicsDB.tar.gz"
             output_files["db_md5"] = "work/mutect2/out/mutect2.genomicsDB.tar.gz.md5"
         return output_files
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_scatter(self, wildcards):
         return {
@@ -559,10 +540,22 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if self.name == self.config.tool:
             self.is_wgs = self.config.cnvkit.path_target == ""
 
-    def get_params(self, action):
-        if self.name != self.config.tool:
-            return None  # cnvkit not enabled, skip
-        self._validate_action(action)
+    def _get_params_target(self, wildcards):
+        return self._cnvkit_params("target")
+
+    def _get_params_antitarget(self, wildcards):
+        return self._cnvkit_params("antitarget")
+
+    def _get_params_coverage(self, wildcards):
+        return self._cnvkit_params("coverage")
+
+    def _get_params_create_panel(self, wildcards):
+        return self._cnvkit_params("create_panel")
+
+    def _get_params_report(self, wildcards):
+        return self._cnvkit_params("report")
+
+    def _cnvkit_params(self, action):
         cfg: CnvKitModel = self.config.get(self.name)
         if action == "create_panel":
             action = "reference"
@@ -579,22 +572,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if action == "target":
             args["bp_per_bin"] = cfg.bp_per_bin
         return args
-
-    def get_input_files(self, action):
-        """Return input files for cnvkit panel of normals creation"""
-        if self.name != self.config.tool:
-            return None  # cnvkit not enabled, skip
-        # Validate action
-        self._validate_action(action)
-        mapping = {
-            "target": self._get_input_files_target,
-            "antitarget": self._get_input_files_antitarget,
-            "coverage": self._get_input_files_coverage,
-            "create_panel": self._get_input_files_create_panel,
-            "report": self._get_input_files_report,
-            "access": self._get_input_files_access,
-        }
-        return mapping[action]
 
     def _get_input_files_access(self, wildcards):
         return {"reference": self.w_config.static_data_config.reference.path}
@@ -771,11 +748,6 @@ class AccessStepPart(PanelOfNormalsStepPart):
             runtime="2h",  # 2 hours
             mem="8GB",
         )
-
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        return None
 
     def get_output_files(self, action):
         # Validate action

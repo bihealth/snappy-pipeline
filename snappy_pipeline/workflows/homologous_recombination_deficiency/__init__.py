@@ -61,6 +61,7 @@ from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet
 from snakemake.io import expand
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -97,11 +98,6 @@ class ScarHRDStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action):
-        self._validate_action(action)
-
-        return self._get_input_files_run
-
     @dictify
     def _get_input_files_run(self, wildcards):
         aligner_tool = str(self.parent.get_task_config("ngs_mapping").tool)
@@ -128,8 +124,7 @@ class ScarHRDStepPart(BaseStepPart):
                 )
             )
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.scarHRD.model_dump(by_alias=True) | {
             "reference": self.parent.w_config.static_data_config.reference.path,
         }

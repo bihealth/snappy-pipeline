@@ -323,10 +323,6 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
         self.base_path_out = "work/{index_library_name}/out/{index_library_name}{ext}"
         self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
 
-    def get_input_files(self, action) -> SnakemakeDict:
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         df = self.parent.build_library_dataframe()
@@ -417,9 +413,7 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
         yield "reference", self.parent.w_config.static_data_config.reference.path
         yield "reference_index", self.parent.w_config.static_data_config.reference.path + ".fai"
 
-    def get_params(self, action: str):
-        self._validate_action(action)
-
+    def _get_params_run(self, wildcards):
         reference_path = self.parent.w_config.static_data_config.reference.path
         if "GRCh37" in reference_path or "hg19" in reference_path:
             assembly = "GRCh37"
@@ -471,8 +465,7 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_hc"
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {
             "num_threads": self.config.gatk3_hc.num_threads,
             "window_length": self.config.gatk3_hc.window_length,
@@ -487,8 +480,7 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_ug"
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {
             "num_threads": self.config.gatk3_ug.num_threads,
             "window_length": self.config.gatk3_ug.window_length,
@@ -503,8 +495,7 @@ class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
 
     name = "gatk4_hc_joint"
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {
             "window_length": self.config.gatk4_hc_joint.window_length,
             "num_threads": self.config.gatk4_hc_joint.num_threads,
@@ -617,8 +608,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         }
         yield from result.items()
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_discover(self, wildcards) -> dict[str, Any]:
         return {
             "step_key": "variant_calling",
             "caller_key": "gatk4_hc_gvcf",
@@ -627,6 +617,9 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,
             "ignore_chroms": self.config.ignore_chroms,
         }
+
+    _get_params_combine_gvcfs = _get_params_discover
+    _get_params_genotype = _get_params_discover
 
 
 class ReportGetLogFileMixin:
@@ -671,16 +664,11 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action: str) -> SnakemakeDict:
-        """Return required input files"""
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")()
-
     @dictify
-    def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
         )
 
     def get_output_files(self, action: str) -> SnakemakeDict:
@@ -698,13 +686,8 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
 
-    def get_params(self, action: str):
-        self._validate_action(action)
-
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            return {"donor_library_name": wildcards.donor_library_name}
-
-        return args_fn
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"donor_library_name": wildcards.donor_library_name}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -729,16 +712,11 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
     actions = ("run",)
     report_per_donor = False
 
-    def get_input_files(self, action: str) -> SnakemakeDict:
-        """Return required input files"""
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")()
-
     @dictify
-    def _get_input_files_run(self) -> SnakemakeDictItemsGenerator:
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            ("output/{index_library_name}/out/{index_library_name}.vcf.gz"),
+            ("output/{index_library_name}/out/{index_library_name}.vcf.gz").format(**wildcards),
         )
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
         if self.config.get(self.name).get("path_targets"):
@@ -749,20 +727,15 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
 
-    def get_params(self, action: str):
-        self._validate_action(action)
-
-        def args_fn(_wildcards):
-            return {
-                name: self.config.bcftools_roh.get(name)
-                for name in [
-                    "ignore_homref",
-                    "skip_indels",
-                    "rec_rate",
-                ]
-            }
-
-        return args_fn
+    def _get_params_run(self, wildcards):
+        return {
+            name: self.config.bcftools_roh.get(name)
+            for name in [
+                "ignore_homref",
+                "skip_indels",
+                "rec_rate",
+            ]
+        }
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
@@ -805,12 +778,11 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
     report_per_donor = False
 
     @dictify
-    def get_input_files(self, action) -> SnakemakeDictItemsGenerator:
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         """Return path to input files"""
-        self._validate_action(action)
         yield (
             "vcf",
-            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
         )
         yield "path_ser", self.config.jannovar_stats.path_ser
 
@@ -836,8 +808,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
             ],
         )
 
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         return {"path_ser": self.config.get(self.name).get("path_ser")}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -872,11 +843,10 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     report_per_donor = True
 
     @dictify
-    def get_input_files(self, action: str) -> SnakemakeDictItemsGenerator:
-        self._validate_action(action)
+    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            "work/{index_library_name}/out/{index_library_name}.vcf.gz",
+            "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
         )
         yield "reference_index", self.w_config.static_data_config.reference.path + ".fai"
 
@@ -892,7 +862,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
             work_files[key] = f"work/{base_path}{ext}"
         yield from work_files.items()
 
-    def get_params(self, action: str):
+    def _get_params_run(self, wildcards):
         return {"min_dp": self.config.baf_file_generation.min_dp}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -908,10 +878,6 @@ class SomaticVariantCallingStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = "work/{library_name}/out/{library_name}{ext}"
-
-    def get_input_files(self, action: str):
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -1007,14 +973,6 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                 runtime=run_resource_usage.runtime,
                 mem=run_resource_usage.mem,
             )
-
-    def get_input_files(self, action):
-        self._validate_action(action)
-        return getattr(self, "_get_input_files_{}".format(action))
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_scatter(self, wildcards):
         ignore_chroms = list(

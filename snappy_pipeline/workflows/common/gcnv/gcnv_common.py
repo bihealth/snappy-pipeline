@@ -27,8 +27,8 @@ class TooFewSamplesWarning(GcnvWarning):
 class PreprocessIntervalsCommonMixin:
     """Mixin used for the ``preprocess_intervals`` step."""
 
-    def _get_input_files_preprocess_intervals(self, wildcards, **kwargs):
-        _ = wildcards, kwargs
+    def _get_input_files_preprocess_intervals(self, wildcards):
+        _ = wildcards
         return {}
 
     @dictify
@@ -46,14 +46,13 @@ class CoverageCommonMixin:
     """Mixin used for ``coverage`` step"""
 
     @dictify
-    def _get_input_files_coverage(self, wildcards, **kwargs):
+    def _get_input_files_coverage(self, wildcards):
         """Yield input files for ``coverage`` rule
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
         and 'library_name' (e.g., 'P001-N1-DNA1-WGS1').
         :type wildcards: snakemake.io.Wildcards
         """
-        _ = kwargs
         # Yield .interval list file.
         ext = "interval_list"
         library_kit = self.ngs_library_to_kit[wildcards.library_name]
@@ -144,18 +143,6 @@ class GcnvCommonStepPart(
         self.index_ngs_library_to_pedigree = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-    def get_input_files(self, action):
-        """Return input function for gCNV rule
-
-        :param action: Action (i.e., step) in the workflow, examples: 'filter_intervals',
-        'coverage'.
-        :type action: str
-
-        :return: Returns input function for gCNV rule based on inputted action.
-        """
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
 
     def get_output_files(self, action):
         """Get output function for gCNV build model rule.

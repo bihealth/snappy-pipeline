@@ -80,7 +80,7 @@ if wf.config.tool == "bbduk":
 
     rule adapter_trimming_bbduk_run:
         input:
-            **wf.get_input_files("bbduk", "run"),
+            unpack(wf.get_input_files("bbduk", "run")),
         output:
             **wf.get_output_files("bbduk", "run"),
         log:
@@ -104,7 +104,7 @@ if wf.config.tool == "fastp":
 
     rule adapter_trimming_fastp_run:
         input:
-            **wf.get_input_files("fastp", "run"),
+            unpack(wf.get_input_files("fastp", "run")),
         output:
             **wf.get_output_files("fastp", "run"),
         log:

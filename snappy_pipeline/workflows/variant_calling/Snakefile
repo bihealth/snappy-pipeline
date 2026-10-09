@@ -223,7 +223,7 @@ if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
 
     rule variant_calling_bcftools_stats_report:
         input:
-            **wf.get_input_files("bcftools_stats", "run"),
+            unpack(wf.get_input_files("bcftools_stats", "run")),
         output:
             **wf.get_output_files("bcftools_stats", "run"),
         log:
@@ -247,7 +247,7 @@ if wf.config.jannovar_stats and wf.config.jannovar_stats.enabled:
 
     rule variant_calling_jannovar_stats_report:
         input:
-            **wf.get_input_files("jannovar_stats", "run"),
+            unpack(wf.get_input_files("jannovar_stats", "run")),
         output:
             **wf.get_output_files("jannovar_stats", "run"),
         log:
@@ -271,7 +271,7 @@ if wf.config.baf_file_generation and wf.config.baf_file_generation.enabled:
 
     rule variant_calling_baf_file_generation:
         input:
-            **wf.get_input_files("baf_file_generation", "run"),
+            unpack(wf.get_input_files("baf_file_generation", "run")),
         output:
             **wf.get_output_files("baf_file_generation", "run"),
         log:
@@ -295,7 +295,7 @@ if wf.config.bcftools_roh and wf.config.bcftools_roh.enabled:
 
     rule variant_calling_bcftools_roh:
         input:
-            **wf.get_input_files("bcftools_roh", "run"),
+            unpack(wf.get_input_files("bcftools_roh", "run")),
         output:
             **wf.get_output_files("bcftools_roh", "run"),
         log:

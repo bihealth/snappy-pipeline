@@ -174,10 +174,6 @@ class PvacToolsStepPart(BaseStepPart):
         else:
             self.proteome_file = None
 
-    def get_input_files(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     def _get_input_files_normalize(self, wildcards: Wildcards) -> dict[str, str]:
         tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
         annotation = self.parent.upstream("somatic_variant_annotation")
@@ -211,10 +207,6 @@ class PvacToolsStepPart(BaseStepPart):
     def _get_output_files_normalize_full(self):
         tpl = "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
         return {"vcf": tpl}
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_normalize(self, wildcards: Wildcards) -> dict[str, str]:
         return self._get_sample_names(wildcards)
@@ -754,10 +746,6 @@ class PhasingStepPart(BaseStepPart):
         super().__init__(parent)
         self.prepare_tpl = "{tumor_dna}"
 
-    def get_input_files(self, action: str):
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield "reference", self.w_config.static_data_config.reference.path
@@ -776,10 +764,6 @@ class PhasingStepPart(BaseStepPart):
                 return {"vcf": "work/{tpl}/out/{tpl}.phased.vcf.gz".format(tpl=self.prepare_tpl)}
             case _:
                 raise MissingConfiguration(f"Unknown action {action} during phasing")
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}
@@ -823,10 +807,6 @@ class NetChopStepPart(BaseStepPart):
         self.prepare_tpl = "{tumor_dna}"
         self.input_tpl = "{tumor_dna}"
         self.output_tpl = "{tumor_dna}"
-
-    def get_input_files(self, action: str):
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
 
     def _get_input_files_pvacseq(self, wildcards: Wildcards):
         assert wildcards.tool == "pvacseq", (
@@ -895,10 +875,6 @@ class NetChopStepPart(BaseStepPart):
             case _:
                 raise MissingConfiguration(f"Unknown action {action} during phasing")
 
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
-
     def _get_params_pvacseq(self, wildcards: Wildcards):
         assert wildcards.tool == "pvacseq", (
             "Internal error: tool {wildcards.tool} should be 'pvacseq'"
@@ -950,10 +926,6 @@ class ProteomeStepPart(BaseStepPart):
     #: Resources
     default_resource_usage = {"run": ResourceUsage(threads=1, runtime="4h", mem="24G")}
 
-    def get_input_files(self, action: str):
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         cfg = self.config.proteome
@@ -971,14 +943,8 @@ class ProteomeStepPart(BaseStepPart):
                     f"Unknown action {action} during personal proteome building"
                 )
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        match action:
-            case "run":
-                return {"add_unmutated": self.config.proteome.add_unmutated}
-            case _:
-                raise MissingConfiguration(
-                    f"Unknown action {action} during personal proteome building"
-                )
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"add_unmutated": self.config.proteome.add_unmutated}
 
     def get_log_file(self, action: str) -> dict[str, str]:
         self._validate_action(action)

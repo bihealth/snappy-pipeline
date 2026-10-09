@@ -88,6 +88,7 @@ from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
@@ -180,13 +181,15 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
-    def get_params(self, action: str) -> dict[str, Any]:
+    def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
         gcnv_config = self.parent.get_task_config("helper_gcnv_model_wgs").gcnv
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_par_intervals": gcnv_config.path_par_intervals,
             "path_uniquely_mapable_bed": gcnv_config.path_uniquely_mapable_bed,
         }
+
+    _get_params_coverage = _get_params_preprocess_intervals
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

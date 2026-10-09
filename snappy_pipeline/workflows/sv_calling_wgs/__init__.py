@@ -203,10 +203,6 @@ class PopDelStepPart(
             ],
         )
 
-    def get_params(self, action: str):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
-
     def _get_params_profile(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"reference": self.parent.w_config.static_data_config.reference.path}
 

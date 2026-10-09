@@ -107,20 +107,14 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         )
         return self.parent.upstream(self.previous_step)(input_path + ".vcf.gz")
 
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        @dictify
-        def input_function(wildcards):
-            # Get name of real index, used when input is not variant_phasing
-            pedigree = self.ngs_library_to_pedigree[wildcards.index_library]
-            # BAM and BAI file of the offspring
-            yield "bam", [self._get_path_bam(wildcards, donor) for donor in pedigree.donors]
-            # Input file comes from previous step.
-            yield "vcf", self._get_path_vcf(wildcards, pedigree.index)
-
-        return input_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        # Get name of real index, used when input is not variant_phasing
+        pedigree = self.ngs_library_to_pedigree[wildcards.index_library]
+        # BAM and BAI file of the offspring
+        yield "bam", [self._get_path_bam(wildcards, donor) for donor in pedigree.donors]
+        # Input file comes from previous step.
+        yield "vcf", self._get_path_vcf(wildcards, pedigree.index)
 
     @dictify
     def get_output_files(self, action):

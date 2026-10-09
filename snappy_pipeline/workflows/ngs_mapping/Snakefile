@@ -224,7 +224,7 @@ rule ngs_mapping_target_coverage_report_run:
 
 rule ngs_mapping_bam_collect_doc_run:
     input:
-        **wf.get_input_files("bam_collect_doc", "run")(),
+        unpack(wf.get_input_files("bam_collect_doc", "run")),
     output:
         **wf.get_output_files("bam_collect_doc", "run"),
     log:
@@ -246,7 +246,7 @@ rule ngs_mapping_bam_collect_doc_run:
 
 rule ngs_mapping_ngs_chew_fingerprint:
     input:
-        **wf.get_input_files("ngs_chew", "fingerprint")(),
+        unpack(wf.get_input_files("ngs_chew", "fingerprint")),
     output:
         **wf.get_output_files("ngs_chew", "fingerprint"),
     log:
@@ -268,7 +268,7 @@ rule ngs_mapping_ngs_chew_fingerprint:
 
 rule ngs_mapping_infer_strandedness:
     input:
-        **wf.get_input_files("strandedness", "infer"),
+        unpack(wf.get_input_files("strandedness", "infer")),
     output:
         **wf.get_output_files("strandedness", "infer"),
     log:
@@ -290,7 +290,7 @@ rule ngs_mapping_infer_strandedness:
 
 rule ngs_mapping_counts_with_strand:
     input:
-        **wf.get_input_files("strandedness", "counts"),
+        unpack(wf.get_input_files("strandedness", "counts")),
     output:
         **wf.get_output_files("strandedness", "counts"),
     params:

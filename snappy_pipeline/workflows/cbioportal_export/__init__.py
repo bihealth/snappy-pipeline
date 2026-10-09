@@ -138,10 +138,8 @@ class cbioportalExportStepPart(BaseStepPart):
                                 first = False
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
-        # Validate action
-        self._validate_action(action)
         assert self.input_tpl is not None
         for lib in self._yield_libraries():
             yield lib.test_sample.bio_sample.name, self.input_tpl.format(library_name=lib.name)
@@ -169,10 +167,7 @@ class cbioportalExportStepPart(BaseStepPart):
             log_files[key + "_md5"] = log_files[key] + ".md5"
         return log_files
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
+    def _get_params_run(self, wildcards):
         return dict(self.config)
 
 
@@ -239,12 +234,10 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         yield "maf", os.path.join("work/maf", self.name_pattern, "out", self.name_pattern + ".maf")
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return input vcf for each output maf"""
-        # Validate action
-        self._validate_action(action)
         tpl = os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
-        yield "vcf", self.parent.upstream("somatic_variant")(tpl)
+        yield "vcf", self.parent.upstream("somatic_variant")(tpl.format(**wildcards))
 
     @dictify
     def get_log_file(self, action):
@@ -262,23 +255,16 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
             yield key, tpl + ext
             yield key + "_md5", tpl + ext + ".md5"
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def args_function(wildcards):
-            result = {
-                "tumor_sample": wildcards.tumor_library,
-                "normal_sample": self._get_normal_lib_name(wildcards),
-                "tumor_id": self._get_tumor_bio_sample(wildcards),
-                "normal_id": self._get_normal_bio_sample(wildcards),
-                "somatic_variant_annotation_tool": self.config.vcf2maf.annotation_tool,
-                "ncbi_build": self.config.vcf2maf.ncbi_build,
-                "Center": self.config.vcf2maf.Center,
-            }
-            return result
-
-        return args_function
+    def _get_params_run(self, wildcards):
+        return {
+            "tumor_sample": wildcards.tumor_library,
+            "normal_sample": self._get_normal_lib_name(wildcards),
+            "tumor_id": self._get_tumor_bio_sample(wildcards),
+            "normal_id": self._get_normal_bio_sample(wildcards),
+            "somatic_variant_annotation_tool": self.config.vcf2maf.annotation_tool,
+            "ncbi_build": self.config.vcf2maf.ncbi_build,
+            "Center": self.config.vcf2maf.Center,
+        }
 
     def _get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -341,16 +327,16 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
     actions = ("run",)
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return the library"""
-        # Validate action
-        self._validate_action(action)
         name_pattern = "{tumor_library}"
         yield "features", self.parent.w_config.static_data_config.features.path
         yield (
             "DNAcopy",
             self.parent.upstream("copy_number")(
-                os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg")
+                os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg").format(
+                    **wildcards
+                )
             ),
         )
 
@@ -378,9 +364,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
             yield key, tpl + ext
             yield key + "_md5", tpl + ext + ".md5"
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         return {"pipeline_id": "ENSEMBL"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -417,24 +401,25 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         name_pattern = "{library_name}"
         self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
-        if action == "log2":
-            return {
-                "action_type": "log2",
-                "mappings": self.config.path_gene_id_mappings,
-                "extra_args": {"pipeline_id": "ENSEMBL"},
-            }
-        if action == "gistic":
-            return {
-                "action_type": "gistic",
-                "mappings": self.config.path_gene_id_mappings,
-                "extra_args": {
-                    "pipeline_id": "ENSEMBL",
-                    "amplification": "9",
-                },  # Amplification: cn >= 9 (https://doi.org/10.1038/s41586-022-04738-6)
-            }
+    # Both actions merge the same per-library inputs
+    _get_input_files_log2 = _get_input_files_gistic = cbioportalExportStepPart._get_input_files_run
+
+    def _get_params_log2(self, wildcards):
+        return {
+            "action_type": "log2",
+            "mappings": self.config.path_gene_id_mappings,
+            "extra_args": {"pipeline_id": "ENSEMBL"},
+        }
+
+    def _get_params_gistic(self, wildcards):
+        return {
+            "action_type": "gistic",
+            "mappings": self.config.path_gene_id_mappings,
+            "extra_args": {
+                "pipeline_id": "ENSEMBL",
+                "amplification": "9",
+            },  # Amplification: cn >= 9 (https://doi.org/10.1038/s41586-022-04738-6)
+        }
 
     def get_output_files(self, action):
         # Validate action
@@ -477,9 +462,8 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         self._seg_name_pattern = name_pattern
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
-        self._validate_action(action)
         for lib in self._yield_libraries():
             local_path = os.path.join(
                 "output",
@@ -492,8 +476,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
                 self.parent.upstream("copy_number")(local_path),
             )
 
-    def get_params(self, action: str) -> dict[str, str]:
-        self._validate_action(action)
+    def _get_params_run(self, wildcards) -> dict[str, str]:
         return {"action_type": "segment", "mappings": ""}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -535,9 +518,8 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         self._expr_name_pattern = name_pattern
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
-        self._validate_action(action)
         for lib in self._yield_libraries():
             local_path = os.path.join(
                 "output",
@@ -550,9 +532,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
                 self.parent.upstream("ngs_mapping")(local_path),
             )
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         return {
             "action_type": "expression",
             "extra_args": {
@@ -600,9 +580,7 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
         if self.config.expression.enabled:
             yield from [os.path.join("work/upload", f) for f in META_FILES["rna_seq_mrna"]]
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         return self.config.study.model_dump(by_alias=True)
 
 
@@ -615,9 +593,7 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("run",)
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         donors = {}
         for extraction_type in ("DNA", "RNA"):
             if extraction_type == "RNA" and not self.config.expression.enabled:
@@ -653,9 +629,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("run",)
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         samples = dict(zip(CASE_LIST_FILES.keys(), [[] for _ in range(len(CASE_LIST_FILES))]))
         self.extraction_type = "DNA"
         for lib in self._yield_libraries():

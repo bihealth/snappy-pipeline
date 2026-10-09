@@ -36,10 +36,6 @@ class VariantAnnotationStepPart(BaseStepPart):
 
     actions = ("run",)
 
-    def get_input_files(self, action):
-        self._validate_action(action)
-        return self._get_input_files_run
-
     @dictify
     def _get_input_files_run(self, wildcards):
         lib = wildcards.library_name
@@ -66,8 +62,7 @@ class VariantAnnotationStepPart(BaseStepPart):
         ):
             yield key, _LOG_PREFIX + ext
 
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         return {"config": getattr(self.config, self.name).model_dump(by_alias=True)}
 
 

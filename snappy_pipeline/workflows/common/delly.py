@@ -3,6 +3,10 @@
 These are used in both ``sv_calling_targeted`` and ``sv_calling_wgs``.
 """
 
+from typing import Any
+
+from snakemake.iocontainers import Wildcards
+
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart
 from snappy_pipeline.workflows.abstract.common import (
@@ -53,13 +57,15 @@ class Delly2StepPart(
         for sheet in self.parent.shortcut_sheets:
             self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "genome": self.w_config.static_data_config.reference.path,
             "config": dict(self.config.get(self.name)),
         }
+
+    _get_params_merge_calls = _get_params_call
+    _get_params_genotype = _get_params_call
+    _get_params_merge_genotypes = _get_params_call
 
     @dictify
     def _get_input_files_call(self, wildcards):

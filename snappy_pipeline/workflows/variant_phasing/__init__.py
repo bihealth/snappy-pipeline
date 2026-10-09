@@ -117,8 +117,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
                     if donor.dna_ngs_library:
                         self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
 
-    def get_input_files(self, action: str):
-        self._validate_action(action)
+    def _get_input_files_run(self, wildcards):
         return []
 
     @staticmethod
@@ -204,36 +203,30 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         super().__init__(parent)
         self.base_path_out = "work/{index_library}/out/gatk_pbt.{index_library}"
 
-    def get_input_files(self, action):
-        @dictify
-        def input_function(wildcards):
-            # Pedigree file required for PhaseByTransmission.
-            yield (
-                "ped",
-                f"work/write_pedigree.{wildcards.index_library}/out/{wildcards.index_library}.ped",
-            )
-            # Get name of real index
-            real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
-            # Annotated variant file resolved via CDC broker
-            upstream_vcf = self.parent.get_upstream_paths(
-                self.parent.previous_step, library_name=real_index.dna_ngs_library.name
-            )
-            vcf = getattr(upstream_vcf, "vcf", None) or upstream_vcf["vcf"]
-            vcf_tbi = getattr(upstream_vcf, "vcf_tbi", None) or upstream_vcf.get(
-                "vcf_tbi", vcf + ".tbi"
-            )
-            yield "vcf", vcf
-            yield "vcf_tbi", vcf_tbi
-            yield "vcf_md5", vcf + ".md5"
-            yield "vcf_tbi_md5", vcf_tbi + ".md5"
-            yield "reference", self.w_config.static_data_config.reference.path
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        # Pedigree file required for PhaseByTransmission.
+        yield (
+            "ped",
+            f"work/write_pedigree.{wildcards.index_library}/out/{wildcards.index_library}.ped",
+        )
+        # Get name of real index
+        real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
+        # Annotated variant file resolved via CDC broker
+        upstream_vcf = self.parent.get_upstream_paths(
+            self.parent.previous_step, library_name=real_index.dna_ngs_library.name
+        )
+        vcf = getattr(upstream_vcf, "vcf", None) or upstream_vcf["vcf"]
+        vcf_tbi = getattr(upstream_vcf, "vcf_tbi", None) or upstream_vcf.get(
+            "vcf_tbi", vcf + ".tbi"
+        )
+        yield "vcf", vcf
+        yield "vcf_tbi", vcf_tbi
+        yield "vcf_md5", vcf + ".md5"
+        yield "vcf_tbi_md5", vcf_tbi + ".md5"
+        yield "reference", self.w_config.static_data_config.reference.path
 
-        assert action == "run", "Unsupported actions"
-        return input_function
-
-    def get_params(self, action: str) -> dict[str, Any]:
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {"de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -326,27 +319,23 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
         super().__init__(parent)
         self.base_path_out = "work/{index_library}/out/gatk_rbp.{index_library}"
 
-    def get_input_files(self, action):
-        @dictify
-        def input_function(wildcards):
-            real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
-            # BAM files from ngs_mapping step.
-            yield from self._yield_bams(wildcards)
-            # Annotated variant file resolved via CDC broker
-            upstream_vcf = self.parent.get_upstream_paths(
-                self.parent.previous_step, library_name=real_index.dna_ngs_library.name
-            )
-            vcf = getattr(upstream_vcf, "vcf", None) or upstream_vcf["vcf"]
-            vcf_tbi = getattr(upstream_vcf, "vcf_tbi", None) or upstream_vcf.get(
-                "vcf_tbi", vcf + ".tbi"
-            )
-            yield "vcf", vcf
-            yield "vcf_tbi", vcf_tbi
-            yield "vcf_md5", vcf + ".md5"
-            yield "vcf_tbi_md5", vcf_tbi + ".md5"
-
-        assert action == "run", "Unsupported actions"
-        return input_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
+        # BAM files from ngs_mapping step.
+        yield from self._yield_bams(wildcards)
+        # Annotated variant file resolved via CDC broker
+        upstream_vcf = self.parent.get_upstream_paths(
+            self.parent.previous_step, library_name=real_index.dna_ngs_library.name
+        )
+        vcf = getattr(upstream_vcf, "vcf", None) or upstream_vcf["vcf"]
+        vcf_tbi = getattr(upstream_vcf, "vcf_tbi", None) or upstream_vcf.get(
+            "vcf_tbi", vcf + ".tbi"
+        )
+        yield "vcf", vcf
+        yield "vcf_tbi", vcf_tbi
+        yield "vcf_md5", vcf + ".md5"
+        yield "vcf_tbi_md5", vcf_tbi + ".md5"
 
 
 class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
@@ -361,21 +350,17 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
         super().__init__(parent)
         self.base_path_out = "work/{index_library}/out/gatk_pbt.gatk_rbp.{index_library}"
 
-    def get_input_files(self, action):
-        @dictify
-        def input_function(wildcards):
-            # BAM files from ngs_mapping step.
-            yield from self._yield_bams(wildcards)
-            # Result of PhaseByTransmission step
-            infix = "work/{index_library}/out/gatk_pbt.{index_library}"
-            base_in = infix.format(**wildcards)
-            yield "vcf", base_in + ".vcf.gz"
-            yield "vcf_tbi", base_in + ".vcf.gz.tbi"
-            yield "vcf_md5", base_in + ".vcf.gz.md5"
-            yield "vcf_tbi_md5", base_in + ".vcf.gz.tbi.md5"
-
-        assert action == "run", "Unsupported actions"
-        return input_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        # BAM files from ngs_mapping step.
+        yield from self._yield_bams(wildcards)
+        # Result of PhaseByTransmission step
+        infix = "work/{index_library}/out/gatk_pbt.{index_library}"
+        base_in = infix.format(**wildcards)
+        yield "vcf", base_in + ".vcf.gz"
+        yield "vcf_tbi", base_in + ".vcf.gz.tbi"
+        yield "vcf_md5", base_in + ".vcf.gz.md5"
+        yield "vcf_tbi_md5", base_in + ".vcf.gz.tbi.md5"
 
 
 class VariantPhasingWorkflow(BaseStep):

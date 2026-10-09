@@ -69,13 +69,10 @@ class TabulateVariantsStepPart(SignaturesStepPart):
     name = "tabulate_vcf"
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return path to input file"""
-        # Validate action
-        self._validate_action(action)
-        name_pattern = self.name_postfix
         variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
-            "somatic_variant", library_name=name_pattern
+            "somatic_variant", library_name=wildcards.tumor_library
         )
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi
@@ -88,21 +85,15 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         name_pattern = "tabulate_vcf." + self.name_postfix
         yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
 
-    def get_params(self, action):
+    def _get_params_run(self, wildcards):
         """Return arguments to pass down."""
-        # Validate action
-        self._validate_action(action)
-
-        def args_fn(wildcards):
-            normal = self.get_normal_lib_name(wildcards)
-            if normal:
-                return {
-                    "tumor_library": wildcards.tumor_library,
-                    "normal_library": normal,
-                }
-            return {}
-
-        return args_fn
+        normal = self.get_normal_lib_name(wildcards)
+        if normal:
+            return {
+                "tumor_library": wildcards.tumor_library,
+                "normal_library": normal,
+            }
+        return {}
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -123,12 +114,15 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         super().__init__(parent)
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return input files to deconstruct signatures"""
-        # Validate action
-        self._validate_action(action)
         name_pattern = "tabulate_vcf." + self.name_postfix
-        yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
+        yield (
+            "tsv",
+            os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv").format(
+                **wildcards
+            ),
+        )
 
     @dictify
     def get_output_files(self, action):

@@ -109,10 +109,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
-    def get_input_files(self, action) -> SnakemakeDict:
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     def get_output_files(self, action) -> SnakemakeDict:
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
@@ -133,10 +129,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -214,7 +206,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_annotate_seqvars(self, wildcards):
-        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        yield (
+            "ped",
+            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped".format(
+                **wildcards
+            ),
+        )
 
         calling = self.parent.get_upstream_paths(
             "variant_calling",
@@ -265,7 +262,12 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
-        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        yield (
+            "ped",
+            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped".format(
+                **wildcards
+            ),
+        )
 
         if self.parent.config.depends_on.sv_calling_targeted:
             sv_dep = "sv_calling_targeted"

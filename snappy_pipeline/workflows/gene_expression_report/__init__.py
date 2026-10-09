@@ -45,10 +45,7 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
     name = "aggregate_counts"
 
     @listify
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
+    def _get_input_files_run(self, wildcards):
         for sheet in filter(is_not_background, self.parent.sheets):
             for donor in sheet.bio_entities.values():
                 for biosample in donor.bio_samples.values():
@@ -77,9 +74,7 @@ class GeneExpressionReportRankExpression(GeneExpressionReportStepPart):
     name = "compute_ranks"
 
     @dictify
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_input_files_run(self, wildcards):
         yield "tsv", "work/gene_exp.tsv"
 
     def get_output_files(self, action):
@@ -96,10 +91,8 @@ class GeneExpressionReportComputeSignatures(GeneExpressionReportStepPart):
     name = "compute_signatures"
 
     @dictify
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        yield "tsv", self.base_path_out.format(ext=".tsv")
+    def _get_input_files_run(self, wildcards):
+        yield "tsv", self.base_path_out.format(ext=".tsv").format(**wildcards)
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
@@ -115,10 +108,8 @@ class GeneExpressionReportPlotGeneDistribution(GeneExpressionReportStepPart):
     name = "plot_expression_distribution"
 
     @dictify
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        yield "tsv", self.base_path_out.format(ext=".tsv")
+    def _get_input_files_run(self, wildcards):
+        yield "tsv", self.base_path_out.format(ext=".tsv").format(**wildcards)
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""

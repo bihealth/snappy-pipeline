@@ -207,47 +207,30 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_input_files(self, action):
-        """Return input paths input function, dependent on rule"""
-        # Validate action
-        self._validate_action(action)
+    @dictify
+    def _get_input_files_coverage(self, wildcards):
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        tumor_library = self._resolve_library_name(wildcards.tumor_library)
+        normal_base_path = "output/{normal_library}/out/{normal_library}".format(
+            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        )
+        tumor_base_path = f"output/{tumor_library}/out/{tumor_library}"
+        yield (
+            "gc",
+            "work/static_data/out/sequenza.{length}.wig.gz".format(
+                length=self.config.sequenza.length,
+            ),
+        )
+        yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
+        yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
+        yield "tumor_bam", ngs_mapping(tumor_base_path + ".bam")
+        yield "tumor_bai", ngs_mapping(tumor_base_path + ".bam.bai")
 
-        method_mapping = {
-            "coverage": self._get_input_files_coverage(),
-            "run": self._get_input_files_run(),
-        }
-        return method_mapping[action]
-
-    def _get_input_files_coverage(self):
-        @dictify
-        def input_function(wildcards):
-            ngs_mapping = self.parent.upstream("ngs_mapping")
-            tumor_library = self._resolve_library_name(wildcards.tumor_library)
-            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
-                normal_library=self.get_normal_lib_name(wildcards), **wildcards
-            )
-            tumor_base_path = f"output/{tumor_library}/out/{tumor_library}"
-            yield (
-                "gc",
-                "work/static_data/out/sequenza.{length}.wig.gz".format(
-                    length=self.config.sequenza.length,
-                ),
-            )
-            yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
-            yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
-            yield "tumor_bam", ngs_mapping(tumor_base_path + ".bam")
-            yield "tumor_bai", ngs_mapping(tumor_base_path + ".bam.bai")
-
-        return input_function
-
-    def _get_input_files_run(self):
-        @dictify
-        def input_function(wildcards):
-            yield "packages", "work/R_packages/out/sequenza.done"
-            name_pattern = "{tumor_library}"
-            yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
-
-        return input_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield "packages", "work/R_packages/out/sequenza.done"
+        name_pattern = "{tumor_library}"
+        yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
 
     def get_output_files(self, action):
         if action == "install":
@@ -277,10 +260,6 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                     action=action, valid=", ".join(self.actions)
                 )
             )
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     @staticmethod
     def _coerce_model(model_cls, value):
@@ -356,16 +335,6 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             mem="96GB",
         ),
     }
-
-    def get_input_files(self, action):
-        """Return input paths input function, dependent on rule"""
-        # Validate action
-        self._validate_action(action)
-        action_mapping = {
-            "coverage": self._get_input_files_coverage,
-            "run": self._get_input_files_run,
-        }
-        return action_mapping[action]
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -505,22 +474,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         super().__init__(parent)
         self.cfg: CnvkitModel = self.config.get(self.name)
 
-    def get_input_files(self, action):
-        """Return input paths input function, dependent on rule"""
-        # Validate action
-        self._validate_action(action)
-        method_mapping = {
-            "coverage": self._get_input_files_coverage,
-            "call": self._get_input_files_call,
-            "fix": self._get_input_files_fix,
-            "segment": self._get_input_files_segment,
-            "postprocess": self._get_input_files_postprocess,
-            "export": self._get_input_files_export,
-            "plot": self._get_input_files_plot,
-            "report": self._get_input_files_report,
-        }
-        return method_mapping[action]
-
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
         ngs_mapping = self.parent.upstream("ngs_mapping")
@@ -588,6 +541,9 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
+        return lambda wildcards: self._cnvkit_params(action)
+
+    def _cnvkit_params(self, action):
         if action == "plot":
             action = "diagram"
         if args := getattr(self.cfg, action, {}):

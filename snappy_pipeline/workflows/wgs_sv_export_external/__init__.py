@@ -125,11 +125,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         # Define mapper+caller tag
         self.mapper_caller_tag = self._get_mapper_caller_tag()
 
-    def get_input_files(self, action):
-        """Return path to pedigree input file"""
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @listify
     def _get_input_files_merge_vcf(self, wildcards):
         """"""
@@ -243,10 +238,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
                 runtime="2h",  # 2 hours
                 mem=f"{7 * 1024 * 2}MB",
             )
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_merge_vcf(self, wildcards):
         result = {

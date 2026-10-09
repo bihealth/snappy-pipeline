@@ -102,11 +102,9 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         )
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return input files"""
-        # Validate action
-        self._validate_action(action)
-        yield "done", os.path.join(self.base_path_in, ".done")
+        yield "done", os.path.join(self.base_path_in, ".done").format(**wildcards)
 
     @dictify
     def get_output_files(self, action):

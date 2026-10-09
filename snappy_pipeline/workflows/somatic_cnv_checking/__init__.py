@@ -113,37 +113,28 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
     name = "pileup"
     actions = ("normal", "tumor")
 
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_input_files_normal(self, wildcards):
+        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
+        ngs = self.parent.upstream("ngs_mapping")
+        return {
+            "bam": ngs(base_path + ".bam"),
+            "bai": ngs(base_path + ".bam.bai"),
+        }
 
-        def input_function_normal(wildcards):
-            base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-            ngs = self.parent.upstream("ngs_mapping")
-            return {
-                "bam": ngs(base_path + ".bam"),
-                "bai": ngs(base_path + ".bam.bai"),
-            }
-
-        def input_function_tumor(wildcards):
-            base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-            ngs = self.parent.upstream("ngs_mapping")
-            normal_lib = self.parent._get_normal_lib(wildcards.tumor_library)
-            return {
-                "locii": "work/{normal_library}/out/{normal_library}.normal.vcf.gz".format(
-                    normal_library=normal_lib, **wildcards
-                ),
-                "locii_tbi": "work/{normal_library}/out/{normal_library}.normal.vcf.gz.tbi".format(
-                    normal_library=normal_lib, **wildcards
-                ),
-                "bam": ngs(base_path + ".bam"),
-                "bai": ngs(base_path + ".bam.bai"),
-            }
-
-        if action == "normal":
-            return input_function_normal
-        else:
-            return input_function_tumor
+    def _get_input_files_tumor(self, wildcards):
+        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
+        ngs = self.parent.upstream("ngs_mapping")
+        normal_lib = self.parent._get_normal_lib(wildcards.tumor_library)
+        return {
+            "locii": "work/{normal_library}/out/{normal_library}.normal.vcf.gz".format(
+                normal_library=normal_lib, **wildcards
+            ),
+            "locii_tbi": "work/{normal_library}/out/{normal_library}.normal.vcf.gz.tbi".format(
+                normal_library=normal_lib, **wildcards
+            ),
+            "bam": ngs(base_path + ".bam"),
+            "bai": ngs(base_path + ".bam.bai"),
+        }
 
     def get_output_files(self, action):
         """Return output files that all somatic variant calling sub steps must
@@ -154,18 +145,15 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}.{action}{ext}"
         return dict(zip(EXT_NAMES, expand(base_path_out, action=action, ext=EXT_VALUES)))
 
-    def get_params(self, action: str):
-        self._validate_action(action)
+    def _get_params_normal(self, wildcards):
+        return {
+            "reference_path": self.w_config.static_data_config.reference.path,
+            "min_baf": self.config.min_baf,
+            "min_depth": self.config.min_depth,
+            "max_depth": self.config.max_depth,
+        }
 
-        def args_fn(_wildcards):
-            return {
-                "reference_path": self.w_config.static_data_config.reference.path,
-                "min_baf": self.config.min_baf,
-                "min_depth": self.config.min_depth,
-                "max_depth": self.config.max_depth,
-            }
-
-        return args_fn
+    _get_params_tumor = _get_params_normal
 
     def get_log_file(self, action):
         # Validate action
@@ -188,26 +176,20 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
     name = "cnv"
     actions = ("run",)
 
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            normal_library = self.parent._get_normal_lib(wildcards.tumor_library)
-            filenames = {}
-            name_pattern = "{normal_library}"
-            tpl = os.path.join("work", name_pattern, "out", name_pattern + ".normal.vcf.gz")
-            filenames["normal"] = tpl.format(normal_library=normal_library, **wildcards)
-            filenames["normal_tbi"] = filenames["normal"] + ".tbi"
-            name_pattern = "{tumor_library}"
-            tpl = os.path.join("work", name_pattern, "out", name_pattern + ".tumor.vcf.gz")
-            filenames["tumor"] = tpl.format(**wildcards)
-            filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
-            base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-            filenames["cnv"] = self.parent.upstream("cnv_calling")(base_path + "_dnacopy.seg")
-            return filenames
-
-        return input_function
+    def _get_input_files_run(self, wildcards):
+        normal_library = self.parent._get_normal_lib(wildcards.tumor_library)
+        filenames = {}
+        name_pattern = "{normal_library}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".normal.vcf.gz")
+        filenames["normal"] = tpl.format(normal_library=normal_library, **wildcards)
+        filenames["normal_tbi"] = filenames["normal"] + ".tbi"
+        name_pattern = "{tumor_library}"
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".tumor.vcf.gz")
+        filenames["tumor"] = tpl.format(**wildcards)
+        filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
+        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
+        filenames["cnv"] = self.parent.upstream("cnv_calling")(base_path + "_dnacopy.seg")
+        return filenames
 
     @dictify
     def get_output_files(self, action):
@@ -221,9 +203,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
             yield (key, base_path_out + ext)
             yield (key + "_md5", base_path_out + ext + ".md5")
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.model_dump(by_alias=True)
 
     def get_log_file(self, action):
@@ -239,20 +219,14 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
     name = "report"
     actions = ("run",)
 
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            name_pattern = "{tumor_library}".format(**wildcards)
-            base_path_out = "work/" + name_pattern + "/out/" + name_pattern
-            return {
-                "vcf": base_path_out + ".vcf.gz",
-                "tsv": base_path_out + ".tsv",
-                "reference": self.parent.w_config.static_data_config.reference.path,
-            }
-
-        return input_function
+    def _get_input_files_run(self, wildcards):
+        name_pattern = "{tumor_library}".format(**wildcards)
+        base_path_out = "work/" + name_pattern + "/out/" + name_pattern
+        return {
+            "vcf": base_path_out + ".vcf.gz",
+            "tsv": base_path_out + ".tsv",
+            "reference": self.parent.w_config.static_data_config.reference.path,
+        }
 
     def get_output_files(self, action):
         # Validate action
@@ -268,16 +242,10 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "segment_md5": base_path_out + ".segment.pdf.md5",
         }
 
-    def get_params(self, action: str):
-        # Validate action
-        self._validate_action(action)
-
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            return {
-                "tumor_library": wildcards.tumor_library,
-            }
-
-        return args_fn
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
+            "tumor_library": wildcards.tumor_library,
+        }
 
     def get_log_file(self, action):
         # Validate action

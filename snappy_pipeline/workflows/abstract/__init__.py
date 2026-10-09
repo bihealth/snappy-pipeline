@@ -1221,12 +1221,12 @@ class BaseStep:
             return dependency.expected_schema(**global_paths)
         return global_paths
 
-    def get_input_files(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
-        """Return input files for action of substep with given wildcards
+    def get_input_files(self, sub_step: str, action: str) -> Callable[..., Inputs]:
+        """Return the input function for action of substep, for the rule's ``input:`` section
 
         Delegates to the sub step object's get_input_files function
         """
-        return self._get_sub_step(sub_step).get_input_files(action)
+        return self._require_function(sub_step, "get_input_files", action)
 
     def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
@@ -1235,12 +1235,23 @@ class BaseStep:
         """
         return self._get_sub_step(sub_step).get_output_files(action)
 
-    def get_params(self, sub_step: str, action: str) -> Any:
-        """Return params for action of substep, for the rule's ``params:`` section
+    def get_params(self, sub_step: str, action: str) -> Callable[..., Any]:
+        """Return the params function for action of substep, for the rule's ``params:`` section
 
         Delegates to the sub step object's get_params function
         """
-        return self._get_sub_step(sub_step).get_params(action)
+        return self._require_function(sub_step, "get_params", action)
+
+    def _require_function(self, sub_step: str, method: str, action: str) -> Callable[..., Any]:
+        """Call ``method`` of the sub step and check that it returned a function of wildcards"""
+        part = self._get_sub_step(sub_step)
+        value = getattr(part, method)(action)
+        if not callable(value):
+            raise TypeError(
+                f"{type(part).__name__}.{method}({action!r}) must return a function of "
+                f"wildcards, not {type(value).__name__}"
+            )
+        return value
 
     def get_resource(self, sub_step: str, action: str, resource_name: str) -> Any:
         """Get resource

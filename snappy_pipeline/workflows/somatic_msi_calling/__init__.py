@@ -102,32 +102,25 @@ class Mantis2StepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
 
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            # Get names of primary libraries of the selected cancer bio sample and the
-            # corresponding primary normal sample
-            normal_lib = self.get_normal_lib_name(wildcards)
-            tumor_lib = wildcards.tumor_library
-            normal: ExpectedAlignments = self.parent.get_upstream_paths(
-                "ngs_mapping", library_name=normal_lib
-            )
-            tumor: ExpectedAlignments = self.parent.get_upstream_paths(
-                "ngs_mapping", library_name=tumor_lib
-            )
-            return {
-                "normal_bam": normal.bam,
-                "normal_bai": normal.bai,
-                "tumor_bam": tumor.bam,
-                "tumor_bai": tumor.bai,
-                "reference": self.w_config.static_data_config.reference.path,
-                "loci_bed": self.config.loci_bed,
-            }
-
-        return input_function
+    def _get_input_files_run(self, wildcards):
+        # Get names of primary libraries of the selected cancer bio sample and the
+        # corresponding primary normal sample
+        normal_lib = self.get_normal_lib_name(wildcards)
+        tumor_lib = wildcards.tumor_library
+        normal: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=normal_lib
+        )
+        tumor: ExpectedAlignments = self.parent.get_upstream_paths(
+            "ngs_mapping", library_name=tumor_lib
+        )
+        return {
+            "normal_bam": normal.bam,
+            "normal_bai": normal.bai,
+            "tumor_bam": tumor.bam,
+            "tumor_bai": tumor.bai,
+            "reference": self.w_config.static_data_config.reference.path,
+            "loci_bed": self.config.loci_bed,
+        }
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""

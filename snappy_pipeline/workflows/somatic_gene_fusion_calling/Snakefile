@@ -71,7 +71,7 @@ if str(wf.config.tool) == "fusioncatcher":
 
     rule somatic_gene_fusion_calling_fusioncatcher_run:
         input:
-            **wf.get_input_files("fusioncatcher", "run"),
+            unpack(wf.get_input_files("fusioncatcher", "run")),
         output:
             **wf.get_output_files("fusioncatcher", "run"),
         log:
@@ -91,7 +91,7 @@ elif str(wf.config.tool) == "jaffa":
 
     rule somatic_gene_fusion_calling_jaffa_run:
         input:
-            **wf.get_input_files("jaffa", "run"),
+            unpack(wf.get_input_files("jaffa", "run")),
         output:
             **wf.get_output_files("jaffa", "run"),
         log:
@@ -111,7 +111,7 @@ elif str(wf.config.tool) == "pizzly":
 
     rule somatic_gene_fusion_calling_pizzly_run:
         input:
-            **wf.get_input_files("pizzly", "run"),
+            unpack(wf.get_input_files("pizzly", "run")),
         output:
             **wf.get_output_files("pizzly", "run"),
         log:
@@ -131,7 +131,7 @@ elif str(wf.config.tool) == "hera":
 
     rule somatic_gene_fusion_calling_hera_run:
         input:
-            **wf.get_input_files("hera", "run"),
+            unpack(wf.get_input_files("hera", "run")),
         output:
             **wf.get_output_files("hera", "run"),
         log:
@@ -151,7 +151,7 @@ elif str(wf.config.tool) == "star_fusion":
 
     rule somatic_gene_fusion_calling_star_fusion_run:
         input:
-            **wf.get_input_files("star_fusion", "run"),
+            unpack(wf.get_input_files("star_fusion", "run")),
         output:
             **wf.get_output_files("star_fusion", "run"),
         log:
@@ -171,7 +171,7 @@ elif str(wf.config.tool) == "defuse":
 
     rule somatic_gene_fusion_calling_defuse_run:
         input:
-            **wf.get_input_files("defuse", "run"),
+            unpack(wf.get_input_files("defuse", "run")),
         output:
             **wf.get_output_files("defuse", "run"),
         log:
@@ -191,7 +191,7 @@ elif str(wf.config.tool) == "arriba":
 
     rule somatic_gene_fusion_calling_arriba_run:
         input:
-            **wf.get_input_files("arriba", "run"),
+            unpack(wf.get_input_files("arriba", "run")),
         output:
             **wf.get_output_files("arriba", "run"),
         log:

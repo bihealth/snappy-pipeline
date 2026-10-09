@@ -32,10 +32,6 @@ class CreateProteomeStepPart(BaseStepPart):
     actions = ("run",)
     default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
-    def get_input_files(self, action: str):
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield "reference", self.w_config.static_data_config.reference.path
@@ -53,10 +49,6 @@ class CreateProteomeStepPart(BaseStepPart):
                 return {"vcf": _OUT_PREFIX + ".fa.gz"}
             case _:
                 raise MissingConfiguration(f"Unimplemented action {action}")
-
-    def get_params(self, action: str):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"add_reference": self.config.add_reference}

@@ -47,9 +47,8 @@ class AdapterTrimmingStepPart(BaseStepPart):
         )
 
     @dictify
-    def get_input_files(self, action):
-        self._validate_action(action)
-        yield "done", "work/input_links/{library_name}/.done"
+    def _get_input_files_run(self, wildcards):
+        yield "done", "work/input_links/{library_name}/.done".format(**wildcards)
 
     @dictify
     def get_output_files(self, action):
@@ -84,24 +83,20 @@ class AdapterTrimmingStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_params(self, action):
-        def args_function(wildcards):
-            folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
-            if self.parent.get_preprocessed_path():
-                folder_name = wildcards.library_name
-            reads_left = self._collect_reads(wildcards, folder_name, "")
-            reads_right = self._collect_reads(wildcards, folder_name, "right-")
-            return {
-                "library_name": wildcards.library_name,
-                "input": {
-                    "reads_left": {key: reads_left[key] for key in sorted(reads_left.keys())},
-                    "reads_right": {key: reads_right[key] for key in sorted(reads_right.keys())},
-                },
-                "config": dict(self.config.get(self.name)),
-            }
-
-        self._validate_action(action)
-        return args_function
+    def _get_params_run(self, wildcards):
+        folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
+        if self.parent.get_preprocessed_path():
+            folder_name = wildcards.library_name
+        reads_left = self._collect_reads(wildcards, folder_name, "")
+        reads_right = self._collect_reads(wildcards, folder_name, "right-")
+        return {
+            "library_name": wildcards.library_name,
+            "input": {
+                "reads_left": {key: reads_left[key] for key in sorted(reads_left.keys())},
+                "reads_right": {key: reads_right[key] for key in sorted(reads_right.keys())},
+            },
+            "config": dict(self.config.get(self.name)),
+        }
 
     def _collect_reads(self, wildcards, folder_name, prefix):
         task_prefix = self.parent.task_path_prefix()

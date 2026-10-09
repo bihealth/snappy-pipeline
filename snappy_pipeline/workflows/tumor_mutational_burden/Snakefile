@@ -54,7 +54,7 @@ rule tumor_mutational_burden_link_out_run:
 
 rule tumor_mutational_burden_calculation:
     input:
-        **wf.get_input_files("tmb_gathering", "run"),
+        unpack(wf.get_input_files("tmb_gathering", "run")),
     output:
         **wf.get_output_files("tmb_gathering", "run"),
     log:

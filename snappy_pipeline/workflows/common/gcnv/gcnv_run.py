@@ -508,20 +508,6 @@ class RunGcnvStepPart(
         # Validate configuration, precomputed models must be present
         self.validate_request()
 
-    def get_params(self, action: str):
-        """
-        :param action: Action (i.e., step) in the workflow. Currently available for:
-        'ploidy-model', 'model', and 'post_germline_calls'.
-
-        :return: Returns input function for gCNV rule based on inputted action.
-
-        :raises UnsupportedActionException: if invalid action.
-        """
-        self._validate_action(action)
-
-        # Return requested function
-        return getattr(self, f"_get_params_{action}")
-
     def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
         args = {"reference": self.parent.w_config.static_data_config.reference.path}
         if self.config.get(self.name).get("path_target_interval_list_mapping", None):

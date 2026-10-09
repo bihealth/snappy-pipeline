@@ -15,8 +15,7 @@ class _ReferenceDownloadStepPart(BaseStepPart):
     source: Source
     actions = ("run",)
 
-    def get_input_files(self, action):
-        self._validate_action(action)
+    def _get_input_files_run(self, wildcards):
         return []
 
     @dictify
@@ -54,8 +53,7 @@ class _ReferenceDownloadStepPart(BaseStepPart):
             yield key, prefix + ext
 
     @dictify
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         yield from self._base_args().items()
 
 
@@ -64,8 +62,7 @@ class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     source = Source.ensembl
 
     @dictify
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         yield from self._base_args().items()
         cfg = self.config.ensembl
         yield "subset", cfg.subset
@@ -84,8 +81,7 @@ class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     source = Source.refseq
 
     @dictify
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         yield from self._base_args().items()
         cfg = self.config.refseq
         yield "assembly_accession", cfg.assembly_accession
@@ -102,8 +98,7 @@ class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     source = Source.ucsc
 
     @dictify
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         yield from self._base_args().items()
         cfg = self.config.ucsc
         yield "db", cfg.db

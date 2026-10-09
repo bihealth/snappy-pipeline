@@ -32,11 +32,9 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     actions = ("run",)
 
     @dictify
-    def get_input_files(self, action):
-        self._validate_action(action)
-
+    def _get_input_files_run(self, wildcards):
         variants: ExpectedSomaticVariants = self.parent.get_upstream_paths(
-            "somatic_variant", library_name="{tumor_library}"
+            "somatic_variant", library_name=wildcards.tumor_library
         )
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi
@@ -81,11 +79,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
             mem=f"{mem_mb}MB",
         )
 
-    def get_params(self, action):
-        self._validate_action(action)
-        return self._get_params_run
-
-    def _get_params_run(self, _wildcards):
+    def _get_params_run(self, wildcards):
         return {
             "missense_re": self.config.missense_regex,
             "target_regions": self.config.target_regions,

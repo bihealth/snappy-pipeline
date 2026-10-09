@@ -90,15 +90,14 @@ class PeddyStepPart(BaseStepPart):
         self.log_path = "work/{index_ngs_library}/log/snakemake.filter.log"
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return path to pedigree input file"""
-        # Validate action
-        self._validate_action(action)
-        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        index = wildcards.index_ngs_library
+        yield "ped", f"work/write_pedigree.{index}/out/{index}.ped"
 
         calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
             "variant_calling",
-            library_name="{index_ngs_library}",
+            library_name=index,
         )
         yield "vcf", calling.vcf
         yield "vcf_tbi", calling.vcf_tbi

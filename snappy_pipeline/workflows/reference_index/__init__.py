@@ -19,8 +19,7 @@ class BuildReferenceCommonStepPart(BaseStepPart):
         self._validate_action(action)
         return ResourceUsage(threads=1, runtime="2h", mem="2GB")
 
-    def get_input_files(self, action):
-        self._validate_action(action)
+    def _get_input_files_run(self, wildcards):
         return {"reference": self.parent.get_reference_path()}
 
     @dictify
@@ -51,16 +50,14 @@ class BuildReferenceCommonStepPart(BaseStepPart):
             yield key, prefix + ext
 
     @dictify
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         yield "reference", self.parent.get_reference_path()
 
 
 class _IndexToolStepPart(BaseStepPart):
     output_suffixes: tuple[str, ...] = ()
 
-    def get_input_files(self, action):
-        self._validate_action(action)
+    def _get_input_files_run(self, wildcards):
         return {
             "reference": self.parent.get_reference_path(),
             "reference_fai": "work/reference_index/out/reference.fa.fai",
@@ -96,8 +93,7 @@ class _IndexToolStepPart(BaseStepPart):
             yield key, prefix + ext
 
     @dictify
-    def get_params(self, action):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
         yield "reference", self.parent.get_reference_path()
 
 
@@ -111,8 +107,8 @@ class BwaIndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
     @dictify
-    def get_params(self, action):
-        yield from super().get_params(action).items()
+    def _get_params_run(self, wildcards):
+        yield from super()._get_params_run(wildcards).items()
         yield "algorithm", self.config.bwa.algorithm
 
 
@@ -126,8 +122,8 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
     @dictify
-    def get_params(self, action):
-        yield from super().get_params(action).items()
+    def _get_params_run(self, wildcards):
+        yield from super()._get_params_run(wildcards).items()
         yield "extra_args", " ".join(self.config.bwa_mem2.extra_args)
 
 
@@ -141,8 +137,8 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=8, runtime="12h", mem="16GB")
 
     @dictify
-    def get_params(self, action):
-        yield from super().get_params(action).items()
+    def _get_params_run(self, wildcards):
+        yield from super()._get_params_run(wildcards).items()
         yield "extra_args", " ".join(self.config.minimap2.extra_args)
 
 
@@ -156,8 +152,8 @@ class StarIndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=16, runtime="24h", mem="64GB")
 
     @dictify
-    def get_params(self, action):
-        yield from super().get_params(action).items()
+    def _get_params_run(self, wildcards):
+        yield from super()._get_params_run(wildcards).items()
         yield "extra_args", " ".join(self.config.star.extra_args)
         features = getattr(self.w_config.static_data_config, "features", None)
         yield "features", getattr(features, "path", "") if features else ""

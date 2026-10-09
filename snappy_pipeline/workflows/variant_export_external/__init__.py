@@ -164,13 +164,6 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         else:
             return "work/target_cov_report/log/snakemake.target_coverage.log"
 
-    def get_params(self, action):
-        assert action in (
-            "run",
-            "bam_qc",
-        ), "Parameters only available for actions 'run' and 'bam_qc'."
-        return getattr(self, f"_get_params_{action}")
-
     @staticmethod
     @dictify
     def _get_log_file_bam_qc():
@@ -260,11 +253,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             return self.config.external_tool.lower() + "."
         return ""
 
-    def get_input_files(self, action):
-        """Return path to pedigree input file"""
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
-
     @listify
     def _get_input_files_gvcf_to_vcf(self, wildcards):
         yield f"work/input_links/{wildcards.index_ngs_library}/.done"
@@ -284,7 +272,12 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def _get_input_files_annotate(self, wildcards):
         # Pedigree
-        yield "ped", "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        yield (
+            "ped",
+            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped".format(
+                **wildcards
+            ),
+        )
         # Reference
         yield "reference", self.w_config.static_data_config.reference.path
         # VCF
@@ -428,10 +421,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
                 runtime="2h",  # 2 hours
                 mem=f"{7 * 1024 * 2}MB",
             )
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_gvcf_to_vcf(self, wildcards):
         result = {

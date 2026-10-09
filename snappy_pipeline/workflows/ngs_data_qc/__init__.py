@@ -89,32 +89,19 @@ class FastQcReportStepPart(BaseStepPart):
             preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
-    def get_params(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_params_run(self, wildcards):
+        return {
+            "num_threads": 1,
+            "more_reads": Namedlist(
+                chain(
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, "")),
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")),
+                )
+            ),
+        }
 
-        def args_function(wildcards):
-            return {
-                "num_threads": 1,
-                "more_reads": Namedlist(
-                    chain(
-                        sorted(self._collect_reads(wildcards, wildcards.library_name, "")),
-                        sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")),
-                    )
-                ),
-            }
-
-        return args_function
-
-    def get_input_files(self, action):
-        # Validate action
-        self._validate_action(action)
-
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            return "work/input_links/{library_name}/.done".format(**wildcards)
-
-        return input_function
+    def _get_input_files_run(self, wildcards):
+        return "work/input_links/{library_name}/.done".format(**wildcards)
 
     @dictify
     def get_output_files(self, action):
@@ -218,11 +205,6 @@ class PicardStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-
-    def get_params(self, action):
-        self._validate_action(action)
-
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_prepare(self, wildcards: Wildcards) -> dict[str, Any]:
         return {

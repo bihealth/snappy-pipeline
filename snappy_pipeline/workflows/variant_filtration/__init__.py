@@ -67,10 +67,6 @@ class VariantFiltrationStepPart(BaseStepPart):
         "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
     }
 
-    def get_input_files(self, action):
-        self._validate_action(action)
-        return self._get_input_files_run
-
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         lib = wildcards.tumor_library
@@ -102,11 +98,7 @@ class VariantFiltrationStepPart(BaseStepPart):
         ):
             yield key, _LOG_PREFIX + ext
 
-    def get_params(self, action):
-        self._validate_action(action)
-        return self._get_params
-
-    def _get_params(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, self.config.tool)
         params: dict[str, Any] = {
             # Keep wrapper naming stable and task-scoped for chaining.
@@ -174,7 +166,7 @@ class VembraneStepPart(VariantFiltrationStepPart):
 
     filter_name = "vembrane"
 
-    def _get_params(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.vembrane
         if cfg is None:
             raise ValueError("vembrane configuration is required")
@@ -221,11 +213,8 @@ class EbfilterStepPart(_BamAwareStepPart):
         "write_panel": ResourceUsage(threads=1, runtime="1h", mem=f"{2 * 1024}MB"),
     }
 
-    def get_input_files(self, action):
-        self._validate_action(action)
-        if action == "write_panel":
-            return {}
-        return self._get_input_files_run
+    def _get_input_files_write_panel(self, wildcards):
+        return {}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -245,8 +234,8 @@ class EbfilterStepPart(_BamAwareStepPart):
             return self._get_output_files_write_panel()
         return super().get_output_files(action)
 
-    def _get_params(self, wildcards: Wildcards) -> dict[str, Any]:
-        return super()._get_params(wildcards) | {
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return super()._get_params_run(wildcards) | {
             "has_annotation": getattr(self.config, "has_annotation", True),
         }
 

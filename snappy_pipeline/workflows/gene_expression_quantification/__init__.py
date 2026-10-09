@@ -150,12 +150,11 @@ class SalmonStepPart(BaseStepPart):
         )
 
     @dictify
-    def get_input_files(self, action):
+    def _get_input_files_run(self, wildcards):
         """Return input files"""
-        assert action == "run"
         if self.config.tool != self.name:
             return
-        yield "done", "work/input_links/{library_name}/.done"
+        yield "done", "work/input_links/{library_name}/.done".format(**wildcards)
         yield "features", self.w_config.static_data_config.features.path
         if self.cfg and self.cfg.path_index:
             yield "indices", self.cfg.path_index
@@ -187,28 +186,21 @@ class SalmonStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            result = {
-                "input": {
-                    "reads_left": list(
-                        sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
-                    )
-                }
+    def _get_params_run(self, wildcards):
+        """Return dict for the wrapper, including the input files"""
+        result = {
+            "input": {
+                "reads_left": list(
+                    sorted(self._collect_reads(wildcards, wildcards.library_name, ""))
+                )
             }
-            reads_right = list(
-                sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
-            )
-            if reads_right:
-                result["input"]["reads_right"] = reads_right
-            result |= self.config.salmon.model_dump(by_alias=True)
-            result["strand"] = self.config.strand
-            return result
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+        }
+        reads_right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
+        if reads_right:
+            result["input"]["reads_right"] = reads_right
+        result |= self.config.salmon.model_dump(by_alias=True)
+        result["strand"] = self.config.strand
+        return result
 
     def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads
@@ -249,10 +241,6 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
 
-    def get_input_files(self, action):
-        assert action == "run", "Unsupported actions"
-        return getattr(self, f"_get_input_files_{action}")
-
     def _get_input_files_run(self, wildcards: Wildcards):
         """Resolve alignment inputs through the typed upstream contract broker."""
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
@@ -276,8 +264,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
             )
         )
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"strand": self.config.strand}
 
     @dictify
@@ -366,18 +353,11 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
         _ = action
         return expand(self.base_path_out, ext=[".decision"])
 
-    def get_params(self, action: str):
-        self._validate_action(action)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if self.config.tool != self.name:
-            return super().get_params(action)
-
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            config = self.config.strandedness.model_dump(by_alias=True) | {
-                "strand": self.config.strand
-            }
-            return {"config": config, "library_name": wildcards.library_name}
-
-        return args_fn
+            return super()._get_params_run(wildcards)
+        config = self.config.strandedness.model_dump(by_alias=True) | {"strand": self.config.strand}
+        return {"config": config, "library_name": wildcards.library_name}
 
 
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
@@ -417,11 +397,10 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
             return
         yield "dupradar_path_annotation_gtf", self.config.dupradar.dupradar_path_annotation_gtf
 
-    def get_params(self, action: str) -> dict[str, Any]:
-        self._validate_action(action)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if self.config.tool != self.name:
-            return super().get_params(action)
-        return super().get_params(action) | {
+            return super()._get_params_run(wildcards)
+        return super()._get_params_run(wildcards) | {
             "num_threads": self.config.dupradar.num_threads,
         }
 

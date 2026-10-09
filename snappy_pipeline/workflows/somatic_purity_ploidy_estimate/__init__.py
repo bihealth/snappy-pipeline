@@ -73,100 +73,74 @@ class AscatStepPart(BaseStepPart):
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
 
-    def get_input_files(self, action):
-        """Return input files"""
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_input_files_{}".format(action))()
-
-    def _get_input_files_baf_tumor(self):
+    def _get_input_files_baf_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam.bai"),
+        }
 
-        def func(wildcards):
-            ngs_mapping = self.parent.upstream("ngs_mapping")
-            base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-            return {
-                "bam": ngs_mapping(base_path + ".bam"),
-                "bai": ngs_mapping(base_path + ".bam.bai"),
-            }
-
-        return func
-
-    def _get_input_files_baf_normal(self):
+    def _get_input_files_baf_normal(self, wildcards):
         """Return input files for generating BAF file for the normal."""
+        ngs_mapping = self.parent.upstream("ngs_mapping")
+        base_path = ("output/{normal_library}/out/{normal_library}").format(**wildcards)
+        return {
+            "bam": ngs_mapping(base_path + ".bam"),
+            "bai": ngs_mapping(base_path + ".bam.bai"),
+        }
 
-        def func(wildcards):
-            ngs_mapping = self.parent.upstream("ngs_mapping")
-            base_path = ("output/{normal_library}/out/{normal_library}").format(**wildcards)
-            return {
-                "bam": ngs_mapping(base_path + ".bam"),
-                "bai": ngs_mapping(base_path + ".bam.bai"),
-            }
-
-        return func
-
-    def _get_input_files_cnv_tumor(self):
+    def _get_input_files_cnv_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
-        return self._get_input_files_baf_tumor()
+        return self._get_input_files_baf_tumor(wildcards)
 
-    def _get_input_files_cnv_normal(self):
+    def _get_input_files_cnv_normal(self, wildcards):
         """Return input files for generating CNV file for the normal."""
-        return self._get_input_files_baf_normal()
+        return self._get_input_files_baf_normal(wildcards)
 
-    def _get_input_files_cnv_tumor_wes(self):
+    def _get_input_files_cnv_tumor_wes(self, wildcards):
         """Return input files for generating CNV file from copywriter for tumor."""
-
-        def func(wildcards):
-            base_path = ("work/copywriter.{tumor_library}/out/copywriter.{tumor_library}").format(
-                **wildcards
+        base_path = ("work/copywriter.{tumor_library}/out/copywriter.{tumor_library}").format(
+            **wildcards
+        )
+        return {
+            "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
+                base_path + "_bins.txt"
             )
-            return {
-                "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
-                    base_path + "_bins.txt"
-                )
-            }
+        }
 
-        return func
-
-    def _get_input_files_cnv_normal_wes(self):
+    def _get_input_files_cnv_normal_wes(self, wildcards):
         """Return input files for generating CNV file from copywriter for normal."""
-
-        def func(wildcards):
-            df = self.parent.build_library_dataframe()
-            normal_df = df[df["library_name"] == wildcards["normal_library"]]
-            tumor_library = normal_df.iloc[0].get("library_name") if not normal_df.empty else None
-            # Find tumor library that has this normal as matched_normal_lib
-            if tumor_library is None:
-                tumor_df = df[df["matched_normal_lib"] == wildcards["normal_library"]]
-                if not tumor_df.empty:
-                    tumor_library = tumor_df.iloc[0]["library_name"]
-            base_path = ("work/copywriter.{tumor_library}/out/copywriter.{tumor_library}").format(
-                tumor_library=tumor_library, **wildcards
+        df = self.parent.build_library_dataframe()
+        normal_df = df[df["library_name"] == wildcards["normal_library"]]
+        tumor_library = normal_df.iloc[0].get("library_name") if not normal_df.empty else None
+        # Find tumor library that has this normal as matched_normal_lib
+        if tumor_library is None:
+            tumor_df = df[df["matched_normal_lib"] == wildcards["normal_library"]]
+            if not tumor_df.empty:
+                tumor_library = tumor_df.iloc[0]["library_name"]
+        base_path = ("work/copywriter.{tumor_library}/out/copywriter.{tumor_library}").format(
+            tumor_library=tumor_library, **wildcards
+        )
+        return {
+            "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
+                base_path + "_bins.txt"
             )
-            return {
-                "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
-                    base_path + "_bins.txt"
-                )
-            }
+        }
 
-        return func
-
-    def _get_input_files_run_ascat(self):
+    @dictify
+    def _get_input_files_run_ascat(self, wildcards):
         """Return input files for actually running ASCAT."""
-
-        @dictify
-        def func(wildcards):
-            result = {
-                "baf_tumor": "work/{tumor_library}/out/{tumor_library}.baf_tumor.txt",
-                "baf_normal": "work/{normal_library}/out/{normal_library}.baf_normal.txt",
-                "cnv_tumor": "work/{tumor_library}/out/{tumor_library}.cnv_tumor.txt",
-                "cnv_normal": "work/{normal_library}/out/{normal_library}.cnv_normal.txt",
-            }
-            normal_library = self.get_normal_lib_name(wildcards)
-            for key, value in result.items():
-                yield key, value.format(normal_library=normal_library, **wildcards)
-
-        return func
+        result = {
+            "baf_tumor": "work/{tumor_library}/out/{tumor_library}.baf_tumor.txt",
+            "baf_normal": "work/{normal_library}/out/{normal_library}.baf_normal.txt",
+            "cnv_tumor": "work/{tumor_library}/out/{tumor_library}.cnv_tumor.txt",
+            "cnv_normal": "work/{normal_library}/out/{normal_library}.cnv_normal.txt",
+        }
+        normal_library = self.get_normal_lib_name(wildcards)
+        for key, value in result.items():
+            yield key, value.format(normal_library=normal_library, **wildcards)
 
     def get_output_files(self, action):
         """Return output files"""
@@ -202,10 +176,6 @@ class AscatStepPart(BaseStepPart):
         for infix in infixes:
             path = ("work/{tumor_library}/out/{tumor_library}.%s.txt") % infix
             yield infix, path
-
-    def get_params(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_params_{action}")
 
     def _get_params_baf_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {

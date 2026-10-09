@@ -236,17 +236,18 @@ class MeltStepPart(
     def _get_log_file_merge_vcf(self):
         yield from self._get_log_file_with_infix("melt.{library_name}").items()
 
-    def get_params(self, action: str):
-        self._validate_action(action)
+    def _get_params_preprocess(self, wildcards: Wildcards) -> dict[str, Any]:
+        params = {
+            "config": self.config.melt.model_dump(by_alias=True),
+        }
+        if self.parent.name == "sv_calling_targeted":
+            params["exome"] = True
+        if getattr(wildcards, "me_type", None):
+            params["me_type"] = getattr(wildcards, "me_type")
+        return params
 
-        def args_fn(wildcards: Wildcards) -> dict[str, Any]:
-            params = {
-                "config": self.config.melt.model_dump(by_alias=True),
-            }
-            if self.parent.name == "sv_calling_targeted":
-                params["exome"] = True
-            if getattr(wildcards, "me_type", None):
-                params["me_type"] = getattr(wildcards, "me_type")
-            return params
-
-        return args_fn
+    _get_params_indiv_analysis = _get_params_preprocess
+    _get_params_group_analysis = _get_params_preprocess
+    _get_params_genotype = _get_params_preprocess
+    _get_params_make_vcf = _get_params_preprocess
+    _get_params_merge_vcf = _get_params_preprocess

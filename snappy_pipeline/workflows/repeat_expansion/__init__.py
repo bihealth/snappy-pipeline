@@ -136,26 +136,6 @@ class ExpansionHunterStepPart(BaseStepPart):
                     for ngs_library in test_sample.ngs_libraries.values():
                         yield ngs_library.name, sex
 
-    def get_input_files(self, action):
-        """Return input function for ExpansionHunter rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns input function for ExpansionHunter rule based on inputted action.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
-        # Return requested function
-        return getattr(self, "_get_input_files_{}".format(action))
-
     def get_output_files(self, action):
         """Return output function for ExpansionHunter rules.
 
@@ -210,15 +190,14 @@ class ExpansionHunterStepPart(BaseStepPart):
             "repeat_catalog": self.config.repeat_catalog,
         }
 
-    @staticmethod
     @listify
-    def _get_input_files_annotate(_wildcards):
+    def _get_input_files_annotate(self, wildcards):
         """Yield input files' pattern for rule `annotate` - based on ExpansionHunter call results.
 
-        :param _wildcards: Snakemake rule wildcards (unused).
-        :type _wildcards: snakemake.io.Wildcards
+        :param wildcards: Snakemake rule wildcards.
+        :type wildcards: snakemake.io.Wildcards
         """
-        name_pattern = "{library_name}"
+        name_pattern = wildcards.library_name
         yield "work/{name_pattern}/out/{name_pattern}.{ext}".format(
             name_pattern=name_pattern, ext="json"
         )
@@ -263,18 +242,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         name_pattern = "{library_name}"
         return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
 
-    def get_params(self, action):
-        """Get parameters.
-
-        :param action: Action, i.e., step being performed.
-        :type action: str
-
-        :return: Returns method to get donor's sex.
-        """
-        assert action == "run", "Parameters is only available for action 'run'."
-        return self._get_donor_sex
-
-    def _get_donor_sex(self, wildcards):
+    def _get_params_run(self, wildcards):
         """Get donor's sex.
 
         :param wildcards: Snakemake wildcards associated with rule (unused).

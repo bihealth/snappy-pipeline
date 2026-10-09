@@ -85,7 +85,7 @@ rule cbioportal_export_case_lists:
 
 rule cbioportal_export_generate_mafs:
     input:
-        **wf.get_input_files("cbioportal_vcf2maf", "run"),
+        unpack(wf.get_input_files("cbioportal_vcf2maf", "run")),
     output:
         **wf.get_output_files("cbioportal_vcf2maf", "run"),
     log:
@@ -107,7 +107,7 @@ rule cbioportal_export_generate_mafs:
 
 rule cbioportal_export_concatenate_maf:
     input:
-        **wf.get_input_files("cbioportal_mutations", "run"),
+        unpack(wf.get_input_files("cbioportal_mutations", "run")),
     output:
         wf.get_output_files("cbioportal_mutations", "run"),
     params:
@@ -130,7 +130,7 @@ if step_config.copy_number_alteration.enabled:
 
     rule cbioportal_export_generate_cna:
         input:
-            **wf.get_input_files("cbioportal_cns2cna", "run"),
+            unpack(wf.get_input_files("cbioportal_cns2cna", "run")),
         output:
             **wf.get_output_files("cbioportal_cns2cna", "run"),
         log:
@@ -149,7 +149,7 @@ if step_config.copy_number_alteration.enabled:
     # Merge sample-based CNA files to cBioPortal ----------------------------------
     rule cbioportal_export_concatenate_cna_log2:
         input:
-            **wf.get_input_files("cbioportal_cna", "log2"),
+            unpack(wf.get_input_files("cbioportal_cna", "log2")),
         output:
             wf.get_output_files("cbioportal_cna", "log2"),
         log:
@@ -167,7 +167,7 @@ if step_config.copy_number_alteration.enabled:
 
     rule cbioportal_export_concatenate_cna_gistic:
         input:
-            **wf.get_input_files("cbioportal_cna", "gistic"),
+            unpack(wf.get_input_files("cbioportal_cna", "gistic")),
         output:
             wf.get_output_files("cbioportal_cna", "gistic"),
         log:
@@ -186,7 +186,7 @@ if step_config.copy_number_alteration.enabled:
     # Merge sample-based segment files to cBioPortal ------------------------------
     rule cbioportal_export_concatenate_segments:
         input:
-            **wf.get_input_files("cbioportal_segment", "run"),
+            unpack(wf.get_input_files("cbioportal_segment", "run")),
         output:
             wf.get_output_files("cbioportal_segment", "run"),
         log:
@@ -209,7 +209,7 @@ if step_config.expression.enabled:
 
     rule cbioportal_export_expression:
         input:
-            **wf.get_input_files("cbioportal_expression", "run"),
+            unpack(wf.get_input_files("cbioportal_expression", "run")),
         output:
             wf.get_output_files("cbioportal_expression", "run"),
         log:
