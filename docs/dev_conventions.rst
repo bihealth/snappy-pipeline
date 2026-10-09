@@ -132,6 +132,10 @@ A task's outputs are described by ``DataSignature`` objects: a data type plus ta
 - ``load_project()`` computes the signatures of every task in dependency order and checks
   each requirement before Snakemake builds any rule. A mismatch fails with a message that names
   both tasks.
+- Consumers read upstream files only through ``get_upstream_paths(field, library_name=...)``,
+  which returns the provider's named outputs (``.bam``, ``.vcf``, ...) wrapped in the field's
+  ``ExpectedPathSchema``; the schema receives only the keys it declares. Consumers never build a
+  provider's paths themselves (``test_upstream_paths_come_from_contracts``).
 - ``get_output_paths(config, signature, ...)`` receives the config of the task whose outputs
   are requested. It does not check the signature again; it only uses it to choose between
   several outputs.

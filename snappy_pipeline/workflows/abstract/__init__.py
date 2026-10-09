@@ -997,34 +997,6 @@ class BaseStep:
             expected_schema=expected_schema,
         )
 
-    def upstream(self, field_name: str) -> "Callable[[str], str]":
-        """Return a path-namespacing callable for ``depends_on.<field_name>``.
-
-        The returned callable accepts a single local path string and returns the
-        globally namespaced version (i.e. prefixed with the upstream task name).
-
-        Usage::
-
-            ngs = self.parent.upstream("alignments")
-            bam = ngs(f"output/{lib}/out/{lib}.bam")
-            bai = ngs(f"output/{lib}/out/{lib}.bam.bai")
-
-        Arguments:
-            field_name: The ``depends_on`` field name identifying the upstream task.
-
-        Returns:
-            A ``str -> str`` callable that prepends the resolved task name.
-        """
-        # Resolve once — cheap after the first call thanks to how resolve_dependency works.
-        dep = self.resolve_dependency(field_name)
-
-        def _prefix(local_path: str) -> str:
-            if local_path.startswith("output/") or local_path.startswith("work/"):
-                return self.namespaced_path(dep.task_name, local_path)
-            return self.namespaced_path(dep.task_name, local_path)
-
-        return _prefix
-
     def get_upstream_paths(
         self, req_field_name: str, **kwargs
     ) -> "pydantic.BaseModel | dict[str, str]":

@@ -205,3 +205,16 @@ def test_tool_is_required():
         and not tool.is_required()
     ]
     assert not found, f"tool must be set explicitly, without a default: {found}"
+
+
+def test_upstream_paths_come_from_contracts():
+    """Consumers ask providers for named outputs instead of building their paths."""
+    found = [
+        f"{_location(path, node)}"
+        for path in sorted(WORKFLOWS.rglob("*.py"))
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "upstream"
+    ]
+    assert not found, f"use get_upstream_paths(field, ...) instead of upstream(field): {found}"
