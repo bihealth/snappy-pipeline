@@ -297,10 +297,8 @@ class VariantFiltrationWorkflow(BaseStep):
 
     @classmethod
     def task_produces(cls, config, upstream):
-        """The variants of the ``variant`` task, tagged ``filtered``."""
-        return tuple(
-            s.with_tags("filtered") for s in upstream["variants"] if s.type == DataType.VARIANTS
-        )
+        """The variants this task reads, tagged ``filtered``."""
+        return (upstream["variants"].with_tags("filtered"),)
 
     config_model_class = VariantFiltrationConfigModel
     sheet_shortcut_class = GenericSampleSheet

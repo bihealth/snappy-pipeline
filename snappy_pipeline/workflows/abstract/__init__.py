@@ -39,6 +39,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DATA_SETS,
     DataSignature,
     ExpectedPathSchema,
+    select_signature,
 )
 
 if typing.TYPE_CHECKING:
@@ -715,11 +716,12 @@ class BaseStep:
 
     @classmethod
     def task_produces(
-        cls, config: SnappyStepModel, upstream: Mapping[str, tuple[DataSignature, ...]]
+        cls, config: SnappyStepModel, upstream: Mapping[str, DataSignature]
     ) -> tuple[DataSignature, ...]:
         """Return the DataSignatures that one task of this step produces.
 
-        ``upstream`` maps each set ``depends_on`` field to the signatures of its upstream task.
+        ``upstream`` maps each set ``depends_on`` field to the upstream signature this task reads
+        (see :func:`~snappy_pipeline.workflows.abstract.protocol.select_signature`).
         The default returns :attr:`produces`; override it when the output depends on the task's
         config or its inputs. ``load_project()`` checks every ``depends_on`` requirement against
         the result.
@@ -998,7 +1000,7 @@ class BaseStep:
         )
 
     def get_upstream_paths(
-        self, req_field_name: str, **kwargs
+        self, req_field_name: str, signature: DataSignature | None = None, **kwargs
     ) -> "pydantic.BaseModel | dict[str, str]":
         """Resolve global output paths from an upstream task using the Consumer-Driven Contract.
 
@@ -1027,6 +1029,10 @@ class BaseStep:
         Arguments:
             req_field_name: The field name on ``self.config.depends_on`` that holds the upstream
                 task reference. Must match a key in the ``depends_on`` Pydantic model.
+            signature: Narrows the field's requirement for this lookup, e.g. ``-filtered`` to
+                read unfiltered calls. The provider's ``get_output_paths`` receives the produced
+                signature that :func:`~snappy_pipeline.workflows.abstract.protocol.select_signature`
+                picks for the requirement.
             kwargs: Forwarded verbatim to the upstream workflow's
                 :py:meth:`get_output_paths` classmethod (e.g. ``library_name``, ``sample_name``).
 
@@ -1040,9 +1046,17 @@ class BaseStep:
         """
         dependency = self.resolve_dependency(req_field_name)
 
-        # Delegate path construction to the upstream workflow classmethod.
+        # The provider gets the signature this consumer reads, so it can choose the file.
+        required = signature or dependency.signature
+        produced = self.project.signatures[dependency.task_name]
+        selected = select_signature(produced, required)
+        if selected is None:
+            raise ValueError(
+                f"Task {self.task_name!r}: depends_on.{req_field_name} task "
+                f"{dependency.task_name!r} produces no {required}"
+            )
         local_paths = dependency.workflow_cls.get_output_paths(
-            self.project.task_configs[dependency.task_name], dependency.signature, **kwargs
+            self.project.task_configs[dependency.task_name], selected, **kwargs
         )
 
         # Prepend upstream task name for Snakemake global namespace.

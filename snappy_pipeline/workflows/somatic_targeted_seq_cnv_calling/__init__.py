@@ -350,7 +350,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         somatic_vcf = self.parent.get_upstream_paths(
             "variants", library_name=wildcards.tumor_library
         )
-        yield "vcf", getattr(somatic_vcf, "full_vcf", None) or getattr(somatic_vcf, "vcf", None)
+        yield "vcf", somatic_vcf.vcf
         yield "normaldb", pon.panel_of_normals
         yield "mapping_bias", pon.mapping_bias
         yield "intervals", pon.intervals

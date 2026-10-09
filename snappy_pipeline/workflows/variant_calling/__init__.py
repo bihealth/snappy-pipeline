@@ -1238,14 +1238,17 @@ class VariantCallingWorkflow(BaseStep):
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "filtered"})),
     ]
     config_model_class = VariantCallingConfigModel
 
     @classmethod
     def task_produces(cls, config, upstream):
-        """Somatic small variants for mutect2, germline small variants for the other tools."""
-        origin = "somatic" if config.tool == Tool.mutect2 else "germline"
-        return (DataSignature(DataType.VARIANTS, frozenset({origin, "snv", "indel"})),)
+        """Germline small variants, or for mutect2 all somatic calls plus the PASS calls."""
+        if config.tool != Tool.mutect2:
+            return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
+        calls = DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))
+        return (calls, calls.with_tags("filtered"))
 
     sheet_shortcut_class = GermlineCaseSheet
 
@@ -1268,14 +1271,14 @@ class VariantCallingWorkflow(BaseStep):
                 the ``{library_name}`` wildcard placeholder.
         """
         lib = kwargs.get("library_name", "{library_name}")
-        paths = {
-            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
-        }
-        if config.tool == Tool.mutect2:
-            paths["full_vcf"] = f"output/{lib}/out/{lib}.full.vcf.gz"
-            paths["full_vcf_tbi"] = f"output/{lib}/out/{lib}.full.vcf.gz.tbi"
-        return paths
+        # mutect2 writes all calls to .full.vcf.gz and the PASS calls to .vcf.gz
+        unfiltered = (
+            config.tool == Tool.mutect2
+            and signature is not None
+            and "filtered" not in signature.tags
+        )
+        prefix = f"output/{lib}/out/{lib}.full" if unfiltered else f"output/{lib}/out/{lib}"
+        return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

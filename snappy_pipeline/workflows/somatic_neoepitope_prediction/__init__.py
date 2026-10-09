@@ -955,15 +955,11 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
 
     def somatic_vcf(self, library_name: str, full: bool) -> str:
         """Return the somatic VCF of ``library_name``; ``full`` for the unfiltered mutect2 calls."""
-        variants = self.get_upstream_paths("somatic_variants", library_name=library_name)
-        if not full:
-            return variants.vcf
-        if variants.full_vcf is None:
-            raise ValueError(
-                f"Task {self.task_name!r} needs unfiltered calls (use_all_transcripts), which only "
-                "a mutect2 variant_calling task in depends_on.somatic_variants provides"
-            )
-        return variants.full_vcf
+        signature = DataSignature(DataType.VARIANTS, frozenset({"-filtered"})) if full else None
+        variants = self.get_upstream_paths(
+            "somatic_variants", signature=signature, library_name=library_name
+        )
+        return variants.vcf
 
     def __init__(self, workflow, project, task_name):
 

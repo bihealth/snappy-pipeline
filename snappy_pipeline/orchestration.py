@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
-from snappy_pipeline.workflows.abstract.protocol import DATA_SETS, DataSignature
+from snappy_pipeline.workflows.abstract.protocol import DATA_SETS, DataSignature, select_signature
 
 if TYPE_CHECKING:
     from snakemake.api import Workflow
@@ -199,6 +199,9 @@ def _task_signatures(
 ) -> dict[str, tuple[DataSignature, ...]]:
     """Return task name -> produced signatures, checking every ``depends_on`` requirement.
 
+    Each task's ``task_produces`` receives, per field, the upstream signature it reads
+    (``select_signature``).
+
     ``tasks`` must be in topological order, so the upstream signatures exist when a task needs
     them.
     """
@@ -208,19 +211,19 @@ def _task_signatures(
     for task in tasks:
         config = task_configs[task.name]
         fields = type(config.depends_on).model_fields if dependencies[task.name] else {}
+        upstream_signatures = {}
         for field, upstream in dependencies[task.name].items():
             required = next(
                 (m for m in fields[field].metadata if isinstance(m, DataSignature)), None
             )
             produced = signatures[upstream]
-            if required is not None and not any(s.satisfies(required) for s in produced):
+            selected = select_signature(produced, required)
+            if selected is None:
                 raise ValueError(
                     f"Task {task.name!r}: depends_on.{field} requires {required}, but task "
                     f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
                 )
-        upstream_signatures = {
-            field: signatures[upstream] for field, upstream in dependencies[task.name].items()
-        }
+            upstream_signatures[field] = selected
         signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
             config, upstream_signatures
         )

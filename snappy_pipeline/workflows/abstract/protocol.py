@@ -56,6 +56,22 @@ class DataSignature:
         return f"{self.type.value} [{', '.join(tags)}]" if tags else self.type.value
 
 
+def select_signature(
+    produced: "tuple[DataSignature, ...]", required: "DataSignature | None"
+) -> "DataSignature | None":
+    """Return the signature in ``produced`` that a consumer requiring ``required`` reads.
+
+    A task can produce several signatures, e.g. mutect2 calling writes all calls and the PASS
+    calls (tagged ``filtered``). When more than one satisfies ``required``, the filtered one wins,
+    so consumers get PASS calls unless they require ``-filtered``. Returns ``None`` when nothing
+    satisfies ``required``.
+    """
+    matching = [s for s in produced if required is None or s.satisfies(required)]
+    if not matching:
+        return None
+    return max(matching, key=lambda s: "filtered" in s.tags)
+
+
 @dataclass(frozen=True)
 class ExpectedPathSchema:
     """Annotated metadata wrapper for expected upstream output-path schema."""

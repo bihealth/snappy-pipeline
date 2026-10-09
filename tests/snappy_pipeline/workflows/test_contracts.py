@@ -6,7 +6,7 @@ import pytest
 from snappy_pipeline.orchestration import load_project
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract import BaseStep
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
 from snappy_pipeline.workflows.link_in.model import LinkIn
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_filtration.model import ExpectedVariantVcf
@@ -66,6 +66,24 @@ def _signature(data_type, *tags):
 )
 def test_data_signature_satisfies(provided, required, expected):
     assert provided.satisfies(required) is expected
+
+
+CALLS = _signature(DataType.VARIANTS, "somatic", "snv", "indel")
+PASS_CALLS = CALLS.with_tags("filtered")
+
+
+@pytest.mark.parametrize(
+    "required, expected",
+    [
+        # PASS calls are the default when both satisfy the requirement.
+        (_signature(DataType.VARIANTS, "somatic"), PASS_CALLS),
+        (None, PASS_CALLS),
+        (_signature(DataType.VARIANTS, "-filtered"), CALLS),
+        (_signature(DataType.VARIANTS, "germline"), None),
+    ],
+)
+def test_select_signature_prefers_filtered_calls(required, expected):
+    assert select_signature((CALLS, PASS_CALLS), required) == expected
 
 
 def test_data_signature_str():
@@ -187,3 +205,29 @@ TRIMMING = (
 )
 def test_get_preprocessed_path_follows_reads(reads, expected):
     assert _mapping_step(RAW, TRIMMING, reads=reads).get_preprocessed_path("reads") == expected
+
+
+# Filtered and unfiltered calls ------------------------------------------------------------------
+
+
+def test_mutect2_calling_provides_pass_calls_by_default_and_all_calls_on_request():
+    project = load_project(_config(_mapping(), _calling(), _annotation()), WORK_DIR)
+    assert project.signatures["calling"] == (CALLS, PASS_CALLS)
+    # Annotation reads the PASS calls, so its output carries the tag on.
+    assert project.signatures["annotation"] == (PASS_CALLS.with_tags("annotated"),)
+
+    annotation = _step(project, "annotation")
+    default = annotation.get_upstream_paths("variants", library_name="T1")
+    unfiltered = annotation.get_upstream_paths(
+        "variants", signature=_signature(DataType.VARIANTS, "-filtered"), library_name="T1"
+    )
+    assert default.vcf == "tasks/calling/output/T1/out/T1.vcf.gz"
+    assert unfiltered.vcf == "tasks/calling/output/T1/out/T1.full.vcf.gz"
+
+
+def test_unfiltered_calls_are_not_available_after_annotation():
+    project = load_project(_config(_mapping(), _calling(), _annotation(), _filtration()), WORK_DIR)
+    with pytest.raises(ValueError, match=r"produces no variants \[-filtered\]"):
+        _step(project, "filtration").get_upstream_paths(
+            "variants", signature=_signature(DataType.VARIANTS, "-filtered"), library_name="T1"
+        )

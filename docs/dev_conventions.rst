@@ -129,6 +129,12 @@ A task's outputs are described by ``DataSignature`` objects: a data type plus ta
   data sets' search paths. No task may be called ``data_sets``.
 - Each ``depends_on`` field states what it requires with a ``DataSignature`` in its
   ``Annotated`` metadata. This annotation is the only place a requirement is declared.
+- A task can produce several signatures. mutect2 calling produces all calls and the PASS
+  calls, which carry the ``filtered`` tag. ``select_signature`` picks the one a consumer reads:
+  the ``filtered`` one when several satisfy the requirement, so PASS calls are the default and
+  ``-filtered`` asks for all calls. ``get_output_paths`` receives the picked signature and
+  returns the matching file. ``get_upstream_paths(field, signature=...)`` narrows the
+  requirement for a single lookup.
 - ``load_project()`` computes the signatures of every task in dependency order and checks
   each requirement before Snakemake builds any rule. A mismatch fails with a message that names
   both tasks.

@@ -435,11 +435,10 @@ class Proteome(ToggleModel):
 
 
 class ExpectedSomaticVariants(BaseModel):
-    """Consumer-driven contract: the somatic variant calls; ``full_vcf`` only from mutect2 calling."""
+    """Consumer-driven contract: the somatic variant calls."""
 
     vcf: str
     vcf_tbi: str
-    full_vcf: str | None = None
 
 
 class SomaticNeoepitopePredictionDependsOn(SnappyModel):

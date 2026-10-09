@@ -119,10 +119,8 @@ class VariantAnnotationWorkflow(BaseStep):
 
     @classmethod
     def task_produces(cls, config, upstream):
-        """The variants of the ``variant`` task, tagged ``annotated``."""
-        return tuple(
-            s.with_tags("annotated") for s in upstream["variants"] if s.type == DataType.VARIANTS
-        )
+        """The variants this task reads, tagged ``annotated``."""
+        return (upstream["variants"].with_tags("annotated"),)
 
     config_model_class = VariantAnnotationConfigModel
     sheet_shortcut_class = GenericSampleSheet
