@@ -232,16 +232,18 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     def _vcf(self, library_name):
         return self.parent.get_upstream_paths("variants", library_name=library_name).vcf
 
-    @listify
+    @dictify
     def _get_input_files_gvcf_to_vcf(self, wildcards):
-        yield from self._collect_gvcf(wildcards)
+        yield "vcf", sorted(self._collect_gvcf(wildcards))
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
-    @listify
+    @dictify
     def _get_input_files_merge_vcf(self, wildcards):
         if self.config.merge_vcf_flag:
-            yield from self._collect_vcfs(wildcards)
+            yield "vcf", sorted(self._collect_vcfs(wildcards))
         else:
-            yield self._vcf(wildcards.index_ngs_library)
+            yield "vcf", [self._vcf(wildcards.index_ngs_library)]
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
@@ -398,18 +400,14 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def _get_params_gvcf_to_vcf(self, wildcards):
         result = {
-            "input": list(sorted(self._collect_gvcf(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
-            "reference_path": self.parent.get_upstream_paths("reference").fasta,
         }
         return result
 
     def _get_params_merge_vcf(self, wildcards):
         result = {
-            "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
             "merge_option": self.config.merge_option,
-            "reference_path": self.parent.get_upstream_paths("reference").fasta,
         }
         return result
 

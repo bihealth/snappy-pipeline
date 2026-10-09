@@ -410,9 +410,7 @@ class JointGermlineCnvSegmentationMixin:
         # Yield path to pedigree file
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
-
-    def _get_params_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
 
 class MergeMultikitFamiliesMixin:
@@ -492,19 +490,13 @@ class RunGcnvStepPart(
         self.validate_request()
 
     def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
-        args = {"reference": self.parent.get_upstream_paths("reference").fasta}
+        args = {}
         if self.config.get(self.name).get("path_target_interval_list_mapping", None):
             for item in self.config.get(self.name).get("path_target_interval_list_mapping"):
                 if item["name"] == wildcards.library_kit:
                     args["target_interval_bed"] = item["path"]
                     break
         return args
-
-    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
-
-    def _get_params_joint_germline_cnv_segmentation(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     @listify
     def get_result_files(self):

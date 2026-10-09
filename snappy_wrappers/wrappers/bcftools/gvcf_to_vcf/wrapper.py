@@ -8,9 +8,6 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-args = getattr(snakemake.params, "args", {})
-reference_path = args["reference_path"]
-
 ShellWrapper(snakemake).run(
     r"""
 # Method checks if VCF contains sample
@@ -32,8 +29,8 @@ check_vcf() {{
 # Convert gVCF to VCF, filter at least one allele
 bcftools convert --gvcf2vcf \
         --output-type u \
-        --fasta-ref {reference_path} \
-        {snakemake.params.args[input]} \
+        --fasta-ref {snakemake.input.reference} \
+        {snakemake.input.vcf} \
 | bcftools view --no-update --min-ac 1 \
         --output-type z \
         --output {snakemake.output.vcf}

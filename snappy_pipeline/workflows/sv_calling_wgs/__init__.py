@@ -109,6 +109,7 @@ class PopDelStepPart(
             "alignments", library_name=wildcards.library_name
         )
         yield "bam", alignments.bam
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_output_files_profile(self):
@@ -200,9 +201,6 @@ class PopDelStepPart(
                 )
             ],
         )
-
-    def _get_params_profile(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {

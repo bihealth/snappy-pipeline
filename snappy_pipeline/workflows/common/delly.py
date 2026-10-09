@@ -59,7 +59,6 @@ class Delly2StepPart(
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
-            "genome": self.parent.get_upstream_paths("reference").fasta,
             "config": dict(self.config.get(self.name)),
         }
 
@@ -74,6 +73,7 @@ class Delly2StepPart(
         )
         yield "bam", alignments.bam
         yield "bai", alignments.bai
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_output_files_call(self):

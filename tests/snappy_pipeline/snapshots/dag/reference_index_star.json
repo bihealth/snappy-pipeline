@@ -99,11 +99,7 @@
    "tasks/reference_index_star/output/reference_index/log/reference_index.common.script",
    "tasks/reference_index_star/output/reference_index/log/reference_index.common.script.md5"
   ],
-  "params": {
-   "args": {
-    "reference": "tasks/reference_download/output/reference_download/out/reference.fa"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -121,7 +117,8 @@
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_star/work/reference_index/out/reference.dict",
-   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome"
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/reference_index_star/work/reference_index/log/reference_index.index.log",
@@ -147,9 +144,7 @@
   ],
   "params": {
    "args": {
-    "extra_args": "",
-    "features": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-    "reference": "tasks/reference_download/output/reference_download/out/reference.fa"
+    "extra_args": ""
    }
   },
   "resources": {

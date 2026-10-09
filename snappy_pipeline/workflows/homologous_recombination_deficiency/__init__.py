@@ -102,6 +102,7 @@ class ScarHRDStepPart(BaseStepPart):
             "copy_number", library_name=wildcards.library_name
         )
         yield "seqz", copy_number.seqz
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     def get_output_files(self, action):
         if action == "install":
@@ -119,9 +120,7 @@ class ScarHRDStepPart(BaseStepPart):
             )
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self.config.scarHRD.model_dump(by_alias=True) | {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
-        }
+        return self.config.scarHRD.model_dump(by_alias=True)
 
     @dictify
     def _get_log_file(self, action):

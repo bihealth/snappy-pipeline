@@ -259,9 +259,6 @@
   "params": {
    "args": {
     "gvcf_option": false,
-    "input": [
-     "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
-    ],
     "merge_option": "id",
     "sample_names": [
      "case001subregion"

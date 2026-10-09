@@ -34,7 +34,8 @@
  {
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
-   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/ngs_mapping_mbcs/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
@@ -112,7 +113,6 @@
      "trim_adapters": false
     },
     "platform": "ILLUMINA",
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
     "sample_name": "case001subregion-N1-DNA1-WES1"
    }
   },
@@ -133,7 +133,8 @@
  {
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
-   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/ngs_mapping_mbcs/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log",
@@ -211,7 +212,6 @@
      "trim_adapters": false
     },
     "platform": "ILLUMINA",
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
     "sample_name": "case001subregion-T1-DNA1-WES1"
    }
   },

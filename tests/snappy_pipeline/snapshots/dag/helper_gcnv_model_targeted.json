@@ -16,7 +16,8 @@
  },
  {
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list"
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/helper_gcnv_model_targeted/work/default/log/default.annotate_gc.log"
@@ -25,7 +26,10 @@
    "tasks/helper_gcnv_model_targeted/work/default/out/default.annotate_gc.tsv"
   ],
   "params": {
-   "step_key": "helper_gcnv_model_targeted"
+   "args": {
+    "path_target_interval_list_mapping": [],
+    "path_uniquely_mapable_bed": "AUTO"
+   }
   },
   "resources": {
    "mem": "7.68 GB",
@@ -72,7 +76,8 @@
   "input": [
    "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
@@ -84,8 +89,7 @@
    "args": {
     "path_par_intervals": "",
     "path_target_interval_list_mapping": [],
-    "path_uniquely_mapable_bed": "AUTO",
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    "path_uniquely_mapable_bed": "AUTO"
    }
   },
   "resources": {
@@ -130,7 +134,9 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/filter_intervals"
  },
  {
-  "input": [],
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
   "log": [
    "tasks/helper_gcnv_model_targeted/work/default/log/default.preprocess_intervals.log"
   ],
@@ -141,8 +147,7 @@
    "args": {
     "path_par_intervals": "",
     "path_target_interval_list_mapping": [],
-    "path_uniquely_mapable_bed": "AUTO",
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    "path_uniquely_mapable_bed": "AUTO"
    }
   },
   "resources": {

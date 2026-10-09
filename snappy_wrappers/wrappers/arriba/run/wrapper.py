@@ -26,8 +26,8 @@ num_threads = args["num_threads"]
 arriba_index = args["path_index"]
 star_parameters = args["star_parameters"]
 
-reference_path = args["reference_path"]
-features_path = args["features_path"]
+reference_path = snakemake.input.reference
+features_path = snakemake.input.features
 
 blacklist = args["blacklist"]
 blacklist_param = f"-b {blacklist}" if blacklist else ""
@@ -94,4 +94,3 @@ done
 touch {snakemake.output.done}
 """
 )
-

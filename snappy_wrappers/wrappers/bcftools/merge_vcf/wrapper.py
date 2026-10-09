@@ -13,7 +13,7 @@ args = getattr(snakemake.params, "args", {})
 merge_option = args["merge_option"]
 gvcf_option = args["gvcf_option"]
 sample_names = args["sample_names"]
-input_ = args["input"]
+input_ = list(snakemake.input.vcf)
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:
     # Write paths to input files into temporary file.

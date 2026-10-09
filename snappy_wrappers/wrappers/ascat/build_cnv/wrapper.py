@@ -38,7 +38,7 @@ tabix -f $TMPDIR/spots.vcf.gz
 #
 # TODO: should become a conda package!
 /fast/groups/cubi/scratch/mholtgr/cnvetti quick wgs-cov-bins \
-    --reference {args[reference]} \
+    --reference {snakemake.input.reference} \
     --input {snakemake.input.bam} \
     --output $TMPDIR/cov.bcf
 

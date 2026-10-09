@@ -236,6 +236,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         # Yield input BAM and BAI file
         yield "bam", alignments.bam
         yield "bai", alignments.bai
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_input_files_tumor_normal_ratio(self, wildcards):
@@ -335,9 +336,6 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                     )
                     v = preset_values.get(k)
                 params[k] = v
-
-        if action == "coverage":
-            params["reference"] = self.parent.get_upstream_paths("reference").fasta
 
         return params
 

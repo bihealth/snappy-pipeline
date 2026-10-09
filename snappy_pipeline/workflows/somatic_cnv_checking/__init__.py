@@ -112,7 +112,11 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.tumor_library
         )
-        return {"bam": alignments.bam, "bai": alignments.bai}
+        return {
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
+        }
 
     def _get_input_files_tumor(self, wildcards):
         alignments = self.parent.get_upstream_paths(
@@ -128,6 +132,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
             ),
             "bam": alignments.bam,
             "bai": alignments.bai,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def get_output_files(self, action):
@@ -141,7 +146,6 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
 
     def _get_params_normal(self, wildcards):
         return {
-            "reference_path": self.parent.get_upstream_paths("reference").fasta,
             "min_baf": self.config.min_baf,
             "min_depth": self.config.min_depth,
             "max_depth": self.config.max_depth,

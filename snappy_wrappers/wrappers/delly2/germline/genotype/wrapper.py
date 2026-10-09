@@ -20,7 +20,7 @@ delly call \
     --geno-qual {delly2_config[geno_qual]} \
     --mad-cutoff {delly2_config[mad_cutoff]} \
     --vcffile {snakemake.input.bcf} \
-    --genome {args[genome]} \
+    --genome {snakemake.input.reference} \
     --outfile {snakemake.output.bcf} \
     {exclude_str} \
     {snakemake.input.bam}

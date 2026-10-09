@@ -207,6 +207,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 **wildcards
             ),
         )
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
         calling = self.parent.get_upstream_paths(
             "variants",
@@ -240,19 +241,11 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         hgnc_tsv = path_mehari_db / "hgnc.tsv"
         params = {
             "path_exon_bed": self.config.path_exon_bed,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
             "hgnc_tsv": str(hgnc_tsv),
             "clinvar_db": str(clinvar_db),
             "frequency_db": str(frequency_db),
             "transcript_db": str(transcript_db),
         }
-        return params
-
-    def _get_params_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
-        params = {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
-        }
-
         return params
 
     @dictify
@@ -263,6 +256,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                 **wildcards
             ),
         )
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
         if not self.parent.config.depends_on.structural_variants:
             raise RuntimeError("depends_on.structural_variants is not set")

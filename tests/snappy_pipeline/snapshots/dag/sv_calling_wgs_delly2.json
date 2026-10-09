@@ -107,7 +107,8 @@
  {
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.call.log",
@@ -136,8 +137,7 @@
      "path_exclude_tsv": null,
      "qual_tra": 20,
      "skip_libraries": []
-    },
-    "genome": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    }
    }
   },
   "resources": {
@@ -158,6 +158,7 @@
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/sv_calling_wgs_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.merge_calls.bcf"
   ],
   "log": [
@@ -187,8 +188,7 @@
      "path_exclude_tsv": null,
      "qual_tra": 20,
      "skip_libraries": []
-    },
-    "genome": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    }
    }
   },
   "resources": {

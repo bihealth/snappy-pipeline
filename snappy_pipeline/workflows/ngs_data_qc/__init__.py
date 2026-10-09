@@ -110,15 +110,16 @@ class PicardStepPart(BaseStepPart):
 
     def get_input_files(self, action):
         self._validate_action(action)
-        if action == "prepare":
-            raise UnsupportedActionException(
-                'Action "prepare" input files must be defined in config'
-            )
+        return getattr(self, f"_get_input_files_{action}")
 
-        return self._get_input_files_metrics
+    def _get_input_files_prepare(self, wildcards):
+        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     @dictify
     def _get_input_files_metrics(self, wildcards):
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        if self.config.depends_on.dbsnp:
+            yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
         if "CollectHsMetrics" in self.config.picard.programs:
             yield "baits", "work/static_data/out/baits.interval_list"
             yield "targets", "work/static_data/out/targets.interval_list"
@@ -175,23 +176,17 @@ class PicardStepPart(BaseStepPart):
 
     def _get_params_prepare(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
             "path_to_baits": self.config.picard.path_to_baits,
             "path_to_targets": self.config.picard.path_to_targets,
         }
 
     def _get_params_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
             "prefix": f"{wildcards.library_name}.",
             "programs": self.config.picard.programs,
         }
         if self.config.picard.bait_name:
             params["bait_name"] = self.config.picard.bait_name
-        if self.config.depends_on.dbsnp:
-            params["dbsnp"] = self.parent.get_upstream_paths("dbsnp").vcf
-        else:
-            params["dbsnp"] = ""
         return params
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:

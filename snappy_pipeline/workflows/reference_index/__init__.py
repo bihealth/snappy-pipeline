@@ -49,10 +49,6 @@ class BuildReferenceCommonStepPart(BaseStepPart):
         ):
             yield key, prefix + ext
 
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield "reference", self.parent.get_reference_path()
-
 
 class _IndexToolStepPart(BaseStepPart):
     output_suffixes: tuple[str, ...] = ()
@@ -92,10 +88,6 @@ class _IndexToolStepPart(BaseStepPart):
         ):
             yield key, prefix + ext
 
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield "reference", self.parent.get_reference_path()
-
 
 class BwaIndexStepPart(_IndexToolStepPart):
     name = "bwa"
@@ -108,7 +100,6 @@ class BwaIndexStepPart(_IndexToolStepPart):
 
     @dictify
     def _get_params_run(self, wildcards):
-        yield from super()._get_params_run(wildcards).items()
         yield "algorithm", self.config.bwa.algorithm
 
 
@@ -123,7 +114,6 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
 
     @dictify
     def _get_params_run(self, wildcards):
-        yield from super()._get_params_run(wildcards).items()
         yield "extra_args", " ".join(self.config.bwa_mem2.extra_args)
 
 
@@ -138,7 +128,6 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
 
     @dictify
     def _get_params_run(self, wildcards):
-        yield from super()._get_params_run(wildcards).items()
         yield "extra_args", " ".join(self.config.minimap2.extra_args)
 
 
@@ -153,10 +142,13 @@ class StarIndexStepPart(_IndexToolStepPart):
 
     @dictify
     def _get_params_run(self, wildcards):
-        yield from super()._get_params_run(wildcards).items()
         yield "extra_args", " ".join(self.config.star.extra_args)
-        features = self.config.depends_on.features
-        yield "features", self.parent.get_upstream_paths("features").gtf if features else ""
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        if self.config.depends_on.features:
+            yield "features", self.parent.get_upstream_paths("features").gtf
 
 
 class ReferenceIndexWorkflow(BaseStep):

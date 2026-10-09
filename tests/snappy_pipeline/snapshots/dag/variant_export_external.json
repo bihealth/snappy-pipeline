@@ -20,7 +20,8 @@
  },
  {
   "input": [
-   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/log/dragen.case001subregion-N1-DNA1-WES1.gvcf_to_vcf.log",
@@ -42,10 +43,6 @@
   ],
   "params": {
    "args": {
-    "input": [
-     "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
-    ],
-    "reference_path": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
     "sample_names": [
      "case001subregion"
     ]

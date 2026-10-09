@@ -23,7 +23,7 @@ samtools mpileup \
     -u \
     -v \
     -t AD \
-    -f {args[reference]} \
+    -f {snakemake.input.reference} \
     {snakemake.input.bam} \
 | bcftools call \
     -c \

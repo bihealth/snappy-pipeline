@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 args = getattr(snakemake.params, "args", {})
-reference_path = args["reference_path"]
+reference_path = snakemake.input.reference
 max_depth = args["max_depth"]
 
 # FIXME: "locii" only ever gets set as the input, never as a parameter in args

@@ -7,7 +7,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 path_exon_bed = args["path_exon_bed"]
-reference = args["reference"]
+reference = snakemake.input.reference
 transcript_db = args.get("transcript_db")
 clinvar_db = args.get("clinvar_db")
 frequency_db = args.get("frequency_db")

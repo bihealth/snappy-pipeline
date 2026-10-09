@@ -99,11 +99,7 @@
    "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.script",
    "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.script.md5"
   ],
-  "params": {
-   "args": {
-    "reference": "tasks/reference_download/output/reference_download/out/reference.fa"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
@@ -147,8 +143,7 @@
   ],
   "params": {
    "args": {
-    "extra_args": "",
-    "reference": "tasks/reference_download/output/reference_download/out/reference.fa"
+    "extra_args": ""
    }
   },
   "resources": {

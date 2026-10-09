@@ -135,7 +135,8 @@
  {
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/out/scarHRD.done",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/log/scarHRD.case001subregion-T1-DNA1-WES1.log",
@@ -153,8 +154,7 @@
    "args": {
     "chr_prefix": false,
     "genome_name": "grch37",
-    "length": 50,
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    "length": 50
    }
   },
   "resources": {
@@ -370,7 +370,9 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
   "log": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log",
@@ -402,8 +404,7 @@
      "HLA-*",
      "GL000220.*"
     ],
-    "length": 50,
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    "length": 50
    }
   },
   "resources": {
@@ -421,7 +422,9 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/coverage"
  },
  {
-  "input": [],
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
   "log": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.log",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.log.md5",
@@ -435,8 +438,7 @@
   ],
   "params": {
    "args": {
-    "length": 50,
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    "length": 50
    }
   },
   "resources": {

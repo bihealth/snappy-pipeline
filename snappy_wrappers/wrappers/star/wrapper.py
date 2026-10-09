@@ -101,7 +101,7 @@ run_star()
     fi
 
     quant_mode=""
-    if [[ -n "{args[features]}" ]]
+    if [[ -n "{snakemake.input.features}" ]]
     then
         quant_mode="$quant_mode GeneCounts"
     fi
@@ -137,8 +137,8 @@ run_star()
         $(if [[ -n "$quant_mode" ]]; then \
             echo "--quantMode $quant_mode"
         fi) \
-        $(if [[ -n "{args[features]}" ]]; then \
-            echo --sjdbGTFfile "{args[features]}"
+        $(if [[ -n "{snakemake.input.features}" ]]; then \
+            echo --sjdbGTFfile "{snakemake.input.features}"
         fi) \
         $(if [[ "{args[mask_duplicates]}" == "True" ]]; then \
             echo " --outStd SAM " ; \

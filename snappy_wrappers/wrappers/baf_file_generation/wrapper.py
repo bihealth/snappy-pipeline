@@ -9,7 +9,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 min_dp = args["min_dp"]
-reference_index_path = args["reference_index_path"]
+reference_index_path = snakemake.input.reference_index
 
 ShellWrapper(snakemake).run(
     r"""

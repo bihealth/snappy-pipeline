@@ -7,14 +7,12 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-args = getattr(snakemake.params, "args", {})
-
 ShellWrapper(snakemake).run(
     r"""
 # Run actual tools --------------------------------------------------------------------------------
 
 gatk JointGermlineCNVSegmentation \
-    --reference {args[reference]} \
+    --reference {snakemake.input.reference} \
     $(for vcf in {snakemake.input.vcf}; do echo --variant $vcf; done) \
     --model-call-intervals {snakemake.input.interval_list} \
     --pedigree {snakemake.input.ped} \

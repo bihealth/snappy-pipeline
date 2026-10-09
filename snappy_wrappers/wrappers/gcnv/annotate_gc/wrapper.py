@@ -26,7 +26,7 @@ ShellWrapper(snakemake).run(
 gatk AnnotateIntervals \
     --interval-merging-rule OVERLAPPING_ONLY \
     --mappability-track {map_bed} \
-    --reference {args[reference]} \
+    --reference {snakemake.input.reference} \
     --intervals {snakemake.input.interval_list} \
     --output {snakemake.output.tsv}
 """

@@ -89,8 +89,6 @@ rule varfish_export_mehari_annotate_strucvars:
         mem=wf.get_resource("mehari", "annotate_strucvars", "mem"),
         partition=wf.get_resource("mehari", "annotate_strucvars", "partition"),
         tmpdir=wf.get_resource("mehari", "annotate_strucvars", "tmpdir"),
-    params:
-        args=wf.get_params("mehari", "annotate_strucvars"),
     wrapper:
         wf.wrapper_path("mehari/annotate_strucvars")
 

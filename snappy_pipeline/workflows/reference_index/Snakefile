@@ -28,8 +28,6 @@ rule reference_index_common_run:
         mem=wf.get_resource("common", "run", "mem"),
         partition=wf.get_resource("common", "run", "partition"),
         tmpdir=wf.get_resource("common", "run", "tmpdir"),
-    params:
-        args=wf.get_params("common", "run"),
     wrapper:
         wf.wrapper_path("reference_index/common")
 

@@ -21,10 +21,10 @@ if TYPE_CHECKING:
 
 args = getattr(snakemake.params, "args", {})
 
-genome = args["reference"]
+genome = snakemake.input.reference
 length = args["length"]
 
-f = open(genome + ".fai", "rt")
+f = open(snakemake.input.reference_fai, "rt")
 contigs = " ".join(yield_contigs(f, args.get("ignore_chroms")))
 f.close()
 

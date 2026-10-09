@@ -190,7 +190,8 @@
  {
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log",
@@ -207,7 +208,6 @@
    "args": {
     "count_kind": "Coverage",
     "normalization": "MedianGcBinned",
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
     "window_length": 200
    }
   },
@@ -228,7 +228,8 @@
  {
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log",
@@ -245,7 +246,6 @@
    "args": {
     "count_kind": "Coverage",
     "normalization": "MedianGcBinned",
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
     "window_length": 200
    }
   },

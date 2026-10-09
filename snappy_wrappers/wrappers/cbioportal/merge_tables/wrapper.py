@@ -12,13 +12,14 @@ helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functio
 
 args = getattr(snakemake.params, "args", {})
 
-filenames = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in snakemake.input.items()])
-if "extra_args" in args.keys():
-    extra_args = ", ".join(
-        ['"{}"="{}"'.format(str(k), str(v)) for k, v in args["extra_args"].items()]
-    )
-else:
-    extra_args = ""
+# The expression rule gets the gene annotation as input "features", which is not a table
+tables = dict(snakemake.input.items())
+extra = dict(args.get("extra_args", {}))
+if args["action_type"] == "expression":
+    extra["tx_obj"] = tables.pop("features")
+
+filenames = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in tables.items()])
+extra_args = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in extra.items()])
 
 shell(
     r"""

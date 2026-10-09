@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-args = getattr(snakemake.params, "args", {})
 
 ShellWrapper(snakemake).run(
     r"""
@@ -40,7 +39,7 @@ chr21:21000000-22000000
 chr22:25000000-26000000
 EOF
 
-if [[ "{args[reference]}" =~ .*hs?37.* ]]; then
+if [[ "{snakemake.input.reference}" =~ .*hs?37.* ]]; then
     perl -p -i -e 's/chr//g' $TMPDIR/intervals.txt
 fi
 

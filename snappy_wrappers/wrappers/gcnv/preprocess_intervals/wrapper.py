@@ -23,7 +23,7 @@ ShellWrapper(snakemake).run(
 gatk PreprocessIntervals \
     --bin-length 0 \
     --interval-merging-rule OVERLAPPING_ONLY \
-    -R {args[reference]} \
+    -R {snakemake.input.reference} \
     {target_interval_bed} \
     -O {snakemake.output.interval_list}
 """

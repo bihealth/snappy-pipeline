@@ -219,12 +219,21 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "normal_bai", normal.bai
         yield "tumor_bam", tumor.bam
         yield "tumor_bai", tumor.bai
+        reference = self.parent.get_upstream_paths("reference").fasta
+        yield "reference", reference
+        yield "reference_fai", reference + ".fai"
+
+    def _get_input_files_gcreference(self, wildcards):
+        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     @dictify
     def _get_input_files_run(self, wildcards):
         yield "packages", "work/R_packages/out/packages.done"
         name_pattern = "{tumor_library}"
         yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
+        reference = self.parent.get_upstream_paths("reference").fasta
+        yield "reference", reference
+        yield "reference_fai", reference + ".fai"
 
     def get_output_files(self, action):
         if action == "install":
@@ -264,7 +273,6 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
         extra_args = self._coerce_model(SequenzaExtraArgs, self.config.sequenza.extra_args)
         return {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
             "length": self.config.sequenza.length,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
             "extra_arguments": extra_args.model_dump(by_alias=True),
@@ -272,7 +280,6 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_params_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
             "length": self.config.sequenza.length,
         }
 
@@ -284,7 +291,6 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             SequenzaFitExtraArgs, self.config.sequenza.extra_args_fit
         )
         return {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
             "assembly": self.config.sequenza.assembly,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
             "extra_args_extract": extra_args_extract.model_dump(by_alias=True),

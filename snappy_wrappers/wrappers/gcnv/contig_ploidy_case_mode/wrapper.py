@@ -32,12 +32,6 @@ ploidy_y = {MALE: 1, FEMALE: 0}
 
 paths_tsv = " ".join(snakemake.input.tsv)
 
-## Add interval block list for PAR regions if configured.
-# par_intervals = snakemake.config["step_config"][snakemake.params.step_key].get("path_par_intervals")
-# if par_intervals:
-#    par_args = f"-XL {par_intervals}"
-# else:
-#    par_args = ""
 
 ShellWrapper(snakemake).run(
     r"""

@@ -10,7 +10,7 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-reference = args["reference"]
+reference = snakemake.input.reference
 reference = re.sub(r"\.fa(sta)?(\.b?gz)?$", ".dict", reference)
 assert os.path.exists(reference), "Missing dict of reference fasta"
 
@@ -60,4 +60,3 @@ else
 fi
 """
 )
-

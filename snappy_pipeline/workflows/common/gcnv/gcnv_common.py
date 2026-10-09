@@ -29,7 +29,7 @@ class PreprocessIntervalsCommonMixin:
 
     def _get_input_files_preprocess_intervals(self, wildcards):
         _ = wildcards
-        return {}
+        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     @dictify
     def _get_output_files_preprocess_intervals(self):
@@ -59,6 +59,7 @@ class CoverageCommonMixin:
         )
         yield "bam", alignments.bam
         yield "bai", alignments.bai
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_output_files_coverage(self):

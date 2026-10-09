@@ -149,8 +149,7 @@
   "params": {
    "args": {
     "model": "<repo>/tests/snappy_pipeline/fixtures/gcnv_models/ploidy_model"
-   },
-   "step_key": "sv_calling_wgs"
+   }
   },
   "resources": {
    "mem": "7.68 GB",
@@ -170,7 +169,8 @@
   "input": [
    "tasks/sv_calling_wgs_gcnv/work/wgs/out/wgs.interval_list",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
@@ -197,7 +197,8 @@
   "input": [
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz",
    "tasks/sv_calling_wgs_gcnv/work/wgs/out/wgs.interval_list",
-   "tasks/sv_calling_wgs_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+   "tasks/sv_calling_wgs_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.conda_info.txt",
@@ -217,11 +218,7 @@
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz.tbi",
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.wgs.joint_segmentation.vcf.gz.tbi.md5"
   ],
-  "params": {
-   "args": {
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "46.08 GB",
    "mem_mb": 46080,
@@ -323,7 +320,9 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls_case_mode"
  },
  {
-  "input": [],
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
   "log": [
    "tasks/sv_calling_wgs_gcnv/work/wgs/log/wgs.preprocess_intervals.log"
   ],
@@ -331,9 +330,7 @@
    "tasks/sv_calling_wgs_gcnv/work/wgs/out/wgs.interval_list"
   ],
   "params": {
-   "args": {
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-   }
+   "args": {}
   },
   "resources": {
    "mem": "7.68 GB",

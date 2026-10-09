@@ -380,6 +380,12 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "arriba"
 
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "features", self.parent.get_upstream_paths("features").gtf
+
     def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
@@ -395,8 +401,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
                 "num_threads": self.config.arriba.num_threads,
                 "path_index": self.config.arriba.path_index,
                 "star_parameters": self.config.arriba.star_parameters,
-                "reference_path": self.parent.get_upstream_paths("reference").fasta,
-                "features_path": self.parent.get_upstream_paths("features").gtf,
                 "blacklist": self.config.arriba.blacklist,
                 "known_fusions": self.config.arriba.known_fusions,
                 "tags": self.config.arriba.tags,

@@ -119,13 +119,12 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         # Define mapper+caller tag
         self.mapper_caller_tag = self._get_mapper_caller_tag()
 
-    @listify
+    @dictify
     def _get_input_files_merge_vcf(self, wildcards):
-        """"""
         if self.config.merge_vcf_flag:
-            yield from self._collect_vcfs(wildcards)
+            yield "vcf", sorted(self._collect_vcfs(wildcards))
         else:
-            yield self._vcf(wildcards.index_ngs_library)
+            yield "vcf", [self._vcf(wildcards.index_ngs_library)]
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
@@ -230,7 +229,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def _get_params_merge_vcf(self, wildcards):
         result = {
-            "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
             "merge_option": self.config.merge_option,
             "gvcf_option": False,

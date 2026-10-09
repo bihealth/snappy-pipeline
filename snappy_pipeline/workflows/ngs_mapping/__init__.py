@@ -732,10 +732,15 @@ class MBCsStepPart(ReadMappingStepPart):
         self._validate_action(action)
         return ResourceUsage(threads=1, runtime="72h", mem="4GB", partition="medium")
 
+    def _get_input_files_run(self, wildcards):
+        return {
+            "reads": super()._get_input_files_run(wildcards),
+            "reference": self.parent.get_upstream_paths("reference").fasta,
+        }
+
     def _get_params_run(self, wildcards: Wildcards):
         args = super()._get_params_run(wildcards)
         args |= {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
             "config": self.config.mbcs.model_dump(by_alias=True),
             "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
                 by_alias=True
@@ -799,8 +804,13 @@ class StarStepPart(ReadMappingStepPart):
         parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.star.model_dump(by_alias=True))
         parent_args["path_index"] = self.parent.get_index_path("star")
-        parent_args["features"] = self.parent.get_upstream_paths("features").gtf
         return parent_args
+
+    def _get_input_files_run(self, wildcards):
+        return {
+            "reads": super()._get_input_files_run(wildcards),
+            "features": self.parent.get_upstream_paths("features").gtf,
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         if action not in self.actions:
@@ -1200,6 +1210,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_input_files_fingerprint(self, wildcards):
         yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def get_output_files(self, action):
@@ -1242,9 +1253,6 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-
-    def _get_params_fingerprint(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

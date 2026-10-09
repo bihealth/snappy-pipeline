@@ -78,14 +78,22 @@ class AscatStepPart(BaseStepPart):
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.tumor_library
         )
-        return {"bam": alignments.bam, "bai": alignments.bai}
+        return {
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
+        }
 
     def _get_input_files_baf_normal(self, wildcards):
         """Return input files for generating BAF file for the normal."""
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.normal_library
         )
-        return {"bam": alignments.bam, "bai": alignments.bai}
+        return {
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
+        }
 
     def _get_input_files_cnv_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
@@ -160,7 +168,6 @@ class AscatStepPart(BaseStepPart):
     def _get_params_baf_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
-            "reference_path": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def _get_params_baf_normal(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -169,14 +176,12 @@ class AscatStepPart(BaseStepPart):
     def _get_params_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
-            "reference_path": self.parent.get_upstream_paths("reference").fasta,
             "tumor_library": wildcards.tumor_library,
         }
 
     def _get_params_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
-            "reference_path": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def _get_params_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:

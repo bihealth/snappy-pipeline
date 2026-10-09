@@ -14,7 +14,7 @@ args = getattr(snakemake.params, "args", {})
 
 lib_path = os.path.realpath(os.path.dirname(snakemake.input.done))
 
-genome = args["reference"]
+genome = snakemake.input.reference
 length = args["length"]
 genome_name = args["genome_name"]
 

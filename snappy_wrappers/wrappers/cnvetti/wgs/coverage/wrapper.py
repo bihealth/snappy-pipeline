@@ -11,7 +11,7 @@ ShellWrapper(snakemake).run(
     r"""
 set -x
 
-REF={args[reference]}
+REF={snakemake.input.reference}
 
 cnvetti cmd coverage \
     -vvv \

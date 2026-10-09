@@ -39,9 +39,9 @@ def config_to_r(x):
     return str(x)
 
 
-genome = args["reference"]
+genome = snakemake.input.reference
 
-f = open(genome + ".fai", "rt")
+f = open(snakemake.input.reference_fai, "rt")
 contigs = config_to_r(list(yield_contigs(f, args.get("ignore_chroms"))))
 f.close()
 

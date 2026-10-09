@@ -7,7 +7,8 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-reference = args["reference"]
+reference = snakemake.input.reference
+dbsnp = snakemake.input.dbsnp if "dbsnp" in snakemake.input.keys() else ""
 
 collect_multiple_metrics_programs = {
     "CollectAlignmentSummaryMetrics",
@@ -72,9 +73,9 @@ fi
 
 if [[ "{args[programs]}" == *"CollectOxoGMetrics"* ]]
 then
-    if [[ -n "{args[dbsnp]}" ]]
+    if [[ -n "{dbsnp}" ]]
     then
-        dbsnp="-DB_SNP {args[dbsnp]}"
+        dbsnp="-DB_SNP {dbsnp}"
     else
         dbsnp=""
     fi
@@ -122,4 +123,3 @@ then
 fi
 """
 )
-

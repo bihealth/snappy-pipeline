@@ -444,7 +444,8 @@
  {
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/somatic_cnv_checking/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.normal.log",
@@ -464,8 +465,7 @@
    "args": {
     "max_depth": 10000,
     "min_baf": 0.4,
-    "min_depth": 20,
-    "reference_path": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    "min_depth": 20
    }
   },
   "resources": {
@@ -487,7 +487,8 @@
    "tasks/somatic_cnv_checking/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.normal.vcf.gz",
    "tasks/somatic_cnv_checking/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.normal.vcf.gz.tbi",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.tumor.log",
@@ -507,8 +508,7 @@
    "args": {
     "max_depth": 10000,
     "min_baf": 0.4,
-    "min_depth": 20,
-    "reference_path": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+    "min_depth": 20
    }
   },
   "resources": {

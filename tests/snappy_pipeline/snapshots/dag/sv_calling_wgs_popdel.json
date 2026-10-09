@@ -784,7 +784,8 @@
  },
  {
   "input": [
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.profile.log",
@@ -802,11 +803,7 @@
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile",
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile.md5"
   ],
-  "params": {
-   "args": {
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "24 GB",
    "mem_mb": 24000,

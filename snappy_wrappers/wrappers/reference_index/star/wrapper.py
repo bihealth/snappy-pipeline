@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
 extra_args = snakemake.params.args.get("extra_args", "")
-features = snakemake.params.args.get("features", "")
+features = snakemake.input.get("features", "")
 
 feature_arg = f"--sjdbGTFfile {features}" if features else ""
 
@@ -23,4 +23,3 @@ STAR \\
 touch {{snakemake.output.index__done}}
 """
 )
-

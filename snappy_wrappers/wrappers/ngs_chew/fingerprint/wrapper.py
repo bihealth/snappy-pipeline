@@ -8,8 +8,6 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
-args = getattr(snakemake.params, "args", {})
-
 ShellWrapper(snakemake).run(
     r"""
 set -x
@@ -17,7 +15,7 @@ set -x
 mkdir -p $TMPDIR/{{out,sorted,sort.tmp}}
 
 ngs-chew fingerprint \
-    --reference {args[reference]} \
+    --reference {snakemake.input.reference} \
     --output-aafs \
     --output-fingerprint {snakemake.output.npz} \
     --input-bam {snakemake.input.bam}

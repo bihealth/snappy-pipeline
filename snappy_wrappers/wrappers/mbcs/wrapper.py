@@ -277,7 +277,7 @@ if config["recalibrate"]:
         "                -R {reference} --known-sites {common_sites} \\\n"
         "                -O {{output.tbl}}"
     ).format(
-        reference=args["reference"],
+        reference=snakemake.input.reference,
         common_sites=config_bqsr["common_variants"],
     )
 
@@ -298,7 +298,7 @@ if config["recalibrate"]:
         "                -R {reference} \\\n"
         "                -O {{output.bam}} \n"
         "            samtools index {{output.bam}}"
-    ).format(reference=args["reference"])
+    ).format(reference=snakemake.input.reference)
 
     kwargs = {
         "rule": "apply",

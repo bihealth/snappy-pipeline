@@ -154,8 +154,6 @@ elif tool == "popdel":
             mem=wf.get_resource("popdel", "profile", "mem"),
             partition=wf.get_resource("popdel", "profile", "partition"),
             tmpdir=wf.get_resource("popdel", "profile", "tmpdir"),
-        params:
-            args=wf.get_params("popdel", "profile"),
         wrapper:
             wf.wrapper_path("popdel/profile")
 
@@ -390,7 +388,6 @@ elif tool == "gcnv":
             tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
         params:
             args=wf.get_params("gcnv", "contig_ploidy"),
-            step_key="sv_calling_wgs",
         wrapper:
             wf.wrapper_path("gcnv/contig_ploidy_case_mode")
 
@@ -443,8 +440,6 @@ elif tool == "gcnv":
             mem=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "mem"),
             partition=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "partition"),
             tmpdir=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "tmpdir"),
-        params:
-            args=wf.get_params("gcnv", "joint_germline_cnv_segmentation"),
         wrapper:
             wf.wrapper_path("gcnv/joint_germline_cnv_segmentation")
 

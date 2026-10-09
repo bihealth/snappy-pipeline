@@ -11,7 +11,7 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-genome = args["reference"]
+genome = snakemake.input.reference
 length = args["length"]
 
 ShellWrapper(snakemake).run(

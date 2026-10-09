@@ -504,15 +504,10 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         for lib in self._yield_libraries():
             counts = self.parent.get_upstream_paths("alignments", library_name=lib.name)
             yield lib.test_sample.bio_sample.name, counts.gene_counts
+        yield "features", self.parent.get_upstream_paths("features").gtf
 
     def _get_params_run(self, wildcards):
-        return {
-            "action_type": "expression",
-            "extra_args": {
-                "pipeline_id": "ENSEMBL",
-                "tx_obj": self.parent.get_upstream_paths("features").gtf,
-            },
-        }
+        return {"action_type": "expression", "extra_args": {"pipeline_id": "ENSEMBL"}}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

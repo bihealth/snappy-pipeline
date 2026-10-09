@@ -149,8 +149,7 @@
   "params": {
    "args": {
     "model": "<repo>/tests/snappy_pipeline/fixtures/gcnv_models/ploidy_model"
-   },
-   "step_key": "sv_calling_targeted"
+   }
   },
   "resources": {
    "mem": "7.68 GB",
@@ -170,7 +169,8 @@
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
@@ -178,11 +178,7 @@
   "output": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
-  "params": {
-   "args": {
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -201,7 +197,8 @@
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz",
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list",
-   "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+   "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.default.joint_segmentation.conda_info.txt",
@@ -221,11 +218,7 @@
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz.tbi",
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz.tbi.md5"
   ],
-  "params": {
-   "args": {
-    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "46.08 GB",
    "mem_mb": 46080,
@@ -327,7 +320,9 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls_case_mode"
  },
  {
-  "input": [],
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
   "log": [
    "tasks/sv_calling_targeted_gcnv/work/default/log/default.preprocess_intervals.log"
   ],
@@ -335,7 +330,7 @@
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list"
   ],
   "params": {
-   "step_key": "sv_calling_targeted"
+   "args": {}
   },
   "resources": {
    "mem": "7.68 GB",

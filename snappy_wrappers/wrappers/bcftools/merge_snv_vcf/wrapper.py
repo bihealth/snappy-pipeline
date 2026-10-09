@@ -9,14 +9,12 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-args = getattr(snakemake.params, "args", {})
-reference_path = args["reference_path"]
 
 with tempfile.NamedTemporaryFile("wt") as tmpf:
     # Write paths to input files into temporary file.
     #
     # cf. https://bitbucket.org/snakemake/snakemake/issues/878
-    print("\n".join(snakemake.params.args["input"]), file=tmpf)
+    print("\n".join(snakemake.input.vcf), file=tmpf)
     tmpf.flush()
     ShellWrapper(snakemake).run(
         r"""
@@ -72,7 +70,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
             --output-type u \
             *.vcf.gz \
         | bcftools norm \
-            --fasta-ref {reference_path} \
+            --fasta-ref {snakemake.input.reference} \
             --multiallelics -any \
         | bgzip -c > $out
         popd
