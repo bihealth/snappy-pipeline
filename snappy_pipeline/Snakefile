@@ -1,6 +1,7 @@
 import os
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline import expand_ref
+from snappy_pipeline.orchestration import select_target_tasks
 
 configfile: "config.yaml"
 
@@ -15,23 +16,14 @@ all_target_files = []
 #   default             — target only leaf tasks (tasks not depended on by any other task)
 target_task = config.get("task")
 target_all_tasks = config.get("all_tasks", False)
-
-# Compute leaf tasks: tasks whose names are not referenced as a dependency by any other task.
-# Optional dependencies with default value "" are excluded from the depended-on set.
-depended_on_task_names = set()
-for _task in tasks:
-    for _dep_value in (_task.get("config", {}).get("depends_on") or {}).values():
-        if _dep_value:  # skip empty-string optional deps
-            depended_on_task_names.add(_dep_value)
-
-leaf_task_names = {t["name"] for t in tasks} - depended_on_task_names
+target_task_names = select_target_tasks(tasks, target_task, target_all_tasks)
 
 if target_task:
     _mode_desc = f"single task '{target_task}'"
 elif target_all_tasks:
     _mode_desc = "all tasks (--all-tasks flag set)"
 else:
-    _mode_desc = f"leaf tasks only: {sorted(leaf_task_names)}"
+    _mode_desc = f"leaf tasks only: {target_task_names}"
 
 print(f"[snappy] Targeting {_mode_desc}", flush=True)
 
@@ -43,14 +35,7 @@ for task in tasks:
         workflow, config, config_lookup_paths, config_paths, os.getcwd(), task_name=task_name
     )
 
-    if target_task is not None:
-        should_target = target_task == task_name
-    elif target_all_tasks:
-        should_target = True
-    else:
-        should_target = task_name in leaf_task_names
-
-    if should_target:
+    if task_name in target_task_names:
         for f in wf_instance.get_result_files():
             if not f.endswith((".md5", ".tbi")):
                 all_target_files.append(os.path.join("tasks", task_name, f))
