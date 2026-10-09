@@ -1,0 +1,121 @@
+[
+ {
+  "input": [
+   "tasks/panel_of_normals_access/output/cnvkit.access/out/cnvkit.access.bed",
+   "tasks/panel_of_normals_access/output/cnvkit.access/log/cnvkit.access.log",
+   "tasks/panel_of_normals_access/output/cnvkit.access/log/cnvkit.access.conda_list.txt",
+   "tasks/panel_of_normals_access/output/cnvkit.access/log/cnvkit.access.conda_info.txt"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [],
+  "log": [
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.conda_list.txt",
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.conda_list.txt.md5",
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.conda_info.txt",
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.conda_info.txt.md5",
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.log",
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.log.md5"
+  ],
+  "output": [
+   "tasks/panel_of_normals_access/work/cnvkit.access/out/cnvkit.access.bed",
+   "tasks/panel_of_normals_access/work/cnvkit.access/out/cnvkit.access.bed.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "panel_of_normals_access_panel_of_normals_access_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/access"
+ },
+ {
+  "input": [
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.log"
+  ],
+  "log": [],
+  "output": [
+   "tasks/panel_of_normals_access/output/cnvkit.access/log/cnvkit.access.log"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "panel_of_normals_access_panel_of_normals_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "log",
+   "file": "cnvkit.access",
+   "path": "cnvkit.access/log"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.conda_info.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/panel_of_normals_access/output/cnvkit.access/log/cnvkit.access.conda_info.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "panel_of_normals_access_panel_of_normals_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "cnvkit.access.conda_info",
+   "path": "cnvkit.access/log"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/panel_of_normals_access/work/cnvkit.access/log/cnvkit.access.conda_list.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/panel_of_normals_access/output/cnvkit.access/log/cnvkit.access.conda_list.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "panel_of_normals_access_panel_of_normals_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "cnvkit.access.conda_list",
+   "path": "cnvkit.access/log"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/panel_of_normals_access/work/cnvkit.access/out/cnvkit.access.bed"
+  ],
+  "log": [],
+  "output": [
+   "tasks/panel_of_normals_access/output/cnvkit.access/out/cnvkit.access.bed"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "panel_of_normals_access_panel_of_normals_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "bed",
+   "file": "cnvkit.access",
+   "path": "cnvkit.access/out"
+  },
+  "wrapper": null
+ }
+]

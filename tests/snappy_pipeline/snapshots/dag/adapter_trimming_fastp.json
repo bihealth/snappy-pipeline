@@ -1,0 +1,143 @@
+[
+ {
+  "input": [
+   "tasks/adapter_trimming_fastp/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+  ],
+  "log": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done.md5",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/rejected/.done"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "average_qual": 0,
+     "complexity_threshold": 30,
+     "correction": false,
+     "cut_front": false,
+     "cut_front_mean_quality": 20,
+     "cut_front_window_size": 4,
+     "cut_right": false,
+     "cut_right_mean_quality": 20,
+     "cut_right_window_size": 4,
+     "cut_tail": false,
+     "cut_tail_mean_quality": 20,
+     "cut_tail_window_size": 4,
+     "dedup": false,
+     "disable_length_filtering": false,
+     "disable_quality_filtering": false,
+     "dont_eval_duplication": true,
+     "dup_calc_accuracy": 0,
+     "filter_by_index1": "",
+     "filter_by_index2": "",
+     "filter_by_index_threshold": 0,
+     "length_limit": 0,
+     "length_required": 15,
+     "low_complexity_filter": false,
+     "max_len1": 0,
+     "max_len2": 0,
+     "n_base_limit": 5,
+     "num_threads": 4,
+     "overlap_diff_limit": 5,
+     "overlap_diff_percent_limit": 20,
+     "overlap_len_require": 30,
+     "overrepresentation_analysis": false,
+     "poly_g_min_len": 8,
+     "poly_x_min_len": 10,
+     "qualified_quality_phred": 15,
+     "trim_front1": 0,
+     "trim_front2": 0,
+     "trim_poly_g": true,
+     "trim_poly_x": false,
+     "trim_tail1": 0,
+     "trim_tail2": 0,
+     "umi": false,
+     "umi_len": 0,
+     "umi_loc": "",
+     "umi_prefix": "",
+     "umi_skip": 0,
+     "unqualified_percent_limit": 40
+    },
+    "input": {
+     "reads_left": {},
+     "reads_right": {}
+    },
+    "library_name": "case001subregion-T1-DNA1-WES1"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 720
+  },
+  "rule": "adapter_trimming_fastp_adapter_trimming_fastp_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/fastp/run"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/adapter_trimming_fastp/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "adapter_trimming_fastp_adapter_trimming_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done"
+  ],
+  "log": [],
+  "output": [
+   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/log/.done",
+   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/report/.done",
+   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/out/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "adapter_trimming_fastp_adapter_trimming_link_out_fastq_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/out/.done",
+   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/report/.done",
+   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/log/.done"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ }
+]

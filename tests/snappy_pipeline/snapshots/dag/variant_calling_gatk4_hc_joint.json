@@ -1,0 +1,13 @@
+[
+ {
+  "input": [],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ }
+]

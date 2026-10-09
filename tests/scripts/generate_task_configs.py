@@ -441,14 +441,20 @@ def bootstrap_step_config(
         elif tool in ("bwa", "bwa_mem2", "minimap2", "bowtie2"):
             cfg.setdefault("library_selection", "extraction_type == 'dna'")
             if isinstance(cfg[tool], dict):
-                cfg[tool].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+                cfg[tool].setdefault(
+                    "path_index",
+                    _resolve_path(_guess_bwa_index_from_reference(base_config), base_config_path),
+                )
         elif tool == "mbcs":
             cfg.setdefault("library_selection", "extraction_type == 'dna'")
             if isinstance(cfg["mbcs"], dict):
                 cfg["mbcs"].setdefault("mapping_tool", "bwa")
             cfg.setdefault("bwa", {})
             if isinstance(cfg["bwa"], dict):
-                cfg["bwa"].setdefault("path_index", _guess_bwa_index_from_reference(base_config))
+                cfg["bwa"].setdefault(
+                    "path_index",
+                    _resolve_path(_guess_bwa_index_from_reference(base_config), base_config_path),
+                )
             cfg.setdefault("bqsr", {})
             if isinstance(cfg["bqsr"], dict):
                 ref_path = _guess_reference_from_static_data(base_config)

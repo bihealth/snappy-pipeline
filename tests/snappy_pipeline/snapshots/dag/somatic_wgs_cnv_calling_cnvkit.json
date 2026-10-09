@@ -1,0 +1,1700 @@
+[
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.breaks.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.genemetrics.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segmetrics.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.sex.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.diagram.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr1.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr2.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr3.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr4.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr5.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr6.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr7.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr8.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr9.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr10.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr11.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr12.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr13.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr14.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr15.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr16.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr17.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr18.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr19.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr20.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr21.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr22.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrX.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrY.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr1.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr2.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr3.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr4.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr5.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr6.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr7.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr8.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr9.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr10.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr11.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr12.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr13.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr14.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr15.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr16.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr17.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr18.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr19.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr20.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr21.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr22.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrX.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_args": [],
+    "input": {
+     "reads_left": []
+    },
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference",
+    "platform": "ILLUMINA",
+    "sample_name": "case001subregion-T1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "ngs_mapping_bwa_ngs_mapping_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segment.cns"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/call.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/call.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/call.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/call.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/call.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/call.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_call",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/call"
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/coverage.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/coverage.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/coverage.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/coverage.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/coverage.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/coverage.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.targetcoverage.cnn",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.targetcoverage.cnn.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "16.38 GB",
+   "mem_mb": 16384,
+   "mem_mib": 15625,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_coverage",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/coverage"
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/export.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/export.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/export.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/export.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/export.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/export.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_export",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/export"
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.targetcoverage.cnn",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/fix.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_fix",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/fix"
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/plot.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/plot.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/plot.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/plot.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/plot.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/plot.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.diagram.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.diagram.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr1.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr1.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr2.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr2.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr3.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr3.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr4.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr4.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr5.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr5.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr6.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr6.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr7.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr7.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr8.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr8.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr9.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr9.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr10.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr10.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr11.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr11.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr12.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr12.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr13.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr13.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr14.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr14.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr15.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr15.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr16.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr16.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr17.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr17.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr18.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr18.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr19.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr19.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr20.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr20.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr21.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr21.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr22.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr22.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrX.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrX.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrY.pdf",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrY.pdf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr1.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr1.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr2.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr2.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr3.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr3.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr4.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr4.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr5.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr5.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr6.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr6.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr7.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr7.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr8.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr8.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr9.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr9.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr10.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr10.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr11.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr11.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr12.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr12.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr13.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr13.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr14.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr14.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr15.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr15.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr16.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr16.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr17.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr17.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr18.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr18.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr19.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr19.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr20.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr20.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr21.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr21.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr22.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr22.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrX.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrX.png.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "30.72 GB",
+   "mem_mb": 30720,
+   "mem_mib": 29297,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_plot",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/plot"
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/postprocess.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_postprocess",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/postprocess"
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.targetcoverage.cnn",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/report.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/report.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/report.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/report.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/report.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/report.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.breaks.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.breaks.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.genemetrics.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.genemetrics.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segmetrics.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segmetrics.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.sex.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.sex.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_report",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/report"
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr"
+  ],
+  "log": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/segment.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/segment.case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/segment.case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/segment.case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/segment.case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/log/segment.case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segment.cns",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segment.cns.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_cnvkit_segment",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/segment"
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bed"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "bed",
+   "file": "case001subregion-T1-DNA1-WES1",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "cnr",
+   "file": "case001subregion-T1-DNA1-WES1",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "cns",
+   "file": "case001subregion-T1-DNA1-WES1",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "gz",
+   "file": "case001subregion-T1-DNA1-WES1.vcf",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_dnacopy.seg"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "seg",
+   "file": "case001subregion-T1-DNA1-WES1_dnacopy",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.breaks.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.breaks.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1.breaks",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.diagram.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.diagram.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.diagram",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.genemetrics.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.genemetrics.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1.genemetrics",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr1.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr1.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr1",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr10.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr10.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr10",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr11.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr11.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr11",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr12.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr12.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr12",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr13.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr13.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr13",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr14.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr14.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr14",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr15.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr15.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr15",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr16.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr16.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr16",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr17.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr17.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr17",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr18.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr18.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr18",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr19.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr19.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr19",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr2.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr2.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr2",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr20.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr20.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr20",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr21.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr21.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr21",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr22.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr22.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr22",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr3.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr3.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr3",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr4.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr4.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr4",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr5.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr5.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr5",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr6.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr6.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr6",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr7.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr7.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr7",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr8.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr8.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr8",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr9.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chr9.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chr9",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrX.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrX.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chrX",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrY.pdf"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.heatmap.chrY.pdf"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "pdf",
+   "file": "case001subregion-T1-DNA1-WES1.heatmap.chrY",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1.metrics",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr1.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr1.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr1",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr10.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr10.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr10",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr11.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr11.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr11",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr12.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr12.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr12",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr13.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr13.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr13",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr14.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr14.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr14",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr15.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr15.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr15",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr16.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr16.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr16",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr17.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr17.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr17",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr18.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr18.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr18",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr19.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr19.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr19",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr2.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr2.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr2",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr20.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr20.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr20",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr21.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr21.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr21",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr22.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr22.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr22",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr3.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr3.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr3",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr4.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr4.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr4",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr5.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr5.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr5",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr6.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr6.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr6",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr7.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr7.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr7",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr8.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr8.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr8",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr9.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr9.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chr9",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrX.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrX.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chrX",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "png",
+   "file": "case001subregion-T1-DNA1-WES1.scatter.chrY",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segmetrics.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segmetrics.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1.segmetrics",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.sex.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.sex.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1.sex",
+   "path": "case001subregion-T1-DNA1-WES1/report"
+  },
+  "wrapper": null
+ }
+]

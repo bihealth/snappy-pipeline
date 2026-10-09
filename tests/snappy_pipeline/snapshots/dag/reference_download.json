@@ -1,0 +1,61 @@
+[
+ {
+  "input": [
+   "tasks/reference_download/output/reference_download/out/reference.fa"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [],
+  "log": [
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log.md5",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt.md5",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/reference_download/work/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_download/output/reference_download/out/reference.fa.md5"
+  ],
+  "params": {
+   "args": {
+    "assembly": "primary_assembly",
+    "branch": "",
+    "build": "GRCh38",
+    "chromosome": [],
+    "contigs": [],
+    "contigs_regex": "",
+    "datatype": "dna",
+    "file_name": "",
+    "molecule": "dna",
+    "source": "ensembl",
+    "species": "homo_sapiens",
+    "subset": "primary_assembly",
+    "url": "",
+    "version": "113"
+   }
+  },
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_download_reference_download_ensembl_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
+ }
+]

@@ -116,6 +116,13 @@ To run a subset of tests::
 
 $ pixi run -e dev test tests/snappy_pipeline/apps
 
+Every generated task closure is checked against a snapshot of its DAG (input, output and log
+paths, params, threads, resources, wrappers) in ``tests/snappy_pipeline/snapshots/dag/``. If a
+change alters these on purpose, refresh the snapshots and review the diff before committing::
+
+$ SNAPPY_UPDATE_SNAPSHOTS=1 pixi run -e dev test tests/snappy_pipeline/test_generated_configs_dryrun.py
+$ git diff tests/snappy_pipeline/snapshots/
+
 To dry-run one of the test pipelines::
 
 $ cd .tests/test-workflow/pipelines/snappy-germline_wes

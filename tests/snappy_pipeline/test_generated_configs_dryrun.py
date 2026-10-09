@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import os
 import re
 import subprocess
@@ -82,8 +83,15 @@ def _task_raw_folders(task_name: str) -> tuple[str, ...]:
     return ("case001subregion-N1-DNA1-WES1", "case001subregion-T1-DNA1-WES1")
 
 
+#: Committed DAG snapshots, one JSON file per generated task.
+SNAPSHOT_DIR = Path(__file__).resolve().parent / "snapshots" / "dag"
+
+
 def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
+    # The default slurm partition ends up in job resources; keep snapshots independent of the
+    # caller's environment.
+    env["SNAPPY_PIPELINE_PARTITION"] = "medium"
     if "PYTHONPATH" not in env:
         env["PYTHONPATH"] = str(_repo_root())
     else:
@@ -223,31 +231,57 @@ def test_generated_config_task_closure_passes(
         ) from e
     assert isinstance(reloaded, dict), f"Generated closure config is not a mapping for {task_name}"
 
-    # Run the dryrun command
-    # Use a per-test snkmt SQLite database so parallel CI workers (pytest-xdist)
-    # do not race on the shared default path (~/.local/share/snkmt/snkmt.db).
+    # Build the DAG that `snappy run --task <task_name>` would build. A broken DAG fails here,
+    # like a dry-run would; the job list (paths, params, resources, wrappers) must match the
+    # committed snapshot.
+    dump_path = tmp_path / "dag.json"
     cmd = [
         sys.executable,
-        "-m",
-        "snappy_pipeline.apps.snappy_cli",
-        "run",
-        "-d",
+        "tests/scripts/dump_dag.py",
+        "--directory",
         str(tmp_path),
         "--task",
         task_name,
-        "--",
-        "-n",
-        "--cores",
-        "1",
-        "--logger-snkmt-db",
-        str(tmp_path / "snkmt.sqlite"),
+        "--output",
+        str(dump_path),
     ]
-    dry = _run(cmd, cwd=root)
-    dry_output = (dry.stdout or "") + "\n" + (dry.stderr or "")
+    dump = _run(cmd, cwd=root)
+    dump_output = (dump.stdout or "") + "\n" + (dump.stderr or "")
 
-    assert dry.returncode == 0, (
-        f"task closure dryrun failed for {task_name}\nstdout/stderr excerpt:\n{dry_output}"
+    assert dump.returncode == 0, (
+        f"building the DAG failed for {task_name}\nstdout/stderr excerpt:\n{dump_output}"
     )
+    actual = dump_path.read_text(encoding="utf-8")
+    for path, placeholder in ((str(tmp_path), "<project>"), (str(root), "<repo>")):
+        actual = actual.replace(path, placeholder)
+    _check_snapshot(task_name, actual)
+
+
+def _check_snapshot(task_name: str, actual: str) -> None:
+    """Compare a normalized DAG dump with its snapshot; rewrite it if SNAPPY_UPDATE_SNAPSHOTS is set."""
+    snapshot_path = SNAPSHOT_DIR / f"{task_name}.json"
+    if os.environ.get("SNAPPY_UPDATE_SNAPSHOTS"):
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        snapshot_path.write_text(actual, encoding="utf-8")
+        return
+
+    assert snapshot_path.exists(), (
+        f"No DAG snapshot for {task_name}; create it with SNAPPY_UPDATE_SNAPSHOTS=1"
+    )
+    expected = snapshot_path.read_text(encoding="utf-8")
+    if actual != expected:
+        diff = difflib.unified_diff(
+            expected.splitlines(keepends=True),
+            actual.splitlines(keepends=True),
+            f"snapshots/dag/{task_name}.json",
+            "actual",
+            n=2,
+        )
+        diff_head = "".join(list(diff)[:150])
+        raise AssertionError(
+            f"DAG of {task_name} differs from its snapshot. If the change is intended, "
+            f"update it with SNAPPY_UPDATE_SNAPSHOTS=1.\n{diff_head}"
+        )
 
 
 @pytest.mark.integration

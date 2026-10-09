@@ -1,0 +1,177 @@
+[
+ {
+  "input": [
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/hla_typing_optitype/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "hla_typing_optitype_hla_typing_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+  ],
+  "log": [],
+  "output": [
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "hla_typing_optitype_hla_typing_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "log",
+   "file": "case001subregion-T1-DNA1-WES1",
+   "path": "case001subregion-T1-DNA1-WES1/log"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "hla_typing_optitype_hla_typing_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1.conda_info",
+   "path": "case001subregion-T1-DNA1-WES1/log"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "hla_typing_optitype_hla_typing_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1.conda_list",
+   "path": "case001subregion-T1-DNA1-WES1/log"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json"
+  ],
+  "log": [],
+  "output": [
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "hla_typing_optitype_hla_typing_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "json",
+   "file": "case001subregion-T1-DNA1-WES1",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt"
+  ],
+  "log": [],
+  "output": [
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "hla_typing_optitype_hla_typing_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "txt",
+   "file": "case001subregion-T1-DNA1-WES1",
+   "path": "case001subregion-T1-DNA1-WES1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/hla_typing_optitype/work/input_links/case001subregion-T1-DNA1-WES1/.done"
+  ],
+  "log": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt.md5",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_result.tsv",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1_coverage_plot.pdf"
+  ],
+  "params": {
+   "args": {
+    "input": {
+     "reads_left": []
+    },
+    "max_reads": 5000,
+    "num_mapping_threads": 4,
+    "seq_type": "dna",
+    "use_discordant": "false",
+    "yara_error_rate": 5,
+    "yara_sensitivity": "high",
+    "yara_strata_rate": 0
+   }
+  },
+  "resources": {
+   "mem": "45 GB",
+   "mem_mb": 45000,
+   "mem_mib": 42916,
+   "partition": "medium",
+   "runtime": 2400
+  },
+  "rule": "hla_typing_optitype_hla_typing_optitype_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/optitype"
+ }
+]

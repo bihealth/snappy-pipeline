@@ -1,0 +1,903 @@
+[
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_args": [],
+    "input": {
+     "reads_left": []
+    },
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference",
+    "platform": "ILLUMINA",
+    "sample_name": "case001subregion-N1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "ngs_mapping_bwa_ngs_mapping_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.log",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/log/melt_genotype.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.tsv"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "ALU"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_genotype",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "ALU"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/genotype"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.log",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/log/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.tsv"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "LINE1"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_genotype",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "LINE1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/genotype"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.log",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/log/melt_genotype.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.tsv"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "SVA"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_genotype",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "SVA"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/genotype"
+ },
+ {
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/ALU.bed.list",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/ALU.hum.list",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/ALU.master.bed",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/ALU.merged.hum_breaks.sorted.bam",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/ALU.merged.hum_breaks.sorted.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/ALU.pre_geno.tsv"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "ALU"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_group_analysis",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "ALU"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/group_analysis"
+ },
+ {
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/LINE1.bed.list",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/LINE1.hum.list",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/LINE1.master.bed",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/LINE1.merged.hum_breaks.sorted.bam",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/LINE1.merged.hum_breaks.sorted.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/LINE1.pre_geno.tsv"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "LINE1"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_group_analysis",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "LINE1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/group_analysis"
+ },
+ {
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/SVA.bed.list",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/SVA.hum.list",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/SVA.master.bed",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/SVA.merged.hum_breaks.sorted.bam",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/SVA.merged.hum_breaks.sorted.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/SVA.pre_geno.tsv"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "SVA"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_group_analysis",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "SVA"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/group_analysis"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.log",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "ALU"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_indiv_analysis",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "ALU"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/indiv_analysis"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.log",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "LINE1"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_indiv_analysis",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "LINE1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/indiv_analysis"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.log",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/log/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA.sv_calling__case001subregion-N1-DNA1-WES1.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "SVA"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_indiv_analysis",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "SVA"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/indiv_analysis"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.final_comp.vcf.gz.tbi"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "ALU"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_make_vcf",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "ALU"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/make_vcf"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.final_comp.vcf.gz.tbi"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "LINE1"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_make_vcf",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "LINE1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/make_vcf"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_genotype.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/log/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/.done",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz.tbi"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true,
+    "me_type": "SVA"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_make_vcf",
+  "threads": 1,
+  "wildcards": {
+   "index_library_name": "case001subregion-N1-DNA1-WES1",
+   "me_type": "SVA"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/make_vcf"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.ALU.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.LINE1.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/melt_make_vcf.case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_melt/work/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/out/melt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/output/melt.case001subregion-N1-DNA1-WES1/log/melt.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_merge_vcf",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/merge_vcf"
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.log.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/log/melt_preprocess.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
+   "tasks/sv_calling_targeted_melt/work/melt_preprocess.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.fq"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "genes_file": "AUTO",
+     "jar_file": "AUTO",
+     "me_refs_infix": "AUTO",
+     "me_refs_path": "AUTO",
+     "me_types": [
+      "ALU",
+      "LINE1",
+      "SVA"
+     ],
+     "skip_libraries": []
+    },
+    "exome": true
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_preprocess",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/preprocess"
+ }
+]

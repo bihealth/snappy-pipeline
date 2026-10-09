@@ -1,0 +1,378 @@
+[
+ {
+  "input": [
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_args": [],
+    "input": {
+     "reads_left": []
+    },
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference",
+    "platform": "ILLUMINA",
+    "sample_name": "case001subregion-N1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "ngs_mapping_bwa_ngs_mapping_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_call_cnvs.default.001/log/gcnv_call_cnvs.default.001.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_call_cnvs.default.001/out/gcnv_call_cnvs.default.001/.done"
+  ],
+  "params": {
+   "args": {
+    "model": "<repo>/tests/snappy_pipeline/fixtures/gcnv_models/call_model_001"
+   }
+  },
+  "resources": {
+   "mem": "46.08 GB",
+   "mem_mb": 46080,
+   "mem_mib": 43946,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_call_cnvs",
+  "threads": 1,
+  "wildcards": {
+   "library_kit": "default",
+   "shard": "001"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/call_cnvs_case_mode"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv",
+   "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/log/gcnv_contig_ploidy.default.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done"
+  ],
+  "params": {
+   "args": {
+    "model": "<repo>/tests/snappy_pipeline/fixtures/gcnv_models/ploidy_model"
+   },
+   "step_key": "sv_calling_targeted"
+  },
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_contig_ploidy",
+  "threads": 1,
+  "wildcards": {
+   "library_kit": "default"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/contig_ploidy_case_mode"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/log/gcnv_coverage.case001subregion-N1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_coverage.case001subregion-N1-DNA1-WES1/out/gcnv_coverage.case001subregion-N1-DNA1-WES1.tsv"
+  ],
+  "params": {
+   "args": {
+    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   }
+  },
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_coverage",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/coverage"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list",
+   "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.wrapper.py.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.environment.yaml.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.log",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/log/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.joint_germline_segmentation.log.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   }
+  },
+  "resources": {
+   "mem": "46.08 GB",
+   "mem_mb": 46080,
+   "mem_mib": 43946,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_joint_germline_cnv_segmentation",
+  "threads": 1,
+  "wildcards": {
+   "kit": "default",
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/joint_germline_cnv_segmentation"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1/out/gcnv_joint_segmentation.default.case001subregion-N1-DNA1-WES1.vcf.gz"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/out/gcnv.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_list.txt.md5",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.wrapper.py.md5",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.environment.yaml.md5",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log",
+   "tasks/sv_calling_targeted_gcnv/output/gcnv.case001subregion-N1-DNA1-WES1/log/gcnv.case001subregion-N1-DNA1-WES1.merge_multikit_families.log.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_merge_multikit_families",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/merge_multikit_families"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_call_cnvs.default.001/out/gcnv_call_cnvs.default.001/.done",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/log/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.ratio.tsv",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.interval.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1/out/gcnv_post_germline_calls.case001subregion-N1-DNA1-WES1.vcf.gz"
+  ],
+  "params": {
+   "args": {
+    "model": [
+     "<repo>/tests/snappy_pipeline/fixtures/gcnv_models/call_model_001"
+    ]
+   }
+  },
+  "resources": {
+   "mem": "46.08 GB",
+   "mem_mb": 46080,
+   "mem_mib": 43946,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_post_germline_calls",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls_case_mode"
+ },
+ {
+  "input": [],
+  "log": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/log/gcnv_preprocess_intervals.default.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/gcnv_preprocess_intervals.default/out/gcnv_preprocess_intervals.default.interval_list"
+  ],
+  "params": {
+   "step_key": "sv_calling_targeted"
+  },
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_preprocess_intervals",
+  "threads": 1,
+  "wildcards": {
+   "library_kit": "default"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_write_pedigree_run",
+  "threads": 1,
+  "wildcards": {
+   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": null
+ }
+]

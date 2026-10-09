@@ -1,0 +1,888 @@
+[
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_args": [],
+    "input": {
+     "reads_left": []
+    },
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference",
+    "platform": "ILLUMINA",
+    "sample_name": "case001subregion-N1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "ngs_mapping_bwa_ngs_mapping_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/log/popdel_call.12-1-10020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/out/popdel_call.12-1-10020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/out/popdel_call.12-1-10020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/out/popdel_call.12-1-10020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/out/popdel_call.12-1-10020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "1",
+    "chrom": "12",
+    "end": "10020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "1",
+   "chrom": "12",
+   "end": "10020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/log/popdel_call.12-109980000-120020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/out/popdel_call.12-109980000-120020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/out/popdel_call.12-109980000-120020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/out/popdel_call.12-109980000-120020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/out/popdel_call.12-109980000-120020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "109980000",
+    "chrom": "12",
+    "end": "120020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "109980000",
+   "chrom": "12",
+   "end": "120020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/log/popdel_call.12-119980000-130020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/out/popdel_call.12-119980000-130020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/out/popdel_call.12-119980000-130020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/out/popdel_call.12-119980000-130020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/out/popdel_call.12-119980000-130020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "119980000",
+    "chrom": "12",
+    "end": "130020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "119980000",
+   "chrom": "12",
+   "end": "130020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/log/popdel_call.12-129980000-133851895.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/out/popdel_call.12-129980000-133851895.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/out/popdel_call.12-129980000-133851895.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/out/popdel_call.12-129980000-133851895.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/out/popdel_call.12-129980000-133851895.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "129980000",
+    "chrom": "12",
+    "end": "133851895"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "129980000",
+   "chrom": "12",
+   "end": "133851895"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/log/popdel_call.12-19980000-30020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/out/popdel_call.12-19980000-30020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/out/popdel_call.12-19980000-30020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/out/popdel_call.12-19980000-30020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/out/popdel_call.12-19980000-30020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "19980000",
+    "chrom": "12",
+    "end": "30020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "19980000",
+   "chrom": "12",
+   "end": "30020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/log/popdel_call.12-29980000-40020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/out/popdel_call.12-29980000-40020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/out/popdel_call.12-29980000-40020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/out/popdel_call.12-29980000-40020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/out/popdel_call.12-29980000-40020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "29980000",
+    "chrom": "12",
+    "end": "40020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "29980000",
+   "chrom": "12",
+   "end": "40020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/log/popdel_call.12-39980000-50020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/out/popdel_call.12-39980000-50020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/out/popdel_call.12-39980000-50020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/out/popdel_call.12-39980000-50020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/out/popdel_call.12-39980000-50020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "39980000",
+    "chrom": "12",
+    "end": "50020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "39980000",
+   "chrom": "12",
+   "end": "50020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/log/popdel_call.12-49980000-60020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/out/popdel_call.12-49980000-60020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/out/popdel_call.12-49980000-60020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/out/popdel_call.12-49980000-60020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/out/popdel_call.12-49980000-60020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "49980000",
+    "chrom": "12",
+    "end": "60020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "49980000",
+   "chrom": "12",
+   "end": "60020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/log/popdel_call.12-59980000-70020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/out/popdel_call.12-59980000-70020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/out/popdel_call.12-59980000-70020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/out/popdel_call.12-59980000-70020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/out/popdel_call.12-59980000-70020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "59980000",
+    "chrom": "12",
+    "end": "70020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "59980000",
+   "chrom": "12",
+   "end": "70020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/log/popdel_call.12-69980000-80020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/out/popdel_call.12-69980000-80020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/out/popdel_call.12-69980000-80020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/out/popdel_call.12-69980000-80020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/out/popdel_call.12-69980000-80020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "69980000",
+    "chrom": "12",
+    "end": "80020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "69980000",
+   "chrom": "12",
+   "end": "80020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/log/popdel_call.12-79980000-90020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/out/popdel_call.12-79980000-90020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/out/popdel_call.12-79980000-90020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/out/popdel_call.12-79980000-90020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/out/popdel_call.12-79980000-90020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "79980000",
+    "chrom": "12",
+    "end": "90020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "79980000",
+   "chrom": "12",
+   "end": "90020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/log/popdel_call.12-89980000-100020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/out/popdel_call.12-89980000-100020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/out/popdel_call.12-89980000-100020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/out/popdel_call.12-89980000-100020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/out/popdel_call.12-89980000-100020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "89980000",
+    "chrom": "12",
+    "end": "100020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "89980000",
+   "chrom": "12",
+   "end": "100020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/log/popdel_call.12-9980000-20020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/out/popdel_call.12-9980000-20020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/out/popdel_call.12-9980000-20020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/out/popdel_call.12-9980000-20020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/out/popdel_call.12-9980000-20020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "9980000",
+    "chrom": "12",
+    "end": "20020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "9980000",
+   "chrom": "12",
+   "end": "20020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/log/popdel_call.12-99980000-110020000.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/out/popdel_call.12-99980000-110020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/out/popdel_call.12-99980000-110020000.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/out/popdel_call.12-99980000-110020000.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/out/popdel_call.12-99980000-110020000.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "begin": "99980000",
+    "chrom": "12",
+    "end": "110020000"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "threads": 1,
+  "wildcards": {
+   "begin": "99980000",
+   "chrom": "12",
+   "end": "110020000"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-1-10020000/out/popdel_call.12-1-10020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-9980000-20020000/out/popdel_call.12-9980000-20020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-19980000-30020000/out/popdel_call.12-19980000-30020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-29980000-40020000/out/popdel_call.12-29980000-40020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-39980000-50020000/out/popdel_call.12-39980000-50020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-49980000-60020000/out/popdel_call.12-49980000-60020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-59980000-70020000/out/popdel_call.12-59980000-70020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-69980000-80020000/out/popdel_call.12-69980000-80020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-79980000-90020000/out/popdel_call.12-79980000-90020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-89980000-100020000/out/popdel_call.12-89980000-100020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-99980000-110020000/out/popdel_call.12-99980000-110020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-109980000-120020000/out/popdel_call.12-109980000-120020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-119980000-130020000/out/popdel_call.12-119980000-130020000.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_call.12-129980000-133851895/out/popdel_call.12-129980000-133851895.vcf.gz"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/log/popdel_concat_calls.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/out/popdel_concat_calls.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/out/popdel_concat_calls.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/out/popdel_concat_calls.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/out/popdel_concat_calls.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_concat_calls",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/concat_calls"
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/log/popdel_profile.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile",
+   "tasks/sv_calling_wgs_popdel/work/popdel_profile.case001subregion-N1-DNA1-WES1/out/popdel_profile.case001subregion-N1-DNA1-WES1.profile.md5"
+  ],
+  "params": {
+   "args": {
+    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_profile",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/profile"
+ },
+ {
+  "input": [
+   "tasks/sv_calling_wgs_popdel/work/popdel_concat_calls/out/popdel_concat_calls.vcf.gz"
+  ],
+  "log": [
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/out/popdel.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.log",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.log.md5",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_info.txt.md5",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.conda_list.txt.md5",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.wrapper.py.md5",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml",
+   "tasks/sv_calling_wgs_popdel/output/popdel.case001subregion-N1-DNA1-WES1/log/popdel.case001subregion-N1-DNA1-WES1.sv_calling.environment.yaml.md5"
+  ],
+  "params": {
+   "args": {
+    "ped_members": "case001subregion-N1-DNA1-WES1"
+   }
+  },
+  "resources": {
+   "mem": "24 GB",
+   "mem_mb": 24000,
+   "mem_mib": 22889,
+   "partition": "medium",
+   "runtime": 5760
+  },
+  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_reorder_vcf",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/reorder_vcf"
+ }
+]
