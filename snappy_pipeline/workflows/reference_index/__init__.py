@@ -186,25 +186,8 @@ class ReferenceIndexWorkflow(BaseStep):
             "reference_genome": prefix + ".fa.genome",
         }
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str = "",
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         tool_to_class = {
             Tool.bwa: BwaIndexStepPart,
             Tool.bwa_mem2: BwaMem2IndexStepPart,

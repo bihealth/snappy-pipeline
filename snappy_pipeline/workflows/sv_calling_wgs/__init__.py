@@ -27,7 +27,6 @@ from snappy_pipeline.workflows.common.sv_calling import (
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
 )
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_wrappers.tools.genome_windows import yield_regions
 
@@ -291,26 +290,8 @@ class SvCallingWgsWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(NgsMappingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         selected_tool = self.config.tool
         match selected_tool:
             case Tool.delly2:

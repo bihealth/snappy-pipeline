@@ -3,23 +3,14 @@
 
 import os
 import sys
-import warnings
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, AnyStr, Dict
 
-import pydantic
 import ruamel.yaml as ruamel_yaml
 
 from .models import SnappyModel, SnappyStepModel
-
-# TODO: This has to go away once biomedsheets is a proper, halfway-stable module
-try:
-    from biomedsheets.ref_resolver import RefResolver
-except ImportError:
-    warnings.warn("module biomedsheets not found", UserWarning)
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -42,57 +33,6 @@ class UnsupportedActionException(Exception):
 
 class UnknownFiltrationSourceException(Exception):
     """Raised when user try to request an unknown filtration source."""
-
-
-def expand_ref(
-    config_path: str,
-    dict_data: dict | list,
-    lookup_paths: list[str] = None,
-    dict_class=OrderedDict,
-) -> tuple[Any, tuple[AnyStr, ...], tuple[AnyStr, ...]]:
-    """Expand "$ref" in JSON-like data ``dict_data``
-
-    Returns triple:
-
-    - path to resolved file
-    - paths containing included config files
-    - config files included
-    """
-    lookup_paths = lookup_paths or [os.getcwd(), str(Path(os.getcwd()).parent)]
-    resolver = RefResolver(lookup_paths=lookup_paths, dict_class=dict_class)
-
-    # Helper to recursively strip None values that crash RefResolver
-    def _strip_nones(data):
-        if isinstance(data, dict):
-            return {k: _strip_nones(v) for k, v in data.items() if v is not None}
-        elif isinstance(data, list):
-            return [_strip_nones(v) for v in data if v is not None]
-        return data
-
-    # In case of submodules, the dict_data can be a pydantic model
-    # To work with the ref_resolver, we convert it to a dict first, excluding None values
-    # which ref_resolver does not support
-    if isinstance(dict_data, pydantic.BaseModel):
-        dict_data = dict_data.model_dump(by_alias=True, exclude_none=True)
-    else:
-        dict_data = _strip_nones(dict_data)
-
-    # Perform resolution
-    resolved = resolver.resolve("file://" + config_path, dict_data)
-
-    # Collect paths of all included configuration files, important for
-    # data set importing later on
-    lookup_paths = list(lookup_paths)  # copy!
-    config_files = []  # config files (not URLs) read
-    for url in resolver.cache:
-        if url.startswith("file://"):
-            config_files.append(os.path.abspath(url[len("file://") :]))
-            dirname = os.path.dirname(url[len("file://") :])
-            if not dirname:
-                dirname = "."
-            if dirname not in lookup_paths:
-                lookup_paths.append(dirname)
-    return resolved, tuple(lookup_paths), tuple(config_files)
 
 
 def validate_config[C: SnappyStepModel](

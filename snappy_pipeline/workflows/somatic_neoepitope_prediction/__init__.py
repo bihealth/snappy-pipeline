@@ -92,16 +92,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
-from snappy_pipeline.workflows.gene_expression_quantification import (
-    GeneExpressionQuantificationWorkflow,
-)
-from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.somatic_gene_fusion_calling import SomaticGeneFusionCallingWorkflow
-from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
-from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
-from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 
 from .model import (
     SomaticNeoepitopePrediction as SomaticNeoepitopePredictionConfigModel,
@@ -985,27 +975,9 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir, **kwargs):
-        previous_steps = [
-            VariantAnnotationWorkflow,
-            HlaTypingWorkflow,
-            VariantCallingWorkflow,
-            VariantFiltrationWorkflow,
-            NgsMappingWorkflow,
-            GeneExpressionQuantificationWorkflow,
-            CombineVariantsWorkflow,
-            SomaticGeneFusionCallingWorkflow,
-        ]
+    def __init__(self, workflow, project, task_name):
 
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=previous_steps,
-            **kwargs,
-        )
+        super().__init__(workflow, project, task_name)
 
         match self.config.tool:
             case SupportedPredictionTool.PVACSEQ:

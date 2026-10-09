@@ -1,11 +1,16 @@
 import os
-from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.orchestration import load_project, select_target_tasks
+from snappy_pipeline.orchestration import (
+    create_task_instances,
+    load_project,
+    register_hooks,
+    select_target_tasks,
+)
 
 configfile: "config.yaml"
 
 project = load_project(config, os.getcwd())
-config_data = dict(project.config)
+task_instances = create_task_instances(workflow, project)
+register_hooks(workflow)
 all_target_files = []
 
 # Targeting mode:
@@ -25,22 +30,10 @@ else:
 
 print(f"[snappy] Targeting {_mode_desc}", flush=True)
 
-for task in project.model.tasks:
-    task_name = task.name
-
-    wf_instance = WORKFLOW_REGISTRY[task.step](
-        workflow,
-        config_data,
-        project.lookup_paths,
-        project.config_paths,
-        project.work_dir,
-        task_name=task_name,
-    )
-
-    if task_name in target_task_names:
-        for f in wf_instance.get_result_files():
-            if not f.endswith((".md5", ".tbi")):
-                all_target_files.append(os.path.join("tasks", task_name, f))
+for task_name in target_task_names:
+    for f in task_instances[task_name].get_result_files():
+        if not f.endswith((".md5", ".tbi")):
+            all_target_files.append(os.path.join("tasks", task_name, f))
 
 for task in project.model.tasks:
     t_name = task.name
@@ -50,7 +43,7 @@ for task in project.model.tasks:
     module:
         name: t_name
         snakefile: f"workflows/{t_step}/Snakefile"
-        config: config_data | {"__task_name__": t_name}
+        config: {"__task_name__": t_name}
         replace_prefix: {"output/": f"tasks/{t_name}/output/", "work/": f"tasks/{t_name}/work/"}
 
     use rule * from t_name as alias*

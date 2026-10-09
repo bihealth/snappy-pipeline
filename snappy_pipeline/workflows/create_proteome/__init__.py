@@ -14,9 +14,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
-from snappy_pipeline.workflows.variant_calling import VariantCallingWorkflow
-from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 
 from .model import CreateProteome as CreateProteomeConfigModel
 
@@ -85,22 +82,9 @@ class CreateProteomeWorkflow(BaseStep):
             "proteome": f"output/{lib}/out/{lib}.fa.gz",
         }
 
-    def __init__(self, workflow, config, config_lookup_paths, config_paths, workdir, **kwargs):
-        previous_steps = [
-            VariantCallingWorkflow,
-            VariantAnnotationWorkflow,
-            VariantFiltrationWorkflow,
-        ]
+    def __init__(self, workflow, project, task_name):
 
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=previous_steps,
-            **kwargs,
-        )
+        super().__init__(workflow, project, task_name)
         self.register_sub_step_classes((CreateProteomeStepPart, LinkOutStepPart))
 
     @listify

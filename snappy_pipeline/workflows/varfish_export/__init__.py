@@ -77,12 +77,7 @@ from snappy_pipeline.workflows.abstract.common import SnakemakeDict, SnakemakeDi
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import InconsistentLibraryKitsWarning
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.sv_calling_targeted import SvCallingTargetedWorkflow
-from snappy_pipeline.workflows.variant_calling import (
-    VariantCallingGetLogFileMixin,
-    VariantCallingWorkflow,
-)
+from snappy_pipeline.workflows.variant_calling import VariantCallingGetLogFileMixin
 
 from .model import VarfishExport as VarfishExportConfigModel
 
@@ -430,26 +425,8 @@ class VarfishExportWorkflow(BaseStep):
             "db_infos": f"{prefix}.db-infos.tsv.gz",
         }
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(VariantCallingWorkflow, SvCallingTargetedWorkflow, NgsMappingWorkflow),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))

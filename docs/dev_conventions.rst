@@ -19,6 +19,19 @@ validation fails with a clear message instead of choosing for the user.
 Step part API
 -------------
 
+The orchestrator loads the project once (``snappy_pipeline.orchestration.load_project``) and
+creates the workflow object of every task once. A step Snakefile fetches it instead of building
+its own:
+
+.. code-block:: python
+
+    from snappy_pipeline.orchestration import task_instance
+
+    wf = task_instance(config["__task_name__"])
+
+``wf.get_task_config(name)`` returns the task's own config (``name`` is its step or task name) or
+the config of the upstream task set in ``depends_on.<name>``; anything else is an error.
+
 Snakefiles stay thin and call the workflow object for everything. The methods a step part
 provides:
 

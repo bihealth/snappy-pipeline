@@ -268,25 +268,8 @@ class NgsDataQcWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/report/fastqc/.done"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         self.register_sub_step_classes(
             (LinkInStepPart, LinkOutStepPart, FastQcReportStepPart, PicardStepPart)
         )

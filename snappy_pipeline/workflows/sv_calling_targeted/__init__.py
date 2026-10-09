@@ -15,7 +15,6 @@ from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import SvCallingTargeted as SvCallingTargetedConfigModel, Tool
 
@@ -53,26 +52,8 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     sheet_shortcut_class = GermlineCaseSheet
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(NgsMappingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         selected_tool = self.config.tool
         # gCNV-specific shortcuts must be initialized BEFORE registering sub-step classes
         # so that GcnvTargetedStepPart.__init__ can access them.

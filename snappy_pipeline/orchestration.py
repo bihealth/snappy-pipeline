@@ -4,14 +4,23 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
 
+if TYPE_CHECKING:
+    from snakemake.api import Workflow
+
+    from snappy_pipeline.workflows.abstract import BaseStep
+
 logger = logging.getLogger(__name__)
+
+#: Task name -> workflow object, filled by the orchestrator before it loads the step modules.
+_TASK_INSTANCES: dict[str, BaseStep] = {}
 
 #: Name of the project configuration file in the project directory.
 CONFIG_FILE = "config.yaml"
@@ -86,6 +95,32 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
         task_configs=task_configs,
         dependencies=dependencies,
     )
+
+
+def create_task_instances(workflow: Workflow, project: Project) -> dict[str, BaseStep]:
+    """Create the workflow object of every task once and register it for the step Snakefiles."""
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    _TASK_INSTANCES.clear()
+    for task in project.tasks:
+        _TASK_INSTANCES[task.name] = WORKFLOW_REGISTRY[task.step](workflow, project, task.name)
+    return dict(_TASK_INSTANCES)
+
+
+def task_instance(task_name: str) -> BaseStep:
+    """Return the workflow object of ``task_name``; called from the step Snakefiles."""
+    return _TASK_INSTANCES[task_name]
+
+
+def register_hooks(workflow: Workflow) -> None:
+    """Print a banner when the workflow fails or succeeds."""
+
+    def banner(message: str) -> None:
+        line = "*" * len(message)
+        print(f"\n{line}\n{message}\n{line}\n", file=sys.stderr)
+
+    workflow.onerror(lambda _: banner("Oh no! Something went wrong."))
+    workflow.onsuccess(lambda _: banner("All done; have a nice day!"))
 
 
 def select_target_tasks(

@@ -133,25 +133,8 @@ class ReferenceDownloadWorkflow(BaseStep):
         fasta = kwargs.get("fasta", "output/reference_download/out/reference.fa")
         return {"fasta": fasta}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str = "",
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         source_to_class = {
             Source.ensembl: EnsemblReferenceDownloadStepPart,
             Source.refseq: RefseqReferenceDownloadStepPart,

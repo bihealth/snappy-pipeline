@@ -55,9 +55,6 @@ from snakemake.io import expand
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
-from snappy_pipeline.workflows.variant_phasing import VariantPhasingWorkflow
 
 from .model import IgvSessionGeneration as IgvSessionGenerationConfigModel
 
@@ -192,26 +189,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
         prefix = f"output/{token}{lib}/out/{token}{lib}"
         return {"xml": f"{prefix}.igv_session.xml"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(VariantPhasingWorkflow, VariantAnnotationWorkflow, NgsMappingWorkflow),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         for prev in ("variant_phasing", "variant_annotation", "variant_calling"):
             if getattr(self.config.depends_on, prev, None):
                 self.previous_step = prev

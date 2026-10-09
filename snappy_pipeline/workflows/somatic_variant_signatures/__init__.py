@@ -165,26 +165,8 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/{lib}/out/deconstruct_sigs.{lib}.tsv"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(

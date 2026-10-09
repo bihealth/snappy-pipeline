@@ -314,26 +314,8 @@ class VariantFiltrationWorkflow(BaseStep):
             "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
         }
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         tool_cls = _TOOL_STEP_PART[self.config.tool]
         self.register_sub_step_classes((tool_cls, LinkOutStepPart))
 

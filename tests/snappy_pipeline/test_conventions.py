@@ -148,3 +148,16 @@ def test_path_conventions_only_improve():
     assert not fixed, (
         f"{len(fixed)} violations are fixed; shrink the baseline with SNAPPY_UPDATE_SNAPSHOTS=1"
     )
+
+
+def test_step_snakefiles_fetch_their_workflow_object():
+    found = []
+    for path in sorted(WORKFLOWS.glob("*/Snakefile")):
+        text = path.read_text(encoding="utf-8")
+        if path.parent.name == "link_in":
+            continue  # configuration carrier without rules
+        if 'wf = task_instance(config["__task_name__"])' not in text or re.search(
+            r"Workflow\(", text
+        ):
+            found.append(str(path.relative_to(REPO)))
+    assert not found, f"use wf = task_instance(config['__task_name__']) only: {found}"

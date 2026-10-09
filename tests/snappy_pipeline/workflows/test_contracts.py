@@ -3,12 +3,13 @@
 
 import pytest
 
+from snappy_pipeline.orchestration import load_project
 from snappy_pipeline.workflow_model import ConfigModel
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.link_in.model import LinkIn
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments, NgsMappingDependsOn
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_filtration import VariantFiltrationWorkflow
 from snappy_pipeline.workflows.variant_filtration.model import (
     ExpectedVariantVcf,
@@ -146,48 +147,51 @@ def test_get_upstream_paths_errors(depends_on, field, error):
         _filtration(**depends_on).get_upstream_paths(field, library_name="L1")
 
 
-# get_task_config (current fallback behaviour, to be made strict in plans.md K1) ---------------------
+# get_task_config --------------------------------------------------------------------------------
 
 
-def _mapping(w_config, link_in=""):
-    own_config = object()
-    return _bare_step(
-        NgsMappingWorkflow, "mapping", w_config, NgsMappingDependsOn(link_in=link_in), own_config
-    )
+def _mapping_step(*tasks, link_in=""):
+    """Return the workflow object of task "mapping" in a loaded project with ``tasks``."""
+    mapping = {"tool": "bwa", "bwa": {"path_index": "/refs/genome"}}
+    if link_in:
+        mapping["depends_on"] = {"link_in": link_in}
+    config = {
+        "static_data_config": {"reference": {"path": "/refs/genome.fa"}},
+        "tasks": [{"step": step, "name": name, "config": c} for step, name, c in tasks]
+        + [{"step": "ngs_mapping", "name": "mapping", "config": mapping}],
+        "data_sets": {},
+    }
+    project = load_project(config, "/projects/p1")
+    step = object.__new__(NgsMappingWorkflow)
+    step.project = project
+    step.task_name = "mapping"
+    step.step_name = "ngs_mapping"
+    step.config = project.task_configs["mapping"]
+    step.depends_on = step.config.depends_on
+    return step
+
+
+TRIMMED = ("link_in", "trimmed", {"path": "/data/trimmed"})
+RAW = ("link_in", "raw", {"path": "/data/raw"})
 
 
 def test_get_task_config_returns_own_config():
-    step = _mapping(_w_config(("ngs_mapping", "mapping", {})))
+    step = _mapping_step()
     assert step.get_task_config("ngs_mapping") is step.config
     assert step.get_task_config("mapping") is step.config
 
 
 def test_get_task_config_follows_depends_on():
-    w_config = _w_config(
-        ("link_in", "trimmed", {"path": "/data/trimmed"}),
-        ("link_in", "raw", {"path": "/data/raw"}),
-        ("ngs_mapping", "mapping", {}),
-    )
-    assert _mapping(w_config, link_in="trimmed").get_task_config("link_in") == LinkIn(
-        path="/data/trimmed"
-    )
+    step = _mapping_step(TRIMMED, RAW, link_in="trimmed")
+    assert step.get_task_config("link_in") == LinkIn(path="/data/trimmed")
 
 
-def test_get_task_config_falls_back_to_the_only_task_of_a_step():
-    w_config = _w_config(("link_in", "raw", {"path": "/data/raw"}), ("ngs_mapping", "mapping", {}))
-    assert _mapping(w_config).get_task_config("link_in") == LinkIn(path="/data/raw")
+def test_get_task_config_does_not_guess_unset_dependencies():
+    # "raw" is the only link_in task, but depends_on.link_in is not set.
+    with pytest.raises(ValueError, match="depends_on.link_in is not set"):
+        _mapping_step(RAW).get_task_config("link_in")
 
 
-def test_get_task_config_ambiguous_step_raises():
-    w_config = _w_config(
-        ("link_in", "trimmed", {"path": "/data/trimmed"}),
-        ("link_in", "raw", {"path": "/data/raw"}),
-        ("ngs_mapping", "mapping", {}),
-    )
-    with pytest.raises(ValueError, match="Ambiguous dependency: 'link_in'"):
-        _mapping(w_config).get_task_config("link_in")
-
-
-def test_get_task_config_missing_task_raises():
-    with pytest.raises(ValueError, match="not found in configuration"):
-        _mapping(_w_config(("ngs_mapping", "mapping", {}))).get_task_config("link_in")
+def test_get_task_config_rejects_unknown_fields():
+    with pytest.raises(ValueError, match="depends_on.variant is not set; depends_on fields"):
+        _mapping_step().get_task_config("variant")

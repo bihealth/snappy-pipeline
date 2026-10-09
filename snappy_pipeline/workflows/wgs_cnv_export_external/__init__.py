@@ -323,26 +323,8 @@ class WgsCnvExportExternalWorkflow(BaseStep):
             "db_infos": f"{prefix}.db-infos.tsv.gz",
         }
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         # Load external data search information
         self.data_search_infos = list(self._load_data_search_infos())
         # Register sub step classes so the sub steps are available

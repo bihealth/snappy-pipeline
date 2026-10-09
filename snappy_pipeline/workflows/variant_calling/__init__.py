@@ -214,7 +214,6 @@ from snappy_pipeline.workflows.abstract.common import (
     SnakemakeListItemsGenerator,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_calling.model import TumorNormalMode
 
@@ -1278,26 +1277,8 @@ class VariantCallingWorkflow(BaseStep):
             "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
         }
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(NgsMappingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         self.shortcut_sheets = []
         for info in self.data_set_infos:
             if info.sheet:

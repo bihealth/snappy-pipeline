@@ -710,25 +710,8 @@ class cbioportalExportWorkflow(BaseStep):
             "clinical_patient": "output/upload/data_clinical_patient.txt",
         }
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
 
         # cBioPortal requires the genome release as GRC[hm]3[78] in the MAF file
         # and hg19 or hg38 in the meta study & meta segment files.

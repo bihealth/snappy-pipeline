@@ -196,8 +196,8 @@ class AdapterTrimmingWorkflow(BaseStep):
         cls.require_signature(signature)
         return {"fastq_dir": "output"}
 
-    def __init__(self, *args, task_name: str, **kwargs):
-        super().__init__(*args, task_name=task_name, **kwargs)
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         match self.config.tool:
             case "bbduk":
                 selected = BbdukStepPart

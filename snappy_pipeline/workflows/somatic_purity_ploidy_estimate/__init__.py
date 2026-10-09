@@ -21,7 +21,7 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow, ResourceUsage
+from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.models import RelationshipDefinition
 
 from .model import SomaticPurityPloidyEstimate as SomaticPurityPloidyEstimateConfigModel
@@ -264,26 +264,8 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(NgsMappingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
 
     @listify

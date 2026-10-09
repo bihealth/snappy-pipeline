@@ -84,7 +84,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import Cnvkit as CnvkitModel
 from .model import SequenzaExtraArgs, SequenzaExtractExtraArgs, SequenzaFitExtraArgs
@@ -709,26 +708,8 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{tumor_library}")
         return {"done": f"output/{lib}/out/.done"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(NgsMappingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         selected_tool = self.config.tool
         match selected_tool:
             case Tool.cnvkit:

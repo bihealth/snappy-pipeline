@@ -1379,25 +1379,8 @@ class NgsMappingWorkflow(BaseStep):
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str = "",
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         match self.config.tool:
             case "bwa":
                 selected_mapper = BwaStepPart

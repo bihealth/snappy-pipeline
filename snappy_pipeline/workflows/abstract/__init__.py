@@ -15,11 +15,9 @@ from collections.abc import MutableMapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import cached_property, lru_cache
-from io import StringIO
 from typing import Any, Callable
 
 import pydantic
-import ruamel.yaml as ruamel_yaml
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.models import SecondaryIDNotFoundException
@@ -33,13 +31,14 @@ from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 from snappy_pipeline.base import (
     UnsupportedActionException,
     merge_kwargs,
-    print_config,
-    print_sample_sheets,
 )
 from snappy_pipeline.find_file import FileSystemCrawler, PatternSet
 from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
+
+if typing.TYPE_CHECKING:
+    from snappy_pipeline.orchestration import Project
 from snappy_wrappers.resource_usage import ResourceUsage
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
@@ -477,13 +476,6 @@ def _cached_read_generic_tsv_sheet(path_abs, path_rel, naming_scheme):
         return io_tsv.read_generic_tsv_sheet(f, path_rel, naming_scheme)
 
 
-@lru_cache()
-def _cached_yaml_round_trip_load_str(str_value):
-    """Cached reading of YAML ``str`` objects."""
-    yaml = ruamel_yaml.YAML()
-    return yaml.load(StringIO(str_value))
-
-
 class DataSetInfo:
     """Information on a DataSet"""
 
@@ -765,56 +757,27 @@ class BaseStep:
         if not cls.supports_signature(required):
             raise ValueError(f"{cls.__name__} does not support signature: {required}")
 
-    def __init__(
-        self,
-        workflow: Workflow,
-        config: MutableMapping[str, Any],
-        config_lookup_paths: tuple[str, ...],
-        config_paths: tuple[str, ...],
-        work_dir: str,
-        *,
-        task_name: str | None = None,
-        previous_steps: tuple[type[typing.Self], ...] | None = None,
-    ):
+    def __init__(self, workflow: Workflow, project: "Project", task_name: str):
         self.step_name = self.__class__.name
-        self.config_paths = config_paths
-        self.work_dir = work_dir
-        self.previous_steps = tuple(previous_steps or [])
         self.workflow = workflow
+        self.project = project
+        self.task = project.task(task_name)
+        if self.task.step != self.step_name:
+            raise ValueError(
+                f"Task {task_name!r} uses step {self.task.step!r}, not {self.step_name!r}"
+            )
+        self.task_name = task_name
         #: Setup logger for the step
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.getLogger(task_name)
         self.logger.setLevel(logging.INFO if getattr(workflow, "verbose", False) else logging.WARN)
-        try:
-            from snappy_pipeline.workflow_model import ConfigModel
 
-            self.w_config: ConfigModel = ConfigModel(**config)
-        except pydantic.ValidationError as ve:
-            raise ve
-
-        # 1. Look up the task name injected by the orchestrator
-        req_task_name = config.get("__task_name__") or task_name or self.step_name
-        self.task = next((t for t in self.w_config.tasks if t.name == req_task_name), None)
-
-        # 2. If the task doesn't match our step type (i.e. we are a submodule being
-        # blindly initialized by a parent's boilerplate Snakefile), ignore it and
-        # grab the actual config for our step type.
-        if not self.task or self.task.step != self.step_name:
-            self.task = next((t for t in self.w_config.tasks if t.step == self.step_name), None)
-
-        if not self.task:
-            raise ValueError(f"No task configuration found for step '{self.step_name}'.")
-
-        self.task_name = self.task.name
-        self.logger = logging.getLogger(self.task_name)
-
-        # Validate from mapping input explicitly to ensure nested coercion is applied consistently.
-        # Pass config_lookup_paths as validation context for path resolution.
-        self.config = self.config_model_class.model_validate(
-            self.task.config, context={"config_lookup_paths": config_lookup_paths}
-        )
+        self.w_config = project.model
+        self.config = project.task_configs[task_name]
         self.depends_on = getattr(self.config, "depends_on", None)
+        self.config_lookup_paths = list(project.lookup_paths)
+        self.config_paths = project.config_paths
+        self.work_dir = project.work_dir
 
-        self.config_lookup_paths = list(config_lookup_paths)
         self.sub_steps: dict[str, BaseStepPart] = {}
         self._library_dataframe = None
         self.data_set_infos = list(self._load_data_set_infos())
@@ -837,13 +800,7 @@ class BaseStep:
                 klass(sheet, *(self.__class__.sheet_shortcut_args or []), **kwargs)
             )
 
-        self._setup_hooks()
         self.check_config()
-
-        config_string = self.config.model_dump_yaml(by_alias=True)
-
-        _config = _cached_yaml_round_trip_load_str(config_string)
-        config.update(_config)
 
     @staticmethod
     def task_root(task_name: str) -> str:
@@ -862,52 +819,20 @@ class BaseStep:
         return ""
 
     def get_task_config(self, name: str) -> SnappyStepModel:
-        """Retrieve the typed configuration model of an upstream task based on dependency resolution."""
+        """Return a task's validated config.
 
-        # If the requested name matches this instance's step type or task name, return own config.
-        if name == self.name or name == getattr(self, "task_name", ""):
+        ``name`` is this task's step or task name (returns its own config) or a ``depends_on``
+        field (returns the config of the upstream task set there).
+        """
+        if name in (self.step_name, self.task_name):
             return self.config
-
-        # Resolve via config-model typed dependency mapping, then literal name as fallback.
-        dep_target = getattr(self.depends_on, name, None) if self.depends_on is not None else None
-        if dep_target is None and self.depends_on is not None:
-            # Check if any resolved dependency task has a step that matches `name`
-            for dep_field, dep_val in self.depends_on.model_dump().items():
-                if isinstance(dep_val, str) and dep_val:
-                    t = next((tk for tk in self.w_config.tasks if tk.name == dep_val), None)
-                    if t and t.step == name:
-                        dep_target = dep_val
-                        break
-        target_task_name = dep_target or name
-
-        # Find the task in the global config
-        task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
-
-        if not task:
-            matching_steps = [t for t in self.w_config.tasks if t.step == target_task_name]
-            if len(matching_steps) == 1:
-                task = matching_steps[0]
-            elif len(matching_steps) > 1:
-                raise ValueError(
-                    f"Ambiguous dependency: '{target_task_name}' matches multiple tasks by step type. "
-                    f"Please explicitly map it in the 'depends_on' block for task '{self.task_name}'."
-                )
-
-        if not task:
+        upstream = self.project.dependencies[self.task_name].get(name)
+        if upstream is None:
+            fields = list(type(self.depends_on).model_fields) if self.depends_on else []
             raise ValueError(
-                f"Task '{target_task_name}' (resolved from '{name}') not found in configuration."
+                f"Task {self.task_name!r}: depends_on.{name} is not set; depends_on fields: {fields}"
             )
-
-        # Instantiate and return its strictly typed config model
-        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-
-        wf_class = WORKFLOW_REGISTRY.get(task.step)
-        if not wf_class:
-            raise ValueError(
-                f"Workflow class for step '{task.step}' not found in WORKFLOW_REGISTRY."
-            )
-
-        return wf_class.config_model_class.model_validate(task.config)
+        return self.project.task_configs[upstream]
 
     def get_preprocessed_path(self) -> str:
         """Return a preprocessed FASTQ directory from configured RAW dependencies.
@@ -952,39 +877,6 @@ class BaseStep:
 
         return ""
 
-    def _setup_hooks(self):
-        """Setup Snakemake workflow hooks for start/end/error"""
-
-        # In the following, the "log" parameter to the handler functions is set to "_" as we
-        # don't use them
-        def on_start(_):
-            """Print configuration and sample sheets on start"""
-            verbose = False
-            if verbose:
-                # Print configuration back to the user after merging workflow step-specific
-                # configuration
-                print_config(self.config, file=sys.stderr)
-                # Print sample sheets to the user
-                print_sample_sheets(self, file=sys.stderr)
-
-        def on_error(_):
-            """Error handler, print message"""
-            msg = "Oh no! Something went wrong."
-            print("\n" + "*" * len(msg), file=sys.stderr)
-            print(msg, file=sys.stderr)
-            print("*" * len(msg) + "\n", file=sys.stderr)
-
-        def on_success(_):
-            """Success handler, print message"""
-            msg = "All done; have a nice day!"
-            print("\n" + "*" * len(msg), file=sys.stderr)
-            print(msg, file=sys.stderr)
-            print("*" * len(msg) + "\n", file=sys.stderr)
-
-        self.workflow.onstart(on_start)
-        self.workflow.onerror(on_error)
-        self.workflow.onsuccess(on_success)
-
     def build_library_dataframe(self):
         """Return the unified library dataframe for this workflow.
 
@@ -1020,7 +912,9 @@ class BaseStep:
         if own is not None:
             return own
         return _resolve_upstream_group_by(
-            self.config, self.get_task_config, _visited=frozenset({self.task_name})
+            self.config,
+            lambda task_name: self.project.task_configs[task_name],
+            _visited=frozenset({self.task_name}),
         )
 
     @cached_property
@@ -1386,8 +1280,8 @@ def _resolve_upstream_group_by(config, get_task_config, *, _visited: frozenset[s
     This is a standalone function (rather than a method) so that it can
     recurse through *config* objects without requiring workflow instances.
 
-    ``get_task_config(task_name)`` must return the config model for a
-    task, resolved from the perspective of the **root** workflow.
+    ``get_task_config(task_name)`` must return the config model of the task
+    called ``task_name``.
     """
     depends_on = getattr(config, "depends_on", None)
     if depends_on is None:

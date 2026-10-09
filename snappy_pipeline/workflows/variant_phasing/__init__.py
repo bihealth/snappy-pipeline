@@ -76,9 +76,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_annotation import VariantAnnotationWorkflow
 
 from .model import VariantPhasing as VariantPhasingConfigModel
 
@@ -387,26 +385,8 @@ class VariantPhasingWorkflow(BaseStep):
         prefix = f"output/{lib}/out/{phasing}.{lib}"
         return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(VariantAnnotationWorkflow, NgsMappingWorkflow),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
 
         for prev in ("variant_annotation", "variant_calling"):
             if getattr(self.config.depends_on, prev, None):

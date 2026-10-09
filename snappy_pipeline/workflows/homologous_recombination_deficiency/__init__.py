@@ -72,9 +72,6 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
-    SomaticTargetedSeqCnvCallingWorkflow,
-)
 
 from .model import HomologousRecombinationDeficiency as HomologousRecombinationDeficiencyConfigModel
 
@@ -186,26 +183,8 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         return {"json": f"output/scarHRD.{lib}/out/scarHRD.{lib}.json"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(SomaticTargetedSeqCnvCallingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart, LinkOutStepPart))
 
@@ -236,11 +215,10 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
         ``scarHRD`` can currently only consume ``sequenza`` copy number output.
         """
-        tool = self.get_task_config("somatic_targeted_seq_cnv_calling").tool
+        tool = self.get_task_config("cnv_calling").tool
         if tool != "sequenza":
             raise InvalidConfiguration(
-                "Tool '{}' of upstream task 'somatic_targeted_seq_cnv_calling' "
-                "not supported by 'homologous_recombination_deficiency'; expected 'sequenza'".format(
-                    tool
-                )
+                f"Tool '{tool}' of the depends_on.cnv_calling task "
+                f"'{self.project.dependencies[self.task_name]['cnv_calling']}' is not supported by "
+                "'homologous_recombination_deficiency'; expected 'sequenza'"
             )

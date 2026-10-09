@@ -95,7 +95,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 
 from .model import HelperGcnvModelTargeted as HelperGcnvModelTargetedConfigModel
 
@@ -199,26 +198,8 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
             "calls_done": f"output/gcnv_call_cnvs.{kit}.{{shard}}/out/gcnv_call_cnvs.{kit}.{{shard}}/.done",
         }
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(NgsMappingWorkflow,),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (

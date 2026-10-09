@@ -71,12 +71,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
-    SomaticTargetedSeqCnvCallingWorkflow,
-)
-from snappy_pipeline.workflows.somatic_wgs_cnv_calling import SomaticWgsCnvCallingWorkflow
 
 from .model import SomaticCnvChecking as SomaticCnvCheckingConfigModel
 
@@ -287,30 +282,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         lib = kwargs.get("tumor_library", "{tumor_library}")
         return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
 
-    def __init__(
-        self,
-        workflow,
-        config,
-        config_lookup_paths,
-        config_paths,
-        workdir,
-        task_name: str | None = None,
-        **kwargs,
-    ):
-        super().__init__(
-            workflow,
-            config,
-            config_lookup_paths,
-            config_paths,
-            workdir,
-            previous_steps=(
-                SomaticTargetedSeqCnvCallingWorkflow,
-                SomaticWgsCnvCallingWorkflow,
-                NgsMappingWorkflow,
-            ),
-            task_name=task_name,
-            **kwargs,
-        )
+    def __init__(self, workflow, project, task_name):
+        super().__init__(workflow, project, task_name)
         self.has_cnv_calling = bool(self.config.depends_on.cnv_calling)
         # Register sub step classes so the sub steps are available
         sub_steps = [SomaticCnvCheckingPileupStepPart]

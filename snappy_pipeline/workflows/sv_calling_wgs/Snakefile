@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """CUBI Pipeline sv_calling_wgs step Snakefile"""
 
-import os
-
-from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.sv_calling_wgs import SvCallingWgsWorkflow
+from snappy_pipeline.orchestration import task_instance
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
@@ -12,18 +9,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 # Regular expression for wildcard constraints
 RE_BETWEEN_DOTS = r"[^.\.]+"
 
-# Configuration ===============================================================
-
-
-configfile: "config.yaml"
-
-
-# Expand "$ref" JSON pointers in configuration (also works for YAML)
-config, lookup_paths, config_paths = expand_ref("config.yaml", config)
-
 # WorkflowImpl Object Setup ===================================================
 
-wf = SvCallingWgsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = task_instance(config["__task_name__"])
 tool = str(wf.config.tool)
 
 

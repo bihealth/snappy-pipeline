@@ -1,15 +1,8 @@
-import os
+from snappy_pipeline.orchestration import task_instance
 
-from snappy_pipeline import expand_ref
-from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
+# WorkflowImpl Object Setup ===================================================
 
-
-configfile: "config.yaml"
-
-
-config, lookup_paths, config_paths = expand_ref("config.yaml", config)
-
-wf = CombineVariantsWorkflow(workflow, config, lookup_paths, config_paths, os.getcwd())
+wf = task_instance(config["__task_name__"])
 
 
 localrules:
