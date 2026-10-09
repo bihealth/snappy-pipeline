@@ -102,8 +102,6 @@ _GERMLINE_CALLER_RESULTS = (
 #: file, otherwise its snapshot checks nothing.
 EXPECTED_EMPTY = {
     "link_in": "configuration carrier without outputs",
-    "ngs_data_qc_fastqc": "compares extraction types upper-case; the library dataframe stores them lower-case",
-    "ngs_data_qc_picard": "compares extraction types upper-case; the library dataframe stores them lower-case",
     "ngs_mapping_minimap2": "minimap2 maps only long-read libraries; there is no long-read fixture",
     "variant_calling_bcftools_call": _GERMLINE_CALLER_RESULTS,
     "variant_calling_gatk3_hc": _GERMLINE_CALLER_RESULTS,

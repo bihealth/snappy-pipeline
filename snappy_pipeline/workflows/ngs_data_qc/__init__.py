@@ -302,8 +302,8 @@ class NgsDataQcWorkflow(BaseStep):
             yield from self._yield_result_files(
                 tpl="output/{library_name}/report/fastqc/.done",
                 allowed_extraction_types=(
-                    "DNA",
-                    "RNA",
+                    "dna",
+                    "rna",
                 ),
             )
         if self.config.tool == "picard":
@@ -319,7 +319,7 @@ class NgsDataQcWorkflow(BaseStep):
                     exts.append(pgm + ".txt.md5")
             yield from self._yield_result_files(
                 tpl=tpl,
-                allowed_extraction_types=("DNA",),
+                allowed_extraction_types=("dna",),
                 ext=exts,
             )
 
