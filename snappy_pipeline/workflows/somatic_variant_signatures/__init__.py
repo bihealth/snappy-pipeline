@@ -139,7 +139,6 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_variant_signatures"
-    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"signatures"}))]
 
     #: Default biomed sheet class
@@ -159,9 +158,8 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     config_model_class = SomaticVariantSignaturesConfigModel
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local signature output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/{lib}/out/deconstruct_sigs.{lib}.tsv"}
 

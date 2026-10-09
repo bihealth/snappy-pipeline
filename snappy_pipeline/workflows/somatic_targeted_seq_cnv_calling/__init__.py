@@ -682,7 +682,6 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_targeted_seq_cnv_calling"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))]
 
     config_model_class = SomaticTargetedSeqCnvCallingConfigModel
@@ -702,9 +701,8 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic targeted CNV output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{tumor_library}")
         return {"done": f"output/{lib}/out/.done"}
 

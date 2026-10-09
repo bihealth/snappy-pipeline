@@ -111,7 +111,6 @@ class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
 
 class ReferenceDownloadWorkflow(BaseStep):
     name = "reference_download"
-    consumes = {}
     produces = [
         DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "dna"})),
         DataSignature(DataType.RAW, frozenset({"ensembl", "reference", "rna"})),
@@ -128,8 +127,7 @@ class ReferenceDownloadWorkflow(BaseStep):
     config_model_class = ReferenceDownloadConfigModel
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
-        cls.require_signature(signature)
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         fasta = kwargs.get("fasta", "output/reference_download/out/reference.fa")
         return {"fasta": fasta}
 

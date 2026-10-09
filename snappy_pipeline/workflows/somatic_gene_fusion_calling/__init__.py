@@ -476,7 +476,6 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_gene_fusion_calling"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))]
 
     config_model_class = SomaticGeneFusionCallingConfigModel
@@ -489,9 +488,8 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local fusion-calling output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 

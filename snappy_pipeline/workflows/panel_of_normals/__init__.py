@@ -766,7 +766,6 @@ class PanelOfNormalsWorkflow(BaseStep):
 
     # Workflow name
     name = "panel_of_normals"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.MODELS, frozenset({"pon"}))]
 
     config_model_class = PanelOfNormalsConfigModel
@@ -779,11 +778,9 @@ class PanelOfNormalsWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local panel-of-normals output paths for downstream consumers."""
-        cls.require_signature(signature)
-        tool = kwargs.get("tool", "{tool}")
-        return {"done": f"output/{tool}/out/.done"}
+        return {"done": f"output/{config.tool}/out/.done"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

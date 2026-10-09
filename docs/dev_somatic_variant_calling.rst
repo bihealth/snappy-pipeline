@@ -9,7 +9,7 @@ Somatic Variant Calling Dissection
     This chapter was written for the legacy ``somatic_variant_calling`` module.
     The workflow has since been renamed to ``variant_calling`` and its internal
     architecture has changed significantly (single-tool selection, task-based
-    config, ``produces``/``consumes`` contracts).
+    config, data signature contracts, see :ref:`dev_conventions`).
 
     For the current implementation, see the ``variant_calling`` step source at
     ``snappy_pipeline/workflows/variant_calling/``.

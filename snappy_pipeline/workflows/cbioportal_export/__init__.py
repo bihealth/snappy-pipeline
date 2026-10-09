@@ -686,11 +686,6 @@ class cbioportalExportWorkflow(BaseStep):
 
     config_model_class = CbioportalExportConfigModel
 
-    consumes = {
-        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True,
-        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True,
-        DataSignature(DataType.EXPRESSION): False,
-    }
     produces = [DataSignature(DataType.EXPORTS, frozenset({"cbioportal"}))]
 
     #: Default biomed sheet class
@@ -701,9 +696,8 @@ class cbioportalExportWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local cBioPortal export output paths for downstream consumers."""
-        cls.require_signature(signature)
         _ = kwargs
         return {
             "meta_study": "output/upload/meta_study.txt",

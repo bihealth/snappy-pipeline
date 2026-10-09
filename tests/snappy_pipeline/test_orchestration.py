@@ -6,8 +6,11 @@ import logging
 import pydantic
 import pytest
 
+from snappy_pipeline import orchestration
 from snappy_pipeline.orchestration import Project, load_project, select_target_tasks
 from snappy_pipeline.workflow_model import ConfigModel
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 WORK_DIR = "/projects/p1"
 
@@ -24,9 +27,10 @@ def _mapping(name="mapping", **config):
     return ("ngs_mapping", name, {"tool": "bwa", "bwa": {"path_index": "/refs/genome"}, **config})
 
 
-def _calling(name="calling", mapping="mapping"):
-    config = {"depends_on": {"ngs_mapping": mapping}, "tool": "mutect2"}
-    return ("variant_calling", name, config | {"mutect2": {"contamination": {}}})
+def _calling(name="calling", mapping="mapping", tool="mutect2"):
+    config = {"depends_on": {"ngs_mapping": mapping}, "tool": tool}
+    config[tool] = {"contamination": {}} if tool == "mutect2" else {}
+    return ("variant_calling", name, config)
 
 
 def _annotation(name="annotation", variant="calling"):
@@ -37,10 +41,15 @@ def _annotation(name="annotation", variant="calling"):
     )
 
 
-def _filtration(name="filtration", variant="annotation"):
-    config = {"depends_on": {"variant": variant}, "tool": "bcftools"}
+def _filtration(name="filtration", variant="annotation", **depends_on):
+    config = {"depends_on": {"variant": variant, **depends_on}, "tool": "bcftools"}
     config["bcftools"] = {"include": "QUAL > 10"}
     return ("variant_filtration", name, config)
+
+
+def _tmb(name="tmb", somatic_variant="filtration"):
+    config = {"depends_on": {"somatic_variant": somatic_variant}}
+    return ("tumor_mutational_burden", name, config | {"target_regions": "/refs/regions.bed"})
 
 
 # load_project ------------------------------------------------------------------------------------
@@ -102,6 +111,60 @@ def test_load_project_validates_step_configs():
         )
 
 
+def test_load_project_passes_variant_tags_through_annotation_and_filtration():
+    tasks = (_mapping(), _calling(), _annotation(), _filtration(), _tmb())
+    project = load_project(_config(*tasks), WORK_DIR)
+
+    somatic = frozenset({"somatic", "snv", "indel"})
+    assert project.signatures["mapping"] == (
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+    )
+    assert project.signatures["filtration"] == (
+        DataSignature(DataType.VARIANTS, somatic | {"annotated", "filtered"}),
+    )
+
+
+def test_load_project_rejects_germline_variants_for_tmb():
+    tasks = (_mapping(), _calling(tool="gatk4_hc_gvcf"), _annotation(), _filtration(), _tmb())
+    with pytest.raises(
+        ValueError,
+        match=r"Task 'tmb': depends_on.somatic_variant requires variants \[somatic\], "
+        r"but task 'filtration' produces variants \[annotated, filtered, germline, indel, snv\]",
+    ):
+        load_project(_config(*tasks), WORK_DIR)
+
+
+def test_load_project_rejects_rna_alignments_for_variant_calling(tmp_path):
+    for index_file in ("Genome", "SA", "SAindex"):
+        (tmp_path / index_file).touch()
+    star = ("ngs_mapping", "star", {"tool": "star", "star": {"path_index": str(tmp_path)}})
+    with pytest.raises(
+        ValueError,
+        match=r"Task 'calling': depends_on.ngs_mapping requires alignments \[dna\], "
+        r"but task 'star' produces alignments \[rna\]",
+    ):
+        load_project(_config(star, _calling(mapping="star")), WORK_DIR)
+
+
+# create_task_instances ---------------------------------------------------------------------------
+
+
+def test_create_task_instances_builds_each_task_once(monkeypatch):
+    project = load_project(_config(_calling(), _mapping()), WORK_DIR)
+    built = []
+
+    class Stub:
+        def __init__(self, workflow, project, task_name):
+            built.append(task_name)
+
+    for step in ("ngs_mapping", "variant_calling"):
+        monkeypatch.setitem(WORKFLOW_REGISTRY, step, Stub)
+    instances = orchestration.create_task_instances(object(), project)
+
+    assert built == ["mapping", "calling"]
+    assert orchestration.task_instance("calling") is instances["calling"]
+
+
 # select_target_tasks -----------------------------------------------------------------------------
 
 
@@ -120,6 +183,7 @@ def _project(**dependencies):
         tasks=tuple(model.tasks),
         task_configs={},
         dependencies=dependencies,
+        signatures={},
     )
 
 

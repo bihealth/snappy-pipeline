@@ -165,10 +165,6 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     #: Step name
     name = "homologous_recombination_deficiency"
-    consumes = {
-        DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True,
-        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): False,
-    }
     produces = [DataSignature(DataType.TABULAR, frozenset({"hrd"}))]
 
     config_model_class = HomologousRecombinationDeficiencyConfigModel
@@ -177,9 +173,8 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
     sheet_shortcut_class = CancerCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HRD output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"json": f"output/scarHRD.{lib}/out/scarHRD.{lib}.json"}
 

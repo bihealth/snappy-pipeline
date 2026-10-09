@@ -365,15 +365,13 @@ class VariantPhasingWorkflow(BaseStep):
     """Perform (small) variant phasing"""
 
     name = "variant_phasing"
-    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))]
     config_model_class = VariantPhasingConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local phased-variant output paths for downstream consumers."""
-        cls.require_signature(signature)
         if "phasing" not in kwargs:
             raise ValueError(
                 "Parameter 'phasing' is required when requesting output paths from "

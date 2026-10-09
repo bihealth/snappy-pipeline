@@ -278,15 +278,13 @@ class SvCallingWgsWorkflow(BaseStep):
     """Perform (germline) WGS SV calling"""
 
     name = "sv_calling_wgs"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
     config_model_class = SvCallingWgsConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local WGS SV output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 

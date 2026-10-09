@@ -98,7 +98,6 @@ class CombineVariantsWorkflow(BaseStep):
     name = "combine_variants"
     sheet_shortcut_class = CancerCaseSheet
 
-    consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"combined"}))]
 
     config_model_class = CombineVariantsConfigModel
@@ -111,8 +110,7 @@ class CombineVariantsWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
-        cls.require_signature(signature)
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",

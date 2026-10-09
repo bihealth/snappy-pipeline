@@ -304,7 +304,6 @@ class WgsSvExportExternalWorkflow(BaseStep):
 
     #: Workflow name
     name = "wgs_sv_export_external"
-    consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
     config_model_class = WgsSvExportExternalConfigModel
 
@@ -312,9 +311,8 @@ class WgsSvExportExternalWorkflow(BaseStep):
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local external WGS SV export output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         prefix = f"output/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
         return {

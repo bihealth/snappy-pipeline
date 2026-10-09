@@ -256,7 +256,6 @@ class SomaticCnvCheckingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_cnv_checking"
-    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True}
     produces = [DataSignature(DataType.QC, frozenset({"cnv_check"}))]
 
     config_model_class = SomaticCnvCheckingConfigModel
@@ -276,9 +275,8 @@ class SomaticCnvCheckingWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local CNV checking output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("tumor_library", "{tumor_library}")
         return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
 

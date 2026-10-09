@@ -412,7 +412,6 @@ class HlaTypingWorkflow(BaseStep):
 
     #: Step name
     name = "hla_typing"
-    consumes = {DataSignature(DataType.RAW): False, DataSignature(DataType.ALIGNMENTS): False}
     produces = [DataSignature(DataType.TABULAR, frozenset({"hla"}))]
 
     #: Default biomed sheet class
@@ -422,9 +421,8 @@ class HlaTypingWorkflow(BaseStep):
     config_model_class = HlaTypingConfigModel
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HLA typing output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "txt": f"output/{lib}/out/{lib}.txt",

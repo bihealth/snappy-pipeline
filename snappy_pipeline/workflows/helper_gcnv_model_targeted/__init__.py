@@ -177,21 +177,14 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
     #: Workflow name
     name = "helper_gcnv_model_targeted"
     config_model_class = HelperGcnvModelTargetedConfigModel
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local helper gCNV model output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.MODELS, frozenset({"gcnv"}))
-        ):
-            raise ValueError(
-                f"HelperBuildTargetSeqGcnvModelWorkflow does not support signature: {signature}"
-            )
         kit = kwargs.get("library_kit", "{library_kit}")
         return {
             "ploidy_done": f"output/gcnv_contig_ploidy.{kit}/out/gcnv_contig_ploidy.{kit}/.done",

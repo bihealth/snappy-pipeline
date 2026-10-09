@@ -111,19 +111,24 @@ class VariantAnnotationWorkflow(BaseStep):
     """Annotate germline or somatic variant calls with a single selected tool."""
 
     name = "variant_annotation"
-    consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "annotated"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "annotated"})),
     ]
 
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """The variants of the ``variant`` task, tagged ``annotated``."""
+        return tuple(
+            s.with_tags("annotated") for s in upstream["variant"] if s.type == DataType.VARIANTS
+        )
+
     config_model_class = VariantAnnotationConfigModel
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local annotated VCF output paths for somatic or germline variants."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",

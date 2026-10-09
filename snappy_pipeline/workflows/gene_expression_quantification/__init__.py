@@ -529,7 +529,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
     config_model_class = GeneExpressionQuantificationConfigModel
 
-    consumes = {DataSignature(DataType.RAW, frozenset({"rna"})): True}
     produces = [
         DataSignature(DataType.EXPRESSION, frozenset({"rna"})),
         STRANDEDNESS_SIGNATURE,
@@ -539,15 +538,11 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local expression or strandedness output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
         if signature is not None and signature.satisfies(STRANDEDNESS_SIGNATURE):
             return {"decision": f"output/{lib}/out/{lib}.decision"}
-        if signature is not None and not signature.satisfies(DataSignature(DataType.EXPRESSION)):
-            raise ValueError(
-                f"GeneExpressionQuantificationWorkflow does not support signature: {signature}"
-            )
         return {"tsv": f"output/{lib}/out/{lib}.tsv"}
 
     def __init__(self, workflow, project, task_name):

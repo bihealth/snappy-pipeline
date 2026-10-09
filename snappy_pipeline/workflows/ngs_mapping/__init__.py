@@ -454,6 +454,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataType
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from .model import NgsMapping as NgsMappingConfigModel
+from .model import Tool
 
 # TODO: Need something smarter still for @RG
 
@@ -1355,13 +1356,21 @@ class NgsMappingWorkflow(BaseStep):
     #: Step name
     name = "ngs_mapping"
 
-    consumes = {DataSignature(DataType.RAW): True}
-    produces = [DataSignature(DataType.ALIGNMENTS, frozenset({"dna"}))]
+    produces = [
+        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
+        DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
+    ]
 
     config_model_class = NgsMappingConfigModel
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def task_produces(cls, config, upstream):
+        """DNA or RNA alignments, depending on the mapping tool."""
+        molecule = "dna" if Tool(config.tool).is_dna() else "rna"
+        return (DataSignature(DataType.ALIGNMENTS, frozenset({molecule})),)
+
+    @classmethod
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local BAM/BAI output paths for an alignment signature.
 
         Arguments:
@@ -1369,7 +1378,6 @@ class NgsMappingWorkflow(BaseStep):
             **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
                 the ``{library_name}`` wildcard placeholder.
         """
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "bam": f"output/{lib}/out/{lib}.bam",

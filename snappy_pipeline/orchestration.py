@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
+from snappy_pipeline.workflows.abstract.protocol import DataSignature
 
 if TYPE_CHECKING:
     from snakemake.api import Workflow
@@ -46,6 +47,8 @@ class Project:
     task_configs: Mapping[str, SnappyStepModel]
     #: Task name -> ``depends_on`` field -> upstream task name, for set fields only.
     dependencies: Mapping[str, Mapping[str, str]]
+    #: Task name -> the DataSignatures the task produces.
+    signatures: Mapping[str, tuple[DataSignature, ...]]
 
     def task(self, name: str) -> TaskModel:
         """Return the task called ``name``."""
@@ -56,7 +59,8 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
     """Validate ``config`` and resolve its task graph.
 
     Raises ``ValueError`` (or a pydantic ``ValidationError``) for unknown steps, duplicate task
-    names, ``depends_on`` values that name no task, and dependency cycles.
+    names, ``depends_on`` values that name no task, dependency cycles, and upstream tasks that
+    do not produce what a ``depends_on`` field requires.
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
@@ -85,15 +89,17 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
         task_configs[task.name] = task_config
         dependencies[task.name] = _resolve_dependencies(task.name, task_config, names)
 
+    tasks = tuple(_topological_order(model.tasks, dependencies))
     return Project(
         config=config,
         model=model,
         work_dir=work_dir,
         lookup_paths=lookup_paths,
         config_paths=(os.path.join(work_dir, CONFIG_FILE),),
-        tasks=tuple(_topological_order(model.tasks, dependencies)),
+        tasks=tasks,
         task_configs=task_configs,
         dependencies=dependencies,
+        signatures=_task_signatures(tasks, task_configs, dependencies),
     )
 
 
@@ -179,6 +185,41 @@ def _resolve_dependencies(
             )
         result[field] = upstream
     return result
+
+
+def _task_signatures(
+    tasks: tuple[TaskModel, ...],
+    task_configs: Mapping[str, SnappyStepModel],
+    dependencies: Mapping[str, Mapping[str, str]],
+) -> dict[str, tuple[DataSignature, ...]]:
+    """Return task name -> produced signatures, checking every ``depends_on`` requirement.
+
+    ``tasks`` must be in topological order, so the upstream signatures exist when a task needs
+    them.
+    """
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    signatures: dict[str, tuple[DataSignature, ...]] = {}
+    for task in tasks:
+        config = task_configs[task.name]
+        fields = type(config.depends_on).model_fields if dependencies[task.name] else {}
+        for field, upstream in dependencies[task.name].items():
+            required = next(
+                (m for m in fields[field].metadata if isinstance(m, DataSignature)), None
+            )
+            produced = signatures[upstream]
+            if required is not None and not any(s.satisfies(required) for s in produced):
+                raise ValueError(
+                    f"Task {task.name!r}: depends_on.{field} requires {required}, but task "
+                    f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
+                )
+        upstream_signatures = {
+            field: signatures[upstream] for field, upstream in dependencies[task.name].items()
+        }
+        signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
+            config, upstream_signatures
+        )
+    return signatures
 
 
 def _topological_order(

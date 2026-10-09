@@ -265,7 +265,6 @@ class MeiWorkflow(BaseStep):
 
     #: Workflow name
     name = "targeted_seq_mei_calling"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "mei"}))]
     config_model_class = TargetedSeqMeiCallingConfigModel
 
@@ -278,9 +277,8 @@ class MeiWorkflow(BaseStep):
         self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local MEI calling output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
 

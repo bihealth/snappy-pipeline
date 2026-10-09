@@ -221,21 +221,14 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
     #: Workflow name
     name = "helper_gcnv_model_wgs"
     config_model_class = HelperGcnvModelWgsConfigModel
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local helper gCNV WGS model output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.MODELS, frozenset({"gcnv"}))
-        ):
-            raise ValueError(
-                f"HelperBuildWgsGcnvModelWorkflow does not support signature: {signature}"
-            )
         _ = kwargs
         return {
             "ploidy_done": "output/gcnv_contig_ploidy.default/out/gcnv_contig_ploidy.default/.done",

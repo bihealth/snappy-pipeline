@@ -69,14 +69,12 @@ class CreateProteomeWorkflow(BaseStep):
     name = "create_proteome"
     sheet_shortcut_class = GermlineCaseSheet
 
-    consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"proteome"}))]
 
     config_model_class = CreateProteomeConfigModel
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
-        cls.require_signature(signature)
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "proteome": f"output/{lib}/out/{lib}.fa.gz",

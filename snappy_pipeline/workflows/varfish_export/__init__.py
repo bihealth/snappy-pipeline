@@ -406,18 +406,13 @@ class VarfishExportWorkflow(BaseStep):
     """Perform germline variant export to VarFish"""
 
     name = "varfish_export"
-    consumes = {
-        DataSignature(DataType.VARIANTS, frozenset({"germline", ("snv", "indel")})): True,
-        DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})): False,
-    }
     produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
     config_model_class = VarfishExportConfigModel
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local VarFish export output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         prefix = f"output/varfish_export.{lib}/out/mehari_annotate_seqvars.{lib}"
         return {

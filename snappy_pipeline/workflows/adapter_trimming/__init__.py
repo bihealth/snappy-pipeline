@@ -184,16 +184,14 @@ class LinkOutFastqStepPart(BaseStepPart):
 
 class AdapterTrimmingWorkflow(BaseStep):
     name = "adapter_trimming"
-    consumes = {DataSignature(DataType.RAW): True}
     produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
 
     sheet_shortcut_class = GenericSampleSheet
     config_model_class = AdapterTrimmingConfigModel
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local output paths for trimmed/raw FASTQ consumption."""
-        cls.require_signature(signature)
         return {"fastq_dir": "output"}
 
     def __init__(self, workflow, project, task_name):

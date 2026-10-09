@@ -279,7 +279,6 @@ class RepeatExpansionWorkflow(BaseStep):
 
     #: Workflow name
     name = "repeat_expansion"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "repeats"}))]
 
     config_model_class = RepeatExpansionConfigModel
@@ -293,9 +292,8 @@ class RepeatExpansionWorkflow(BaseStep):
         self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local repeat expansion output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"vcf": f"output/{lib}/out/{lib}.vcf"}
 

@@ -170,7 +170,6 @@ class IgvSessionGenerationWorkflow(BaseStep):
 
     #: Workflow name
     name = "igv_session_generation"
-    consumes = {DataSignature(DataType.ALIGNMENTS): True, DataSignature(DataType.VARIANTS): False}
     produces = [DataSignature(DataType.EXPORTS, frozenset({"igv"}))]
 
     config_model_class = IgvSessionGenerationConfigModel
@@ -179,9 +178,8 @@ class IgvSessionGenerationWorkflow(BaseStep):
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local IGV session output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         token = kwargs.get("token", "")
         if token:

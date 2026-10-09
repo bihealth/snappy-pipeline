@@ -107,7 +107,6 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_hla_loh_calling"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"hla_loh"}))]
 
     config_model_class = SomaticHlaLohCallingConfigModel
@@ -127,9 +126,8 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HLA LOH output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/{lib}.done"}
 

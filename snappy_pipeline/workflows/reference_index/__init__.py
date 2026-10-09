@@ -161,7 +161,6 @@ class StarIndexStepPart(_IndexToolStepPart):
 
 class ReferenceIndexWorkflow(BaseStep):
     name = "reference_index"
-    consumes = {}
     produces = [
         DataSignature(DataType.INDEX, frozenset({"bwa", "dna"})),
         DataSignature(DataType.INDEX, frozenset({"bwa_mem2", "dna"})),
@@ -173,8 +172,7 @@ class ReferenceIndexWorkflow(BaseStep):
     config_model_class = ReferenceIndexConfigModel
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
-        cls.require_signature(signature)
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         prefix = kwargs.get("prefix", "output/reference_index/out/reference")
         return {
             "bwa_index_prefix": prefix,

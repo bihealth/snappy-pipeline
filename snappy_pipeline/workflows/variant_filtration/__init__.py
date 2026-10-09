@@ -291,8 +291,14 @@ class VariantFiltrationWorkflow(BaseStep):
     """
 
     name = "variant_filtration"
-    consumes = {DataSignature(DataType.VARIANTS): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"filtered"}))]
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """The variants of the ``variant`` task, tagged ``filtered``."""
+        return tuple(
+            s.with_tags("filtered") for s in upstream["variant"] if s.type == DataType.VARIANTS
+        )
 
     config_model_class = VariantFiltrationConfigModel
     sheet_shortcut_class = GenericSampleSheet
@@ -305,9 +311,8 @@ class VariantFiltrationWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local filtered-variant output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("tumor_library", "{tumor_library}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",

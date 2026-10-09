@@ -91,7 +91,6 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     """Perform TMB calculation"""
 
     name = "tumor_mutational_burden"
-    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"tmb"}))]
     config_model_class = TumorMutationalBurdenConfigModel
     sheet_shortcut_class = CancerCaseSheet
@@ -100,9 +99,8 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local TMB output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"json": f"output/{lib}/out/tmb.{lib}.json"}
 

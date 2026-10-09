@@ -44,6 +44,14 @@ class DataSignature:
                 return False
         return True
 
+    def with_tags(self, *tags: str) -> "DataSignature":
+        """Return this signature with ``tags`` added."""
+        return DataSignature(self.type, self.tags | frozenset(tags))
+
+    def __str__(self) -> str:
+        tags = sorted("|".join(t) if isinstance(t, tuple) else t for t in self.tags)
+        return f"{self.type.value} [{', '.join(tags)}]" if tags else self.type.value
+
 
 @dataclass(frozen=True)
 class ExpectedPathSchema:

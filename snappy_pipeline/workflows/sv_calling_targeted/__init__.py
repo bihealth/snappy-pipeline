@@ -47,7 +47,6 @@ class SvCallingTargetedWorkflow(BaseStep):
     #: Workflow name
     name = "sv_calling_targeted"
     config_model_class = SvCallingTargetedConfigModel
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
 
     sheet_shortcut_class = GermlineCaseSheet
@@ -98,9 +97,8 @@ class SvCallingTargetedWorkflow(BaseStep):
         return result
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local targeted SV output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 

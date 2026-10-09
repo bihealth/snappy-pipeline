@@ -11,7 +11,7 @@ import sys
 import tempfile
 import typing
 from collections import OrderedDict
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from functools import cached_property, lru_cache
@@ -660,10 +660,7 @@ class BaseStep:
     #: Override with step name
     name: str
 
-    #: DataSignatures this workflow step consumes
-    consumes: dict[DataSignature, bool] = {}
-
-    #: DataSignatures this workflow step produces
+    #: DataSignatures a task of this step produces; the default of :meth:`task_produces`
     produces: list[DataSignature] = []
 
     #: Default relationships merged into ``build_library_dataframe()``.
@@ -719,18 +716,32 @@ class BaseStep:
     config_model_class: type[SnappyStepModel]
 
     @classmethod
+    def task_produces(
+        cls, config: SnappyStepModel, upstream: Mapping[str, tuple[DataSignature, ...]]
+    ) -> tuple[DataSignature, ...]:
+        """Return the DataSignatures that one task of this step produces.
+
+        ``upstream`` maps each set ``depends_on`` field to the signatures of its upstream task.
+        The default returns :attr:`produces`; override it when the output depends on the task's
+        config or its inputs. ``load_project()`` checks every ``depends_on`` requirement against
+        the result.
+        """
+        return tuple(cls.produces)
+
+    @classmethod
     def get_output_paths(
-        cls, signature: "DataSignature | None" = None, **kwargs
+        cls, config: SnappyStepModel, signature: "DataSignature | None" = None, **kwargs
     ) -> "dict[str, str]":
         """Return **local** output paths for *signature*.
 
         Override in concrete workflow classes to expose this step's outputs to downstream
         consumers via :meth:`get_upstream_paths`.
 
+        :param config: The config of the task whose outputs are requested.
         :param signature: The
             :class:`~snappy_pipeline.workflows.abstract.protocol.DataSignature` requested by the
-            consumer.  Implementations should check ``signature.satisfies(...)`` and raise
-            ``ValueError`` for unsupported signatures.
+            consumer. ``load_project()`` has already checked that the task produces it;
+            implementations only use it to choose between several outputs.
         :param kwargs: Caller-supplied identifiers (e.g. ``library_name``, ``sample_name``)
             used to parametrise the returned path strings.  Implementations may use
             ``{library_name}``-style format strings when the identifiers are omitted.
@@ -738,24 +749,10 @@ class BaseStep:
             a **local** path string (relative to the step's own ``output/`` directory, e.g.
             ``"output/{library_name}/out/{library_name}.bam"``).
         :raises NotImplementedError: When the concrete subclass has not overridden this method.
-        :raises ValueError: When *signature* is not supported by this workflow.
         """
         raise NotImplementedError(
             f"'{cls.__name__}' must implement 'get_output_paths' to act as an upstream provider."
         )
-
-    @classmethod
-    def supports_signature(cls, required: DataSignature | None) -> bool:
-        """Return whether ``required`` is produced by this workflow class."""
-        if required is None:
-            return True
-        return any(provided.satisfies(required) for provided in cls.produces)
-
-    @classmethod
-    def require_signature(cls, required: DataSignature | None) -> None:
-        """Raise ``ValueError`` when ``required`` is unsupported by this workflow class."""
-        if not cls.supports_signature(required):
-            raise ValueError(f"{cls.__name__} does not support signature: {required}")
 
     def __init__(self, workflow: Workflow, project: "Project", task_name: str):
         self.step_name = self.__class__.name
@@ -1103,7 +1100,7 @@ class BaseStep:
 
         # Delegate path construction to the upstream workflow classmethod.
         local_paths = dependency.workflow_cls.get_output_paths(
-            signature=dependency.signature, **kwargs
+            self.project.task_configs[dependency.task_name], dependency.signature, **kwargs
         )
 
         # Prepend upstream task name for Snakemake global namespace.

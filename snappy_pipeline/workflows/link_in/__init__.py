@@ -53,10 +53,8 @@ class LinkInWorkflow(BaseStep):
     config_model_class = LinkIn
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return link_in payload contract for external FASTQ source paths."""
-        if signature is not None and not signature.satisfies(DataSignature(DataType.RAW)):
-            raise ValueError(f"LinkInWorkflow does not support signature: {signature}")
         return {"path": kwargs.get("path", "")}
 
     def get_result_files(self):

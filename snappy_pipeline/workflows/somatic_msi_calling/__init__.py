@@ -174,7 +174,6 @@ class SomaticMsiCallingWorkflow(BaseStep):
 
     #: Step name
     name = "somatic_msi_calling"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"msi"}))]
 
     config_model_class = SomaticMsiCallingConfigModel
@@ -194,9 +193,8 @@ class SomaticMsiCallingWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local MSI calling output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"results": f"output/{lib}/out/{lib}.results.txt"}
 

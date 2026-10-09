@@ -122,7 +122,6 @@ class GeneExpressionReportWorkflow(BaseStep):
 
     #: Workflow name
     name = "gene_expression_report"
-    consumes = {DataSignature(DataType.EXPRESSION, frozenset({"rna"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"expression_report"}))]
 
     config_model_class = GeneExpressionReportConfigModel
@@ -135,14 +134,8 @@ class GeneExpressionReportWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local gene-expression report output paths for downstream consumers."""
-        if signature is not None and not signature.satisfies(
-            DataSignature(DataType.TABULAR, frozenset({"expression_report"}))
-        ):
-            raise ValueError(
-                f"GeneExpressionReportWorkflow does not support signature: {signature}"
-            )
         lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/{lib}/out/{lib}.tsv"}
 

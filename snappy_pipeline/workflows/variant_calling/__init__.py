@@ -215,7 +215,7 @@ from snappy_pipeline.workflows.abstract.common import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_calling.model import TumorNormalMode
+from snappy_pipeline.workflows.variant_calling.model import Tool, TumorNormalMode
 
 from .model import VariantCalling as VariantCallingConfigModel
 
@@ -1241,15 +1241,18 @@ class VariantCallingWorkflow(BaseStep):
     """Workflow implementation for germline variant calling"""
 
     name = "variant_calling"
-    consumes = {DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})): True}
     produces = [
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"})),
-        DataSignature(DataType.VARIANTS, frozenset({"somatic"})),
-        DataSignature(DataType.VARIANTS, frozenset({"germline"})),
-        DataSignature(DataType.VARIANTS),
     ]
     config_model_class = VariantCallingConfigModel
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """Somatic small variants for mutect2, germline small variants for the other tools."""
+        origin = "somatic" if config.tool == Tool.mutect2 else "germline"
+        return (DataSignature(DataType.VARIANTS, frozenset({origin, "snv", "indel"})),)
+
     sheet_shortcut_class = GermlineCaseSheet
 
     #: Default relationship for somatic (mutect2) callers: resolve matched normal.
@@ -1261,7 +1264,7 @@ class VariantCallingWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local VCF output paths for a germline-variants signature.
 
         Arguments:
@@ -1270,7 +1273,6 @@ class VariantCallingWorkflow(BaseStep):
             **kwargs: Accepts ``library_name`` for concrete path rendering; falls back to
                 the ``{library_name}`` wildcard placeholder.
         """
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {
             "vcf": f"output/{lib}/out/{lib}.vcf.gz",

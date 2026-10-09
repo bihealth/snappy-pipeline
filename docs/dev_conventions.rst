@@ -100,6 +100,26 @@ The exception is an input function that needs Snakemake's ``checkpoints`` object
 calls it as ``wf.get_input_files(...)(wildcards, checkpoints)`` from a Snakefile-level function
 (``helper_gcnv_model_*``).
 
+---------
+Contracts
+---------
+
+A task's outputs are described by ``DataSignature`` objects: a data type plus tags such as
+``dna``, ``somatic`` or ``filtered``.
+
+- A step lists what its tasks produce in ``produces``. If that depends on the task's config or
+  its inputs, the step overrides the classmethod ``task_produces(config, upstream)``. For
+  example, ``ngs_mapping`` produces ``alignments [rna]`` for STAR, and ``variant_filtration``
+  adds ``filtered`` to the tags of its input.
+- Each ``depends_on`` field states what it requires with a ``DataSignature`` in its
+  ``Annotated`` metadata. This annotation is the only place a requirement is declared.
+- ``load_project()`` computes the signatures of every task in dependency order and checks
+  each requirement before Snakemake builds any rule. A mismatch fails with a message that names
+  both tasks.
+- ``get_output_paths(config, signature, ...)`` receives the config of the task whose outputs
+  are requested. It does not check the signature again; it only uses it to choose between
+  several outputs.
+
 -----
 Paths
 -----

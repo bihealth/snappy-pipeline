@@ -146,7 +146,6 @@ class VariantCheckingWorkflow(BaseStep):
 
     #: Workflow name
     name = "variant_checking"
-    consumes = {DataSignature(DataType.VARIANTS, frozenset({"germline"})): True}
     produces = [DataSignature(DataType.QC, frozenset({"pedigree_check"}))]
     config_model_class = VariantCheckingConfigModel
 
@@ -154,9 +153,8 @@ class VariantCheckingWorkflow(BaseStep):
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local variant-checking output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"ped_check": f"output/{lib}/out/{lib}.ped_check.csv"}
 

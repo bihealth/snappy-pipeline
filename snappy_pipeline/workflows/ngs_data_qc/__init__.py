@@ -257,14 +257,12 @@ class NgsDataQcWorkflow(BaseStep):
 
     name = "ngs_data_qc"
     config_model_class = NgsDataQcConfigModel
-    consumes = {DataSignature(DataType.RAW): True, DataSignature(DataType.ALIGNMENTS): False}
     produces = [DataSignature(DataType.QC)]
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local NGS QC output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/report/fastqc/.done"}
 

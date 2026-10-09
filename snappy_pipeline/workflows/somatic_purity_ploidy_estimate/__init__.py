@@ -238,7 +238,6 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
 
     #: Workflow name
     name = "somatic_purity_ploidy_estimate"
-    consumes = {DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})): True}
     produces = [DataSignature(DataType.TABULAR, frozenset({"purity_ploidy"}))]
 
     config_model_class = SomaticPurityPloidyEstimateConfigModel
@@ -258,9 +257,8 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
     }
 
     @classmethod
-    def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
+    def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local purity/ploidy output paths for downstream consumers."""
-        cls.require_signature(signature)
         lib = kwargs.get("library_name", "{library_name}")
         return {"done": f"output/{lib}/out/.done"}
 
