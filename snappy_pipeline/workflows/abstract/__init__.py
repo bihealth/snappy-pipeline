@@ -6,6 +6,7 @@ import datetime
 import logging
 import os
 import os.path
+import re
 import sys
 import tempfile
 import typing
@@ -1590,6 +1591,92 @@ def _derive_pedigree_from_raw_sheet(sheet):
     }
 
 
+#: Standard columns of the library dataframe built by :func:`build_library_dataframe`.
+_LIBRARY_COLUMNS = [
+    "library_name",
+    "extraction_type",
+    "kind",
+    "role",
+    "is_primary",
+    "sex",
+    "donor_name",
+    "sample_name",
+    "cohort_name",
+    "father_name",
+    "mother_name",
+    "disease_state",
+    "tissue_type",
+]
+
+#: Sample sheet keys that already feed standard columns and are not added again.
+_SHEET_KEYS_IN_LIBRARY_COLUMNS = frozenset(
+    (
+        "extractionType",
+        "isTumor",
+        "sex",
+        "isAffected",
+        "fatherName",
+        "motherName",
+        "fatherPk",
+        "motherPk",
+    )
+)
+
+
+def _snake_case(name: str) -> str:
+    """Return ``name`` in snake_case, e.g. ``libraryKit`` -> ``library_kit``."""
+    name = re.sub(r"\W+", "_", name)
+    name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name)
+    return re.sub(r"_+", "_", name).strip("_").lower()
+
+
+def _library_extra_columns(raw_sheet) -> dict[str, dict[str, Any]]:
+    """Return library name -> extra columns from the sample sheet's ``extra_infos``.
+
+    Each library gets the ``extra_infos`` of its bio entity, bio sample, test sample and
+    itself, with keys converted to snake_case. Keys that already feed standard columns
+    (:data:`_SHEET_KEYS_IN_LIBRARY_COLUMNS`) are skipped.
+
+    Raises ``ValueError`` when a key maps to a standard column, or when two keys map to
+    the same column for one library with different values.
+    """
+    result: dict[str, dict[str, Any]] = {}
+    for bio_entity in raw_sheet.bio_entities.values():
+        for bio_sample in bio_entity.bio_samples.values():
+            for test_sample in bio_sample.test_samples.values():
+                for library in test_sample.ngs_libraries.values():
+                    columns: dict[str, Any] = {}
+                    sources: dict[str, str] = {}
+                    levels = (
+                        ("bio entity", bio_entity),
+                        ("bio sample", bio_sample),
+                        ("test sample", test_sample),
+                        ("NGS library", library),
+                    )
+                    for level, entity in levels:
+                        for key, value in (entity.extra_infos or {}).items():
+                            if key in _SHEET_KEYS_IN_LIBRARY_COLUMNS:
+                                continue
+                            column = _snake_case(key)
+                            source = f"{key!r} of {level} {entity.name!r}"
+                            if column in _LIBRARY_COLUMNS:
+                                raise ValueError(
+                                    f"Sample sheet column {source} maps to {column!r}, "
+                                    "which is a standard library column."
+                                )
+                            if column in columns and columns[column] != value:
+                                raise ValueError(
+                                    f"Sample sheet columns {sources[column]} and {source} both "
+                                    f"map to {column!r} for library {library.name!r}, with "
+                                    "different values."
+                                )
+                            columns.setdefault(column, value)
+                            sources.setdefault(column, source)
+                    result[library.name] = columns
+    return result
+
+
 def build_library_dataframe(
     data_set_infos,
     sheets,
@@ -1628,6 +1715,10 @@ def build_library_dataframe(
         * ``donor_name`` — patient / family identifier
         * ``sample_name`` — bio-sample name
         * ``tissue_type`` — ``"tumor"``, ``"normal"``, or ``"unknown"``
+
+        Further sample sheet columns (``extra_infos`` of the library and its test sample,
+        bio sample and bio entity) are added in snake_case, e.g. ``libraryKit`` becomes
+        ``library_kit``; see :func:`_library_extra_columns`.
     """
     import pandas as pd
     from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
@@ -1637,6 +1728,8 @@ def build_library_dataframe(
     for info, _raw_sheet, shortcut_sheet in zip(data_set_infos, sheets, shortcut_sheets):
         if info.is_background:
             continue
+
+        extra_columns = _library_extra_columns(_raw_sheet) if _raw_sheet is not None else {}
 
         sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
 
@@ -1690,6 +1783,7 @@ def build_library_dataframe(
                                     "mother_name": "0",
                                     "disease_state": 0,
                                     "tissue_type": "tumor" if is_tumor else "normal",
+                                    **extra_columns.get(lib.name, {}),
                                 }
                             )
 
@@ -1859,25 +1953,13 @@ def build_library_dataframe(
                         "mother_name": lib_mother.get(lib_name, "0"),
                         "disease_state": lib_disease.get(lib_name, 0),
                         "tissue_type": "unknown",
+                        **extra_columns.get(lib_name, {}),
                     }
                 )
 
-    _COLS = [
-        "library_name",
-        "extraction_type",
-        "kind",
-        "role",
-        "is_primary",
-        "sex",
-        "donor_name",
-        "sample_name",
-        "cohort_name",
-        "father_name",
-        "mother_name",
-        "disease_state",
-        "tissue_type",
-    ]
-    df = pd.DataFrame(rows, columns=_COLS) if rows else pd.DataFrame(columns=_COLS)
+    extra_column_names = sorted({column for row in rows for column in row} - set(_LIBRARY_COLUMNS))
+    columns = _LIBRARY_COLUMNS + extra_column_names
+    df = pd.DataFrame(rows, columns=columns) if rows else pd.DataFrame(columns=columns)
     if relationships:
         df = resolve_relationships(df, relationships)
     return df
