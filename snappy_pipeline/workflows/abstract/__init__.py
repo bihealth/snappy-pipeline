@@ -292,14 +292,8 @@ class WritePedigreeStepPart(BaseStepPart):
 
         # TODO only_trios not fully implemented via pandas yet, fall back to writing all
 
-        tpl = "output/{library_name}/out/{library_name}{ext}"
         for _, row in df_cohort.iterrows():
-            path = tpl.format(
-                library_name=row["library_name"],
-                ext=".bam",
-                **wildcards,
-            )
-            yield self.parent.upstream("alignments")(path)
+            yield self.parent.get_upstream_paths("alignments", library_name=row["library_name"]).bam
 
     def get_output_files(self, action):
         self._validate_action(action=action)

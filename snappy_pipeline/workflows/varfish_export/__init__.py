@@ -277,8 +277,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
         ]
 
-        path = "output/{sv_caller}.{index_ngs_library}/out/{sv_caller}.{index_ngs_library}.vcf.gz"
-
         vcfs = []
         for sv_caller in sv_callers:
             if any(map(skip_libraries[sv_caller].__contains__, library_names)):
@@ -303,12 +301,9 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
                     continue
 
             vcfs.append(
-                self.parent.upstream("structural_variants")(
-                    path.format(
-                        sv_caller=sv_caller,
-                        index_ngs_library=wildcards.index_ngs_library,
-                    )
-                )
+                self.parent.get_upstream_paths(
+                    "structural_variants", library_name=wildcards.index_ngs_library
+                )["vcf"]
             )
         yield "vcf", vcfs
 
@@ -332,23 +327,16 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
     def _get_input_files_bam_qc(self, wildcards):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
-        ngs_mapping = self.parent.upstream("alignments")
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
         for donor in pedigree.donors:
             if not donor.dna_ngs_library:
                 continue
-            tpl = (
-                f"output/{donor.dna_ngs_library.name}/report/bam_qc/"
-                f"{donor.dna_ngs_library.name}.bam.%s.txt"
+            qc = self.parent.get_upstream_paths(
+                "alignments", library_name=donor.dna_ngs_library.name
             )
-            for key in ("bamstats", "flagstats", "idxstats"):
-                result[key].append(ngs_mapping(tpl % key))
-            path = (
-                f"output/{donor.dna_ngs_library.name}/report/alfred_qc/"
-                f"{donor.dna_ngs_library.name}.alfred.json.gz"
-            )
-            result["alfred_qc"].append(ngs_mapping(path))
+            for key in result:
+                result[key].append(getattr(qc, key))
         return result
 
     @dictify

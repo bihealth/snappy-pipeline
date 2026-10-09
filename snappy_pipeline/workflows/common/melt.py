@@ -91,10 +91,11 @@ class MeltStepPart(
 
     @dictify
     def _get_input_files_preprocess(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
-        infix = f"{wildcards.library_name}"
-        yield "bam", ngs_mapping(f"output/{infix}/out/{infix}.bam")
-        yield "bai", ngs_mapping(f"output/{infix}/out/{infix}.bam.bai")
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
         yield "reference", self.w_config.static_data_config.reference.path
 
     @dictify

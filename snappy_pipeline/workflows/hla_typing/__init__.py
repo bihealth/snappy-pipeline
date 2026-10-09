@@ -240,11 +240,10 @@ class ArcasHlaStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards):
         """Return input files"""
         yield "ref_done", "work/arcashla.prepare_reference/out/.done"
-        tpl = "output/{library_name}/out/{library_name}.bam"
-        yield (
-            "bam",
-            self.parent.upstream("alignments")(tpl.format(mapper=self.mapper, **wildcards)),
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
         )
+        yield "bam", alignments.bam
 
     @dictify
     def get_output_files(self, action):

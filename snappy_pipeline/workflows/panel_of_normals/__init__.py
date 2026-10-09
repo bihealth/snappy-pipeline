@@ -277,10 +277,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         yield "container", "work/containers/out/purecn.simg"
         tpl = "work/purecn/out/{library_name}_coverage_loess.txt.gz"
         yield "normals", [tpl.format(library_name=lib) for lib in self.normal_libraries]
-        # The Mutect2 genomicsDB is the output of the upstream panel_of_normals (mutect2) task;
-        # resolve it via upstream() so Snakemake tracks it as a real dependency.
-        pon = self.parent.upstream("panel_of_normals")
-        yield "genomicsdb", pon("work/mutect2/out/mutect2.genomicsDB.tar.gz")
+        # The Mutect2 genomicsDB is the output of the upstream panel_of_normals (mutect2) task.
+        yield "genomicsdb", self.parent.get_upstream_paths("panel_of_normals").genomicsdb
 
     def get_output_files(self, action):
         if self.name != self.config.tool:
@@ -383,13 +381,13 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
-        ngs_mapping = self.parent.upstream("alignments")
-        tpl = "output/{normal_library}/out/{normal_library}.bam"
-        bam = ngs_mapping(tpl.format(**wildcards))
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.normal_library
+        )
         scatteritem_base_path = "work/{normal_library}/par/scatter/{scatteritem}.region.bed"
         return {
-            "normal_bam": bam,
-            "normal_bai": bam + ".bai",
+            "normal_bam": alignments.bam,
+            "normal_bai": alignments.bai,
             "region": scatteritem_base_path.format(**wildcards),
             "reference": self.w_config.static_data_config.reference.path,
         }
@@ -583,13 +581,13 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             if self.config.cnvkit.path_annotation:
                 input_files["annotate"] = self.config.cnvkit.path_annotation
             return input_files
-        tpl = "output/{normal_library}/out/{normal_library}.bam"
-        ngs_mapping = self.parent.upstream("alignments")
-        bams = [ngs_mapping(tpl.format(normal_library=x)) for x in self.normal_libraries]
-        bais = [x + ".bai" for x in bams]
+        alignments = [
+            self.parent.get_upstream_paths("alignments", library_name=x)
+            for x in self.normal_libraries
+        ]
         input_files = {
-            "bams": bams,
-            "bais": bais,
+            "bams": [x.bam for x in alignments],
+            "bais": [x.bai for x in alignments],
             "reference": self.w_config.static_data_config.reference.path,
         }
         if self.config.cnvkit.path_access:
@@ -611,14 +609,14 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         """Helper wrapper function for computing coverage"""
-        ngs_mapping = self.parent.upstream("alignments")
-        tpl = "output/{normal_library}/out/{normal_library}.bam"
-        bam = ngs_mapping(tpl.format(**wildcards))
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.normal_library
+        )
         return {
             "target": "work/cnvkit/out/cnvkit.target.bed".format(**wildcards),
             "antitarget": "work/cnvkit/out/cnvkit.antitarget.bed".format(**wildcards),
-            "bam": bam,
-            "bai": bam + ".bai",
+            "bam": alignments.bam,
+            "bai": alignments.bai,
             "reference": self.w_config.static_data_config.reference.path,
         }
 

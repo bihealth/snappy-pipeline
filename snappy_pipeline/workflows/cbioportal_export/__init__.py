@@ -233,8 +233,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input vcf for each output maf"""
-        tpl = os.path.join("output", self.name_pattern, "out", self.name_pattern + ".vcf.gz")
-        yield "vcf", self.parent.upstream("variants")(tpl.format(**wildcards))
+        variants = self.parent.get_upstream_paths("variants", library_name=wildcards.tumor_library)
+        yield "vcf", variants.vcf
 
     @dictify
     def get_log_file(self, action):
@@ -326,16 +326,11 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return the library"""
-        name_pattern = "{tumor_library}"
         yield "features", self.parent.w_config.static_data_config.features.path
-        yield (
-            "DNAcopy",
-            self.parent.upstream("copy_number")(
-                os.path.join("output", name_pattern, "out", name_pattern + "_dnacopy.seg").format(
-                    **wildcards
-                )
-            ),
+        copy_number = self.parent.get_upstream_paths(
+            "copy_number", library_name=wildcards.tumor_library
         )
+        yield "DNAcopy", copy_number.dnacopy_seg
 
     @dictify
     def get_output_files(self, action):
@@ -462,16 +457,8 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
     def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
         for lib in self._yield_libraries():
-            local_path = os.path.join(
-                "output",
-                self._seg_name_pattern,
-                "out",
-                self._seg_name_pattern + "_dnacopy.seg",
-            ).format(library_name=lib.name)
-            yield (
-                lib.test_sample.bio_sample.name,
-                self.parent.upstream("copy_number")(local_path),
-            )
+            copy_number = self.parent.get_upstream_paths("copy_number", library_name=lib.name)
+            yield lib.test_sample.bio_sample.name, copy_number.dnacopy_seg
 
     def _get_params_run(self, wildcards) -> dict[str, str]:
         return {"action_type": "segment", "mappings": ""}

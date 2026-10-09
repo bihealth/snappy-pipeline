@@ -162,14 +162,10 @@ class PvacToolsStepPart(BaseStepPart):
             self.proteome_file = None
 
     def _get_input_files_normalize(self, wildcards: Wildcards) -> dict[str, str]:
-        tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variants")
-        return {"annotated": annotation(tpl)}
+        return {"annotated": self.parent.somatic_vcf(wildcards.tumor_dna, full=False)}
 
     def _get_input_files_normalize_full(self, wildcards: Wildcards) -> dict[str, str]:
-        tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variants")
-        return {"annotated": annotation(tpl)}
+        return {"annotated": self.parent.somatic_vcf(wildcards.tumor_dna, full=True)}
 
     def get_output_files(self, action):
         if action == "install":
@@ -234,7 +230,6 @@ class PvacToolsStepPart(BaseStepPart):
 
     @listify
     def _get_hla_files(self, wildcards: Wildcards):
-        hla_typing = self.parent.upstream("hla_types")
         tumor_dna = wildcards.tumor_dna
         normal_dna = self.parent.tumor_dna.get(tumor_dna, None)
         tumor_rna = self.parent.tumor_rna.get(tumor_dna, None)
@@ -242,18 +237,18 @@ class PvacToolsStepPart(BaseStepPart):
         input_files = []
         for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
             if self.hla_tools.get("dna", {}).get(mhc_class.name, None):
-                tpl = "output/{library_name}/out/{library_name}.json"
-                input_files.append(tpl.format(library_name=tumor_dna))
+                input_files.append(tumor_dna)
                 if normal_dna:
-                    input_files.append(tpl.format(library_name=normal_dna))
+                    input_files.append(normal_dna)
         if tumor_rna:
             for mhc_class in (MHC_CLASS_I, MHC_CLASS_II):
                 if self.hla_tools.get("rna", {}).get(mhc_class.name, None):
-                    tpl = "output/{library_name}/out/{library_name}.json"
-                    input_files.append(tpl.format(library_name=tumor_rna))
+                    input_files.append(tumor_rna)
 
-        for f in input_files:
-            yield hla_typing(f)
+        for library_name in input_files:
+            yield self.parent.get_upstream_paths("hla_types", library_name=library_name)[
+                "calls_json"
+            ]
 
     @staticmethod
     def _extra_args_flags(args: dict[str, Any]):
@@ -343,12 +338,9 @@ class PvacSeqStepPart(PvacToolsStepPart):
         )
         input_files = {"bam": alignments.bam}
 
-        if self.cfg.use_all_transcripts:
-            tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
-        else:
-            tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variants")
-        input_files["loci"] = annotation(tpl)
+        input_files["loci"] = self.parent.somatic_vcf(
+            wildcards.tumor_dna, full=self.cfg.use_all_transcripts
+        )
         input_files["reference"] = self.w_config.static_data_config.reference.path
         return input_files
 
@@ -601,21 +593,14 @@ class PvacSpliceStepPart(PvacToolsStepPart):
     def _get_input_files_junction(self, wildcards: Wildcards) -> dict[str, str]:
         input_files = {}
 
-        if self.cfg.use_all_transcripts:
-            tpl = "output/{tpl}/out/{tpl}.full.vcf.gz".format(tpl=self.prepare_tpl)
-        else:
-            tpl = "output/{tpl}/out/{tpl}.vcf.gz".format(tpl=self.prepare_tpl)
-        annotation = self.parent.upstream("somatic_variants")
-        input_files["annotated"] = annotation(tpl)
+        input_files["annotated"] = self.parent.somatic_vcf(
+            wildcards.tumor_dna, full=self.cfg.use_all_transcripts
+        )
 
         rna_lib = self.parent.tumor_rna[wildcards.tumor_dna]
         alignments = self.parent.get_upstream_paths("alignments", library_name=rna_lib)
         input_files["bam"] = alignments.bam
-
-        ngs_mapping = self.parent.upstream("alignments")
-        input_files["strandedness"] = ngs_mapping(
-            f"output/{rna_lib}/strandedness/{rna_lib}.decision.json"
-        )
+        input_files["strandedness"] = alignments.strandedness
 
         input_files["reference"] = self.w_config.static_data_config.reference.path
         input_files["features"] = "work/pvacsplice_workaround/out/features.gtf"
@@ -967,6 +952,18 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
     }
+
+    def somatic_vcf(self, library_name: str, full: bool) -> str:
+        """Return the somatic VCF of ``library_name``; ``full`` for the unfiltered mutect2 calls."""
+        variants = self.get_upstream_paths("somatic_variants", library_name=library_name)
+        if not full:
+            return variants.vcf
+        if variants.full_vcf is None:
+            raise ValueError(
+                f"Task {self.task_name!r} needs unfiltered calls (use_all_transcripts), which only "
+                "a mutect2 variant_calling task in depends_on.somatic_variants provides"
+            )
+        return variants.full_vcf
 
     def __init__(self, workflow, project, task_name):
 

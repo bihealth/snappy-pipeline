@@ -75,21 +75,17 @@ class AscatStepPart(BaseStepPart):
 
     def _get_input_files_baf_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
-        ngs_mapping = self.parent.upstream("alignments")
-        base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-        return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
-        }
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.tumor_library
+        )
+        return {"bam": alignments.bam, "bai": alignments.bai}
 
     def _get_input_files_baf_normal(self, wildcards):
         """Return input files for generating BAF file for the normal."""
-        ngs_mapping = self.parent.upstream("alignments")
-        base_path = ("output/{normal_library}/out/{normal_library}").format(**wildcards)
-        return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
-        }
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.normal_library
+        )
+        return {"bam": alignments.bam, "bai": alignments.bai}
 
     def _get_input_files_cnv_tumor(self, wildcards):
         """Return input files for generating BAF file for the tumor."""
@@ -101,33 +97,17 @@ class AscatStepPart(BaseStepPart):
 
     def _get_input_files_cnv_tumor_wes(self, wildcards):
         """Return input files for generating CNV file from copywriter for tumor."""
-        base_path = ("work/copywriter.{tumor_library}/out/copywriter.{tumor_library}").format(
-            **wildcards
+        raise NotImplementedError(
+            "Copywriter-based WES CNV input is not available: no somatic_targeted_seq_cnv_calling "
+            "tool writes copywriter bins."
         )
-        return {
-            "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
-                base_path + "_bins.txt"
-            )
-        }
 
     def _get_input_files_cnv_normal_wes(self, wildcards):
         """Return input files for generating CNV file from copywriter for normal."""
-        df = self.parent.build_library_dataframe()
-        normal_df = df[df["library_name"] == wildcards["normal_library"]]
-        tumor_library = normal_df.iloc[0].get("library_name") if not normal_df.empty else None
-        # Find tumor library that has this normal as matched_normal_lib
-        if tumor_library is None:
-            tumor_df = df[df["matched_normal_lib"] == wildcards["normal_library"]]
-            if not tumor_df.empty:
-                tumor_library = tumor_df.iloc[0]["library_name"]
-        base_path = ("work/copywriter.{tumor_library}/out/copywriter.{tumor_library}").format(
-            tumor_library=tumor_library, **wildcards
+        raise NotImplementedError(
+            "Copywriter-based WES CNV input is not available: no somatic_targeted_seq_cnv_calling "
+            "tool writes copywriter bins."
         )
-        return {
-            "bins": self.parent.upstream("somatic_targeted_seq_cnv_calling")(
-                base_path + "_bins.txt"
-            )
-        }
 
     @dictify
     def _get_input_files_run_ascat(self, wildcards):

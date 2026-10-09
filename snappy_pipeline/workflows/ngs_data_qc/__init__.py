@@ -154,11 +154,10 @@ class PicardStepPart(BaseStepPart):
         if "CollectHsMetrics" in self.config.picard.programs:
             yield "baits", "work/static_data/picard/out/baits.interval_list"
             yield "targets", "work/static_data/picard/out/targets.interval_list"
-        infix = f"{wildcards.library_name}"
-        yield (
-            "bam",
-            self.parent.upstream("alignments")(f"output/{infix}/out/{infix}.bam"),
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
         )
+        yield "bam", alignments.bam
 
     @dictify
     def get_output_files(self, action):

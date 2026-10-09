@@ -880,23 +880,20 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
-        tumor_base_path = ("output/{library_name}/out/{library_name}").format(**wildcards)
+        tumor = self.parent.get_upstream_paths("alignments", library_name=wildcards.library_name)
 
         input_files = {
-            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+            "tumor_bam": tumor.bam,
+            "tumor_bai": tumor.bai,
         }
 
         normal_library = self.get_normal_lib_name(wildcards)
         if normal_library:
-            normal_base_path = "output/{normal_library}/out/{normal_library}".format(
-                normal_library=normal_library, **wildcards
-            )
+            normal = self.parent.get_upstream_paths("alignments", library_name=normal_library)
             input_files.update(
                 {
-                    "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                    "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                    "normal_bam": normal.bam,
+                    "normal_bai": normal.bai,
                 }
             )
 
@@ -1021,17 +1018,16 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
 
     def _get_input_files_run(self, wildcards):
-        tumor_base_path = ("output/{library_name}/out/{library_name}").format(**wildcards)
         scatteritem_base_path = (
             "work/{library_name}/out/{library_name}/mutect2par/scatter/{scatteritem}".format(
                 **wildcards
             )
         )
 
-        ngs_mapping = self.parent.upstream("alignments")
+        tumor = self.parent.get_upstream_paths("alignments", library_name=wildcards.library_name)
         input_files = {
-            "tumor_bam": ngs_mapping(tumor_base_path + ".bam"),
-            "tumor_bai": ngs_mapping(tumor_base_path + ".bam.bai"),
+            "tumor_bam": tumor.bam,
+            "tumor_bai": tumor.bai,
             "region": scatteritem_base_path + ".region.bed",
         }
 
@@ -1039,13 +1035,11 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         if tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
             normal_library = self.get_normal_lib_name(wildcards)
             if normal_library:
-                normal_base_path = "output/{normal_library}/out/{normal_library}".format(
-                    normal_library=normal_library, **wildcards
-                )
+                normal = self.parent.get_upstream_paths("alignments", library_name=normal_library)
                 input_files.update(
                     {
-                        "normal_bam": ngs_mapping(normal_base_path + ".bam"),
-                        "normal_bai": ngs_mapping(normal_base_path + ".bam.bai"),
+                        "normal_bam": normal.bam,
+                        "normal_bai": normal.bai,
                     }
                 )
             else:
@@ -1093,23 +1087,23 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return input_files
 
     def _get_input_files_pileup_normal(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
-        base_path = "output/{normal_library}/out/{normal_library}".format(
-            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=self.get_normal_lib_name(wildcards)
         )
         return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam"),
+            "bam": alignments.bam,
+            "bai": alignments.bam,  # TODO: bai is the BAM path; fixed in a separate commit
             "reference": self.w_config.static_data_config.reference.path,
             "common_variants": self.config.mutect2.contamination.common_variants,
         }
 
     def _get_input_files_pileup_tumor(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
-        base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
         return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam"),
+            "bam": alignments.bam,
+            "bai": alignments.bam,  # TODO: bai is the BAM path; fixed in a separate commit
             "reference": self.w_config.static_data_config.reference.path,
             "common_variants": self.config.mutect2.contamination.common_variants,
         }

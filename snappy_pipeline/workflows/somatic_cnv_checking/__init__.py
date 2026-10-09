@@ -109,16 +109,15 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
     actions = ("normal", "tumor")
 
     def _get_input_files_normal(self, wildcards):
-        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-        ngs = self.parent.upstream("alignments")
-        return {
-            "bam": ngs(base_path + ".bam"),
-            "bai": ngs(base_path + ".bam.bai"),
-        }
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.tumor_library
+        )
+        return {"bam": alignments.bam, "bai": alignments.bai}
 
     def _get_input_files_tumor(self, wildcards):
-        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-        ngs = self.parent.upstream("alignments")
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.tumor_library
+        )
         normal_lib = self.parent._get_normal_lib(wildcards.tumor_library)
         return {
             "locii": "work/{normal_library}/out/{normal_library}.normal.vcf.gz".format(
@@ -127,8 +126,8 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
             "locii_tbi": "work/{normal_library}/out/{normal_library}.normal.vcf.gz.tbi".format(
                 normal_library=normal_lib, **wildcards
             ),
-            "bam": ngs(base_path + ".bam"),
-            "bai": ngs(base_path + ".bam.bai"),
+            "bam": alignments.bam,
+            "bai": alignments.bai,
         }
 
     def get_output_files(self, action):
@@ -182,8 +181,9 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".tumor.vcf.gz")
         filenames["tumor"] = tpl.format(**wildcards)
         filenames["tumor_tbi"] = filenames["tumor"] + ".tbi"
-        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
-        filenames["cnv"] = self.parent.upstream("copy_number")(base_path + "_dnacopy.seg")
+        filenames["cnv"] = self.parent.get_upstream_paths(
+            "copy_number", library_name=wildcards.tumor_library
+        ).dnacopy_seg
         return filenames
 
     @dictify

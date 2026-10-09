@@ -60,12 +60,13 @@ class MantaStepPart(
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
         bams = []
         for donor in self.index_ngs_library_to_pedigree[wildcards.library_name].donors:
             if donor.dna_ngs_library:
-                token = f"{donor.dna_ngs_library.name}"
-                bams.append(ngs_mapping(f"output/{token}/out/{token}.bam"))
+                alignments = self.parent.get_upstream_paths(
+                    "alignments", library_name=donor.dna_ngs_library.name
+                )
+                bams.append(alignments.bam)
         yield "bam", bams
         yield "reference", self.parent.w_config.static_data_config.reference.path
 

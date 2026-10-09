@@ -124,17 +124,16 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
         # Get names of primary libraries of the selected cancer bio sample and the
         # corresponding primary normal sample
-        normal_base_path = "output/{normal_library}/out/{normal_library}".format(
-            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        normal = self.parent.get_upstream_paths(
+            "alignments", library_name=self.get_normal_lib_name(wildcards)
         )
-        cancer_base_path = ("output/{tumor_library}/out/{tumor_library}").format(**wildcards)
-        yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
-        yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
-        yield "tumor_bam", ngs_mapping(cancer_base_path + ".bam")
-        yield "tumor_bai", ngs_mapping(cancer_base_path + ".bam.bai")
+        tumor = self.parent.get_upstream_paths("alignments", library_name=wildcards.tumor_library)
+        yield "normal_bam", normal.bam
+        yield "normal_bai", normal.bai
+        yield "tumor_bam", tumor.bam
+        yield "tumor_bai", tumor.bai
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -231,11 +230,12 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_input_files_coverage(self, wildcards):
         """Return input files that "cnvetti coverage" needs"""
-        ngs_mapping = self.parent.upstream("alignments")
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
         # Yield input BAM and BAI file
-        bam_tpl = "output/{library_name}/out/{library_name}{ext}"
-        for ext in (".bam", ".bam.bai"):
-            yield ext.split(".")[-1], ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
 
     @dictify
     def _get_input_files_tumor_normal_ratio(self, wildcards):
@@ -416,12 +416,10 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.upstream("alignments")
-        base_path = "output/{library_name}/out/{library_name}".format(**wildcards)
-        return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
-        }
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        return {"bam": alignments.bam, "bai": alignments.bai}
 
     def _get_input_files_fix(self, wildcards):
         tpl_base = "{library_name}"

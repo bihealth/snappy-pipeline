@@ -208,22 +208,21 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
         tumor_library = self._resolve_library_name(wildcards.tumor_library)
-        normal_base_path = "output/{normal_library}/out/{normal_library}".format(
-            normal_library=self.get_normal_lib_name(wildcards), **wildcards
+        normal = self.parent.get_upstream_paths(
+            "alignments", library_name=self.get_normal_lib_name(wildcards)
         )
-        tumor_base_path = f"output/{tumor_library}/out/{tumor_library}"
+        tumor = self.parent.get_upstream_paths("alignments", library_name=tumor_library)
         yield (
             "gc",
             "work/static_data/out/sequenza.{length}.wig.gz".format(
                 length=self.config.sequenza.length,
             ),
         )
-        yield "normal_bam", ngs_mapping(normal_base_path + ".bam")
-        yield "normal_bai", ngs_mapping(normal_base_path + ".bam.bai")
-        yield "tumor_bam", ngs_mapping(tumor_base_path + ".bam")
-        yield "tumor_bai", ngs_mapping(tumor_base_path + ".bam.bai")
+        yield "normal_bam", normal.bam
+        yield "normal_bai", normal.bai
+        yield "tumor_bam", tumor.bam
+        yield "tumor_bai", tumor.bai
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -347,36 +346,23 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 name_pattern + "_coverage_loess.txt.gz",
             ).format(**wildcards),
         )
-        pon = self.parent.upstream("panel_of_normals")
+        pon = self.parent.get_upstream_paths("panel_of_normals")
         somatic_vcf = self.parent.get_upstream_paths(
             "variants", library_name=wildcards.tumor_library
         )
         yield "vcf", getattr(somatic_vcf, "full_vcf", None) or getattr(somatic_vcf, "vcf", None)
-        purecn_cfg = self.config.purecn
-        yield "normaldb", pon("output/purecn/out/purecn.panel_of_normals.rds")
-        yield "mapping_bias", pon("output/purecn/out/purecn.mapping_bias.rds")
-        yield (
-            "intervals",
-            pon(
-                f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
-            ),
-        )
+        yield "normaldb", pon.panel_of_normals
+        yield "mapping_bias", pon.mapping_bias
+        yield "intervals", pon.intervals
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
-        pon = self.parent.upstream("panel_of_normals")
-        name_pattern = "{tumor_library}".format(**wildcards)
-        base_path = os.path.join("output", name_pattern, "out", name_pattern)
-        yield "bam", ngs_mapping(base_path + ".bam")
-        yield "bai", ngs_mapping(base_path + ".bam.bai")
-        purecn_cfg = self.config.purecn
-        yield (
-            "intervals",
-            pon(
-                f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
-            ),
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.tumor_library
         )
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
+        yield "intervals", self.parent.get_upstream_paths("panel_of_normals").intervals
 
     def get_output_files(self, action):
         """Return output paths, dependent on rule"""
@@ -412,13 +398,10 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         config_dump = self.config.get(self.name).model_dump(by_alias=True)
         # Inject PON file paths resolved from the panel_of_normals dependency so that
         # the wrapper can access them via config["path_*"] as before.
-        pon = self.parent.upstream("panel_of_normals")
-        purecn_cfg = self.config.purecn
-        config_dump["path_panel_of_normals"] = pon("output/purecn/out/purecn.panel_of_normals.rds")
-        config_dump["path_mapping_bias"] = pon("output/purecn/out/purecn.mapping_bias.rds")
-        config_dump["path_intervals"] = pon(
-            f"output/purecn/out/{purecn_cfg.enrichment_kit_name}_{purecn_cfg.genome_name}.list"
-        )
+        pon = self.parent.get_upstream_paths("panel_of_normals")
+        config_dump["path_panel_of_normals"] = pon.panel_of_normals
+        config_dump["path_mapping_bias"] = pon.mapping_bias
+        config_dump["path_intervals"] = pon.intervals
         return {
             "config": config_dump,
             "mapper": mapper,
@@ -475,11 +458,12 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
-        ngs_mapping = self.parent.upstream("alignments")
-        base_path = "output/{tumor_library}/out/{tumor_library}".format(**wildcards)
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.tumor_library
+        )
         return {
-            "bam": ngs_mapping(base_path + ".bam"),
-            "bai": ngs_mapping(base_path + ".bam.bai"),
+            "bam": alignments.bam,
+            "bai": alignments.bai,
             "reference": self.w_config.static_data_config.reference.path,
             "target": self.config.cnvkit.path_target,
             "antitarget": self.config.cnvkit.path_antitarget,
@@ -491,9 +475,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return {
             "target": tpl.format(target="target", **wildcards),
             "antitarget": tpl.format(target="antitarget", **wildcards),
-            "ref": self.parent.upstream("panel_of_normals")(
-                "output/cnvkit/out/cnvkit.panel_of_normals.cnn"
-            ),
+            "ref": self.parent.get_upstream_paths("panel_of_normals").panel_of_normals,
         }
 
     def _get_input_files_segment(self, wildcards):

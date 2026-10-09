@@ -91,18 +91,15 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         # TODO: For instance, given pedigree (P001, P002, P003) it will return three runtime the
         # TODO: same value: '../ngs_mapping/output/bwa.P001-N1-DNA1-WGS1/out/bwa.P001-N1-DNA1-WGS1.bam'
         _ = donor
-        return self.parent.upstream("alignments")(
-            "output/{index_library}/out/{index_library}.bam".format(**wildcards)
-        )
+        return self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.index_library
+        ).bam
 
     def _get_path_vcf(self, wildcards, real_index):
-        name_pattern = "{prev_token}.{real_index_library}"
-        input_path = ("output/" + name_pattern + "/out/" + name_pattern).format(
-            prev_token=self.prev_token,
-            real_index_library=real_index.dna_ngs_library.name,
-            **wildcards,
-        )
-        return self.parent.upstream(self.previous_step)(input_path + ".vcf.gz")
+        kwargs = {"library_name": real_index.dna_ngs_library.name}
+        if self.previous_step == "phased_variants":
+            kwargs["phasing"] = "gatk_pbt.gatk_rbp"
+        return self.parent.get_upstream_paths(self.previous_step, **kwargs).vcf
 
     @dictify
     def _get_input_files_run(self, wildcards):

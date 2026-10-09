@@ -59,10 +59,11 @@ class CoverageCommonMixin:
         name_pattern = f"gcnv_preprocess_intervals.{library_kit}"
         yield ext, f"work/{name_pattern}/out/{name_pattern}.{ext}"
         # Yield input BAM and BAI files
-        ngs_mapping = self.parent.upstream("alignments")
-        bam_tpl = "output/{library_name}/out/{library_name}{ext}"
-        for key, ext in {"bam": ".bam", "bai": ".bam.bai"}.items():
-            yield key, ngs_mapping(bam_tpl.format(ext=ext, **wildcards))
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
 
     @dictify
     def _get_output_files_coverage(self):

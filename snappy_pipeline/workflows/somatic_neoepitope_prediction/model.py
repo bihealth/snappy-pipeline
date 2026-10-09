@@ -13,7 +13,7 @@ from snappy_pipeline.workflows.hla_typing.model import (
     MHCIIClassDnaTool,
     MHCIIClassRnaTool,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedRnaAlignments
 
 
 @dataclasses.dataclass
@@ -452,7 +452,7 @@ class SomaticNeoepitopePredictionDependsOn(SnappyModel):
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS),
-        ExpectedPathSchema(ExpectedAlignments),
+        ExpectedPathSchema(ExpectedRnaAlignments),
     ] = ""
     expression: Annotated[str, DataSignature(DataType.EXPRESSION, frozenset({"rna"}))] = ""
     combined_variants: Annotated[str, DataSignature(DataType.VARIANTS)] = ""

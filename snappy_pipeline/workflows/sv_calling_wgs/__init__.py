@@ -105,11 +105,10 @@ class PopDelStepPart(
     @dictify
     def _get_input_files_profile(self, wildcards):
         """Return input files for "call" action"""
-        infix = wildcards.library_name
-        yield (
-            "bam",
-            self.parent.upstream("alignments")(f"output/{infix}/out/{infix}.bam"),
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
         )
+        yield "bam", alignments.bam
 
     @dictify
     def _get_output_files_profile(self):

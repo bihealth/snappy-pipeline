@@ -69,10 +69,11 @@ class Delly2StepPart(
 
     @dictify
     def _get_input_files_call(self, wildcards):
-        ngs_mapping = self.parent.upstream("alignments")
-        token = f"{wildcards.library_name}"
-        yield "bam", ngs_mapping(f"output/{token}/out/{token}.bam")
-        yield "bai", ngs_mapping(f"output/{token}/out/{token}.bam.bai")
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
 
     @dictify
     def _get_output_files_call(self):
