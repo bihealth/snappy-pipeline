@@ -19,6 +19,31 @@ The gene expression quantification step uses Snakemake sub workflows for using t
 Additionally, salmon can be used to estimate expression directly from the FASTQs with no need
 for prior mapping.
 
+The tools ``featurecounts``, ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats`` also need
+the strandedness of each library. It comes from a separate task of this step with
+``tool: strandedness``, named in ``depends_on.strandedness``:
+
+.. code-block:: yaml
+
+    tasks:
+      - step: gene_expression_quantification
+        name: strandedness
+        config:
+          depends_on:
+            ngs_mapping: mapping
+          tool: strandedness
+          strandedness:
+            path_exon_bed: /path/to/exons.bed
+      - step: gene_expression_quantification
+        name: counts
+        config:
+          depends_on:
+            ngs_mapping: mapping
+            strandedness: strandedness
+          tool: featurecounts
+          featurecounts:
+            path_annotation_gtf: /path/to/genes.gtf
+
 ===========
 Step Output
 ===========
@@ -68,8 +93,12 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
+from .model import ExpectedStrandedness
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
 from .model import Salmon as SalmonConfigModel
+
+#: Signature of the strandedness decision of a ``tool: strandedness`` task
+STRANDEDNESS_SIGNATURE = DataSignature(DataType.QC, frozenset({"strandedness"}))
 
 # Extensions
 EXTENSIONS = {
@@ -237,6 +266,9 @@ class SalmonStepPart(BaseStepPart):
 class GeneExpressionQuantificationStepPart(BaseStepPart):
     """Base class for gene expression quantifiers"""
 
+    #: Whether the tool reads the strandedness decision of the ``strandedness`` dependency.
+    needs_strandedness = False
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
@@ -246,10 +278,16 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
             "ngs_mapping", library_name=wildcards.library_name
         )
-        return {
+        input_files = {
             "bam": alignments.bam,
             "bai": alignments.bai,
         }
+        if self.needs_strandedness:
+            strandedness: ExpectedStrandedness = self.parent.get_upstream_paths(
+                "strandedness", library_name=wildcards.library_name
+            )
+            input_files["decision"] = strandedness.decision
+        return input_files
 
     def get_output_files(self, action):
         """Return output files that sub steps must return"""
@@ -290,6 +328,8 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
 
     #: Step name
     name = "featurecounts"
+
+    needs_strandedness = True
 
     #: Class available actions
     actions = ("run",)
@@ -349,10 +389,6 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
             mem="6700MB",
         )
 
-    def get_strandedness_file(self, action):
-        _ = action
-        return expand(self.base_path_out, ext=[".decision"])
-
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if self.config.tool != self.name:
             return super()._get_params_run(wildcards)
@@ -363,6 +399,8 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
 class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "duplication"
+
+    needs_strandedness = True
 
     #: Class available actions
     actions = ("run",)
@@ -387,6 +425,8 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
 class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "dupradar"
+
+    needs_strandedness = True
 
     #: Class available actions
     actions = ("run",)
@@ -426,6 +466,8 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "rnaseqc"
 
+    needs_strandedness = True
+
     #: Class available actions
     actions = ("run",)
 
@@ -458,6 +500,8 @@ class QCStepPartStats(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "stats"
 
+    needs_strandedness = True
+
     #: Class available actions
     actions = ("run",)
 
@@ -487,19 +531,24 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     config_model_class = GeneExpressionQuantificationConfigModel
 
     consumes = {DataSignature(DataType.RAW, frozenset({"rna"})): True}
-    produces = [DataSignature(DataType.EXPRESSION, frozenset({"rna"}))]
+    produces = [
+        DataSignature(DataType.EXPRESSION, frozenset({"rna"})),
+        STRANDEDNESS_SIGNATURE,
+    ]
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
     def get_output_paths(cls, signature=None, **kwargs) -> dict[str, str]:
-        """Return local expression output paths for downstream consumers."""
+        """Return local expression or strandedness output paths for downstream consumers."""
+        lib = kwargs.get("library_name", "{library_name}")
+        if signature is not None and signature.satisfies(STRANDEDNESS_SIGNATURE):
+            return {"decision": f"output/{lib}/out/{lib}.decision"}
         if signature is not None and not signature.satisfies(DataSignature(DataType.EXPRESSION)):
             raise ValueError(
                 f"GeneExpressionQuantificationWorkflow does not support signature: {signature}"
             )
-        lib = kwargs.get("library_name", "{library_name}")
         return {"tsv": f"output/{lib}/out/{lib}.tsv"}
 
     def __init__(
@@ -537,10 +586,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
             )
         )
         # Inputs are resolved via get_upstream_paths() in step parts.
-
-    def get_strandedness_file(self, action):
-        _ = action
-        return self.sub_steps["strandedness"].get_strandedness_file("run")
 
     @listify
     def get_result_files(self):

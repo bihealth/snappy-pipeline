@@ -96,7 +96,6 @@ rule gene_expression_quantification_strandedness_run:
 rule gene_expression_quantification_duplication_run:
     input:
         unpack(wf.get_input_files("duplication", "run")),
-        decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("duplication", "run"),
     log:
@@ -116,7 +115,6 @@ rule gene_expression_quantification_duplication_run:
 rule gene_expression_quantification_dupradar_run:
     input:
         unpack(wf.get_input_files("dupradar", "run")),
-        decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("dupradar", "run"),
     log:
@@ -136,7 +134,6 @@ rule gene_expression_quantification_dupradar_run:
 rule gene_expression_quantification_rnaseqc_run:
     input:
         unpack(wf.get_input_files("rnaseqc", "run")),
-        decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("rnaseqc", "run"),
     log:
@@ -156,7 +153,6 @@ rule gene_expression_quantification_rnaseqc_run:
 rule gene_expression_quantification_stats_run:
     input:
         unpack(wf.get_input_files("stats", "run")),
-        decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("stats", "run"),
     log:
@@ -181,7 +177,6 @@ rule gene_expression_quantification_stats_run:
 rule gene_expression_quantification_featurecounts_run:
     input:
         unpack(wf.get_input_files("featurecounts", "run")),
-        decision=wf.get_strandedness_file("run"),
     output:
         **wf.get_output_files("featurecounts", "run"),
     log:

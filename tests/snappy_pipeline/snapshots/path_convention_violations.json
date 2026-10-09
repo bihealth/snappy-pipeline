@@ -1,4 +1,8 @@
 {
+ "gene_expression_quantification": [
+  "tool name: work/{library_name}/out/{library_name}.dupradar.tsv",
+  "tool name: work/{library_name}/out/{library_name}.dupradar.tsv.md5"
+ ],
  "hla_typing": [
   "tool name: work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_info.txt",
   "tool name: work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_list.txt",

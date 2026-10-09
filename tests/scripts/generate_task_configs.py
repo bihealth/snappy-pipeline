@@ -999,6 +999,15 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             if producer and producer != step_name:
                 depends_on[logical_name] = step_to_default_task[producer]
 
+        # Expression quantifiers read the strandedness decision of the strandedness task.
+        if (
+            step_name == "gene_expression_quantification"
+            and isinstance(task.get("config"), dict)
+            and task["config"].get("tool")
+            in ("featurecounts", "dupradar", "duplication", "rnaseqc", "stats")
+        ):
+            depends_on["strandedness"] = "gene_expression_quantification_strandedness"
+
         # 3) Special handling for panel_of_normals:
         # - For purecn: depends_on.panel_of_normals must point to the mutect2 variant
         # - For other tools: remove any panel_of_normals dependency (it's only for purecn)

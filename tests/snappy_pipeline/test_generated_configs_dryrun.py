@@ -77,17 +77,8 @@ GERMLINE_TASKS = {
 }
 
 
-_NEEDS_STRANDEDNESS = (
-    "needs the strandedness .decision file, which only the strandedness tool declares as output"
-)
-
 #: Closures whose DAG cannot be built yet, with the reason. Strict xfail, so a fix shows up.
 KNOWN_BROKEN = {
-    "gene_expression_quantification_duplication": _NEEDS_STRANDEDNESS,
-    "gene_expression_quantification_dupradar": _NEEDS_STRANDEDNESS,
-    "gene_expression_quantification_featurecounts": _NEEDS_STRANDEDNESS,
-    "gene_expression_quantification_rnaseqc": _NEEDS_STRANDEDNESS,
-    "gene_expression_quantification_stats": _NEEDS_STRANDEDNESS,
     "igv_session_generation": "still builds tool-prefixed upstream paths (plans.md K3, C3)",
 }
 

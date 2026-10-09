@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
@@ -67,6 +67,22 @@ class Tool(enum.StrEnum):
     stats = "stats"
 
 
+#: Tools that read the strandedness decision of a ``tool: strandedness`` task.
+TOOLS_NEEDING_STRANDEDNESS = (
+    Tool.featurecounts,
+    Tool.dupradar,
+    Tool.duplication,
+    Tool.rnaseqc,
+    Tool.stats,
+)
+
+
+class ExpectedStrandedness(SnappyModel):
+    """Consumer-driven contract: the strandedness decision (JSON) of an RNA library."""
+
+    decision: str
+
+
 class GeneExpressionQuantificationDependsOn(SnappyModel):
     ngs_mapping: Annotated[
         str,
@@ -84,6 +100,13 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW, frozenset({"trimmed"})),
         ExpectedPathSchema(ExpectedTrimmedRawFastq),
+    ] = ""
+
+    # Task of this step with tool: strandedness; required for TOOLS_NEEDING_STRANDEDNESS.
+    strandedness: Annotated[
+        str,
+        DataSignature(DataType.QC, frozenset({"strandedness"})),
+        ExpectedPathSchema(ExpectedStrandedness),
     ] = ""
 
 
@@ -110,3 +133,12 @@ class GeneExpressionQuantification(SnappyStepModel, validators.NgsMappingMixin):
     stats: Stats | None = None
 
     salmon: Salmon | None = None
+
+    @model_validator(mode="after")
+    def validate_strandedness_dependency(self):
+        if self.tool in TOOLS_NEEDING_STRANDEDNESS and not self.depends_on.strandedness:
+            raise ValueError(
+                f"tool={self.tool} needs depends_on.strandedness: a gene_expression_quantification "
+                "task with tool: strandedness"
+            )
+        return self

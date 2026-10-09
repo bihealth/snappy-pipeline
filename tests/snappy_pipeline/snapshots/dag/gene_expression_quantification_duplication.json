@@ -1,0 +1,251 @@
+[
+ {
+  "input": [
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls",
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+  ],
+  "log": [
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log.md5",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt.md5",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls.md5",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls.md5"
+  ],
+  "params": {
+   "args": {
+    "strand": -1
+   }
+  },
+  "resources": {
+   "mem": "127 GB",
+   "mem_mb": 127000,
+   "mem_mib": 121117,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "gene_expression_quantification_duplication_gene_expression_quantification_duplication_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/rnaqc/duplication"
+ },
+ {
+  "input": [
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls"
+  ],
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "gene_expression_quantification_duplication_gene_expression_quantification_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "xls",
+   "file": "case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate",
+   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls"
+  ],
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "gene_expression_quantification_duplication_gene_expression_quantification_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "xls",
+   "file": "case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate",
+   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+  ],
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_link_out_run",
+  "threads": 1,
+  "wildcards": {
+   "ext": "decision",
+   "file": "case001subregion-T1-RNA1-mRNA_seq1",
+   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
+  },
+  "wrapper": null
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai"
+  ],
+  "log": [
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log.md5",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt.md5",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv.md5",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "path_exon_bed": "AUTO",
+     "strand": -1,
+     "threshold": 0.85
+    },
+    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+   }
+  },
+  "resources": {
+   "mem": "6.7 GB",
+   "mem_mb": 6700,
+   "mem_mib": 6390,
+   "partition": "medium",
+   "runtime": 720
+  },
+  "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_strandedness_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/rseqc"
+ },
+ {
+  "input": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.environment.yaml.md5"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_info.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_info.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_list.txt",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.conda_list.txt.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.wrapper.py",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.wrapper.py.md5",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.environment.yaml",
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.environment.yaml.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_args": [],
+    "input": {
+     "reads_left": []
+    },
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference",
+    "platform": "ILLUMINA",
+    "sample_name": "case001subregion-T1-RNA1-mRNA_seq1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/input_links/case001subregion-T1-RNA1-mRNA_seq1/.done"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "ngs_mapping_bwa_ngs_mapping_link_in_run",
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
+  },
+  "wrapper": null
+ }
+]
