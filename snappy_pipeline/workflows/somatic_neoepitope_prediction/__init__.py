@@ -777,26 +777,26 @@ class NetChopStepPart(BaseStepPart):
         self.output_tpl = "{tumor_dna}"
 
     def _get_input_files_pvacseq(self, wildcards: Wildcards):
-        assert wildcards.tool == "pvacseq", (
-            "Internal error: tool {wildcards.tool} should be 'pvacseq'"
+        assert self.config.tool == "pvacseq", (
+            f"Internal error: tool {self.config.tool} should be 'pvacseq'"
         )
         return self._get_input_files_run(wildcards)
 
     def _get_input_files_pvacfuse(self, wildcards: Wildcards):
-        assert wildcards.tool == "pvacfuse", (
-            "Internal error: tool {wildcards.tool} should be 'pvacfuse'"
+        assert self.config.tool == "pvacfuse", (
+            f"Internal error: tool {self.config.tool} should be 'pvacfuse'"
         )
         return self._get_input_files_run(wildcards)
 
     def _get_input_files_pvacsplice(self, wildcards: Wildcards):
-        assert wildcards.tool == "pvacsplice", (
-            "Internal error: tool {wildcards.tool} should be 'pvacsplice'"
+        assert self.config.tool == "pvacsplice", (
+            f"Internal error: tool {self.config.tool} should be 'pvacsplice'"
         )
         return self._get_input_files_run(wildcards)
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        yield "netchop", self.config.get(wildcards.tool).net_chop.path_netchop
+        yield "netchop", self.config.get(self.config.tool).net_chop.path_netchop
 
         if self.config.phasing.enabled:
             combined = self.parent.get_upstream_paths(
@@ -804,7 +804,7 @@ class NetChopStepPart(BaseStepPart):
             )
             yield "vcf", combined["vcf"]
         else:
-            if self.config.get(wildcards.tool).use_all_transcripts:
+            if self.config.get(self.config.tool).use_all_transcripts:
                 yield (
                     "vcf",
                     "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl),
@@ -812,7 +812,7 @@ class NetChopStepPart(BaseStepPart):
             else:
                 yield "vcf", "work/{tpl}/out/{tpl}.normalized.vcf.gz".format(tpl=self.prepare_tpl)
 
-        tool = wildcards.tool
+        tool = self.config.tool
         if self.config.get(tool).class_i_epitope_length:
             tool_dirname = "MHC_Class_I"
             tool_filename = "MHC_I"
@@ -844,26 +844,26 @@ class NetChopStepPart(BaseStepPart):
                 raise MissingConfiguration(f"Unknown action {action} during phasing")
 
     def _get_params_pvacseq(self, wildcards: Wildcards):
-        assert wildcards.tool == "pvacseq", (
-            "Internal error: tool {wildcards.tool} should be 'pvacseq'"
+        assert self.config.tool == "pvacseq", (
+            f"Internal error: tool {self.config.tool} should be 'pvacseq'"
         )
         return self._get_params_run(wildcards)
 
     def _get_params_pvacfuse(self, wildcards: Wildcards):
-        assert wildcards.tool == "pvacfuse", (
-            "Internal error: tool {wildcards.tool} should be 'pvacfuse'"
+        assert self.config.tool == "pvacfuse", (
+            f"Internal error: tool {self.config.tool} should be 'pvacfuse'"
         )
         return self._get_params_run(wildcards)
 
     def _get_params_pvacsplice(self, wildcards: Wildcards):
-        assert wildcards.tool == "pvacsplice", (
-            "Internal error: tool {wildcards.tool} should be 'pvacsplice'"
+        assert self.config.tool == "pvacsplice", (
+            f"Internal error: tool {self.config.tool} should be 'pvacsplice'"
         )
         return self._get_params_run(wildcards)
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        cfg: NetChopModel = self.config.get(wildcards.tool).net_chop
-        return {"tool": wildcards.tool, "method": cfg.method, "threshold": cfg.threshold}
+        cfg: NetChopModel = self.config.get(self.config.tool).net_chop
+        return {"tool": self.config.tool, "method": cfg.method, "threshold": cfg.threshold}
 
     def get_log_file(self, action):
         """Return mapping of log files."""
