@@ -235,7 +235,7 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
                 "kallisto_index": self.config.pizzly.kallisto_index,
                 "kmer_size": self.config.pizzly.kmer_size,
                 "transcripts_fasta": self.config.pizzly.transcripts_fasta,
-                "annotation_gtf": self.config.pizzly.annotation_gtf,
+                "annotations_gtf": self.config.pizzly.annotations_gtf,
             }
 
         assert action == "run", "Unsupported actions"

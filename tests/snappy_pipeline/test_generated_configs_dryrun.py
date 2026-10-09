@@ -89,7 +89,6 @@ KNOWN_BROKEN = {
     "gene_expression_quantification_rnaseqc": _NEEDS_STRANDEDNESS,
     "gene_expression_quantification_stats": _NEEDS_STRANDEDNESS,
     "igv_session_generation": "still builds tool-prefixed upstream paths (plans.md K3, C3)",
-    "somatic_gene_fusion_calling_pizzly": "reads config field annotation_gtf; the model has annotations_gtf",
     "hla_typing_arcashla": "declares a single log file; result files and wrapper expect the standard logs",
 }
 
