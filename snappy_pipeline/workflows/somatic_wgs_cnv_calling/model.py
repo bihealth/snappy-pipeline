@@ -7,7 +7,6 @@ from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.cnvkit import Cnvkit
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
 class Tool(enum.StrEnum):
@@ -87,17 +86,10 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = "ngs_mapping"
-    somatic_variant_calling: Annotated[
-        str,
-        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
-        ExpectedPathSchema(ExpectedSomaticVariants),
-    ] = "somatic_variant_calling"
 
 
 class SomaticWgsCnvCalling(SnappyStepModel):
     depends_on: SomaticWgsCnvCallingDependsOn = Field(default_factory=SomaticWgsCnvCallingDependsOn)
-
-    somatic_variant_calling_tool: str
 
     tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvetti)]
 
