@@ -154,7 +154,7 @@ def test_step_snakefiles_fetch_their_workflow_object():
     found = []
     for path in sorted(WORKFLOWS.glob("*/Snakefile")):
         text = path.read_text(encoding="utf-8")
-        if path.parent.name == "link_in":
+        if path.parent.name == "external_data":
             continue  # configuration carrier without rules
         if 'wf = task_instance(config["__task_name__"])' not in text or re.search(
             r"Workflow\(", text
@@ -164,7 +164,7 @@ def test_step_snakefiles_fetch_their_workflow_object():
 
 
 #: Allowed ``depends_on`` keys: named after the data, with role prefixes where a step needs two
-#: inputs of one kind. ``link_in`` remains for the external-file export steps until plans.md F1.
+#: inputs of one kind.
 DEPENDS_ON_KEYS = {
     "reads",
     "alignments",
@@ -183,7 +183,6 @@ DEPENDS_ON_KEYS = {
     "panel_of_normals",
     "reference",
     "index",
-    "link_in",
 }
 
 

@@ -76,8 +76,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkInPathGenerator,
-    LinkInVcfExternalStepPart,
     LinkOutStepPart,
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
@@ -118,10 +116,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         self.index_ngs_library_to_pedigree = {}
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-        # Path generator for linking in
-        self.path_gen = LinkInPathGenerator(
-            self.parent.work_dir, self.parent.data_search_infos, self.parent.config_lookup_paths
-        )
         # Define mapper+caller tag
         self.mapper_caller_tag = self._get_mapper_caller_tag()
 
@@ -129,14 +123,9 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     def _get_input_files_merge_vcf(self, wildcards):
         """"""
         if self.config.merge_vcf_flag:
-            pedigree = self.index_ngs_library_to_pedigree.get(wildcards.index_ngs_library)
-            for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-                for bio_sample in donor.bio_samples.values():
-                    for test_sample in bio_sample.test_samples.values():
-                        for library in test_sample.ngs_libraries.values():
-                            yield f"work/input_links/{library.name}/.done"
+            yield from self._collect_vcfs(wildcards)
         else:
-            yield f"work/input_links/{wildcards.index_ngs_library}/.done"
+            yield self._vcf(wildcards.index_ngs_library)
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
@@ -256,25 +245,14 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             "config": self.config.model_dump(by_alias=True),
         }
 
+    def _vcf(self, library_name):
+        return self.parent.get_upstream_paths("variants", library_name=library_name).vcf
+
     def _collect_vcfs(self, wildcards):
-        """Yield path to pedigree VCF"""
-        # Seen paths list
-        seen = []
-        base_path_in = "work/input_links/{library_name}"
+        """Yield the paths of the VCFs of the pedigree's DNA libraries"""
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-            folder_name = donor.dna_ngs_library.name
-            for _, path_infix, filename in self.path_gen.run(
-                folder_name=folder_name, pattern_set_keys=("vcf",)
-            ):
-                path = os.path.join(base_path_in, path_infix, filename).format(
-                    library_name=donor.dna_ngs_library.name
-                )
-                if path in seen:
-                    print(f"WARNING: ignoring path seen before {path}", file=sys.stderr)
-                else:
-                    seen.append(path)
-                    yield path
+            yield self._vcf(donor.dna_ngs_library.name)
 
     def _collect_sample_ids(self, wildcards):
         """Yield sample ids in pedigree"""
@@ -324,13 +302,11 @@ class WgsCnvExportExternalWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Load external data search information
-        self.data_search_infos = list(self._load_data_search_infos())
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
             (
                 WritePedigreeSampleNameStepPart,
                 VarfishAnnotatorExternalStepPart,
-                LinkInVcfExternalStepPart,
                 LinkOutStepPart,
             )
         )

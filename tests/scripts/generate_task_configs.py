@@ -39,7 +39,6 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "germline_variants": "variant_filtration_bcftools",
     "hla_types": "hla_typing_optitype",
     "index": "reference_index_bwa",
-    "link_in": "link_in",
     "phased_variants": "variant_phasing",
     "reads": "data_sets",
     "reference": "reference_download",
@@ -65,7 +64,10 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
     ("somatic_targeted_seq_cnv_calling", "variants"): "variant_calling_mutect2",
     ("somatic_variant_signatures", "variants"): "variant_calling_mutect2",
     ("tumor_mutational_burden", "variants"): "variant_calling_mutect2",
+    ("variant_export_external", "variants"): "external_vcf",
     ("variant_filtration", "variants"): "variant_annotation_vep",
+    ("wgs_cnv_export_external", "variants"): "external_cnv",
+    ("wgs_sv_export_external", "variants"): "external_sv",
     ("variant_phasing", "variants"): "variant_annotation_vep",
 }
 
@@ -288,7 +290,7 @@ def validate_and_autofill_step_config(
     return candidate, notes
 
 
-def infer_link_in_path(base_config: dict[str, Any], base_config_path: Path) -> str:
+def raw_data_dir(base_config: dict[str, Any], base_config_path: Path) -> str:
     data_sets = base_config.get("data_sets", {})
     if not isinstance(data_sets, dict) or not data_sets:
         return str(base_config_path.parent)
@@ -358,6 +360,7 @@ def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[s
         "gcnv_targeted": gcnv_models("default"),
         "gcnv_wgs": gcnv_models("wgs"),
         "placeholder_file": PLACEHOLDER_FILE,
+        "raw_data_dir": [raw_data_dir(base_config, base_config_path)],
     }
 
 
@@ -377,6 +380,16 @@ VARIANT_EXPORT_EXTERNAL = {
 #: Values fill keys that the default config leaves unset (missing, None, "", "AUTO", [] or
 #: ["AUTO"]); ``Overwrite`` values replace whatever is there.
 TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
+    ("external_data", None): {
+        "produces": {"type": "raw"},
+        "search_paths": Fixture("raw_data_dir"),
+        "search_patterns": [
+            {
+                "left": r"(?P<readgroup>.+)\.R1\.fastq\.gz",
+                "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz",
+            }
+        ],
+    },
     ("gene_expression_quantification", None): {"library_selection": RNA},
     ("gene_expression_quantification", "dupradar"): {
         "dupradar": {"dupradar_path_annotation_gtf": PLACEHOLDER}
@@ -458,6 +471,21 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("wgs_cnv_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("wgs_sv_export_external", None): VARIANT_EXPORT_EXTERNAL,
 }
+
+
+def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
+    pattern = {"vcf": r".+\.vcf\.gz", "vcf_tbi": r".+\.vcf\.gz\.tbi"}
+    config = {"produces": {"type": "variants", "tags": tags}, "search_patterns": [pattern]}
+    return {"step": "external_data", "name": name, "config": config}
+
+
+#: external_data tasks besides the step's own one: the inputs of the external export steps.
+#: Their search_paths are filled with the raw data directory.
+EXTRA_TASKS: list[dict[str, Any]] = [
+    _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
+    _external_vcfs("external_cnv", ["germline", "cnv"]),
+    _external_vcfs("external_sv", ["germline", "sv"]),
+]
 
 
 def _unset(value: Any) -> bool:
@@ -546,8 +574,6 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             fill_config(config, TASK_CONFIG.get((step_name, None), {}), fixtures)
             if tool is not None:
                 fill_config(config, TASK_CONFIG.get((step_name, tool), {}), fixtures)
-            if step_name == "link_in":
-                config.setdefault("path", infer_link_in_path(base_config, base_config_path))
             if depends_on := wire_dependencies(step_name, tool):
                 config["depends_on"] = depends_on
 
@@ -558,6 +584,11 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                 config["depends_on"] = depends_on
             name = f"{step_name}_{tool}" if tool else step_name
             tasks.append({"step": step_name, "name": name, "config": config})
+
+    for extra in EXTRA_TASKS:
+        task = copy.deepcopy(extra)
+        task["config"]["search_paths"] = copy.deepcopy(fixtures["raw_data_dir"])
+        tasks.append(task)
 
     if generation_notes:
         print("Generation notes:")

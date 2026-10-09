@@ -7,7 +7,6 @@ from snappy_pipeline.orchestration import load_project
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
-from snappy_pipeline.workflows.link_in.model import LinkIn
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_filtration.model import ExpectedVariantVcf
 from tests.snappy_pipeline.test_orchestration import (
@@ -160,8 +159,19 @@ def _mapping_step(*tasks, reads="data_sets"):
     return _step(load_project(_config(*tasks, mapping), WORK_DIR), "mapping")
 
 
-TRIMMED = ("link_in", "trimmed", {"path": "/data/trimmed"})
-RAW = ("link_in", "raw", {"path": "/data/raw"})
+READS_PATTERN = {
+    "left": r"(?P<readgroup>.+)\.R1\.fastq\.gz",
+    "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz",
+}
+
+
+def _external_reads(name, path):
+    config = {"produces": {"type": "raw"}, "search_paths": [path]}
+    return ("external_data", name, config | {"search_patterns": [READS_PATTERN]})
+
+
+TRIMMED = _external_reads("trimmed", "/data/trimmed")
+RAW = _external_reads("raw", "/data/raw")
 
 
 def test_get_task_config_returns_own_config():
@@ -172,11 +182,11 @@ def test_get_task_config_returns_own_config():
 
 def test_get_task_config_follows_depends_on():
     step = _mapping_step(TRIMMED, RAW, reads="trimmed")
-    assert step.get_task_config("reads") == LinkIn(path="/data/trimmed")
+    assert step.get_task_config("reads").search_paths == ["/data/trimmed"]
 
 
 def test_get_task_config_does_not_guess_unset_dependencies():
-    # "raw" is the only link_in task, but depends_on.reads is data_sets.
+    # "raw" is the only external_data task, but depends_on.reads is data_sets.
     with pytest.raises(ValueError, match="depends_on.reads names no task"):
         _mapping_step(RAW).get_task_config("reads")
 
@@ -184,27 +194,6 @@ def test_get_task_config_does_not_guess_unset_dependencies():
 def test_get_task_config_rejects_unknown_fields():
     with pytest.raises(ValueError, match="depends_on.variant names no task; depends_on fields"):
         _mapping_step().get_task_config("variant")
-
-
-# get_preprocessed_path --------------------------------------------------------------------------
-
-TRIMMING = (
-    "adapter_trimming",
-    "trimming",
-    {"tool": "fastp", "fastp": {}, "depends_on": {"reads": "raw"}},
-)
-
-
-@pytest.mark.parametrize(
-    "reads, expected",
-    [
-        ("raw", "/data/raw"),
-        ("trimming", "tasks/trimming/output"),
-        ("data_sets", ""),
-    ],
-)
-def test_get_preprocessed_path_follows_reads(reads, expected):
-    assert _mapping_step(RAW, TRIMMING, reads=reads).get_preprocessed_path("reads") == expected
 
 
 # Filtered and unfiltered calls ------------------------------------------------------------------
@@ -231,3 +220,26 @@ def test_unfiltered_calls_are_not_available_after_annotation():
         _step(project, "filtration").get_upstream_paths(
             "variants", signature=_signature(DataType.VARIANTS, "-filtered"), library_name="T1"
         )
+
+
+# External data ------------------------------------------------------------------------------------
+
+
+def test_external_files_are_used_where_they_are(tmp_path):
+    for name in ("T1.bam", "T1.bam.bai"):
+        (tmp_path / "T1").mkdir(exist_ok=True)
+        (tmp_path / "T1" / name).touch()
+    bams = (
+        "external_data",
+        "bams",
+        {
+            "produces": {"type": "alignments", "tags": ["dna"]},
+            "search_paths": [str(tmp_path)],
+            "search_patterns": [{"bam": r".+\.bam", "bai": r".+\.bam\.bai"}],
+        },
+    )
+    project = load_project(_config(bams, _calling(mapping="bams")), WORK_DIR)
+
+    alignments = _step(project, "calling").get_upstream_paths("alignments", library_name="T1")
+    assert alignments.bam == str(tmp_path / "T1" / "T1.bam")
+    assert alignments.bai == str(tmp_path / "T1" / "T1.bam.bai")

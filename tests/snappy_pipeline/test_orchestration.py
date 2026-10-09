@@ -188,6 +188,49 @@ def test_load_project_reserves_data_sets_for_reads():
         load_project(_config(_mapping(name="data_sets")), WORK_DIR)
 
 
+def _external(name, data_type, tags, **config):
+    return ("external_data", name, {"produces": {"type": data_type, "tags": tags}, **config})
+
+
+BAM_PATTERN = {"bam": r".+\.bam", "bai": r".+\.bam\.bai"}
+
+
+def test_external_alignments_feed_variant_calling():
+    bams = _external(
+        "bams", "alignments", ["dna"], search_paths=["/data"], search_patterns=[BAM_PATTERN]
+    )
+    project = load_project(_config(bams, _calling(mapping="bams")), WORK_DIR)
+    assert project.signatures["bams"] == (DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),)
+
+
+def test_external_data_is_checked_against_requirements_and_schemas():
+    vcfs = _external("vcfs", "variants", ["germline"], files={"vcf": "/data/x.vcf.gz"})
+    with pytest.raises(ValueError, match=r"depends_on.variants requires variants \[somatic\]"):
+        load_project(_config(vcfs, _tmb(variants="vcfs")), WORK_DIR)
+
+    bams = _external(
+        "bams", "alignments", ["dna"], search_paths=["/data"], search_patterns=[{"bam": r".+\.bam"}]
+    )
+    with pytest.raises(
+        ValueError, match="depends_on.alignments needs bai, which task 'bams' does not provide"
+    ):
+        load_project(_config(bams, _calling(mapping="bams")), WORK_DIR)
+
+
+@pytest.mark.parametrize(
+    "config, error",
+    [
+        ({}, "Set either files"),
+        ({"files": {"x": "/a"}, "search_paths": ["/b"]}, "Set either files"),
+        ({"search_paths": ["/b"]}, "search_paths need search_patterns"),
+        ({"search_paths": ["/b"], "search_patterns": [{"left": r".+\.fastq\.gz"}]}, "readgroup"),
+    ],
+)
+def test_external_data_config_errors(config, error):
+    with pytest.raises(pydantic.ValidationError, match=error):
+        load_project(_config(_external("reads", "raw", [], **config)), WORK_DIR)
+
+
 # create_task_instances ---------------------------------------------------------------------------
 
 

@@ -14,7 +14,6 @@ from snappy_pipeline.models import (
     ToggleModel,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 from snappy_pipeline.workflows.reference_index.model import ExpectedReferenceIndexFiles
 
 
@@ -54,7 +53,6 @@ class NgsMappingDependsOn(SnappyModel):
     reads: Annotated[
         str,
         DataSignature(DataType.RAW),
-        ExpectedPathSchema(ExpectedLinkedRawFastq),
     ]
 
     # Optional upstream index provider task.

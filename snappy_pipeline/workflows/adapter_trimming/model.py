@@ -4,8 +4,10 @@ from pydantic import BaseModel, Field, PositiveInt
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+)
 
 
 class Tool(StrEnum):
@@ -881,7 +883,6 @@ class AdapterTrimmingDependsOn(SnappyModel):
     reads: Annotated[
         str,
         DataSignature(DataType.RAW),
-        ExpectedPathSchema(ExpectedLinkedRawFastq),
     ]
 
 

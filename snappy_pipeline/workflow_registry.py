@@ -15,7 +15,7 @@ from snappy_pipeline.workflows.homologous_recombination_deficiency import (
     HomologousRecombinationDeficiencyWorkflow,
 )
 from snappy_pipeline.workflows.igv_session_generation import IgvSessionGenerationWorkflow
-from snappy_pipeline.workflows.link_in import LinkInWorkflow
+from snappy_pipeline.workflows.external_data import ExternalDataWorkflow
 from snappy_pipeline.workflows.ngs_data_qc import NgsDataQcWorkflow
 from snappy_pipeline.workflows.ngs_mapping import NgsMappingWorkflow
 from snappy_pipeline.workflows.panel_of_normals import PanelOfNormalsWorkflow
@@ -65,7 +65,7 @@ WORKFLOW_REGISTRY = {
     "hla_typing": HlaTypingWorkflow,
     "homologous_recombination_deficiency": HomologousRecombinationDeficiencyWorkflow,
     "igv_session_generation": IgvSessionGenerationWorkflow,
-    "link_in": LinkInWorkflow,
+    "external_data": ExternalDataWorkflow,
     "ngs_data_qc": NgsDataQcWorkflow,
     "ngs_mapping": NgsMappingWorkflow,
     "panel_of_normals": PanelOfNormalsWorkflow,

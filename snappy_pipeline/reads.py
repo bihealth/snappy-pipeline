@@ -42,16 +42,19 @@ class ReadGroup:
         return ReadGroup(self.name, paths, self.relpaths)
 
 
-def compile_search_pattern(pattern: Mapping[str, str]) -> dict[str, re.Pattern]:
-    """Compile the regexes of one search pattern; each needs a ``readgroup`` group."""
-    if "left" not in pattern:
+def compile_search_pattern(pattern: Mapping[str, str], reads: bool = True) -> dict[str, re.Pattern]:
+    """Compile the regexes of one search pattern.
+
+    Read patterns (``reads``) need a ``left`` entry, and each regex a ``readgroup`` group.
+    """
+    if reads and "left" not in pattern:
         raise ValueError(f"Search pattern {dict(pattern)} has no 'left' entry")
     compiled = {}
     for mate, regex in pattern.items():
         if regex is None:
             continue
         compiled[mate] = re.compile(regex)
-        if READGROUP not in compiled[mate].groupindex:
+        if reads and READGROUP not in compiled[mate].groupindex:
             raise ValueError(f"Search pattern {mate}: {regex!r} has no (?P<{READGROUP}>...) group")
     return compiled
 
@@ -130,6 +133,36 @@ class ReadDiscovery:
                     "for single-end data"
                 )
         return sorted(result, key=lambda group: group.relpaths["left"])
+
+    def find_files(
+        self, roots: Iterable[str], folder_name: str, patterns: Iterable[Mapping[str, str]]
+    ) -> dict[str, str]:
+        """Return output key -> path of the one file per key in the folders ``folder_name``.
+
+        For data other than reads: each key's regex must match the whole path below the folder,
+        for exactly one file. Raises ``ValueError`` if no file matches or a key matches twice.
+        """
+        roots = list(dict.fromkeys(roots))
+        compiled = [compile_search_pattern(pattern, reads=False) for pattern in patterns]
+        found: dict[str, str] = {}
+        for root in roots:
+            for rel in self.files(root):
+                parts = rel.split("/")
+                if folder_name not in parts[:-1]:
+                    continue
+                inner = "/".join(parts[parts.index(folder_name) + 1 :])
+                for pattern in compiled:
+                    for key, regex in pattern.items():
+                        if regex.fullmatch(inner):
+                            if key in found:
+                                raise ValueError(
+                                    f"Two {key} files for {folder_name!r}: {found[key]} and "
+                                    f"{os.path.join(root, rel)}"
+                                )
+                            found[key] = os.path.join(root, rel)
+        if not found:
+            raise ValueError(self.missing(roots, folder_name))
+        return found
 
     def missing(self, roots: Iterable[str], folder_name: str) -> str:
         """Return the error message for a library whose files are not below ``roots``."""

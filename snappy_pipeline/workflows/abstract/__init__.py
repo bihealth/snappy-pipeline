@@ -9,7 +9,6 @@ import os.path
 import re
 import sys
 import tempfile
-import copy
 import typing
 from collections import OrderedDict
 from collections.abc import Mapping, MutableMapping
@@ -664,6 +663,9 @@ class BaseStep:
     #: DataSignatures a task of this step produces; the default of :meth:`task_produces`
     produces: list[DataSignature] = []
 
+    #: Whether ``get_output_paths`` needs the project's read discovery (``discovery`` keyword)
+    needs_discovery: bool = False
+
     #: Default relationships merged into ``build_library_dataframe()``.
     #: Config-level ``relationships`` override these.
     default_relationships: dict[str, RelationshipDefinition] = {}
@@ -729,6 +731,15 @@ class BaseStep:
         the result.
         """
         return tuple(cls.produces)
+
+    @classmethod
+    def output_keys(cls, config: SnappyStepModel) -> set[str] | None:
+        """Return the keys of ``get_output_paths`` if the config alone determines them.
+
+        ``load_project()`` checks them against the consumers' ``ExpectedPathSchema``. ``None``
+        (the default) skips that check.
+        """
+        return None
 
     @classmethod
     def get_output_paths(
@@ -853,26 +864,25 @@ class BaseStep:
 
         ``source`` defaults to ``depends_on.reads``:
         - ``data_sets``: the folder named in the sample sheet, below the data sets' search paths;
-        - a ``link_in`` task: a folder named like the library, below the task's ``path``;
+        - an ``external_data`` task: a folder named like the library, below its search paths;
         - a task that writes FASTQs (``adapter_trimming``): its ``output/<library>/out``, where
           the files keep the names and sub-directories of the task's own input.
         """
         source = self.depends_on.reads if source is None else source
-        if source not in ("", DATA_SETS) and self.project.task(source).step != "link_in":
+        discovery = self.project.read_discovery
+        if source not in ("", DATA_SETS) and self.project.task(source).step == "external_data":
+            config = self.project.task_configs[source]
+            roots = [os.path.abspath(path) for path in config.search_paths]
+            groups = discovery.find(roots, library_name, config.search_patterns)
+            if not groups:
+                raise ValueError(discovery.missing(roots, library_name))
+            return groups
+        if source not in ("", DATA_SETS):
             out_dir = self.namespaced_path(source, f"output/{library_name}/out")
             upstream = self.project.task_configs[source].depends_on.reads
             return [group.rebased(out_dir) for group in self.read_groups(library_name, upstream)]
-        if source in ("", DATA_SETS):
-            folder_name = get_ngs_library_folder_name(self.sheets, library_name)
-            infos = self.data_set_infos
-        else:
-            folder_name = library_name
-            infos = []
-            for info in self.data_set_infos:
-                info = copy.copy(info)
-                info.search_paths = [self.project.task_configs[source].path]
-                infos.append(info)
-        discovery = self.project.read_discovery
+        folder_name = get_ngs_library_folder_name(self.sheets, library_name)
+        infos = self.data_set_infos
         groups: list[ReadGroup] = []
         searched: list[str] = []
         for info in infos:
@@ -892,7 +902,7 @@ class BaseStep:
         them.
         """
         source = self.depends_on.reads
-        if source not in ("", DATA_SETS) and self.project.task(source).step != "link_in":
+        if source not in ("", DATA_SETS) and self.project.task(source).step != "external_data":
             return [self.namespaced_path(source, f"output/{library_name}/out/.done")]
         return [path for group in self.read_groups(library_name) for path in group.paths.values()]
 
@@ -1105,13 +1115,16 @@ class BaseStep:
                 f"Task {self.task_name!r}: depends_on.{req_field_name} task "
                 f"{dependency.task_name!r} produces no {required}"
             )
+        if dependency.workflow_cls.needs_discovery:
+            kwargs["discovery"] = self.project.read_discovery
         local_paths = dependency.workflow_cls.get_output_paths(
             self.project.task_configs[dependency.task_name], selected, **kwargs
         )
 
-        # Prepend upstream task name for Snakemake global namespace.
+        # Task-local paths get the upstream task's prefix; absolute ones (existing files) do not.
         global_paths = {
-            k: self.namespaced_path(dependency.task_name, v) for k, v in local_paths.items()
+            k: v if os.path.isabs(v) else self.namespaced_path(dependency.task_name, v)
+            for k, v in local_paths.items()
         }
 
         if dependency.expected_schema is not None:

@@ -1,23 +1,32 @@
 from typing import Annotated
 
-from pydantic import DirectoryPath, Field, FilePath
+from pydantic import BaseModel, FilePath
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+)
+
+
+class ExpectedExternalVcf(BaseModel):
+    """Consumer-driven contract: the VCF of a library."""
+
+    vcf: str
 
 
 class WgsSvExportExternalDependsOn(SnappyModel):
-    link_in: Annotated[
+    variants: Annotated[
         str,
-        DataSignature(DataType.RAW),
-        ExpectedPathSchema(ExpectedLinkedRawFastq),
-    ] = ""
-    """Optional upstream link_in task providing the external VCF search path."""
+        DataSignature(DataType.VARIANTS, frozenset({"sv"})),
+        ExpectedPathSchema(ExpectedExternalVcf),
+    ]
+    """``external_data`` task with the SV VCF of each library."""
 
 
 class WgsSvExportExternal(SnappyStepModel):
-    depends_on: WgsSvExportExternalDependsOn = Field(default_factory=WgsSvExportExternalDependsOn)
+    depends_on: WgsSvExportExternalDependsOn
 
     tool_ngs_mapping: str | None = None
     """used to create output file prefix."""
@@ -30,14 +39,6 @@ class WgsSvExportExternal(SnappyStepModel):
 
     merge_option: str = "id"
     """How to merge VCF, used in `bcftools --merge` call."""
-
-    search_paths: Annotated[list[DirectoryPath], Field(min_length=1)]
-    """path to all VCF files."""
-
-    search_patterns: Annotated[
-        list[dict[str, str]], Field(examples=[{"vcf": "*/*.vcf.gz"}], min_length=1)
-    ]
-    """list of search pattern"""
 
     release: str = "GRCh37"
 

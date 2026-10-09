@@ -20,7 +20,7 @@
  },
  {
   "input": [
-   "tasks/variant_export_external/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
   ],
   "log": [
    "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/log/dragen.case001subregion-N1-DNA1-WES1.gvcf_to_vcf.log",
@@ -42,7 +42,9 @@
   ],
   "params": {
    "args": {
-    "input": [],
+    "input": [
+     "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
+    ],
     "reference_path": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
     "sample_names": [
      "case001subregion"
@@ -62,21 +64,6 @@
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/gvcf_to_vcf"
- },
- {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/variant_export_external/work/input_links/case001subregion-N1-DNA1-WES1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "variant_export_external_variant_export_external_link_in_vcf_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
-  },
-  "wrapper": null
  },
  {
   "input": [
@@ -245,7 +232,8 @@
     "config": {
      "bam_available_flag": false,
      "depends_on": {
-      "link_in": "link_in"
+      "alignments": "ngs_mapping_bwa",
+      "variants": "external_vcf"
      },
      "external_tool": "dragen",
      "group_by": null,
@@ -259,14 +247,6 @@
      "path_refseq_ser": "<repo>/tests/scripts/generate_task_configs.py",
      "relationships": null,
      "release": "GRCh37",
-     "search_paths": [
-      "/tmp"
-     ],
-     "search_patterns": [
-      {
-       "vcf": "*.vcf.gz"
-      }
-     ],
      "target_coverage_report": {
       "path_targets_bed": null
      }

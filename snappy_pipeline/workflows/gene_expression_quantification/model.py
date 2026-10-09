@@ -5,7 +5,6 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -97,7 +96,6 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
     reads: Annotated[
         str,
         DataSignature(DataType.RAW),
-        ExpectedPathSchema(ExpectedLinkedRawFastq),
     ] = ""
 
     # Task of this step with tool: strandedness; required for TOOLS_NEEDING_STRANDEDNESS.

@@ -20,21 +20,6 @@
   "wrapper": null
  },
  {
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/wgs_sv_export_external/work/input_links/case001subregion-N1-DNA1-WES1/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_link_in_run",
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
-  },
-  "wrapper": null
- },
- {
   "input": [
    "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.log"
   ],
@@ -219,7 +204,7 @@
    "args": {
     "config": {
      "depends_on": {
-      "link_in": "link_in"
+      "variants": "external_sv"
      },
      "group_by": null,
      "library_selection": null,
@@ -230,14 +215,6 @@
      "path_refseq_ser": "<repo>/tests/scripts/generate_task_configs.py",
      "relationships": null,
      "release": "GRCh37",
-     "search_paths": [
-      "/tmp"
-     ],
-     "search_patterns": [
-      {
-       "vcf": "*.vcf.gz"
-      }
-     ],
      "tool_ngs_mapping": null,
      "tool_sv_calling_wgs": null,
      "varfish_server_compatibility": false
@@ -262,7 +239,7 @@
  },
  {
   "input": [
-   "tasks/wgs_sv_export_external/work/input_links/case001subregion-N1-DNA1-WES1/.done"
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
   ],
   "log": [
    "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.log",
@@ -281,7 +258,9 @@
   "params": {
    "args": {
     "gvcf_option": false,
-    "input": [],
+    "input": [
+     "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
+    ],
     "merge_option": "id",
     "sample_names": [
      "case001subregion"

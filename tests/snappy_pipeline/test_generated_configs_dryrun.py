@@ -90,7 +90,10 @@ _GERMLINE_CALLER_RESULTS = (
 #: Closures that target no files, with the reason. Every other closure must target at least one
 #: file, otherwise its snapshot checks nothing.
 EXPECTED_EMPTY = {
-    "link_in": "configuration carrier without outputs",
+    "external_data": "provides existing files; has no rules",
+    "external_vcf": "provides existing files; has no rules",
+    "external_cnv": "provides existing files; has no rules",
+    "external_sv": "provides existing files; has no rules",
     "ngs_mapping_minimap2": "minimap2 maps only long-read libraries; there is no long-read fixture",
     "variant_calling_bcftools_call": _GERMLINE_CALLER_RESULTS,
     "variant_calling_gatk3_hc": _GERMLINE_CALLER_RESULTS,
@@ -250,13 +253,16 @@ def _write_closure_project(
                 if task_name in GERMLINE_TASKS:
                     ds_config["type"] = "germline_variants"
                 ds_config["search_paths"] = [str(raw_dir)]
+    for task in closure_config["tasks"]:
+        if task["step"] == "external_data":
+            task["config"]["search_paths"] = [str(raw_dir)]
 
-    # Touch dummy FASTQ files
+    # Touch dummy FASTQ files, and VCFs for the external_data tasks
     for folder in _task_raw_folders(task_name):
         f_dir = raw_dir / folder
         f_dir.mkdir(parents=True, exist_ok=True)
-        (f_dir / f"{folder}.R1.fastq.gz").touch()
-        (f_dir / f"{folder}.R2.fastq.gz").touch()
+        for suffix in (".R1.fastq.gz", ".R2.fastq.gz", ".vcf.gz", ".vcf.gz.tbi"):
+            (f_dir / f"{folder}{suffix}").touch()
         (raw_dir / f"{folder}.R1.fastq.gz").touch()
         (raw_dir / f"{folder}.R2.fastq.gz").touch()
 
@@ -380,15 +386,24 @@ def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp
 
 
 @pytest.mark.integration
-def test_mapping_reads_from_a_link_in_directory(
+def test_mapping_reads_from_an_external_data_task(
     generated_task_config: dict[str, Any], tmp_path: Path
 ):
-    link_in = {
-        "step": "link_in",
+    external_reads = {
+        "step": "external_data",
         "name": "external_reads",
-        "config": {"path": str(tmp_path / "raw")},
+        "config": {
+            "produces": {"type": "raw"},
+            "search_paths": [str(tmp_path / "raw")],
+            "search_patterns": [
+                {
+                    "left": r"(?P<readgroup>.+)\.R1\.fastq\.gz",
+                    "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz",
+                }
+            ],
+        },
     }
-    job, _ = _mapping_job_with_reads_from(link_in, generated_task_config, tmp_path)
+    job, _ = _mapping_job_with_reads_from(external_reads, generated_task_config, tmp_path)
     lib = job["wildcards"]["library_name"]
 
     assert job["params"]["args"]["input"]["reads_left"] == [

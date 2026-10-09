@@ -124,7 +124,7 @@ A task's outputs are described by ``DataSignature`` objects: a data type plus ta
   tools read defaults to ``""`` and is listed per tool in the step's ``TOOL_DEPENDENCIES``,
   which ``validators.require_tool_dependencies`` checks. Other optional keys default to ``""``,
   meaning "not used". No key defaults to a task name.
-- ``reads`` names a ``link_in`` task, a task whose ``output/`` holds FASTQs (such as
+- ``reads`` names an ``external_data`` task, a task whose ``output/`` holds FASTQs (such as
   ``adapter_trimming``), or the reserved value ``data_sets``, which searches the FASTQs in the
   data sets' search paths. No task may be called ``data_sets``.
 - Each ``depends_on`` field states what it requires with a ``DataSignature`` in its

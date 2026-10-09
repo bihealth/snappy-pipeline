@@ -13,7 +13,12 @@ from typing import TYPE_CHECKING, Any
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import ReadDiscovery
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
-from snappy_pipeline.workflows.abstract.protocol import DATA_SETS, DataSignature, select_signature
+from snappy_pipeline.workflows.abstract.protocol import (
+    DATA_SETS,
+    DataSignature,
+    ExpectedPathSchema,
+    select_signature,
+)
 
 if TYPE_CHECKING:
     from snakemake.api import Workflow
@@ -219,6 +224,7 @@ def _task_signatures(
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     signatures: dict[str, tuple[DataSignature, ...]] = {}
+    steps = {task.name: task.step for task in tasks}
     for task in tasks:
         config = task_configs[task.name]
         fields = type(config.depends_on).model_fields if dependencies[task.name] else {}
@@ -235,10 +241,34 @@ def _task_signatures(
                     f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
                 )
             upstream_signatures[field] = selected
+            _check_output_keys(task.name, field, fields[field], upstream, steps, task_configs)
         signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
             config, upstream_signatures
         )
     return signatures
+
+
+def _check_output_keys(task_name, field, field_info, upstream, steps, task_configs) -> None:
+    """Raise if the upstream task does not provide the keys of the field's ``ExpectedPathSchema``.
+
+    Only tasks whose config determines their outputs (``output_keys()``) are checked.
+    """
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    schema = next(
+        (m.schema for m in field_info.metadata if isinstance(m, ExpectedPathSchema)), None
+    )
+    keys = WORKFLOW_REGISTRY[steps[upstream]].output_keys(task_configs[upstream])
+    if schema is None or keys is None:
+        return
+    missing = [
+        name for name, f in schema.model_fields.items() if f.is_required() and name not in keys
+    ]
+    if missing:
+        raise ValueError(
+            f"Task {task_name!r}: depends_on.{field} needs {', '.join(missing)}, which task "
+            f"{upstream!r} does not provide; it provides {', '.join(sorted(keys))}"
+        )
 
 
 def _topological_order(

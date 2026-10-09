@@ -251,8 +251,27 @@ below a data set's ``search_paths``. ``search_patterns`` are regular expressions
 the whole path below that folder. Their ``(?P<readgroup>...)`` group pairs the ``left`` and
 ``right`` file of each read group (usually a lane); read groups are processed in the order of the
 left file's path. The files are found once per ``snappy run``, and tasks read them through
-``depends_on.reads``: ``data_sets`` for these folders, a ``link_in`` task for a directory with one
-folder per library, or an ``adapter_trimming`` task for its trimmed files.
+``depends_on.reads``: ``data_sets`` for these folders, an ``external_data`` task for reads
+elsewhere, or an ``adapter_trimming`` task for its trimmed files.
+
+Existing data from outside the project (reads, BAM or VCF files of another pipeline, or
+project-wide files) comes from ``external_data`` tasks. Such a task declares what it provides,
+so consumers are checked when the project loads, and it has no rules of its own:
+
+.. code-block:: yaml
+
+    tasks:
+      - name: dragen_calls
+        step: external_data
+        config:
+          produces: {type: variants, tags: [germline, snv, indel]}
+          search_paths: [/data/dragen]
+          search_patterns:
+            - { vcf: '.+\.hard-filtered\.vcf\.gz', vcf_tbi: '.+\.hard-filtered\.vcf\.gz\.tbi' }
+
+Per-library files are in a folder named like the library below the ``search_paths``; the pattern
+keys (``vcf``, ``bam``, ``left``, ...) are the keys under which consumers read the files.
+Project-wide files are given as ``files: {key: path}`` instead.
 
 Adding tasks can also be done incrementally with ``snappy task add``:
 

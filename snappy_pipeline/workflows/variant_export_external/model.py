@@ -1,19 +1,42 @@
 from typing import Annotated
 
-from pydantic import DirectoryPath, Field, FilePath
+from pydantic import BaseModel, FilePath, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
-from snappy_pipeline.workflows.link_in.model import ExpectedLinkedRawFastq
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+)
+
+
+class ExpectedExternalVcf(BaseModel):
+    """Consumer-driven contract: the VCF of a library."""
+
+    vcf: str
+
+
+class ExpectedExternalBam(BaseModel):
+    """Consumer-driven contract: the BAM file and index of a library."""
+
+    bam: str
+    bai: str
 
 
 class VariantExportExternalDependsOn(SnappyModel):
-    link_in: Annotated[
+    variants: Annotated[
         str,
-        DataSignature(DataType.RAW),
-        ExpectedPathSchema(ExpectedLinkedRawFastq),
+        DataSignature(DataType.VARIANTS, frozenset({"germline"})),
+        ExpectedPathSchema(ExpectedExternalVcf),
+    ]
+    """``external_data`` task with the (g)VCF of each library."""
+
+    alignments: Annotated[
+        str,
+        DataSignature(DataType.ALIGNMENTS),
+        ExpectedPathSchema(ExpectedExternalBam),
     ] = ""
-    """Optional upstream link_in task providing the external VCF/BAM search path."""
+    """``external_data`` task with the BAM file of each library; needed for bam_available_flag."""
 
 
 class TargetCoverageReport(SnappyModel):
@@ -26,9 +49,7 @@ class TargetCoverageReport(SnappyModel):
 
 
 class VariantExportExternal(SnappyStepModel):
-    depends_on: VariantExportExternalDependsOn = Field(
-        default_factory=VariantExportExternalDependsOn
-    )
+    depends_on: VariantExportExternalDependsOn
 
     external_tool: str = "dragen"
     """external tool name."""
@@ -44,15 +65,6 @@ class VariantExportExternal(SnappyStepModel):
 
     gvcf_option: bool = True
     """Flag to indicate if inputs are genomic VCFs."""
-
-    search_paths: Annotated[list[DirectoryPath], Field(min_length=1)]
-    """list of paths to VCF files."""
-
-    search_patterns: Annotated[
-        list[dict[str, str]],
-        Field(examples=[{"vcf": "*.vcf.gz"}, {"bam": "*.bam"}, {"bai": "*.bam.bai"}], min_length=1),
-    ]
-    """list of search patterns"""
 
     release: str = "GRCh37"
     """genome release; default 'GRCh37'."""
@@ -70,3 +82,9 @@ class VariantExportExternal(SnappyStepModel):
     """path to annotator DB file to use."""
 
     target_coverage_report: TargetCoverageReport = TargetCoverageReport()
+
+    @model_validator(mode="after")
+    def bam_qc_needs_alignments(self):
+        if self.bam_available_flag and not self.depends_on.alignments:
+            raise ValueError("bam_available_flag needs depends_on.alignments")
+        return self
