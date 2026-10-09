@@ -3,9 +3,8 @@
 
 The generator builds one task per workflow step, derives each task's config from
 `default_config_yaml()`, and wires `depends_on` mappings systematically using:
-1) typed `depends_on` defaults from each step config model,
-2) explicit logical-name aliases for non-step dependency names, and
-3) consumes/produces signature matching as a fallback.
+1) typed `depends_on` defaults from each step config model, and
+2) explicit logical-name aliases and per-step wiring for non-step dependency names.
 """
 
 from __future__ import annotations
@@ -21,7 +20,6 @@ import pydantic
 import ruamel.yaml as ruamel_yaml
 
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, ExpectedPathSchema
 
 yaml = ruamel_yaml.YAML()
 yaml.default_flow_style = False
@@ -30,11 +28,16 @@ yaml.indent(sequence=4, offset=2)
 
 # Logical dependency names that are not step names but commonly appear in depends_on models.
 LOGICAL_DEP_ALIASES: dict[str, str] = {
-    "somatic_variant": "variant_calling",
-    "somatic_variants": "variant_calling",
     "somatic_variant_annotation": "variant_annotation",
     "cnv_calling": "somatic_wgs_cnv_calling",
     "copy_number": "somatic_wgs_cnv_calling",
+}
+
+# Logical dependency names that need one particular task, e.g. a somatic instead of the default
+# germline variant caller.
+LOGICAL_DEP_TASKS: dict[str, str] = {
+    "somatic_variant": "variant_calling_mutect2",
+    "somatic_variants": "variant_calling_mutect2",
 }
 
 
@@ -714,49 +717,6 @@ def ensure_explicit_selected_tool_config(
     return cfg, notes
 
 
-def _candidate_score(candidate_step: str, requirement: DataSignature) -> tuple[int, int, str]:
-    tags = getattr(requirement, "tags", frozenset())
-    positive_tags = [t for t in tags if isinstance(t, str) and not t.startswith("-")]
-    score = len(positive_tags)
-
-    # Mild domain preference: for DNA alignments choose mapping first.
-    if requirement.type.value == "alignments" and candidate_step == "ngs_mapping":
-        score += 2
-
-    return (score, len(candidate_step), candidate_step)
-
-
-def find_producer_for_requirement(
-    requirement: DataSignature,
-    workflow_items: list[tuple[str, type]],
-    consumer_step: str,
-    expected_schema: type[pydantic.BaseModel] | None = None,
-) -> str | None:
-    candidates: list[str] = []
-    for step_name, cls in workflow_items:
-        if step_name == consumer_step:
-            continue
-        produces = getattr(cls, "produces", []) or []
-        if any(sig.satisfies(requirement) for sig in produces):
-            if expected_schema is not None:
-                try:
-                    out_paths = cls.get_output_paths(signature=requirement)
-                    if isinstance(out_paths, dict):
-                        if not all(
-                            field_name in out_paths for field_name in expected_schema.model_fields
-                        ):
-                            continue
-                except Exception:
-                    continue
-            candidates.append(step_name)
-
-    if not candidates:
-        return None
-
-    candidates = sorted(candidates, key=lambda c: _candidate_score(c, requirement), reverse=True)
-    return candidates[0]
-
-
 def get_possible_tools(workflow_cls: type) -> list[str]:
     config_model = getattr(workflow_cls, "config_model_class", None)
     if not config_model:
@@ -949,6 +909,8 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                     depends_on[logical_name] = "somatic_targeted_seq_cnv_calling_sequenza"
                 else:
                     depends_on[logical_name] = step_to_default_task[logical_name]
+            elif logical_name in LOGICAL_DEP_TASKS:
+                depends_on[logical_name] = LOGICAL_DEP_TASKS[logical_name]
             elif logical_name in LOGICAL_DEP_ALIASES:
                 alias_target = LOGICAL_DEP_ALIASES[logical_name]
                 if alias_target in all_steps and alias_target != step_name:
@@ -960,44 +922,9 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
                     else:
                         depends_on[logical_name] = step_to_default_task[alias_target]
 
-        # 2) Fill remaining typed dependency keys by consumes/produces matching.
-        unresolved = [k for k in dep_defaults if k not in depends_on]
-        required_reqs = [
-            req for req, required in (getattr(cls, "consumes", {}) or {}).items() if required
-        ]
-        for logical_name in unresolved:
-            # Prefer a requirement whose type name resembles the logical dependency name.
-            selected_req = next(
-                (
-                    req
-                    for req in required_reqs
-                    if req.type.value in logical_name or logical_name in req.type.value
-                ),
-                None,
-            )
-            if selected_req is None and required_reqs:
-                selected_req = required_reqs[0]
-            if selected_req is None:
-                continue
-            expected_schema = None
-            config_model = getattr(cls, "config_model_class", None)
-            if config_model:
-                dep_field = config_model.model_fields.get("depends_on")
-                if dep_field is not None:
-                    dep_model = dep_field.annotation
-                    field_info = dep_model.model_fields.get(logical_name)
-                    if field_info is not None:
-                        for item in getattr(field_info, "metadata", []):
-                            if isinstance(item, ExpectedPathSchema):
-                                expected_schema = item.schema
-                            elif isinstance(item, type) and issubclass(item, pydantic.BaseModel):
-                                expected_schema = item
-
-            producer = find_producer_for_requirement(
-                selected_req, workflow_items, step_name, expected_schema=expected_schema
-            )
-            if producer and producer != step_name:
-                depends_on[logical_name] = step_to_default_task[producer]
+        # 2) combine_variants merges somatic calls with filtered germline calls.
+        if step_name == "combine_variants":
+            depends_on["germline_variant"] = step_to_default_task["variant_filtration"]
 
         # Expression quantifiers read the strandedness decision of the strandedness task.
         if (
