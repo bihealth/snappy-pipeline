@@ -391,8 +391,9 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
+    @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        yield from super()._get_input_files_run(wildcards)
+        yield from super()._get_input_files_run(wildcards).items()
         if self.config.tool != self.name:
             return
         yield "dupradar_path_annotation_gtf", self.config.dupradar.dupradar_path_annotation_gtf
@@ -428,8 +429,9 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
+    @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        yield from super()._get_input_files_run(wildcards)
+        yield from super()._get_input_files_run(wildcards).items()
         if self.config.tool != self.name:
             return
         yield "reference", self.w_config.static_data_config.reference.path
