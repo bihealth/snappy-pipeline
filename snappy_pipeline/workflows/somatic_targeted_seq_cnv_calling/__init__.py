@@ -555,9 +555,9 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         if action in ("segment", "call", "report"):
             args["drop_low_coverage"] = self.cfg.drop_low_coverage
         if action in ("call", "diagram") and self.cfg.gender != CnvkitGender.guess:
-            action["gender"] = self.cfg.gender
+            args["gender"] = self.cfg.gender
         if action in ("call", "diagram") and self.cfg.male_reference:
-            action["male_reference"] = self.cfg.male_reference
+            args["male_reference"] = self.cfg.male_reference
         return args
 
     def get_output_files(self, action):
