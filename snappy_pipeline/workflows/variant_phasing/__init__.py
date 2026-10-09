@@ -231,7 +231,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         assert action == "run", "Unsupported actions"
         return input_function
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         # Validate action
         self._validate_action(action)
         return {"de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior}

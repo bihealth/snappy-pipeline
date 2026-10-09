@@ -164,12 +164,12 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         else:
             return "work/target_cov_report/log/snakemake.target_coverage.log"
 
-    def get_args(self, action):
+    def get_params(self, action):
         assert action in (
             "run",
             "bam_qc",
         ), "Parameters only available for actions 'run' and 'bam_qc'."
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
     @staticmethod
     @dictify
@@ -186,14 +186,14 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def _get_args_run(self, wildcards):
+    def _get_params_run(self, wildcards):
         return {
             "bam": sorted(list(self._collect_bam_files(wildcards))),
             "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
             "path_targets_bed": self.config.target_coverage_report.path_targets_bed,
         }
 
-    def _get_args_bam_qc(self, wildcards):
+    def _get_params_bam_qc(self, wildcards):
         return {
             "bam": sorted(list(self._collect_bam_files(wildcards))),
             "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
@@ -429,11 +429,11 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
                 mem=f"{7 * 1024 * 2}MB",
             )
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_gvcf_to_vcf(self, wildcards):
+    def _get_params_gvcf_to_vcf(self, wildcards):
         result = {
             "input": list(sorted(self._collect_gvcf(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
@@ -441,7 +441,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         }
         return result
 
-    def _get_args_merge_vcf(self, wildcards):
+    def _get_params_merge_vcf(self, wildcards):
         result = {
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
@@ -450,10 +450,10 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         }
         return result
 
-    def _get_args_annotate(self, wildcards):
+    def _get_params_annotate(self, wildcards):
         return {"config": self.config.model_dump(by_alias=True)}
 
-    def _get_args_bam_qc(self, wildcards):
+    def _get_params_bam_qc(self, wildcards):
         """Get parameters for wrapper ``variant_annotator/bam_qc``
 
         Creates dictionary that links library name to identifier that should be used in output file.

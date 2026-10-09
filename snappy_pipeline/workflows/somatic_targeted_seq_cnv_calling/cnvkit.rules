@@ -12,7 +12,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_coverage:
         partition=wf.get_resource("cnvkit", "coverage", "partition"),
         tmpdir=wf.get_resource("cnvkit", "coverage", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "coverage"),
+        args=wf.get_params("cnvkit", "coverage"),
     wrapper:
         wf.wrapper_path("cnvkit/coverage")
 
@@ -31,7 +31,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_fix:
         partition=wf.get_resource("cnvkit", "fix", "partition"),
         tmpdir=wf.get_resource("cnvkit", "fix", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "fix"),
+        args=wf.get_params("cnvkit", "fix"),
     wrapper:
         wf.wrapper_path("cnvkit/fix")
 
@@ -50,7 +50,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_segment:
         partition=wf.get_resource("cnvkit", "segment", "partition"),
         tmpdir=wf.get_resource("cnvkit", "segment", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "segment"),
+        args=wf.get_params("cnvkit", "segment"),
     wrapper:
         wf.wrapper_path("cnvkit/segment")
 
@@ -69,7 +69,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_call:
         partition=wf.get_resource("cnvkit", "call", "partition"),
         tmpdir=wf.get_resource("cnvkit", "call", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "call"),
+        args=wf.get_params("cnvkit", "call"),
     wrapper:
         wf.wrapper_path("cnvkit/call")
 
@@ -88,7 +88,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_postprocess:
         partition=wf.get_resource("cnvkit", "postprocess", "partition"),
         tmpdir=wf.get_resource("cnvkit", "postprocess", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "postprocess"),
+        args=wf.get_params("cnvkit", "postprocess"),
     wrapper:
         wf.wrapper_path("cnvkit/postprocess")
 
@@ -107,7 +107,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_plot:
         partition=wf.get_resource("cnvkit", "plot", "partition"),
         tmpdir=wf.get_resource("cnvkit", "plot", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "plot"),
+        args=wf.get_params("cnvkit", "plot"),
     wrapper:
         wf.wrapper_path("cnvkit/plot")
 
@@ -126,7 +126,7 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_export:
         partition=wf.get_resource("cnvkit", "export", "partition"),
         tmpdir=wf.get_resource("cnvkit", "export", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "export"),
+        args=wf.get_params("cnvkit", "export"),
     wrapper:
         wf.wrapper_path("cnvkit/export")
 
@@ -145,6 +145,6 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_report:
         partition=wf.get_resource("cnvkit", "report", "partition"),
         tmpdir=wf.get_resource("cnvkit", "report", "tmpdir"),
     params:
-        args=wf.get_args("cnvkit", "report"),
+        args=wf.get_params("cnvkit", "report"),
     wrapper:
         wf.wrapper_path("cnvkit/report")

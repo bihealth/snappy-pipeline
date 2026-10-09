@@ -154,7 +154,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}.{action}{ext}"
         return dict(zip(EXT_NAMES, expand(base_path_out, action=action, ext=EXT_VALUES)))
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
 
         def args_fn(_wildcards):
@@ -221,7 +221,7 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
             yield (key, base_path_out + ext)
             yield (key + "_md5", base_path_out + ext + ".md5")
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         # Validate action
         self._validate_action(action)
         return self.config.model_dump(by_alias=True)
@@ -268,7 +268,7 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "segment_md5": base_path_out + ".segment.pdf.md5",
         }
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         # Validate action
         self._validate_action(action)
 

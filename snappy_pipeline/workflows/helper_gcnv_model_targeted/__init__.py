@@ -158,7 +158,7 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
         )
         yield ext, "work/{name_pattern}/out/{name_pattern}/.done".format(name_pattern=name_pattern)
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         gcnv_config = self.parent.get_task_config("helper_gcnv_model_targeted").gcnv
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,

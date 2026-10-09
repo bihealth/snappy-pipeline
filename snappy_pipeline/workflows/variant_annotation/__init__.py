@@ -66,7 +66,7 @@ class VariantAnnotationStepPart(BaseStepPart):
         ):
             yield key, _LOG_PREFIX + ext
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         return {"config": getattr(self.config, self.name).model_dump(by_alias=True)}
 

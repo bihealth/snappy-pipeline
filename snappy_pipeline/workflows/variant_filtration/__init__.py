@@ -102,11 +102,11 @@ class VariantFiltrationStepPart(BaseStepPart):
         ):
             yield key, _LOG_PREFIX + ext
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return self._get_args
+        return self._get_params
 
-    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, self.config.tool)
         params: dict[str, Any] = {
             # Keep wrapper naming stable and task-scoped for chaining.
@@ -174,7 +174,7 @@ class VembraneStepPart(VariantFiltrationStepPart):
 
     filter_name = "vembrane"
 
-    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.vembrane
         if cfg is None:
             raise ValueError("vembrane configuration is required")
@@ -245,8 +245,8 @@ class EbfilterStepPart(_BamAwareStepPart):
             return self._get_output_files_write_panel()
         return super().get_output_files(action)
 
-    def _get_args(self, wildcards: Wildcards) -> dict[str, Any]:
-        return super()._get_args(wildcards) | {
+    def _get_params(self, wildcards: Wildcards) -> dict[str, Any]:
+        return super()._get_params(wildcards) | {
             "has_annotation": getattr(self.config, "has_annotation", True),
         }
 

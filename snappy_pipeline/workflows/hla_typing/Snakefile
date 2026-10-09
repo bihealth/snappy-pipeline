@@ -92,7 +92,7 @@ if wf.config.tool == "optitype":
             partition=wf.get_resource("optitype", "run", "partition"),
             tmpdir=wf.get_resource("optitype", "run", "tmpdir"),
         params:
-            args=wf.get_args("optitype", "run"),
+            args=wf.get_params("optitype", "run"),
         wrapper:
             wf.wrapper_path("optitype")
 

@@ -323,14 +323,14 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 "plot": "work/purecn/out/purecn.interval_weights.png",
             }
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         if action == "coverage":
-            return getattr(self, f"_get_args_{action}")
+            return getattr(self, f"_get_params_{action}")
         else:
             return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
-    def _get_args_coverage(self, wildcards):
+    def _get_params_coverage(self, wildcards):
         mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         return {
             "config": self.config.get(self.name).model_dump(by_alias=True),
@@ -457,27 +457,27 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             output_files["db_md5"] = "work/mutect2/out/mutect2.genomicsDB.tar.gz.md5"
         return output_files
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_scatter(self, wildcards):
+    def _get_params_scatter(self, wildcards):
         return {
             "ignore_chroms": self.config.ignore_chroms,
             "padding": self.config.mutect2.padding,
         }
 
-    def _get_args_prepare_panel(self, wildcards):
+    def _get_params_prepare_panel(self, wildcards):
         return {
             "max_mnp_distance": 0,
             "java_options": self.config.mutect2.java_options,
             "extra_arguments": self.config.mutect2.extra_arguments,
         }
 
-    def _get_args_gather(self, wildcards):
+    def _get_params_gather(self, wildcards):
         return {}
 
-    def _get_args_create_panel(self, wildcards):
+    def _get_params_create_panel(self, wildcards):
         return self.config.mutect2.genomicsdb.model_dump(by_alias=True)
 
     def get_log_file(self, action):
@@ -559,7 +559,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         if self.name == self.config.tool:
             self.is_wgs = self.config.cnvkit.path_target == ""
 
-    def get_args(self, action):
+    def get_params(self, action):
         if self.name != self.config.tool:
             return None  # cnvkit not enabled, skip
         self._validate_action(action)

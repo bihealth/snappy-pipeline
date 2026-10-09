@@ -94,6 +94,6 @@ rule homologous_recombination_deficiency_scarHRD_run:
         partition=wf.get_resource("scarHRD", "run", "partition"),
         tmpdir=wf.get_resource("scarHRD", "run", "tmpdir"),
     params:
-        args=wf.get_args("scarHRD", "run"),
+        args=wf.get_params("scarHRD", "run"),
     wrapper:
         wf.wrapper_path("scarHRD/run")

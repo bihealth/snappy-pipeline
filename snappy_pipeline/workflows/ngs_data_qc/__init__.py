@@ -89,7 +89,7 @@ class FastQcReportStepPart(BaseStepPart):
             preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
 
@@ -219,19 +219,19 @@ class PicardStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
 
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_prepare(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_prepare(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "path_to_baits": self.config.picard.path_to_baits,
             "path_to_targets": self.config.picard.path_to_targets,
         }
 
-    def _get_args_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "prefix": f"{wildcards.library_name}.",

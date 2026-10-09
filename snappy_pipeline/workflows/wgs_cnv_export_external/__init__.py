@@ -244,11 +244,11 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
                 mem=f"{7 * 1024 * 2}MB",
             )
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_merge_vcf(self, wildcards):
+    def _get_params_merge_vcf(self, wildcards):
         result = {
             "input": list(sorted(self._collect_vcfs(wildcards))),
             "sample_names": list(sorted(self._collect_sample_ids(wildcards))),
@@ -257,7 +257,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         }
         return result
 
-    def _get_args_annotate(self, wildcards):
+    def _get_params_annotate(self, wildcards):
         varfish_server_compatibility_flag = self.config.varfish_server_compatibility
         return {
             "step_name": "wgs_cnv_export_external",

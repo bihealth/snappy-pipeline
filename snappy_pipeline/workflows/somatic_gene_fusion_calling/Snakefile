@@ -83,7 +83,7 @@ if str(wf.config.tool) == "fusioncatcher":
             partition=wf.get_resource("fusioncatcher", "run", "partition"),
             tmpdir=wf.get_resource("fusioncatcher", "run", "tmpdir"),
         params:
-            args=wf.get_args("fusioncatcher", "run"),
+            args=wf.get_params("fusioncatcher", "run"),
         wrapper:
             wf.wrapper_path("fusioncatcher/run")
 
@@ -103,7 +103,7 @@ elif str(wf.config.tool) == "jaffa":
             partition=wf.get_resource("jaffa", "run", "partition"),
             tmpdir=wf.get_resource("jaffa", "run", "tmpdir"),
         params:
-            args=wf.get_args("jaffa", "run"),
+            args=wf.get_params("jaffa", "run"),
         wrapper:
             wf.wrapper_path("jaffa/run")
 
@@ -123,7 +123,7 @@ elif str(wf.config.tool) == "pizzly":
             partition=wf.get_resource("pizzly", "run", "partition"),
             tmpdir=wf.get_resource("pizzly", "run", "tmpdir"),
         params:
-            args=wf.get_args("pizzly", "run"),
+            args=wf.get_params("pizzly", "run"),
         wrapper:
             wf.wrapper_path("pizzly/run")
 
@@ -143,7 +143,7 @@ elif str(wf.config.tool) == "hera":
             partition=wf.get_resource("hera", "run", "partition"),
             tmpdir=wf.get_resource("hera", "run", "tmpdir"),
         params:
-            args=wf.get_args("hera", "run"),
+            args=wf.get_params("hera", "run"),
         wrapper:
             wf.wrapper_path("hera/quant")
 
@@ -163,7 +163,7 @@ elif str(wf.config.tool) == "star_fusion":
             partition=wf.get_resource("star_fusion", "run", "partition"),
             tmpdir=wf.get_resource("star_fusion", "run", "tmpdir"),
         params:
-            args=wf.get_args("star_fusion", "run"),
+            args=wf.get_params("star_fusion", "run"),
         wrapper:
             wf.wrapper_path("star_fusion")
 
@@ -183,7 +183,7 @@ elif str(wf.config.tool) == "defuse":
             partition=wf.get_resource("defuse", "run", "partition"),
             tmpdir=wf.get_resource("defuse", "run", "tmpdir"),
         params:
-            args=wf.get_args("defuse", "run"),
+            args=wf.get_params("defuse", "run"),
         wrapper:
             wf.wrapper_path("defuse")
 
@@ -203,6 +203,6 @@ elif str(wf.config.tool) == "arriba":
             partition=wf.get_resource("arriba", "run", "partition"),
             tmpdir=wf.get_resource("arriba", "run", "tmpdir"),
         params:
-            args=wf.get_args("arriba", "run"),
+            args=wf.get_params("arriba", "run"),
         wrapper:
             wf.wrapper_path("arriba/run")

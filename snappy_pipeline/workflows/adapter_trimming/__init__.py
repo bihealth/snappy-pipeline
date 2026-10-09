@@ -84,7 +84,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_args(self, action):
+    def get_params(self, action):
         def args_function(wildcards):
             folder_name = get_ngs_library_folder_name(self.parent.sheets, wildcards.library_name)
             if self.parent.get_preprocessed_path():

@@ -54,7 +54,7 @@ class _ReferenceDownloadStepPart(BaseStepPart):
             yield key, prefix + ext
 
     @dictify
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         yield from self._base_args().items()
 
@@ -64,7 +64,7 @@ class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     source = Source.ensembl
 
     @dictify
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         yield from self._base_args().items()
         cfg = self.config.ensembl
@@ -84,7 +84,7 @@ class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     source = Source.refseq
 
     @dictify
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         yield from self._base_args().items()
         cfg = self.config.refseq
@@ -102,7 +102,7 @@ class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     source = Source.ucsc
 
     @dictify
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         yield from self._base_args().items()
         cfg = self.config.ucsc

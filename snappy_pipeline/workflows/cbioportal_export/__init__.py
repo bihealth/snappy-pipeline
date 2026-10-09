@@ -169,7 +169,7 @@ class cbioportalExportStepPart(BaseStepPart):
             log_files[key + "_md5"] = log_files[key] + ".md5"
         return log_files
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
 
@@ -262,7 +262,7 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
             yield key, tpl + ext
             yield key + "_md5", tpl + ext + ".md5"
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
 
@@ -378,7 +378,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
             yield key, tpl + ext
             yield key + "_md5", tpl + ext + ".md5"
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
         return {"pipeline_id": "ENSEMBL"}
@@ -417,7 +417,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         name_pattern = "{library_name}"
         self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
         if action == "log2":
@@ -492,7 +492,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
                 self.parent.upstream("copy_number")(local_path),
             )
 
-    def get_args(self, action: str) -> dict[str, str]:
+    def get_params(self, action: str) -> dict[str, str]:
         self._validate_action(action)
         return {"action_type": "segment", "mappings": ""}
 
@@ -550,7 +550,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
                 self.parent.upstream("ngs_mapping")(local_path),
             )
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
         return {
@@ -600,7 +600,7 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
         if self.config.expression.enabled:
             yield from [os.path.join("work/upload", f) for f in META_FILES["rna_seq_mrna"]]
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
         return self.config.study.model_dump(by_alias=True)
@@ -615,7 +615,7 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("run",)
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
         donors = {}
@@ -653,7 +653,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("run",)
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
         samples = dict(zip(CASE_LIST_FILES.keys(), [[] for _ in range(len(CASE_LIST_FILES))]))

@@ -36,7 +36,7 @@ rule reference_index_common_run:
         partition=wf.get_resource("common", "run", "partition"),
         tmpdir=wf.get_resource("common", "run", "tmpdir"),
     params:
-        args=wf.get_args("common", "run"),
+        args=wf.get_params("common", "run"),
     wrapper:
         wf.wrapper_path("reference_index/common")
 
@@ -59,7 +59,7 @@ if tool == "bwa":
             partition=wf.get_resource("bwa", "run", "partition"),
             tmpdir=wf.get_resource("bwa", "run", "tmpdir"),
         params:
-            args=wf.get_args("bwa", "run"),
+            args=wf.get_params("bwa", "run"),
         wrapper:
             wf.wrapper_path("reference_index/bwa")
 
@@ -80,7 +80,7 @@ elif tool == "bwa_mem2":
             partition=wf.get_resource("bwa_mem2", "run", "partition"),
             tmpdir=wf.get_resource("bwa_mem2", "run", "tmpdir"),
         params:
-            args=wf.get_args("bwa_mem2", "run"),
+            args=wf.get_params("bwa_mem2", "run"),
         wrapper:
             wf.wrapper_path("reference_index/bwa_mem2")
 
@@ -101,7 +101,7 @@ elif tool == "minimap2":
             partition=wf.get_resource("minimap2", "run", "partition"),
             tmpdir=wf.get_resource("minimap2", "run", "tmpdir"),
         params:
-            args=wf.get_args("minimap2", "run"),
+            args=wf.get_params("minimap2", "run"),
         wrapper:
             wf.wrapper_path("reference_index/minimap2")
 
@@ -122,6 +122,6 @@ elif tool == "star":
             partition=wf.get_resource("star", "run", "partition"),
             tmpdir=wf.get_resource("star", "run", "tmpdir"),
         params:
-            args=wf.get_args("star", "run"),
+            args=wf.get_params("star", "run"),
         wrapper:
             wf.wrapper_path("reference_index/star")

@@ -72,7 +72,7 @@ rule somatic_variant_signatures_tabulate_vcf:
         partition=wf.get_resource("tabulate_vcf", "run", "partition"),
         tmpdir=wf.get_resource("tabulate_vcf", "run", "tmpdir"),
     params:
-        args=wf.get_args("tabulate_vcf", "run"),
+        args=wf.get_params("tabulate_vcf", "run"),
     wrapper:
         wf.wrapper_path("signatures/tabulate_vcf")
 

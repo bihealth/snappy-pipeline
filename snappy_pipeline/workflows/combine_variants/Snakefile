@@ -45,6 +45,6 @@ rule combine_variants_run:
         partition=wf.get_resource("combine", "run", "partition"),
         tmpdir=wf.get_resource("combine", "run", "tmpdir"),
     params:
-        args=wf.get_args("combine", "run"),
+        args=wf.get_params("combine", "run"),
     wrapper:
         wf.wrapper_path("combine_variants/run")

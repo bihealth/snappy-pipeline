@@ -88,7 +88,7 @@ if tool == "mutect2":
             partition=wf.get_resource("mutect2", "scatter", "partition"),
             tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "scatter"),
+            args=wf.get_params("mutect2", "scatter"),
         wrapper:
             wf.wrapper_path("split_regions")
 
@@ -106,7 +106,7 @@ if tool == "mutect2":
             partition=wf.get_resource("mutect2", "prepare_panel", "partition"),
             tmpdir=wf.get_resource("mutect2", "prepare_panel", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "prepare_panel"),
+            args=wf.get_params("mutect2", "prepare_panel"),
         wrapper:
             wf.wrapper_path("mutect2/run")
 
@@ -140,7 +140,7 @@ if tool == "mutect2":
             partition=wf.get_resource("mutect2", "create_panel", "partition"),
             tmpdir=wf.get_resource("mutect2", "create_panel", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "create_panel"),
+            args=wf.get_params("mutect2", "create_panel"),
         wrapper:
             wf.wrapper_path("mutect2/create_panel")
 
@@ -176,7 +176,7 @@ elif tool in ("cnvkit", "access"):
                 mem=wf.get_resource("cnvkit", "target", "mem"),
                 partition=wf.get_resource("cnvkit", "target", "partition"),
             params:
-                args=wf.get_args("cnvkit", "target"),
+                args=wf.get_params("cnvkit", "target"),
             wrapper:
                 wf.wrapper_path("cnvkit/target")
 
@@ -193,7 +193,7 @@ elif tool in ("cnvkit", "access"):
                 mem=wf.get_resource("cnvkit", "antitarget", "mem"),
                 partition=wf.get_resource("cnvkit", "antitarget", "partition"),
             params:
-                args=wf.get_args("cnvkit", "antitarget"),
+                args=wf.get_params("cnvkit", "antitarget"),
             wrapper:
                 wf.wrapper_path("cnvkit/antitarget")
 
@@ -210,7 +210,7 @@ elif tool in ("cnvkit", "access"):
                 mem=wf.get_resource("cnvkit", "coverage", "mem"),
                 partition=wf.get_resource("cnvkit", "coverage", "partition"),
             params:
-                args=wf.get_args("cnvkit", "coverage"),
+                args=wf.get_params("cnvkit", "coverage"),
             wrapper:
                 wf.wrapper_path("cnvkit/coverage")
 
@@ -227,7 +227,7 @@ elif tool in ("cnvkit", "access"):
                 mem=wf.get_resource("cnvkit", "create_panel", "mem"),
                 partition=wf.get_resource("cnvkit", "create_panel", "partition"),
             params:
-                args=wf.get_args("cnvkit", "create_panel"),
+                args=wf.get_params("cnvkit", "create_panel"),
             wrapper:
                 wf.wrapper_path("cnvkit/reference")
 
@@ -244,7 +244,7 @@ elif tool in ("cnvkit", "access"):
                 mem=wf.get_resource("cnvkit", "report", "mem"),
                 partition=wf.get_resource("cnvkit", "report", "partition"),
             params:
-                args=wf.get_args("cnvkit", "report"),
+                args=wf.get_params("cnvkit", "report"),
             wrapper:
                 wf.wrapper_path("cnvkit/report")
 
@@ -295,7 +295,7 @@ elif tool == "purecn":
             mem=wf.get_resource("purecn", "coverage", "mem"),
             partition=wf.get_resource("purecn", "coverage", "partition"),
         params:
-            args=wf.get_args("purecn", "coverage"),
+            args=wf.get_params("purecn", "coverage"),
         wrapper:
             wf.wrapper_path("purecn/coverage")
 

@@ -37,7 +37,7 @@ if source == "ensembl":
             partition=wf.get_resource("ensembl", "run", "partition"),
             tmpdir=wf.get_resource("ensembl", "run", "tmpdir"),
         params:
-            args=wf.get_args("ensembl", "run"),
+            args=wf.get_params("ensembl", "run"),
         wrapper:
             wf.wrapper_path("reference_download/ensembl")
 
@@ -56,7 +56,7 @@ elif source == "refseq":
             partition=wf.get_resource("refseq", "run", "partition"),
             tmpdir=wf.get_resource("refseq", "run", "tmpdir"),
         params:
-            args=wf.get_args("refseq", "run"),
+            args=wf.get_params("refseq", "run"),
         wrapper:
             wf.wrapper_path("reference_download/refseq")
 
@@ -75,6 +75,6 @@ elif source == "ucsc":
             partition=wf.get_resource("ucsc", "run", "partition"),
             tmpdir=wf.get_resource("ucsc", "run", "tmpdir"),
         params:
-            args=wf.get_args("ucsc", "run"),
+            args=wf.get_params("ucsc", "run"),
         wrapper:
             wf.wrapper_path("reference_download/ucsc")

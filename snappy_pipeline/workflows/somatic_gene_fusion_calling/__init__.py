@@ -140,7 +140,7 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "fusioncatcher"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def flatten(lst):
@@ -183,7 +183,7 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "jaffa"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def flatten(lst):
@@ -221,7 +221,7 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "pizzly"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def flatten(lst):
@@ -266,7 +266,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "star_fusion"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def flatten(lst):
@@ -308,7 +308,7 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "defuse"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def flatten(lst):
@@ -350,7 +350,7 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "hera"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def flatten(lst):
@@ -393,7 +393,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "arriba"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def args_function(wildcards):

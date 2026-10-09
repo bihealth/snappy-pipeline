@@ -236,7 +236,7 @@ class MeltStepPart(
     def _get_log_file_merge_vcf(self):
         yield from self._get_log_file_with_infix("melt.{library_name}").items()
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:

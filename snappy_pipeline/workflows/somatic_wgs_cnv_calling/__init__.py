@@ -206,7 +206,7 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             mem=f"{int(3.75 * 1024 * 16)}MB",
         )
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
@@ -325,7 +325,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                 ),
             )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         """Return args (params) that CNVetti creates for the given action"""
         # Validate action
         self._validate_action(action)
@@ -703,12 +703,12 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return result
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         # Validate action
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec
         return {
             "path_chrlenfile": cfg.path_chrlenfile,
@@ -717,7 +717,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "window_size": cfg.window_size,
         }
 
-    def _get_args_transform(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_transform(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec
         return {
             "org_obj": cfg.convert.org_obj,
@@ -726,7 +726,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "tumor_library": wildcards.tumor_library,
         }
 
-    def _get_args_plot(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_plot(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:

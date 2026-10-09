@@ -185,8 +185,8 @@ class BaseStepPart:
 
         return _get_resource
 
-    def get_args(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
-        """Return args for the given action of the sub step"""
+    def get_params(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
+        """Return params for the given action of the sub step, passed to the wrapper as ``args``"""
         raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
 
     def get_input_files(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
@@ -1226,13 +1226,6 @@ class BaseStep:
             return dependency.expected_schema(**global_paths)
         return global_paths
 
-    def get_args(self, sub_step, action):
-        """Return arguments for action of substep with given wildcards
-
-        Delegates to the sub step object's get_args function
-        """
-        return self._get_sub_step(sub_step).get_args(action)
-
     def get_input_files(self, sub_step: str, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
         """Return input files for action of substep with given wildcards
 
@@ -1263,11 +1256,11 @@ class BaseStep:
         return self._get_sub_step(sub_step).get_output_files(action)
 
     def get_params(self, sub_step: str, action: str) -> Any:
-        """Return parameters
+        """Return params for action of substep, for the rule's ``params:`` section
 
         Delegates to the sub step object's get_params function
         """
-        return self.substep_dispatch(sub_step, "get_params", action)
+        return self._get_sub_step(sub_step).get_params(action)
 
     def get_resource(self, sub_step: str, action: str, resource_name: str) -> Any:
         """Get resource

@@ -278,9 +278,9 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
                 )
             )
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
     @staticmethod
     def _coerce_model(model_cls, value):
@@ -288,7 +288,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             return value
         return model_cls.model_validate(value or {})
 
-    def _get_args_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
         extra_args = self._coerce_model(SequenzaExtraArgs, self.config.sequenza.extra_args)
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
@@ -297,13 +297,13 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "extra_arguments": extra_args.model_dump(by_alias=True),
         }
 
-    def _get_args_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "length": self.config.sequenza.length,
         }
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         extra_args_extract = self._coerce_model(
             SequenzaExtractExtraArgs, self.config.sequenza.extra_args_extract
         )
@@ -435,11 +435,11 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
         return action_mapping[action]
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return self._get_args_all
+        return self._get_params_all
 
-    def _get_args_all(self, wildcards):
+    def _get_params_all(self, wildcards):
         mapper = str(self.parent.get_task_config("ngs_mapping").tool)
         config_dump = self.config.get(self.name).model_dump(by_alias=True)
         # Inject PON file paths resolved from the panel_of_normals dependency so that
@@ -586,7 +586,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
         return input_files
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         if action == "plot":
             action = "diagram"

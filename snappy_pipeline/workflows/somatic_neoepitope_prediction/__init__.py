@@ -212,15 +212,15 @@ class PvacToolsStepPart(BaseStepPart):
         tpl = "work/{tpl}/out/{tpl}.normalized.full.vcf.gz".format(tpl=self.prepare_tpl)
         return {"vcf": tpl}
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_normalize(self, wildcards: Wildcards) -> dict[str, str]:
+    def _get_params_normalize(self, wildcards: Wildcards) -> dict[str, str]:
         return self._get_sample_names(wildcards)
 
-    def _get_args_normalize_full(self, wildcards: Wildcards) -> dict[str, str]:
-        return self._get_args_normalize(wildcards)
+    def _get_params_normalize_full(self, wildcards: Wildcards) -> dict[str, str]:
+        return self._get_params_normalize(wildcards)
 
     def get_log_file(self, action):
         """Return mapping of log files."""
@@ -439,7 +439,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
     def _get_output_files_pvacseq(self):
         return self._get_output_files_run()
 
-    def _get_args_pileup(self, wildcards: Wildcards) -> dict[str, str]:
+    def _get_params_pileup(self, wildcards: Wildcards) -> dict[str, str]:
         args = dict(self.config.pileup.model_dump(by_alias=True))
         del args["enabled"]
         del args["path_ngs_mapping"]
@@ -456,7 +456,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
             "extra_args": extra_args.strip(),
         }
 
-    def _get_args_combine(self, wildcards: Wildcards) -> dict[str, str]:
+    def _get_params_combine(self, wildcards: Wildcards) -> dict[str, str]:
         args = dict(self.config.quantification.model_dump(by_alias=True))
         del args["enabled"]
         del args["path_gene_expression_quantification"]
@@ -474,7 +474,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
             "normal_sample": sample_names["normal_sample"],
         }
 
-    def _get_args_pvacseq(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+    def _get_params_pvacseq(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         args = dict(self.cfg.model_dump(by_alias=True))
         del args["path_container"]
         del args["use_all_transcripts"]
@@ -562,7 +562,7 @@ class PvacFuseStepPart(PvacToolsStepPart):
     def _get_output_files_pvacfuse(self):
         return self._get_output_files_run()
 
-    def _get_args_pvacfuse(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+    def _get_params_pvacfuse(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         args = dict(self.cfg.model_dump(by_alias=True))
 
         args.pop("path_container", None)
@@ -685,7 +685,7 @@ class PvacSpliceStepPart(PvacToolsStepPart):
     def _get_output_files_pvacsplice(self):
         return self._get_output_files_run()
 
-    def _get_args_junction(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+    def _get_params_junction(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         decision = "no file"
         with open(input["strandedness"], "rt") as f:
             decision = json.load(f).get("decision", "not found")
@@ -701,7 +701,7 @@ class PvacSpliceStepPart(PvacToolsStepPart):
                 )
         return {"strandedness": decision}
 
-    def _get_args_pvacsplice(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
+    def _get_params_pvacsplice(self, wildcards: Wildcards, input: InputFiles) -> dict[str, str]:
         args = dict(self.cfg.model_dump(by_alias=True))
         del args["path_container"]
         del args["use_all_transcripts"]
@@ -777,11 +777,11 @@ class PhasingStepPart(BaseStepPart):
             case _:
                 raise MissingConfiguration(f"Unknown action {action} during phasing")
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {}
 
     def get_log_file(self, action):
@@ -895,29 +895,29 @@ class NetChopStepPart(BaseStepPart):
             case _:
                 raise MissingConfiguration(f"Unknown action {action} during phasing")
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_pvacseq(self, wildcards: Wildcards):
+    def _get_params_pvacseq(self, wildcards: Wildcards):
         assert wildcards.tool == "pvacseq", (
             "Internal error: tool {wildcards.tool} should be 'pvacseq'"
         )
-        return self._get_args_run(wildcards)
+        return self._get_params_run(wildcards)
 
-    def _get_args_pvacfuse(self, wildcards: Wildcards):
+    def _get_params_pvacfuse(self, wildcards: Wildcards):
         assert wildcards.tool == "pvacfuse", (
             "Internal error: tool {wildcards.tool} should be 'pvacfuse'"
         )
-        return self._get_args_run(wildcards)
+        return self._get_params_run(wildcards)
 
-    def _get_args_pvacsplice(self, wildcards: Wildcards):
+    def _get_params_pvacsplice(self, wildcards: Wildcards):
         assert wildcards.tool == "pvacsplice", (
             "Internal error: tool {wildcards.tool} should be 'pvacsplice'"
         )
-        return self._get_args_run(wildcards)
+        return self._get_params_run(wildcards)
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg: NetChopModel = self.config.get(wildcards.tool).net_chop
         return {"tool": wildcards.tool, "method": cfg.method, "threshold": cfg.threshold}
 
@@ -971,7 +971,7 @@ class ProteomeStepPart(BaseStepPart):
                     f"Unknown action {action} during personal proteome building"
                 )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         match action:
             case "run":
                 return {"add_unmutated": self.config.proteome.add_unmutated}

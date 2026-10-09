@@ -85,7 +85,7 @@ rule gene_expression_quantification_strandedness_run:
         partition=wf.get_resource("strandedness", "run", "partition"),
         tmpdir=wf.get_resource("strandedness", "run", "tmpdir"),
     params:
-        args=wf.get_args("strandedness", "run"),
+        args=wf.get_params("strandedness", "run"),
     wrapper:
         wf.wrapper_path("rseqc")
 
@@ -108,7 +108,7 @@ rule gene_expression_quantification_duplication_run:
         partition=wf.get_resource("duplication", "run", "partition"),
         tmpdir=wf.get_resource("duplication", "run", "tmpdir"),
     params:
-        args=wf.get_args("duplication", "run"),
+        args=wf.get_params("duplication", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/duplication")
 
@@ -128,7 +128,7 @@ rule gene_expression_quantification_dupradar_run:
         partition=wf.get_resource("dupradar", "run", "partition"),
         tmpdir=wf.get_resource("dupradar", "run", "tmpdir"),
     params:
-        args=wf.get_args("dupradar", "run"),
+        args=wf.get_params("dupradar", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/dupradar")
 
@@ -148,7 +148,7 @@ rule gene_expression_quantification_rnaseqc_run:
         partition=wf.get_resource("rnaseqc", "run", "partition"),
         tmpdir=wf.get_resource("rnaseqc", "run", "tmpdir"),
     params:
-        args=wf.get_args("rnaseqc", "run"),
+        args=wf.get_params("rnaseqc", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/rnaseqc")
 
@@ -168,7 +168,7 @@ rule gene_expression_quantification_stats_run:
         partition=wf.get_resource("stats", "run", "partition"),
         tmpdir=wf.get_resource("stats", "run", "tmpdir"),
     params:
-        args=wf.get_args("stats", "run"),
+        args=wf.get_params("stats", "run"),
     wrapper:
         wf.wrapper_path("rnaqc/stats")
 
@@ -193,7 +193,7 @@ rule gene_expression_quantification_featurecounts_run:
         partition=wf.get_resource("featurecounts", "run", "partition"),
         tmpdir=wf.get_resource("featurecounts", "run", "tmpdir"),
     params:
-        args=wf.get_args("featurecounts", "run"),
+        args=wf.get_params("featurecounts", "run"),
     wrapper:
         wf.wrapper_path("featurecounts")
 
@@ -217,6 +217,6 @@ rule gene_expression_quantification_salmon_run:
         partition=wf.get_resource("salmon", "run", "partition"),
         tmpdir=wf.get_resource("salmon", "run", "tmpdir"),
     params:
-        args=wf.get_args("salmon", "run"),
+        args=wf.get_params("salmon", "run"),
     wrapper:
         wf.wrapper_path("salmon")

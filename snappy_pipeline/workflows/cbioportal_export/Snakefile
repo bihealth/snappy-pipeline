@@ -52,7 +52,7 @@ rule cbioportal_export_meta_files:
     output:
         wf.get_output_files("cbioportal_meta_files", "run"),
     params:
-        args=wf.get_args("cbioportal_meta_files", "run"),
+        args=wf.get_params("cbioportal_meta_files", "run"),
     wrapper:
         wf.wrapper_path("cbioportal/meta_files")
 
@@ -64,7 +64,7 @@ rule cbioportal_export_patient_data:
     output:
         **wf.get_output_files("cbioportal_clinical_data", "run"),
     params:
-        args=wf.get_args("cbioportal_clinical_data", "run"),
+        args=wf.get_params("cbioportal_clinical_data", "run"),
     wrapper:
         wf.wrapper_path("cbioportal/clinical_data")
 
@@ -73,7 +73,7 @@ rule cbioportal_export_case_lists:
     output:
         **wf.get_output_files("cbioportal_case_lists", "run"),
     params:
-        args=wf.get_args("cbioportal_case_lists", "run"),
+        args=wf.get_params("cbioportal_case_lists", "run"),
     wrapper:
         wf.wrapper_path("cbioportal/case_lists")
 
@@ -97,7 +97,7 @@ rule cbioportal_export_generate_mafs:
         partition=wf.get_resource("cbioportal_vcf2maf", "run", "partition"),
         tmpdir=wf.get_resource("cbioportal_vcf2maf", "run", "tmpdir"),
     params:
-        args=wf.get_args("cbioportal_vcf2maf", "run"),
+        args=wf.get_params("cbioportal_vcf2maf", "run"),
     wrapper:
         wf.wrapper_path("vcf2maf/vcf_to_table")
 
@@ -142,7 +142,7 @@ if step_config.copy_number_alteration.enabled:
             partition=wf.get_resource("cbioportal_cns2cna", "run", "partition"),
             tmpdir=wf.get_resource("cbioportal_cns2cna", "run", "tmpdir"),
         params:
-            args=wf.get_args("cbioportal_cns2cna", "run"),
+            args=wf.get_params("cbioportal_cns2cna", "run"),
         wrapper:
             wf.wrapper_path("cbioportal/generate_cna")
 
@@ -161,7 +161,7 @@ if step_config.copy_number_alteration.enabled:
             partition=wf.get_resource("cbioportal_cna", "log2", "partition"),
             tmpdir=wf.get_resource("cbioportal_cna", "log2", "tmpdir"),
         params:
-            args=wf.get_args("cbioportal_cna", "log2"),
+            args=wf.get_params("cbioportal_cna", "log2"),
         wrapper:
             wf.wrapper_path("cbioportal/merge_tables")
 
@@ -179,7 +179,7 @@ if step_config.copy_number_alteration.enabled:
             partition=wf.get_resource("cbioportal_cna", "gistic", "partition"),
             tmpdir=wf.get_resource("cbioportal_cna", "gistic", "tmpdir"),
         params:
-            args=wf.get_args("cbioportal_cna", "gistic"),
+            args=wf.get_params("cbioportal_cna", "gistic"),
         wrapper:
             wf.wrapper_path("cbioportal/merge_tables")
 
@@ -221,6 +221,6 @@ if step_config.expression.enabled:
             partition=wf.get_resource("cbioportal_expression", "run", "partition"),
             tmpdir=wf.get_resource("cbioportal_expression", "run", "tmpdir"),
         params:
-            args=wf.get_args("cbioportal_expression", "run"),
+            args=wf.get_params("cbioportal_expression", "run"),
         wrapper:
             wf.wrapper_path("cbioportal/merge_tables")

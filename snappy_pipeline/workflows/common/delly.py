@@ -53,7 +53,7 @@ class Delly2StepPart(
         for sheet in self.parent.shortcut_sheets:
             self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
 
-    def get_args(self, action):
+    def get_params(self, action):
         # Validate action
         self._validate_action(action)
         return {

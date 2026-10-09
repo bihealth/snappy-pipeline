@@ -88,7 +88,7 @@ if wf.config.tool != "pvacfuse" and not getattr(wf.config, wf.config.tool).use_a
             partition=wf.get_resource("pvactools", "normalize", "partition"),
             tmpdir=wf.get_resource("pvactools", "normalize", "tmpdir"),
         params:
-            args=wf.get_args("pvactools", "normalize"),
+            args=wf.get_params("pvactools", "normalize"),
         wrapper:
             wf.wrapper_path("pvactools/normalize")
 
@@ -109,7 +109,7 @@ if wf.config.tool != "pvacfuse" and getattr(wf.config, wf.config.tool).use_all_t
             partition=wf.get_resource("pvactools", "normalize_full", "partition"),
             tmpdir=wf.get_resource("pvactools", "normalize_full", "tmpdir"),
         params:
-            args=wf.get_args("pvactools", "normalize_full"),
+            args=wf.get_params("pvactools", "normalize_full"),
         wrapper:
             wf.wrapper_path("pvactools/normalize")
 
@@ -133,7 +133,7 @@ if wf.config.proteome.enabled and wf.config.proteome.add_unmutated:
             partition=wf.get_resource("proteome", "run", "partition"),
             tmpdir=wf.get_resource("proteome", "run", "tmpdir"),
         params:
-            args=wf.get_args("proteome", "run"),
+            args=wf.get_params("proteome", "run"),
         wrapper:
             wf.wrapper_path("pvactools/create_proteome")
 
@@ -154,7 +154,7 @@ if wf.config.tool == "pvacseq" and wf.config.pileup.enabled:
             partition=wf.get_resource("pvacseq", "pileup", "partition"),
             tmpdir=wf.get_resource("pvacseq", "pileup", "tmpdir"),
         params:
-            args=wf.get_args("pvacseq", "pileup"),
+            args=wf.get_params("pvacseq", "pileup"),
         wrapper:
             wf.wrapper_path("pvactools/pileup")
 
@@ -175,7 +175,7 @@ if wf.config.tool == "pvacseq" and wf.config.quantification.enabled:
             partition=wf.get_resource("pvacseq", "combine", "partition"),
             tmpdir=wf.get_resource("pvacseq", "combine", "tmpdir"),
         params:
-            args=wf.get_args("pvacseq", "combine"),
+            args=wf.get_params("pvacseq", "combine"),
         wrapper:
             wf.wrapper_path("pvactools/combine")
 
@@ -196,7 +196,7 @@ if wf.config.phasing.enabled:
             partition=wf.get_resource("phasing", "run", "partition"),
             tmpdir=wf.get_resource("phasing", "run", "tmpdir"),
         params:
-            args=wf.get_args("phasing", "run"),
+            args=wf.get_params("phasing", "run"),
         wrapper:
             wf.wrapper_path("pvactools/phasing")
 
@@ -220,7 +220,7 @@ if wf.config.tool == "pvacseq":
             partition=wf.get_resource("pvacseq", "pvacseq", "partition"),
             tmpdir=wf.get_resource("pvacseq", "pvacseq", "tmpdir"),
         params:
-            args=wf.get_args("pvacseq", "pvacseq"),
+            args=wf.get_params("pvacseq", "pvacseq"),
         wrapper:
             wf.wrapper_path("pvactools/pvacseq")
 
@@ -238,7 +238,7 @@ if wf.config.tool == "pvacseq":
             partition=wf.get_resource("netchop", "pvacseq", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacseq", "tmpdir"),
         params:
-            args=wf.get_args("netchop", "pvacseq"),
+            args=wf.get_params("netchop", "pvacseq"),
         wrapper:
             wf.wrapper_path("pvactools/netchop")
 
@@ -262,7 +262,7 @@ if wf.config.tool == "pvacfuse":
             partition=wf.get_resource("pvacfuse", "pvacfuse", "partition"),
             tmpdir=wf.get_resource("pvacfuse", "pvacfuse", "tmpdir"),
         params:
-            args=wf.get_args("pvacfuse", "pvacfuse"),
+            args=wf.get_params("pvacfuse", "pvacfuse"),
         wrapper:
             wf.wrapper_path("pvactools/pvacfuse")
 
@@ -280,7 +280,7 @@ if wf.config.tool == "pvacfuse":
             partition=wf.get_resource("netchop", "pvacfuse", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacfuse", "tmpdir"),
         params:
-            args=wf.get_args("netchop", "pvacfuse"),
+            args=wf.get_params("netchop", "pvacfuse"),
         wrapper:
             wf.wrapper_path("pvactools/netchop")
 
@@ -304,7 +304,7 @@ if wf.config.tool == "pvacsplice":
             partition=wf.get_resource("pvacsplice", "junction", "partition"),
             tmpdir=wf.get_resource("pvacsplice", "junction", "tmpdir"),
         params:
-            args=wf.get_args("pvacsplice", "junction"),
+            args=wf.get_params("pvacsplice", "junction"),
         wrapper:
             wf.wrapper_path("pvactools/junction")
 
@@ -352,7 +352,7 @@ if wf.config.tool == "pvacsplice":
             partition=wf.get_resource("pvacsplice", "pvacsplice", "partition"),
             tmpdir=wf.get_resource("pvacsplice", "pvacsplice", "tmpdir"),
         params:
-            args=wf.get_args("pvacsplice", "pvacsplice"),
+            args=wf.get_params("pvacsplice", "pvacsplice"),
         wrapper:
             wf.wrapper_path("pvactools/pvacsplice")
 
@@ -370,6 +370,6 @@ if wf.config.tool == "pvacsplice":
             partition=wf.get_resource("netchop", "pvacsplice", "partition"),
             tmpdir=wf.get_resource("netchop", "pvacsplice", "tmpdir"),
         params:
-            args=wf.get_args("netchop", "pvacsplice"),
+            args=wf.get_params("netchop", "pvacsplice"),
         wrapper:
             wf.wrapper_path("pvactools/netchop")

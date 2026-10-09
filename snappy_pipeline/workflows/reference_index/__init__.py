@@ -51,7 +51,7 @@ class BuildReferenceCommonStepPart(BaseStepPart):
             yield key, prefix + ext
 
     @dictify
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         yield "reference", self.parent.get_reference_path()
 
@@ -96,7 +96,7 @@ class _IndexToolStepPart(BaseStepPart):
             yield key, prefix + ext
 
     @dictify
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         yield "reference", self.parent.get_reference_path()
 
@@ -111,8 +111,8 @@ class BwaIndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
     @dictify
-    def get_args(self, action):
-        yield from super().get_args(action).items()
+    def get_params(self, action):
+        yield from super().get_params(action).items()
         yield "algorithm", self.config.bwa.algorithm
 
 
@@ -126,8 +126,8 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
     @dictify
-    def get_args(self, action):
-        yield from super().get_args(action).items()
+    def get_params(self, action):
+        yield from super().get_params(action).items()
         yield "extra_args", " ".join(self.config.bwa_mem2.extra_args)
 
 
@@ -141,8 +141,8 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=8, runtime="12h", mem="16GB")
 
     @dictify
-    def get_args(self, action):
-        yield from super().get_args(action).items()
+    def get_params(self, action):
+        yield from super().get_params(action).items()
         yield "extra_args", " ".join(self.config.minimap2.extra_args)
 
 
@@ -156,8 +156,8 @@ class StarIndexStepPart(_IndexToolStepPart):
         return ResourceUsage(threads=16, runtime="24h", mem="64GB")
 
     @dictify
-    def get_args(self, action):
-        yield from super().get_args(action).items()
+    def get_params(self, action):
+        yield from super().get_params(action).items()
         yield "extra_args", " ".join(self.config.star.extra_args)
         features = getattr(self.w_config.static_data_config, "features", None)
         yield "features", getattr(features, "path", "") if features else ""

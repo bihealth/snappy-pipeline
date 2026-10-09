@@ -82,7 +82,7 @@ rule variant_phasing_gatk_phase_by_transmission_run:
         partition=wf.get_resource("gatk_phase_by_transmission", "run", "partition"),
         tmpdir=wf.get_resource("gatk_phase_by_transmission", "run", "tmpdir"),
     params:
-        args=wf.get_args("gatk_phase_by_transmission", "run"),
+        args=wf.get_params("gatk_phase_by_transmission", "run"),
     wrapper:
         wf.wrapper_path("gatk_phase_by_transmission")
 

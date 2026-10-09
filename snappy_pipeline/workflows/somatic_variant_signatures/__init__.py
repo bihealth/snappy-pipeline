@@ -88,7 +88,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         name_pattern = "tabulate_vcf." + self.name_postfix
         yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return arguments to pass down."""
         # Validate action
         self._validate_action(action)

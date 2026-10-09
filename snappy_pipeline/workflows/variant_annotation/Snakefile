@@ -68,7 +68,7 @@ if wf.config.tool == Tool.vep:
             partition=wf.get_resource("vep", "run", "partition"),
             tmpdir=wf.get_resource("vep", "run", "tmpdir"),
         params:
-            args=wf.get_args("vep", "run"),
+            args=wf.get_params("vep", "run"),
         wrapper:
             wf.wrapper_path("vep/run")
 
@@ -88,7 +88,7 @@ elif wf.config.tool == Tool.mehari:
             partition=wf.get_resource("mehari", "run", "partition"),
             tmpdir=wf.get_resource("mehari", "run", "tmpdir"),
         params:
-            args=wf.get_args("mehari", "run"),
+            args=wf.get_params("mehari", "run"),
         wrapper:
             wf.wrapper_path("mehari/run")
 

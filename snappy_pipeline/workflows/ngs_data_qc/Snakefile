@@ -84,7 +84,7 @@ rule ngs_data_qc_fastqc_run:
         partition=wf.get_resource("fastqc", "run", "partition"),
         tmpdir=wf.get_resource("fastqc", "run", "tmpdir"),
     params:
-        args=wf.get_args("fastqc", "run"),
+        args=wf.get_params("fastqc", "run"),
     wrapper:
         wf.wrapper_path("fastqc")
 
@@ -106,7 +106,7 @@ rule ngs_data_qc_picard_prepare:
         partition=wf.get_resource("picard", "prepare", "partition"),
         tmpdir=wf.get_resource("picard", "prepare", "tmpdir"),
     params:
-        args=wf.get_args("picard", "prepare"),
+        args=wf.get_params("picard", "prepare"),
     wrapper:
         wf.wrapper_path("picard/prepare")
 
@@ -125,6 +125,6 @@ rule ngs_data_qc_picard_metrics:
         partition=wf.get_resource("picard", "metrics", "partition"),
         tmpdir=wf.get_resource("picard", "metrics", "tmpdir"),
     params:
-        args=wf.get_args("picard", "metrics"),
+        args=wf.get_params("picard", "metrics"),
     wrapper:
         wf.wrapper_path("picard/metrics")

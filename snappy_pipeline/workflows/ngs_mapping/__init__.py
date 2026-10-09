@@ -601,12 +601,12 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             preprocessed_path=self.parent.get_preprocessed_path(),
         )
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
         assert action == "run", "Unsupported actions"
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         result = {
             "input": {
                 "reads_left": list(
@@ -732,8 +732,8 @@ class BwaStepPart(ReadMappingStepPart):
             threads=self.config.bwa.num_threads_align, runtime="3d", mem=f"{mem_mb}MB"
         )
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        parent_args = super()._get_args_run(wildcards)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.bwa.model_dump(by_alias=True))
         parent_args["path_index"] = self.parent.get_index_path("bwa")
         return parent_args
@@ -754,8 +754,8 @@ class BwaMem2StepPart(ReadMappingStepPart):
             threads=self.config.bwa_mem2.num_threads_align, runtime="3d", mem=f"{mem_mb}MB"
         )
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        parent_args = super()._get_args_run(wildcards)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True))
         parent_args["path_index"] = self.parent.get_index_path("bwa_mem2")
         return parent_args
@@ -780,8 +780,8 @@ class MBCsStepPart(ReadMappingStepPart):
         self._validate_action(action)
         return ResourceUsage(threads=1, runtime="72h", mem="4GB", partition="medium")
 
-    def _get_args_run(self, wildcards: Wildcards):
-        args = super()._get_args_run(wildcards)
+    def _get_params_run(self, wildcards: Wildcards):
+        args = super()._get_params_run(wildcards)
         args |= {
             "reference": self.parent.w_config.static_data_config.reference.path,
             "config": self.config.mbcs.model_dump(by_alias=True),
@@ -843,8 +843,8 @@ class StarStepPart(ReadMappingStepPart):
                 ),
             )
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        parent_args = super()._get_args_run(wildcards)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.star.model_dump(by_alias=True))
         parent_args["path_index"] = self.parent.get_index_path("star")
         parent_args["features"] = self.parent.w_config.static_data_config.features.path
@@ -950,7 +950,7 @@ class StrandednessStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
@@ -993,8 +993,8 @@ class Minimap2StepPart(ReadMappingStepPart):
             threads=self.config.minimap2.mapping_threads, runtime="2d", mem=f"{mem_gb}GB"
         )
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        params = super()._get_args_run(wildcards)
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        params = super()._get_params_run(wildcards)
         params |= self.config.minimap2.model_dump(by_alias=True)
         params["path_index"] = self.parent.get_index_path("minimap2")
         params["extra_infos"] = self.parent.ngs_library_to_extra_infos[wildcards.library_name]
@@ -1011,7 +1011,7 @@ class ExternalStepPart(ReadMappingStepPart):
     #: Use wildcard for tool library
     tool_category = "__any__"
 
-    def _get_args_run(self, wildcards: Wildcards):
+    def _get_params_run(self, wildcards: Wildcards):
         return {
             "input": self._collect_bams(wildcards, wildcards.library_name),
             "sample_name": wildcards.library_name,
@@ -1235,7 +1235,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
             ],
         )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._check_action(action)
         return {
             "window_length": self.config.bam_collect_doc.window_length,
@@ -1358,7 +1358,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {"reference": self.parent.w_config.static_data_config.reference.path}
 

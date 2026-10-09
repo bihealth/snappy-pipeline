@@ -54,11 +54,11 @@ class CreateProteomeStepPart(BaseStepPart):
             case _:
                 raise MissingConfiguration(f"Unimplemented action {action}")
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"add_reference": self.config.add_reference}
 
     @dictify

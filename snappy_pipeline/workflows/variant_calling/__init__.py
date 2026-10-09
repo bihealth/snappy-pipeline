@@ -417,7 +417,7 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
         yield "reference", self.parent.w_config.static_data_config.reference.path
         yield "reference_index", self.parent.w_config.static_data_config.reference.path + ".fai"
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
 
         reference_path = self.parent.w_config.static_data_config.reference.path
@@ -471,7 +471,7 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_hc"
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
             "num_threads": self.config.gatk3_hc.num_threads,
@@ -487,7 +487,7 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
     #: Step name
     name = "gatk3_ug"
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
             "num_threads": self.config.gatk3_ug.num_threads,
@@ -503,7 +503,7 @@ class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
 
     name = "gatk4_hc_joint"
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
             "window_length": self.config.gatk4_hc_joint.window_length,
@@ -617,7 +617,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         }
         yield from result.items()
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {
             "step_key": "variant_calling",
@@ -698,7 +698,7 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
@@ -749,7 +749,7 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
 
         def args_fn(_wildcards):
@@ -836,7 +836,7 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
             ],
         )
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
         return {"path_ser": self.config.get(self.name).get("path_ser")}
 
@@ -892,7 +892,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
             work_files[key] = f"work/{base_path}{ext}"
         yield from work_files.items()
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         return {"min_dp": self.config.baf_file_generation.min_dp}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -1012,11 +1012,11 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         self._validate_action(action)
         return getattr(self, "_get_input_files_{}".format(action))
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_scatter(self, wildcards):
+    def _get_params_scatter(self, wildcards):
         ignore_chroms = list(
             set(
                 self.w_config.get("ignore_chroms", [])
@@ -1031,33 +1031,33 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "extra_arguments": self.config.mutect2.contamination.extra_arguments,
         }
 
-    def _get_args_pileup_normal(self, wildcards):
+    def _get_params_pileup_normal(self, wildcards):
         return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
             "normal_lib_name": self.get_normal_lib_name(wildcards)
         }
 
-    def _get_args_pileup_tumor(self, wildcards):
+    def _get_params_pileup_tumor(self, wildcards):
         return self.config.mutect2.contamination.pileup.model_dump(by_alias=True) | {
             "tumor_lib_name": self.get_tumor_lib_name(wildcards)
         }
 
-    def _get_args_contamination(self, wildcards):
+    def _get_params_contamination(self, wildcards):
         return {
             "java_options": self.config.mutect2.contamination.java_options,
             "extra_arguments": self.config.mutect2.contamination.extra_arguments,
         }
 
-    def _get_args_run(self, wildcards):
+    def _get_params_run(self, wildcards):
         return {
             "normal_lib_name": self.get_normal_lib_name(wildcards),
             "java_options": self.config.mutect2.java_options,
             "extra_arguments": self.config.mutect2.extra_arguments,
         }
 
-    def _get_args_gather(self, wildcards):
+    def _get_params_gather(self, wildcards):
         return {}
 
-    def _get_args_filter(self, wildcards):
+    def _get_params_filter(self, wildcards):
         return self.config.mutect2.filtration.model_dump(by_alias=True)
 
     def _get_input_files_scatter(self, wildcards):

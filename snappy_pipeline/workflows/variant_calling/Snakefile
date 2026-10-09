@@ -76,7 +76,7 @@ if tool == "bcftools_call":
             partition=wf.get_resource("bcftools_call", "run", "partition"),
             tmpdir=wf.get_resource("bcftools_call", "run", "tmpdir"),
         params:
-            args=wf.get_args("bcftools_call", "run"),
+            args=wf.get_params("bcftools_call", "run"),
         wrapper:
             wf.wrapper_path("bcftools_call")
 
@@ -100,7 +100,7 @@ elif tool == "gatk3_hc":
             partition=wf.get_resource("gatk3_hc", "run", "partition"),
             tmpdir=wf.get_resource("gatk3_hc", "run", "tmpdir"),
         params:
-            args=wf.get_args("gatk3_hc", "run"),
+            args=wf.get_params("gatk3_hc", "run"),
         wrapper:
             wf.wrapper_path("gatk3_hc")
 
@@ -124,7 +124,7 @@ elif tool == "gatk3_ug":
             partition=wf.get_resource("gatk3_ug", "run", "partition"),
             tmpdir=wf.get_resource("gatk3_ug", "run", "tmpdir"),
         params:
-            args=wf.get_args("gatk3_ug", "run"),
+            args=wf.get_params("gatk3_ug", "run"),
         wrapper:
             wf.wrapper_path("gatk3_ug")
 
@@ -171,7 +171,7 @@ elif tool == "gatk4_hc_gvcf":
             partition=wf.get_resource("gatk4_hc_gvcf", "discover", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "discover", "tmpdir"),
         params:
-            args=wf.get_args("gatk4_hc_gvcf", "discover"),
+            args=wf.get_params("gatk4_hc_gvcf", "discover"),
         wrapper:
             wf.wrapper_path("gatk4_hc/discover")
 
@@ -190,7 +190,7 @@ elif tool == "gatk4_hc_gvcf":
             partition=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "tmpdir"),
         params:
-            args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
+            args=wf.get_params("gatk4_hc_gvcf", "combine_gvcfs"),
         wrapper:
             wf.wrapper_path("gatk4_hc/combine_gvcfs")
 
@@ -209,7 +209,7 @@ elif tool == "gatk4_hc_gvcf":
             partition=wf.get_resource("gatk4_hc_gvcf", "genotype", "partition"),
             tmpdir=wf.get_resource("gatk4_hc_gvcf", "genotype", "tmpdir"),
         params:
-            args=wf.get_args("gatk4_hc_gvcf", "combine_gvcfs"),
+            args=wf.get_params("gatk4_hc_gvcf", "combine_gvcfs"),
         wrapper:
             wf.wrapper_path("gatk4_hc/genotype")
 
@@ -235,7 +235,7 @@ if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
             partition=wf.get_resource("bcftools_stats", "run", "partition"),
             tmpdir=wf.get_resource("bcftools_stats", "run", "tmpdir"),
         params:
-            args=wf.get_args("bcftools_stats", "run"),
+            args=wf.get_params("bcftools_stats", "run"),
         wrapper:
             wf.wrapper_path("bcftools_stats/run")
 
@@ -259,7 +259,7 @@ if wf.config.jannovar_stats and wf.config.jannovar_stats.enabled:
             partition=wf.get_resource("jannovar_stats", "run", "partition"),
             tmpdir=wf.get_resource("jannovar_stats", "run", "tmpdir"),
         params:
-            args=wf.get_args("jannovar_stats", "run"),
+            args=wf.get_params("jannovar_stats", "run"),
         wrapper:
             wf.wrapper_path("jannovar/statistics")
 
@@ -283,7 +283,7 @@ if wf.config.baf_file_generation and wf.config.baf_file_generation.enabled:
             partition=wf.get_resource("baf_file_generation", "run", "partition"),
             tmpdir=wf.get_resource("baf_file_generation", "run", "tmpdir"),
         params:
-            args=wf.get_args("baf_file_generation", "run"),
+            args=wf.get_params("baf_file_generation", "run"),
         wrapper:
             wf.wrapper_path("baf_file_generation")
 
@@ -307,7 +307,7 @@ if wf.config.bcftools_roh and wf.config.bcftools_roh.enabled:
             partition=wf.get_resource("bcftools_roh", "run", "partition"),
             tmpdir=wf.get_resource("bcftools_roh", "run", "tmpdir"),
         params:
-            args=wf.get_args("bcftools_roh", "run"),
+            args=wf.get_params("bcftools_roh", "run"),
         wrapper:
             wf.wrapper_path("bcftools_roh")
 
@@ -335,7 +335,7 @@ if tool == "mutect2":
                 partition=wf.get_resource("mutect2", "pileup_normal", "partition"),
                 tmpdir=wf.get_resource("mutect2", "pileup_normal", "tmpdir"),
             params:
-                args=wf.get_args("mutect2", "pileup_normal"),
+                args=wf.get_params("mutect2", "pileup_normal"),
             wrapper:
                 wf.wrapper_path("mutect2/pileup")
 
@@ -353,7 +353,7 @@ if tool == "mutect2":
                 partition=wf.get_resource("mutect2", "pileup_tumor", "partition"),
                 tmpdir=wf.get_resource("mutect2", "pileup_tumor", "tmpdir"),
             params:
-                args=wf.get_args("mutect2", "pileup_tumor"),
+                args=wf.get_params("mutect2", "pileup_tumor"),
             wrapper:
                 wf.wrapper_path("mutect2/pileup")
 
@@ -395,7 +395,7 @@ if tool == "mutect2":
             partition=wf.get_resource("mutect2", "scatter", "partition"),
             tmpdir=wf.get_resource("mutect2", "scatter", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "scatter"),
+            args=wf.get_params("mutect2", "scatter"),
         wrapper:
             wf.wrapper_path("split_regions")
 
@@ -413,7 +413,7 @@ if tool == "mutect2":
             partition=wf.get_resource("mutect2", "run", "partition"),
             tmpdir=wf.get_resource("mutect2", "run", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "run"),
+            args=wf.get_params("mutect2", "run"),
         wrapper:
             wf.wrapper_path("mutect2/run")
 
@@ -447,7 +447,7 @@ if tool == "mutect2":
             partition=wf.get_resource("mutect2", "filter", "partition"),
             tmpdir=wf.get_resource("mutect2", "filter", "tmpdir"),
         params:
-            args=wf.get_args("mutect2", "filter"),
+            args=wf.get_params("mutect2", "filter"),
         wrapper:
             wf.wrapper_path("mutect2/filter")
 

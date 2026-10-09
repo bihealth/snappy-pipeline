@@ -101,7 +101,7 @@ elif tool == "sequenza":
             partition=wf.get_resource("sequenza", "gcreference", "partition"),
             tmpdir=wf.get_resource("sequenza", "gcreference", "tmpdir"),
         params:
-            args=wf.get_args("sequenza", "gcreference"),
+            args=wf.get_params("sequenza", "gcreference"),
         wrapper:
             wf.wrapper_path("sequenza/gcreference")
 
@@ -119,7 +119,7 @@ elif tool == "sequenza":
             partition=wf.get_resource("sequenza", "coverage", "partition"),
             tmpdir=wf.get_resource("sequenza", "coverage", "tmpdir"),
         params:
-            args=wf.get_args("sequenza", "coverage"),
+            args=wf.get_params("sequenza", "coverage"),
         wrapper:
             wf.wrapper_path("sequenza/coverage")
 
@@ -137,7 +137,7 @@ elif tool == "sequenza":
             partition=wf.get_resource("sequenza", "run", "partition"),
             tmpdir=wf.get_resource("sequenza", "run", "tmpdir"),
         params:
-            args=wf.get_args("sequenza", "run"),
+            args=wf.get_params("sequenza", "run"),
         wrapper:
             wf.wrapper_path("sequenza/run")
 
@@ -161,7 +161,7 @@ elif tool == "purecn":
             partition=wf.get_resource("purecn", "coverage", "partition"),
             tmpdir=wf.get_resource("purecn", "coverage", "tmpdir"),
         params:
-            args=wf.get_args("purecn", "coverage"),
+            args=wf.get_params("purecn", "coverage"),
         wrapper:
             wf.wrapper_path("purecn/coverage")
 
@@ -179,6 +179,6 @@ elif tool == "purecn":
             partition=wf.get_resource("purecn", "run", "partition"),
             tmpdir=wf.get_resource("purecn", "run", "tmpdir"),
         params:
-            args=wf.get_args("purecn", "run"),
+            args=wf.get_params("purecn", "run"),
         wrapper:
             wf.wrapper_path("purecn/run")

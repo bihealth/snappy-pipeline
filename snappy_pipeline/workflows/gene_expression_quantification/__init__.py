@@ -187,7 +187,7 @@ class SalmonStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def args_function(wildcards):
@@ -276,7 +276,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
             )
         )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return {"strand": self.config.strand}
 
@@ -366,10 +366,10 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
         _ = action
         return expand(self.base_path_out, ext=[".decision"])
 
-    def get_args(self, action: str):
+    def get_params(self, action: str):
         self._validate_action(action)
         if self.config.tool != self.name:
-            return super().get_args(action)
+            return super().get_params(action)
 
         def args_fn(wildcards: Wildcards) -> dict[str, Any]:
             config = self.config.strandedness.model_dump(by_alias=True) | {
@@ -417,11 +417,11 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
             return
         yield "dupradar_path_annotation_gtf", self.config.dupradar.dupradar_path_annotation_gtf
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         if self.config.tool != self.name:
-            return super().get_args(action)
-        return super().get_args(action) | {
+            return super().get_params(action)
+        return super().get_params(action) | {
             "num_threads": self.config.dupradar.num_threads,
         }
 

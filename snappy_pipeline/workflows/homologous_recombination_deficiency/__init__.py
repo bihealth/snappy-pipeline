@@ -128,7 +128,7 @@ class ScarHRDStepPart(BaseStepPart):
                 )
             )
 
-    def get_args(self, action: str) -> dict[str, Any]:
+    def get_params(self, action: str) -> dict[str, Any]:
         self._validate_action(action)
         return self.config.scarHRD.model_dump(by_alias=True) | {
             "reference": self.parent.w_config.static_data_config.reference.path,

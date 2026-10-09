@@ -45,6 +45,6 @@ rule create_proteome_run:
         partition=wf.get_resource("create_proteome", "run", "partition"),
         tmpdir=wf.get_resource("create_proteome", "run", "tmpdir"),
     params:
-        args=wf.get_args("create_proteome", "run"),
+        args=wf.get_params("create_proteome", "run"),
     wrapper:
         wf.wrapper_path("pvactools/create_proteome")

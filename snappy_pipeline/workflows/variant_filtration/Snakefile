@@ -86,7 +86,7 @@ if wf.config.tool == "bcftools":
             partition=wf.get_resource("filter", "run", "partition"),
             tmpdir=wf.get_resource("filter", "run", "tmpdir"),
         params:
-            args=wf.get_args("filter", "run"),
+            args=wf.get_params("filter", "run"),
         wrapper:
             wf.wrapper_path("bcftools/filter")
 
@@ -106,7 +106,7 @@ elif wf.config.tool == "vembrane":
             partition=wf.get_resource("filter", "run", "partition"),
             tmpdir=wf.get_resource("filter", "run", "tmpdir"),
         params:
-            args=wf.get_args("filter", "run"),
+            args=wf.get_params("filter", "run"),
         wrapper:
             wf.wrapper_path("vembrane/tag")
 
@@ -126,7 +126,7 @@ elif wf.config.tool == "regions":
             partition=wf.get_resource("filter", "run", "partition"),
             tmpdir=wf.get_resource("filter", "run", "tmpdir"),
         params:
-            args=wf.get_args("filter", "run"),
+            args=wf.get_params("filter", "run"),
         wrapper:
             wf.wrapper_path("bcftools/regions")
 
@@ -146,7 +146,7 @@ elif wf.config.tool == "dkfz":
             partition=wf.get_resource("filter", "run", "partition"),
             tmpdir=wf.get_resource("filter", "run", "tmpdir"),
         params:
-            args=wf.get_args("filter", "run"),
+            args=wf.get_params("filter", "run"),
         wrapper:
             wf.wrapper_path("dkfz_bias_filter")
 
@@ -166,6 +166,6 @@ elif wf.config.tool == "ebfilter":
             partition=wf.get_resource("filter", "run", "partition"),
             tmpdir=wf.get_resource("filter", "run", "tmpdir"),
         params:
-            args=wf.get_args("filter", "run"),
+            args=wf.get_params("filter", "run"),
         wrapper:
             wf.wrapper_path("eb_filter")

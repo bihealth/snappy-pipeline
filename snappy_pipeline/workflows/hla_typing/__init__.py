@@ -155,7 +155,7 @@ class OptiTypeStepPart(BaseStepPart):
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
 
-    def get_args(self, action):
+    def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def args_function(wildcards):
@@ -372,14 +372,14 @@ class HlaLaStepPart(BaseStepPart):
     def get_output_prefix(self):
         return "%s." % self.mapper
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_prepare_reference(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_prepare_reference(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"start": self.config.hla_la.start, "end": self.config.hla_la.end}
 
-    def _get_args_run(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "sample_id": self.NON_WORD.sub("_", wildcards.library_name),
             "min_score": self.config.hla_la.min_score,

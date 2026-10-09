@@ -203,33 +203,33 @@ class AscatStepPart(BaseStepPart):
             path = ("work/{tumor_library}/out/{tumor_library}.%s.txt") % infix
             yield infix, path
 
-    def get_args(self, action):
+    def get_params(self, action):
         self._validate_action(action)
-        return getattr(self, f"_get_args_{action}")
+        return getattr(self, f"_get_params_{action}")
 
-    def _get_args_baf_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_baf_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
             "reference_path": self.w_config.static_data_config.reference.path,
         }
 
-    def _get_args_baf_normal(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self._get_args_baf_tumor(wildcards)
+    def _get_params_baf_normal(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._get_params_baf_tumor(wildcards)
 
-    def _get_args_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
             "reference_path": self.w_config.static_data_config.reference.path,
             "tumor_library": wildcards.tumor_library,
         }
 
-    def _get_args_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
             "reference_path": self.w_config.static_data_config.reference.path,
         }
 
-    def _get_args_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
 
     def get_log_file(self, action):

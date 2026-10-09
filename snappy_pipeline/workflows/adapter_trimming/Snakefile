@@ -92,7 +92,7 @@ if wf.config.tool == "bbduk":
             partition=wf.get_resource("bbduk", "run", "partition"),
             tmpdir=wf.get_resource("bbduk", "run", "tmpdir"),
         params:
-            args=wf.get_args("bbduk", "run"),
+            args=wf.get_params("bbduk", "run"),
         wrapper:
             wf.wrapper_path("bbduk/run")
 
@@ -116,6 +116,6 @@ if wf.config.tool == "fastp":
             partition=wf.get_resource("fastp", "run", "partition"),
             tmpdir=wf.get_resource("fastp", "run", "tmpdir"),
         params:
-            args=wf.get_args("fastp", "run"),
+            args=wf.get_params("fastp", "run"),
         wrapper:
             wf.wrapper_path("fastp/run")

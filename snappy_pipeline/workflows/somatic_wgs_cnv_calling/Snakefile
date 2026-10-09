@@ -77,7 +77,7 @@ if str(wf.config.tool) == "canvas":
             partition=wf.get_resource("canvas", "run", "partition"),
             tmpdir=wf.get_resource("canvas", "run", "tmpdir"),
         params:
-            args=wf.get_args("canvas", "run"),
+            args=wf.get_params("canvas", "run"),
         wrapper:
             wf.wrapper_path("canvas/somatic_wgs")
 
@@ -98,7 +98,7 @@ elif str(wf.config.tool) == "cnvetti":
             partition=wf.get_resource("cnvetti", "coverage", "partition"),
             tmpdir=wf.get_resource("cnvetti", "coverage", "tmpdir"),
         params:
-            args=wf.get_args("cnvetti", "coverage"),
+            args=wf.get_params("cnvetti", "coverage"),
         wrapper:
             wf.wrapper_path("cnvetti/wgs/coverage")
 
@@ -135,7 +135,7 @@ elif str(wf.config.tool) == "cnvetti":
             partition=wf.get_resource("cnvetti", "segment", "partition"),
             tmpdir=wf.get_resource("cnvetti", "segment", "tmpdir"),
         params:
-            args=wf.get_args("cnvetti", "segment"),
+            args=wf.get_params("cnvetti", "segment"),
         wrapper:
             wf.wrapper_path("cnvetti/wgs/segment")
 
@@ -155,7 +155,7 @@ elif str(wf.config.tool) == "control_freec":
             partition=wf.get_resource("control_freec", "run", "partition"),
             tmpdir=wf.get_resource("control_freec", "run", "tmpdir"),
         params:
-            args=wf.get_args("control_freec", "run"),
+            args=wf.get_params("control_freec", "run"),
         wrapper:
             wf.wrapper_path("control_freec")
 
@@ -173,7 +173,7 @@ elif str(wf.config.tool) == "control_freec":
             partition=wf.get_resource("control_freec", "transform", "partition"),
             tmpdir=wf.get_resource("control_freec", "transform", "tmpdir"),
         params:
-            args=wf.get_args("control_freec", "transform"),
+            args=wf.get_params("control_freec", "transform"),
         wrapper:
             wf.wrapper_path("control_freec/transform")
 
