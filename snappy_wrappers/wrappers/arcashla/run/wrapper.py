@@ -17,25 +17,25 @@ _ARCAS_HLA_PAIRED = "--paired" if ARCAS_HLA_PAIRED_IS_PAIRED else ""
 ShellWrapper(snakemake).run(
     r"""
 input=$(readlink -f {snakemake.input.bam})
-mkdir -p work/star.arcashla.{snakemake.wildcards.library_name}/tmp/{{extracted,genotyped}}
+mkdir -p work/{snakemake.wildcards.library_name}/tmp/{{extracted,genotyped}}
 mkdir -p $(dirname {snakemake.output.txt})
-pushd work/star.arcashla.{snakemake.wildcards.library_name}
+pushd work/{snakemake.wildcards.library_name}/tmp
 
 arcasHLA extract \
     {snakemake.input.bam} \
-    -o tmp/extracted \
+    -o extracted \
     {_ARCAS_HLA_PAIRED} \
     -t {ARCAS_HLA_THREADS} \
     -v
 
 arcasHLA genotype \
-    tmp/extracted/*.fq.gz \
-    -o tmp/genotyped \
+    extracted/*.fq.gz \
+    -o genotyped \
     -t {ARCAS_HLA_THREADS} \
     -v
 
 popd
 
-cp work/star.arcashla.{snakemake.wildcards.library_name}/tmp/genotyped/star.genotype.json {snakemake.output.txt}
+cp work/{snakemake.wildcards.library_name}/tmp/genotyped/*.genotype.json {snakemake.output.txt}
 """
 )

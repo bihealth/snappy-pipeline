@@ -121,7 +121,7 @@ class OptiTypeStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, self.base_path_out.format(ext=ext)
         # add additional optitype output files
-        for name, ext in {"tsv": "_result.tsv", "cov_pdf": "_coverage_plot.pdf"}.items():
+        for name, ext in {"tsv": ".result.tsv", "cov_pdf": ".coverage_plot.pdf"}.items():
             yield name, self.base_path_out.format(ext=ext)
 
     @dictify
@@ -208,7 +208,7 @@ class ArcasHlaStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files"""
-        yield "ref_done", "work/arcashla.prepare_reference/out/.done"
+        yield "ref_done", "work/prepare_reference/out/.done"
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
         )

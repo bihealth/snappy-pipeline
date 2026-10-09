@@ -72,11 +72,11 @@ if wf.config.tool == "arcashla":
 
     rule hla_typing_arcashla_prepare_reference:
         output:
-            done="work/arcashla.prepare_reference/out/.done",
+            done="work/prepare_reference/out/.done",
         log:
-            log="work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
-            conda_list="work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_list.txt",
-            conda_info="work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_info.txt",
+            log="work/prepare_reference/log/prepare_reference.log",
+            conda_list="work/prepare_reference/log/prepare_reference.conda_list.txt",
+            conda_info="work/prepare_reference/log/prepare_reference.conda_info.txt",
         params:
             reference_version="3.24.0",  # See https://github.com/RabadanLab/arcasHLA/pull/132
         wrapper:

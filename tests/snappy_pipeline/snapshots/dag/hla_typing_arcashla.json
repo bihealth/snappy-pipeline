@@ -19,12 +19,12 @@
  {
   "input": [],
   "log": [
-   "tasks/hla_typing_arcashla/work/arcashla.prepare_reference/log/arcashla.prepare_reference.log",
-   "tasks/hla_typing_arcashla/work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_list.txt",
-   "tasks/hla_typing_arcashla/work/arcashla.prepare_reference/log/arcashla.prepare_reference.conda_info.txt"
+   "tasks/hla_typing_arcashla/work/prepare_reference/log/prepare_reference.log",
+   "tasks/hla_typing_arcashla/work/prepare_reference/log/prepare_reference.conda_list.txt",
+   "tasks/hla_typing_arcashla/work/prepare_reference/log/prepare_reference.conda_info.txt"
   ],
   "output": [
-   "tasks/hla_typing_arcashla/work/arcashla.prepare_reference/out/.done"
+   "tasks/hla_typing_arcashla/work/prepare_reference/out/.done"
   ],
   "params": {
    "reference_version": "3.24.0"
@@ -37,7 +37,7 @@
  },
  {
   "input": [
-   "tasks/hla_typing_arcashla/work/arcashla.prepare_reference/out/.done",
+   "tasks/hla_typing_arcashla/work/prepare_reference/out/.done",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam"
   ],
   "log": [
