@@ -185,13 +185,23 @@ class BaseStepPart:
 
         return _get_resource
 
-    def get_params(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
-        """Return params for the given action of the sub step, passed to the wrapper as ``args``"""
-        raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
+    def get_params(self, action: str) -> Callable[..., dict[str, Any]]:
+        """Return the params function of the given action: ``self._get_params_<action>``
 
-    def get_input_files(self, action: str) -> Inputs | Callable[[Wildcards], Inputs]:
-        """Return input files for the given action of the sub step"""
-        raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
+        The function takes ``wildcards`` (and optionally ``input``) and returns the dict that
+        the wrapper reads as ``snakemake.params.args``.
+        """
+        self._validate_action(action)
+        return getattr(self, f"_get_params_{action}")
+
+    def get_input_files(self, action: str) -> Callable[[Wildcards], Inputs]:
+        """Return the input function of the given action: ``self._get_input_files_<action>``
+
+        The function takes ``wildcards`` and returns a dict (named inputs, used with
+        ``unpack()``), a list or a single path.
+        """
+        self._validate_action(action)
+        return getattr(self, f"_get_input_files_{action}")
 
     def get_output_files(self, action: str) -> Outputs:
         """Return output files for the given action of the sub step and"""
@@ -255,44 +265,38 @@ class WritePedigreeStepPart(BaseStepPart):
         self.require_dna_ngs_library = require_dna_ngs_library
         self.only_trios = only_trios
 
-    def get_input_files(self, action):
-        """Returns function returning input files.
+    @listify
+    def _get_input_files_run(self, wildcards):
+        """Return the input BAM files of the cohort.
 
-        Returns a dict with entry ``"bam"`` mapping to list of input BAM files.  This list will
-        be empty if the parent step does not define an ``"ngs_mapping"`` workflow.
+        The list is empty if the parent step does not define an ``"ngs_mapping"`` workflow.
         """
-        self._validate_action(action=action)
+        df = self.parent.build_library_dataframe()
+        if df.empty:
+            return
 
-        @listify
-        def get_input_files(wildcards):
-            df = self.parent.build_library_dataframe()
-            if df.empty:
-                return
+        # Cancer cases: do not generate pedigree logic for now
+        if df["kind"].eq("cancer").all():
+            return
 
-            # Cancer cases: do not generate pedigree logic for now
-            if df["kind"].eq("cancer").all():
-                return
+        if wildcards.index_ngs_library == "whole_cohort":
+            df_cohort = df[df["kind"] == "germline"]
+        else:
+            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
 
-            if wildcards.index_ngs_library == "whole_cohort":
-                df_cohort = df[df["kind"] == "germline"]
-            else:
-                df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
+        if self.require_dna_ngs_library:
+            df_cohort = df_cohort[df_cohort["extraction_type"] == "dna"]
 
-            if self.require_dna_ngs_library:
-                df_cohort = df_cohort[df_cohort["extraction_type"] == "dna"]
+        # TODO only_trios not fully implemented via pandas yet, fall back to writing all
 
-            # TODO only_trios not fully implemented via pandas yet, fall back to writing all
-
-            tpl = "output/{library_name}/out/{library_name}{ext}"
-            for _, row in df_cohort.iterrows():
-                path = tpl.format(
-                    library_name=row["library_name"],
-                    ext=".bam",
-                    **wildcards,
-                )
-                yield self.parent.upstream("ngs_mapping")(path)
-
-        return get_input_files
+        tpl = "output/{library_name}/out/{library_name}{ext}"
+        for _, row in df_cohort.iterrows():
+            path = tpl.format(
+                library_name=row["library_name"],
+                ext=".bam",
+                **wildcards,
+            )
+            yield self.parent.upstream("ngs_mapping")(path)
 
     def get_output_files(self, action):
         self._validate_action(action=action)
@@ -359,9 +363,8 @@ class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
     def __init__(self, *args, **kwargs):
         WritePedigreeStepPart.__init__(self, *args, **kwargs)
 
-    def get_input_files(self, action):
-        """Return empty input list — pedigree writing only needs sample-sheet data."""
-        self._validate_action(action=action)
+    def _get_input_files_run(self, wildcards):
+        """Return no input files: pedigree writing only needs sample-sheet data."""
         return []
 
     def run(self, wildcards, output):
@@ -412,6 +415,8 @@ class LinkOutStepPart(BaseStepPart):
 
     name = "link_out"
 
+    actions = ("run",)
+
     def __init__(self, parent, disable_patterns=None):
         super().__init__(parent)
         self.base_pattern_out = "output/{path}/{file}.{ext}"
@@ -422,23 +427,13 @@ class LinkOutStepPart(BaseStepPart):
         #: performed or not, depending on the configuration.
         self.disable_patterns = list(disable_patterns or [])
 
-    def get_input_files(self, action):
-        """Return input file pattern"""
-
-        if not self.disable_patterns:
-            return self.base_path_in
-
-        task_prefix = self.parent.task_path_prefix()
-
-        def input_function(wildcards):
-            """Helper wrapper function"""
-            result = self.base_path_in.format(**wildcards)
-            for pattern in self.disable_patterns:
-                if fnmatch(result, pattern):
-                    raise ValueError("Blocking match...")
-            return task_prefix + result
-
-        return input_function
+    def _get_input_files_run(self, wildcards):
+        """Return the work file to link to"""
+        path = self.base_path_in.format(**wildcards)
+        for pattern in self.disable_patterns:
+            if fnmatch(path, pattern):
+                raise ValueError("Blocking match...")
+        return path
 
     def get_output_files(self, action):
         """Return output file pattern"""
@@ -1231,22 +1226,7 @@ class BaseStep:
 
         Delegates to the sub step object's get_input_files function
         """
-        input_files = self._get_sub_step(sub_step).get_input_files(action)
-        if callable(input_files):
-
-            def input_wrapper(*args, **kwargs):
-                try:
-                    return input_files(*args, **kwargs)
-                except TypeError as e:
-                    if kwargs and "unexpected keyword argument" in str(e):
-                        if args:
-                            return input_files(*args)
-                        if "wildcards" in kwargs:
-                            return input_files(kwargs["wildcards"])
-                    raise
-
-            return input_wrapper
-        return input_files
+        return self._get_sub_step(sub_step).get_input_files(action)
 
     def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
@@ -2365,6 +2345,8 @@ class LinkInStepPart(BaseStepPart):
 
     name = "link_in"
 
+    actions = ("run",)
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_pattern_out = "work/input_links/{library_name}/.done"
@@ -2379,9 +2361,9 @@ class LinkInStepPart(BaseStepPart):
             preprocessed_path=self.preprocessed_path,
         )
 
-    def get_input_files(self, action):
-        """Return required input files"""
-        return []  # no input
+    def _get_input_files_run(self, wildcards):
+        """Return no input files: linking in reads only from the data set search paths"""
+        return []
 
     def get_output_files(self, action):
         assert action == "run", "Unsupported action"

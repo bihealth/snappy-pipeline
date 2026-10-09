@@ -3,6 +3,7 @@
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+import functools
 from typing import Any, Callable, Generator, Iterable, TypeVar
 
 F = TypeVar("F")
@@ -22,6 +23,9 @@ def listify(gen: Callable[..., Generator[T, None, None]]) -> Callable[..., list[
                 yield i
     """
 
+    # functools.wraps keeps the signature visible to inspect, which Snakemake uses to decide
+    # which keyword arguments an input or params function accepts.
+    @functools.wraps(gen)
     def patched(*args, **kwargs) -> list[T]:
         """Wrapper function"""
         return list(gen(*args, **kwargs))
@@ -42,6 +46,7 @@ def dictify[**P](gen) -> Callable[P, dict]:
                 yield 'key{}'.format(i), i
     """
 
+    @functools.wraps(gen)
     def patched(*args, **kwargs) -> dict[F, T]:
         """Wrapper function"""
         return dict(gen(*args, **kwargs))
