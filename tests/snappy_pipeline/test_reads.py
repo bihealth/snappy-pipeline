@@ -97,3 +97,27 @@ def test_missing_library_suggests_similar_folders(tmp_path):
 def test_patterns_need_a_readgroup_group():
     with pytest.raises(ValueError, match=r"has no \(\?P<readgroup>...\) group"):
         compile_search_pattern({"left": r".*\.R1\.fastq\.gz"})
+
+
+BAM = {"bam": r".+\.bam", "bai": r".+\.bam\.bai"}
+
+
+def test_find_files_returns_one_file_per_key(tmp_path):
+    _touch(tmp_path, "P1/x.bam", "P1/x.bam.bai", "P1/x.bam.md5", "P2/y.bam")
+    assert ReadDiscovery().find_files([str(tmp_path)], "P1", [BAM]) == {
+        "bam": str(tmp_path / "P1/x.bam"),
+        "bai": str(tmp_path / "P1/x.bam.bai"),
+    }
+
+
+@pytest.mark.parametrize(
+    "files, error",
+    [
+        (["P1/x.bam", "P1/y.bam"], "Two bam files for 'P1'"),
+        (["P2/x.bam"], "Found no files of 'P1' below"),
+    ],
+)
+def test_find_files_errors(tmp_path, files, error):
+    _touch(tmp_path, *files)
+    with pytest.raises(ValueError, match=error):
+        ReadDiscovery().find_files([str(tmp_path)], "P1", [BAM])

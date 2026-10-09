@@ -3,6 +3,7 @@
 A library's files are in a folder named after it (the sample sheet's folder name) somewhere below
 a data set's search paths. Search patterns are regular expressions that must match the whole path
 below that folder. Their ``readgroup`` group pairs the mates of one sequencing unit, usually a lane.
+``find_files`` finds other per-library files the same way, one file per pattern key.
 """
 
 from __future__ import annotations
@@ -161,12 +162,12 @@ class ReadDiscovery:
                                 )
                             found[key] = os.path.join(root, rel)
         if not found:
-            raise ValueError(self.missing(roots, folder_name))
+            raise ValueError(self.missing(roots, folder_name, what="files"))
         return found
 
-    def missing(self, roots: Iterable[str], folder_name: str) -> str:
+    def missing(self, roots: Iterable[str], folder_name: str, what: str = "reads") -> str:
         """Return the error message for a library whose files are not below ``roots``."""
         folders = {d for root in roots for rel in self.files(root) for d in rel.split("/")[:-1]}
         hint = difflib.get_close_matches(folder_name, sorted(folders), n=3)
-        message = f"Found no reads of {folder_name!r} below {', '.join(roots)}"
+        message = f"Found no {what} of {folder_name!r} below {', '.join(roots)}"
         return message + (f"; similar folders: {', '.join(hint)}" if hint else "")
