@@ -23,4 +23,4 @@ class VariantChecking(SnappyStepModel):
 
     """Path to variant calling"""
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.peddy)]
+    tool: Annotated[Tool, EnumField(Tool)]

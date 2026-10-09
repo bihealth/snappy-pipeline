@@ -107,7 +107,7 @@ class SvCallingTargetedDependsOn(SnappyModel):
 class SvCallingTargeted(SnappyStepModel):
     depends_on: SvCallingTargetedDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.gcnv)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     gcnv: Gcnv | None = None
 

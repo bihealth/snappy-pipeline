@@ -26,6 +26,6 @@ class SomaticPurityPloidyEstimateDependsOn(SnappyModel):
 class SomaticPurityPloidyEstimate(SnappyStepModel):
     depends_on: SomaticPurityPloidyEstimateDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.ascat)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     ascat: Ascat | None = None

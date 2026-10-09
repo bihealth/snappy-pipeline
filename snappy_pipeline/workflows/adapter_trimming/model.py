@@ -894,6 +894,6 @@ class ExpectedTrimmedRawFastq(BaseModel):
 class AdapterTrimming(SnappyStepModel):
     depends_on: AdapterTrimmingDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.FASTP)]
+    tool: Annotated[Tool, EnumField(Tool)]
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None

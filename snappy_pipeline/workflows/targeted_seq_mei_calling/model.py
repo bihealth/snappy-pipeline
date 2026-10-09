@@ -43,6 +43,6 @@ class TargetedSeqMeiCallingDependsOn(SnappyModel):
 class TargetedSeqMeiCalling(SnappyStepModel):
     depends_on: TargetedSeqMeiCallingDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.scramble)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     scramble: Scramble | None = None

@@ -131,7 +131,7 @@ TOOL_DEPENDENCIES = {
 class PanelOfNormals(SnappyStepModel):
     depends_on: PanelOfNormalsDependsOn = Field(default_factory=PanelOfNormalsDependsOn)
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.mutect2)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     ignore_chroms: Annotated[
         list[str],

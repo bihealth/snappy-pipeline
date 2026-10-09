@@ -195,3 +195,13 @@ def test_depends_on_keys_use_the_vocabulary():
             keys = set(depends_on.annotation.model_fields) - DEPENDS_ON_KEYS
             found += [f"{step}.{key}" for key in sorted(keys)]
     assert not found, f"depends_on keys outside the vocabulary in docs/dev_conventions.rst: {found}"
+
+
+def test_tool_is_required():
+    found = [
+        step
+        for step, workflow_cls in WORKFLOW_REGISTRY.items()
+        if (tool := workflow_cls.config_model_class.model_fields.get("tool")) is not None
+        and not tool.is_required()
+    ]
+    assert not found, f"tool must be set explicitly, without a default: {found}"

@@ -89,7 +89,7 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
 class SomaticWgsCnvCalling(SnappyStepModel):
     depends_on: SomaticWgsCnvCallingDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvetti)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     canvas: Canvas | None = None
 

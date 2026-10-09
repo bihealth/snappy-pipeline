@@ -213,7 +213,7 @@ TOOL_DEPENDENCIES = {Tool.purecn: ("variants",)}
 class SomaticTargetedSeqCnvCalling(SnappyStepModel):
     depends_on: SomaticTargetedSeqCnvCallingDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.cnvkit)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None

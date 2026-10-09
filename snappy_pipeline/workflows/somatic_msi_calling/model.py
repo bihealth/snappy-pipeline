@@ -23,7 +23,7 @@ class SomaticMsiCallingDependsOn(SnappyModel):
 class SomaticMsiCalling(SnappyStepModel):
     depends_on: SomaticMsiCallingDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.mantis_msi2)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     loci_bed: Annotated[
         str,

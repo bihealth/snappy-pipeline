@@ -127,7 +127,7 @@ class SvCallingWgsDependsOn(SnappyModel):
 class SvCallingWgs(SnappyStepModel):
     depends_on: SvCallingWgsDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.delly2)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     delly2: Delly2 | None = None
 

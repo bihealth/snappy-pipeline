@@ -105,7 +105,7 @@ class HlaTyping(SnappyStepModel):
 
     depends_on: HlaTypingDependsOn = Field(default_factory=HlaTypingDependsOn)
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.optitype)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     optitype: Optitype = Optitype()
 

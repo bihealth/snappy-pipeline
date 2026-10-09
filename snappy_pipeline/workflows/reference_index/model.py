@@ -57,7 +57,7 @@ class ReferenceIndexDependsOn(SnappyModel):
 class ReferenceIndex(SnappyStepModel):
     depends_on: ReferenceIndexDependsOn = Field(default_factory=ReferenceIndexDependsOn)
 
-    tool: Tool = Tool.bwa
+    tool: Tool
     """Index family to build for this task (one tool per task)."""
 
     path_reference: ResolvablePath = ""

@@ -48,6 +48,6 @@ class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
 class HomologousRecombinationDeficiency(SnappyStepModel):
     depends_on: HomologousRecombinationDeficiencyDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.scarHRD)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     scarHRD: ScarHRD | None = None

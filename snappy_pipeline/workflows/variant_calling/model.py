@@ -153,7 +153,7 @@ class VariantCallingDependsOn(SnappyModel):
 class VariantCalling(SnappyStepModel):
     depends_on: VariantCallingDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.gatk4_hc_gvcf)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
 

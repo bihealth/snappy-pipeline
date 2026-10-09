@@ -101,7 +101,7 @@ class NgsDataQc(SnappyStepModel):
 
     depends_on: NgsDataQcDependsOn = Field(default_factory=NgsDataQcDependsOn)
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.fastqc)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     picard: Picard | None = None
 

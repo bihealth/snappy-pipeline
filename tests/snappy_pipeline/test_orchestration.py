@@ -168,6 +168,12 @@ def test_load_project_requires_depends_on_keys():
         load_project(_config(_mapping(depends_on={})), WORK_DIR)
 
 
+def test_load_project_requires_tool():
+    calling = ("variant_calling", "calling", {"depends_on": {"alignments": "mapping"}})
+    with pytest.raises(pydantic.ValidationError, match="tool\n  Field required"):
+        load_project(_config(_mapping(), calling), WORK_DIR)
+
+
 def test_load_project_accepts_reads_from_data_sets():
     project = load_project(_config(_mapping(depends_on={"reads": "data_sets"})), WORK_DIR)
     assert project.dependencies["mapping"] == {}

@@ -110,7 +110,7 @@ class SomaticGeneFusionCallingDependsOn(SnappyModel):
 class SomaticGeneFusionCalling(SnappyStepModel):
     depends_on: SomaticGeneFusionCallingDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.fusioncatcher)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     fusioncatcher: Fusioncatcher | None = None
 

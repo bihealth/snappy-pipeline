@@ -38,7 +38,7 @@ class VariantAnnotationDependsOn(SnappyModel):
 class VariantAnnotation(SnappyStepModel):
     depends_on: VariantAnnotationDependsOn
 
-    tool: Annotated[Tool, EnumField(Tool, default=Tool.vep)]
+    tool: Annotated[Tool, EnumField(Tool)]
 
     vep: Vep = Field(default_factory=Vep)
 

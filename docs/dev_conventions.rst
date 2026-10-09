@@ -15,6 +15,9 @@ A configuration must mean the same thing across snappy versions and setups. Code
 there is no automatic wiring of ``depends_on``, no fallback that picks a task by its step type, and
 validation fails with a clear message instead of choosing for the user.
 
+- ``tool`` has no default; every task names its tool (``test_tool_is_required``).
+- ``depends_on`` keys have no task-name defaults (see `Contracts`_).
+
 -------------
 Step part API
 -------------
