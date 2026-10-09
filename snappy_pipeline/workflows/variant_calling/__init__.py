@@ -1092,7 +1092,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         )
         return {
             "bam": alignments.bam,
-            "bai": alignments.bam,  # TODO: bai is the BAM path; fixed in a separate commit
+            "bai": alignments.bai,
             "reference": self.w_config.static_data_config.reference.path,
             "common_variants": self.config.mutect2.contamination.common_variants,
         }
@@ -1103,7 +1103,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         )
         return {
             "bam": alignments.bam,
-            "bai": alignments.bam,  # TODO: bai is the BAM path; fixed in a separate commit
+            "bai": alignments.bai,
             "reference": self.w_config.static_data_config.reference.path,
             "common_variants": self.config.mutect2.contamination.common_variants,
         }
