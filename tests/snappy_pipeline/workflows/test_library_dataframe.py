@@ -743,7 +743,7 @@ class TestModelValidation:
         from snappy_pipeline.workflows.variant_calling.model import VariantCalling
 
         config = VariantCalling(
-            depends_on={"alignments": "mapping"},
+            depends_on={"alignments": "mapping", "reference": "genome", "dbsnp": "dbsnp"},
             tool="gatk4_hc_gvcf",
             gatk4_hc_gvcf={},
             relationships={
@@ -761,7 +761,9 @@ class TestModelValidation:
         from snappy_pipeline.workflows.variant_calling.model import VariantCalling
 
         config = VariantCalling(
-            depends_on={"alignments": "mapping"}, tool="gatk4_hc_gvcf", gatk4_hc_gvcf={}
+            depends_on={"alignments": "mapping", "reference": "genome", "dbsnp": "dbsnp"},
+            tool="gatk4_hc_gvcf",
+            gatk4_hc_gvcf={},
         )
         assert config.relationships is None
         assert config.library_selection is None

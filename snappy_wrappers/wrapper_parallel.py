@@ -499,10 +499,9 @@ class ParallelBaseWrapper(PythonWrapper):
     def get_fai_path(self):
         """Return path to FAI file for reference to use.
 
-        The base implementation uses the value in ``/static_data_config/reference/path`` to
-        construct the path by appending ``".fai"``.
+        The base implementation appends ``".fai"`` to the ``reference`` in ``params.args``.
         """
-        return self.snakemake.config["static_data_config"]["reference"]["path"] + ".fai"
+        return self.snakemake.params.args["reference"] + ".fai"
 
     def get_all_log_files(self):
         """Return dict with realpaths of log files."""

@@ -5,7 +5,12 @@ from pydantic import ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.panel_of_normals.model import ExpectedPonPaths
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
@@ -204,10 +209,16 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     Snakemake tracks the PON outputs as proper input files via this dependency.
     """
 
+    reference: Reference = ""
+
 
 #: The ``depends_on`` fields each tool reads besides ``alignments``; see also
 #: ``validate_panel_of_normals_dependency``.
-TOOL_DEPENDENCIES = {Tool.purecn: ("variants",)}
+TOOL_DEPENDENCIES = {
+    Tool.cnvkit: ("reference",),
+    Tool.sequenza: ("reference",),
+    Tool.purecn: ("variants",),
+}
 
 
 class SomaticTargetedSeqCnvCalling(SnappyStepModel):

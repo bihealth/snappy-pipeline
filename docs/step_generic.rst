@@ -80,7 +80,8 @@ Each task entry references a step type (e.g. ``ngs_mapping``, ``variant_calling`
           depends_on:
             alignments: bwa_mapping
 
-Relative paths in ``static_data_config`` (e.g., ``reference.path``) and in task configuration are resolved relative to the **config file's directory** at validation time.
+Relative paths in task configuration are resolved relative to the **config file's directory** at validation time.
+Relative paths in ``external_data`` tasks are resolved against the working directory of ``snappy run``.
 Absolute paths are also supported and will not be modified.
 
 .. note:: **Debugging configuration errors**

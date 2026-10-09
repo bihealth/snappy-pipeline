@@ -204,6 +204,7 @@
    "args": {
     "config": {
      "depends_on": {
+      "reference": "genome",
       "variants": "external_cnv"
      },
      "group_by": null,

@@ -51,9 +51,8 @@ is gets an appropriate MD5 checksum file ``{file}.md5``.
 Global Configuration
 ====================
 
-- If GATK HaplotypeCaller or GATK UnifiedGenotyper are activated then
-  ``static_data_config/dbsnp/path`` must be properly configured
-- ``static_data_config/reference/path`` must be set appropriately
+- ``depends_on.reference`` must name the reference genome task
+- GATK HaplotypeCaller and GATK UnifiedGenotyper also need ``depends_on.dbsnp``
 
 =====================
 Default Configuration
@@ -409,11 +408,11 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
         parent = super()._get_input_files_run(wildcards)
         for k, v in parent.items():
             yield k, v
-        yield "reference", self.parent.w_config.static_data_config.reference.path
-        yield "reference_index", self.parent.w_config.static_data_config.reference.path + ".fai"
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "reference_index", self.parent.get_upstream_paths("reference").fasta + ".fai"
 
     def _get_params_run(self, wildcards):
-        reference_path = self.parent.w_config.static_data_config.reference.path
+        reference_path = self.parent.get_upstream_paths("reference").fasta
         if "GRCh37" in reference_path or "hg19" in reference_path:
             assembly = "GRCh37"
         elif "GRCh38" in reference_path or "hg38" in reference_path:
@@ -443,8 +442,8 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
         when was failing when dbsnp is not present anyway.
         """
         yield from super()._get_input_files_run(wildcards).items()
-        yield "reference", self.parent.w_config.static_data_config.reference.path
-        yield "dbsnp", self.parent.w_config.static_data_config.dbsnp.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -512,8 +511,8 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_discover(self, wildcards):
-        yield "reference", self.w_config.static_data_config.reference.path
-        yield "dbsnp", self.w_config.static_data_config.dbsnp.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
         infix = wildcards.library_name
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
             "alignments", library_name=infix
@@ -522,7 +521,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
         df = self.parent.build_library_dataframe()
         if df.empty:
@@ -568,7 +567,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
         infix = f"gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
@@ -847,7 +846,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
             "vcf",
             "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
         )
-        yield "reference_index", self.w_config.static_data_config.reference.path + ".fai"
+        yield "reference_index", self.parent.get_upstream_paths("reference").fasta + ".fai"
 
     @dictify
     def get_output_files(self, action: str) -> SnakemakeDictItemsGenerator:
@@ -1015,7 +1014,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return self.config.mutect2.filtration.model_dump(by_alias=True)
 
     def _get_input_files_scatter(self, wildcards):
-        return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
+        return {"fai": self.parent.get_upstream_paths("reference").fasta + ".fai"}
 
     def _get_input_files_run(self, wildcards):
         scatteritem_base_path = (
@@ -1048,7 +1047,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                         f"Normal sample for tumor {wildcards.library_name} required but not found."
                     )
 
-        input_files["reference"] = self.w_config.static_data_config.reference.path
+        input_files["reference"] = self.parent.get_upstream_paths("reference").fasta
 
         if self.config.mutect2.germline_resource:
             input_files["germline_resource"] = self.config.mutect2.germline_resource
@@ -1078,7 +1077,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "raw": base_path + ".raw.vcf.gz",
             "stats": base_path + ".raw.vcf.stats",
             "orientation": base_path + ".raw.read_orientation_model.tar.gz",
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
         if self.get_normal_lib_name(wildcards):
             if self.config.mutect2.contamination.enabled:
@@ -1093,7 +1092,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "common_variants": self.config.mutect2.contamination.common_variants,
         }
 
@@ -1104,7 +1103,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "common_variants": self.config.mutect2.contamination.common_variants,
         }
 
@@ -1113,7 +1112,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {
             "normal": base_path + ".normal.pileup",
             "tumor": base_path + ".tumor.pileup",
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def get_output_files(self, action):

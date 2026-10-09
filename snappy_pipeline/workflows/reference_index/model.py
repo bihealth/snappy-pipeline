@@ -1,10 +1,21 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import (
+    BaseModel,
+    model_validator,
+)
 
-from snappy_pipeline.models import ResolvablePath, SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.models import (
+    SnappyModel,
+    SnappyStepModel,
+)
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Features,
+)
 from snappy_pipeline.workflows.reference_download.model import (
     ExpectedReferenceDownloadFiles,
     Molecule,
@@ -51,17 +62,17 @@ class ReferenceIndexDependsOn(SnappyModel):
         str,
         DataSignature(DataType.RAW, frozenset({"reference", ("dna", "rna")})),
         ExpectedPathSchema(ExpectedReferenceDownloadFiles),
-    ] = ""
+    ]
+
+    features: Features = ""
+    """Gene annotation for the STAR index."""
 
 
 class ReferenceIndex(SnappyStepModel):
-    depends_on: ReferenceIndexDependsOn = Field(default_factory=ReferenceIndexDependsOn)
+    depends_on: ReferenceIndexDependsOn
 
     tool: Tool
     """Index family to build for this task (one tool per task)."""
-
-    path_reference: ResolvablePath = ""
-    """Optional FASTA path override. Falls back to static_data_config.reference.path when empty."""
 
     reference_molecule: Molecule = Molecule.dna
     """Molecule class of the input reference used for index generation."""

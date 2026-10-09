@@ -211,21 +211,25 @@ A project directory is set up with the ``snappy init`` command:
     +-- raw/
     +-- resources/
 
-The ``config.yaml`` file contains a ``tasks`` list with the step configurations, ``static_data_config`` for paths to reference data, and a ``data_sets`` section describing the input data and sample sheet.
+The ``config.yaml`` file contains a ``tasks`` list with the step configurations, including ``external_data`` tasks for reference data, and a ``data_sets`` section describing the input data and sample sheet.
 
 Tasks reference step types (``ngs_mapping``, ``variant_calling``, etc.) and each task can have its own tool, library selection, and dependency configuration.
 For example, after editing ``config.yaml`` to add a mapping and variant calling task, the project might look like:
 
 .. code-block:: yaml
 
-    static_data_config:
-      reference:
-        path: ../../resources/refs/GRCh38.fa
-
     tasks:
+      - name: genome
+        step: external_data
+        config:
+          produces: {type: raw, tags: [reference, dna]}
+          files: {fasta: ../../resources/refs/GRCh38.fa}
+
       - name: bwa_mapping
         step: ngs_mapping
         config:
+          depends_on:
+            reference: genome
           tool: bwa
           bwa:
             path_index: ../../resources/refs/bwa_index
@@ -236,6 +240,7 @@ For example, after editing ``config.yaml`` to add a mapping and variant calling 
           tool: strelka
           depends_on:
             alignments: bwa_mapping
+            reference: genome
 
     data_sets:
       batch1:
@@ -255,7 +260,7 @@ left file's path. The files are found once per ``snappy run``, and tasks read th
 elsewhere, or an ``adapter_trimming`` task for its trimmed files.
 
 Existing data from outside the project (reads, BAM or VCF files of another pipeline, or
-project-wide files) comes from ``external_data`` tasks. Such a task declares what it provides,
+project-wide files such as the reference genome) comes from ``external_data`` tasks. Such a task declares what it provides,
 so consumers are checked when the project loads, and it has no rules of its own:
 
 .. code-block:: yaml
@@ -283,8 +288,9 @@ Adding tasks can also be done incrementally with ``snappy task add``:
 Path Resolution for Static Data and Configuration Files
 ========================================================
 
-Relative paths in ``static_data_config`` and in task-level configuration
+Relative paths in task-level configuration
 are resolved relative to the **config file's directory** at validation time.
+Relative paths in ``external_data`` tasks are resolved against the working directory of ``snappy run``.
 Absolute paths are supported and will not be modified.
 
 Working Directory Layout

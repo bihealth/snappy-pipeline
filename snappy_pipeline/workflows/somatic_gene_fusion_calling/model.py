@@ -4,11 +4,8 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import (
-    DataSignature,
-    DataType,
-)
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, Features, Reference
 
 
 class Tool(enum.StrEnum):
@@ -107,6 +104,13 @@ class SomaticGeneFusionCallingDependsOn(SnappyModel):
         DataSignature(DataType.RAW),
     ]
 
+    reference: Reference = ""
+
+    features: Features = ""
+
+
+TOOL_DEPENDENCIES = {Tool.arriba: ("reference", "features")}
+
 
 class SomaticGeneFusionCalling(SnappyStepModel):
     depends_on: SomaticGeneFusionCallingDependsOn
@@ -126,3 +130,8 @@ class SomaticGeneFusionCalling(SnappyStepModel):
     pizzly: Pizzly | None = None
 
     star_fusion: StarFusion | None = None
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
+        return self

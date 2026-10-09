@@ -1,7 +1,12 @@
 from typing import Annotated
 
 from snappy_pipeline.models import KeepTmpdir, SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedVariants
 
@@ -70,6 +75,8 @@ class VariantPhasingDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
         ExpectedPathSchema(ExpectedAnnotatedVariants),
     ]
+
+    reference: Reference
 
 
 class VariantPhasing(SnappyStepModel):

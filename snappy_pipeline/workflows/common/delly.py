@@ -59,7 +59,7 @@ class Delly2StepPart(
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
-            "genome": self.w_config.static_data_config.reference.path,
+            "genome": self.parent.get_upstream_paths("reference").fasta,
             "config": dict(self.config.get(self.name)),
         }
 

@@ -175,25 +175,21 @@ class PicardStepPart(BaseStepPart):
 
     def _get_params_prepare(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "path_to_baits": self.config.picard.path_to_baits,
             "path_to_targets": self.config.picard.path_to_targets,
         }
 
     def _get_params_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "prefix": f"{wildcards.library_name}.",
             "programs": self.config.picard.programs,
         }
         if self.config.picard.bait_name:
             params["bait_name"] = self.config.picard.bait_name
-        if (
-            getattr(self.parent.w_config.static_data_config, "dbsnp", {"path": ""})
-            and getattr(self.parent.w_config.static_data_config.dbsnp, "path", "")
-            and self.parent.w_config.static_data_config.dbsnp.path
-        ):
-            params["dbsnp"] = self.parent.w_config.static_data_config.dbsnp.path
+        if self.config.depends_on.dbsnp:
+            params["dbsnp"] = self.parent.get_upstream_paths("dbsnp").vcf
         else:
             params["dbsnp"] = ""
         return params

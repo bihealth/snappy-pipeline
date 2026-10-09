@@ -5,7 +5,12 @@ from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.gcnv import PrecomputedModelEntry
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -122,6 +127,8 @@ class SvCallingWgsDependsOn(SnappyModel):
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ]
+
+    reference: Reference
 
 
 class SvCallingWgs(SnappyStepModel):

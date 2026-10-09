@@ -120,7 +120,7 @@ class ScarHRDStepPart(BaseStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.scarHRD.model_dump(by_alias=True) | {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     @dictify

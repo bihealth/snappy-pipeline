@@ -68,7 +68,7 @@ class MantaStepPart(
                 )
                 bams.append(alignments.bam)
         yield "bam", bams
-        yield "reference", self.parent.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_output_files_run(self):

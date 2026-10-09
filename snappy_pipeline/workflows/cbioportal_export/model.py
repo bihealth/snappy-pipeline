@@ -6,7 +6,12 @@ from typing import Annotated, Any, TypedDict
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Features,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedGeneCounts
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
@@ -103,6 +108,8 @@ class CbioportalExportDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedSomaticVariants),
     ]
 
+    features: Features = ""
+
 
 class CbioportalExport(SnappyStepModel):
     depends_on: CbioportalExportDependsOn
@@ -133,6 +140,10 @@ class CbioportalExport(SnappyStepModel):
             raise ValueError("copy_number_alteration needs depends_on.copy_number")
         if self.expression.enabled and not self.depends_on.alignments:
             raise ValueError("expression needs depends_on.alignments")
+        if (self.copy_number_alteration.enabled or self.expression.enabled) and not (
+            self.depends_on.features
+        ):
+            raise ValueError("copy_number_alteration and expression need depends_on.features")
         return self
 
     study: Study

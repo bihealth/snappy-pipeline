@@ -4,7 +4,12 @@ from typing import Annotated
 from pydantic import Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -30,6 +35,8 @@ class SomaticCnvCheckingDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
     ] = ""
+
+    reference: Reference
 
 
 class SomaticCnvChecking(SnappyStepModel):

@@ -1,9 +1,16 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from pydantic import model_validator
+
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -85,6 +92,11 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedAlignments),
     ]
 
+    reference: Reference = ""
+
+
+TOOL_DEPENDENCIES = {Tool.cnvetti: ("reference",)}
+
 
 class SomaticWgsCnvCalling(SnappyStepModel):
     depends_on: SomaticWgsCnvCallingDependsOn
@@ -98,3 +110,8 @@ class SomaticWgsCnvCalling(SnappyStepModel):
     control_freec: ControlFreec | None = None
 
     cnvkit: CnvkitWgs | None = None
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
+        return self

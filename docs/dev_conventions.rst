@@ -117,9 +117,12 @@ A task's outputs are described by ``DataSignature`` objects: a data type plus ta
 - ``depends_on`` keys are named after the data they bring in, not after the step that produces
   it: ``reads``, ``alignments``, ``variants``, ``copy_number``, ``structural_variants``,
   ``fusions``, ``expression``, ``hla_types``, ``strandedness``, ``panel_of_normals``,
-  ``reference`` and ``index``. A step with two inputs of one kind qualifies them by role, such
-  as ``somatic_variants`` and ``germline_variants``. ``test_depends_on_keys_use_the_vocabulary``
-  checks this.
+  ``reference``, ``features``, ``dbsnp`` and ``index``. A step with two inputs of one kind
+  qualifies them by role, such as ``somatic_variants`` and ``germline_variants``.
+  ``test_depends_on_keys_use_the_vocabulary`` checks this.
+- ``reference`` (genome FASTA), ``features`` (gene annotation GTF) and ``dbsnp`` use the
+  shared field types ``Reference``, ``Features`` and ``Dbsnp`` from
+  ``snappy_pipeline.workflows.abstract.protocol``. They usually name ``external_data`` tasks.
 - A key that every tool of a step reads is required and has no default. A key that only some
   tools read defaults to ``""`` and is listed per tool in the step's ``TOOL_DEPENDENCIES``,
   which ``validators.require_tool_dependencies`` checks. Other optional keys default to ``""``,

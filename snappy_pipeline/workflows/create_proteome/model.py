@@ -3,7 +3,13 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Features,
+    Reference,
+)
 
 
 class ExpectedVariantVcf(BaseModel):
@@ -17,6 +23,10 @@ class CreateProteomeDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedVariantVcf),
     ]
+
+    reference: Reference
+
+    features: Features
 
 
 class CreateProteome(SnappyStepModel):

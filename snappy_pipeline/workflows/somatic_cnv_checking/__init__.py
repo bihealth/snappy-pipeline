@@ -141,7 +141,7 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
 
     def _get_params_normal(self, wildcards):
         return {
-            "reference_path": self.w_config.static_data_config.reference.path,
+            "reference_path": self.parent.get_upstream_paths("reference").fasta,
             "min_baf": self.config.min_baf,
             "min_depth": self.config.min_depth,
             "max_depth": self.config.max_depth,
@@ -220,7 +220,7 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
         return {
             "vcf": base_path_out + ".vcf.gz",
             "tsv": base_path_out + ".tsv",
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def get_output_files(self, action):

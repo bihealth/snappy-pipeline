@@ -297,7 +297,7 @@ if wf.config.tool == "pvacsplice":
 
     rule somatic_neoepitope_pvacsplice_workaround:
         input:
-            features=wf.w_config.static_data_config.features.path,
+            features=wf.get_upstream_paths("features").gtf,
         output:
             gtf="work/pvacsplice_workaround/out/features.gtf",
         run:

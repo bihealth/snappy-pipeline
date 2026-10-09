@@ -5,7 +5,12 @@ from typing import Annotated, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -136,6 +141,8 @@ class VariantFiltrationDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedAlignments),
     ] = ""
 
+    reference: Reference = ""
+
 
 class VariantFiltration(SnappyStepModel):
     depends_on: VariantFiltrationDependsOn
@@ -163,5 +170,7 @@ class VariantFiltration(SnappyStepModel):
 
         if self.tool in _BAM_TOOLS and not self.depends_on.alignments:
             raise ValueError(f"depends_on.alignments is required when tool is '{self.tool}'")
+        if self.tool in _BAM_TOOLS and not self.depends_on.reference:
+            raise ValueError(f"depends_on.reference is required when tool is '{self.tool}'")
 
         return self

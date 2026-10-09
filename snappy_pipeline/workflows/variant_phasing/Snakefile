@@ -91,6 +91,8 @@ rule variant_phasing_gatk_read_backed_phasing_only_run:
         mem=wf.get_resource("gatk_read_backed_phasing_only", "run", "mem"),
         partition=wf.get_resource("gatk_read_backed_phasing_only", "run", "partition"),
         tmpdir=wf.get_resource("gatk_read_backed_phasing_only", "run", "tmpdir"),
+    params:
+        args=wf.get_params("gatk_read_backed_phasing_only", "run"),
     wrapper:
         wf.wrapper_path("gatk_read_backed_phasing_par")
 
@@ -111,5 +113,7 @@ rule variant_phasing_gatk_read_backed_phasing_also_run:
         mem=wf.get_resource("gatk_read_backed_phasing_also", "run", "mem"),
         partition=wf.get_resource("gatk_read_backed_phasing_also", "run", "partition"),
         tmpdir=wf.get_resource("gatk_read_backed_phasing_also", "run", "tmpdir"),
+    params:
+        args=wf.get_params("gatk_read_backed_phasing_also", "run"),
     wrapper:
         wf.wrapper_path("gatk_read_backed_phasing_par")

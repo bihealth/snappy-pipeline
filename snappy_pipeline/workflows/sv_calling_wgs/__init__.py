@@ -162,7 +162,7 @@ class PopDelStepPart(
         yield "vcf", vcfs
 
     def _get_fai_path(self):
-        return self.w_config.static_data_config.reference.path + ".fai"
+        return self.parent.get_upstream_paths("reference").fasta + ".fai"
 
     def _get_ignore_chroms(self):
         return self.config.ignore_chroms
@@ -202,7 +202,7 @@ class PopDelStepPart(
         )
 
     def _get_params_profile(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.w_config.static_data_config.reference.path}
+        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {

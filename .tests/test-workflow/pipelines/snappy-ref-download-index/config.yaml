@@ -1,7 +1,3 @@
-static_data_config:
-  reference:
-    path: ../../resources/refs/chrMT.fa
-
 tasks:
   - step: reference_download
     name: download_chrmt

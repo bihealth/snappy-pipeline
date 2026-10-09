@@ -91,6 +91,9 @@ _GERMLINE_CALLER_RESULTS = (
 #: file, otherwise its snapshot checks nothing.
 EXPECTED_EMPTY = {
     "external_data": "provides existing files; has no rules",
+    "genome": "provides existing files; has no rules",
+    "features": "provides existing files; has no rules",
+    "dbsnp": "provides existing files; has no rules",
     "external_vcf": "provides existing files; has no rules",
     "external_cnv": "provides existing files; has no rules",
     "external_sv": "provides existing files; has no rules",
@@ -238,7 +241,6 @@ def _write_closure_project(
 
     # Construct closure config
     closure_config = {
-        "static_data_config": config.get("static_data_config", {}),
         "tasks": tasks_subset,
         "data_sets": config.get("data_sets", {}),
     }
@@ -254,7 +256,7 @@ def _write_closure_project(
                     ds_config["type"] = "germline_variants"
                 ds_config["search_paths"] = [str(raw_dir)]
     for task in closure_config["tasks"]:
-        if task["step"] == "external_data":
+        if task["step"] == "external_data" and "search_paths" in task["config"]:
             task["config"]["search_paths"] = [str(raw_dir)]
 
     # Touch dummy FASTQ files, and VCFs for the external_data tasks

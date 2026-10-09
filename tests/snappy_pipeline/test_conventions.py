@@ -182,6 +182,8 @@ DEPENDS_ON_KEYS = {
     "strandedness",
     "panel_of_normals",
     "reference",
+    "features",
+    "dbsnp",
     "index",
 }
 

@@ -206,7 +206,7 @@ The BAM files are only postprocessed if configured so.
 Global Configuration
 ====================
 
-- ``static_data_config/reference/path`` must be set appropriately
+- ``depends_on.reference`` must name the reference genome task
 
 =====================
 Default Configuration
@@ -250,8 +250,8 @@ The configuration provides the possibility to pass to `STAR` the location of a `
 This removes the need to include gene models into the generation of indices, so that the user can select the
 gene models (either from ENSEMBL or GENCODE, for example).
 
-The computation of gene counts relies on the features defined in the `static_data_config` section of the
-configuration file. The other steps relying of feature annotations should use this too.
+The computation of gene counts relies on the gene annotation of the ``depends_on.features`` task.
+The other steps relying of feature annotations should use this too.
 
 `STAR` outputs the counts for unstranded, forward and reverse strand protocols. When the user doesn't supply the
 protocol code (0 for unstranded, 1 for forward & 2 for reverse), the step runs `infer_experiment`
@@ -735,7 +735,7 @@ class MBCsStepPart(ReadMappingStepPart):
     def _get_params_run(self, wildcards: Wildcards):
         args = super()._get_params_run(wildcards)
         args |= {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "config": self.config.mbcs.model_dump(by_alias=True),
             "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
                 by_alias=True
@@ -799,7 +799,7 @@ class StarStepPart(ReadMappingStepPart):
         parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.star.model_dump(by_alias=True))
         parent_args["path_index"] = self.parent.get_index_path("star")
-        parent_args["features"] = self.parent.w_config.static_data_config.features.path
+        parent_args["features"] = self.parent.get_upstream_paths("features").gtf
         return parent_args
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -979,8 +979,8 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         mapper_lib = f"{self.config.tool}.{wildcards.library_name}"
         yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
         yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
-        yield "reference", self.w_config.static_data_config.reference.path
-        yield "reference_genome", self.w_config.static_data_config.reference.path + ".genome"
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "reference_genome", self.parent.get_upstream_paths("reference").fasta + ".genome"
         # Find bed file associated with library kit
         library_name = wildcards.library_name
         path_targets_bed = ""
@@ -1107,7 +1107,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def _get_input_files_run(self, wildcards):
         yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
         yield "bai", "work/{library_name}/out/{library_name}.bam.bai".format(**wildcards)
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def get_output_files(self, action):
@@ -1244,7 +1244,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     def _get_params_fingerprint(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"reference": self.parent.w_config.static_data_config.reference.path}
+        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

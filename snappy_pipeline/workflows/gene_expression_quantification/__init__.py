@@ -177,7 +177,7 @@ class SalmonStepPart(BaseStepPart):
         if self.config.tool != self.name:
             return
         yield "reads", self.parent.reads_input(wildcards.library_name)
-        yield "features", self.w_config.static_data_config.features.path
+        yield "features", self.parent.get_upstream_paths("features").gtf
         if self.cfg and self.cfg.path_index:
             yield "indices", self.cfg.path_index
 
@@ -309,7 +309,7 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        yield "features", self.w_config.static_data_config.features.path
+        yield "features", self.parent.get_upstream_paths("features").gtf
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -448,7 +448,7 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         if self.config.tool != self.name:
             return
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield "rnaseqc_path_annotation_gtf", self.config.rnaseqc.rnaseqc_path_annotation_gtf
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:

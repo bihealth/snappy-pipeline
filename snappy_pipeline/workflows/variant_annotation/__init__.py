@@ -45,7 +45,7 @@ class VariantAnnotationStepPart(BaseStepPart):
         )
         yield "vcf", variant.vcf
         yield "vcf_tbi", variant.vcf_tbi
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def get_output_files(self, action):

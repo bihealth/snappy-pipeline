@@ -4,15 +4,16 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import (
-    EnumField,
-    SnappyModel,
-    SnappyStepModel,
-    ToggleModel,
-)
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel, validators
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    Dbsnp,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 logger = logging.getLogger(__name__)
@@ -149,6 +150,16 @@ class VariantCallingDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedAlignments),
     ]
 
+    reference: Reference
+
+    dbsnp: Dbsnp = ""
+
+
+TOOL_DEPENDENCIES = {
+    tool: ("dbsnp",)
+    for tool in (Tool.gatk3_hc, Tool.gatk3_ug, Tool.gatk4_hc_joint, Tool.gatk4_hc_gvcf)
+}
+
 
 class VariantCalling(SnappyStepModel):
     depends_on: VariantCallingDependsOn
@@ -177,3 +188,8 @@ class VariantCalling(SnappyStepModel):
 
     mutect2: Mutect2 | None = None
     """Configuration for MuTect 2"""
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
+        return self

@@ -240,7 +240,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         hgnc_tsv = path_mehari_db / "hgnc.tsv"
         params = {
             "path_exon_bed": self.config.path_exon_bed,
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "hgnc_tsv": str(hgnc_tsv),
             "clinvar_db": str(clinvar_db),
             "frequency_db": str(frequency_db),
@@ -250,7 +250,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
 
     def _get_params_annotate_strucvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
         params = {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
         return params

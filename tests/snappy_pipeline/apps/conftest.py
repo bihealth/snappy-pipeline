@@ -20,10 +20,6 @@ def germline_sheet_config_yaml():
     """Return YAML parsing result for (germline) configuration"""
     return textwrap.dedent(
         r"""
-        static_data_config:
-          reference:
-            path: /path/to/ref.fa
-
         tasks: []
 
         data_sets:

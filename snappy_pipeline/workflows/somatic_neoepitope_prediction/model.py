@@ -6,7 +6,13 @@ from typing import Annotated
 from pydantic import BaseModel, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Features,
+    Reference,
+)
 from snappy_pipeline.workflows.hla_typing.model import (
     MHCIClassDnaTool,
     MHCIClassRnaTool,
@@ -459,6 +465,10 @@ class SomaticNeoepitopePredictionDependsOn(SnappyModel):
         str, DataSignature(DataType.VARIANTS, frozenset({"somatic", "fusion", "rna"}))
     ] = ""
     germline_variants: Annotated[str, DataSignature(DataType.VARIANTS)] = ""
+
+    reference: Reference
+
+    features: Features
 
 
 class SomaticNeoepitopePrediction(SnappyStepModel):

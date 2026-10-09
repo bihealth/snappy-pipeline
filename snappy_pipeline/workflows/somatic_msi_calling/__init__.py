@@ -117,7 +117,7 @@ class Mantis2StepPart(BaseStepPart):
             "normal_bai": normal.bai,
             "tumor_bam": tumor.bam,
             "tumor_bai": tumor.bai,
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "loci_bed": self.config.loci_bed,
         }
 

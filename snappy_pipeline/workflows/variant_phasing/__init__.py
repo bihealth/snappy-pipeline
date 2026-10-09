@@ -41,7 +41,7 @@ and then read backed phasing is performed).
 Global Configuration
 ====================
 
-- ``static_data_config/reference/path`` must be set appropriately
+- ``depends_on.reference`` must name the reference genome task
 
 =====================
 Default Configuration
@@ -222,7 +222,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         yield "vcf_tbi", vcf_tbi
         yield "vcf_md5", vcf + ".md5"
         yield "vcf_tbi_md5", vcf_tbi + ".md5"
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {"de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior}
@@ -280,6 +280,9 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
             bais.append(bai)
         yield "bam", bams
         yield "bai", bais
+
+    def _get_params_run(self, wildcards) -> dict[str, Any]:
+        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

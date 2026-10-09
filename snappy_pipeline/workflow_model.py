@@ -3,25 +3,11 @@ from typing import Any, TypedDict
 
 from pydantic import ConfigDict, Field, field_validator
 
-from snappy_pipeline.models import ResolvablePath, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import (
+    SnappyModel,
+    SnappyStepModel,
+)
 from snappy_pipeline.reads import compile_search_pattern
-
-
-class PathModel(SnappyModel):
-    """
-    A simple model holding a single resolvable path field.
-    Uses ResolvablePath which ensures relative paths are resolved to absolute ones.
-    """
-
-    path: ResolvablePath = ""
-
-
-class StaticDataConfig(SnappyModel):
-    reference: PathModel
-    cosmic: PathModel | None = None
-    dbsnp: PathModel | None = None
-    dbnsfp: PathModel | None = None
-    features: PathModel | None = None
 
 
 class SearchPattern(TypedDict):
@@ -87,6 +73,5 @@ class ConfigModel(SnappyStepModel):
         use_enum_values=True,
     )
 
-    static_data_config: StaticDataConfig
     tasks: list[TaskModel]
     data_sets: dict[str, DataSet]

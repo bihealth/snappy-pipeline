@@ -290,14 +290,14 @@ class HlaLaStepPart(BaseStepPart):
             "knownReferences",
             self.FASTA_PATTERN.sub(
                 ".txt",
-                os.path.basename(self.w_config.static_data_config.reference.path),
+                os.path.basename(self.parent.get_upstream_paths("reference").fasta),
             ),
         )
 
     @dictify
     def _get_input_files_prepare_reference(self, wildcards: Wildcards):
         yield "path_graph", self.path_graph
-        yield "reference", self.w_config.static_data_config.reference.path + ".fai"
+        yield "reference", self.parent.get_upstream_paths("reference").fasta + ".fai"
 
     @dictify
     def _get_input_files_run(self, wildcards):

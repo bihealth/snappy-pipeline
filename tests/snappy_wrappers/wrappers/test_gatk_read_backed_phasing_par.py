@@ -23,10 +23,6 @@ def minimal_config():
     return yaml.load(
         textwrap.dedent(
             r"""
-        static_data_config:
-          reference:
-            path: /path/to/ref.fa
-
         step_config:
           ngs_mapping:
             tools:
@@ -120,7 +116,7 @@ def snakemake_obj(minimal_config):
         "log_md5": log_base_name + ".log.md5",
     }
     wildcards_dict = {"mapper": "bwa", "index_library_name": "P001-N1-DNA1-WGS1"}
-    params_dict = {}
+    params_dict = {"args": {"reference": "/path/to/ref.fa"}}
 
     # Define Snakemake class input
     input_ = InputFiles(fromdict=input_dict)

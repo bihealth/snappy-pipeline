@@ -1,15 +1,22 @@
-static_data_config:
-  reference:
-    path: ../../resources/refs/subregion.fa
-  dbsnp:
-    path: ../../resources/refs/dbsnp.vcf.gz
-
 tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: ../../resources/refs/subregion.fa}
+
+  - name: dbsnp
+    step: external_data
+    config:
+      produces: {type: variants, tags: [dbsnp]}
+      files: {vcf: ../../resources/refs/dbsnp.vcf.gz}
+
   - name: mapping
     step: ngs_mapping
     config:
       depends_on:
         reads: data_sets
+        reference: genome
       tool: bwa
       bwa:
         path_index: ../../resources/refs/subregion
@@ -31,6 +38,8 @@ tasks:
     config:
       depends_on:
         alignments: mapping
+        reference: genome
+        dbsnp: dbsnp
       group_by: cohort
       tool: gatk4_hc_gvcf
       gatk4_hc_gvcf: {}
@@ -40,6 +49,7 @@ tasks:
     config:
       depends_on:
         variants: variant_calling
+        reference: genome
       tool: "mehari"
       mehari:
         transcripts:

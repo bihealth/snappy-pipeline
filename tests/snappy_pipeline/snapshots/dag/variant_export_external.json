@@ -233,6 +233,7 @@
      "bam_available_flag": false,
      "depends_on": {
       "alignments": "ngs_mapping_bwa",
+      "reference": "genome",
       "variants": "external_vcf"
      },
      "external_tool": "dragen",

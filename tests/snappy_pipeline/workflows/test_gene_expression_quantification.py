@@ -15,6 +15,7 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import (
     ExpectedStrandedness,
     GeneExpressionQuantification,
 )
+from snappy_pipeline.workflows.abstract.protocol import ExpectedReference
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 WILDCARDS = SimpleNamespace(library_name="L1")
@@ -26,17 +27,15 @@ DECISION = {"decision": "tasks/strandedness/output/L1/out/L1.decision"}
 UPSTREAM = {
     "alignments": ExpectedAlignments(**ALIGNMENTS),
     "strandedness": ExpectedStrandedness(**DECISION),
+    "reference": ExpectedReference(fasta="/refs/genome.fa"),
 }
 
 
 def _part(cls, **tool_config):
     # The input functions only read upstream paths and config, so skip the full step setup.
     part = object.__new__(cls)
-    part.parent = SimpleNamespace(get_upstream_paths=lambda field, library_name: UPSTREAM[field])
+    part.parent = SimpleNamespace(get_upstream_paths=lambda field, **kwargs: UPSTREAM[field])
     part.config = SimpleNamespace(tool=cls.name, **{cls.name: SimpleNamespace(**tool_config)})
-    part.w_config = SimpleNamespace(
-        static_data_config=SimpleNamespace(reference=SimpleNamespace(path="/refs/genome.fa"))
-    )
     return part
 
 
@@ -75,6 +74,9 @@ def test_quantifiers_require_a_strandedness_task(tool):
         GeneExpressionQuantification(tool=tool, depends_on={"alignments": "mapping"}, **section)
 
     depends_on = {"alignments": "mapping", "strandedness": "strandedness"}
+    depends_on |= {"featurecounts": {"features": "genes"}, "rnaseqc": {"reference": "genome"}}.get(
+        tool, {}
+    )
     config = GeneExpressionQuantification(tool=tool, depends_on=depends_on, **section)
     assert config.depends_on.strandedness == "strandedness"
 

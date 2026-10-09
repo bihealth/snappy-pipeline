@@ -160,7 +160,7 @@ class AscatStepPart(BaseStepPart):
     def _get_params_baf_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
-            "reference_path": self.w_config.static_data_config.reference.path,
+            "reference_path": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def _get_params_baf_normal(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -169,14 +169,14 @@ class AscatStepPart(BaseStepPart):
     def _get_params_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
-            "reference_path": self.w_config.static_data_config.reference.path,
+            "reference_path": self.parent.get_upstream_paths("reference").fasta,
             "tumor_library": wildcards.tumor_library,
         }
 
     def _get_params_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "b_af_loci": self.config.ascat.b_af_loci,
-            "reference_path": self.w_config.static_data_config.reference.path,
+            "reference_path": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def _get_params_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:

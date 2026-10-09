@@ -185,7 +185,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "repeat_catalog": self.config.repeat_catalog,
         }
 

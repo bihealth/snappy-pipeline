@@ -254,7 +254,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_prepare(self, wildcards):
         return {
             "container": "work/containers/out/container.simg",
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     @dictify
@@ -368,7 +368,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     }
 
     def _get_input_files_scatter(self, wildcards):
-        return {"fai": self.w_config.static_data_config.reference.path + ".fai"}
+        return {"fai": self.parent.get_upstream_paths("reference").fasta + ".fai"}
 
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
@@ -380,7 +380,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "normal_bam": alignments.bam,
             "normal_bai": alignments.bai,
             "region": scatteritem_base_path.format(**wildcards),
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def _get_input_files_gather(self, wildcards):
@@ -397,7 +397,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             paths.append(tpl.format(normal_library=normal, **wildcards))
         return {
             "normals": paths,
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "germline_resource": self.config.mutect2.germline_resource,
         }
 
@@ -565,7 +565,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         return args
 
     def _get_input_files_access(self, wildcards):
-        return {"reference": self.w_config.static_data_config.reference.path}
+        return {"reference": self.parent.get_upstream_paths("reference").fasta}
 
     def _get_input_files_target(self, wildcards):
         """Helper wrapper function to estimate target average size in wgs mode"""
@@ -581,7 +581,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         input_files = {
             "bams": [x.bam for x in alignments],
             "bais": [x.bai for x in alignments],
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
         if self.config.cnvkit.path_access:
             input_files["access"] = self.config.cnvkit.path_access
@@ -612,7 +612,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             ),
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def _get_input_files_create_panel(self, wildcards):
@@ -639,7 +639,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
                 else "work/panel_of_normals/out/panel_of_normals.antitarget.bed".format(**wildcards)
             ),
             "logs": logs if targets or antitargets else [],
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
     def _get_input_files_report(self, wildcards):

@@ -7,6 +7,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    Reference,
 )
 
 
@@ -37,6 +38,8 @@ class VariantExportExternalDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedExternalBam),
     ] = ""
     """``external_data`` task with the BAM file of each library; needed for bam_available_flag."""
+
+    reference: Reference
 
 
 class TargetCoverageReport(SnappyModel):

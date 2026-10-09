@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Annotated
 
 from pydantic import BaseModel
 
@@ -77,3 +78,35 @@ class ExpectedPathSchema:
     """Annotated metadata wrapper for expected upstream output-path schema."""
 
     schema: type[BaseModel]
+
+
+class ExpectedReference(BaseModel):
+    """The genome FASTA; tools find its ``.fai`` and ``.dict`` next to it."""
+
+    fasta: str
+
+
+class ExpectedFeatures(BaseModel):
+    """The gene annotation."""
+
+    gtf: str
+
+
+class ExpectedDbsnp(BaseModel):
+    """The dbSNP VCF."""
+
+    vcf: str
+
+
+#: ``depends_on`` field types for the reference data that many steps read
+Reference = Annotated[
+    str,
+    DataSignature(DataType.RAW, frozenset({"reference", "dna"})),
+    ExpectedPathSchema(ExpectedReference),
+]
+Features = Annotated[
+    str, DataSignature(DataType.RAW, frozenset({"features"})), ExpectedPathSchema(ExpectedFeatures)
+]
+Dbsnp = Annotated[
+    str, DataSignature(DataType.VARIANTS, frozenset({"dbsnp"})), ExpectedPathSchema(ExpectedDbsnp)
+]

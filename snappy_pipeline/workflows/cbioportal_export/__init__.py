@@ -326,7 +326,7 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return the library"""
-        yield "features", self.parent.w_config.static_data_config.features.path
+        yield "features", self.parent.get_upstream_paths("features").gtf
         copy_number = self.parent.get_upstream_paths(
             "copy_number", library_name=wildcards.tumor_library
         )
@@ -510,7 +510,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             "action_type": "expression",
             "extra_args": {
                 "pipeline_id": "ENSEMBL",
-                "tx_obj": self.parent.w_config.static_data_config.features.path,
+                "tx_obj": self.parent.get_upstream_paths("features").gtf,
             },
         }
 

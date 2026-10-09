@@ -4,7 +4,13 @@ from typing import Annotated
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Features,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -69,12 +75,12 @@ class Tool(enum.StrEnum):
 #: ``tool: strandedness`` task.
 TOOL_DEPENDENCIES = {
     Tool.strandedness: ("alignments",),
-    Tool.featurecounts: ("alignments", "strandedness"),
+    Tool.featurecounts: ("alignments", "strandedness", "features"),
     Tool.dupradar: ("alignments", "strandedness"),
     Tool.duplication: ("alignments", "strandedness"),
-    Tool.rnaseqc: ("alignments", "strandedness"),
+    Tool.rnaseqc: ("alignments", "strandedness", "reference"),
     Tool.stats: ("alignments", "strandedness"),
-    Tool.salmon: ("reads",),
+    Tool.salmon: ("reads", "features"),
 }
 
 
@@ -104,6 +110,10 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
         DataSignature(DataType.QC, frozenset({"strandedness"})),
         ExpectedPathSchema(ExpectedStrandedness),
     ] = ""
+
+    reference: Reference = ""
+
+    features: Features = ""
 
 
 class GeneExpressionQuantification(SnappyStepModel):

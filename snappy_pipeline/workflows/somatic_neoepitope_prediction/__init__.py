@@ -341,7 +341,7 @@ class PvacSeqStepPart(PvacToolsStepPart):
         input_files["loci"] = self.parent.somatic_vcf(
             wildcards.tumor_dna, full=self.cfg.use_all_transcripts
         )
-        input_files["reference"] = self.w_config.static_data_config.reference.path
+        input_files["reference"] = self.parent.get_upstream_paths("reference").fasta
         return input_files
 
     def _get_input_files_combine(self, wildcards: Wildcards) -> dict[str, str]:
@@ -602,7 +602,7 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         input_files["bam"] = alignments.bam
         input_files["strandedness"] = alignments.strandedness
 
-        input_files["reference"] = self.w_config.static_data_config.reference.path
+        input_files["reference"] = self.parent.get_upstream_paths("reference").fasta
         input_files["features"] = "work/pvacsplice_workaround/out/features.gtf"
 
         return input_files
@@ -614,8 +614,8 @@ class PvacSpliceStepPart(PvacToolsStepPart):
         else:
             yield "container", "work/containers/out/pvactools.sif"
 
-        yield "reference", self.w_config.static_data_config.reference.path
-        yield "features", self.w_config.static_data_config.features.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "features", self.parent.get_upstream_paths("features").gtf
 
         if self.cfg.use_all_transcripts:
             yield (
@@ -716,7 +716,7 @@ class PhasingStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
         combined = self.parent.get_upstream_paths(
             "combined_variants", library_name=wildcards.tumor_dna
@@ -899,8 +899,8 @@ class ProteomeStepPart(BaseStepPart):
         cfg = self.config.proteome
         if cfg.external_proteome:
             yield "path_proteome", cfg.external_proteome
-        yield "reference", self.w_config.static_data_config.reference.path
-        yield "features", self.w_config.static_data_config.features.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "features", self.parent.get_upstream_paths("features").gtf
 
     def get_output_files(self, action: str) -> dict[str, str]:
         match action:

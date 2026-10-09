@@ -4,7 +4,12 @@ from typing import Annotated
 from pydantic import BaseModel
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 
 
 class RenameCombine(enum.StrEnum):
@@ -33,6 +38,8 @@ class CombineVariantsDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedGermlineVariant),
     ]
+
+    reference: Reference
 
 
 class CombineVariants(SnappyStepModel):

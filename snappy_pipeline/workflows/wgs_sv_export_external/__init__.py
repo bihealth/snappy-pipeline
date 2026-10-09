@@ -134,7 +134,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
         yield "ped", tpl.format(**wildcards)
         # Reference
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
         # VCF
         tpl = (
             f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"

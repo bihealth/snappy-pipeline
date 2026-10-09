@@ -1,7 +1,12 @@
 from typing import Annotated
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignmentQc
 from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
@@ -26,6 +31,8 @@ class VarfishExportDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"})),
     ] = ""
     """Optional ``sv_calling_targeted`` or ``sv_calling_wgs`` task whose calls are exported"""
+
+    reference: Reference
 
 
 class VarfishExport(SnappyStepModel):

@@ -15,21 +15,42 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 WORK_DIR = "/projects/p1"
 
 
+#: The reference genome task that every test project has
+GENOME = (
+    "external_data",
+    "genome",
+    {
+        "produces": {"type": "raw", "tags": ["reference", "dna"]},
+        "files": {"fasta": "/refs/genome.fa"},
+    },
+)
+
+
+GENES = ("external_data", "genes", {"produces": {"type": "raw", "tags": ["features"]}})
+GENES[2]["files"] = {"gtf": "/refs/genes.gtf"}
+DBSNP = ("external_data", "dbsnp", {"produces": {"type": "variants", "tags": ["dbsnp"]}})
+DBSNP[2]["files"] = {"vcf": "/refs/dbsnp.vcf.gz"}
+
+
 def _config(*tasks):
     return {
-        "static_data_config": {"reference": {"path": "/refs/genome.fa"}},
-        "tasks": [{"step": step, "name": name, "config": config} for step, name, config in tasks],
+        "tasks": [
+            {"step": step, "name": name, "config": config}
+            for step, name, config in (GENOME, *tasks)
+        ],
         "data_sets": {},
     }
 
 
-def _mapping(name="mapping", **config):
-    config = {"depends_on": {"reads": "data_sets"}, **config}
-    return ("ngs_mapping", name, {"tool": "bwa", "bwa": {"path_index": "/refs/genome"}, **config})
+def _mapping(name="mapping", depends_on=None, **config):
+    depends_on = {"reads": "data_sets", "reference": "genome", **(depends_on or {})}
+    config = {"tool": "bwa", "bwa": {"path_index": "/refs/genome"}, **config}
+    return ("ngs_mapping", name, {"depends_on": depends_on, **config})
 
 
-def _calling(name="calling", mapping="mapping", tool="mutect2"):
-    config = {"depends_on": {"alignments": mapping}, "tool": tool}
+def _calling(name="calling", mapping="mapping", tool="mutect2", **depends_on):
+    depends_on = {"alignments": mapping, "reference": "genome", **depends_on}
+    config = {"depends_on": depends_on, "tool": tool}
     config[tool] = {"contamination": {}} if tool == "mutect2" else {}
     return ("variant_calling", name, config)
 
@@ -38,7 +59,7 @@ def _annotation(name="annotation", variants="calling"):
     return (
         "variant_annotation",
         name,
-        {"depends_on": {"variants": variants}, "tool": "vep", "vep": {}},
+        {"depends_on": {"variants": variants, "reference": "genome"}, "tool": "vep", "vep": {}},
     )
 
 
@@ -61,13 +82,14 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
     project = load_project(_config(_filtration(), _annotation(), _calling(), _mapping()), WORK_DIR)
 
     assert [task.name for task in project.tasks] == [
+        "genome",
         "mapping",
         "calling",
         "annotation",
         "filtration",
     ]
     assert project.dependencies["filtration"] == {"variants": "annotation"}
-    assert project.dependencies["mapping"] == {}
+    assert project.dependencies["mapping"] == {"reference": "genome"}
     assert project.task_configs["calling"].tool == "mutect2"
     assert project.lookup_paths == (WORK_DIR, "/projects")
     assert project.config_paths == (f"{WORK_DIR}/config.yaml",)
@@ -102,7 +124,7 @@ def test_load_project_uses_defaults_for_keys_without_value(caplog):
         project = load_project(_config(mapping), WORK_DIR)
 
     assert project.task_configs["mapping"].bwa.mask_duplicates is True
-    assert "tasks[0].config.bwa.mask_duplicates has no value" in caplog.text
+    assert "tasks[1].config.bwa.mask_duplicates has no value" in caplog.text
 
 
 def test_load_project_validates_step_configs():
@@ -126,7 +148,8 @@ def test_load_project_passes_variant_tags_through_annotation_and_filtration():
 
 
 def test_load_project_rejects_germline_variants_for_tmb():
-    tasks = (_mapping(), _calling(tool="gatk4_hc_gvcf"), _annotation(), _filtration(), _tmb())
+    calling = _calling(tool="gatk4_hc_gvcf", dbsnp="dbsnp")
+    tasks = (DBSNP, _mapping(), calling, _annotation(), _filtration(), _tmb())
     with pytest.raises(
         ValueError,
         match=r"Task 'tmb': depends_on.variants requires variants \[somatic\], "
@@ -138,13 +161,15 @@ def test_load_project_rejects_germline_variants_for_tmb():
 def test_load_project_rejects_rna_alignments_for_variant_calling(tmp_path):
     for index_file in ("Genome", "SA", "SAindex"):
         (tmp_path / index_file).touch()
-    star = _mapping("star", tool="star", star={"path_index": str(tmp_path)})
+    star = _mapping(
+        "star", depends_on={"features": "genes"}, tool="star", star={"path_index": str(tmp_path)}
+    )
     with pytest.raises(
         ValueError,
         match=r"Task 'calling': depends_on.alignments requires alignments \[dna\], "
         r"but task 'star' produces alignments \[rna\]",
     ):
-        load_project(_config(star, _calling(mapping="star")), WORK_DIR)
+        load_project(_config(GENES, star, _calling(mapping="star")), WORK_DIR)
 
 
 def test_load_project_rejects_dna_alignments_for_expression_quantification():
@@ -164,8 +189,10 @@ def test_load_project_requires_depends_on_keys():
     calling = ("variant_calling", "calling", {"tool": "mutect2", "mutect2": {"contamination": {}}})
     with pytest.raises(pydantic.ValidationError, match="depends_on\n  Field required"):
         load_project(_config(_mapping(), calling), WORK_DIR)
+    mapping = _mapping()
+    del mapping[2]["depends_on"]["reads"]
     with pytest.raises(pydantic.ValidationError, match="depends_on.reads\n  Field required"):
-        load_project(_config(_mapping(depends_on={})), WORK_DIR)
+        load_project(_config(mapping), WORK_DIR)
 
 
 def test_load_project_requires_tool():
@@ -176,7 +203,7 @@ def test_load_project_requires_tool():
 
 def test_load_project_accepts_reads_from_data_sets():
     project = load_project(_config(_mapping(depends_on={"reads": "data_sets"})), WORK_DIR)
-    assert project.dependencies["mapping"] == {}
+    assert project.dependencies["mapping"] == {"reference": "genome"}
 
 
 def test_load_project_reserves_data_sets_for_reads():
@@ -256,9 +283,7 @@ def test_create_task_instances_builds_each_task_once(monkeypatch):
 def _project(**dependencies):
     """Return a project with the given task -> {field: upstream} dependencies."""
     tasks = [{"step": "dummy", "name": name, "config": {}} for name in dependencies]
-    model = ConfigModel(
-        static_data_config={"reference": {"path": "/refs/genome.fa"}}, tasks=tasks, data_sets={}
-    )
+    model = ConfigModel(tasks=tasks, data_sets={})
     return Project(
         config={},
         model=model,

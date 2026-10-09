@@ -263,7 +263,8 @@
     "cnv_assay_type": null,
     "depends_on": {
      "alignments": "ngs_mapping_bwa",
-     "copy_number": "somatic_wgs_cnv_calling_cnvkit"
+     "copy_number": "somatic_wgs_cnv_calling_cnvkit",
+     "reference": "genome"
     },
     "excluded_regions": "",
     "group_by": null,

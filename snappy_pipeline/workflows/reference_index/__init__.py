@@ -155,8 +155,8 @@ class StarIndexStepPart(_IndexToolStepPart):
     def _get_params_run(self, wildcards):
         yield from super()._get_params_run(wildcards).items()
         yield "extra_args", " ".join(self.config.star.extra_args)
-        features = getattr(self.w_config.static_data_config, "features", None)
-        yield "features", getattr(features, "path", "") if features else ""
+        features = self.config.depends_on.features
+        yield "features", self.parent.get_upstream_paths("features").gtf if features else ""
 
 
 class ReferenceIndexWorkflow(BaseStep):
@@ -196,12 +196,7 @@ class ReferenceIndexWorkflow(BaseStep):
         self.register_sub_step_classes((BuildReferenceCommonStepPart, selected_tool_class))
 
     def get_reference_path(self) -> str:
-        dep_task = getattr(self.config.depends_on, "reference", "")
-        if dep_task:
-            upstream = self.get_upstream_paths("reference")
-            if getattr(upstream, "fasta", ""):
-                return upstream.fasta
-        return self.config.path_reference or self.w_config.static_data_config.reference.path
+        return self.get_upstream_paths("reference").fasta
 
     @listify
     def get_result_files(self):

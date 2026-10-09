@@ -4,7 +4,13 @@ from typing import Annotated
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    Dbsnp,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -89,9 +95,13 @@ class NgsDataQcDependsOn(SnappyModel):
         DataSignature(DataType.RAW),
     ] = ""
 
+    reference: Reference = ""
+
+    dbsnp: Dbsnp = ""
+
 
 #: The ``depends_on`` fields each tool reads.
-TOOL_DEPENDENCIES = {Tool.fastqc: ("reads",), Tool.picard: ("alignments",)}
+TOOL_DEPENDENCIES = {Tool.fastqc: ("reads",), Tool.picard: ("alignments", "reference")}
 
 
 class NgsDataQc(SnappyStepModel):

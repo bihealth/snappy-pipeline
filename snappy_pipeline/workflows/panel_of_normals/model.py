@@ -7,7 +7,12 @@ from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, vali
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -126,12 +131,14 @@ class PanelOfNormalsDependsOn(SnappyModel):
     to produce the Mutect2 genomicsDB used by PureCN's NormalDB.R step.
     """
 
+    reference: Reference = ""
+
 
 #: The ``depends_on`` fields each tool reads; see also ``validate_purecn_dependencies``.
 TOOL_DEPENDENCIES = {
-    Tool.mutect2: ("alignments",),
-    Tool.cnvkit: ("alignments",),
-    Tool.purecn: ("alignments",),
+    Tool.mutect2: ("alignments", "reference"),
+    Tool.cnvkit: ("alignments", "reference"),
+    Tool.purecn: ("alignments", "reference"),
 }
 
 

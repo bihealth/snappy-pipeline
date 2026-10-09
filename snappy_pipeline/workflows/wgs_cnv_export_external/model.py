@@ -7,6 +7,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    Reference,
 )
 
 
@@ -23,6 +24,8 @@ class WgsCnvExportExternalDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedExternalVcf),
     ]
     """``external_data`` task with the CNV VCF of each library."""
+
+    reference: Reference
 
 
 class WgsCnvExportExternal(SnappyStepModel):

@@ -337,7 +337,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                 params[k] = v
 
         if action == "coverage":
-            params["reference"] = self.parent.w_config.static_data_config.reference.path
+            params["reference"] = self.parent.get_upstream_paths("reference").fasta
 
         return params
 

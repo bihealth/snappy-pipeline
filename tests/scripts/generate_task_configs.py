@@ -34,14 +34,16 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "annotated_variants": "variant_annotation_vep",
     "combined_variants": "combine_variants",
     "copy_number": "somatic_wgs_cnv_calling_cnvkit",
+    "dbsnp": "dbsnp",
     "expression": "gene_expression_quantification_featurecounts",
+    "features": "features",
     "fusions": "somatic_gene_fusion_calling_fusioncatcher",
     "germline_variants": "variant_filtration_bcftools",
     "hla_types": "hla_typing_optitype",
     "index": "reference_index_bwa",
     "phased_variants": "variant_phasing",
     "reads": "data_sets",
-    "reference": "reference_download",
+    "reference": "genome",
     "somatic_variants": "variant_calling_mutect2",
     "structural_variants": "sv_calling_targeted_delly2",
     "variants": "variant_calling_gatk4_hc_gvcf",
@@ -55,6 +57,7 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
     ("cbioportal_export", "variants"): "variant_calling_mutect2",
     ("create_proteome", "variants"): "variant_annotation_vep",
     ("gene_expression_quantification", "alignments"): "ngs_mapping_star",
+    ("reference_index", "reference"): "reference_download",
     ("homologous_recombination_deficiency", "copy_number"): (
         "somatic_targeted_seq_cnv_calling_sequenza"
     ),
@@ -335,8 +338,9 @@ class Overwrite:
 
 def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[str, Any]:
     """Return the fixture and reference paths that ``TASK_CONFIG`` refers to."""
-    reference = base_config.get("static_data_config", {}).get("reference", {}).get("path")
-    reference = reference or PLACEHOLDER_FILE
+    tasks = base_config.get("tasks", [])
+    genome = next((task for task in tasks if task.get("name") == "genome"), None)
+    reference = genome["config"]["files"]["fasta"] if genome else PLACEHOLDER_FILE
 
     def resolve(path: str) -> str:
         return path if path.startswith("/") else str((base_config_path.parent / path).resolve())
@@ -369,8 +373,6 @@ RNA = "extraction_type == 'rna'"
 REFERENCE = Fixture("reference")
 PLACEHOLDER = Fixture("placeholder_file")
 VARIANT_EXPORT_EXTERNAL = {
-    "search_paths": ["/tmp"],
-    "search_patterns": [{"vcf": "*.vcf.gz"}],
     "path_refseq_ser": PLACEHOLDER,
     "path_ensembl_ser": PLACEHOLDER,
     "path_db": PLACEHOLDER,
@@ -473,15 +475,24 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
 }
 
 
-def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
-    pattern = {"vcf": r".+\.vcf\.gz", "vcf_tbi": r".+\.vcf\.gz\.tbi"}
-    config = {"produces": {"type": "variants", "tags": tags}, "search_patterns": [pattern]}
+def _external_file(name: str, data_type: str, tags: list[str], key: str) -> dict[str, Any]:
+    config = {"produces": {"type": data_type, "tags": tags}, "files": {key: REFERENCE}}
     return {"step": "external_data", "name": name, "config": config}
 
 
-#: external_data tasks besides the step's own one: the inputs of the external export steps.
-#: Their search_paths are filled with the raw data directory.
+def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
+    pattern = {"vcf": r".+\.vcf\.gz", "vcf_tbi": r".+\.vcf\.gz\.tbi"}
+    config = {"produces": {"type": "variants", "tags": tags}, "search_patterns": [pattern]}
+    config["search_paths"] = Fixture("raw_data_dir")
+    return {"step": "external_data", "name": name, "config": config}
+
+
+#: external_data tasks besides the step's own one: the reference data, and the inputs of the
+#: external export steps. features and dbsnp name the reference FASTA, as no test reads them.
 EXTRA_TASKS: list[dict[str, Any]] = [
+    _external_file("genome", "raw", ["reference", "dna"], "fasta"),
+    _external_file("features", "raw", ["features"], "gtf"),
+    _external_file("dbsnp", "variants", ["dbsnp"], "vcf"),
     _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
     _external_vcfs("external_cnv", ["germline", "cnv"]),
     _external_vcfs("external_sv", ["germline", "sv"]),
@@ -585,10 +596,7 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             name = f"{step_name}_{tool}" if tool else step_name
             tasks.append({"step": step_name, "name": name, "config": config})
 
-    for extra in EXTRA_TASKS:
-        task = copy.deepcopy(extra)
-        task["config"]["search_paths"] = copy.deepcopy(fixtures["raw_data_dir"])
-        tasks.append(task)
+    tasks += [_resolve(extra, fixtures) for extra in EXTRA_TASKS]
 
     if generation_notes:
         print("Generation notes:")
@@ -631,33 +639,7 @@ def normalize_data_set_paths(config: dict[str, Any], base_config_path: Path) -> 
 def build_config(
     base_config: dict[str, Any], tasks: list[dict[str, Any]], base_config_path: Path
 ) -> dict[str, Any]:
-    config = {
-        "static_data_config": copy.deepcopy(base_config.get("static_data_config", {})),
-        "tasks": tasks,
-        "data_sets": copy.deepcopy(base_config.get("data_sets", {})),
-    }
-
-    # Enrich static_data_config with placeholders for optional but frequently accessed fields
-    static_data = config.get("static_data_config", {})
-    if isinstance(static_data, dict):
-        # Resolve any relative paths to absolute relative to the base config file
-        for k, v in static_data.items():
-            if isinstance(v, dict) and "path" in v and isinstance(v["path"], str):
-                p = v["path"]
-                if p and not p.startswith("/") and not p.startswith("AUTO"):
-                    v["path"] = str((base_config_path.parent / p).resolve())
-
-        ref_path = "AUTO"
-        ref_obj = static_data.get("reference")
-        if isinstance(ref_obj, dict) and ref_obj.get("path"):
-            ref_path = ref_obj["path"]
-        else:
-            ref_path = PLACEHOLDER_FILE
-
-        for key in ("cosmic", "dbsnp", "dbnsfp", "features"):
-            if key not in static_data or static_data[key] is None:
-                static_data[key] = {"path": ref_path}
-
+    config = {"tasks": tasks, "data_sets": copy.deepcopy(base_config.get("data_sets", {}))}
     normalize_data_set_paths(config, base_config_path)
     return config
 
@@ -668,7 +650,7 @@ def main() -> int:
         "--base-config",
         type=Path,
         default=Path("tests/snappy_pipeline/fixtures/base_config.yaml"),
-        help="Path to an existing config.yaml used as source for static_data_config and data_sets.",
+        help="Path to an existing config.yaml used as source for the genome task and data_sets.",
     )
     parser.add_argument(
         "--out-dir",

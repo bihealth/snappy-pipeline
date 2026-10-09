@@ -831,7 +831,11 @@
    "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
    "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "reference": "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   }
+  },
   "resources": {
    "mem": "8.19 GB",
    "mem_mb": 8192,

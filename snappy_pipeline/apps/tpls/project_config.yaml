@@ -2,27 +2,30 @@
 #
 # created: %(created_at)s
 
-# Static Data Configuration ==========================================================
-#
-# Paths to reference data (reference genome, annotation databases, etc.).
-# Relative paths are resolved relative to this config file's directory.
-#
-static_data_config:
-  cosmic:
-    path: /fast/projects/cubit/current/static_data/db/COSMIC/v72/GRCh37/CosmicAll.vcf.gz
-  dbnsfp:
-    path: /fast/projects/cubit/current/static_data/db/dbNSFP/2.9/dbNSFP2.9.txt.gz
-  dbsnp:
-    path: /fast/projects/cubit/current/static_data/db/dbSNP/b147/GRCh37/All_20160408.vcf.gz
-  reference:
-    path: /fast/projects/cubit/current/static_data/reference/GRCh37/hs37d5/hs37d5.fa
-
 # Task Configuration ================================================================
 #
 # Define pipeline tasks.  Each task references a step type, a unique name,
 # and a self-contained config block.
 #
 # Use `snappy task add` to add tasks incrementally.
+#
+# Reference data comes from external_data tasks, which other tasks name in
+# depends_on.reference (and depends_on.features, depends_on.dbsnp).
+#
+# Example
+# -------
+#
+# tasks:
+#   - name: genome
+#     step: external_data
+#     config:
+#       produces: {type: raw, tags: [reference, dna]}
+#       files: {fasta: /path/to/genome.fa}
+#   - name: dbsnp
+#     step: external_data
+#     config:
+#       produces: {type: variants, tags: [dbsnp]}
+#       files: {vcf: /path/to/dbsnp.vcf.gz}
 #
 tasks: []
 

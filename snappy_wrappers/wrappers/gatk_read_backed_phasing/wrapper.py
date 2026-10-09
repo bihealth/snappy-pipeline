@@ -114,7 +114,7 @@ gatk_nonfree \
     --variant $TMPDIR/intervals.pos.nofilter.vcf.gz \
     --out $TMPDIR/phased.nofilter.vcf.gz \
     $(for bam in {snakemake.input.bam}; do echo -I $bam; done) \
-    --reference_sequence {snakemake.config[static_data_config][reference][path]} \
+    --reference_sequence {args[reference]} \
     -L $(echo {args[intervals]} | tr -d ',' | tr ' ' ',')
 
 snappy-vcf_filter_from_info \

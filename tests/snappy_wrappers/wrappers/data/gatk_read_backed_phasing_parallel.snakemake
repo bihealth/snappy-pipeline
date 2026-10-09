@@ -10,4 +10,4 @@ rule chunk_0:
         mem=resource_merge_memory,
         partition=resource_merge_partition,
     params:
-        **{'args': {'intervals': ['1:1-3,501,000']}}
+        **{'args': {'reference': '/path/to/ref.fa', 'intervals': ['1:1-3,501,000']}}

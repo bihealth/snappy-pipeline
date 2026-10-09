@@ -12,8 +12,15 @@ from snappy_pipeline.models import (
     SnappyModel,
     SnappyStepModel,
     ToggleModel,
+    validators,
 )
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Features,
+    Reference,
+)
 from snappy_pipeline.workflows.reference_index.model import ExpectedReferenceIndexFiles
 
 
@@ -64,6 +71,10 @@ class NgsMappingDependsOn(SnappyModel):
         ),
         ExpectedPathSchema(ExpectedReferenceIndexFiles),
     ] = ""
+
+    reference: Reference
+
+    features: Features = ""
 
 
 class DnaMapper(StrEnum):
@@ -348,6 +359,9 @@ class Mbcs(SnappyModel):
     recalibrate: bool = True
 
 
+TOOL_DEPENDENCIES = {Tool.star: ("features",)}
+
+
 class NgsMapping(SnappyStepModel):
     depends_on: NgsMappingDependsOn
 
@@ -400,4 +414,9 @@ class NgsMapping(SnappyStepModel):
             if self.mbcs.recalibrate:
                 if not self.bqsr:
                     raise ValueError("BQSR configuration required for MBCS")
+        return self
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
         return self

@@ -264,7 +264,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
         extra_args = self._coerce_model(SequenzaExtraArgs, self.config.sequenza.extra_args)
         return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "length": self.config.sequenza.length,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
             "extra_arguments": extra_args.model_dump(by_alias=True),
@@ -272,7 +272,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_params_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "length": self.config.sequenza.length,
         }
 
@@ -284,7 +284,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             SequenzaFitExtraArgs, self.config.sequenza.extra_args_fit
         )
         return {
-            "reference": self.parent.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "assembly": self.config.sequenza.assembly,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
             "extra_args_extract": extra_args_extract.model_dump(by_alias=True),
@@ -460,7 +460,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.w_config.static_data_config.reference.path,
+            "reference": self.parent.get_upstream_paths("reference").fasta,
             "target": self.config.cnvkit.path_target,
             "antitarget": self.config.cnvkit.path_antitarget,
         }

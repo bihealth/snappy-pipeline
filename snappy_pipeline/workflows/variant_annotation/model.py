@@ -5,7 +5,12 @@ from pydantic import Field
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.models.annotation import Mehari, Vep
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Reference,
+)
 
 
 class Tool(enum.StrEnum):
@@ -33,6 +38,8 @@ class VariantAnnotationDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS),
         ExpectedPathSchema(ExpectedVariantVcf),
     ]
+
+    reference: Reference
 
 
 class VariantAnnotation(SnappyStepModel):

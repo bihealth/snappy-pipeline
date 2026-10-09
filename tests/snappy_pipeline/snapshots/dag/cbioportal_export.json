@@ -145,6 +145,7 @@
      "depends_on": {
       "alignments": "",
       "copy_number": "somatic_wgs_cnv_calling_cnvkit",
+      "features": "features",
       "variants": "variant_calling_mutect2"
      },
      "exclude_variant_with_flag": "",

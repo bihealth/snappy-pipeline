@@ -1,13 +1,16 @@
-static_data_config:
-  reference:
-    path: ../../resources/refs/subregion.fa
-
 tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: ../../resources/refs/subregion.fa}
+
   - name: mapping
     step: ngs_mapping
     config:
       depends_on:
         reads: data_sets
+        reference: genome
       tool: bwa
       bwa:
         path_index: ../../resources/refs/subregion
@@ -29,6 +32,7 @@ tasks:
     config:
       depends_on:
         alignments: mapping
+        reference: genome
       tool: mutect2
       mutect2:
         extra_arguments: [ ]
@@ -40,6 +44,7 @@ tasks:
     config:
       depends_on:
         variants: variant_calling
+        reference: genome
       tool: "mehari"
       mehari:
         transcripts:
@@ -54,6 +59,7 @@ tasks:
       depends_on:
         variants: annotation
         alignments: mapping
+        reference: genome
 
   - name: filtration_AGAIN
     step: variant_filtration

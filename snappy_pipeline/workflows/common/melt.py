@@ -90,7 +90,7 @@ class MeltStepPart(
         )
         yield "bam", alignments.bam
         yield "bai", alignments.bai
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_output_files_preprocess(self):
@@ -113,7 +113,7 @@ class MeltStepPart(
         prefix = f"work/{wildcards.library_name}/out/{wildcards.library_name}"
         yield "orig_bam", f"{prefix}.bam"
         yield "disc_bam", f"{prefix}.bam.disc"
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_output_files_indiv_analysis(self):
@@ -127,7 +127,7 @@ class MeltStepPart(
 
     @listify
     def _get_input_files_group_analysis(self, wildcards):
-        yield self.w_config.static_data_config.reference.path
+        yield self.parent.get_upstream_paths("reference").fasta
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
         for member in pedigree.donors:
             if member.dna_ngs_library:
@@ -160,7 +160,7 @@ class MeltStepPart(
         infix_done = f"group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
         yield "done", f"work/{infix_done}/out/.done"
         yield "bam", f"work/{wildcards.library_name}/out/{wildcards.library_name}.bam"
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_output_files_genotype(self):
@@ -185,7 +185,7 @@ class MeltStepPart(
                 infix = f"genotype.{wildcards.index_library_name}.{wildcards.me_type}"
                 paths.append(f"work/{infix}/out/.done.{member.dna_ngs_library.name}")
         yield "genotype", paths
-        yield "reference", self.w_config.static_data_config.reference.path
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     @dictify
     def _get_log_file_make_vcf(self):
