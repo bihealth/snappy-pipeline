@@ -268,6 +268,8 @@ elif tool == "purecn":
             runtime=wf.get_resource("purecn", "prepare", "runtime"),
             mem=wf.get_resource("purecn", "prepare", "mem"),
             partition=wf.get_resource("purecn", "prepare", "partition"),
+        params:
+            args=wf.get_params("purecn", "prepare"),
         wrapper:
             wf.wrapper_path("purecn/prepare")
 
@@ -298,5 +300,7 @@ elif tool == "purecn":
             runtime=wf.get_resource("purecn", "create_panel", "runtime"),
             mem=wf.get_resource("purecn", "create_panel", "mem"),
             partition=wf.get_resource("purecn", "create_panel", "partition"),
+        params:
+            args=wf.get_params("purecn", "create_panel"),
         wrapper:
             wf.wrapper_path("purecn/create_panel")

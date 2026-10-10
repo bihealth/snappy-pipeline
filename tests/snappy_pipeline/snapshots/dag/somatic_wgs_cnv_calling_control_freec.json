@@ -213,7 +213,13 @@
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.scatter.png",
    "tasks/somatic_wgs_cnv_calling_control_freec/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.diagram.pdf"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "min_probes": 3,
+    "shift_xy": true,
+    "threshold": 0.5
+   }
+  },
   "resources": {
    "mem": "61.44 GB",
    "mem_mb": 61440,

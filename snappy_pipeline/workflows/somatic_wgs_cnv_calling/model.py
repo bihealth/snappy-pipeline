@@ -4,7 +4,7 @@ from typing import Annotated
 from pydantic import model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
-from snappy_pipeline.models.cnvkit import Cnvkit
+from snappy_pipeline.models.cnvkit import Cnvkit, Diagram
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -78,6 +78,9 @@ class ControlFreec(SnappyModel):
     """set to a value >=0 you want a specific fixed window size"""
 
     convert: ControlFreecConvert
+
+    diagram: Diagram = Diagram()
+    """Settings of the cnvkit diagram plot of the calls"""
 
 
 # If defaults need to be overwritten, subclass the model and override the defaults

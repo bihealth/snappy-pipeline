@@ -175,7 +175,17 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "center": "median",
+    "drop_low_coverage": false,
+    "filter": "ampdel",
+    "method": "threshold",
+    "ploidy": 2,
+    "purity": 0.0,
+    "thresholds": "-1.1,-0.25,0.2,0.7"
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -209,7 +219,12 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "count": false,
+    "min_mapq": 0
+   }
+  },
   "resources": {
    "mem": "16.38 GB",
    "mem_mb": 16384,
@@ -278,7 +293,13 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "edge_correction": true,
+    "gc_correction": true,
+    "rmask_correction": true
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -410,7 +431,13 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "min_probes": 3,
+    "shift_xy": true,
+    "threshold": 0.5
+   }
+  },
   "resources": {
    "mem": "30.72 GB",
    "mem_mb": 30720,
@@ -483,7 +510,25 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "breaks": {
+     "min_probes": 1
+    },
+    "drop_low_coverage": false,
+    "genemetrics": {
+     "alpha": 0.05,
+     "bootstrap": 100,
+     "min_probes": 3,
+     "threshold": 0.2
+    },
+    "segmetrics": {
+     "alpha": 0.05,
+     "bootstrap": 100,
+     "smooth_bootstrap": false
+    }
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -514,7 +559,15 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segment.cns",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segment.cns.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "drop_low_coverage": false,
+    "drop_outliers": 10,
+    "method": "cbs",
+    "smooth_cbs": true,
+    "threshold": 1e-06
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,

@@ -193,7 +193,8 @@
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.baf_normal.log"
@@ -201,11 +202,7 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.baf_normal.txt"
   ],
-  "params": {
-   "args": {
-    "b_af_loci": "AUTO"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,
@@ -224,7 +221,8 @@
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.baf_tumor.log"
@@ -232,11 +230,7 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.baf_tumor.txt"
   ],
-  "params": {
-   "args": {
-    "b_af_loci": "AUTO"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,
@@ -255,7 +249,8 @@
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.cnv_normal.log"
@@ -263,11 +258,7 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cnv_normal.txt"
   ],
-  "params": {
-   "args": {
-    "b_af_loci": "AUTO"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,
@@ -286,7 +277,8 @@
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.cnv_tumor.log"
@@ -296,7 +288,6 @@
   ],
   "params": {
    "args": {
-    "b_af_loci": "AUTO",
     "tumor_library": "case001subregion-T1-DNA1-WES1"
    }
   },

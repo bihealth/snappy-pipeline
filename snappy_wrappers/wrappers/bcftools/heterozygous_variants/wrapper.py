@@ -12,15 +12,8 @@ args = getattr(snakemake.params, "args", {})
 
 reference_path = snakemake.input.reference
 
-# FIXME: "locii" only ever gets set as the input, never as a parameter in args
-if intervals := args["intervals"]:
-    locii = "-r " + intervals
-elif "locii" in snakemake.input.keys():
-    locii = "-R " + snakemake.input.locii
-elif locii_arg := args.get("locii"):
-    locii = "-R " + locii_arg
-else:
-    locii = ""
+# The tumor pileup is restricted to the heterozygous sites of the normal
+locii = f"-R {snakemake.input.locii}" if "locii" in snakemake.input.keys() else ""
 
 # Convert minimum B-allele fraction into ratio of alternative to reference alleles
 min_ratio = args["min_baf"] / (1 - args["min_baf"])

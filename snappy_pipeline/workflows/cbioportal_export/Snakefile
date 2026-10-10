@@ -186,7 +186,7 @@ if step_config.copy_number_alteration.enabled:
             partition=wf.get_resource("cbioportal_segment", "run", "partition"),
             tmpdir=wf.get_resource("cbioportal_segment", "run", "tmpdir"),
         params:
-            action_type="segment",
+            args=wf.get_params("cbioportal_segment", "run"),
         wrapper:
             wf.wrapper_path("cbioportal/merge_tables")
 

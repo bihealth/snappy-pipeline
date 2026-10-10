@@ -12,13 +12,12 @@ helper_functions = os.path.join(os.path.dirname(r_script), "..", "helper_functio
 
 args = getattr(snakemake.params, "args", {})
 
-# The expression rule gets the gene annotation as input "features", which is not a table
-tables = dict(snakemake.input.items())
+tables = zip(args["samples"], snakemake.input.tables, strict=True)
+filenames = ", ".join(['"{}"="{}"'.format(sample, table) for sample, table in tables])
+mappings = snakemake.input.get("mappings", "")
 extra = dict(args.get("extra_args", {}))
-if args["action_type"] == "expression":
-    extra["tx_obj"] = tables.pop("features")
-
-filenames = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in tables.items()])
+if "features" in snakemake.input.keys():
+    extra["tx_obj"] = snakemake.input.features
 extra_args = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in extra.items()])
 
 shell(
@@ -55,7 +54,7 @@ R --vanilla --slave << __EOF
 source("{helper_functions}")
 source("{r_script}")
 write.table(
-    merge_tables(list({filenames}), mappings="{args[mappings]}", type="{args[action_type]}", args=list({extra_args})),
+    merge_tables(list({filenames}), mappings="{mappings}", type="{args[action_type]}", args=list({extra_args})),
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
 __EOF

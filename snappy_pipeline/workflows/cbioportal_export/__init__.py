@@ -141,6 +141,10 @@ class cbioportalExportStepPart(BaseStepPart):
         for lib in self._yield_libraries():
             yield lib.test_sample.bio_sample.name, self.input_tpl.format(library_name=lib.name)
 
+    def _samples(self):
+        """Return the sample names of the merged tables, in input order"""
+        return [lib.test_sample.bio_sample.name for lib in self._yield_libraries()]
+
     def get_output_files(self, action):
         # Validate action
         self._validate_action(action)
@@ -394,19 +398,25 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
         self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
     # Both actions merge the same per-library inputs
-    _get_input_files_log2 = _get_input_files_gistic = cbioportalExportStepPart._get_input_files_run
+    @dictify
+    def _get_input_files_log2(self, wildcards):
+        libraries = self._yield_libraries()
+        yield "tables", [self.input_tpl.format(library_name=lib.name) for lib in libraries]
+        yield "mappings", self.config.path_gene_id_mappings
+
+    _get_input_files_gistic = _get_input_files_log2
 
     def _get_params_log2(self, wildcards):
         return {
             "action_type": "log2",
-            "mappings": self.config.path_gene_id_mappings,
+            "samples": self._samples(),
             "extra_args": {"pipeline_id": "ENSEMBL"},
         }
 
     def _get_params_gistic(self, wildcards):
         return {
             "action_type": "gistic",
-            "mappings": self.config.path_gene_id_mappings,
+            "samples": self._samples(),
             "extra_args": {
                 "pipeline_id": "ENSEMBL",
                 "amplification": "9",
@@ -453,15 +463,17 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         name_pattern = "{library_name}"
         self._seg_name_pattern = name_pattern
 
-    @dictify
     def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
-        for lib in self._yield_libraries():
-            copy_number = self.parent.get_upstream_paths("copy_number", library_name=lib.name)
-            yield lib.test_sample.bio_sample.name, copy_number.dnacopy_seg
+        copy_number = self.parent.get_upstream_paths
+        tables = [
+            copy_number("copy_number", library_name=lib.name).dnacopy_seg
+            for lib in self._yield_libraries()
+        ]
+        return {"tables": tables}
 
-    def _get_params_run(self, wildcards) -> dict[str, str]:
-        return {"action_type": "segment", "mappings": ""}
+    def _get_params_run(self, wildcards):
+        return {"action_type": "segment", "samples": self._samples()}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -501,13 +513,23 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
-        for lib in self._yield_libraries():
-            counts = self.parent.get_upstream_paths("alignments", library_name=lib.name)
-            yield lib.test_sample.bio_sample.name, counts.gene_counts
+        alignments = self.parent.get_upstream_paths
+        yield (
+            "tables",
+            [
+                alignments("alignments", library_name=lib.name).gene_counts
+                for lib in self._yield_libraries()
+            ],
+        )
+        yield "mappings", self.config.path_gene_id_mappings
         yield "features", self.parent.get_upstream_paths("features").gtf
 
     def _get_params_run(self, wildcards):
-        return {"action_type": "expression", "extra_args": {"pipeline_id": "ENSEMBL"}}
+        return {
+            "action_type": "expression",
+            "samples": self._samples(),
+            "extra_args": {"pipeline_id": "ENSEMBL"},
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

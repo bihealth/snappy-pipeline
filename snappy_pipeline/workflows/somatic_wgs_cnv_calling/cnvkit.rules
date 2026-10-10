@@ -10,6 +10,8 @@ rule somatic_wgs_cnv_calling_cnvkit_coverage:
         runtime=wf.get_resource("cnvkit", "coverage", "runtime"),
         mem=wf.get_resource("cnvkit", "coverage", "mem"),
         partition=wf.get_resource("cnvkit", "coverage", "partition"),
+    params:
+        args=wf.get_params("cnvkit", "coverage"),
     wrapper:
         wf.wrapper_path("cnvkit/coverage")
 
@@ -26,6 +28,8 @@ rule somatic_wgs_cnv_calling_cnvkit_fix:
         runtime=wf.get_resource("cnvkit", "fix", "runtime"),
         mem=wf.get_resource("cnvkit", "fix", "mem"),
         partition=wf.get_resource("cnvkit", "fix", "partition"),
+    params:
+        args=wf.get_params("cnvkit", "fix"),
     wrapper:
         wf.wrapper_path("cnvkit/fix")
 
@@ -42,6 +46,8 @@ rule somatic_wgs_cnv_calling_cnvkit_segment:
         runtime=wf.get_resource("cnvkit", "segment", "runtime"),
         mem=wf.get_resource("cnvkit", "segment", "mem"),
         partition=wf.get_resource("cnvkit", "segment", "partition"),
+    params:
+        args=wf.get_params("cnvkit", "segment"),
     wrapper:
         wf.wrapper_path("cnvkit/segment")
 
@@ -58,6 +64,8 @@ rule somatic_wgs_cnv_calling_cnvkit_call:
         runtime=wf.get_resource("cnvkit", "call", "runtime"),
         mem=wf.get_resource("cnvkit", "call", "mem"),
         partition=wf.get_resource("cnvkit", "call", "partition"),
+    params:
+        args=wf.get_params("cnvkit", "call"),
     wrapper:
         wf.wrapper_path("cnvkit/call")
 
@@ -90,6 +98,8 @@ rule somatic_wgs_cnv_calling_cnvkit_plot:
         runtime=wf.get_resource("cnvkit", "plot", "runtime"),
         mem=wf.get_resource("cnvkit", "plot", "mem"),
         partition=wf.get_resource("cnvkit", "plot", "partition"),
+    params:
+        args=wf.get_params("cnvkit", "plot"),
     wrapper:
         wf.wrapper_path("cnvkit/plot")
 
@@ -122,5 +132,7 @@ rule somatic_wgs_cnv_calling_cnvkit_report:
         runtime=wf.get_resource("cnvkit", "report", "runtime"),
         mem=wf.get_resource("cnvkit", "report", "mem"),
         partition=wf.get_resource("cnvkit", "report", "partition"),
+    params:
+        args=wf.get_params("cnvkit", "report"),
     wrapper:
         wf.wrapper_path("cnvkit/report")

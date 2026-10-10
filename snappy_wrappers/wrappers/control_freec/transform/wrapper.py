@@ -21,7 +21,7 @@ set -x
 
 R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     control_freec_write_files( \
-    sample_name = \"{args[cancer_library]}\", \
+    sample_name = \"{args[tumor_library]}\", \
     ratios_fn = \"{snakemake.input.ratio}\", \
     log2_fn = \"{snakemake.output.log2}\", \
     call_fn = \"{snakemake.output.call}\", \

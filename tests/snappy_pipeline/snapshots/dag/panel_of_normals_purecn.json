@@ -1553,7 +1553,19 @@
    "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.hq_sites.bed",
    "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.interval_weights.png"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "config": {
+     "enrichment_kit_name": "unknown",
+     "genome_name": "unknown",
+     "mappability": "",
+     "path_bait_regions": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+     "path_normals_list": "",
+     "reptiming": "",
+     "seed": 1234567
+    }
+   }
+  },
   "resources": {
    "mem": "32 GB",
    "mem_mb": 32000,
@@ -1615,7 +1627,19 @@
    "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.md5",
    "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "config": {
+     "enrichment_kit_name": "unknown",
+     "genome_name": "unknown",
+     "mappability": "",
+     "path_bait_regions": "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+     "path_normals_list": "",
+     "reptiming": "",
+     "seed": 1234567
+    }
+   }
+  },
   "resources": {
    "mem": "24 GB",
    "mem_mb": 24000,

@@ -32,7 +32,7 @@ mono $EBROOTCANVAS/Canvas.exe Somatic-WGS \
     --reference={path_reference} \
     --genome-folder={path_genome_folder} \
     --filter-bed={path_filter_bed} \
-    --sample-name={args[cancer_library]}
+    --sample-name={args[tumor_library]}
 
 tabix -f {snakemake.output.vcf}
 """

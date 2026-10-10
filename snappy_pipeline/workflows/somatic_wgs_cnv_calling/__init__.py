@@ -81,6 +81,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
+from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -412,6 +413,44 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def _cnvkit_params(self, action: str) -> dict[str, Any]:
+        cfg = self.config.cnvkit
+        args = {}
+        if action != "report":
+            args = getattr(cfg, action).model_dump(by_alias=True)
+        else:
+            args = {
+                "breaks": cfg.breaks.model_dump(by_alias=True),
+                "genemetrics": cfg.genemetrics.model_dump(by_alias=True),
+                "segmetrics": cfg.segmetrics.model_dump(by_alias=True),
+            }
+        if action in ("segment", "call", "report"):
+            args["drop_low_coverage"] = cfg.drop_low_coverage
+        if action in ("call", "diagram"):
+            if cfg.gender != CnvkitGender.guess:
+                args["gender"] = cfg.gender
+            if cfg.male_reference:
+                args["male_reference"] = cfg.male_reference
+        return args
+
+    def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._cnvkit_params("coverage")
+
+    def _get_params_fix(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._cnvkit_params("fix")
+
+    def _get_params_segment(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._cnvkit_params("segment")
+
+    def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._cnvkit_params("call")
+
+    def _get_params_plot(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._cnvkit_params("diagram")
+
+    def _get_params_report(self, wildcards: Wildcards) -> dict[str, Any]:
+        return self._cnvkit_params("report")
+
     def _get_input_files_coverage(self, wildcards):
         # BAM/BAI file
         alignments = self.parent.get_upstream_paths(
@@ -681,7 +720,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         }
 
     def _get_params_plot(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {}
+        return self.config.control_freec.diagram.model_dump(by_alias=True)
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

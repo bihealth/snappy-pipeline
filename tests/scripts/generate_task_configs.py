@@ -431,7 +431,12 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("repeat_expansion", None): {"repeat_catalog": REFERENCE, "repeat_annotation": REFERENCE},
     ("somatic_gene_fusion_calling", None): {"library_selection": RNA},
     ("somatic_gene_fusion_calling", "arriba"): {"arriba": {"path_index": Fixture("star_index")}},
+    ("cbioportal_export", None): {
+        "copy_number_alteration": {"enabled": True},
+        "path_gene_id_mappings": PLACEHOLDER,
+    },
     ("somatic_msi_calling", None): {"loci_bed": REFERENCE},
+    ("somatic_purity_ploidy_estimate", "ascat"): {"ascat": {"b_af_loci": PLACEHOLDER}},
     ("somatic_neoepitope_prediction", None): {
         "tool_hla_typing": {
             "dna": {"class_i": "optitype", "class_ii": None},

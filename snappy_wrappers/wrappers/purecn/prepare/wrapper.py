@@ -8,7 +8,7 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
-config = args["purecn"]
+config = args["config"]
 
 genome = snakemake.input.reference
 

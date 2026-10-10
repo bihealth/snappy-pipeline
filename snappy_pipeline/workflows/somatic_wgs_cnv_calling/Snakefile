@@ -176,6 +176,8 @@ elif str(wf.config.tool) == "control_freec":
             mem=wf.get_resource("control_freec", "plot", "mem"),
             partition=wf.get_resource("control_freec", "plot", "partition"),
             tmpdir=wf.get_resource("control_freec", "plot", "tmpdir"),
+        params:
+            args=wf.get_params("control_freec", "plot"),
         wrapper:
             wf.wrapper_path("cnvkit/plot")  # we're using the plotting tool from cnvkit
 

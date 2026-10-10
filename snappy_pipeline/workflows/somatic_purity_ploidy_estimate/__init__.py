@@ -82,6 +82,7 @@ class AscatStepPart(BaseStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
+            "b_af_loci": self.config.ascat.b_af_loci,
         }
 
     def _get_input_files_baf_normal(self, wildcards):
@@ -93,6 +94,7 @@ class AscatStepPart(BaseStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
+            "b_af_loci": self.config.ascat.b_af_loci,
         }
 
     def _get_input_files_cnv_tumor(self, wildcards):
@@ -165,24 +167,8 @@ class AscatStepPart(BaseStepPart):
             path = ("work/{tumor_library}/out/{tumor_library}.%s.txt") % infix
             yield infix, path
 
-    def _get_params_baf_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "b_af_loci": self.config.ascat.b_af_loci,
-        }
-
-    def _get_params_baf_normal(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self._get_params_baf_tumor(wildcards)
-
     def _get_params_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "b_af_loci": self.config.ascat.b_af_loci,
-            "tumor_library": wildcards.tumor_library,
-        }
-
-    def _get_params_cnv_normal(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "b_af_loci": self.config.ascat.b_af_loci,
-        }
+        return {"tumor_library": wildcards.tumor_library}
 
     def _get_params_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
