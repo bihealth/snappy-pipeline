@@ -204,6 +204,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ReportOutput,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -654,6 +655,8 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     """
 
     name = "bcftools_stats"
+
+    report_outputs = {"run": {"txt": ReportOutput("bcftools stats", caption="bcftools_stats.rst")}}
 
     actions = ("run",)
 

@@ -22,7 +22,8 @@ more_reads = [*reads_left, *reads_right]
 ShellWrapper(snakemake).run(
     r"""
 
-outdir=$(dirname $(echo {snakemake.output}  | tr ' ' '\n' | tail -n 1))
+outdir={snakemake.output.html}
+mkdir -p $outdir
 
 _JAVA_OPTIONS="-Xms256m -Xmx512m -XX:CompressedClassSpaceSize=512m" \
 fastqc \
@@ -34,5 +35,14 @@ fastqc \
 pushd $outdir
 pwd
 ls -lh
+
+# Index of the reports, which the Snakemake report opens
+{{
+    echo "<html><body><h1>FastQC</h1><ul>"
+    for report in *_fastqc.html; do
+        echo "<li><a href=\"$report\">$report</a></li>"
+    done
+    echo "</ul></body></html>"
+}} > index.html
 """
 )

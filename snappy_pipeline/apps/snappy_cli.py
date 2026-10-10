@@ -647,19 +647,7 @@ def run(ctx, directory, slurm, task_name, all_tasks, frozen, verbose):
 
     snakemake_args = list(ctx.args)
 
-    # Point to the master orchestrator Snakefile
-    orchestrator_snakefile = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Snakefile"
-    )
-
-    snakemake_argv = [
-        "--directory",
-        directory_path,
-        "--snakefile",
-        orchestrator_snakefile,
-    ]
-
-    config_args = ["--config"]
+    config_args = []
     if task_name:
         config_args.append(f"task={task_name}")
     if all_tasks:
@@ -669,22 +657,7 @@ def run(ctx, directory, slurm, task_name, all_tasks, frozen, verbose):
     if verbose:
         config_args.append("dump_orchestrator=True")
 
-    if len(config_args) > 1:
-        snakemake_argv.extend(config_args)
-
-    # Always pass the default conda workflow profile
-    default_profile = os.path.join(os.path.dirname(__file__), "profile")
-    snakemake_argv += ["--workflow-profile", default_profile]
-
-    # Layer the SLURM profile on top when --slurm is requested
-    if slurm:
-        slurm_profile = os.path.join(os.path.dirname(__file__), "profile-slurm")
-        snakemake_argv += ["--workflow-profile", slurm_profile]
-
-    # Without an explicit path, the snkmt logger writes to one database per user, shared by all
-    # projects. The path must be absolute because the logger resolves it against the process
-    # working directory, not against --directory.
-    snakemake_argv += ["--logger-snkmt-db", _snkmt_db_path(directory_path)]
+    snakemake_argv = _snakemake_argv(directory_path, slurm, tuple(config_args))
 
     # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
@@ -762,6 +735,62 @@ def logs(directory, snakemake_log):
         sys.exit(1)
     archive = build_archive(directory_path, snakemake_log)
     log("Logs archived in {path}", {"path": str(archive)}, level=LVL_IMPORTANT)
+
+
+def _snakemake_argv(directory_path: str, slurm: bool = False, config: tuple = ()) -> list[str]:
+    """Return the Snakemake arguments that snappy run and snappy report share."""
+    apps = os.path.dirname(os.path.abspath(__file__))
+    argv = [
+        "--directory",
+        directory_path,
+        # The orchestrator Snakefile, which loads the tasks of config.yaml
+        "--snakefile",
+        os.path.join(os.path.dirname(apps), "Snakefile"),
+    ]
+    if config:
+        argv += ["--config", *config]
+    # Conda and the database persistence backend, plus SLURM on request
+    argv += ["--workflow-profile", os.path.join(apps, "profile")]
+    if slurm:
+        argv += ["--workflow-profile", os.path.join(apps, "profile-slurm")]
+    # Without an explicit path, the snkmt logger writes to one database per user, shared by all
+    # projects. The path must be absolute because the logger resolves it against the process
+    # working directory, not against --directory.
+    return argv + ["--logger-snkmt-db", _snkmt_db_path(directory_path)]
+
+
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
+@click.option(
+    "--directory",
+    type=click.Path(),
+    default=_get_cwd,
+    help="Project directory, defaults to current working directory",
+)
+@click.option(
+    "--output",
+    default="report.zip",
+    show_default=True,
+    help="Report file below the project directory. A .zip report also holds HTML directories "
+    "such as the FastQC reports.",
+)
+@click.pass_context
+def report(ctx, directory, output):
+    """Build the Snakemake report of the QC outputs of the project's tasks.
+
+    Arguments after -- go to Snakemake, as with snappy run.
+    """
+    directory_path = directory() if callable(directory) else directory
+    target = os.path.join(os.path.abspath(directory_path), output)
+    argv = _snakemake_argv(directory_path) + ["--report", target] + list(ctx.args)
+    logging.info("Executing snakemake %s", " ".join(map(repr, argv)))
+    res = snakemake_main(argv)
+    if res != 0:
+        ctx.exit(res)
 
 
 def _snkmt_db_path(directory_path: str) -> str:

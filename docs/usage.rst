@@ -31,6 +31,8 @@ Subcommands
      - Run the pipeline via Snakemake.  This is the main entry point for executing workflows.
    * - ``snappy watch``
      - Launch the ``snkmt`` TUI to monitor a running workflow via its SQLite database.
+   * - ``snappy report``
+     - Build the Snakemake report of the QC outputs (``report.zip`` in the project directory).
    * - ``snappy logs``
      - Archive the logs of a run whose Snakemake process was killed (``snappy run`` does this
        itself when it ends).
@@ -65,6 +67,14 @@ snappy run options
     Snakemake command line.
 
 Everything after ``--`` is passed verbatim to Snakemake.
+
+Report
+======
+
+``snappy report`` builds Snakemake's report of the project: the QC outputs of the tasks, one
+category per task (FastQC, Picard metrics, ``bcftools stats``, cnvkit plots). It uses the same
+Snakefile, directory and profile as ``snappy run``; arguments after ``--`` go to Snakemake. The
+default ``report.zip`` can hold HTML directories such as the FastQC reports.
 
 Log archive
 ===========

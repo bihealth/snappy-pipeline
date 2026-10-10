@@ -6,6 +6,7 @@ import datetime
 import logging
 import os
 import os.path
+import inspect
 import re
 import sys
 import tempfile
@@ -25,6 +26,7 @@ from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import ShortcutSampleSheet
 from snakemake.api import Workflow
+from snakemake.io import report
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
@@ -103,6 +105,18 @@ Threads: typing.TypeAlias = int | None
 Attempt: typing.TypeAlias = int | None
 
 
+@dataclass(frozen=True)
+class ReportOutput:
+    """An output that the Snakemake report shows (``snappy report``, plans.md F5)."""
+
+    #: Subcategory below the task's category
+    subcategory: str | None = None
+    #: Caption, an RST file in the ``report/`` directory next to the step part's module
+    caption: str | None = None
+    #: For a directory output: the HTML file to open (Snakemake's ``htmlindex``)
+    htmlindex: str | None = None
+
+
 class BaseStepPart:
     """Base class for a part of a pipeline step"""
 
@@ -121,6 +135,9 @@ class BaseStepPart:
     #: Configure resource usage here that should not use the default resource usage from
     #: ``default_resource_usage``.
     resource_usage: dict[str, ResourceUsage] = {}
+
+    #: Outputs that the Snakemake report shows, by action and output key
+    report_outputs: dict[str, dict[str, ReportOutput]] = {}
 
     def __init__[P: BaseStep](self, parent: P):
         self.name = self.__class__.name
@@ -1118,9 +1135,34 @@ class BaseStep:
     def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
 
-        Delegates to the sub step object's get_output_files function
+        Delegates to the sub step object's get_output_files function and flags the outputs in
+        its ``report_outputs`` for the Snakemake report.
         """
-        return self._get_sub_step(sub_step).get_output_files(action)
+        part = self._get_sub_step(sub_step)
+        outputs = part.get_output_files(action)
+        if specs := part.report_outputs.get(action):
+            outputs = {
+                key: self._report(part, value, specs[key]) if key in specs else value
+                for key, value in outputs.items()
+            }
+        return outputs
+
+    def _report(self, part: BaseStepPart, path: str, spec: ReportOutput):
+        """Flag ``path`` for the report, in the task's category, labelled by its wildcards."""
+        caption = None
+        if spec.caption:
+            caption = os.path.join(
+                os.path.dirname(inspect.getfile(type(part))), "report", spec.caption
+            )
+        labels = {name: "{%s}" % name for name in re.findall(r"\{(\w+)\}", str(path))}
+        return report(
+            path,
+            caption=caption,
+            category=self.task_name,
+            subcategory=spec.subcategory,
+            labels=labels or None,
+            htmlindex=spec.htmlindex,
+        )
 
     def get_params(self, sub_step: str, action: str) -> Callable[..., Any]:
         """Return the params function for action of substep, for the rule's ``params:`` section

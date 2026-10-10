@@ -18,10 +18,16 @@
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
-   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log.md5",
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt",
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt",
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
   ],
   "output": [
-   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/.done"
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/.done",
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/html"
   ],
   "params": {
    "args": {

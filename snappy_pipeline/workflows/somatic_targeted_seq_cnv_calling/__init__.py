@@ -77,6 +77,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -424,6 +425,13 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     #: Step name
     name = "cnvkit"
+
+    report_outputs = {
+        "plot": {
+            "diagram": ReportOutput("cnvkit", caption="cnvkit_plots.rst"),
+            "scatter": ReportOutput("cnvkit", caption="cnvkit_plots.rst"),
+        }
+    }
 
     #: Class available actions
     actions = (

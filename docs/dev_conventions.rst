@@ -74,6 +74,11 @@ produce them first and trigger reruns when they change.
 ``test_files_are_inputs_not_params`` flags params that hold file paths, against a baseline that
 only shrinks.
 
+Outputs for the Snakemake report are declared per action in a step part's ``report_outputs``
+(output key to ``ReportOutput``: subcategory, caption, ``htmlindex`` for a directory).
+``BaseStep.get_output_files`` flags them with ``report()``, in the task's category and labelled
+by the wildcards of the path. Captions are RST files in ``report/`` next to the step module.
+
 Defining input files and params
 ===============================
 

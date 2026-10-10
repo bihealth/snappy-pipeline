@@ -14,7 +14,7 @@ The default configuration is as follows.
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import expand, touch
+from snakemake.io import directory, expand, touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
@@ -23,6 +23,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     LinkOutStepPart,
+    ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -74,6 +75,10 @@ class FastQcReportStepPart(BaseStepPart):
 
     default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
 
+    report_outputs = {
+        "run": {"html": ReportOutput("FastQC", caption="fastqc.rst", htmlindex="index.html")}
+    }
+
     def _get_params_run(self, wildcards):
         return {"num_threads": 1} | reads_params(self.parent, wildcards.library_name)
 
@@ -86,11 +91,16 @@ class FastQcReportStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
         yield "fastqc_done", touch("work/{library_name}/report/.done")
+        # One report per FASTQ file, so a directory with an index of them
+        yield "html", directory("work/{library_name}/report/html")
 
-    @staticmethod
-    def get_log_file(action):
-        _ = action
-        return "work/{library_name}/log/{library_name}.log"
+    @dictify
+    def _get_log_file(self, action):
+        self._validate_action(action)
+        prefix = "work/{library_name}/log/{library_name}"
+        yield "log", prefix + ".log"
+        yield "conda_info", prefix + ".conda_info.txt"
+        yield "conda_list", prefix + ".conda_list.txt"
 
 
 class PicardStepPart(BaseStepPart):
@@ -98,6 +108,14 @@ class PicardStepPart(BaseStepPart):
 
     name = "picard"
     actions = ("prepare", "metrics")
+
+    @property
+    def report_outputs(self):
+        if self.config.tool != self.name:
+            return {}
+        programs = self.config.picard.programs
+        metrics = {pgm: ReportOutput(f"Picard {pgm}", caption="picard.rst") for pgm in programs}
+        return {"metrics": metrics}
 
     def __init__(self, parent):
         super().__init__(parent)
