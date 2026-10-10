@@ -86,7 +86,6 @@ An example of the configuration required for the ``somatic`` tool would be:
         use_barcodes: true
         recalibrate: true
       bwa_mem2:
-        path_index: <path_to_bwa-mem2 indices>
         trim_adapter: false
         mark_duplicates: true
         split_as_secondary: true

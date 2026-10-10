@@ -225,14 +225,19 @@ For example, after editing ``config.yaml`` to add a mapping and variant calling 
           produces: {type: raw, tags: [reference, dna]}
           files: {fasta: ../../resources/refs/GRCh38.fa}
 
+      - name: bwa_index
+        step: external_data
+        config:
+          produces: {type: index, tags: [bwa, dna]}
+          files: {index: ../../resources/refs/bwa_index/GRCh38}
+
       - name: bwa_mapping
         step: ngs_mapping
         config:
           depends_on:
             reference: genome
+            index: bwa_index
           tool: bwa
-          bwa:
-            path_index: ../../resources/refs/bwa_index
 
       - name: strelka_calling
         step: variant_calling

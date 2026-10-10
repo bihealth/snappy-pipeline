@@ -10,7 +10,8 @@
 # Use `snappy task add` to add tasks incrementally.
 #
 # Reference data comes from external_data tasks, which other tasks name in
-# depends_on.reference (and depends_on.features, depends_on.dbsnp).
+# depends_on.reference (and depends_on.features, depends_on.dbsnp). Mappers read their
+# index from depends_on.index: a reference_index task, or external_data for an existing one.
 #
 # Example
 # -------
@@ -26,6 +27,11 @@
 #     config:
 #       produces: {type: variants, tags: [dbsnp]}
 #       files: {vcf: /path/to/dbsnp.vcf.gz}
+#   - name: bwa_index
+#     step: external_data
+#     config:
+#       produces: {type: index, tags: [bwa, dna]}
+#       files: {index: /path/to/bwa/genome}  # prefix of the .amb, .ann, ... files
 #
 tasks: []
 

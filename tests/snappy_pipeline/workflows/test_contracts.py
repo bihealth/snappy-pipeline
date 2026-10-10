@@ -243,3 +243,19 @@ def test_external_files_are_used_where_they_are(tmp_path):
     alignments = _step(project, "calling").get_upstream_paths("alignments", library_name="T1")
     assert alignments.bam == str(tmp_path / "T1" / "T1.bam")
     assert alignments.bai == str(tmp_path / "T1" / "T1.bam.bai")
+
+
+# Mapper index ---------------------------------------------------------------------------------
+
+
+def test_mapping_reads_the_index_files_of_its_index_task():
+    step = _step(load_project(_config(_mapping()), WORK_DIR), "mapping")
+    assert step.get_index_files("bwa") == [
+        f"/refs/genome{ext}" for ext in (".amb", ".ann", ".bwt", ".pac", ".sa")
+    ]
+
+
+def test_mapping_rejects_the_index_of_another_tool():
+    step = _step(load_project(_config(_mapping()), WORK_DIR), "mapping")
+    with pytest.raises(ValueError, match="bwa_index"):
+        step.get_index_path("star")

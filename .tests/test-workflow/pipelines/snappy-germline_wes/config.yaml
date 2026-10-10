@@ -5,6 +5,12 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: ../../resources/refs/subregion.fa}
 
+  - name: bwa_index
+    step: external_data
+    config:
+      produces: {type: index, tags: [bwa, dna]}
+      files: {index: ../../resources/refs/subregion}
+
   - name: dbsnp
     step: external_data
     config:
@@ -17,9 +23,9 @@ tasks:
       depends_on:
         reads: data_sets
         reference: genome
+        index: bwa_index
       tool: bwa
       bwa:
-        path_index: ../../resources/refs/subregion
         mask_duplicates: false
         memory_bam_sort: 2G
         num_threads_bam_sort: 2

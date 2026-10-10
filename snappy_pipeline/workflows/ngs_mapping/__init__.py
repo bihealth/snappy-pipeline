@@ -293,7 +293,6 @@ Another shortcominig of the current implementation is that multiple exome kits i
         use_barcodes: true
         recalibrate: true
       bwa_mem2:
-        path_index: <path_to_bwa-mem2 indices>
         [...]                       # Select bwa-mem2 options
         extra_args: ["-C"]          # Use ["-C"] when UMI/MBC are present, and processed with AGeNT, otherwise [""]
       agent:
@@ -468,10 +467,10 @@ READ_MAPPERS_RNA = ("star",)
 #: Available read mappers for (long/PacBio/Nanopoare) DNA-seq data
 READ_MAPPERS_DNA_LONG = ("minimap2",)
 
-#: Files of a BWA index with the prefix ``path_index``. The wrapper takes the prefix from the first.
+#: Files of a BWA index below its prefix. The wrapper takes the prefix from the first.
 BWA_INDEX_EXTENSIONS = (".amb", ".ann", ".bwt", ".pac", ".sa")
 
-#: Files of a BWA-MEM2 index with the prefix ``path_index``. The wrapper takes the prefix from the first.
+#: Files of a BWA-MEM2 index below its prefix. The wrapper takes the prefix from the first.
 BWA_MEM2_INDEX_EXTENSIONS = (".amb", ".ann", ".0123", ".bwt.2bit.64", ".pac")
 
 #: Files of a STAR index directory that mark it as the index
@@ -692,7 +691,7 @@ class BwaStepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.bwa.model_dump(by_alias=True, exclude={"path_index"}))
+        parent_args.update(self.config.bwa.model_dump(by_alias=True))
         return parent_args
 
     def _get_input_files_run(self, wildcards):
@@ -717,7 +716,7 @@ class BwaMem2StepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True, exclude={"path_index"}))
+        parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True))
         return parent_args
 
     def _get_input_files_run(self, wildcards):
@@ -763,7 +762,7 @@ class MBCsStepPart(ReadMappingStepPart):
         mapper = getattr(self.config, self.config.mbcs.mapping_tool)
         args |= {
             "config": self.config.mbcs.model_dump(by_alias=True),
-            "mapper_config": mapper.model_dump(by_alias=True, exclude={"path_index"}),
+            "mapper_config": mapper.model_dump(by_alias=True),
         }
         if self.config.mbcs.use_barcodes:
             args["barcode_config"] = getattr(self.config, self.config.mbcs.barcode_tool).model_dump(
@@ -820,7 +819,7 @@ class StarStepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.star.model_dump(by_alias=True, exclude={"path_index"}))
+        parent_args.update(self.config.star.model_dump(by_alias=True))
         return parent_args
 
     def _get_input_files_run(self, wildcards):
@@ -980,7 +979,7 @@ class Minimap2StepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
-        params |= self.config.minimap2.model_dump(by_alias=True, exclude={"path_index"})
+        params |= self.config.minimap2.model_dump(by_alias=True)
         params["extra_infos"] = self.parent.ngs_library_to_extra_infos[wildcards.library_name]
         params["library_name"] = wildcards.library_name
         return params
@@ -1382,34 +1381,14 @@ class NgsMappingWorkflow(BaseStep):
         return result
 
     def get_index_path(self, tool_name: str) -> str:
-        """Resolve mapper index paths with optional reference_index dependency override."""
-        dep_task = getattr(self.config.depends_on, "index", "")
-        if dep_task:
-            index_paths = self.get_upstream_paths("index")
-            key_by_tool = {
-                "bwa": "bwa_index_prefix",
-                "bwa_mem2": "bwa_mem2_index_prefix",
-                "minimap2": "minimap2_index",
-                "star": "star_index_dir",
-            }
-            key = key_by_tool.get(tool_name)
-            path = getattr(index_paths, key, "") if key else ""
-            if path:
-                return path
-
-        cfg = getattr(self.config, tool_name, None)
-        if cfg is None or not getattr(cfg, "path_index", ""):
-            raise InvalidConfiguration(
-                f"No index path configured for ngs_mapping tool '{tool_name}'. "
-                "Set config.<tool>.path_index or configure depends_on.index."
-            )
-        return cfg.path_index
+        """Return the index of ``tool_name`` from the ``depends_on.index`` task, tagged with it."""
+        signature = DataSignature(DataType.INDEX, frozenset({tool_name}))
+        return self.get_upstream_paths("index", signature=signature).index
 
     def get_index_files(self, tool_name: str) -> list[str]:
         """Return the files of the mapper index, which are rule inputs.
 
-        A ``reference_index`` task builds them if ``depends_on.index`` is set, otherwise they are
-        the files below the tool's ``path_index``. BWA and BWA-MEM2 indices are file prefixes with
+        The ``depends_on.index`` task provides them. BWA and BWA-MEM2 indices are file prefixes with
         ``.amb`` first. The STAR index is a directory, given by its first file: the wrappers
         take its ``dirname``.
         """

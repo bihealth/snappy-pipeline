@@ -22,16 +22,13 @@ from snappy_pipeline.workflows.reference_download.model import (
 )
 
 
-class ExpectedReferenceIndexFiles(BaseModel):
-    """Consumer-driven contract for reference index artifact paths."""
+class ExpectedIndex(BaseModel):
+    """Consumer-driven contract: the index of one mapper.
 
-    bwa_index_prefix: str
-    bwa_mem2_index_prefix: str
-    minimap2_index: str
-    star_index_dir: str
-    reference_fai: str
-    reference_dict: str
-    reference_genome: str
+    The file prefix for bwa and bwa-mem2, the ``.mmi`` file for minimap2, the directory for STAR.
+    """
+
+    index: str
 
 
 class Tool(StrEnum):

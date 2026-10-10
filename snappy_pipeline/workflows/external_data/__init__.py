@@ -36,14 +36,20 @@ Example task config
             - left: '(?P<readgroup>.+)_R1\\.fastq\\.gz'
               right: '(?P<readgroup>.+)_R2\\.fastq\\.gz'
 
+      - step: external_data
+        name: bwa_index
+        config:
+          produces: {type: index, tags: [bwa, dna]}
+          files: {index: /refs/GRCh38/bwa/GRCh38}  # the prefix of the .amb, .ann, ... files
+
       - step: ngs_mapping
         name: mapping
         config:
           depends_on:
             reads: trimmed_reads
+            index: bwa_index
+            reference: genome
           tool: bwa
-          bwa:
-            path_index: /path/to/bwa/index.fa
 """
 
 import os

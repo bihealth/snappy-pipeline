@@ -69,9 +69,9 @@ Each task entry references a step type (e.g. ``ngs_mapping``, ``variant_calling`
       - name: bwa_mapping
         step: ngs_mapping
         config:
+          depends_on:
+            index: bwa_index  # a reference_index task, or external_data for an existing index
           tool: bwa
-          bwa:
-            path_index: ../../resources/refs/subregion
 
       - name: strelka_calling
         step: variant_calling

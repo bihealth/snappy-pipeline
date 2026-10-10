@@ -414,18 +414,17 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("ngs_mapping", None): {
         "target_coverage_report": {"enabled": False, "path_target_interval_list_mapping": []}
     },
-    ("ngs_mapping", "bwa"): {"library_selection": DNA, "bwa": {"path_index": REFERENCE}},
-    ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA, "bwa_mem2": {"path_index": REFERENCE}},
-    ("ngs_mapping", "minimap2"): {"library_selection": DNA, "minimap2": {"path_index": REFERENCE}},
+    ("ngs_mapping", "bwa"): {"library_selection": DNA},
+    ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA},
+    ("ngs_mapping", "minimap2"): {"library_selection": DNA},
     ("ngs_mapping", "mbcs"): {
         "library_selection": DNA,
         "mbcs": {"mapping_tool": "bwa"},
-        "bwa": {"path_index": REFERENCE},
+        "bwa": {},
         "bqsr": {"common_variants": REFERENCE},
     },
     ("ngs_mapping", "star"): {
         "library_selection": RNA,
-        "star": {"path_index": Fixture("star_index")},
         "strandedness": {"path_exon_bed": PLACEHOLDER, "strand": -1, "threshold": 0.85},
     },
     ("panel_of_normals", "cnvkit"): {"cnvkit": {"path_target": Overwrite("")}},

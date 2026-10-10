@@ -32,19 +32,26 @@ DBSNP = ("external_data", "dbsnp", {"produces": {"type": "variants", "tags": ["d
 DBSNP[2]["files"] = {"vcf": "/refs/dbsnp.vcf.gz"}
 
 
+#: The BWA index that ``_mapping`` tasks read
+BWA_INDEX = ("external_data", "bwa_index", {"produces": {"type": "index", "tags": ["bwa", "dna"]}})
+BWA_INDEX[2]["files"] = {"index": "/refs/genome"}
+
+
 def _config(*tasks):
     return {
         "tasks": [
             {"step": step, "name": name, "config": config}
-            for step, name, config in (GENOME, *tasks)
+            for step, name, config in (GENOME, BWA_INDEX, *tasks)
         ],
         "data_sets": {},
     }
 
 
 def _mapping(name="mapping", depends_on=None, **config):
-    depends_on = {"reads": "data_sets", "reference": "genome", **(depends_on or {})}
-    config = {"tool": "bwa", "bwa": {"path_index": "/refs/genome"}, **config}
+    depends_on = {"reads": "data_sets", "reference": "genome", "index": "bwa_index"} | (
+        depends_on or {}
+    )
+    config = {"tool": "bwa", "bwa": {}, **config}
     return ("ngs_mapping", name, {"depends_on": depends_on, **config})
 
 
@@ -83,13 +90,14 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
 
     assert [task.name for task in project.tasks] == [
         "genome",
+        "bwa_index",
         "mapping",
         "calling",
         "annotation",
         "filtration",
     ]
     assert project.dependencies["filtration"] == {"variants": "annotation"}
-    assert project.dependencies["mapping"] == {"reference": "genome"}
+    assert project.dependencies["mapping"] == {"reference": "genome", "index": "bwa_index"}
     assert project.task_configs["calling"].tool == "mutect2"
     assert project.lookup_paths == (WORK_DIR, "/projects")
     assert project.config_paths == (f"{WORK_DIR}/config.yaml",)
@@ -120,11 +128,11 @@ def test_load_project_rejects_dependency_cycles():
 
 def test_load_project_uses_defaults_for_keys_without_value(caplog):
     with caplog.at_level(logging.INFO, logger="snappy_pipeline.orchestration"):
-        mapping = _mapping(bwa={"path_index": "/refs/genome", "mask_duplicates": None})
+        mapping = _mapping(bwa={"mask_duplicates": None})
         project = load_project(_config(mapping), WORK_DIR)
 
     assert project.task_configs["mapping"].bwa.mask_duplicates is True
-    assert "tasks[1].config.bwa.mask_duplicates has no value" in caplog.text
+    assert "tasks[2].config.bwa.mask_duplicates has no value" in caplog.text
 
 
 def test_load_project_validates_step_configs():
@@ -158,18 +166,24 @@ def test_load_project_rejects_germline_variants_for_tmb():
         load_project(_config(*tasks), WORK_DIR)
 
 
-def test_load_project_rejects_rna_alignments_for_variant_calling(tmp_path):
-    for index_file in ("Genome", "SA", "SAindex"):
-        (tmp_path / index_file).touch()
+STAR_INDEX = (
+    "external_data",
+    "star_index",
+    {"produces": {"type": "index", "tags": ["star", "rna"]}},
+)
+STAR_INDEX[2]["files"] = {"index": "/refs/star"}
+
+
+def test_load_project_rejects_rna_alignments_for_variant_calling():
     star = _mapping(
-        "star", depends_on={"features": "genes"}, tool="star", star={"path_index": str(tmp_path)}
+        "star", depends_on={"features": "genes", "index": "star_index"}, tool="star", star={}
     )
     with pytest.raises(
         ValueError,
         match=r"Task 'calling': depends_on.alignments requires alignments \[dna\], "
         r"but task 'star' produces alignments \[rna\]",
     ):
-        load_project(_config(GENES, star, _calling(mapping="star")), WORK_DIR)
+        load_project(_config(GENES, STAR_INDEX, star, _calling(mapping="star")), WORK_DIR)
 
 
 def test_load_project_rejects_dna_alignments_for_expression_quantification():
@@ -203,7 +217,7 @@ def test_load_project_requires_tool():
 
 def test_load_project_accepts_reads_from_data_sets():
     project = load_project(_config(_mapping(depends_on={"reads": "data_sets"})), WORK_DIR)
-    assert project.dependencies["mapping"] == {"reference": "genome"}
+    assert project.dependencies["mapping"] == {"reference": "genome", "index": "bwa_index"}
 
 
 def test_load_project_reserves_data_sets_for_reads():

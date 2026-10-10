@@ -1,5 +1,4 @@
 import enum
-import os
 from enum import StrEnum
 from typing import Annotated
 
@@ -7,7 +6,6 @@ from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import (
     ResolvablePath,
-    ResolvablePathPrefix,
     SizeString,
     SnappyModel,
     SnappyStepModel,
@@ -21,7 +19,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Features,
     Reference,
 )
-from snappy_pipeline.workflows.reference_index.model import ExpectedReferenceIndexFiles
+from snappy_pipeline.workflows.reference_index.model import ExpectedIndex
 
 
 class ExpectedAlignments(BaseModel):
@@ -62,15 +60,15 @@ class NgsMappingDependsOn(SnappyModel):
         DataSignature(DataType.RAW),
     ]
 
-    # Optional upstream index provider task.
     index: Annotated[
         str,
         DataSignature(
             DataType.INDEX,
             frozenset({("bwa", "bwa_mem2", "minimap2", "star"), ("dna", "rna")}),
         ),
-        ExpectedPathSchema(ExpectedReferenceIndexFiles),
-    ] = ""
+        ExpectedPathSchema(ExpectedIndex),
+    ]
+    """Task with the index of the mapper, tagged with its tool (mbcs: its ``mapping_tool``)."""
 
     reference: Reference
 
@@ -162,9 +160,6 @@ class BwaMode(StrEnum):
 
 
 class BwaMapper(SnappyModel):
-    path_index: ResolvablePathPrefix
-    """Path prefix for BWA index files (e.g., "path/to/GRCh38" without ".amb" extension)"""
-
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -181,51 +176,11 @@ class BwaMapper(SnappyModel):
 
 
 class Bwa(BwaMapper):
-    @model_validator(mode="after")
-    def validate_bwa_path_index(self):
-        import logging
-
-        v = self.path_index
-        extensions = {".amb", ".ann", ".bwt", ".pac", ".sa"}
-        prefix, ext = os.path.splitext(v)
-        if ext:
-            if ext in {".fa", ".fasta"}:
-                prefix += ext
-            else:
-                if ext not in extensions:
-                    logging.warning(f"unknown extension '{v}'")
-        for extension in extensions:
-            sidecar = prefix + extension
-            alt_sidecar = os.path.splitext(prefix)[0] + extension
-            if not (os.path.exists(sidecar) or os.path.exists(alt_sidecar)):
-                logging.warning(f"missing BWA index sidecar file: {sidecar} (or {alt_sidecar})")
-        self.path_index = prefix
-        return self
+    pass
 
 
 class BwaMem2(BwaMapper):
-    @model_validator(mode="after")
-    def validate_bwa_mem2_path_index(self):
-        import logging
-
-        v = self.path_index
-        extensions = {".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac"}
-        prefix, ext = os.path.splitext(v)
-        if ext:
-            if ext in {".fa", ".fasta"}:
-                prefix += ext
-            else:
-                if ext not in extensions:
-                    logging.warning(f"unknown extension '{v}'")
-        for extension in extensions:
-            sidecar = prefix + extension
-            alt_sidecar = os.path.splitext(prefix)[0] + extension
-            if not (os.path.exists(sidecar) or os.path.exists(alt_sidecar)):
-                logging.warning(
-                    f"missing BWA-MEM2 index sidecar file: {sidecar} (or {alt_sidecar})"
-                )
-        self.path_index = prefix
-        return self
+    pass
 
 
 class BarcodeTool(StrEnum):
@@ -282,7 +237,6 @@ class Agent(SnappyModel):
 
 
 class Star(SnappyModel):
-    path_index: str
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -312,16 +266,6 @@ class Star(SnappyModel):
     mask_duplicates: bool = False
     include_unmapped: bool = True
 
-    @model_validator(mode="after")
-    def ensure_star_index_files_exist(self):
-        full_path = self.path_index
-        # a lot of files should be in this dir, justtest these
-        for indfile in ("Genome", "SA", "SAindex"):
-            expected_path = os.path.join(full_path, indfile)
-            if not os.path.exists(expected_path):  # pragma: no cover
-                raise ValueError(f"Expected STAR index file {expected_path} does not exist!")
-        return self
-
 
 class Strand(enum.IntEnum):
     UNKNOWN = -1
@@ -344,8 +288,6 @@ class Strandedness(SnappyModel):
 
 class Minimap2(SnappyModel):
     mapping_threads: int = 16
-
-    path_index: str
 
 
 class Mbcs(SnappyModel):

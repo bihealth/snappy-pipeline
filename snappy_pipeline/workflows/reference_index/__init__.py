@@ -191,13 +191,16 @@ class ReferenceIndexWorkflow(BaseStep):
     config_model_class = ReferenceIndexConfigModel
 
     @classmethod
+    def task_produces(cls, config, upstream):
+        molecule = "rna" if config.tool == Tool.star else "dna"
+        return (DataSignature(DataType.INDEX, frozenset({str(config.tool), molecule})),)
+
+    @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         prefix = kwargs.get("prefix", "output/reference_index/out/reference")
+        index = {Tool.minimap2: prefix + ".mmi", Tool.star: prefix + ".index"}
         return {
-            "bwa_index_prefix": prefix,
-            "bwa_mem2_index_prefix": prefix,
-            "minimap2_index": prefix + ".mmi",
-            "star_index_dir": prefix + ".index",
+            "index": index.get(Tool(config.tool), prefix),
             "reference_fai": prefix + ".fa.fai",
             "reference_dict": prefix + ".dict",
             "reference_genome": prefix + ".fa.genome",
