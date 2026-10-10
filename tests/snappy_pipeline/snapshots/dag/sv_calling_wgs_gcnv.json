@@ -457,9 +457,7 @@
   "output": [
    "tasks/sv_calling_wgs_gcnv/work/wgs/out/wgs.interval_list"
   ],
-  "params": {
-   "args": {}
-  },
+  "params": {},
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,

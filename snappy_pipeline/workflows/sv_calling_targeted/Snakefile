@@ -54,8 +54,6 @@ if tool == "gcnv":
             mem=wf.get_resource("gcnv", "preprocess_intervals", "mem"),
             partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
             tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
-        params:
-            args=wf.get_params("gcnv", "preprocess_intervals"),
         wrapper:
             wf.wrapper_path("gcnv/preprocess_intervals")
 

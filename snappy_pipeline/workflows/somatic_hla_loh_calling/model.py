@@ -22,8 +22,6 @@ class SomaticHlaLohCallingDependsOn(SnappyModel):
 class SomaticHlaLohCalling(SnappyStepModel):
     depends_on: SomaticHlaLohCallingDependsOn
 
-    path_somatic_purity_ploidy: str
-
     path_hla_dat: str
     """HLA exon locations, ``hla.dat`` of the OptiType data"""
 

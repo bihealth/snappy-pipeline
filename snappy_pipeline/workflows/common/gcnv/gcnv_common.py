@@ -28,8 +28,13 @@ class PreprocessIntervalsCommonMixin:
     """Mixin used for the ``preprocess_intervals`` step."""
 
     def _get_input_files_preprocess_intervals(self, wildcards):
-        _ = wildcards
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
+        inputs = {"reference": self.parent.get_upstream_paths("reference").fasta}
+        # Targeted sequencing: the target regions of the library kit
+        for item in getattr(self.config.gcnv, "path_target_interval_list_mapping", None) or []:
+            if item.name == wildcards.library_kit:
+                inputs["target_bed"] = item.path
+                break
+        return inputs
 
     @dictify
     def _get_output_files_preprocess_intervals(self):

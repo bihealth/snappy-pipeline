@@ -8,14 +8,9 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-# NOTE: (valid in snappy 0.3 & 0.4 already. Removing the reference to the config in wrappers should not have created the issue.)
-#       When called from the sv_calling_wgs, the model has no target interval list,
-#       and target_interval_bed is not defined.
-#       This is probably incorrect, as intervals should not be pre-processed for WGS data.
-
-args = getattr(snakemake.params, "args", {})
-if target_interval_bed := args.get("target_interval_bed", None):
-    target_interval_bed = f"-L {target_interval_bed}"
+# Targeted sequencing: restrict the bins to the target regions of the library kit
+target_bed = snakemake.input.get("target_bed", "")
+target_interval_bed = f"-L {target_bed}" if target_bed else ""
 
 ShellWrapper(snakemake).run(
     r"""

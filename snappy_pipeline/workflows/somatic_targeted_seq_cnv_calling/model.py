@@ -157,15 +157,6 @@ class PureCn(SnappyModel):
     enrichment_kit_name: str = "unknown"
     """For filename only..."""
 
-    mappability: str = ""
-    """
-    GRCh38:
-     ``mappability.bw`` from the PureCN extdata (hg38)
-    """
-
-    reptiming: str = ""
-    """Nothing for GRCh38"""
-
     seed: int = 1234567
     extra_commands: dict[str, Any] = {
         "model": "betabin",

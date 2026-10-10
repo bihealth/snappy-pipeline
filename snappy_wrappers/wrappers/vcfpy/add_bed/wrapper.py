@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import tempfile
+from numbers import Number
 from typing import TYPE_CHECKING
 
 import tabix

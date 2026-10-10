@@ -7,7 +7,6 @@ import re
 import warnings
 from glob import glob
 from itertools import chain
-from typing import Any
 
 from snakemake.io import expand, touch
 from snakemake.iocontainers import Wildcards
@@ -449,15 +448,6 @@ class RunGcnvStepPart(
         super().__init__(parent)
         # Validate configuration, precomputed models must be present
         self.validate_request()
-
-    def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
-        args = {}
-        if self.config.get(self.name).get("path_target_interval_list_mapping", None):
-            for item in self.config.get(self.name).get("path_target_interval_list_mapping"):
-                if item["name"] == wildcards.library_kit:
-                    args["target_interval_bed"] = item["path"]
-                    break
-        return args
 
     @listify
     def get_result_files(self):

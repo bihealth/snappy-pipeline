@@ -41,8 +41,6 @@ the strandedness of each library. It comes from a separate task of this step wit
             alignments: mapping
             strandedness: strandedness
           tool: featurecounts
-          featurecounts:
-            path_annotation_gtf: /path/to/genes.gtf
 
 ===========
 Step Output

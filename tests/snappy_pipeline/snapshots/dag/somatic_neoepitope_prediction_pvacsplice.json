@@ -872,8 +872,6 @@
       "rank",
       "length"
      ],
-     "plugins": [],
-     "plugins_dir": "",
      "species": "homo_sapiens",
      "tx_flag": "gencode_basic"
     }

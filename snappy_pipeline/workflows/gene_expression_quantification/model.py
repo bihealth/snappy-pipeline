@@ -21,7 +21,7 @@ class Strand(enum.IntEnum):
 
 
 class Featurecounts(SnappyModel):
-    path_annotation_gtf: str
+    pass
 
 
 class Strandedness(SnappyModel):

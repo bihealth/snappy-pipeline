@@ -401,7 +401,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         mapper = str(self.parent.get_task_config("alignments").tool)
         # The files reach the wrappers as inputs
         config_dump = self.config.get(self.name).model_dump(
-            by_alias=True, exclude={"path_container", "mappability", "reptiming"}
+            by_alias=True, exclude={"path_container"}
         )
         return {
             "config": config_dump,
