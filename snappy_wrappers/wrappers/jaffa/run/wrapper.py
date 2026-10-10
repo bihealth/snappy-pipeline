@@ -17,7 +17,7 @@ echo ${{JOB_ID:-unknown}} >$(dirname {snakemake.output.done})/sge_job_id
 # Java fun1
 export MALLOC_ARENA_MAX=4
 
-export JAFFA_REF_BASE=/fast/projects/fusionbench/software/JAFFA-1.08/JAFFA_REFERENCE_FILES_HG38_GENCODE22
+export JAFFA_REF_BASE={snakemake.input.reference_files}
 
 workdir=$(dirname {snakemake.output.done})
 inputdir=$workdir/input

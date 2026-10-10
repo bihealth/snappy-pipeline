@@ -36,8 +36,8 @@ class SomaticMsiCalling(SnappyStepModel):
         str,
         Field(
             examples=[
-                "/fast/groups/cubi/projects/biotools/Mantis/appData/hg19/loci.bed",
-                "/fast/work/groups/cubi/projects/biotools/Mantis/appData/hg38/GRCh38.d1.vd1.all_loci.bed",
+                "/path/to/Mantis/appData/hg19/loci.bed",
+                "/path/to/Mantis/appData/hg38/GRCh38.d1.vd1.all_loci.bed",
             ]
         ),
     ]

@@ -19,7 +19,7 @@ Somatic variant calling
 
 The panel of normals for ``mutect2`` is straightforward to generate: only a germline resource is needed, to locate known germline variants (SNVs & indels).
 This germline resource is provided in the `GATK best practice bundle <https://console.cloud.google.com/storage/browser/gatk-best-practices>`_.
-On the cluster, it can be found in ``/fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK/``, search for ``vcf`` files with ``af-only-gnomad`` in their name.
+Look for ``vcf`` files with ``af-only-gnomad`` in their name.
 
 It is `recommended <https://gatk.broadinstitute.org/hc/en-us/articles/360035890631-Panel-of-Normals-PON>`_ to have at least 40 normals in the panel, but it is not uncommon to build a panel with fewer samples.
 When the number of samples in too small, GATK provides a panel of normals in the same `best practice bundle <https://console.cloud.google.com/storage/browser/gatk-best-practices>`_.

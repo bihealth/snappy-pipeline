@@ -35,8 +35,7 @@ tabix -f $TMPDIR/spots.vcf.gz
 # -------------------------------------------------------------------------------------------------
 # Build temporary BCF file with the normalized coverage information.
 #
-# TODO: should become a conda package!
-/fast/groups/cubi/scratch/mholtgr/cnvetti quick wgs-cov-bins \
+cnvetti quick wgs-cov-bins \
     --reference {snakemake.input.reference} \
     --input {snakemake.input.bam} \
     --output $TMPDIR/cov.bcf

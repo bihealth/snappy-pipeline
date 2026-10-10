@@ -189,7 +189,7 @@ class BarcodeTool(StrEnum):
 
 class Bqsr(SnappyModel):
     common_variants: ResolvablePath
-    """Common germline variants (see /fast/work/groups/cubi/projects/biotools/static_data/app_support/GATK)"""
+    """Common germline variants, e.g. ``small_exac_common_3.vcf`` of the GATK resource bundle"""
 
 
 class AgentLibPrepType(StrEnum):

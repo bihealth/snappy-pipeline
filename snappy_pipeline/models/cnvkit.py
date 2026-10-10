@@ -219,21 +219,13 @@ class PanelOfNormals(SnappyModel):
 
     path_access: Annotated[
         str | None,
-        Field(
-            examples=[
-                "/data/cephfs-1/work/groups/cubi/projects/biotools/cnvkit/access-10kb.hg38.bed"
-            ]
-        ),
+        Field(examples=["/path/to/access-10kb.hg38.bed"]),
     ] = None
     """Path to accessible regions"""
 
     path_annotation: Annotated[
         str | None,
-        Field(
-            examples=[
-                "/data/cephfs-1/work/projects/cubit/20.05/static_data/annotation/GENCODE/33/GRCh38/gencode.v33.annotation.gtf"
-            ]
-        ),
+        Field(examples=["/path/to/gencode.v33.annotation.gtf"]),
     ] = None
     """Path to accessible regions"""
 

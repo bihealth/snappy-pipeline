@@ -471,7 +471,10 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
-   "tasks/hla_typing_optitype/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.txt"
+   "tasks/hla_typing_optitype/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.txt",
+   "<repo>/tests/scripts/generate_task_configs.py",
+   "<repo>/tests/scripts/generate_task_configs.py",
+   "<repo>/tests/snappy_pipeline/fixtures/star_index"
   ],
   "log": [
    "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",

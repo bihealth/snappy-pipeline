@@ -23,3 +23,12 @@ class SomaticHlaLohCalling(SnappyStepModel):
     depends_on: SomaticHlaLohCallingDependsOn
 
     path_somatic_purity_ploidy: str
+
+    path_hla_dat: str
+    """HLA exon locations, ``hla.dat`` of the OptiType data"""
+
+    path_hla_fasta: str
+    """HLA reference sequences, ``hla_reference_dna.fasta`` of the OptiType data"""
+
+    path_picard_dir: str
+    """Directory with the picard-tools 1.x jar files that LOHHLA calls (``--gatkDir``)"""

@@ -14,8 +14,7 @@ The step ensures that the following operations are carried out:
 - Meta files required by cBioPortal must be created.
 
 The ``vcf`` to ``maf`` conversion is done by a bespoke script, which requires a mapping between gene symbols and NCBI (ENTREZ) gene ids.
-This mapping is independent of the genome release, and can be obtained directly from `HGNC <https://www.genenames.org/download/archive/>`_. 
-There is a relatively recent version on the cluster, in ``/fast/work/groups/cubi/projects/biotools/static_data/annotation/hgnc_complete_set_2023-10-01.tsv``.
+This mapping is independent of the genome release, and can be obtained directly from `HGNC <https://www.genenames.org/download/archive/>`_ (``hgnc_complete_set.txt``).
 
 Enriching clinical data
 =======================

@@ -32,11 +32,11 @@ jellyfish -h
 
 Rscript $lohhla_script \
     --BAMDir $TMPDIR/bams/  \
-    --HLAexonLoc /fast/groups/cubi/projects/biotools/OptiType/data/hla.dat \
-    --HLAfastaLoc /fast/groups/cubi/projects/biotools/OptiType/data/hla_reference_dna.fasta \
+    --HLAexonLoc {snakemake.input.hla_dat} \
+    --HLAfastaLoc {snakemake.input.hla_fasta} \
     --cleanUp FALSE \
     --fishingStep FALSE \
-    --gatkDir /fast/groups/cubi/projects/biotools/picard-tools-1.119 \
+    --gatkDir {snakemake.input.picard_dir} \
     --hlaPath $(realpath {snakemake.input.hla} ) \
     --mappingStep TRUE \
     --minCoverageFilter 10 \

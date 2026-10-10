@@ -47,15 +47,12 @@ done
 cat <<"EOF" > $TMPDIR/run_ascat.R
 library(ASCAT)
 
-GC_CONTENT_FILE = "/fast/users/mholtgr/Data/ASCAT/GC_AffySNP6_102015.txt";
-
 ascat.bc = ascat.loadData(
     "cnv_tumor.txt",
     "baf_tumor.txt",
     "cnv_normal.txt",
     "baf_normal.txt");
 
-#ascat.bc = ascat.GCcorrect(ascat.bc, GC_CONTENT_FILE)
 ascat.plotRawData(ascat.bc)
 ascat.plotRawData(ascat.bc)
 ascat.bc = ascat.aspcf(ascat.bc)

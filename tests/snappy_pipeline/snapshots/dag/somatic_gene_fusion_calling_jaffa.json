@@ -16,7 +16,8 @@
  {
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
-   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
+   "<repo>/tests/snappy_pipeline/fixtures/star_index"
   ],
   "log": [
    "tasks/somatic_gene_fusion_calling_jaffa/work/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"

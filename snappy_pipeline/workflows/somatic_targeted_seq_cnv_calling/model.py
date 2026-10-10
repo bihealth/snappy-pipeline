@@ -160,7 +160,7 @@ class PureCn(SnappyModel):
     mappability: str = ""
     """
     GRCh38:
-     /fast/work/groups/cubi/projects/biotools/static_data/app_support/PureCN/hg38/mappability.bw
+     ``mappability.bw`` from the PureCN extdata (hg38)
     """
 
     reptiming: str = ""

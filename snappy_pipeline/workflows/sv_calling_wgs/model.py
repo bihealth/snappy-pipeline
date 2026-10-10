@@ -107,11 +107,7 @@ class Popdel(SnappyModel):
 class Sniffles2(SnappyModel):
     tandem_repeats: Annotated[
         str,
-        Field(
-            examples=[
-                "/fast/groups/cubi/work/projects/biotools/sniffles2/trf/GRCh37/human_hs37d5.trf.bed"
-            ]
-        ),
+        Field(examples=["/path/to/sniffles2/trf/GRCh37/human_hs37d5.trf.bed"]),
     ]
 
     skip_libraries: list[str] = []

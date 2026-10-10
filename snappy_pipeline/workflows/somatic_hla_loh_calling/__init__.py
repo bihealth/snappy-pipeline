@@ -71,6 +71,9 @@ class LohhlaStepPart(BaseStepPart):
             "tumor_bam": tumor.bam,
             "tumor_bai": tumor.bai,
             "hla": hla_typing.txt,
+            "hla_dat": self.config.path_hla_dat,
+            "hla_fasta": self.config.path_hla_fasta,
+            "picard_dir": self.config.path_picard_dir,
         }
 
     def get_normal_lib_name(self, wildcards):

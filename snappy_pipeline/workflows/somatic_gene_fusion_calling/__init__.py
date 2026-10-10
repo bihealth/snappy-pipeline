@@ -158,6 +158,11 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "jaffa"
 
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "reference_files", self.config.jaffa.path_reference_files
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 

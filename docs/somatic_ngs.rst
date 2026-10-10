@@ -110,7 +110,7 @@ An example of the configuration required for the ``somatic`` tool would be:
       bqsr:
         common_variants: <path to common germline variants>  # For example small_exac_common_3.vcf from the GATK bucket
 
-A summary of the ``AGeNT`` documentation is available on the cluster (``/fast/work/groups/cubi/projects/biotools/AGeNT/AGeNT ReadMe.pdf``).
+The ``AGeNT`` documentation comes with its download from Agilent.
 
 .. note::
 

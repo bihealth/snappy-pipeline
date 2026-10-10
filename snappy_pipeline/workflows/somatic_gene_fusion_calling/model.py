@@ -44,8 +44,9 @@ class Defuse(SnappyModel):
     path_dataset_directory: str
 
 
-class Jaffa(SnappyModel):  # TODO
-    pass
+class Jaffa(SnappyModel):
+    path_reference_files: str
+    """Directory with the JAFFA reference files (``JAFFA_REF_BASE``)"""
 
 
 class Arriba(SnappyModel):
@@ -53,7 +54,7 @@ class Arriba(SnappyModel):
     """STAR path index (preferably 2.7.10 or later)"""
 
     blacklist: str = ""
-    """provided in the arriba distribution, see /fast/work/groups/cubi/projects/biotools/static_data/app_support/arriba/v2.3.0"""
+    """provided in the arriba distribution (``database/`` of the release)"""
 
     known_fusions: str = ""
 
