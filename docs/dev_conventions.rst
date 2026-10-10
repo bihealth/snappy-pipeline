@@ -71,6 +71,8 @@ FASTA, is a rule input, and every other value is a param. Only inputs order the 
 produce them first and trigger reruns when they change.
 ``test_wrappers_get_the_params_they_read`` checks that the jobs in the DAG snapshots pass every
 ``args`` key their wrapper reads.
+``test_files_are_inputs_not_params`` flags params that hold file paths, against a baseline that
+only shrinks.
 
 Defining input files and params
 ===============================

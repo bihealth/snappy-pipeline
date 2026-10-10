@@ -265,3 +265,52 @@ def test_wrappers_get_the_params_they_read():
     assert not found, f"wrappers read params that their rules do not pass: {sorted(found)}"
     stale = sorted(set(WRAPPER_PARAM_EXCEPTIONS) - used_exceptions)
     assert not stale, f"remove these entries from WRAPPER_PARAM_EXCEPTIONS: {stale}"
+
+
+#: Params that hold file paths (plans.md F11). The test fails for new ones and for fixed ones, so
+#: the list only shrinks.
+PARAMS_FILES_BASELINE = SNAPSHOTS / "params_file_violations.json"
+
+
+def _flat_params(value, key=""):
+    if isinstance(value, dict):
+        for name, item in value.items():
+            yield from _flat_params(item, f"{key}.{name}")
+    elif isinstance(value, list):
+        for item in value:
+            yield from _flat_params(item, f"{key}[]")
+    else:
+        yield key, value
+
+
+def _params_file_violations() -> list[str]:
+    """Return ``rule key`` for each param of a wrapper job whose value is a file path."""
+    found = set()
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        for job in json.loads(snapshot.read_text(encoding="utf-8")):
+            params = job.get("params") or {}
+            if not job.get("wrapper") or not isinstance(params.get("args", {}), dict):
+                continue
+            inputs = set(job["input"])
+            for key, value in _flat_params(params):
+                if isinstance(value, str) and (
+                    value in inputs or value.startswith(("<repo>/", "<project>/", "/", "tasks/"))
+                ):
+                    found.add(f"{job['rule']} {key}")
+    return sorted(found)
+
+
+def test_files_are_inputs_not_params():
+    """Wrappers get the files they read as inputs, so the DAG and rerun triggers see them."""
+    current = _params_file_violations()
+    if os.environ.get("SNAPPY_UPDATE_SNAPSHOTS"):
+        PARAMS_FILES_BASELINE.write_text(json.dumps(current, indent=1) + "\n", encoding="utf-8")
+        return
+
+    baseline = json.loads(PARAMS_FILES_BASELINE.read_text(encoding="utf-8"))
+    new = sorted(set(current) - set(baseline))
+    fixed = sorted(set(baseline) - set(current))
+    assert not new, f"params that hold file paths; pass these files as inputs: {new}"
+    assert not fixed, (
+        f"{len(fixed)} file params are fixed; shrink the baseline with SNAPPY_UPDATE_SNAPSHOTS=1"
+    )
