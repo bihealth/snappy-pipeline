@@ -54,3 +54,13 @@ tasks: []
 #     type: germline_variants
 #
 data_sets: {}
+
+# Resources =======================================================================
+#
+# Memory and runtime of a job grow with each retry by retry_factor, capped at max_mem and
+# max_runtime (e.g. the limits of the SLURM partition; empty: no cap).
+#
+# resources:
+#   retry_factor: 1.5
+#   max_mem: 500GB
+#   max_runtime: 14d

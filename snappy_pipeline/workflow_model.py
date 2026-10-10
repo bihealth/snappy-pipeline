@@ -66,6 +66,19 @@ class TaskModel(SnappyModel):
     """The raw configuration dictionary for the step. Validated downstream."""
 
 
+class Resources(SnappyModel):
+    """Project-wide rules for the memory and runtime that jobs request."""
+
+    retry_factor: float = 1.5
+    """Memory and runtime grow by this factor with each retry of a failed job"""
+
+    max_mem: str = ""
+    """Upper limit of a memory request, e.g. the memory of the largest node (``"500GB"``)"""
+
+    max_runtime: str = ""
+    """Upper limit of a runtime request, e.g. the time limit of the partition (``"14d"``)"""
+
+
 class ConfigModel(SnappyStepModel):
     model_config = ConfigDict(
         extra="allow",
@@ -75,3 +88,4 @@ class ConfigModel(SnappyStepModel):
 
     tasks: list[TaskModel]
     data_sets: dict[str, DataSet]
+    resources: Resources = Resources()

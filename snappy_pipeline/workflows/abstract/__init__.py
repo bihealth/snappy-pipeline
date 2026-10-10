@@ -7,6 +7,7 @@ import logging
 import os
 import os.path
 import inspect
+import math
 import re
 import sys
 import tempfile
@@ -45,7 +46,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
 
 if typing.TYPE_CHECKING:
     from snappy_pipeline.orchestration import Project
-from snappy_wrappers.resource_usage import ResourceUsage
+from snappy_wrappers.resource_usage import ResourceUsage, mem_mb, runtime_minutes
 
 #: String constant with bash command for redirecting stderr to ``{log}`` file
 STDERR_TO_LOG_FILE = r"""
@@ -200,10 +201,35 @@ class BaseStepPart:
             resource = getattr(resource_usage, resource_name)
             if callable(resource):
                 return resource(wildcards=wildcards, input=input, threads=threads, attempt=attempt)
-            else:
-                return getattr(resource_usage, resource_name)
+            if resource_name in ("mem", "runtime"):
+                return self._scaled(resource_name, resource_usage, input, attempt)
+            return resource
 
         return _get_resource
+
+    def _scaled(self, name: str, usage: ResourceUsage, input: InputFiles, attempt: int) -> str:
+        """Return memory or runtime: base, plus a term per GB of input, grown with retries.
+
+        The value grows by ``resources.retry_factor`` with each retry and is capped at
+        ``resources.max_mem`` / ``max_runtime`` of the project config. Without growth, input term
+        or cap, the declared value is returned as it is.
+        """
+        policy = self.w_config.resources
+        base, per_gb = getattr(usage, name), getattr(usage, f"{name}_per_gb_input")
+        limit = policy.max_mem if name == "mem" else policy.max_runtime
+        factor = policy.retry_factor ** ((attempt or 1) - 1)
+        if factor == 1 and not per_gb and not limit:
+            return base
+        parse = mem_mb if name == "mem" else runtime_minutes
+        value = parse(base)
+        if per_gb:
+            value += parse(per_gb) * input.size_mb / 1024
+        value *= factor
+        if limit:
+            value = min(value, parse(limit))
+        if value == parse(base):
+            return base
+        return f"{math.ceil(value)}MB" if name == "mem" else f"{math.ceil(value)}m"
 
     def get_params(self, action: str) -> Callable[..., dict[str, Any]]:
         """Return the params function of the given action: ``self._get_params_<action>``

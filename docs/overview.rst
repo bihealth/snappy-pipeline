@@ -298,6 +298,20 @@ are resolved relative to the **config file's directory** at validation time.
 Relative paths in ``external_data`` tasks are resolved against the working directory of ``snappy run``.
 Absolute paths are supported and will not be modified.
 
+Resource Requests
+=================
+
+Each step declares the threads, memory and runtime of its jobs. Memory and runtime grow with each
+retry of a failed job (``restart-times`` in the SLURM profile), by ``resources.retry_factor``, and
+are capped at the project's limits, e.g. those of the partition:
+
+.. code-block:: yaml
+
+    resources:
+      retry_factor: 1.5   # default
+      max_mem: 500GB      # default: no limit
+      max_runtime: 14d    # default: no limit
+
 Working Directory Layout
 ========================
 
