@@ -86,7 +86,6 @@
   ],
   "params": {
    "args": {
-    "path_par_intervals": "",
     "path_uniquely_mapable_bed": "AUTO"
    }
   },
@@ -143,7 +142,6 @@
   ],
   "params": {
    "args": {
-    "path_par_intervals": "",
     "path_uniquely_mapable_bed": "AUTO"
    }
   },

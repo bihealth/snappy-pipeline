@@ -82,6 +82,8 @@ class ContigPloidyMixin:
         """
         kit = wildcards.library_kit
         yield "interval_list", f"work/{kit}/out/{kit}.filter_intervals.interval_list"
+        if self.config.gcnv.path_par_intervals:  # PAR regions to exclude
+            yield "par_intervals", self.config.gcnv.path_par_intervals
         tsvs = []
         for lib in sorted(self.index_ngs_library_to_donor):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:

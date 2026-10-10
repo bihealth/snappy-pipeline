@@ -148,7 +148,6 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
     def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
         gcnv_config = self.parent.get_task_config("helper_gcnv_model_targeted").gcnv
         return {
-            "path_par_intervals": gcnv_config.path_par_intervals,
             "path_target_interval_list_mapping": gcnv_config.path_target_interval_list_mapping,
             "path_uniquely_mapable_bed": gcnv_config.path_uniquely_mapable_bed,
         }
