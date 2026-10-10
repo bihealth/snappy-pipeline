@@ -21,6 +21,7 @@ from ruamel.yaml.comments import CommentedMap
 from snakemake.cli import main as snakemake_main
 
 from .. import __version__
+from ..log_archive import build_archive, latest_snakemake_log
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     assume_path_existing,
@@ -737,6 +738,30 @@ def watch(directory, db_path):
     res = subprocess.run(cmd)
     if res.returncode != 0:
         sys.exit(res.returncode)
+
+
+@main.command()
+@click.option(
+    "--directory",
+    type=click.Path(),
+    default=_get_cwd,
+    help="Project directory, defaults to current working directory",
+)
+@click.argument("snakemake_log", required=False, type=click.Path(exists=True, dir_okay=False))
+def logs(directory, snakemake_log):
+    """Archive the logs of a run in logs/<run start>.tar.gz.
+
+    snappy run does this when it ends. Use this command for a run whose Snakemake process was
+    killed (walltime, scancel), so that its hooks did not run. Without SNAKEMAKE_LOG, the
+    newest log in <directory>/.snakemake/log is used.
+    """
+    directory_path = directory() if callable(directory) else directory
+    snakemake_log = snakemake_log or latest_snakemake_log(directory_path)
+    if snakemake_log is None:
+        log("No Snakemake log found below {path}", {"path": directory_path}, level=LVL_ERROR)
+        sys.exit(1)
+    archive = build_archive(directory_path, snakemake_log)
+    log("Logs archived in {path}", {"path": str(archive)}, level=LVL_IMPORTANT)
 
 
 def _snkmt_db_path(directory_path: str) -> str:

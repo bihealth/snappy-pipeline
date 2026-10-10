@@ -8,8 +8,10 @@ import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from snappy_pipeline.log_archive import archive_after_run
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import ReadDiscovery
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
@@ -137,14 +139,15 @@ def task_instance(task_name: str) -> BaseStep:
 
 
 def register_hooks(workflow: Workflow) -> None:
-    """Print a banner when the workflow fails or succeeds."""
+    """Archive the logs of the run and print a banner when the workflow fails or succeeds."""
 
-    def banner(message: str) -> None:
+    def finish(snakemake_logs: list[str], message: str) -> None:
+        archive_after_run(Path.cwd(), snakemake_logs)
         line = "*" * len(message)
         print(f"\n{line}\n{message}\n{line}\n", file=sys.stderr)
 
-    workflow.onerror(lambda _: banner("Oh no! Something went wrong."))
-    workflow.onsuccess(lambda _: banner("All done; have a nice day!"))
+    workflow.onerror(lambda logs: finish(logs, "Oh no! Something went wrong."))
+    workflow.onsuccess(lambda logs: finish(logs, "All done; have a nice day!"))
 
 
 def select_target_tasks(

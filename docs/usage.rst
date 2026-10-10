@@ -31,6 +31,9 @@ Subcommands
      - Run the pipeline via Snakemake.  This is the main entry point for executing workflows.
    * - ``snappy watch``
      - Launch the ``snkmt`` TUI to monitor a running workflow via its SQLite database.
+   * - ``snappy logs``
+     - Archive the logs of a run whose Snakemake process was killed (``snappy run`` does this
+       itself when it ends).
    * - ``snappy refresh``
      - Recreate ``pipeline_job.sh`` and ensure ``slurm_log`` exists.
    * - ``snappy status``
@@ -62,3 +65,13 @@ snappy run options
     Snakemake command line.
 
 Everything after ``--`` is passed verbatim to Snakemake.
+
+Log archive
+===========
+
+When a run ends, successfully or not, ``snappy run`` writes ``logs/<run start>.tar.gz``. It holds
+the run's Snakemake log, the logs of the jobs that ran (with their SLURM logs), and a copy of the
+``snkmt`` database. The run's Snakemake log names these files, so the task directories are not
+searched. Dry-runs write no archive. If the Snakemake process was killed (walltime,
+``scancel``), its end hooks did not run; ``snappy logs`` builds the archive from the newest
+Snakemake log, or from the one given as argument.
