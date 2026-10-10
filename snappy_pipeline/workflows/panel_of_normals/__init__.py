@@ -251,11 +251,17 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         ),
     }
 
+    @dictify
     def _get_input_files_prepare(self, wildcards):
-        return {
-            "container": "work/containers/out/container.simg",
-            "reference": self.parent.get_upstream_paths("reference").fasta,
-        }
+        yield "container", "work/containers/out/container.simg"
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "bait_regions", self.config.purecn.path_bait_regions
+        for key, path in (
+            ("mappability", self.config.purecn.mappability),
+            ("reptiming", self.config.purecn.reptiming),
+        ):
+            if path:
+                yield key, path
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
@@ -307,8 +313,15 @@ class PureCnStepPart(PanelOfNormalsStepPart):
                 "plot": "work/panel_of_normals/out/panel_of_normals.interval_weights.png",
             }
 
+    #: Config paths reach the wrappers as inputs, so they are left out of the params
+    _config_files = {"path_normals_list", "path_bait_regions", "mappability", "reptiming"}
+
     def _get_params_install(self, wildcards):
-        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
+        return {
+            "config": self.config.get(self.name).model_dump(
+                by_alias=True, exclude=self._config_files
+            )
+        }
 
     _get_params_prepare = _get_params_install
     _get_params_create_panel = _get_params_install
@@ -316,7 +329,9 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_params_coverage(self, wildcards):
         mapper = str(self.parent.get_task_config("alignments").tool)
         return {
-            "config": self.config.get(self.name).model_dump(by_alias=True),
+            "config": self.config.get(self.name).model_dump(
+                by_alias=True, exclude=self._config_files
+            ),
             "mapper": mapper,
             "library_name": wildcards.library_name,
         }
@@ -734,6 +749,15 @@ class AccessStepPart(PanelOfNormalsStepPart):
 
     name = "access"
     actions = ("run",)
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        if self.config.access.exclude:
+            yield "exclude", self.config.access.exclude
+
+    def _get_params_run(self, wildcards):
+        return {"min_gap_size": self.config.access.min_gap_size}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         # Validate action

@@ -21,12 +21,10 @@ extra_commands = " ".join(
 # List files that must be accessible from the container
 files_to_bind = {
     "vcf": snakemake.input.vcf,
-    "mapping_bias": config["path_mapping_bias"],
-    "normaldb": config["path_panel_of_normals"],
-    "intervals": config["path_intervals"],
+    "mapping_bias": snakemake.input.mapping_bias,
+    "normaldb": snakemake.input.normaldb,
+    "intervals": snakemake.input.intervals,
 }
-if "snp_blacklist" in config.keys() and config["snp_blacklist"]:
-    files_to_bind["snp-blacklist"] = config["snp_blacklist"]
 if "segments" in snakemake.input.keys() and snakemake.input.segments:
     files_to_bind["seg-file"] = snakemake.input.segments
 if "log2" in snakemake.input.keys() and snakemake.input.log2:
@@ -47,8 +45,6 @@ bound_files = {
     for k, v in files_to_bind.items()
 }
 
-if "snp-blacklist" in bound_files.keys():
-    extra_commands += " --snp-blacklist={}".format(bound_files["snp-blacklist"])
 if "seg-file" in bound_files.keys():
     extra_commands += " --seg-file={}".format(bound_files["seg-file"])
 if "log-ratio-file" in bound_files.keys():
@@ -81,7 +77,7 @@ cmd="/usr/local/bin/Rscript /opt/PureCN/PureCN.R \
     --seed {config[seed]} --parallel --cores {snakemake.threads} \
     {extra_commands}
 "
-apptainer exec --home $PWD {bindings} {config[path_container]} $cmd
+apptainer exec --home $PWD {bindings} {snakemake.input.container} $cmd
 
 rename {snakemake.output.segments} _dnacopy.seg
 rename {snakemake.output.ploidy} .csv

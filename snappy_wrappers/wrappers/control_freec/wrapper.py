@@ -14,6 +14,8 @@ w = args.get("window_size")
 if w >= 0:
     window_str = "window = {}".format(w)
 
+mappability = snakemake.input.get("mappability", "")
+
 shell.executable("/bin/bash")
 
 ShellWrapper(snakemake).run(
@@ -36,7 +38,7 @@ outputDir = $output_dir
 ## path to sambamba (faster BAM file reading)
 sambamba = sambamba
 
-chrLenFile = {args[path_chrlenfile]}
+chrLenFile = {snakemake.input.chrlenfile}
 ploidy = 2
 
 breakPointThreshold = .8
@@ -51,7 +53,7 @@ minimalSubclonePresence = 0.2
 numberOfProcesses = 4
 
 $(if [[ "{args[path_mappability_enabled]}" == True ]]; then
-  echo gemMappabilityFile = {args[path_mappability]};
+  echo gemMappabilityFile = {mappability};
 fi)
 
 uniqueMatch = TRUE

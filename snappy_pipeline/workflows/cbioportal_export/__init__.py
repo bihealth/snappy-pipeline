@@ -600,7 +600,8 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
                 # Multiple libraries should not be returned by _yield_libraries
                 assert extraction_type not in donors[donor_name][sample_name]
                 donors[donor_name][sample_name][extraction_type] = lib.name
-        return {"donors": donors, "config": self.config.model_dump(by_alias=True)}
+        config = self.config.model_dump(by_alias=True, exclude={"path_gene_id_mappings"})
+        return {"donors": donors, "config": config}
 
     @dictify
     def get_output_files(self, action):

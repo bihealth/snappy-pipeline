@@ -189,7 +189,7 @@ class ExpansionHunterStepPart(BaseStepPart):
             "repeat_catalog": self.config.repeat_catalog,
         }
 
-    @listify
+    @dictify
     def _get_input_files_annotate(self, wildcards):
         """Yield input files' pattern for rule `annotate` - based on ExpansionHunter call results.
 
@@ -197,9 +197,13 @@ class ExpansionHunterStepPart(BaseStepPart):
         :type wildcards: snakemake.io.Wildcards
         """
         name_pattern = wildcards.library_name
-        yield "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-            name_pattern=name_pattern, ext="json"
+        yield (
+            "json",
+            "work/{name_pattern}/out/{name_pattern}.{ext}".format(
+                name_pattern=name_pattern, ext="json"
+            ),
         )
+        yield "annotation", self.config.repeat_annotation
 
     @staticmethod
     @dictify
@@ -264,12 +268,12 @@ class ExpansionHunterStepPart(BaseStepPart):
         :type sm_output: snakemake.io.Namedlist
         """
         # Absolute path from input and output
-        input_path = os.path.join(os.getcwd(), str(sm_input))
+        input_path = os.path.join(os.getcwd(), sm_input.json)
         output_path = os.path.join(os.getcwd(), sm_output.json)
         # Annotate
         AnnotateExpansionHunter(
             eh_json=input_path,
-            annotation_json=self.config.repeat_annotation,
+            annotation_json=sm_input.annotation,
             output_path=output_path,
         ).run()
 

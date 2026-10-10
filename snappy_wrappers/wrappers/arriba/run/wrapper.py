@@ -11,37 +11,34 @@ if TYPE_CHECKING:
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
-# Input fastqs are passed through snakemake.params.
-# snakemake.input are the FASTQ files (or the .done file of the task that wrote them); the
-# wrapper takes the ordered read lists from params.
 args = getattr(snakemake.params, "args", {})
-reads_left = args["input"]["reads_left"]
-reads_right = args["input"]["reads_right"] if args["input"]["reads_right"] else ""
+reads_left = snakemake.input.reads_left
+reads_right = snakemake.input.get("reads_right", "")
 
 trim_adapters = args["trim_adapters"]
 num_threads_trimming = args["num_threads_trimming"]
 trim_cmd = "trimadap-mt -p {num_threads_trimming}" if trim_adapters else "zcat"
 
 num_threads = args["num_threads"]
-arriba_index = args["path_index"]
+arriba_index = snakemake.input.index
 star_parameters = args["star_parameters"]
 
 reference_path = snakemake.input.reference
 features_path = snakemake.input.features
 
-blacklist = args["blacklist"]
+blacklist = snakemake.input.get("blacklist", "")
 blacklist_param = f"-b {blacklist}" if blacklist else ""
 
-known_fusions = args["known_fusions"]
+known_fusions = snakemake.input.get("known_fusions", "")
 known_fusions_param = f"-k {known_fusions}" if known_fusions else ""
 
-tags = args["tags"]
+tags = snakemake.input.get("tags", "")
 tags_param = f"-t {tags}" if tags else ""
 
-structural_variants = args["structural_variants"]
+structural_variants = snakemake.input.get("structural_variants", "")
 structural_variants_param = f"-d {structural_variants}" if structural_variants else ""
 
-protein_domains = args["protein_domains"]
+protein_domains = snakemake.input.get("protein_domains", "")
 protein_domains_param = f"-p {protein_domains}" if protein_domains else ""
 
 ShellWrapper(snakemake).run(

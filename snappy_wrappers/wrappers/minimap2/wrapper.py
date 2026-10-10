@@ -14,7 +14,13 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 this_file = __file__
 
 args = getattr(snakemake.params, "args", {})
-reads = " ".join(args["input"]["reads_left"] + args["input"].get("reads_right", []))
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files.
+reads_param = args.get("input", {})
+reads_left = snakemake.input.get("reads_left") or reads_param["reads_left"]
+reads_right = snakemake.input.get("reads_right") or reads_param.get("reads_right", [])
+reads = " ".join([*reads_left, *reads_right])
+path_index = snakemake.input.index[0]
 seq_platform = args["extra_infos"]["seqPlatform"]
 library_kit = args["extra_infos"]["libraryKit"]
 
@@ -46,7 +52,7 @@ for fname in {reads}; do
     | minimap2 \
         -t {args[mapping_threads]} \
         -x $preset \
-        -a {args[path_index]} \
+        -a {path_index} \
         -Y \
         --MD \
         /dev/stdin \

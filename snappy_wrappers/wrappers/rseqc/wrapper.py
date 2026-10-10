@@ -13,14 +13,15 @@ __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 config = args["config"]
-with open(config["path_exon_bed"], "rb") as inputf:
+exon_bed = snakemake.input.exon_bed
+with open(exon_bed, "rb") as inputf:
     bed_file_md5 = hashlib.md5(inputf.read()).hexdigest()
 
 ShellWrapper(snakemake).run(
     r"""
 # ----- Run rseqc to infer strandedness
 infer_experiment.py \
-    -r "{config[path_exon_bed]}" \
+    -r "{exon_bed}" \
     -i "{snakemake.input.bam}" \
     > "{snakemake.output.tsv}"
 
@@ -68,7 +69,7 @@ fi
 cat << __EOF > {snakemake.output.decision}
 {{
     "library_name": "{args[library_name]}",
-    "bed_path": "{config[path_exon_bed]}",
+    "bed_path": "{exon_bed}",
     "bed_file_md5": "{bed_file_md5}",
     "bam_path": "{snakemake.input.bam}",
     "strand_from_user": "{config[strand]}",
@@ -83,4 +84,3 @@ cat << __EOF > {snakemake.output.decision}
 __EOF
 """
 )
-

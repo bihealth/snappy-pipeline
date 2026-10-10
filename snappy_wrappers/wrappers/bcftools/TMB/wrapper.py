@@ -13,7 +13,7 @@ __author__ = "Pham Gia Cuong"
 __email__ = "pham.gia-cuong@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-target_regions = args["target_regions"]
+target_regions = snakemake.input.target_regions
 has_annotation = args["has_annotation"]
 
 

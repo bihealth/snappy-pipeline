@@ -69,6 +69,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import HlaTyping as HlaTypingConfigModel
 
@@ -104,10 +105,9 @@ class OptiTypeStepPart(BaseStepPart):
     def get_output_prefix():
         return ""
 
-    @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files"""
-        yield "reads", self.parent.reads_input(wildcards.library_name)
+        return reads_input_files(self.parent, wildcards.library_name)
 
     @dictify
     def get_output_files(self, action):
@@ -139,14 +139,9 @@ class OptiTypeStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     def _get_params_run(self, wildcards):
-        """Return dict for the wrapper, including the input files"""
-        groups = self.parent.read_groups(wildcards.library_name)
-        result = {
-            "input": {"reads_left": [group.left for group in groups]},
-            "seq_type": self._get_seq_type(wildcards),
-        }
-        if reads_right := [group.right for group in groups if group.right]:
-            result["input"]["reads_right"] = reads_right
+        """Return dict for the wrapper"""
+        result = reads_params(self.parent, wildcards.library_name)
+        result["seq_type"] = self._get_seq_type(wildcards)
         result["use_discordant"] = "true" if self.config.optitype.use_discordant else "false"
         result["num_mapping_threads"] = self.config.optitype.num_mapping_threads
         result["max_reads"] = self.config.optitype.max_reads

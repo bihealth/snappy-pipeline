@@ -1,43 +1,44 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for fastp: Snakemake wrapper.py"""
 
+from typing import TYPE_CHECKING
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
 args = getattr(snakemake.params, "args", {})
 
-# Input fastqs are passed through snakemake.params.
-# snakemake.input are the FASTQ files (or the .done file of the task that wrote them); the
-# wrapper takes the ordered read lists from params.
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files. Params also name the trimmed files, in the order of the inputs.
 library_name = args["library_name"]
-input_left = args["input"]["reads_left"]
-input_right = args["input"]["reads_right"] if args["input"]["reads_right"] else {}
+reads = args.get("input", {})
+input_path_left = list(snakemake.input.get("reads_left") or reads["reads_left"])
+input_path_right = list(snakemake.input.get("reads_right") or reads.get("reads_right", []))
+output_left = args["output_left"]
+output_right = args["output_right"]
 
-input_path_left = list(input_left.keys())
-prefix_left = [x["relative_path"] for x in input_left.values()]
-filename_left = [x["filename"] for x in input_left.values()]
+prefix_left = [x["relative_path"] for x in output_left]
+filename_left = [x["filename"] for x in output_left]
+prefix_right = [x["relative_path"] for x in output_right]
+filename_right = [x["filename"] for x in output_right]
 
 assert len(input_path_left) == len(prefix_left)
 assert len(input_path_left) == len(filename_left)
-
-if input_right:
-    input_path_right = list(input_right.keys())
-    prefix_right = [x["relative_path"] for x in input_right.values()]
-    filename_right = [x["filename"] for x in input_right.values()]
-
+assert len(input_path_right) == len(prefix_right)
+assert len(input_path_right) == len(filename_right)
+if input_path_right:
     assert len(input_path_left) == len(input_path_right)
-    assert len(prefix_left) == len(prefix_right)
-    assert len(filename_left) == len(filename_right)
-else:
-    input_path_right = []
-    prefix_right = []
-    filename_right = []
 
 this_file = __file__
 
 config = args["config"]
+filter_by_index1 = snakemake.input.get("filter_by_index1", "")
+filter_by_index2 = snakemake.input.get("filter_by_index2", "")
 
 ShellWrapper(snakemake).run(
     r"""
@@ -149,11 +150,11 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         $(if [[ "{config[low_complexity_filter]}" = "True" ]]; then \
             echo --low_complexity_filter --complexity_threshold {config[complexity_threshold]}
         fi) \
-        $(if [[ -n "{config[filter_by_index1]}" ]]; then \
-            echo --filter_by_index1 {config[filter_by_index1]} --filter_by_index_threshold {config[filter_by_index_threshold]}
+        $(if [[ -n "{filter_by_index1}" ]]; then \
+            echo --filter_by_index1 {filter_by_index1} --filter_by_index_threshold {config[filter_by_index_threshold]}
         fi) \
-        $(if [[ -n "{config[filter_by_index2]}" ]]; then \
-            echo --filter_by_index2 {config[filter_by_index2]} --filter_by_index_threshold {config[filter_by_index_threshold]}
+        $(if [[ -n "{filter_by_index2}" ]]; then \
+            echo --filter_by_index2 {filter_by_index2} --filter_by_index_threshold {config[filter_by_index_threshold]}
         fi) \
         $(if [[ "{config[correction]}" = "True" ]]; then \
             echo --correction
@@ -193,4 +194,3 @@ touch {snakemake.output.rejected_done}
 
 """
 )
-

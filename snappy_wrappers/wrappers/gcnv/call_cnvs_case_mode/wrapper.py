@@ -6,8 +6,6 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-args = getattr(snakemake.params, "args", {})
-
 paths_tsv = " ".join(snakemake.input.tsv)
 ShellWrapper(snakemake).run(
     r"""
@@ -37,7 +35,7 @@ gatk GermlineCNVCaller \
     --run-mode CASE \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
-    --model {args[model]} \
+    --model {snakemake.input.model} \
     --output $(dirname {snakemake.output.done}) \
     --output-prefix cnv_calls
 """

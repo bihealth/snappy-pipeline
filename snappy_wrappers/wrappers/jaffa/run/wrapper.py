@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-args = getattr(snakemake.params, "args", {})
-
 ShellWrapper(snakemake).run(
     r"""
 echo ${{JOB_ID:-unknown}} >$(dirname {snakemake.output.done})/sge_job_id
@@ -27,10 +25,10 @@ inputdir=$workdir/input
 mkdir -p $inputdir
 
 if [[ ! -f "$inputdir/reads_1.fastq.gz" ]]; then
-    cat {args[left]} > $inputdir/reads_1.fastq.gz
+    cat {snakemake.input.reads_left} > $inputdir/reads_1.fastq.gz
 fi
 if [[ ! -f "$inputdir/reads_2.fastq.gz" ]]; then
-    cat {args[right]} > $inputdir/reads_2.fastq.gz
+    cat {snakemake.input.reads_right} > $inputdir/reads_2.fastq.gz
 fi
 
 pushd $workdir \

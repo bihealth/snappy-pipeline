@@ -3,17 +3,16 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
-melt_config = args["config"]
 
-reference = snakemake.input[0]
-individual = snakemake.input[1]
+reference = snakemake.input.reference
+individual = snakemake.input.indiv_analysis[0]
 
 ShellWrapper(snakemake).run(
     r"""
 
-JAR={melt_config[jar_file]}
-ME_REFS={melt_config[me_refs_path]}
-ME_INFIX={melt_config[me_refs_infix]}
+JAR={snakemake.input.jar}
+ME_REFS={snakemake.input.me_refs}
+ME_INFIX={args[me_refs_infix]}
 
 java -jar -Xmx13G -jar $JAR \
     GroupAnalysis \
@@ -24,7 +23,7 @@ java -jar -Xmx13G -jar $JAR \
     fi) \
     -w $(dirname {snakemake.output.done}) \
     -r 150 \
-    -n {melt_config[genes_file]} \
+    -n {snakemake.input.genes} \
     -discoverydir $(dirname {individual})
 """
 )

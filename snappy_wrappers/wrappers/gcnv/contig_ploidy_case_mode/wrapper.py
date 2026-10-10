@@ -13,8 +13,6 @@ if TYPE_CHECKING:
 #
 # cf. https://github.com/broadinstitute/gatk/issues/8164
 
-args = getattr(snakemake.params, "args", {})
-
 out_path = pathlib.Path(snakemake.output.done).parent
 
 MALE = "male"
@@ -47,7 +45,7 @@ then
 fi
 
 gatk DetermineGermlineContigPloidy \
-    --model {args[model]} \
+    --model {snakemake.input.model} \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --output $(dirname {snakemake.output}) \
     --output-prefix ploidy

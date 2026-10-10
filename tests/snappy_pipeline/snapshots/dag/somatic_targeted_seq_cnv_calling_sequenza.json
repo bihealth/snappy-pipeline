@@ -23,7 +23,12 @@
  {
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
-   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
   ],
   "log": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
@@ -72,21 +77,12 @@
   "params": {
    "args": {
     "extra_args": [],
-    "input": {
-     "reads_left": [
-      "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz"
-     ],
-     "reads_right": [
-      "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
-     ]
-    },
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
     "num_threads_align": 16,
     "num_threads_bam_sort": 4,
     "num_threads_bam_view": 4,
     "num_threads_trimming": 8,
-    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference",
     "platform": "ILLUMINA",
     "sample_name": "case001subregion-N1-DNA1-WES1",
     "split_as_secondary": false,
@@ -110,7 +106,12 @@
  {
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
-   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
   ],
   "log": [
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log",
@@ -159,21 +160,12 @@
   "params": {
    "args": {
     "extra_args": [],
-    "input": {
-     "reads_left": [
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz"
-     ],
-     "reads_right": [
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
-     ]
-    },
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
     "num_threads_align": 16,
     "num_threads_bam_sort": 4,
     "num_threads_bam_view": 4,
     "num_threads_trimming": 8,
-    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference",
     "platform": "ILLUMINA",
     "sample_name": "case001subregion-T1-DNA1-WES1",
     "split_as_secondary": false,
@@ -193,6 +185,149 @@
    "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "input": [],
+  "log": [
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log.md5",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt.md5",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/reference_download/work/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_download/output/reference_download/out/reference.fa.md5"
+  ],
+  "params": {
+   "args": {
+    "assembly": "primary_assembly",
+    "branch": "",
+    "build": "GRCh38",
+    "chromosome": [],
+    "contigs": [],
+    "contigs_regex": "",
+    "datatype": "dna",
+    "file_name": "",
+    "molecule": "dna",
+    "source": "ensembl",
+    "species": "homo_sapiens",
+    "subset": "primary_assembly",
+    "url": "",
+    "version": "113"
+   }
+  },
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_download_reference_download_ensembl_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
+ },
+ {
+  "input": [
+   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+  ],
+  "log": [
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log.md5",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_info.txt",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_info.txt.md5",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_list.txt",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_list.txt.md5",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script.md5"
+  ],
+  "output": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.sa",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.log",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.log.md5",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_info.txt",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_info.txt.md5",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_list.txt",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_list.txt.md5",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.script",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.script.md5"
+  ],
+  "params": {
+   "args": {
+    "algorithm": "bwtsw"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
+ },
+ {
+  "input": [
+   "tasks/reference_download/output/reference_download/out/reference.fa"
+  ],
+  "log": [
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log.md5",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_info.txt",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_info.txt.md5",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_list.txt",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_list.txt.md5",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script",
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script.md5"
+  ],
+  "output": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.log",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.log.md5",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_info.txt",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_info.txt.md5",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_list.txt",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_list.txt.md5",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.script",
+   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.script.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_index_bwa_reference_index_common_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
   "input": [

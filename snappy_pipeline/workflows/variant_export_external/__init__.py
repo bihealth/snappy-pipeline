@@ -116,15 +116,19 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     def _alignments(self, library_name):
         return self.parent.get_upstream_paths("alignments", library_name=library_name)
 
+    @dictify
     def _get_input_files_bam_qc(self, wildcards):
         alignments = self._alignments(wildcards.library_name)
-        yield alignments.bam
-        yield alignments.bai
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
 
+    @dictify
     def _get_input_files_run(self, wildcards):
         alignments = self._alignments(wildcards.library_name)
-        yield alignments.bam
-        yield alignments.bai
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
+        if self.config.target_coverage_report.path_targets_bed:
+            yield "targets_bed", self.config.target_coverage_report.path_targets_bed
 
     @dictify
     def get_output_files(self, action):
@@ -174,19 +178,6 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-
-    def _get_params_run(self, wildcards):
-        return {
-            "bam": sorted(list(self._collect_bam_files(wildcards))),
-            "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
-            "path_targets_bed": self.config.target_coverage_report.path_targets_bed,
-        }
-
-    def _get_params_bam_qc(self, wildcards):
-        return {
-            "bam": sorted(list(self._collect_bam_files(wildcards))),
-            "bam_count": len(sorted(list(self._collect_bam_files(wildcards)))),
-        }
 
     def _collect_bam_files(self, wildcards):
         """Yield the BAM file of the library."""
@@ -256,6 +247,11 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         )
         # Reference
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "db", self.config.path_db
+        yield "refseq_ser", self.config.path_refseq_ser
+        yield "ensembl_ser", self.config.path_ensembl_ser
+        if self.config.path_exon_bed:
+            yield "exon_bed", self.config.path_exon_bed
         # VCF
         tpl = (
             f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
@@ -412,7 +408,12 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         return result
 
     def _get_params_annotate(self, wildcards):
-        return {"config": self.config.model_dump(by_alias=True)}
+        return {
+            "config": self.config.model_dump(
+                by_alias=True,
+                exclude={"path_db", "path_refseq_ser", "path_ensembl_ser", "path_exon_bed"},
+            )
+        }
 
     def _get_params_bam_qc(self, wildcards):
         """Get parameters for wrapper ``variant_annotator/bam_qc``

@@ -14,16 +14,14 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-args = getattr(snakemake.params, "args", {})
-
 tempdir = tempfile.mkdtemp()
 
 variants = [
     f"bcftools merge {snakemake.input.normal} {snakemake.input.tumor}",
     'bcftools filter --include "N_ALT=2 & FORMAT/AD[:2]=0"',
 ]
-if "excluded_regions" in args and args["excluded_regions"]:
-    variants.append(f"bcftools view --targets-file ^{args['excluded_regions']}")
+if excluded_regions := snakemake.input.get("excluded_regions", ""):
+    variants.append(f"bcftools view --targets-file ^{excluded_regions}")
 variants = " \\\n    | ".join(variants)
 
 ShellWrapper(snakemake).run(

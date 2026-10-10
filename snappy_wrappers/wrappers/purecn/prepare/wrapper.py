@@ -15,16 +15,14 @@ genome = snakemake.input.reference
 # Prepare files and directories that must be accessible by the container
 bound_files = {
     "genome": os.path.normpath(genome),
-    "path_bait_regions": os.path.normpath(config["path_bait_regions"]),
+    "path_bait_regions": os.path.normpath(snakemake.input.bait_regions),
     "mappability": (
-        os.path.normpath(config["mappability"])
-        if "mappability" in config and config["mappability"]
+        os.path.normpath(snakemake.input.mappability)
+        if "mappability" in snakemake.input.keys()
         else ""
     ),
     "reptiming": (
-        os.path.normpath(config["reptiming"])
-        if "reptiming" in config and config["reptiming"]
-        else ""
+        os.path.normpath(snakemake.input.reptiming) if "reptiming" in snakemake.input.keys() else ""
     ),
 }
 

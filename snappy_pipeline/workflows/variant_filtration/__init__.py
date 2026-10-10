@@ -179,19 +179,42 @@ class VembraneStepPart(VariantFiltrationStepPart):
             params.update(
                 {
                     "expression": cfg.expression,
-                    "aux": cfg.aux,
+                    "aux_names": list(cfg.aux),
                     "context": cfg.context,
-                    "context_files": cfg.context_files,
-                    "ontology": cfg.ontology,
                 }
             )
         return params
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        cfg = self.config.vembrane
+        if cfg is None or cfg.mode != "filter":
+            return
+        if cfg.aux:
+            yield "aux", list(cfg.aux.values())
+        if cfg.context_files:
+            yield "context_files", list(cfg.context_files)
+        if cfg.ontology:
+            yield "ontology", cfg.ontology
 
 
 class RegionsStepPart(VariantFiltrationStepPart):
     """Region/BED-based filter via bcftools."""
 
     filter_name = "regions"
+
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        cfg = self.config.regions
+        if cfg.include:
+            yield "include", cfg.include
+        else:
+            yield "exclude", cfg.exclude or cfg.path_bed
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"filter_name": self.filter_name, "mode": self.config.regions.mode}
 
 
 class DkfzStepPart(_BamAwareStepPart):
@@ -237,7 +260,9 @@ class EbfilterStepPart(_BamAwareStepPart):
         return super().get_output_files(action)
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return super()._get_params_run(wildcards) | {
+        params = super()._get_params_run(wildcards)
+        params.pop("path_panel_of_normals_sample_list", None)
+        return params | {
             "has_annotation": getattr(self.config, "has_annotation", True),
         }
 

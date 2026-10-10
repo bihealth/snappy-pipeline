@@ -15,14 +15,7 @@ class AnnotateGcMixin:
         kit = wildcards.library_kit
         yield "interval_list", f"work/{kit}/out/{kit}.interval_list"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
-
-    def _get_params_annotate_gc(self, wildcards):
-        gcnv = self.config.gcnv
-        params = {"path_uniquely_mapable_bed": gcnv.path_uniquely_mapable_bed}
-        if hasattr(gcnv, "path_target_interval_list_mapping"):  # targeted sequencing only
-            mapping = gcnv.path_target_interval_list_mapping
-            params["path_target_interval_list_mapping"] = [item.model_dump() for item in mapping]
-        return params
+        yield "mappability", self.config.gcnv.path_uniquely_mapable_bed
 
     @dictify
     def _get_output_files_annotate_gc(self):

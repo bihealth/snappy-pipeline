@@ -3,19 +3,21 @@
 
 import os
 import re
+from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
-__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
-args = getattr(snakemake.params, "args", {})
+__author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 reference = snakemake.input.reference
 reference = re.sub(r"\.fa(sta)?(\.b?gz)?$", ".dict", reference)
 assert os.path.exists(reference), "Missing dict of reference fasta"
 
-baits = args["path_to_baits"]
-targets = args.get("path_to_targets", "")
+baits = snakemake.input.baits
+targets = snakemake.input.get("targets", "")
 
 ShellWrapper(snakemake).run(
     r"""

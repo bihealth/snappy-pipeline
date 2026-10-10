@@ -81,11 +81,9 @@ The default configuration is as follows.
 """
 
 import os
-from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import glob_wildcards
-from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
@@ -150,14 +148,6 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
             [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done" for shard in shards],
         )
         yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
-
-    def _get_params_preprocess_intervals(self, wildcards: Wildcards) -> dict[str, Any]:
-        gcnv_config = self.parent.get_task_config("helper_gcnv_model_wgs").gcnv
-        return {
-            "path_uniquely_mapable_bed": gcnv_config.path_uniquely_mapable_bed,
-        }
-
-    _get_params_coverage = _get_params_preprocess_intervals
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

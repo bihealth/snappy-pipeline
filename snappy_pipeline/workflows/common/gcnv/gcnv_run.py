@@ -202,6 +202,16 @@ class ValidationMixin:
 class ContigPloidyMixin:
     """Methods for ``contig_ploidy``."""
 
+    def _precomputed_ploidy_model(self, library_kit: str) -> str:
+        """Return the precomputed contig-ploidy model directory of the library kit."""
+        path = "__no_ploidy_model_for_library_in_config__"
+        for model in self.config.gcnv.precomputed_model_paths:
+            # Adjust library kit name from config to wildcard
+            library_to_wildcard = model.get("library").strip().replace(" ", "_")
+            if library_to_wildcard == library_kit:
+                path = model.get("contig_ploidy")
+        return path
+
     @dictify
     def _get_input_files_contig_ploidy(self, wildcards: Wildcards):
         """Yield input files for ``contig_ploidy`` rule  in CASE MODE using precomputed model.
@@ -220,30 +230,12 @@ class ContigPloidyMixin:
             name_pattern = f"write_pedigree.{library_name}"
             peds.append(f"work/{name_pattern}/out/{library_name}.ped")
         yield "ped", peds
+        yield "model", self._precomputed_ploidy_model(wildcards.library_kit)
 
     @dictify
     def _get_output_files_contig_ploidy(self):
         """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE."""
         yield "done", touch("work/{library_kit}/out/{library_kit}.contig_ploidy/.done")
-
-    def _get_params_contig_ploidy(self, wildcards: Wildcards):
-        """Get ploidy-model parameters.
-
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
-        (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns ploidy-model parameters dictionary if analysis type is 'case_mode';
-        otherwise, returns empty dictionary. Step: Calling autosomal and allosomal contig ploidy
-        with `DetermineGermlineContigPloidy`.
-        """
-        path = "__no_ploidy_model_for_library_in_config__"
-        for model in self.config.gcnv.precomputed_model_paths:
-            # Adjust library kit name from config to wildcard
-            library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            if library_to_wildcard == wildcards.library_kit:
-                path = model.get("contig_ploidy")
-        return {"model": path}
 
 
 class CallCnvsMixin:
@@ -268,31 +260,21 @@ class CallCnvsMixin:
         kit = wildcards.library_kit
         yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy/.done"
 
-    @dictify
-    def _get_output_files_call_cnvs(self):
-        """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
-        yield "done", touch("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done")
-
-    def _get_params_call_cnvs(self, wildcards):
-        """Get model parameters.
-
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_kit'
-        (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns model parameters dictionary if analysis type is 'case_mode';
-        otherwise, returns empty dictionary. Step: Calling copy number variants with
-        `GermlineCNVCaller`.
-        """
+        # Yield the precomputed model shard directory
         path = "__no_model_for_library_in_config__"
         for model in self.config.gcnv.precomputed_model_paths:
             # Adjust library kit name from config to wildcard
             library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            if library_to_wildcard == wildcards.library_kit:
+            if library_to_wildcard == kit:
                 pattern = model.get("model_pattern")
                 model_dir_dict = get_model_dir_to_dict(pattern)
                 path = model_dir_dict.get(wildcards.shard)
-        return {"model": path}
+        yield "model", path
+
+    @dictify
+    def _get_output_files_call_cnvs(self):
+        """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
+        yield "done", touch("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done")
 
 
 class PostGermlineCallsMixin:
@@ -347,29 +329,8 @@ class PostGermlineCallsMixin:
         # Yield contig-ploidy output
         yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
 
-    def _get_params_post_germline_calls(self, wildcards):
-        """Get post germline model parameters.
-
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_name'
-        (e.g., 'P001-N1-DNA1-WGS1').
-        :type wildcards: snakemake.io.Wildcards
-
-        :return: Returns model parameters dictionary if analysis type is 'case_mode';
-        otherwise, returns empty dictionary. Step: consolidating the scattered
-        `GermlineCNVCaller` results, performs segmentation and calls copy number states with
-        `PostprocessGermlineCNVCalls `.
-        """
-        paths = ["__no_model_available_for_library__"]
-        for model in self.config.gcnv.precomputed_model_paths:
-            # Adjust library kit name from config to wildcard
-            library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            # Get library kit associated with library name
-            library_kit = self.ngs_library_to_kit[wildcards.library_name]
-            if library_to_wildcard == library_kit:
-                pattern = model.get("model_pattern")
-                model_dir_dict = get_model_dir_to_dict(pattern)
-                paths = list(model_dir_dict.values())
-        return {"model": paths}
+        # Yield the precomputed model shard directories (same order as the calls)
+        yield "model", list(model_dir_dict.values())
 
 
 class JointGermlineCnvSegmentationMixin:

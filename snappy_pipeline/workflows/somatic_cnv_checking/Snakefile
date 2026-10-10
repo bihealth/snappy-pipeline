@@ -101,8 +101,6 @@ if wf.depends_on.get("copy_number"):
             mem=wf.get_resource("cnv", "run", "mem"),
             partition=wf.get_resource("cnv", "run", "partition"),
             tmpdir=wf.get_resource("cnv", "run", "tmpdir"),
-        params:
-            args=wf.get_params("cnv", "run"),
         wrapper:
             wf.wrapper_path("vcfpy/add_bed")
 

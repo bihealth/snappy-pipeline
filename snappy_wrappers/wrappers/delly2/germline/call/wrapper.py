@@ -5,8 +5,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 delly2_config = args["config"]
 
-if delly2_config["path_exclude_tsv"]:
-    exclude_str = "--exclude %s" % delly2_config["path_exclude_tsv"]
+if exclude := snakemake.input.get("exclude", ""):
+    exclude_str = f"--exclude {exclude}"
 else:
     exclude_str = ""
 

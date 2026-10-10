@@ -11,14 +11,9 @@ mehari_config = args.get("config", {})
 
 cli_args = []
 
-# skip keys that are handled via snakemake.input
-ignore_keys = {"reference", "transcripts", "frequencies", "clinvar"}
 num_threads = snakemake.threads
 
 for key, value in mehari_config.items():
-    if key in ignore_keys:
-        continue
-
     # skip None, empty strings, and 'none' for sequence reporting
     if value is None or value == "":
         continue

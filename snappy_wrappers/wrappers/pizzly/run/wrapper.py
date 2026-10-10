@@ -22,17 +22,17 @@ inputdir=$workdir/input
 mkdir -p $inputdir
 
 if [[ ! -f "$inputdir/reads_1.fastq.gz" ]]; then
-    cat {args[left]} > $inputdir/reads_1.fastq.gz
+    cat {snakemake.input.reads_left} > $inputdir/reads_1.fastq.gz
 fi
 if [[ ! -f "$inputdir/reads_2.fastq.gz" ]]; then
-    cat {args[right]} > $inputdir/reads_2.fastq.gz
+    cat {snakemake.input.reads_right} > $inputdir/reads_2.fastq.gz
 fi
 
 pushd $workdir
 
 test -f output/fusion.txt \
 || kallisto quant \
-    -i {args[kallisto_index]} \
+    -i {snakemake.input.kallisto_index} \
     --fusion \
     -o output \
     input/reads_1.fastq.gz \
@@ -45,9 +45,9 @@ pizzly \
     --cache index.cache.txt \
     --align-score 2 \
     --insert-size 400 \
-    --fasta {args[transcripts_fasta]} \
+    --fasta {snakemake.input.transcripts_fasta} \
     --output fusions \
-    --gtf {args[annotations_gtf]} \
+    --gtf {snakemake.input.annotations_gtf} \
     output/fusion.txt
 
 pizzly_flatten_json.py fusions.json > fusions.txt

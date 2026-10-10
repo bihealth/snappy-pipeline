@@ -25,7 +25,7 @@ if wf.config.tool == "bwa":
 
     rule ngs_mapping_bwa_run:
         input:
-            wf.get_input_files("bwa", "run"),
+            unpack(wf.get_input_files("bwa", "run")),
         output:
             **wf.get_output_files("bwa", "run"),
         log:
@@ -49,7 +49,7 @@ if wf.config.tool == "bwa_mem2":
 
     rule ngs_mapping_bwa_mem2_run:
         input:
-            wf.get_input_files("bwa_mem2", "run"),
+            unpack(wf.get_input_files("bwa_mem2", "run")),
         output:
             **wf.get_output_files("bwa_mem2", "run"),
         log:
@@ -121,7 +121,7 @@ if wf.config.tool == "minimap2":
 
     rule ngs_mapping_minimap2_run:
         input:
-            wf.get_input_files("minimap2", "run"),
+            unpack(wf.get_input_files("minimap2", "run")),
         output:
             **wf.get_output_files("minimap2", "run"),
         log:

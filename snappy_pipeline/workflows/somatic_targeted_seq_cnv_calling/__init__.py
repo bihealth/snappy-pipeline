@@ -356,6 +356,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "normaldb", pon.panel_of_normals
         yield "mapping_bias", pon.mapping_bias
         yield "intervals", pon.intervals
+        yield "container", self.config.purecn.path_container
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
@@ -365,6 +366,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "bam", alignments.bam
         yield "bai", alignments.bai
         yield "intervals", self.parent.get_upstream_paths("panel_of_normals").intervals
+        yield "container", self.config.purecn.path_container
 
     def get_output_files(self, action):
         """Return output paths, dependent on rule"""
@@ -397,13 +399,10 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def _get_params_all(self, wildcards):
         mapper = str(self.parent.get_task_config("alignments").tool)
-        config_dump = self.config.get(self.name).model_dump(by_alias=True)
-        # Inject PON file paths resolved from the panel_of_normals dependency so that
-        # the wrapper can access them via config["path_*"] as before.
-        pon = self.parent.get_upstream_paths("panel_of_normals")
-        config_dump["path_panel_of_normals"] = pon.panel_of_normals
-        config_dump["path_mapping_bias"] = pon.mapping_bias
-        config_dump["path_intervals"] = pon.intervals
+        # The files reach the wrappers as inputs
+        config_dump = self.config.get(self.name).model_dump(
+            by_alias=True, exclude={"path_container", "mappability", "reptiming"}
+        )
         return {
             "config": config_dump,
             "mapper": mapper,

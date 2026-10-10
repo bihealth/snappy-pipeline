@@ -76,14 +76,6 @@
   ],
   "params": {
    "args": {
-    "input": {
-     "reads_left": [
-      "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz"
-     ],
-     "reads_right": [
-      "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
-     ]
-    },
     "max_reads": 5000,
     "num_mapping_threads": 4,
     "seq_type": "dna",
@@ -130,14 +122,6 @@
   ],
   "params": {
    "args": {
-    "input": {
-     "reads_left": [
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz"
-     ],
-     "reads_right": [
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
-     ]
-    },
     "max_reads": 5000,
     "num_mapping_threads": 4,
     "seq_type": "dna",

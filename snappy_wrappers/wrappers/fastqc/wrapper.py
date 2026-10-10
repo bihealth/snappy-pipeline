@@ -12,6 +12,13 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files.
+reads = args.get("input", {})
+reads_left = snakemake.input.get("reads_left") or reads["reads_left"]
+reads_right = snakemake.input.get("reads_right") or reads.get("reads_right", [])
+more_reads = [*reads_left, *reads_right]
+
 ShellWrapper(snakemake).run(
     r"""
 
@@ -22,7 +29,7 @@ fastqc \
     --noextract \
     -o $outdir \
     -t {args[num_threads]} \
-    $(echo {args[more_reads]} | tr ' ' '\n' | grep 'fastq.gz$\|fastq$\|sam$\|bam$')
+    $(echo {more_reads} | tr ' ' '\n' | grep 'fastq.gz$\|fastq$\|sam$\|bam$')
 
 pushd $outdir
 pwd

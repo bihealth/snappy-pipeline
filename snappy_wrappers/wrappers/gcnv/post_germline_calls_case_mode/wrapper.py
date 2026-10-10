@@ -7,10 +7,8 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-args = getattr(snakemake.params, "args", {})
-
 paths_calls = " ".join(snakemake.input.calls)
-paths_models = " ".join(args["model"])
+paths_models = " ".join(snakemake.input.model)
 
 ShellWrapper(snakemake).run(
     r"""

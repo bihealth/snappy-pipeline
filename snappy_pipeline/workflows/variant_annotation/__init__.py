@@ -70,6 +70,15 @@ class VariantAnnotationStepPart(BaseStepPart):
 class VepStepPart(VariantAnnotationStepPart):
     name = "vep"
 
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        if self.config.vep.cache_dir:
+            yield "cache", self.config.vep.cache_dir
+
+    def _get_params_run(self, wildcards):
+        return {"config": self.config.vep.model_dump(by_alias=True, exclude={"cache_dir"})}
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
         num_threads = self.config.vep.num_threads
@@ -82,6 +91,11 @@ class VepStepPart(VariantAnnotationStepPart):
 
 class MehariStepPart(VariantAnnotationStepPart):
     name = "mehari"
+
+    def _get_params_run(self, wildcards):
+        """Pass the options; the files (reference, databases) are inputs."""
+        excluded = {"reference", "transcripts", "frequencies", "clinvar"}
+        return {"config": self.config.mehari.model_dump(by_alias=True, exclude=excluded)}
 
     @dictify
     def _get_input_files_run(self, wildcards):

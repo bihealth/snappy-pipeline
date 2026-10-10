@@ -11,12 +11,11 @@ The default configuration is as follows.
 
 """
 
-from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand, touch
-from snakemake.iocontainers import Namedlist, Wildcards
+from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
@@ -27,6 +26,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import NgsDataQc as NgsDataQcConfigModel
 
@@ -75,16 +75,10 @@ class FastQcReportStepPart(BaseStepPart):
     default_resource_usage = ResourceUsage(threads=1, mem="4GB", runtime="4h")
 
     def _get_params_run(self, wildcards):
-        groups = self.parent.read_groups(wildcards.library_name)
-        return {
-            "num_threads": 1,
-            "more_reads": Namedlist(
-                chain((g.left for g in groups), (g.right for g in groups if g.right))
-            ),
-        }
+        return {"num_threads": 1} | reads_params(self.parent, wildcards.library_name)
 
     def _get_input_files_run(self, wildcards):
-        return self.parent.reads_input(wildcards.library_name)
+        return reads_input_files(self.parent, wildcards.library_name)
 
     @dictify
     def get_output_files(self, action):
@@ -112,8 +106,13 @@ class PicardStepPart(BaseStepPart):
         self._validate_action(action)
         return getattr(self, f"_get_input_files_{action}")
 
+    @dictify
     def _get_input_files_prepare(self, wildcards):
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        if self.config.picard.path_to_baits:
+            yield "baits", self.config.picard.path_to_baits
+        if self.config.picard.path_to_targets:  # same as the baits when missing
+            yield "targets", self.config.picard.path_to_targets
 
     @dictify
     def _get_input_files_metrics(self, wildcards):
@@ -173,12 +172,6 @@ class PicardStepPart(BaseStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
             yield key + "_md5", prefix + ext + ".md5"
-
-    def _get_params_prepare(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {
-            "path_to_baits": self.config.picard.path_to_baits,
-            "path_to_targets": self.config.picard.path_to_targets,
-        }
 
     def _get_params_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {

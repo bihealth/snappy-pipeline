@@ -58,8 +58,11 @@ class Delly2StepPart(
             self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
+        config = dict(self.config.get(self.name))
         return {
-            "config": dict(self.config.get(self.name)),
+            "config": {
+                key: config[key] for key in ("map_qual", "qual_tra", "geno_qual", "mad_cutoff")
+            },
         }
 
     _get_params_merge_calls = _get_params_call
@@ -74,6 +77,8 @@ class Delly2StepPart(
         yield "bam", alignments.bam
         yield "bai", alignments.bai
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+        if path_exclude_tsv := dict(self.config.get(self.name))["path_exclude_tsv"]:
+            yield "exclude", path_exclude_tsv
 
     @dictify
     def _get_output_files_call(self):

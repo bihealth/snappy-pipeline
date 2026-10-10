@@ -87,6 +87,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import ExpectedStrandedness, Tool
@@ -176,10 +177,12 @@ class SalmonStepPart(BaseStepPart):
         """Return input files"""
         if self.config.tool != self.name:
             return
-        yield "reads", self.parent.reads_input(wildcards.library_name)
+        yield from reads_input_files(self.parent, wildcards.library_name).items()
         yield "features", self.parent.get_upstream_paths("features").gtf
         if self.cfg and self.cfg.path_index:
-            yield "indices", self.cfg.path_index
+            yield "index", self.cfg.path_index
+        if self.cfg and self.cfg.path_transcript_to_gene:
+            yield "transcript_to_gene", self.cfg.path_transcript_to_gene
 
     @dictify
     def get_output_files(self, action):
@@ -209,12 +212,11 @@ class SalmonStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     def _get_params_run(self, wildcards):
-        """Return dict for the wrapper, including the input files"""
-        groups = self.parent.read_groups(wildcards.library_name)
-        result = {"input": {"reads_left": [group.left for group in groups]}}
-        if reads_right := [group.right for group in groups if group.right]:
-            result["input"]["reads_right"] = reads_right
-        result |= self.config.salmon.model_dump(by_alias=True)
+        """Return dict for the wrapper"""
+        result = reads_params(self.parent, wildcards.library_name)
+        result |= self.config.salmon.model_dump(
+            by_alias=True, exclude={"path_index", "path_transcript_to_gene"}
+        )
         result["strand"] = self.config.strand
         return result
 
@@ -341,6 +343,13 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
+    @dictify
+    def _get_input_files_run(self, wildcards: Wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        if self.config.tool != self.name:
+            return
+        yield "exon_bed", self.config.strandedness.path_exon_bed
+
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
@@ -364,7 +373,9 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if self.config.tool != self.name:
             return super()._get_params_run(wildcards)
-        config = self.config.strandedness.model_dump(by_alias=True) | {"strand": self.config.strand}
+        config = self.config.strandedness.model_dump(by_alias=True, exclude={"path_exon_bed"}) | {
+            "strand": self.config.strand
+        }
         return {"config": config, "library_name": wildcards.library_name}
 
 

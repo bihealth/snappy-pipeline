@@ -47,7 +47,7 @@ rule ngs_data_qc_link_out_run:
 
 rule ngs_data_qc_fastqc_run:
     input:
-        wf.get_input_files("fastqc", "run"),
+        unpack(wf.get_input_files("fastqc", "run")),
     output:
         **wf.get_output_files("fastqc", "run"),
     log:
@@ -82,8 +82,6 @@ rule ngs_data_qc_picard_prepare:
         mem=wf.get_resource("picard", "prepare", "mem"),
         partition=wf.get_resource("picard", "prepare", "partition"),
         tmpdir=wf.get_resource("picard", "prepare", "tmpdir"),
-    params:
-        args=wf.get_params("picard", "prepare"),
     wrapper:
         wf.wrapper_path("picard/prepare")
 

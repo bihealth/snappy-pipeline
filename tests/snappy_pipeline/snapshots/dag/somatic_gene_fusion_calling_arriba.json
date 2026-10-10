@@ -26,7 +26,8 @@
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/snappy_pipeline/fixtures/star_index"
   ],
   "log": [
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
@@ -53,20 +54,8 @@
   ],
   "params": {
    "args": {
-    "blacklist": "",
-    "input": {
-     "reads_left": [
-      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz"
-     ],
-     "reads_right": [
-      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
-     ]
-    },
-    "known_fusions": "",
     "num_threads": 8,
     "num_threads_trimming": 2,
-    "path_index": "<repo>/tests/snappy_pipeline/fixtures/star_index",
-    "protein_domains": "",
     "star_parameters": [
      " --outFilterMultimapNmax 50",
      " --peOverlapNbasesMin 10",
@@ -81,8 +70,6 @@
      " --chimSegmentReadGapMax 3",
      " --chimMultimapNmax 50"
     ],
-    "structural_variants": "",
-    "tags": "",
     "trim_adapters": false
    }
   },

@@ -13,22 +13,22 @@ args = getattr(snakemake.params, "args", {})
 mode = args.get("mode", "tag")
 extra = args.get("extra_args", "")
 
-aux = args.get("aux", {})
-aux_cmd = " ".join(f"--aux {name}={shlex.quote(str(path))}" for name, path in aux.items())
+aux_names = args.get("aux_names", [])
+aux_cmd = " ".join(
+    f"--aux {name}={shlex.quote(str(path))}"
+    for name, path in zip(aux_names, snakemake.input.get("aux", []))
+)
 
 context = args.get("context", [])
 if isinstance(context, str):
     context = [context]
 context_cmd = " ".join(f"--context {shlex.quote(str(stmt))}" for stmt in context)
 
-context_files = args.get("context_files", [])
-if isinstance(context_files, str):
-    context_files = [context_files]
 context_file_cmd = " ".join(
-    f"--context-file {shlex.quote(str(path))}" for path in context_files
+    f"--context-file {shlex.quote(str(path))}" for path in snakemake.input.get("context_files", [])
 )
 
-ontology = args.get("ontology", "")
+ontology = snakemake.input.get("ontology", "")
 ontology_cmd = f"--ontology {shlex.quote(str(ontology))}" if ontology else ""
 
 # Actually run the script.

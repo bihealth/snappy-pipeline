@@ -9,10 +9,14 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-input_left = args["input"]["reads_left"]
-input_right = args["input"].get("reads_right", "")
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files.
+reads = args.get("input", {})
+input_left = snakemake.input.get("reads_left") or reads["reads_left"]
+input_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
 
-path_index = args["path_index"]
+# The index files are inputs, the first one is the .amb file.
+path_index = snakemake.input.index[0].removesuffix(".amb")
 trim_adapters = args["trim_adapters"]
 num_threads_trimming = args["num_threads_trimming"]
 mask_duplicates = args["mask_duplicates"]

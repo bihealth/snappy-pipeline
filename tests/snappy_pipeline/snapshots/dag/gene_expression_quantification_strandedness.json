@@ -54,7 +54,8 @@
  {
   "input": [
    "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai"
+   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
@@ -73,7 +74,6 @@
   "params": {
    "args": {
     "config": {
-     "path_exon_bed": "AUTO",
      "strand": -1,
      "threshold": 0.85
     },
@@ -98,7 +98,8 @@
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/reference_index_star/output/reference_index/out/reference.index/.done"
   ],
   "log": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log",
@@ -159,14 +160,6 @@
     "align_sjdb_overhang_min": 1,
     "genome_load": "NoSharedMemory",
     "include_unmapped": true,
-    "input": {
-     "reads_left": [
-      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz"
-     ],
-     "reads_right": [
-      "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
-     ]
-    },
     "mask_duplicates": false,
     "memory_bam_sort": "4G",
     "num_threads_align": 16,
@@ -179,7 +172,6 @@
     "out_filter_multimap_n_max": 20,
     "out_filter_type": "BySJout",
     "out_sam_strand_field": "None",
-    "path_index": "tasks/reference_index_bwa/output/reference_index/out/reference.index",
     "platform": "ILLUMINA",
     "raw_star_options": "",
     "sample_name": "case001subregion-T1-RNA1-mRNA_seq1",
@@ -200,5 +192,141 @@
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/star"
+ },
+ {
+  "input": [],
+  "log": [
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log.md5",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt.md5",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt",
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt.md5"
+  ],
+  "output": [
+   "tasks/reference_download/work/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_download/output/reference_download/out/reference.fa.md5"
+  ],
+  "params": {
+   "args": {
+    "assembly": "primary_assembly",
+    "branch": "",
+    "build": "GRCh38",
+    "chromosome": [],
+    "contigs": [],
+    "contigs_regex": "",
+    "datatype": "dna",
+    "file_name": "",
+    "molecule": "dna",
+    "source": "ensembl",
+    "species": "homo_sapiens",
+    "subset": "primary_assembly",
+    "url": "",
+    "version": "113"
+   }
+  },
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_download_reference_download_ensembl_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
+ },
+ {
+  "input": [
+   "tasks/reference_download/output/reference_download/out/reference.fa"
+  ],
+  "log": [
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.log",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.log.md5",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.conda_info.txt",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.conda_info.txt.md5",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.conda_list.txt",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.conda_list.txt.md5",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.script",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.script.md5"
+  ],
+  "output": [
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_star/work/reference_index/out/reference.dict",
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_star/output/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_star/output/reference_index/out/reference.dict",
+   "tasks/reference_index_star/output/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.log",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.log.md5",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.conda_info.txt",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.conda_info.txt.md5",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.conda_list.txt",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.conda_list.txt.md5",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.script",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.common.script.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_index_star_reference_index_common_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
+ },
+ {
+  "input": [
+   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_star/work/reference_index/out/reference.dict",
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.log",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.log.md5",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.conda_info.txt",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.conda_info.txt.md5",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.conda_list.txt",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.conda_list.txt.md5",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.script",
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.script.md5"
+  ],
+  "output": [
+   "tasks/reference_index_star/work/reference_index/out/reference.index/.done",
+   "tasks/reference_index_star/output/reference_index/out/reference.index/.done",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.log",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.log.md5",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.conda_info.txt",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.conda_info.txt.md5",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.conda_list.txt",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.conda_list.txt.md5",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.script",
+   "tasks/reference_index_star/output/reference_index/log/reference_index.index.script.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_args": ""
+   }
+  },
+  "resources": {
+   "mem": "64 GB",
+   "mem_mb": 64000,
+   "mem_mib": 61036,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "reference_index_star_reference_index_star_run",
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/star"
  }
 ]

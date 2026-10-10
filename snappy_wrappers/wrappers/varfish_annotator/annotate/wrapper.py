@@ -4,16 +4,17 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 export_config = args["config"]
+path_exon_bed = snakemake.input.get("exon_bed", "")
 
 ShellWrapper(snakemake).run(
     r"""
 set -x
 
 # Extract around BED file, if given.
-if [[ -n "{export_config[path_exon_bed]}" ]] && [[ "{export_config[path_exon_bed]}" != "None" ]]; then
+if [[ -n "{path_exon_bed}" ]]; then
     set -e
     bcftools view \
-        -R {export_config[path_exon_bed]} \
+        -R {path_exon_bed} \
         {snakemake.input.vcf} \
     | bcftools sort -T $TMPDIR \
     | bcftools norm -d all \
@@ -36,9 +37,9 @@ varfish-annotator \
     \
     --self-test-chr1-only \
     --ref-path {snakemake.input.reference} \
-    --db-path {export_config[path_db]} \
-    --refseq-ser-path {export_config[path_refseq_ser]} \
-    --ensembl-ser-path {export_config[path_ensembl_ser]} \
+    --db-path {snakemake.input.db} \
+    --refseq-ser-path {snakemake.input.refseq_ser} \
+    --ensembl-ser-path {snakemake.input.ensembl_ser} \
     --input-ped {snakemake.input.ped} \
     \
     --input-vcf $TMPDIR/tmp.vcf.gz \

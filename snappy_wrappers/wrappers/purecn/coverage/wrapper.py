@@ -10,26 +10,13 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 config = args["config"]
 
-if "container" in snakemake.input.keys() and snakemake.input.container:
-    container = snakemake.input.container
-elif "path_container" in config.keys() and config["path_container"]:
-    container = config["path_container"]
-else:
-    raise Exception("No path to PureCN container")
-
-if "intervals" in snakemake.input.keys() and snakemake.input.intervals:
-    intervals = snakemake.input.intervals
-elif "path_intervals" in config.keys() and config["path_intervals"]:
-    intervals = config["path_intervals"]
-else:
-    raise Exception("No path to PureCN intervals")
+container = snakemake.input.container
+intervals = snakemake.input.intervals
 
 # Prepare files and directories that must be accessible by the container
 files_to_bind = {
     "bam": snakemake.input.bam,
 }
-if "intervals" not in snakemake.input.keys():
-    files_to_bind["intervals"] = intervals
 
 # Replace with full absolute paths
 files_to_bind = {k: os.path.realpath(v) for k, v in files_to_bind.items()}
@@ -44,9 +31,6 @@ bound_files = {
     k: "/bindings/d{}/{}".format(bound_dirs[dirs_to_bind[k]], os.path.basename(v))
     for k, v in files_to_bind.items()
 }
-
-if "intervals" in bound_files.keys():
-    intervals = bound_files["intervals"]
 
 ShellWrapper(snakemake).run(
     r"""

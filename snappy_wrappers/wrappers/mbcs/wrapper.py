@@ -53,8 +53,11 @@ def pair_fastq_files(input_left, input_right):
 
 
 # Read snakemake input --------------------------------------------------------
-input_left = args["input"]["reads_left"]
-input_right = args["input"].get("reads_right", "")
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files.
+reads = args.get("input", {})
+input_left = snakemake.input.get("reads_left") or reads["reads_left"]
+input_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
 
 config = args["config"]
 mapper = config["mapping_tool"]
@@ -64,8 +67,6 @@ if mapper == "bwa_mem2":
 if config["use_barcodes"]:
     barcoder = config["barcode_tool"]
     config_barcodes = args["barcode_config"]
-if config["recalibrate"]:
-    config_bqsr = args["bqsr_config"]
 
 # Group fastq files by lane ---------------------------------------------------
 pairs = pair_fastq_files(input_left, input_right)
@@ -125,7 +126,7 @@ if config["use_barcodes"]:
             '                -out "trimmed/{name}" \\\n'
             "                -fq1 {{input.r1}} {fq2}"
         ).format(
-            trimmer=config_barcodes["prepare"]["path"],
+            trimmer=snakemake.input.agent_prepare,
             lib_prep_type=config_barcodes["prepare"]["lib_prep_type"],
             extra_args=" ".join(config_barcodes["prepare"]["extra_args"]),
             name=name,
@@ -164,7 +165,7 @@ cmd += (
     "                -p {extra_args} -t {threads} /dev/stdin \\\n"
 ).format(
     mapper=mapper,
-    indices=mapper_config["path_index"],
+    indices=snakemake.input.index[0].removesuffix(".amb"),
     sample_name=args["sample_name"],
     extra_args=" ".join(mapper_config.get("extra_args", [])),
     threads=mapper_config["num_threads_align"],
@@ -249,9 +250,9 @@ if config["use_barcodes"]:
         "                {{input.bam}} \n"
         "            samtools index {{output.bam}}"
     ).format(
-        marker=config_barcodes["mark_duplicates"]["path"],
+        marker=snakemake.input.agent_mark_duplicates,
         consensus_mode=config_barcodes["mark_duplicates"]["consensus_mode"],
-        baits=config_barcodes["mark_duplicates"]["path_baits"],
+        baits=snakemake.input.agent_baits,
         extra_args=" ".join(config_barcodes["mark_duplicates"]["extra_args"]),
         input_filter_args=" ".join(config_barcodes["mark_duplicates"]["input_filter_args"]),
         consensus_filter_args=" ".join(config_barcodes["mark_duplicates"]["consensus_filter_args"]),
@@ -278,7 +279,7 @@ if config["recalibrate"]:
         "                -O {{output.tbl}}"
     ).format(
         reference=snakemake.input.reference,
-        common_sites=config_bqsr["common_variants"],
+        common_sites=snakemake.input.common_variants,
     )
 
     kwargs = {

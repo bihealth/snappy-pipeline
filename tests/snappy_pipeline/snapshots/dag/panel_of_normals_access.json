@@ -16,7 +16,9 @@
   "wrapper": null
  },
  {
-  "input": [],
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
   "log": [
    "tasks/panel_of_normals_access/work/panel_of_normals/log/panel_of_normals.accessible.conda_list.txt",
    "tasks/panel_of_normals_access/work/panel_of_normals/log/panel_of_normals.accessible.conda_list.txt.md5",
@@ -29,7 +31,11 @@
    "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed",
    "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "min_gap_size": 0
+   }
+  },
   "resources": {
    "mem": "8 GB",
    "mem_mb": 8000,

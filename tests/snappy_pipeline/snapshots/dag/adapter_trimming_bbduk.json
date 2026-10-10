@@ -2,7 +2,8 @@
  {
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
-   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/log/.done",
@@ -22,9 +23,7 @@
   "params": {
    "args": {
     "config": {
-     "adapter_sequences": [],
      "barcodefilter": "f",
-     "barcodes": "",
      "cardinality": false,
      "cardinalityout": false,
      "chastityfilter": false,
@@ -113,21 +112,19 @@
      "ymax": -1,
      "ymin": -1
     },
-    "input": {
-     "reads_left": {
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz": {
-       "filename": "case001subregion-T1-DNA1-WES1.R1.fastq.gz",
-       "relative_path": "."
-      }
-     },
-     "reads_right": {
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz": {
-       "filename": "case001subregion-T1-DNA1-WES1.R2.fastq.gz",
-       "relative_path": "."
-      }
+    "library_name": "case001subregion-T1-DNA1-WES1",
+    "output_left": [
+     {
+      "filename": "case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+      "relative_path": "."
      }
-    },
-    "library_name": "case001subregion-T1-DNA1-WES1"
+    ],
+    "output_right": [
+     {
+      "filename": "case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+      "relative_path": "."
+     }
+    ]
    }
   },
   "resources": {

@@ -54,7 +54,10 @@
  {
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
-   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
+   "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
+   "<repo>/tests/scripts/generate_task_configs.py",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/somatic_gene_fusion_calling_pizzly/work/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
@@ -64,16 +67,7 @@
   ],
   "params": {
    "args": {
-    "annotations_gtf": "AUTO",
-    "kallisto_index": "AUTO",
-    "kmer_size": 31,
-    "left": [
-     "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz"
-    ],
-    "right": [
-     "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
-    ],
-    "transcripts_fasta": "AUTO"
+    "kmer_size": 31
    }
   },
   "resources": {

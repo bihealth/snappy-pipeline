@@ -39,8 +39,6 @@
      "disable_quality_filtering": false,
      "dont_eval_duplication": true,
      "dup_calc_accuracy": 0,
-     "filter_by_index1": "",
-     "filter_by_index2": "",
      "filter_by_index_threshold": 0,
      "length_limit": 0,
      "length_required": 15,
@@ -69,21 +67,19 @@
      "umi_skip": 0,
      "unqualified_percent_limit": 40
     },
-    "input": {
-     "reads_left": {
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz": {
-       "filename": "case001subregion-T1-DNA1-WES1.R1.fastq.gz",
-       "relative_path": "."
-      }
-     },
-     "reads_right": {
-      "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz": {
-       "filename": "case001subregion-T1-DNA1-WES1.R2.fastq.gz",
-       "relative_path": "."
-      }
+    "library_name": "case001subregion-T1-DNA1-WES1",
+    "output_left": [
+     {
+      "filename": "case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+      "relative_path": "."
      }
-    },
-    "library_name": "case001subregion-T1-DNA1-WES1"
+    ],
+    "output_right": [
+     {
+      "filename": "case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+      "relative_path": "."
+     }
+    ]
    }
   },
   "resources": {

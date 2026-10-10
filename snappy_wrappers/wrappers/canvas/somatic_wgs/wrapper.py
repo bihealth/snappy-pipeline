@@ -12,9 +12,9 @@ __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-path_reference = args["path_reference"]
-path_genome_folder = args["path_genome_folder"]
-path_filter_bed = args["path_filter_bed"]
+path_reference = snakemake.input.reference
+path_genome_folder = snakemake.input.genome_folder
+path_filter_bed = snakemake.input.filter_bed
 
 ShellWrapper(snakemake).run(
     r"""

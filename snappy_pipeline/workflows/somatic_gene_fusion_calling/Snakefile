@@ -55,8 +55,6 @@ if str(wf.config.tool) == "fusioncatcher":
             mem=wf.get_resource("fusioncatcher", "run", "mem"),
             partition=wf.get_resource("fusioncatcher", "run", "partition"),
             tmpdir=wf.get_resource("fusioncatcher", "run", "tmpdir"),
-        params:
-            args=wf.get_params("fusioncatcher", "run"),
         wrapper:
             wf.wrapper_path("fusioncatcher/run")
 
@@ -75,8 +73,6 @@ elif str(wf.config.tool) == "jaffa":
             mem=wf.get_resource("jaffa", "run", "mem"),
             partition=wf.get_resource("jaffa", "run", "partition"),
             tmpdir=wf.get_resource("jaffa", "run", "tmpdir"),
-        params:
-            args=wf.get_params("jaffa", "run"),
         wrapper:
             wf.wrapper_path("jaffa/run")
 
@@ -115,8 +111,6 @@ elif str(wf.config.tool) == "hera":
             mem=wf.get_resource("hera", "run", "mem"),
             partition=wf.get_resource("hera", "run", "partition"),
             tmpdir=wf.get_resource("hera", "run", "tmpdir"),
-        params:
-            args=wf.get_params("hera", "run"),
         wrapper:
             wf.wrapper_path("hera/quant")
 
@@ -135,8 +129,6 @@ elif str(wf.config.tool) == "star_fusion":
             mem=wf.get_resource("star_fusion", "run", "mem"),
             partition=wf.get_resource("star_fusion", "run", "partition"),
             tmpdir=wf.get_resource("star_fusion", "run", "tmpdir"),
-        params:
-            args=wf.get_params("star_fusion", "run"),
         wrapper:
             wf.wrapper_path("star_fusion")
 
@@ -155,8 +147,6 @@ elif str(wf.config.tool) == "defuse":
             mem=wf.get_resource("defuse", "run", "mem"),
             partition=wf.get_resource("defuse", "run", "partition"),
             tmpdir=wf.get_resource("defuse", "run", "tmpdir"),
-        params:
-            args=wf.get_params("defuse", "run"),
         wrapper:
             wf.wrapper_path("defuse")
 

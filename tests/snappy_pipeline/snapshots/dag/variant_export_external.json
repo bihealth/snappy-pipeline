@@ -199,6 +199,9 @@
   "input": [
    "tasks/variant_export_external/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/scripts/generate_task_configs.py",
+   "<repo>/tests/scripts/generate_task_configs.py",
+   "<repo>/tests/scripts/generate_task_configs.py",
    "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/out/dragen.case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/out/dragen.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
    "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/out/dragen.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
@@ -239,10 +242,6 @@
      "library_selection": null,
      "merge_option": null,
      "merge_vcf_flag": false,
-     "path_db": "<repo>/tests/scripts/generate_task_configs.py",
-     "path_ensembl_ser": "<repo>/tests/scripts/generate_task_configs.py",
-     "path_exon_bed": "",
-     "path_refseq_ser": "<repo>/tests/scripts/generate_task_configs.py",
      "relationships": null,
      "release": "GRCh37",
      "target_coverage_report": {

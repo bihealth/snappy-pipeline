@@ -67,8 +67,6 @@ rule varfish_export_mehari_annotate_seqvars:
         mem=wf.get_resource("mehari", "annotate_seqvars", "mem"),
         partition=wf.get_resource("mehari", "annotate_seqvars", "partition"),
         tmpdir=wf.get_resource("mehari", "annotate_seqvars", "tmpdir"),
-    params:
-        args=wf.get_params("mehari", "annotate_seqvars"),
     wrapper:
         wf.wrapper_path("mehari/annotate_seqvars")
 

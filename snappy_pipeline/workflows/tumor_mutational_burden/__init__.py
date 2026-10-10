@@ -38,6 +38,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         )
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi
+        yield "target_regions", self.config.target_regions
 
     @dictify
     def get_output_files(self, action):
@@ -82,7 +83,6 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     def _get_params_run(self, wildcards):
         return {
             "missense_re": self.config.missense_regex,
-            "target_regions": self.config.target_regions,
             "has_annotation": self.config.has_annotation,
         }
 

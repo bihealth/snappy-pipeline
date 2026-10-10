@@ -199,10 +199,15 @@ class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             mem=f"{int(3.75 * 1024 * 16)}MB",
         )
 
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "reference", self.config.canvas.path_reference
+        yield "genome_folder", self.config.canvas.path_genome_folder
+        yield "filter_bed", self.config.canvas.path_filter_bed
+
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self.config.canvas.model_dump(by_alias=True) | {
-            "tumor_library": wildcards.tumor_library
-        }
+        return {"tumor_library": wildcards.tumor_library}
 
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
@@ -701,11 +706,16 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return result
 
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "chrlenfile", self.config.control_freec.path_chrlenfile
+        if self.config.control_freec.path_mappability_enabled:
+            yield "mappability", self.config.control_freec.path_mappability
+
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec
         return {
-            "path_chrlenfile": cfg.path_chrlenfile,
-            "path_mappability": cfg.path_mappability,
             "path_mappability_enabled": cfg.path_mappability_enabled,
             "window_size": cfg.window_size,
         }

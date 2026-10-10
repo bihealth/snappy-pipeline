@@ -1,3 +1,4 @@
+import os
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -13,11 +14,15 @@ out_gc = snakemake.output.get("gene_counts", "__dummy__")
 out_sj = snakemake.output.get("junctions", "__dummy__")
 out_tx = snakemake.output.get("transcriptome", "__dummy__")
 
-# Input fastqs are passed through snakemake.params.
-# snakemake.input are the FASTQ files (or the .done file of the task that wrote them); the
-# wrapper takes the ordered read lists from params.
-reads_left = args["input"]["reads_left"]
-reads_right = args["input"].get("reads_right", "")
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files.
+reads = args.get("input", {})
+reads_left = snakemake.input.get("reads_left") or reads["reads_left"]
+reads_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
+
+# The index directory holds the input files: Genome, SA and SAindex, or the .done file of the
+# reference_index task.
+path_index = os.path.dirname(snakemake.input.index[0])
 
 ShellWrapper(snakemake).run(
     r"""
@@ -28,7 +33,7 @@ set -x
 mkdir -p $TMPDIR/tmp.d $TMPDIR/pre.d
 
 # Define some global shortcuts
-INDEX={args[path_index]}
+INDEX={path_index}
 
 # Define left and right reads as Bash arrays
 declare -a reads_left=({reads_left})
@@ -120,7 +125,7 @@ run_star()
         --alignMatesGapMax {args[align_mates_gap_max]} \
         --alignSJDBoverhangMin {args[align_sjdb_overhang_min]} \
         --alignSJoverhangMin {args[align_sj_overhang_min]} \
-        --genomeDir {args[path_index]} \
+        --genomeDir {path_index} \
         --genomeLoad {args[genome_load]} \
         --outFileNamePrefix $TMPDIR/pre.d/out. \
         --outFilterIntronMotifs {args[out_filter_intron_motifs]} \

@@ -28,7 +28,7 @@ echo "##fileformat=VCFv4.2" \
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
 >> $TMPDIR/spots.vcf
 
-zcat -f {args[path_b_af_loci]} \
+zcat -f {snakemake.input.b_af_loci} \
 | awk \
     -F $'\t' '
     BEGIN {{ OFS=FS; }}

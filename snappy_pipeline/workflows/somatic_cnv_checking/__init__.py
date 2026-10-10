@@ -188,6 +188,8 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         filenames["cnv"] = self.parent.get_upstream_paths(
             "copy_number", library_name=wildcards.tumor_library
         ).dnacopy_seg
+        if self.config.excluded_regions:
+            filenames["excluded_regions"] = self.config.excluded_regions
         return filenames
 
     @dictify
@@ -201,9 +203,6 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         for key, ext in key_ext.items():
             yield (key, base_path_out + ext)
             yield (key + "_md5", base_path_out + ext + ".md5")
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self.config.model_dump(by_alias=True)
 
     def get_log_file(self, action):
         # Validate action

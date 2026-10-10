@@ -11,15 +11,15 @@ if TYPE_CHECKING:
 args = getattr(snakemake.params, "args", {})
 
 # Define input full path
-input_full_path = os.path.join(os.getcwd(), str(snakemake.input))
+input_full_path = os.path.join(os.getcwd(), str(snakemake.input.cluster))
 
 # Define prefix based on input
 prefix = input_full_path.replace(".cluster.txt", "")
 
 # Include user provided MEI Ref if any
 mei_ref_argument = ""
-if args["mei_refs"]:
-    mei_ref_argument = "--mei-refs " + str(args["mei_refs"])
+if mei_refs := snakemake.input.get("mei_refs", ""):
+    mei_ref_argument = f"--mei-refs {mei_refs}"
 
 ShellWrapper(snakemake).run(
     r"""
@@ -28,7 +28,7 @@ mkdir -p $(dirname {snakemake.output.txt})
 
 # Call tool
 scramble.sh  {mei_ref_argument} \
-  --ref {args[reference_genome]} \
+  --ref {snakemake.input.reference_genome} \
   --out-name {prefix} \
   --cluster-file {input_full_path} \
   --nCluster {args[n_cluster]} \

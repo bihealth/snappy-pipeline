@@ -134,6 +134,9 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         yield "ped", tpl.format(**wildcards)
         # Reference
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield "db", self.config.path_db
+        yield "refseq_ser", self.config.path_refseq_ser
+        yield "ensembl_ser", self.config.path_ensembl_ser
         # VCF
         tpl = (
             f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
@@ -239,7 +242,9 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         return {
             "step_name": "wgs_sv_export_external",
             "varfish_server_compatibility": self.config.varfish_server_compatibility,
-            "config": self.config.model_dump(by_alias=True),
+            "config": self.config.model_dump(
+                by_alias=True, exclude={"path_db", "path_refseq_ser", "path_ensembl_ser"}
+            ),
         }
 
     def _vcf(self, library_name):

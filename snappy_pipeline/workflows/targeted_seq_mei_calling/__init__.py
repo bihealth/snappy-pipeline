@@ -163,7 +163,7 @@ class ScrambleStepPart(BaseStepPart):
         )
         yield alignments.bam
 
-    @listify
+    @dictify
     def _get_input_files_analysis(self, wildcards):
         """Yield input files' pattern for rule `annotate` - based on scramble call results.
 
@@ -174,7 +174,10 @@ class ScrambleStepPart(BaseStepPart):
         base_name_out = "work/{name_pattern}/out/{name_pattern}.cluster.{ext}".format(
             name_pattern=name_pattern, ext="txt"
         )
-        yield base_name_out.format(**wildcards)
+        yield "cluster", base_name_out.format(**wildcards)
+        yield "reference_genome", self.config.scramble.blast_ref
+        if self.config.scramble.mei_refs:
+            yield "mei_refs", self.config.scramble.mei_refs
 
     @staticmethod
     @dictify
@@ -232,8 +235,6 @@ class ScrambleStepPart(BaseStepPart):
         except TypeError as e:
             raise TypeError("Path to reference genome ('blast_ref') cannot be empty.") from e
         params = {
-            "reference_genome": blast_ref_path,
-            "mei_refs": self.config.scramble.mei_refs,
             "n_cluster": self.config.scramble.n_cluster,
             "mei_score": self.config.scramble.mei_score,
             "indel_score": self.config.scramble.indel_score,

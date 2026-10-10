@@ -13,6 +13,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import AdapterTrimming as AdapterTrimmingConfigModel
 
@@ -31,13 +32,20 @@ class AdapterTrimmingStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    #: Keys of the tool config that name files, which are inputs and not params
+    file_keys: tuple[str, ...] = ()
+
     def __init__(self, parent):
         super().__init__(parent)
         self.base_path_out = "work/{library_name}"
 
-    @dictify
     def _get_input_files_run(self, wildcards):
-        yield "reads", self.parent.reads_input(wildcards.library_name)
+        inputs = reads_input_files(self.parent, wildcards.library_name)
+        tool_config = self.config.get(self.name)
+        for key in self.file_keys:
+            if value := getattr(tool_config, key):
+                inputs[key] = value
+        return inputs
 
     @dictify
     def get_output_files(self, action):
@@ -73,24 +81,32 @@ class AdapterTrimmingStepPart(BaseStepPart):
             yield key + "_md5", prefix + ext + ".md5"
 
     def _get_params_run(self, wildcards):
-        # The trimmed files keep the sub-directory and name of each input file.
-        reads = {"reads_left": {}, "reads_right": {}}
+        # The trimmed files keep the sub-directory and name of each input file, in input order.
+        output = {"left": [], "right": []}
         for group in self.parent.read_groups(wildcards.library_name):
-            for mate in ("left", "right"):
+            for mate, files in output.items():
                 if mate in group.paths:
-                    reads[f"reads_{mate}"][group.paths[mate]] = {
-                        "relative_path": os.path.dirname(group.relpaths[mate]) or ".",
-                        "filename": os.path.basename(group.relpaths[mate]),
-                    }
+                    files.append(
+                        {
+                            "relative_path": os.path.dirname(group.relpaths[mate]) or ".",
+                            "filename": os.path.basename(group.relpaths[mate]),
+                        }
+                    )
         return {
             "library_name": wildcards.library_name,
-            "input": reads,
-            "config": dict(self.config.get(self.name)),
-        }
+            "output_left": output["left"],
+            "output_right": output["right"],
+            "config": {
+                key: value
+                for key, value in dict(self.config.get(self.name)).items()
+                if key not in self.file_keys
+            },
+        } | reads_params(self.parent, wildcards.library_name)
 
 
 class BbdukStepPart(AdapterTrimmingStepPart):
     name = "bbduk"
+    file_keys = ("adapter_sequences", "barcodes")
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -103,6 +119,7 @@ class BbdukStepPart(AdapterTrimmingStepPart):
 
 class FastpStepPart(AdapterTrimmingStepPart):
     name = "fastp"
+    file_keys = ("filter_by_index1", "filter_by_index2")
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)

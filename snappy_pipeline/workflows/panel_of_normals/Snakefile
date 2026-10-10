@@ -138,6 +138,8 @@ if tool == "mutect2":
 elif tool in ("cnvkit", "access"):
 
     rule panel_of_normals_access_run:
+        input:
+            unpack(wf.get_input_files("access", "run")),
         output:
             **wf.get_output_files("access", "run"),
         log:
@@ -146,6 +148,8 @@ elif tool in ("cnvkit", "access"):
             runtime=wf.get_resource("access", "run", "runtime"),
             mem=wf.get_resource("access", "run", "mem"),
             partition=wf.get_resource("access", "run", "partition"),
+        params:
+            args=wf.get_params("access", "run"),
         wrapper:
             wf.wrapper_path("cnvkit/access")
 

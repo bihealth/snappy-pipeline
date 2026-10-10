@@ -131,8 +131,6 @@ rule variant_export_external_bam_reports_bam_qc:
         mem=wf.get_resource("bam_reports", "bam_qc", "mem"),
         partition=wf.get_resource("bam_reports", "bam_qc", "partition"),
         tmpdir=wf.get_resource("bam_reports", "bam_qc", "tmpdir"),
-    params:
-        args=wf.get_params("bam_reports", "bam_qc"),
     wrapper:
         wf.wrapper_path("samtools/bam_qc_report")
 
@@ -153,8 +151,6 @@ rule variant_export_external_bam_reports_run:
         mem=wf.get_resource("bam_reports", "run", "mem"),
         partition=wf.get_resource("bam_reports", "run", "partition"),
         tmpdir=wf.get_resource("bam_reports", "run", "tmpdir"),
-    params:
-        args=wf.get_params("bam_reports", "run"),
     wrapper:
         wf.wrapper_path("target_cov_report/run_external")
 

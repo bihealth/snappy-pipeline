@@ -11,38 +11,34 @@ if TYPE_CHECKING:
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
-# Input fastqs are passed through snakemake.params.
-# snakemake.input are the FASTQ files (or the .done file of the task that wrote them); the
-# wrapper takes the ordered read lists from params.
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files. Params also name the trimmed files, in the order of the inputs.
 args = getattr(snakemake.params, "args", {})
 
 library_name = args["library_name"]
-input_left = args["input"]["reads_left"]
-input_right = args["input"]["reads_right"] if args["input"]["reads_right"] else {}
+reads = args.get("input", {})
+input_path_left = list(snakemake.input.get("reads_left") or reads["reads_left"])
+input_path_right = list(snakemake.input.get("reads_right") or reads.get("reads_right", []))
+output_left = args["output_left"]
+output_right = args["output_right"]
 
-input_path_left = list(input_left.keys())
-prefix_left = [x["relative_path"] for x in input_left.values()]
-filename_left = [x["filename"] for x in input_left.values()]
+prefix_left = [x["relative_path"] for x in output_left]
+filename_left = [x["filename"] for x in output_left]
+prefix_right = [x["relative_path"] for x in output_right]
+filename_right = [x["filename"] for x in output_right]
 
 assert len(input_path_left) == len(prefix_left)
 assert len(input_path_left) == len(filename_left)
-
-if input_right:
-    input_path_right = list(input_right.keys())
-    prefix_right = [x["relative_path"] for x in input_right.values()]
-    filename_right = [x["filename"] for x in input_right.values()]
-
+assert len(input_path_right) == len(prefix_right)
+assert len(input_path_right) == len(filename_right)
+if input_path_right:
     assert len(input_path_left) == len(input_path_right)
-    assert len(prefix_left) == len(prefix_right)
-    assert len(filename_left) == len(filename_right)
-else:
-    input_path_right = []
-    prefix_right = []
-    filename_right = []
 
 this_file = __file__
 
 config = args["config"]
+adapter_sequences = snakemake.input.adapter_sequences
+barcodes = snakemake.input.get("barcodes", "")
 
 ShellWrapper(snakemake).run(
     r"""
@@ -111,7 +107,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         $(if [[ $paired -eq 1 ]]; then \
             echo in2=$in2 out2=$out2 outm2=$outm2
         fi) \
-        ref=$(echo "{config[adapter_sequences]}" | tr ' ' ',') \
+        ref=$(echo "{adapter_sequences}" | tr ' ' ',') \
         stats=$TMPDIR/report/$report/stats.tsv       \
         refstats=$TMPDIR/report/$report/refstats.tsv \
         rpkm=$TMPDIR/report/$report/rpkm.tsv         \
@@ -192,8 +188,8 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         swift={config[swift]}                         \
         chastityfilter={config[chastityfilter]}       \
         barcodefilter={config[barcodefilter]}         \
-        $(if [[ -n "{config[barcodes]}" ]]; then \
-            echo barcodes={config[barcodes]}
+        $(if [[ -n "{barcodes}" ]]; then \
+            echo barcodes={barcodes}
         fi) \
         xmin={config[xmin]}                           \
         ymin={config[ymin]}                           \
@@ -236,4 +232,3 @@ touch {snakemake.output.rejected_done}
 
 """
 )
-

@@ -24,15 +24,7 @@
   "output": [
    "tasks/somatic_gene_fusion_calling_fusioncatcher/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
   ],
-  "params": {
-   "args": {
-    "normal": [],
-    "tumor": [
-     "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
-     "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
-    ]
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "30 GB",
    "mem_mb": 30000,

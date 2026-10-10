@@ -6,7 +6,7 @@ from biomedsheets.shortcuts import is_not_background
 from snakemake.io import touch
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.common import (
     ForwardResourceUsageMixin,
@@ -69,6 +69,15 @@ class MeltStepPart(
         for sheet in filter(is_not_background, self.parent.shortcut_sheets):
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
+    def _melt_files(self, *keys: str) -> dict[str, str]:
+        """Return the MELT jar, support files directory and genes file (``keys`` selects)."""
+        files = {
+            "jar": self.config.melt.jar_file,
+            "me_refs": self.config.melt.me_refs_path,
+            "genes": self.config.melt.genes_file,
+        }
+        return {key: files[key] for key in keys}
+
     @dictify
     def _get_log_file_with_prefix(self, prefix: str):
         """Return dict of log files whose paths start with ``prefix``"""
@@ -91,6 +100,7 @@ class MeltStepPart(
         yield "bam", alignments.bam
         yield "bai", alignments.bai
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self._melt_files("jar").items()
 
     @dictify
     def _get_output_files_preprocess(self):
@@ -114,6 +124,7 @@ class MeltStepPart(
         yield "orig_bam", f"{prefix}.bam"
         yield "disc_bam", f"{prefix}.bam.disc"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self._melt_files("jar", "me_refs").items()
 
     @dictify
     def _get_output_files_indiv_analysis(self):
@@ -125,15 +136,18 @@ class MeltStepPart(
             "work/indiv_analysis.{library_name}.{me_type}/log/{library_name}.{me_type}"
         ).items()
 
-    @listify
+    @dictify
     def _get_input_files_group_analysis(self, wildcards):
-        yield self.parent.get_upstream_paths("reference").fasta
+        yield "reference", self.parent.get_upstream_paths("reference").fasta
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
+        indiv_analysis = []
         for member in pedigree.donors:
             if member.dna_ngs_library:
                 library_name = member.dna_ngs_library.name
                 infix = f"indiv_analysis.{library_name}.{wildcards.me_type}"
-                yield f"work/{infix}/out/.done.{library_name}"
+                indiv_analysis.append(f"work/{infix}/out/.done.{library_name}")
+        yield "indiv_analysis", indiv_analysis
+        yield from self._melt_files("jar", "me_refs", "genes").items()
 
     @dictify
     def _get_output_files_group_analysis(self):
@@ -161,6 +175,7 @@ class MeltStepPart(
         yield "done", f"work/{infix_done}/out/.done"
         yield "bam", f"work/{wildcards.library_name}/out/{wildcards.library_name}.bam"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self._melt_files("jar", "me_refs").items()
 
     @dictify
     def _get_output_files_genotype(self):
@@ -186,6 +201,7 @@ class MeltStepPart(
                 paths.append(f"work/{infix}/out/.done.{member.dna_ngs_library.name}")
         yield "genotype", paths
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self._melt_files("jar", "me_refs").items()
 
     @dictify
     def _get_log_file_make_vcf(self):
@@ -233,9 +249,9 @@ class MeltStepPart(
             "work/{library_name}/log/{library_name}.merge_vcf"
         ).items()
 
-    def _get_params_preprocess(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_indiv_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {
-            "config": self.config.melt.model_dump(by_alias=True),
+            "me_refs_infix": self.config.melt.me_refs_infix,
         }
         if self.parent.name == "sv_calling_targeted":
             params["exome"] = True
@@ -243,8 +259,7 @@ class MeltStepPart(
             params["me_type"] = getattr(wildcards, "me_type")
         return params
 
-    _get_params_indiv_analysis = _get_params_preprocess
-    _get_params_group_analysis = _get_params_preprocess
-    _get_params_genotype = _get_params_preprocess
-    _get_params_make_vcf = _get_params_preprocess
-    _get_params_merge_vcf = _get_params_preprocess
+    _get_params_group_analysis = _get_params_indiv_analysis
+    _get_params_genotype = _get_params_indiv_analysis
+    _get_params_make_vcf = _get_params_indiv_analysis
+    _get_params_merge_vcf = _get_params_indiv_analysis

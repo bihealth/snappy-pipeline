@@ -234,8 +234,6 @@ elif tool == "melt":
             runtime=wf.get_resource("melt", "preprocess", "runtime"),
             mem=wf.get_resource("melt", "preprocess", "mem"),
             partition=wf.get_resource("melt", "preprocess", "partition"),
-        params:
-            args=wf.get_params("melt", "preprocess"),
         wrapper:
             wf.wrapper_path("melt/preprocess")
 
@@ -386,8 +384,6 @@ elif tool == "gcnv":
             mem=wf.get_resource("gcnv", "contig_ploidy", "mem"),
             partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
             tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
-        params:
-            args=wf.get_params("gcnv", "contig_ploidy"),
         wrapper:
             wf.wrapper_path("gcnv/contig_ploidy_case_mode")
 
@@ -404,8 +400,6 @@ elif tool == "gcnv":
             mem=wf.get_resource("gcnv", "call_cnvs", "mem"),
             partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
             tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
-        params:
-            args=wf.get_params("gcnv", "call_cnvs"),
         wrapper:
             wf.wrapper_path("gcnv/call_cnvs_case_mode")
 
@@ -422,8 +416,6 @@ elif tool == "gcnv":
             mem=wf.get_resource("gcnv", "post_germline_calls", "mem"),
             partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
             tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
-        params:
-            args=wf.get_params("gcnv", "post_germline_calls"),
         wrapper:
             wf.wrapper_path("gcnv/post_germline_calls_case_mode")
 

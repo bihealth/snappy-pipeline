@@ -425,6 +425,7 @@ Fingerprinting (.npz)
   fingerprints can detect contamination in samples.
 """
 
+import os
 import re
 from itertools import chain
 from typing import Any
@@ -443,6 +444,7 @@ from snappy_pipeline.workflows.abstract import (
     apply_library_selection,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataType
+from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -465,6 +467,15 @@ READ_MAPPERS_RNA = ("star",)
 
 #: Available read mappers for (long/PacBio/Nanopoare) DNA-seq data
 READ_MAPPERS_DNA_LONG = ("minimap2",)
+
+#: Files of a BWA index with the prefix ``path_index``. The wrapper takes the prefix from the first.
+BWA_INDEX_EXTENSIONS = (".amb", ".ann", ".bwt", ".pac", ".sa")
+
+#: Files of a BWA-MEM2 index with the prefix ``path_index``. The wrapper takes the prefix from the first.
+BWA_MEM2_INDEX_EXTENSIONS = (".amb", ".ann", ".0123", ".bwt.2bit.64", ".pac")
+
+#: Files of a STAR index directory that mark it as the index
+STAR_INDEX_FILES = ("Genome", "SA", "SAindex")
 
 #: Default configuration
 
@@ -588,18 +599,13 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         self.extensions = EXT_VALUES
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        groups = self.parent.read_groups(wildcards.library_name)
-        result = {
-            "input": {"reads_left": [group.left for group in groups]},
+        return {
             "sample_name": wildcards.library_name,
             "platform": "ILLUMINA",
-        }
-        if reads_right := [group.right for group in groups if group.right]:
-            result["input"]["reads_right"] = reads_right
-        return result
+        } | reads_params(self.parent, wildcards.library_name)
 
     def _get_input_files_run(self, wildcards):
-        return self.parent.reads_input(wildcards.library_name)
+        return reads_input_files(self.parent, wildcards.library_name)
 
     @dictify
     def get_output_files(self, action):
@@ -686,9 +692,12 @@ class BwaStepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.bwa.model_dump(by_alias=True))
-        parent_args["path_index"] = self.parent.get_index_path("bwa")
+        parent_args.update(self.config.bwa.model_dump(by_alias=True, exclude={"path_index"}))
         return parent_args
+
+    def _get_input_files_run(self, wildcards):
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {"index": self.parent.get_index_files("bwa")}
 
 
 class BwaMem2StepPart(ReadMappingStepPart):
@@ -708,9 +717,12 @@ class BwaMem2StepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True))
-        parent_args["path_index"] = self.parent.get_index_path("bwa_mem2")
+        parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True, exclude={"path_index"}))
         return parent_args
+
+    def _get_input_files_run(self, wildcards):
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {"index": self.parent.get_index_files("bwa_mem2")}
 
 
 class MBCsStepPart(ReadMappingStepPart):
@@ -733,25 +745,31 @@ class MBCsStepPart(ReadMappingStepPart):
         return ResourceUsage(threads=1, runtime="72h", mem="4GB", partition="medium")
 
     def _get_input_files_run(self, wildcards):
-        return {
-            "reads": super()._get_input_files_run(wildcards),
+        inputs = super()._get_input_files_run(wildcards) | {
             "reference": self.parent.get_upstream_paths("reference").fasta,
+            "index": self.parent.get_index_files(str(self.config.mbcs.mapping_tool)),
         }
+        if self.config.mbcs.use_barcodes:
+            agent = getattr(self.config, self.config.mbcs.barcode_tool)
+            inputs["agent_prepare"] = agent.prepare.path
+            inputs["agent_mark_duplicates"] = agent.mark_duplicates.path
+            inputs["agent_baits"] = agent.mark_duplicates.path_baits
+        if self.config.mbcs.recalibrate:
+            inputs["common_variants"] = self.config.bqsr.common_variants
+        return inputs
 
     def _get_params_run(self, wildcards: Wildcards):
         args = super()._get_params_run(wildcards)
+        mapper = getattr(self.config, self.config.mbcs.mapping_tool)
         args |= {
             "config": self.config.mbcs.model_dump(by_alias=True),
-            "mapper_config": getattr(self.config, self.config.mbcs.mapping_tool).model_dump(
-                by_alias=True
-            ),
+            "mapper_config": mapper.model_dump(by_alias=True, exclude={"path_index"}),
         }
         if self.config.mbcs.use_barcodes:
             args["barcode_config"] = getattr(self.config, self.config.mbcs.barcode_tool).model_dump(
-                by_alias=True
+                by_alias=True,
+                exclude={"prepare": {"path"}, "mark_duplicates": {"path", "path_baits"}},
             )
-        if self.config.mbcs.recalibrate:
-            args["bqsr_config"] = self.config.bqsr.model_dump(by_alias=True)
         return args
 
 
@@ -802,14 +820,14 @@ class StarStepPart(ReadMappingStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
-        parent_args.update(self.config.star.model_dump(by_alias=True))
-        parent_args["path_index"] = self.parent.get_index_path("star")
+        parent_args.update(self.config.star.model_dump(by_alias=True, exclude={"path_index"}))
         return parent_args
 
     def _get_input_files_run(self, wildcards):
-        return {
-            "reads": super()._get_input_files_run(wildcards),
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {
             "features": self.parent.get_upstream_paths("features").gtf,
+            "index": self.parent.get_index_files("star"),
         }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
@@ -830,7 +848,10 @@ class StrandednessStepPart(BaseStepPart):
 
     def _get_input_files_infer(self, wildcards):
         # Must reference the mapper-specific work directory
-        return {"bam": "work/{library_name}/out/{library_name}.bam".format(**wildcards)}
+        inputs = {"bam": "work/{library_name}/out/{library_name}.bam".format(**wildcards)}
+        if (strandedness := self.config.strandedness) and strandedness.path_exon_bed:
+            inputs["exon_bed"] = strandedness.path_exon_bed
+        return inputs
 
     def _get_input_files_counts(self, wildcards):
         return {
@@ -915,7 +936,7 @@ class StrandednessStepPart(BaseStepPart):
 
     def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, "strandedness", None)
-        config_dump = cfg.model_dump(by_alias=True) if cfg else {}
+        config_dump = cfg.model_dump(by_alias=True, exclude={"path_exon_bed"}) if cfg else {}
         return {
             "config": config_dump,
             "library_name": wildcards.library_name,
@@ -953,10 +974,13 @@ class Minimap2StepPart(ReadMappingStepPart):
             threads=self.config.minimap2.mapping_threads, runtime="2d", mem=f"{mem_gb}GB"
         )
 
+    def _get_input_files_run(self, wildcards):
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {"index": self.parent.get_index_files("minimap2")}
+
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
-        params |= self.config.minimap2.model_dump(by_alias=True)
-        params["path_index"] = self.parent.get_index_path("minimap2")
+        params |= self.config.minimap2.model_dump(by_alias=True, exclude={"path_index"})
         params["extra_infos"] = self.parent.ngs_library_to_extra_infos[wildcards.library_name]
         params["library_name"] = wildcards.library_name
         return params
@@ -1380,6 +1404,26 @@ class NgsMappingWorkflow(BaseStep):
                 "Set config.<tool>.path_index or configure depends_on.index."
             )
         return cfg.path_index
+
+    def get_index_files(self, tool_name: str) -> list[str]:
+        """Return the files of the mapper index, which are rule inputs.
+
+        A ``reference_index`` task builds them if ``depends_on.index`` is set, otherwise they are
+        the files below the tool's ``path_index``. BWA and BWA-MEM2 indices are file prefixes with
+        ``.amb`` first. The STAR index is a directory, given by its first file: the wrappers
+        take its ``dirname``.
+        """
+        path = self.get_index_path(tool_name)
+        match tool_name:
+            case "bwa":
+                return [path + ext for ext in BWA_INDEX_EXTENSIONS]
+            case "bwa_mem2":
+                return [path + ext for ext in BWA_MEM2_INDEX_EXTENSIONS]
+            case "star":
+                if self.config.depends_on.index:  # reference_index writes .done last
+                    return [os.path.join(path, ".done")]
+                return [os.path.join(path, name) for name in STAR_INDEX_FILES]
+        return [path]
 
     def _build_ngs_library_to_kit(self):
         cov_config = self.get_task_config(self.task_name).target_coverage_report

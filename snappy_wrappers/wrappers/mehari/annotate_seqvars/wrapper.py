@@ -1,43 +1,24 @@
-import os
-
-from pathlib import Path
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-args = getattr(snakemake.params, "args", {})
-path_exon_bed = args["path_exon_bed"]
+path_exon_bed = snakemake.input.get("exon_bed", "")
 reference = snakemake.input.reference
-transcript_db = args.get("transcript_db")
-clinvar_db = args.get("clinvar_db")
-frequency_db = args.get("frequency_db")
-hgnc_tsv = args["hgnc_tsv"]
+transcript_db = snakemake.input.transcript_db
+clinvar_db = snakemake.input.clinvar_db
+frequency_db = snakemake.input.frequency_db
+hgnc_tsv = snakemake.input.hgnc_tsv
 
-if not Path(transcript_db).exists(follow_symlinks=True):
-    transcript_db = None
-if not Path(clinvar_db).exists(follow_symlinks=True):
-    clinvar_db = None
-if not Path(frequency_db).exists(follow_symlinks=True):
-    frequency_db = None
-if not Path(hgnc_tsv).exists(follow_symlinks=True):
-    raise ValueError(f"hgnc.tsv required for mehari tsv output but not found at {hgnc_tsv}")
-
-if not (transcript_db or clinvar_db or frequency_db):
-    raise ValueError(
-        "At least one of the following databases must be provided: "
-        "transcript_db, clinvar_db, frequency_db."
-    )
-
-transcript_db_param = f"--transcripts {transcript_db}" if transcript_db else ""
-clinvar_db_param = f"--clinvar {clinvar_db}" if clinvar_db else ""
-frequency_db_param = f"--frequencies {frequency_db}" if frequency_db else ""
+transcript_db_param = f"--transcripts {transcript_db}"
+clinvar_db_param = f"--clinvar {clinvar_db}"
+frequency_db_param = f"--frequencies {frequency_db}"
 
 ShellWrapper(snakemake).run(
     r"""
 set -x
 
 # Extract around BED file, if given.  Otherwise, "just" normalize.
-if [[ -n "{path_exon_bed}" ]] && [[ "{path_exon_bed}" != "None" ]]; then
+if [[ -n "{path_exon_bed}" ]]; then
     set -e
     bcftools view \
         -R {path_exon_bed} \

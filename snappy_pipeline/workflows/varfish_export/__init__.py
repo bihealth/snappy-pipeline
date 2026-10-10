@@ -215,6 +215,15 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         )
         yield "vcf", [calling.vcf]
 
+        path_mehari_db = Path(self.config.path_mehari_db)
+        prefix = path_mehari_db / self.config.release.lower()
+        yield "hgnc_tsv", str(path_mehari_db / "hgnc.tsv")
+        yield "transcript_db", str(prefix / "seqvars" / "txs.bin.zst")
+        yield "clinvar_db", str(prefix / "seqvars" / "clinvar" / "rocksdb")
+        yield "frequency_db", str(prefix / "seqvars" / "frequencies" / "rocksdb")
+        if self.config.path_exon_bed:
+            yield "exon_bed", self.config.path_exon_bed
+
     @dictify
     def _get_output_files_annotate_seqvars(self):
         # Generate paths in "work/" directory
@@ -231,22 +240,6 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             "db_infos_md5": f"{prefix}.db-infos.tsv.gz.md5",
         }
         yield from work_paths.items()
-
-    def _get_params_annotate_seqvars(self, wildcards: Wildcards) -> typing.Dict[str, typing.Any]:
-        path_mehari_db = Path(self.config.path_mehari_db)
-        prefix = path_mehari_db / self.config.release.lower()
-        transcript_db = prefix / "seqvars" / "txs.bin.zst"
-        clinvar_db = prefix / "seqvars" / "clinvar" / "rocksdb"
-        frequency_db = prefix / "seqvars" / "frequencies" / "rocksdb"
-        hgnc_tsv = path_mehari_db / "hgnc.tsv"
-        params = {
-            "path_exon_bed": self.config.path_exon_bed,
-            "hgnc_tsv": str(hgnc_tsv),
-            "clinvar_db": str(clinvar_db),
-            "frequency_db": str(frequency_db),
-            "transcript_db": str(transcript_db),
-        }
-        return params
 
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):

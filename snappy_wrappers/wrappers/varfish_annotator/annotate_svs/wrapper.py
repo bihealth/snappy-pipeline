@@ -63,9 +63,9 @@ varfish-annotator \
         done; \
     fi) \
     \
-    --db-path {export_config[path_db]} \
-    --refseq-ser-path {export_config[path_refseq_ser]} \
-    --ensembl-ser-path {export_config[path_ensembl_ser]} \
+    --db-path {snakemake.input.db} \
+    --refseq-ser-path {snakemake.input.refseq_ser} \
+    --ensembl-ser-path {snakemake.input.ensembl_ser} \
     --input-ped {snakemake.input.ped} \
     \
     $(for vcf in $TMPDIR/final_for_import.*.vcf.gz; do \

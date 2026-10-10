@@ -12,11 +12,13 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-# Input fastqs are passed through snakemake.params.
-# snakemake.input are the FASTQ files (or the .done file of the task that wrote them); the
-# wrapper takes the ordered read lists from params.
-reads_left = args["input"]["reads_left"]
-reads_right = args["input"].get("reads_right", "")
+# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# params list the files.
+reads = args.get("input", {})
+reads_left = snakemake.input.get("reads_left") or reads["reads_left"]
+reads_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
+index = snakemake.input.index
+t2g = snakemake.input.get("transcript_to_gene", "")
 
 # salmon flag for first reads changes for single-end data.
 if reads_right:
@@ -44,7 +46,7 @@ if [[ "{reads_right}" != "" ]]; then
     right_files_prefixed=" -2 ${{right_files}}"
 fi
 
-t2g="{args[path_transcript_to_gene]}"
+t2g="{t2g}"
 t2g_cmd=""
 if [[ "$t2g" != "" ]] && [[ "$t2g" != "REQUIRED" ]] && [[ -r "$t2g" ]]
 then
@@ -70,7 +72,7 @@ then
 fi
 
 salmon quant \
-    -i {args[path_index]} \
+    -i {index} \
     -l $libraryType \
     {read_flag} ${{left_files_prefixed}} ${{right_files_prefixed}} \
     ${{t2g_cmd}} \

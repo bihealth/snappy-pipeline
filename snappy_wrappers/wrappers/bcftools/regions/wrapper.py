@@ -11,7 +11,11 @@ if TYPE_CHECKING:
 args = getattr(snakemake.params, "args", {})
 filter_name = args.get("filter_name", "regions")
 mode = args.get("mode", "tag")
-bed = f"^{args['include']}" if "include" in args else args["exclude"]
+bed = (
+    f"^{snakemake.input.include}"
+    if "include" in snakemake.input.keys()
+    else snakemake.input.exclude
+)
 
 if mode == "tag":
     cmd = r"""

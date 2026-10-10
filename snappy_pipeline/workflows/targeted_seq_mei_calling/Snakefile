@@ -55,7 +55,7 @@ rule mobile_element_insertion_scramble_cluster:
 
 rule mobile_element_insertion_scramble_analysis:
     input:
-        wf.get_input_files("scramble", "analysis"),
+        unpack(wf.get_input_files("scramble", "analysis")),
     output:
         **wf.get_output_files("scramble", "analysis"),
     log:

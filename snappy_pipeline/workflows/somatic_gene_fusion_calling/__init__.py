@@ -93,8 +93,16 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        """Return input files"""
-        yield "reads", self.parent.reads_input(wildcards.library_name)
+        """Return the ordered mates, and the upstream ``.done`` file when a task wrote the reads"""
+        library_name = wildcards.library_name
+        left = sorted(self._collect_reads(wildcards, library_name, ""))
+        right = sorted(self._collect_reads(wildcards, library_name, "right-"))
+        yield "reads_left", left
+        if right:
+            yield "reads_right", right
+        written = {*left, *right}
+        if done := [path for path in self.parent.reads_input(library_name) if path not in written]:
+            yield "reads_done", done
 
     @dictify
     def get_output_files(self, action):
@@ -127,26 +135,6 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "fusioncatcher"
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def flatten(lst):
-            return [x for pair in lst for x in pair]
-
-        def args_function(wildcards):
-            # TODO: wildcards.library_name is tumor_library_name
-            tumor = flatten(
-                zip(
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, "")),
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")),
-                )
-            )
-            tumor = list(map(os.path.abspath, tumor))
-            return {"normal": [], "tumor": tumor}
-
-        assert action == "run", "Unsupported actions"
-        return args_function
-
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
 
@@ -169,21 +157,6 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
 
     #: Step name
     name = "jaffa"
-
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def flatten(lst):
-            return [x for pair in lst for x in pair]
-
-        def args_function(wildcards):
-            # TODO: wildcards.library_name is tumor_library_name
-            left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
-            right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {"left": left, "right": right}
-
-        assert action == "run", "Unsupported actions"
-        return args_function
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -208,24 +181,18 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "pizzly"
 
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "kallisto_index", self.config.pizzly.kallisto_index
+        yield "transcripts_fasta", self.config.pizzly.transcripts_fasta
+        yield "annotations_gtf", self.config.pizzly.annotations_gtf
+
     def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
-        def flatten(lst):
-            return [x for pair in lst for x in pair]
-
         def args_function(wildcards):
-            # TODO: wildcards.library_name is tumor_library_name
-            return {
-                "left": list(sorted(self._collect_reads(wildcards, wildcards.library_name, ""))),
-                "right": list(
-                    sorted(self._collect_reads(wildcards, wildcards.library_name, "right-"))
-                ),
-                "kallisto_index": self.config.pizzly.kallisto_index,
-                "kmer_size": self.config.pizzly.kmer_size,
-                "transcripts_fasta": self.config.pizzly.transcripts_fasta,
-                "annotations_gtf": self.config.pizzly.annotations_gtf,
-            }
+            return {"kmer_size": self.config.pizzly.kmer_size}
 
         assert action == "run", "Unsupported actions"
         return args_function
@@ -253,24 +220,10 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "star_fusion"
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def flatten(lst):
-            return [x for pair in lst for x in pair]
-
-        def args_function(wildcards):
-            # TODO: wildcards.library_name is tumor_library_name
-            left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
-            right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {
-                "left": left,
-                "right": right,
-                "path_ctat_resource_lib": self.config.star_fusion.path_ctat_resource_lib,
-            }
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "ctat_resource_lib", self.config.star_fusion.path_ctat_resource_lib
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -295,24 +248,10 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "defuse"
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def flatten(lst):
-            return [x for pair in lst for x in pair]
-
-        def args_function(wildcards):
-            # TODO: wildcards.library_name is tumor_library_name
-            left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
-            right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {
-                "left": left,
-                "right": right,
-                "path_dataset_directory": self.config.get(self.name).get("path_dataset_directory"),
-            }
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "dataset_directory", self.config.defuse.path_dataset_directory
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -337,25 +276,11 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "hera"
 
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def flatten(lst):
-            return [x for pair in lst for x in pair]
-
-        def args_function(wildcards):
-            # TODO: wildcards.library_name is tumor_library_name
-            left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
-            right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-            return {
-                "left": left,
-                "right": right,
-                "path_genome": self.config.get(self.name).get("path_genome"),
-                "path_index": self.config.get(self.name).get("path_index"),
-            }
-
-        assert action == "run", "Unsupported actions"
-        return args_function
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "genome", self.config.hera.path_genome
+        yield "index", self.config.hera.path_index
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -385,27 +310,20 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield "features", self.parent.get_upstream_paths("features").gtf
+        yield "index", self.config.arriba.path_index
+        for key in ("blacklist", "known_fusions", "tags", "structural_variants", "protein_domains"):
+            if path := getattr(self.config.arriba, key):
+                yield key, path
 
     def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""
 
         def args_function(wildcards):
-            # TODO: wildcards.library_name is tumor_library_name
-            left = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "")))
-            right = list(sorted(self._collect_reads(wildcards, wildcards.library_name, "right-")))
-
             return {
-                "input": {"reads_left": left, "reads_right": right},
                 "trim_adapters": self.config.arriba.trim_adapters,
                 "num_threads_trimming": self.config.arriba.num_threads_trimming,
                 "num_threads": self.config.arriba.num_threads,
-                "path_index": self.config.arriba.path_index,
                 "star_parameters": self.config.arriba.star_parameters,
-                "blacklist": self.config.arriba.blacklist,
-                "known_fusions": self.config.arriba.known_fusions,
-                "tags": self.config.arriba.tags,
-                "structural_variants": self.config.arriba.structural_variants,
-                "protein_domains": self.config.arriba.protein_domains,
             }
 
         assert action == "run", "Unsupported actions"

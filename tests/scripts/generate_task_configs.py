@@ -357,8 +357,8 @@ def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[s
 
     return {
         "reference": resolve(reference),
-        "exon_bed": resolve(reference.replace(".fa", ".exon.bed")),
         "star_index": str(FIXTURES / "star_index"),
+        "mehari_db": str(FIXTURES / "mehari_db"),
         "cnvkit_targets": str(FIXTURES / "cnvkit_targets.bed"),
         "cnvkit_antitargets": str(FIXTURES / "cnvkit_antitargets.bed"),
         "gcnv_targeted": gcnv_models("default"),
@@ -378,10 +378,13 @@ VARIANT_EXPORT_EXTERNAL = {
     "path_db": PLACEHOLDER,
 }
 
+MELT_FILES = {"jar_file": PLACEHOLDER, "me_refs_path": PLACEHOLDER, "genes_file": PLACEHOLDER}
+
 #: Config of the generated tasks, by (step, tool); (step, None) applies to every tool of a step.
 #: Values fill keys that the default config leaves unset (missing, None, "", "AUTO", [] or
 #: ["AUTO"]); ``Overwrite`` values replace whatever is there.
 TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
+    ("adapter_trimming", "bbduk"): {"bbduk": {"adapter_sequences": [PLACEHOLDER]}},
     ("external_data", None): {
         "produces": {"type": "raw"},
         "search_paths": Fixture("raw_data_dir"),
@@ -398,6 +401,9 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     },
     ("gene_expression_quantification", "rnaseqc"): {
         "rnaseqc": {"rnaseqc_path_annotation_gtf": PLACEHOLDER}
+    },
+    ("gene_expression_quantification", "strandedness"): {
+        "strandedness": {"path_exon_bed": PLACEHOLDER}
     },
     ("gene_expression_quantification", "salmon"): {
         "salmon": {"path_index": Fixture("star_index"), "path_transcript_to_gene": PLACEHOLDER}
@@ -420,7 +426,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("ngs_mapping", "star"): {
         "library_selection": RNA,
         "star": {"path_index": Fixture("star_index")},
-        "strandedness": {"path_exon_bed": Fixture("exon_bed"), "strand": -1, "threshold": 0.85},
+        "strandedness": {"path_exon_bed": PLACEHOLDER, "strand": -1, "threshold": 0.85},
     },
     ("panel_of_normals", "cnvkit"): {"cnvkit": {"path_target": Overwrite("")}},
     ("panel_of_normals", "mutect2"): {"mutect2": {"germline_resource": REFERENCE}},
@@ -431,6 +437,22 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("repeat_expansion", None): {"repeat_catalog": REFERENCE, "repeat_annotation": REFERENCE},
     ("somatic_gene_fusion_calling", None): {"library_selection": RNA},
     ("somatic_gene_fusion_calling", "arriba"): {"arriba": {"path_index": Fixture("star_index")}},
+    ("somatic_gene_fusion_calling", "defuse"): {
+        "defuse": {"path_dataset_directory": Fixture("star_index")}
+    },
+    ("somatic_gene_fusion_calling", "hera"): {
+        "hera": {"path_index": Fixture("star_index"), "path_genome": REFERENCE}
+    },
+    ("somatic_gene_fusion_calling", "pizzly"): {
+        "pizzly": {
+            "kallisto_index": PLACEHOLDER,
+            "transcripts_fasta": REFERENCE,
+            "annotations_gtf": PLACEHOLDER,
+        }
+    },
+    ("somatic_gene_fusion_calling", "star_fusion"): {
+        "star_fusion": {"path_ctat_resource_lib": Fixture("star_index")}
+    },
     ("cbioportal_export", None): {
         "copy_number_alteration": {"enabled": True},
         "path_gene_id_mappings": PLACEHOLDER,
@@ -450,6 +472,21 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         }
     },
     ("somatic_targeted_seq_cnv_calling", "purecn"): {"purecn": {"path_container": PLACEHOLDER}},
+    ("somatic_wgs_cnv_calling", "canvas"): {
+        "canvas": {
+            "path_reference": REFERENCE,
+            "path_filter_bed": PLACEHOLDER,
+            "path_genome_folder": Fixture("star_index"),
+        }
+    },
+    ("somatic_wgs_cnv_calling", "control_freec"): {
+        "control_freec": {"path_chrlenfile": PLACEHOLDER, "path_mappability": PLACEHOLDER}
+    },
+    ("tumor_mutational_burden", None): {"target_regions": PLACEHOLDER},
+    ("helper_gcnv_model_targeted", None): {"gcnv": {"path_uniquely_mapable_bed": PLACEHOLDER}},
+    ("helper_gcnv_model_wgs", None): {"gcnv": {"path_uniquely_mapable_bed": PLACEHOLDER}},
+    ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
+    ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
     ("sv_calling_targeted", "gcnv"): {
         "gcnv": {"precomputed_model_paths": Fixture("gcnv_targeted")}
     },
@@ -471,10 +508,14 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "rec_rate": 1e-8,
         },
     },
+    ("varfish_export", None): {
+        "path_mehari_db": Fixture("mehari_db"),
+        "path_exon_bed": PLACEHOLDER,
+    },
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("variant_phasing", None): {"gatk_read_backed_phasing": {"num_jobs": Overwrite(2)}},
     ("variant_filtration", "bcftools"): {"bcftools": {"exclude": "FILTER ~ 'low_depth'"}},
-    ("variant_filtration", "regions"): {"regions": {"exclude": "FILTER ~ 'low_depth'"}},
+    ("variant_filtration", "regions"): {"regions": {"exclude": REFERENCE}},
     ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},
     ("wgs_cnv_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("wgs_sv_export_external", None): VARIANT_EXPORT_EXTERNAL,
@@ -564,6 +605,10 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
         "stats",
     ):
         depends_on["strandedness"] = "gene_expression_quantification_strandedness"
+
+    # A mapper reads the index of its own tool (mbcs maps with bwa).
+    if step_name == "ngs_mapping" and tool is not None:
+        depends_on["index"] = f"reference_index_{'bwa' if tool == 'mbcs' else tool}"
 
     # The purecn panel of normals builds on the mutect2 one.
     if step_name == "panel_of_normals" and tool == "purecn":
