@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.target.bed",
    "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.antitarget.bed",
@@ -30,6 +31,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -113,6 +115,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/panel_of_normals_cnvkit/benchmarks/panel_of_normals/panel_of_normals.antitarget.tsv",
   "input": [],
   "log": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt",
@@ -145,6 +148,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/antitarget"
  },
  {
+  "benchmark": "tasks/panel_of_normals_cnvkit/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.coverage.tsv",
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed",
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
@@ -187,6 +191,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/coverage"
  },
  {
+  "benchmark": "tasks/panel_of_normals_cnvkit/benchmarks/panel_of_normals/panel_of_normals.tsv",
   "input": [
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
@@ -231,6 +236,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/reference"
  },
  {
+  "benchmark": "tasks/panel_of_normals_cnvkit/benchmarks/panel_of_normals/panel_of_normals.report.tsv",
   "input": [
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn"
@@ -265,6 +271,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/report"
  },
  {
+  "benchmark": "tasks/panel_of_normals_cnvkit/benchmarks/panel_of_normals/panel_of_normals.target.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
@@ -302,6 +309,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/target"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log"
   ],
@@ -321,6 +329,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.log"
   ],
@@ -340,6 +349,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt"
   ],
@@ -359,6 +369,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt"
   ],
@@ -378,6 +389,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_info.txt"
   ],
@@ -397,6 +409,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_list.txt"
   ],
@@ -416,6 +429,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.merged.tar.gz"
   ],
@@ -435,6 +449,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.log"
   ],
@@ -454,6 +469,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_info.txt"
   ],
@@ -473,6 +489,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_list.txt"
   ],
@@ -492,6 +509,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log"
   ],
@@ -511,6 +529,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_info.txt"
   ],
@@ -530,6 +549,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_list.txt"
   ],
@@ -549,6 +569,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn"
   ],
@@ -568,6 +589,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed"
   ],
@@ -587,6 +609,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed"
   ],
@@ -606,6 +629,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv"
   ],
@@ -625,6 +649,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.sex.tsv"
   ],
@@ -644,6 +669,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -690,6 +716,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -744,6 +771,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],

@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_purity_ploidy_estimate_ascat/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.goodness_of_fit.txt",
    "tasks/somatic_purity_ploidy_estimate_ascat/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ploidy.txt",
@@ -16,6 +17,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -99,6 +101,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
@@ -182,6 +185,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -228,6 +232,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -282,6 +287,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],
@@ -325,6 +331,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
+  "benchmark": "tasks/somatic_purity_ploidy_estimate_ascat/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.baf_normal.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
@@ -353,6 +360,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/ascat/build_baf"
  },
  {
+  "benchmark": "tasks/somatic_purity_ploidy_estimate_ascat/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.baf_tumor.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -381,6 +389,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/ascat/build_baf"
  },
  {
+  "benchmark": "tasks/somatic_purity_ploidy_estimate_ascat/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.cnv_normal.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
@@ -409,6 +418,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/ascat/build_cnv"
  },
  {
+  "benchmark": "tasks/somatic_purity_ploidy_estimate_ascat/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.cnv_tumor.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -441,6 +451,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/ascat/build_cnv"
  },
  {
+  "benchmark": "tasks/somatic_purity_ploidy_estimate_ascat/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.run.tsv",
   "input": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.baf_tumor.txt",
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.baf_normal.txt",
@@ -477,6 +488,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/ascat/run_ascat"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.goodness_of_fit.txt"
   ],
@@ -496,6 +508,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ploidy.txt"
   ],
@@ -515,6 +528,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments.txt"
   ],
@@ -534,6 +548,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments_raw.txt"
   ],

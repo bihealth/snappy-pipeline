@@ -31,6 +31,8 @@ rule combine_variants_run:
         **wf.get_output_files("combine", "run"),
     log:
         **wf.get_log_file("combine", "run"),
+    benchmark:
+        wf.get_benchmark_file("combine", "run")
     threads: wf.get_resource("combine", "run", "threads")
     resources:
         runtime=wf.get_resource("combine", "run", "runtime"),

@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log",
@@ -21,6 +22,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -104,6 +106,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
@@ -187,6 +190,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -233,6 +237,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -287,6 +292,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],
@@ -330,6 +336,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/report/.done"
   ],
@@ -349,6 +356,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log"
   ],
@@ -368,6 +376,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt"
   ],
@@ -387,6 +396,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt"
   ],
@@ -406,6 +416,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log"
   ],
@@ -425,6 +436,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_info.txt"
   ],
@@ -444,6 +456,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_list.txt"
   ],
@@ -463,6 +476,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
   ],
@@ -482,6 +496,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
   ],
@@ -501,6 +516,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.coverage.tsv",
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/out/gc.50.wig.gz",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -558,6 +574,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/coverage"
  },
  {
+  "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/static_data/gc.50.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
@@ -590,6 +607,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/gcreference"
  },
  {
+  "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/R_packages/packages.tsv",
   "input": [],
   "log": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.log",
@@ -627,6 +645,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/install"
  },
  {
+  "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.run.tsv",
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/out/packages.done",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",

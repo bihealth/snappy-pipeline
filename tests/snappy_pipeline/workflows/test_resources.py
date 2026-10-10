@@ -47,8 +47,3 @@ def test_retries_grow_by_the_retry_factor():
 def test_input_term_adds_per_gb_of_input():
     usage = ResourceUsage(threads=1, runtime="1h", mem="2GB", mem_per_gb_input="1GB")
     assert _resource("mem", usage, input_mb=3 * 1024) == "5120MB"
-
-
-def test_requests_are_capped_at_the_project_limits():
-    assert _resource("mem", USAGE, attempt=4, max_mem="16GB") == "16384MB"
-    assert _resource("runtime", USAGE, attempt=1, max_runtime="2h") == "120m"

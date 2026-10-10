@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_fastqc/output/case001subregion-T1-DNA1-WES1/report/.done"
   ],
@@ -13,6 +14,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_data_qc_fastqc/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
@@ -49,6 +51,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/fastqc"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/.done"
   ],

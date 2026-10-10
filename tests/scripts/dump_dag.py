@@ -45,6 +45,7 @@ def _job_record(job) -> dict[str, Any]:
         "input": [str(f) for f in job.input],
         "output": [str(f) for f in job.output],
         "log": [str(f) for f in job.log],
+        "benchmark": str(job.benchmark) if job.benchmark else None,
         "params": _plain(dict(job.params.items())),
         "threads": job.threads,
         "resources": {

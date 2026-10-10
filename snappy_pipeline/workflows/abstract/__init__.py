@@ -210,25 +210,19 @@ class BaseStepPart:
     def _scaled(self, name: str, usage: ResourceUsage, input: InputFiles, attempt: int) -> str:
         """Return memory or runtime: base, plus a term per GB of input, grown with retries.
 
-        The value grows by ``resources.retry_factor`` with each retry and is capped at
-        ``resources.max_mem`` / ``max_runtime`` of the project config. Without growth, input term
-        or cap, the declared value is returned as it is.
+        The value grows by ``resources.retry_factor`` of the project config with each retry.
+        Without growth or input term, the declared value is returned as it is. Partition limits
+        are left to SLURM and the executor plugin.
         """
-        policy = self.w_config.resources
         base, per_gb = getattr(usage, name), getattr(usage, f"{name}_per_gb_input")
-        limit = policy.max_mem if name == "mem" else policy.max_runtime
-        factor = policy.retry_factor ** ((attempt or 1) - 1)
-        if factor == 1 and not per_gb and not limit:
+        factor = self.w_config.resources.retry_factor ** ((attempt or 1) - 1)
+        if factor == 1 and not per_gb:
             return base
         parse = mem_mb if name == "mem" else runtime_minutes
         value = parse(base)
         if per_gb:
             value += parse(per_gb) * input.size_mb / 1024
         value *= factor
-        if limit:
-            value = min(value, parse(limit))
-        if value == parse(base):
-            return base
         return f"{math.ceil(value)}MB" if name == "mem" else f"{math.ceil(value)}m"
 
     def get_params(self, action: str) -> Callable[..., dict[str, Any]]:
@@ -1189,6 +1183,19 @@ class BaseStep:
             labels=labels or None,
             htmlindex=spec.htmlindex,
         )
+
+    def get_benchmark_file(self, sub_step: str, action: str) -> str:
+        """Return the benchmark file of a rule: the path of its log below ``benchmarks/``.
+
+        Snakemake writes wall time, memory (``max_rss``), I/O and CPU time of the job into this
+        TSV file; it calibrates the resource requests (plans.md F7).
+        """
+        log = self.get_log_file(sub_step, action)
+        if not log:  # a rule of an inactive tool, which has no outputs and never runs
+            return f"benchmarks/inactive/{sub_step}.{action}.tsv"
+        path = str(log["log"] if isinstance(log, dict) else log).removeprefix("work/")
+        path = re.sub(r"(^|/)log/", r"\1", path, count=1)
+        return f"benchmarks/{path.removesuffix('.log')}.tsv"
 
     def get_params(self, sub_step: str, action: str) -> Callable[..., Any]:
         """Return the params function for action of substep, for the rule's ``params:`` section

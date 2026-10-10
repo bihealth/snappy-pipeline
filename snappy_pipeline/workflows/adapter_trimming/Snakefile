@@ -53,6 +53,8 @@ if wf.config.tool == "bbduk":
             **wf.get_output_files("bbduk", "run"),
         log:
             **wf.get_log_file("bbduk", "run"),
+        benchmark:
+            wf.get_benchmark_file("bbduk", "run")
         threads: wf.get_resource("bbduk", "run", "threads")
         resources:
             runtime=wf.get_resource("bbduk", "run", "runtime"),
@@ -77,6 +79,8 @@ if wf.config.tool == "fastp":
             **wf.get_output_files("fastp", "run"),
         log:
             **wf.get_log_file("fastp", "run"),
+        benchmark:
+            wf.get_benchmark_file("fastp", "run")
         threads: wf.get_resource("fastp", "run", "threads")
         resources:
             runtime=wf.get_resource("fastp", "run", "runtime"),

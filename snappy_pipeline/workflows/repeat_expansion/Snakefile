@@ -43,6 +43,8 @@ rule repeat_expansion_run_expansionhunter:
         **wf.get_output_files("expansionhunter", "run"),
     log:
         wf.get_log_file("expansionhunter", "run"),
+    benchmark:
+        wf.get_benchmark_file("expansionhunter", "run")
     wildcard_constraints:
         library_name=r"(?!annotated\.).+",
     threads: wf.get_resource("expansionhunter", "run", "threads")

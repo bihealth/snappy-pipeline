@@ -67,6 +67,8 @@ if wf.config.tool == "bcftools":
             **wf.get_output_files("filter", "run"),
         log:
             **wf.get_log_file("filter", "run"),
+        benchmark:
+            wf.get_benchmark_file("filter", "run")
         threads: wf.get_resource("filter", "run", "threads")
         resources:
             runtime=wf.get_resource("filter", "run", "runtime"),
@@ -87,6 +89,8 @@ elif wf.config.tool == "vembrane":
             **wf.get_output_files("filter", "run"),
         log:
             **wf.get_log_file("filter", "run"),
+        benchmark:
+            wf.get_benchmark_file("filter", "run")
         threads: wf.get_resource("filter", "run", "threads")
         resources:
             runtime=wf.get_resource("filter", "run", "runtime"),
@@ -107,6 +111,8 @@ elif wf.config.tool == "regions":
             **wf.get_output_files("filter", "run"),
         log:
             **wf.get_log_file("filter", "run"),
+        benchmark:
+            wf.get_benchmark_file("filter", "run")
         threads: wf.get_resource("filter", "run", "threads")
         resources:
             runtime=wf.get_resource("filter", "run", "runtime"),
@@ -127,6 +133,8 @@ elif wf.config.tool == "dkfz":
             **wf.get_output_files("filter", "run"),
         log:
             **wf.get_log_file("filter", "run"),
+        benchmark:
+            wf.get_benchmark_file("filter", "run")
         threads: wf.get_resource("filter", "run", "threads")
         resources:
             runtime=wf.get_resource("filter", "run", "runtime"),
@@ -147,6 +155,8 @@ elif wf.config.tool == "ebfilter":
             **wf.get_output_files("filter", "run"),
         log:
             **wf.get_log_file("filter", "run"),
+        benchmark:
+            wf.get_benchmark_file("filter", "run")
         threads: wf.get_resource("filter", "run", "threads")
         resources:
             runtime=wf.get_resource("filter", "run", "runtime"),

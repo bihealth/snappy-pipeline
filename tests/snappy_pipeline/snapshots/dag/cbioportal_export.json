@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/cbioportal_export/work/upload/meta_study.txt",
    "tasks/cbioportal_export/work/upload/meta_clinical_patient.txt",
@@ -28,6 +29,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_case_lists.run.tsv",
   "input": [],
   "log": [
    "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.log",
@@ -84,6 +86,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/case_lists"
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_cna.gistic.tsv",
   "input": [
    "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cna",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -124,6 +127,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/merge_tables"
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_cna.log2.tsv",
   "input": [
    "tasks/cbioportal_export/work/cna/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cna",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -163,6 +167,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/merge_tables"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.maf"
   ],
@@ -180,6 +185,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_segment.run.tsv",
   "input": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
   ],
@@ -215,6 +221,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/merge_tables"
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cna/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
@@ -250,6 +257,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/generate_cna"
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/maf/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
@@ -290,6 +298,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/vcf2maf/vcf_to_table"
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_meta_files.run.tsv",
   "input": [],
   "log": [
    "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.log",
@@ -325,6 +334,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/meta_files"
  },
  {
+  "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_clinical_data.run.tsv",
   "input": [],
   "log": [
    "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.log",
@@ -390,6 +400,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cbioportal/clinical_data"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -473,6 +484,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
@@ -556,6 +568,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -602,6 +615,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -656,6 +670,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],
@@ -699,6 +714,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
+  "benchmark": "tasks/somatic_wgs_cnv_calling_cnvkit/benchmarks/case001subregion-T1-DNA1-WES1/call.case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segment.cns"
   ],
@@ -740,6 +756,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/call"
  },
  {
+  "benchmark": "tasks/somatic_wgs_cnv_calling_cnvkit/benchmarks/case001subregion-T1-DNA1-WES1/coverage.case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
@@ -779,6 +796,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/coverage"
  },
  {
+  "benchmark": "tasks/somatic_wgs_cnv_calling_cnvkit/benchmarks/case001subregion-T1-DNA1-WES1/export.case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.call.cns"
   ],
@@ -816,6 +834,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/export"
  },
  {
+  "benchmark": "tasks/somatic_wgs_cnv_calling_cnvkit/benchmarks/case001subregion-T1-DNA1-WES1/fix.case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.targetcoverage.cnn",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.antitargetcoverage.cnn"
@@ -854,6 +873,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/fix"
  },
  {
+  "benchmark": "tasks/somatic_wgs_cnv_calling_cnvkit/benchmarks/case001subregion-T1-DNA1-WES1/segment.case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnr"
   ],
@@ -893,6 +913,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/segment"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
   ],
@@ -912,6 +933,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
@@ -931,6 +953,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.filter.tsv",
   "input": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.stats",
@@ -976,6 +999,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/filter"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/1-of-24.raw.vcf.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/2-of-24.raw.vcf.gz",
@@ -1084,6 +1108,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/gather"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.1-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1133,6 +1158,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.10-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1182,6 +1208,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.11-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1231,6 +1258,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.12-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1280,6 +1308,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.13-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1329,6 +1358,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.14-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1378,6 +1408,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.15-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1427,6 +1458,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.16-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1476,6 +1508,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.17-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1525,6 +1558,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.18-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1574,6 +1608,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.19-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1623,6 +1658,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.2-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1672,6 +1708,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.20-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1721,6 +1758,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.21-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1770,6 +1808,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.22-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1819,6 +1858,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.23-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1868,6 +1908,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.24-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1917,6 +1958,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.3-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -1966,6 +2008,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.4-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -2015,6 +2058,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.5-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -2064,6 +2108,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.6-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -2113,6 +2158,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.7-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -2162,6 +2208,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.8-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -2211,6 +2258,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.9-of-24.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
@@ -2260,6 +2308,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/run"
  },
  {
+  "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.scatter.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],

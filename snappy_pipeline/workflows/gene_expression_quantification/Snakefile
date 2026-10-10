@@ -51,6 +51,8 @@ rule gene_expression_quantification_strandedness_run:
         **wf.get_output_files("strandedness", "run"),
     log:
         **wf.get_log_file("strandedness", "run"),
+    benchmark:
+        wf.get_benchmark_file("strandedness", "run")
     threads: wf.get_resource("strandedness", "run", "threads")
     resources:
         runtime=wf.get_resource("strandedness", "run", "runtime"),
@@ -73,6 +75,8 @@ rule gene_expression_quantification_duplication_run:
         **wf.get_output_files("duplication", "run"),
     log:
         **wf.get_log_file("duplication", "run"),
+    benchmark:
+        wf.get_benchmark_file("duplication", "run")
     threads: wf.get_resource("duplication", "run", "threads")
     resources:
         runtime=wf.get_resource("duplication", "run", "runtime"),
@@ -92,6 +96,8 @@ rule gene_expression_quantification_dupradar_run:
         **wf.get_output_files("dupradar", "run"),
     log:
         **wf.get_log_file("dupradar", "run"),
+    benchmark:
+        wf.get_benchmark_file("dupradar", "run")
     threads: wf.get_resource("dupradar", "run", "threads")
     resources:
         runtime=wf.get_resource("dupradar", "run", "runtime"),
@@ -111,6 +117,8 @@ rule gene_expression_quantification_rnaseqc_run:
         **wf.get_output_files("rnaseqc", "run"),
     log:
         **wf.get_log_file("rnaseqc", "run"),
+    benchmark:
+        wf.get_benchmark_file("rnaseqc", "run")
     threads: wf.get_resource("rnaseqc", "run", "threads")
     resources:
         runtime=wf.get_resource("rnaseqc", "run", "runtime"),
@@ -130,6 +138,8 @@ rule gene_expression_quantification_stats_run:
         **wf.get_output_files("stats", "run"),
     log:
         **wf.get_log_file("stats", "run"),
+    benchmark:
+        wf.get_benchmark_file("stats", "run")
     threads: wf.get_resource("stats", "run", "threads")
     resources:
         runtime=wf.get_resource("stats", "run", "runtime"),
@@ -154,6 +164,8 @@ rule gene_expression_quantification_featurecounts_run:
         **wf.get_output_files("featurecounts", "run"),
     log:
         **wf.get_log_file("featurecounts", "run"),
+    benchmark:
+        wf.get_benchmark_file("featurecounts", "run")
     threads: wf.get_resource("featurecounts", "run", "threads")
     resources:
         runtime=wf.get_resource("featurecounts", "run", "runtime"),
@@ -178,6 +190,8 @@ rule gene_expression_quantification_salmon_run:
         **wf.get_output_files("salmon", "run"),
     log:
         **wf.get_log_file("salmon", "run"),
+    benchmark:
+        wf.get_benchmark_file("salmon", "run")
     threads: wf.get_resource("salmon", "run", "threads")
     resources:
         runtime=wf.get_resource("salmon", "run", "runtime"),

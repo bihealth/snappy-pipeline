@@ -63,6 +63,8 @@ rule variant_checking_peddy_run:
         **wf.get_output_files("peddy", "run"),
     log:
         wf.get_log_file("peddy", "run"),
+    benchmark:
+        wf.get_benchmark_file("peddy", "run")
     threads: wf.get_resource("peddy", "run", "threads")
     resources:
         runtime=wf.get_resource("peddy", "run", "runtime"),

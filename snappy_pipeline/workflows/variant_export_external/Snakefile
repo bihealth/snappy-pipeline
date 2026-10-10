@@ -61,6 +61,8 @@ if wf.get_task_config("variant_export_external").gvcf_option:
             **wf.get_output_files("varfish_annotator_external", "gvcf_to_vcf"),
         log:
             **wf.get_log_file("varfish_annotator_external", "gvcf_to_vcf"),
+        benchmark:
+            wf.get_benchmark_file("varfish_annotator_external", "gvcf_to_vcf")
         threads: wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "threads")
         resources:
             runtime=wf.get_resource("varfish_annotator_external", "gvcf_to_vcf", "runtime"),
@@ -81,6 +83,8 @@ else:
             **wf.get_output_files("varfish_annotator_external", "merge_vcf"),
         log:
             **wf.get_log_file("varfish_annotator_external", "merge_vcf"),
+        benchmark:
+            wf.get_benchmark_file("varfish_annotator_external", "merge_vcf")
         threads: wf.get_resource("varfish_annotator_external", "merge_vcf", "threads")
         resources:
             runtime=wf.get_resource("varfish_annotator_external", "merge_vcf", "runtime"),
@@ -103,6 +107,8 @@ rule variant_export_external_varfish_annotator_annotate:
         **wf.get_output_files("varfish_annotator_external", "annotate"),
     log:
         **wf.get_log_file("varfish_annotator_external", "annotate"),
+    benchmark:
+        wf.get_benchmark_file("varfish_annotator_external", "annotate")
     threads: wf.get_resource("varfish_annotator_external", "annotate", "threads")
     resources:
         runtime=wf.get_resource("varfish_annotator_external", "annotate", "runtime"),
@@ -125,6 +131,8 @@ rule variant_export_external_bam_reports_bam_qc:
         **wf.get_output_files("bam_reports", "bam_qc"),
     log:
         **wf.get_log_file("bam_reports", "bam_qc"),
+    benchmark:
+        wf.get_benchmark_file("bam_reports", "bam_qc")
     threads: wf.get_resource("bam_reports", "bam_qc", "threads")
     resources:
         runtime=wf.get_resource("bam_reports", "bam_qc", "runtime"),
@@ -145,6 +153,8 @@ rule variant_export_external_bam_reports_run:
         **wf.get_output_files("bam_reports", "run"),
     log:
         wf.get_log_file("bam_reports", "run"),
+    benchmark:
+        wf.get_benchmark_file("bam_reports", "run")
     threads: wf.get_resource("bam_reports", "run", "threads")
     resources:
         runtime=wf.get_resource("bam_reports", "run", "runtime"),
@@ -165,6 +175,8 @@ rule variant_export_external_bam_reports_collect:
         **wf.get_output_files("bam_reports", "collect"),
     log:
         wf.get_log_file("bam_reports", "collect"),
+    benchmark:
+        wf.get_benchmark_file("bam_reports", "collect")
     threads: wf.get_resource("bam_reports", "run", "threads")
     resources:
         runtime=wf.get_resource("bam_reports", "run", "runtime"),
@@ -185,6 +197,8 @@ rule variant_export_external_varfish_annotator_bam_qc:
         **wf.get_output_files("varfish_annotator_external", "bam_qc"),
     log:
         **wf.get_log_file("varfish_annotator_external", "bam_qc"),
+    benchmark:
+        wf.get_benchmark_file("varfish_annotator_external", "bam_qc")
     threads: wf.get_resource("varfish_annotator_external", "bam_qc", "threads")
     resources:
         runtime=wf.get_resource("varfish_annotator_external", "bam_qc", "runtime"),

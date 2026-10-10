@@ -72,12 +72,6 @@ class Resources(SnappyModel):
     retry_factor: float = 1.5
     """Memory and runtime grow by this factor with each retry of a failed job"""
 
-    max_mem: str = ""
-    """Upper limit of a memory request, e.g. the memory of the largest node (``"500GB"``)"""
-
-    max_runtime: str = ""
-    """Upper limit of a runtime request, e.g. the time limit of the partition (``"14d"``)"""
-
 
 class ConfigModel(SnappyStepModel):
     model_config = ConfigDict(

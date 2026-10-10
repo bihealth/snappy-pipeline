@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt",
    "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json",
@@ -17,6 +18,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/hla_typing_arcashla/benchmarks/prepare_reference/prepare_reference.tsv",
   "input": [],
   "log": [
    "tasks/hla_typing_arcashla/work/prepare_reference/log/prepare_reference.log",
@@ -36,6 +38,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/arcashla/prepare_reference"
  },
  {
+  "benchmark": "tasks/hla_typing_arcashla/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
   "input": [
    "tasks/hla_typing_arcashla/work/prepare_reference/out/.done",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam"
@@ -70,6 +73,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/arcashla/run"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log"
   ],
@@ -89,6 +93,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt"
   ],
@@ -108,6 +113,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt"
   ],
@@ -127,6 +133,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json"
   ],
@@ -146,6 +153,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt"
   ],
@@ -165,6 +173,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
@@ -248,6 +257,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -294,6 +304,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -348,6 +359,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],

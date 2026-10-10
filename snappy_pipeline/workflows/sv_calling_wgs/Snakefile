@@ -54,6 +54,8 @@ if tool == "manta":
             **wf.get_output_files("manta", "run"),
         log:
             **wf.get_log_file("manta", "run"),
+        benchmark:
+            wf.get_benchmark_file("manta", "run")
         threads: wf.get_resource("manta", "run", "threads")
         resources:
             runtime=wf.get_resource("manta", "run", "runtime"),
@@ -74,6 +76,8 @@ elif tool == "delly2":
             **wf.get_output_files("delly2", "call"),
         log:
             **wf.get_log_file("delly2", "call"),
+        benchmark:
+            wf.get_benchmark_file("delly2", "call")
         threads: wf.get_resource("delly2", "call", "threads")
         resources:
             runtime=wf.get_resource("delly2", "call", "runtime"),
@@ -92,6 +96,8 @@ elif tool == "delly2":
             **wf.get_output_files("delly2", "merge_calls"),
         log:
             **wf.get_log_file("delly2", "merge_calls"),
+        benchmark:
+            wf.get_benchmark_file("delly2", "merge_calls")
         threads: wf.get_resource("delly2", "merge_calls", "threads")
         resources:
             runtime=wf.get_resource("delly2", "merge_calls", "runtime"),
@@ -108,6 +114,8 @@ elif tool == "delly2":
             **wf.get_output_files("delly2", "genotype"),
         log:
             **wf.get_log_file("delly2", "genotype"),
+        benchmark:
+            wf.get_benchmark_file("delly2", "genotype")
         threads: wf.get_resource("delly2", "genotype", "threads")
         resources:
             runtime=wf.get_resource("delly2", "genotype", "runtime"),
@@ -126,6 +134,8 @@ elif tool == "delly2":
             **wf.get_output_files("delly2", "merge_genotypes"),
         log:
             **wf.get_log_file("delly2", "merge_genotypes"),
+        benchmark:
+            wf.get_benchmark_file("delly2", "merge_genotypes")
         threads: wf.get_resource("delly2", "merge_genotypes", "threads")
         resources:
             runtime=wf.get_resource("delly2", "merge_genotypes", "runtime"),
@@ -146,6 +156,8 @@ elif tool == "popdel":
             **wf.get_output_files("popdel", "profile"),
         log:
             **wf.get_log_file("popdel", "profile"),
+        benchmark:
+            wf.get_benchmark_file("popdel", "profile")
         wildcard_constraints:
             index_ngs_library=RE_BETWEEN_DOTS,
         threads: wf.get_resource("popdel", "profile", "threads")
@@ -164,6 +176,8 @@ elif tool == "popdel":
             **wf.get_output_files("popdel", "call"),
         log:
             **wf.get_log_file("popdel", "call"),
+        benchmark:
+            wf.get_benchmark_file("popdel", "call")
         wildcard_constraints:
             chrom=RE_BETWEEN_DOTS,
             begin=RE_BETWEEN_DOTS,
@@ -186,6 +200,8 @@ elif tool == "popdel":
             **wf.get_output_files("popdel", "concat_calls"),
         log:
             **wf.get_log_file("popdel", "concat_calls"),
+        benchmark:
+            wf.get_benchmark_file("popdel", "concat_calls")
         threads: wf.get_resource("popdel", "concat_calls", "threads")
         resources:
             runtime=wf.get_resource("popdel", "concat_calls", "runtime"),
@@ -202,6 +218,8 @@ elif tool == "popdel":
             **wf.get_output_files("popdel", "reorder_vcf"),
         log:
             **wf.get_log_file("popdel", "reorder_vcf"),
+        benchmark:
+            wf.get_benchmark_file("popdel", "reorder_vcf")
         wildcard_constraints:
             index_ngs_library=RE_BETWEEN_DOTS,
         threads: wf.get_resource("popdel", "reorder_vcf", "threads")
@@ -226,6 +244,8 @@ elif tool == "melt":
             **wf.get_output_files("melt", "preprocess"),
         log:
             **wf.get_log_file("melt", "preprocess"),
+        benchmark:
+            wf.get_benchmark_file("melt", "preprocess")
         wildcard_constraints:
             library_name=RE_BETWEEN_DOTS,
             me_type=RE_BETWEEN_DOTS,
@@ -244,6 +264,8 @@ elif tool == "melt":
             **wf.get_output_files("melt", "indiv_analysis"),
         log:
             **wf.get_log_file("melt", "indiv_analysis"),
+        benchmark:
+            wf.get_benchmark_file("melt", "indiv_analysis")
         wildcard_constraints:
             library_name=RE_BETWEEN_DOTS,
             me_type=RE_BETWEEN_DOTS,
@@ -264,6 +286,8 @@ elif tool == "melt":
             **wf.get_output_files("melt", "group_analysis"),
         log:
             **wf.get_log_file("melt", "group_analysis"),
+        benchmark:
+            wf.get_benchmark_file("melt", "group_analysis")
         wildcard_constraints:
             index_library_name=RE_BETWEEN_DOTS,
             me_type=RE_BETWEEN_DOTS,
@@ -284,6 +308,8 @@ elif tool == "melt":
             **wf.get_output_files("melt", "genotype"),
         log:
             **wf.get_log_file("melt", "genotype"),
+        benchmark:
+            wf.get_benchmark_file("melt", "genotype")
         wildcard_constraints:
             index_library_name=RE_BETWEEN_DOTS,
             me_type=RE_BETWEEN_DOTS,
@@ -304,6 +330,8 @@ elif tool == "melt":
             **wf.get_output_files("melt", "make_vcf"),
         log:
             **wf.get_log_file("melt", "make_vcf"),
+        benchmark:
+            wf.get_benchmark_file("melt", "make_vcf")
         wildcard_constraints:
             index_library_name=RE_BETWEEN_DOTS,
         threads: wf.get_resource("melt", "make_vcf", "threads")
@@ -323,6 +351,8 @@ elif tool == "melt":
             **wf.get_output_files("melt", "merge_vcf"),
         log:
             **wf.get_log_file("melt", "merge_vcf"),
+        benchmark:
+            wf.get_benchmark_file("melt", "merge_vcf")
         wildcard_constraints:
             library_name=RE_BETWEEN_DOTS,
         threads: wf.get_resource("melt", "merge_vcf", "threads")
@@ -344,6 +374,8 @@ elif tool == "gcnv":
             **wf.get_output_files("gcnv", "preprocess_intervals"),
         log:
             wf.get_log_file("gcnv", "preprocess_intervals"),
+        benchmark:
+            wf.get_benchmark_file("gcnv", "preprocess_intervals")
         threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
         resources:
             runtime=wf.get_resource("gcnv", "preprocess_intervals", "runtime"),
@@ -360,6 +392,8 @@ elif tool == "gcnv":
             **wf.get_output_files("gcnv", "coverage"),
         log:
             wf.get_log_file("gcnv", "coverage"),
+        benchmark:
+            wf.get_benchmark_file("gcnv", "coverage")
         threads: wf.get_resource("gcnv", "coverage", "threads")
         resources:
             runtime=wf.get_resource("gcnv", "coverage", "runtime"),
@@ -376,6 +410,8 @@ elif tool == "gcnv":
             **wf.get_output_files("gcnv", "contig_ploidy"),
         log:
             wf.get_log_file("gcnv", "contig_ploidy"),
+        benchmark:
+            wf.get_benchmark_file("gcnv", "contig_ploidy")
         threads: wf.get_resource("gcnv", "contig_ploidy", "threads")
         resources:
             runtime=wf.get_resource("gcnv", "contig_ploidy", "runtime"),
@@ -392,6 +428,8 @@ elif tool == "gcnv":
             **wf.get_output_files("gcnv", "call_cnvs"),
         log:
             wf.get_log_file("gcnv", "call_cnvs"),
+        benchmark:
+            wf.get_benchmark_file("gcnv", "call_cnvs")
         threads: wf.get_resource("gcnv", "call_cnvs", "threads")
         resources:
             runtime=wf.get_resource("gcnv", "call_cnvs", "runtime"),
@@ -408,6 +446,8 @@ elif tool == "gcnv":
             **wf.get_output_files("gcnv", "post_germline_calls"),
         log:
             wf.get_log_file("gcnv", "post_germline_calls"),
+        benchmark:
+            wf.get_benchmark_file("gcnv", "post_germline_calls")
         threads: wf.get_resource("gcnv", "post_germline_calls", "threads")
         resources:
             runtime=wf.get_resource("gcnv", "post_germline_calls", "runtime"),
@@ -424,6 +464,8 @@ elif tool == "gcnv":
             **wf.get_output_files("gcnv", "joint_germline_cnv_segmentation"),
         log:
             **wf.get_log_file("gcnv", "joint_germline_cnv_segmentation"),
+        benchmark:
+            wf.get_benchmark_file("gcnv", "joint_germline_cnv_segmentation")
         threads: wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "threads")
         resources:
             runtime=wf.get_resource("gcnv", "joint_germline_cnv_segmentation", "runtime"),
@@ -440,6 +482,8 @@ elif tool == "gcnv":
             **wf.get_output_files("gcnv", "merge_multikit_families"),
         log:
             **wf.get_log_file("gcnv", "merge_multikit_families"),
+        benchmark:
+            wf.get_benchmark_file("gcnv", "merge_multikit_families")
         threads: wf.get_resource("gcnv", "merge_multikit_families", "threads")
         resources:
             runtime=wf.get_resource("gcnv", "merge_multikit_families", "runtime"),

@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
    "tasks/variant_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
@@ -19,6 +20,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/variant_export_external/benchmarks/dragen.case001subregion-N1-DNA1-WES1/dragen.case001subregion-N1-DNA1-WES1.gvcf_to_vcf.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
@@ -63,6 +65,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/gvcf_to_vcf"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.annotate.case001subregion-N1-DNA1-WES1.log"
   ],
@@ -82,6 +85,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.annotate.case001subregion-N1-DNA1-WES1.conda_info.txt"
   ],
@@ -101,6 +105,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.annotate.case001subregion-N1-DNA1-WES1.conda_list.txt"
   ],
@@ -120,6 +125,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.annotate.case001subregion-N1-DNA1-WES1.environment.yaml"
   ],
@@ -139,6 +145,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.annotate.case001subregion-N1-DNA1-WES1.wrapper.py"
   ],
@@ -158,6 +165,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
   ],
@@ -177,6 +185,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz"
   ],
@@ -196,6 +205,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/variant_export_external/benchmarks/varfish_annotated.case001subregion-N1-DNA1-WES1/varfish_annotated.annotate.case001subregion-N1-DNA1-WES1.tsv",
   "input": [
    "tasks/variant_export_external/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
@@ -265,6 +275,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varfish_annotator/annotate"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [],
   "output": [

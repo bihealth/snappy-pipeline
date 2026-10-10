@@ -31,6 +31,8 @@ rule create_proteome_run:
         **wf.get_output_files("create_proteome", "run"),
     log:
         **wf.get_log_file("create_proteome", "run"),
+    benchmark:
+        wf.get_benchmark_file("create_proteome", "run")
     threads: wf.get_resource("create_proteome", "run", "threads")
     resources:
         runtime=wf.get_resource("create_proteome", "run", "runtime"),

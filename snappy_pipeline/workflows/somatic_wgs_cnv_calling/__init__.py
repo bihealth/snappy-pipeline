@@ -167,6 +167,8 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
 
         name_pattern = "{{tumor_library}}".format()
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
+        if len(self.actions) > 1:  # one log per action, not one shared by all
+            prefix += f".{action}"
         key_ext = (
             ("log", ".log"),
             ("conda_info", ".conda_info.txt"),

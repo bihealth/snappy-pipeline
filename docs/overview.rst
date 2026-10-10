@@ -302,15 +302,16 @@ Resource Requests
 =================
 
 Each step declares the threads, memory and runtime of its jobs. Memory and runtime grow with each
-retry of a failed job (``restart-times`` in the SLURM profile), by ``resources.retry_factor``, and
-are capped at the project's limits, e.g. those of the partition:
+retry of a failed job (``restart-times`` in the SLURM profile), by ``resources.retry_factor``:
 
 .. code-block:: yaml
 
     resources:
       retry_factor: 1.5   # default
-      max_mem: 500GB      # default: no limit
-      max_runtime: 14d    # default: no limit
+
+Partition limits are left to SLURM and its executor plugin. Every job that runs a wrapper writes a
+benchmark (``tasks/<task>/benchmarks/...tsv``) with its wall time (``s``), peak memory
+(``max_rss``), I/O and CPU time; these measurements calibrate the requests.
 
 Working Directory Layout
 ========================

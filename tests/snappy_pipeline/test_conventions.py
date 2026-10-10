@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import collections
 import enum
 import importlib
 import json
@@ -345,3 +346,58 @@ def test_wrappers_use_a_base_class():
     assert sorted(set(found) - set(WRAPPERS_WITHOUT_BASE_CLASS)) == []
     stale = sorted(set(WRAPPERS_WITHOUT_BASE_CLASS) - set(found))
     assert not stale, f"remove these entries from WRAPPERS_WITHOUT_BASE_CLASS: {stale}"
+
+
+#: Wrapper rules without a benchmark: their wrappers do not exist (legacy)
+RULES_WITHOUT_BENCHMARK = {
+    "gene_expression_report_aggregate_counts",
+    "gene_expression_report_compute_ranks",
+    "gene_expression_report_compute_signatures",
+    "gene_expression_report_plot_expression_distribution",
+}
+
+
+def _rule_blocks(path: Path) -> Iterator[tuple[str, str]]:
+    """Yield (rule name, rule text) for the rules of a Snakefile."""
+    lines = path.read_text(encoding="utf-8").splitlines()
+    i = 0
+    while i < len(lines):
+        m = re.match(r"^(\s*)(?:rule|checkpoint) (\w+):", lines[i])
+        if not m:
+            i += 1
+            continue
+        indent, j = len(m.group(1)), i + 1
+        while j < len(lines) and (
+            not lines[j].strip() or len(lines[j]) - len(lines[j].lstrip()) > indent
+        ):
+            j += 1
+        yield m.group(2), "\n".join(lines[i:j])
+        i = j
+
+
+def test_wrapper_rules_write_a_benchmark():
+    """Benchmarks record wall time and memory per job to calibrate resources (plans.md F7).
+
+    Snakemake does not allow benchmarks for rules that are cached between workflows.
+    """
+    snakefiles = sorted(WORKFLOWS.glob("*/Snakefile")) + sorted(WORKFLOWS.glob("*/*.rules"))
+    found = [
+        f"{path.relative_to(WORKFLOWS)}: {name}"
+        for path in snakefiles
+        for name, text in _rule_blocks(path)
+        if "wrapper:" in text
+        and "benchmark:" not in text
+        and "cache:" not in text
+        and name not in RULES_WITHOUT_BENCHMARK
+    ]
+    assert not found, f"wrapper rules without benchmark: wf.get_benchmark_file(...): {found}"
+
+
+def test_logs_and_benchmarks_are_unique_per_job():
+    """Two jobs of one DAG never share a log or benchmark file."""
+    found = []
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        jobs = json.loads(snapshot.read_text(encoding="utf-8"))
+        paths = [p for job in jobs for p in job["log"] + [job.get("benchmark")] if p]
+        found += [f"{snapshot.stem}: {p}" for p, n in collections.Counter(paths).items() if n > 1]
+    assert not found, f"files shared by several jobs: {found}"

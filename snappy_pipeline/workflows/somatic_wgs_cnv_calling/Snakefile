@@ -57,6 +57,8 @@ if str(wf.config.tool) == "cnvetti":
             **wf.get_output_files("cnvetti", "coverage"),
         log:
             **wf.get_log_file("cnvetti", "coverage"),
+        benchmark:
+            wf.get_benchmark_file("cnvetti", "coverage")
         threads: wf.get_resource("cnvetti", "coverage", "threads")
         resources:
             runtime=wf.get_resource("cnvetti", "coverage", "runtime"),
@@ -76,6 +78,8 @@ if str(wf.config.tool) == "cnvetti":
             **wf.get_output_files("cnvetti", "tumor_normal_ratio"),
         log:
             **wf.get_log_file("cnvetti", "tumor_normal_ratio"),
+        benchmark:
+            wf.get_benchmark_file("cnvetti", "tumor_normal_ratio")
         threads: wf.get_resource("cnvetti", "tumor_normal_ratio", "threads")
         resources:
             runtime=wf.get_resource("cnvetti", "tumor_normal_ratio", "runtime"),
@@ -94,6 +98,8 @@ if str(wf.config.tool) == "cnvetti":
             **wf.get_output_files("cnvetti", "segment"),
         log:
             **wf.get_log_file("cnvetti", "segment"),
+        benchmark:
+            wf.get_benchmark_file("cnvetti", "segment")
         threads: wf.get_resource("cnvetti", "segment", "threads")
         resources:
             runtime=wf.get_resource("cnvetti", "segment", "runtime"),
@@ -114,6 +120,8 @@ elif str(wf.config.tool) == "control_freec":
             **wf.get_output_files("control_freec", "run"),
         log:
             **wf.get_log_file("control_freec", "run"),
+        benchmark:
+            wf.get_benchmark_file("control_freec", "run")
         threads: wf.get_resource("control_freec", "run", "threads")
         resources:
             runtime=wf.get_resource("control_freec", "run", "runtime"),
@@ -132,6 +140,8 @@ elif str(wf.config.tool) == "control_freec":
             **wf.get_output_files("control_freec", "transform"),
         log:
             **wf.get_log_file("control_freec", "transform"),
+        benchmark:
+            wf.get_benchmark_file("control_freec", "transform")
         threads: wf.get_resource("control_freec", "transform", "threads")
         resources:
             runtime=wf.get_resource("control_freec", "transform", "runtime"),
@@ -150,6 +160,8 @@ elif str(wf.config.tool) == "control_freec":
             **wf.get_output_files("control_freec", "plot"),
         log:
             **wf.get_log_file("control_freec", "plot"),
+        benchmark:
+            wf.get_benchmark_file("control_freec", "plot")
         threads: wf.get_resource("control_freec", "plot", "threads")
         resources:
             runtime=wf.get_resource("control_freec", "plot", "runtime"),

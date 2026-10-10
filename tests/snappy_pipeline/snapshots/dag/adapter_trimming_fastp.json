@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": "tasks/adapter_trimming_fastp/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
@@ -97,6 +98,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/fastp/run"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done",
@@ -118,6 +120,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/out/.done",
    "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/report/.done",

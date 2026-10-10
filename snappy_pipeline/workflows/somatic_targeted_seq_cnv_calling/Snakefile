@@ -61,6 +61,8 @@ elif tool == "sequenza":
             **wf.get_output_files("sequenza", "install"),
         log:
             **wf.get_log_file("sequenza", "install"),
+        benchmark:
+            wf.get_benchmark_file("sequenza", "install")
         threads: wf.get_resource("sequenza", "install", "threads")
         resources:
             runtime=wf.get_resource("sequenza", "install", "runtime"),
@@ -82,6 +84,8 @@ elif tool == "sequenza":
             **wf.get_output_files("sequenza", "gcreference"),
         log:
             **wf.get_log_file("sequenza", "gcreference"),
+        benchmark:
+            wf.get_benchmark_file("sequenza", "gcreference")
         threads: wf.get_resource("sequenza", "gcreference", "threads")
         resources:
             runtime=wf.get_resource("sequenza", "gcreference", "runtime"),
@@ -100,6 +104,8 @@ elif tool == "sequenza":
             **wf.get_output_files("sequenza", "coverage"),
         log:
             **wf.get_log_file("sequenza", "coverage"),
+        benchmark:
+            wf.get_benchmark_file("sequenza", "coverage")
         threads: wf.get_resource("sequenza", "coverage", "threads")
         resources:
             runtime=wf.get_resource("sequenza", "coverage", "runtime"),
@@ -118,6 +124,8 @@ elif tool == "sequenza":
             **wf.get_output_files("sequenza", "run"),
         log:
             **wf.get_log_file("sequenza", "run"),
+        benchmark:
+            wf.get_benchmark_file("sequenza", "run")
         threads: wf.get_resource("sequenza", "run", "threads")
         resources:
             runtime=wf.get_resource("sequenza", "run", "runtime"),
@@ -142,6 +150,8 @@ elif tool == "purecn":
             **wf.get_output_files("purecn", "coverage"),
         log:
             **wf.get_log_file("purecn", "coverage"),
+        benchmark:
+            wf.get_benchmark_file("purecn", "coverage")
         threads: wf.get_resource("purecn", "coverage", "threads")
         resources:
             runtime=wf.get_resource("purecn", "coverage", "runtime"),
@@ -160,6 +170,8 @@ elif tool == "purecn":
             **wf.get_output_files("purecn", "run"),
         log:
             **wf.get_log_file("purecn", "run"),
+        benchmark:
+            wf.get_benchmark_file("purecn", "run")
         threads: wf.get_resource("purecn", "run", "threads")
         resources:
             runtime=wf.get_resource("purecn", "run", "runtime"),

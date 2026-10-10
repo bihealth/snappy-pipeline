@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/output/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json",
    "tasks/homologous_recombination_deficiency_scarHRD/output/scarHRD.case001subregion-T1-DNA1-WES1/log/scarHRD.case001subregion-T1-DNA1-WES1.log",
@@ -16,6 +17,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/log/scarHRD.case001subregion-T1-DNA1-WES1.log"
   ],
@@ -35,6 +37,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/log/scarHRD.case001subregion-T1-DNA1-WES1.conda_info.txt"
   ],
@@ -54,6 +57,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/log/scarHRD.case001subregion-T1-DNA1-WES1.conda_list.txt"
   ],
@@ -73,6 +77,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json"
   ],
@@ -92,6 +97,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/homologous_recombination_deficiency_scarHRD/benchmarks/R_packages/scarHRD.tsv",
   "input": [],
   "log": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/log/scarHRD.log",
@@ -133,6 +139,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/scarHRD/install"
  },
  {
+  "benchmark": "tasks/homologous_recombination_deficiency_scarHRD/benchmarks/scarHRD.case001subregion-T1-DNA1-WES1/scarHRD.case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/out/scarHRD.done",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
@@ -172,6 +179,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/scarHRD/run"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -255,6 +263,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
@@ -338,6 +347,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -384,6 +394,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -438,6 +449,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],
@@ -481,6 +493,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
   ],
@@ -500,6 +513,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.coverage.tsv",
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/out/gc.50.wig.gz",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -557,6 +571,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/coverage"
  },
  {
+  "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/static_data/gc.50.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],

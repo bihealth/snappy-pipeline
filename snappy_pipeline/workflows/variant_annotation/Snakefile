@@ -49,6 +49,8 @@ if wf.config.tool == Tool.vep:
             **wf.get_output_files("vep", "run"),
         log:
             **wf.get_log_file("vep", "run"),
+        benchmark:
+            wf.get_benchmark_file("vep", "run")
         threads: wf.get_resource("vep", "run", "threads")
         resources:
             runtime=wf.get_resource("vep", "run", "runtime"),
@@ -69,6 +71,8 @@ elif wf.config.tool == Tool.mehari:
             **wf.get_output_files("mehari", "run"),
         log:
             **wf.get_log_file("mehari", "run"),
+        benchmark:
+            wf.get_benchmark_file("mehari", "run")
         threads: wf.get_resource("mehari", "run", "threads")
         resources:
             runtime=wf.get_resource("mehari", "run", "runtime"),

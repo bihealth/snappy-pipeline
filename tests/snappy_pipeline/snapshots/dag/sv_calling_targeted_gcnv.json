@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/sv_calling_targeted_gcnv/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.conda_info.txt",
@@ -18,6 +19,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -101,6 +103,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -147,6 +150,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -201,6 +205,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],
@@ -244,6 +249,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
+  "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/default/default.001.call_cnvs.tsv",
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv",
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.contig_ploidy/.done",
@@ -272,6 +278,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/call_cnvs_case_mode"
  },
  {
+  "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/default/default.contig_ploidy.tsv",
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv",
    "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
@@ -299,6 +306,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/contig_ploidy_case_mode"
  },
  {
+  "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.coverage.tsv",
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -327,6 +335,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/coverage"
  },
  {
+  "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.default.joint_segmentation.tsv",
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz",
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list",
@@ -368,6 +377,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/joint_germline_cnv_segmentation"
  },
  {
+  "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.merge_multikit_families.tsv",
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz"
   ],
@@ -419,6 +429,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/merge_multikit_families"
  },
  {
+  "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",
   "input": [
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.001.call_cnvs/.done",
    "tasks/sv_calling_targeted_gcnv/work/default/out/default.contig_ploidy/.done",
@@ -448,6 +459,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls_case_mode"
  },
  {
+  "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/default/default.preprocess_intervals.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
@@ -473,6 +485,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [],
   "output": [

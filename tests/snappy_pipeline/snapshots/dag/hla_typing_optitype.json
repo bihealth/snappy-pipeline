@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
    "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
@@ -17,6 +18,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
@@ -36,6 +38,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt"
   ],
@@ -55,6 +58,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt"
   ],
@@ -74,6 +78,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json"
   ],
@@ -93,6 +98,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt"
   ],
@@ -112,6 +118,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/hla_typing_optitype/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"

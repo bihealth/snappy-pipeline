@@ -49,6 +49,8 @@ if str(wf.config.tool) == "fusioncatcher":
             **wf.get_output_files("fusioncatcher", "run"),
         log:
             wf.get_log_file("fusioncatcher", "run"),
+        benchmark:
+            wf.get_benchmark_file("fusioncatcher", "run")
         threads: wf.get_resource("fusioncatcher", "run", "threads")
         resources:
             runtime=wf.get_resource("fusioncatcher", "run", "runtime"),
@@ -67,6 +69,8 @@ elif str(wf.config.tool) == "jaffa":
             **wf.get_output_files("jaffa", "run"),
         log:
             wf.get_log_file("jaffa", "run"),
+        benchmark:
+            wf.get_benchmark_file("jaffa", "run")
         threads: wf.get_resource("jaffa", "run", "threads")
         resources:
             runtime=wf.get_resource("jaffa", "run", "runtime"),
@@ -85,6 +89,8 @@ elif str(wf.config.tool) == "pizzly":
             **wf.get_output_files("pizzly", "run"),
         log:
             wf.get_log_file("pizzly", "run"),
+        benchmark:
+            wf.get_benchmark_file("pizzly", "run")
         threads: wf.get_resource("pizzly", "run", "threads")
         resources:
             runtime=wf.get_resource("pizzly", "run", "runtime"),
@@ -105,6 +111,8 @@ elif str(wf.config.tool) == "hera":
             **wf.get_output_files("hera", "run"),
         log:
             wf.get_log_file("hera", "run"),
+        benchmark:
+            wf.get_benchmark_file("hera", "run")
         threads: wf.get_resource("hera", "run", "threads")
         resources:
             runtime=wf.get_resource("hera", "run", "runtime"),
@@ -123,6 +131,8 @@ elif str(wf.config.tool) == "star_fusion":
             **wf.get_output_files("star_fusion", "run"),
         log:
             wf.get_log_file("star_fusion", "run"),
+        benchmark:
+            wf.get_benchmark_file("star_fusion", "run")
         threads: wf.get_resource("star_fusion", "run", "threads")
         resources:
             runtime=wf.get_resource("star_fusion", "run", "runtime"),
@@ -141,6 +151,8 @@ elif str(wf.config.tool) == "defuse":
             **wf.get_output_files("defuse", "run"),
         log:
             wf.get_log_file("defuse", "run"),
+        benchmark:
+            wf.get_benchmark_file("defuse", "run")
         threads: wf.get_resource("defuse", "run", "threads")
         resources:
             runtime=wf.get_resource("defuse", "run", "runtime"),
@@ -159,6 +171,8 @@ elif str(wf.config.tool) == "arriba":
             **wf.get_output_files("arriba", "run"),
         log:
             **wf.get_log_file("arriba", "run"),
+        benchmark:
+            wf.get_benchmark_file("arriba", "run")
         threads: wf.get_resource("arriba", "run", "threads")
         resources:
             runtime=wf.get_resource("arriba", "run", "runtime"),

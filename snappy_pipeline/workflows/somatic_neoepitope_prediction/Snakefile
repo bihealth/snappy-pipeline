@@ -68,6 +68,8 @@ if wf.config.tool != "pvacfuse" and not getattr(wf.config, wf.config.tool).use_a
             **wf.get_output_files("pvactools", "normalize"),
         log:
             **wf.get_log_file("pvactools", "normalize"),
+        benchmark:
+            wf.get_benchmark_file("pvactools", "normalize")
         threads: wf.get_resource("pvactools", "normalize", "threads")
         resources:
             runtime=wf.get_resource("pvactools", "normalize", "runtime"),
@@ -89,6 +91,8 @@ if wf.config.tool != "pvacfuse" and getattr(wf.config, wf.config.tool).use_all_t
             **wf.get_output_files("pvactools", "normalize_full"),
         log:
             **wf.get_log_file("pvactools", "normalize_full"),
+        benchmark:
+            wf.get_benchmark_file("pvactools", "normalize_full")
         threads: wf.get_resource("pvactools", "normalize_full", "threads")
         resources:
             runtime=wf.get_resource("pvactools", "normalize_full", "runtime"),
@@ -113,6 +117,8 @@ if wf.config.proteome.enabled and wf.config.proteome.add_unmutated:
             **wf.get_output_files("proteome", "run"),
         log:
             **wf.get_log_file("proteome", "run"),
+        benchmark:
+            wf.get_benchmark_file("proteome", "run")
         threads: wf.get_resource("proteome", "run", "threads")
         resources:
             runtime=wf.get_resource("proteome", "run", "runtime"),
@@ -134,6 +140,8 @@ if wf.config.tool == "pvacseq" and wf.config.pileup.enabled:
             **wf.get_output_files("pvacseq", "pileup"),
         log:
             **wf.get_log_file("pvacseq", "pileup"),
+        benchmark:
+            wf.get_benchmark_file("pvacseq", "pileup")
         threads: wf.get_resource("pvacseq", "pileup", "threads")
         resources:
             runtime=wf.get_resource("pvacseq", "pileup", "runtime"),
@@ -155,6 +163,8 @@ if wf.config.tool == "pvacseq" and wf.config.quantification.enabled:
             **wf.get_output_files("pvacseq", "combine"),
         log:
             **wf.get_log_file("pvacseq", "combine"),
+        benchmark:
+            wf.get_benchmark_file("pvacseq", "combine")
         threads: wf.get_resource("pvacseq", "combine", "threads")
         resources:
             runtime=wf.get_resource("pvacseq", "combine", "runtime"),
@@ -176,6 +186,8 @@ if wf.config.phasing.enabled:
             **wf.get_output_files("phasing", "run"),
         log:
             **wf.get_log_file("phasing", "run"),
+        benchmark:
+            wf.get_benchmark_file("phasing", "run")
         threads: wf.get_resource("phasing", "run", "threads")
         resources:
             runtime=wf.get_resource("phasing", "run", "runtime"),
@@ -200,6 +212,8 @@ if wf.config.tool == "pvacseq":
             **wf.get_output_files("pvacseq", "pvacseq"),
         log:
             **wf.get_log_file("pvacseq", "pvacseq"),
+        benchmark:
+            wf.get_benchmark_file("pvacseq", "pvacseq")
         threads: wf.get_resource("pvacseq", "pvacseq", "threads")
         resources:
             runtime=wf.get_resource("pvacseq", "pvacseq", "runtime"),
@@ -218,6 +232,8 @@ if wf.config.tool == "pvacseq":
             **wf.get_output_files("netchop", "pvacseq"),
         log:
             **wf.get_log_file("netchop", "pvacseq"),
+        benchmark:
+            wf.get_benchmark_file("netchop", "pvacseq")
         threads: wf.get_resource("netchop", "pvacseq", "threads")
         resources:
             runtime=wf.get_resource("netchop", "pvacseq", "runtime"),
@@ -242,6 +258,8 @@ if wf.config.tool == "pvacfuse":
             **wf.get_output_files("pvacfuse", "pvacfuse"),
         log:
             **wf.get_log_file("pvacfuse", "pvacfuse"),
+        benchmark:
+            wf.get_benchmark_file("pvacfuse", "pvacfuse")
         threads: wf.get_resource("pvacfuse", "pvacfuse", "threads")
         resources:
             runtime=wf.get_resource("pvacfuse", "pvacfuse", "runtime"),
@@ -260,6 +278,8 @@ if wf.config.tool == "pvacfuse":
             **wf.get_output_files("netchop", "pvacfuse"),
         log:
             **wf.get_log_file("netchop", "pvacfuse"),
+        benchmark:
+            wf.get_benchmark_file("netchop", "pvacfuse")
         threads: wf.get_resource("netchop", "pvacfuse", "threads")
         resources:
             runtime=wf.get_resource("netchop", "pvacfuse", "runtime"),
@@ -284,6 +304,8 @@ if wf.config.tool == "pvacsplice":
             **wf.get_output_files("pvacsplice", "junction"),
         log:
             **wf.get_log_file("pvacsplice", "junction"),
+        benchmark:
+            wf.get_benchmark_file("pvacsplice", "junction")
         threads: wf.get_resource("pvacsplice", "junction", "threads")
         resources:
             runtime=wf.get_resource("pvacsplice", "junction", "runtime"),
@@ -332,6 +354,8 @@ if wf.config.tool == "pvacsplice":
             **wf.get_output_files("pvacsplice", "pvacsplice"),
         log:
             **wf.get_log_file("pvacsplice", "pvacsplice"),
+        benchmark:
+            wf.get_benchmark_file("pvacsplice", "pvacsplice")
         threads: wf.get_resource("pvacsplice", "pvacsplice", "threads")
         resources:
             runtime=wf.get_resource("pvacsplice", "pvacsplice", "runtime"),
@@ -350,6 +374,8 @@ if wf.config.tool == "pvacsplice":
             **wf.get_output_files("netchop", "pvacsplice"),
         log:
             **wf.get_log_file("netchop", "pvacsplice"),
+        benchmark:
+            wf.get_benchmark_file("netchop", "pvacsplice")
         threads: wf.get_resource("netchop", "pvacsplice", "threads")
         resources:
             runtime=wf.get_resource("netchop", "pvacsplice", "runtime"),

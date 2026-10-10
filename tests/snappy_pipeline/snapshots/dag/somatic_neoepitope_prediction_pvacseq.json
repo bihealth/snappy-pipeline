@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/output/case001subregion-T1-DNA1-WES1/out/MHC_Class_I/case001subregion-T1-DNA1-WES1.MHC_I.filtered.tsv",
    "tasks/somatic_neoepitope_prediction_pvacseq/output/case001subregion-T1-DNA1-WES1/log/MHC_Class_I.case001subregion-T1-DNA1-WES1.MHC_I.filtered.log",
@@ -20,6 +21,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json"
   ],
@@ -39,6 +41,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json"
   ],
@@ -58,6 +61,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json"
   ],
@@ -77,6 +81,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/hla_typing_optitype/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
@@ -123,6 +128,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/optitype"
  },
  {
+  "benchmark": "tasks/hla_typing_optitype/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
@@ -169,6 +175,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/optitype"
  },
  {
+  "benchmark": "tasks/hla_typing_optitype/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz"
@@ -215,6 +222,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/optitype"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -298,6 +306,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
@@ -381,6 +390,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
@@ -464,6 +474,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -510,6 +521,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -564,6 +576,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],
@@ -607,6 +620,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/containers/log/pvactools.log"
@@ -631,6 +645,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-DNA1-WES1/log/MHC_Class_I.case001subregion-T1-DNA1-WES1.MHC_I.filtered.log"
   ],
@@ -650,6 +665,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-DNA1-WES1/log/MHC_Class_I.case001subregion-T1-DNA1-WES1.MHC_I.filtered.conda_info.txt"
   ],
@@ -669,6 +685,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-DNA1-WES1/log/MHC_Class_I.case001subregion-T1-DNA1-WES1.MHC_I.filtered.conda_list.txt"
   ],
@@ -688,6 +705,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-DNA1-WES1/out/MHC_Class_I/case001subregion-T1-DNA1-WES1.MHC_I.filtered.tsv"
   ],
@@ -707,6 +725,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-RNA1-mRNA_seq1/log/MHC_Class_I.case001subregion-T1-RNA1-mRNA_seq1.MHC_I.filtered.log"
   ],
@@ -726,6 +745,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-RNA1-mRNA_seq1/log/MHC_Class_I.case001subregion-T1-RNA1-mRNA_seq1.MHC_I.filtered.conda_info.txt"
   ],
@@ -745,6 +765,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-RNA1-mRNA_seq1/log/MHC_Class_I.case001subregion-T1-RNA1-mRNA_seq1.MHC_I.filtered.conda_list.txt"
   ],
@@ -764,6 +785,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-RNA1-mRNA_seq1/out/MHC_Class_I/case001subregion-T1-RNA1-mRNA_seq1.MHC_I.filtered.tsv"
   ],
@@ -783,6 +805,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/somatic_neoepitope_prediction_pvacseq/benchmarks/case001subregion-T1-DNA1-WES1/normalize.tsv",
   "input": [
    "tasks/variant_annotation_vep/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
@@ -820,6 +843,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/normalize"
  },
  {
+  "benchmark": "tasks/somatic_neoepitope_prediction_pvacseq/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/normalize.tsv",
   "input": [
    "tasks/variant_annotation_vep/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.vcf.gz"
   ],
@@ -857,6 +881,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/normalize"
  },
  {
+  "benchmark": "tasks/somatic_neoepitope_prediction_pvacseq/benchmarks/case001subregion-T1-DNA1-WES1/MHC_Class_I.case001subregion-T1-DNA1-WES1.MHC_I.filtered.tsv",
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/containers/out/pvactools.sif",
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.normalized.vcf.gz",
@@ -895,6 +920,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/pvacseq"
  },
  {
+  "benchmark": "tasks/somatic_neoepitope_prediction_pvacseq/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/MHC_Class_I.case001subregion-T1-RNA1-mRNA_seq1.MHC_I.filtered.tsv",
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacseq/work/containers/out/pvactools.sif",
    "tasks/somatic_neoepitope_prediction_pvacseq/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.normalized.vcf.gz",
@@ -933,6 +959,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/pvacseq"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
@@ -952,6 +979,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_annotation_vep/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.vcf.gz"
   ],
@@ -971,6 +999,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/variant_annotation_vep/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
@@ -1031,6 +1060,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/vep/run"
  },
  {
+  "benchmark": "tasks/variant_annotation_vep/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
   "input": [
    "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.vcf.gz.tbi",
@@ -1091,6 +1121,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/vep/run"
  },
  {
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_combine_gvcfs.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz",
@@ -1146,6 +1177,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/combine_gvcfs"
  },
  {
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.gatk4_hc_gvcf_combine_gvcfs.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz",
@@ -1201,6 +1233,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/combine_gvcfs"
  },
  {
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.gatk4_hc_gvcf_discover.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
@@ -1255,6 +1288,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/discover"
  },
  {
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_discover.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
@@ -1309,6 +1343,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/discover"
  },
  {
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.gatk4_hc_gvcf_discover.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
@@ -1363,6 +1398,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/discover"
  },
  {
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_genotype.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-DNA1-WES1.g.vcf.gz",
@@ -1423,6 +1459,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/genotype"
  },
  {
+  "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.gatk4_hc_gvcf_genotype.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-RNA1-mRNA_seq1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-T1-RNA1-mRNA_seq1.g.vcf.gz",
@@ -1483,6 +1520,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/genotype"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
@@ -1502,6 +1540,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
   ],
@@ -1521,6 +1560,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.vcf.gz"
   ],
@@ -1540,6 +1580,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.vcf.gz.tbi"
   ],

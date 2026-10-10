@@ -30,6 +30,8 @@ if wf.config.tool == "bwa":
             **wf.get_output_files("bwa", "run"),
         log:
             **wf.get_log_file("bwa", "run"),
+        benchmark:
+            wf.get_benchmark_file("bwa", "run")
         threads: wf.get_resource("bwa", "run", "threads")
         resources:
             runtime=wf.get_resource("bwa", "run", "runtime"),
@@ -54,6 +56,8 @@ if wf.config.tool == "bwa_mem2":
             **wf.get_output_files("bwa_mem2", "run"),
         log:
             **wf.get_log_file("bwa_mem2", "run"),
+        benchmark:
+            wf.get_benchmark_file("bwa_mem2", "run")
         threads: wf.get_resource("bwa_mem2", "run", "threads")
         resources:
             runtime=wf.get_resource("bwa_mem2", "run", "runtime"),
@@ -78,6 +82,8 @@ if wf.config.tool == "mbcs":
             **wf.get_output_files("mbcs", "run"),
         log:
             **wf.get_log_file("mbcs", "run"),
+        benchmark:
+            wf.get_benchmark_file("mbcs", "run")
         threads: wf.get_resource("mbcs", "run", "threads")
         resources:
             runtime=wf.get_resource("mbcs", "run", "runtime"),
@@ -102,6 +108,8 @@ if wf.config.tool == "star":
             **wf.get_output_files("star", "run"),
         log:
             **wf.get_log_file("star", "run"),
+        benchmark:
+            wf.get_benchmark_file("star", "run")
         threads: wf.get_resource("star", "run", "threads")
         resources:
             runtime=wf.get_resource("star", "run", "runtime"),
@@ -126,6 +134,8 @@ if wf.config.tool == "minimap2":
             **wf.get_output_files("minimap2", "run"),
         log:
             **wf.get_log_file("minimap2", "run"),
+        benchmark:
+            wf.get_benchmark_file("minimap2", "run")
         threads: wf.get_resource("minimap2", "run", "threads")
         resources:
             runtime=wf.get_resource("minimap2", "run", "runtime"),
@@ -150,6 +160,8 @@ rule ngs_mapping_target_coverage_report_run:
         **wf.get_output_files("target_coverage_report", "run"),
     log:
         **wf.get_log_file("target_coverage_report", "run"),
+    benchmark:
+        wf.get_benchmark_file("target_coverage_report", "run")
     threads: wf.get_resource("target_coverage_report", "run", "threads")
     resources:
         runtime=wf.get_resource("target_coverage_report", "run", "runtime"),
@@ -170,6 +182,8 @@ rule ngs_mapping_bam_collect_doc_run:
         **wf.get_output_files("bam_collect_doc", "run"),
     log:
         **wf.get_log_file("bam_collect_doc", "run"),
+    benchmark:
+        wf.get_benchmark_file("bam_collect_doc", "run")
     threads: wf.get_resource("bam_collect_doc", "run", "threads")
     resources:
         runtime=wf.get_resource("bam_collect_doc", "run", "runtime"),
@@ -192,6 +206,8 @@ rule ngs_mapping_ngs_chew_fingerprint:
         **wf.get_output_files("ngs_chew", "fingerprint"),
     log:
         **wf.get_log_file("ngs_chew", "fingerprint"),
+    benchmark:
+        wf.get_benchmark_file("ngs_chew", "fingerprint")
     threads: wf.get_resource("ngs_chew", "fingerprint", "threads")
     resources:
         runtime=wf.get_resource("ngs_chew", "fingerprint", "runtime"),
@@ -212,6 +228,8 @@ rule ngs_mapping_infer_strandedness:
         **wf.get_output_files("strandedness", "infer"),
     log:
         **wf.get_log_file("strandedness", "infer"),
+    benchmark:
+        wf.get_benchmark_file("strandedness", "infer")
     threads: wf.get_resource("strandedness", "infer", "threads")
     resources:
         runtime=wf.get_resource("strandedness", "infer", "runtime"),

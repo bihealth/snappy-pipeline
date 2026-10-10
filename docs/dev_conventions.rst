@@ -74,6 +74,13 @@ produce them first and trigger reruns when they change.
 ``test_files_are_inputs_not_params`` flags params that hold file paths, against a baseline that
 only shrinks.
 
+Rules that run a wrapper declare ``benchmark: wf.get_benchmark_file(part, action)``: the path of
+the rule's log below ``benchmarks/`` (``tasks/<task>/benchmarks/`` in a project), where Snakemake
+writes the wall time, memory and I/O of each job. These files calibrate the resource requests.
+Rules cached between workflows (``cache:``) cannot have a benchmark.
+``test_wrapper_rules_write_a_benchmark`` and ``test_logs_and_benchmarks_are_unique_per_job``
+check this.
+
 Outputs for the Snakemake report are declared per action in a step part's ``report_outputs``
 (output key to ``ReportOutput``: subcategory, caption, ``htmlindex`` for a directory).
 ``BaseStep.get_output_files`` flags them with ``report()``, in the task's category and labelled

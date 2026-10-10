@@ -50,6 +50,8 @@ rule somatic_cnv_checking_pileup_normal:
         **wf.get_output_files("pileup", "normal"),
     log:
         **wf.get_log_file("pileup", "normal"),
+    benchmark:
+        wf.get_benchmark_file("pileup", "normal")
     threads: wf.get_resource("pileup", "normal", "threads")
     resources:
         runtime=wf.get_resource("pileup", "normal", "runtime"),
@@ -72,6 +74,8 @@ rule somatic_cnv_checking_pileup_tumor:
         **wf.get_output_files("pileup", "tumor"),
     log:
         **wf.get_log_file("pileup", "tumor"),
+    benchmark:
+        wf.get_benchmark_file("pileup", "tumor")
     threads: wf.get_resource("pileup", "tumor", "threads")
     resources:
         runtime=wf.get_resource("pileup", "tumor", "runtime"),
@@ -95,6 +99,8 @@ if wf.depends_on.get("copy_number"):
             **wf.get_output_files("cnv", "run"),
         log:
             **wf.get_log_file("cnv", "run"),
+        benchmark:
+            wf.get_benchmark_file("cnv", "run")
         threads: wf.get_resource("cnv", "run", "threads")
         resources:
             runtime=wf.get_resource("cnv", "run", "runtime"),
@@ -112,6 +118,8 @@ if wf.depends_on.get("copy_number"):
             **wf.get_output_files("report", "run"),
         log:
             **wf.get_log_file("report", "run"),
+        benchmark:
+            wf.get_benchmark_file("report", "run")
         threads: wf.get_resource("report", "run", "threads")
         resources:
             runtime=wf.get_resource("report", "run", "runtime"),

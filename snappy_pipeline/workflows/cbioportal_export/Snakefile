@@ -41,6 +41,8 @@ rule cbioportal_export_meta_files:
         wf.get_output_files("cbioportal_meta_files", "run"),
     log:
         **wf.get_log_file("cbioportal_meta_files", "run"),
+    benchmark:
+        wf.get_benchmark_file("cbioportal_meta_files", "run")
     params:
         args=wf.get_params("cbioportal_meta_files", "run"),
     wrapper:
@@ -55,6 +57,8 @@ rule cbioportal_export_patient_data:
         **wf.get_output_files("cbioportal_clinical_data", "run"),
     log:
         **wf.get_log_file("cbioportal_clinical_data", "run"),
+    benchmark:
+        wf.get_benchmark_file("cbioportal_clinical_data", "run")
     params:
         args=wf.get_params("cbioportal_clinical_data", "run"),
     wrapper:
@@ -66,6 +70,8 @@ rule cbioportal_export_case_lists:
         **wf.get_output_files("cbioportal_case_lists", "run"),
     log:
         **wf.get_log_file("cbioportal_case_lists", "run"),
+    benchmark:
+        wf.get_benchmark_file("cbioportal_case_lists", "run")
     params:
         args=wf.get_params("cbioportal_case_lists", "run"),
     wrapper:
@@ -84,6 +90,8 @@ rule cbioportal_export_generate_mafs:
         **wf.get_output_files("cbioportal_vcf2maf", "run"),
     log:
         **wf.get_log_file("cbioportal_vcf2maf", "run"),
+    benchmark:
+        wf.get_benchmark_file("cbioportal_vcf2maf", "run")
     threads: wf.get_resource("cbioportal_vcf2maf", "run", "threads")
     resources:
         runtime=wf.get_resource("cbioportal_vcf2maf", "run", "runtime"),
@@ -129,6 +137,8 @@ if step_config.copy_number_alteration.enabled:
             **wf.get_output_files("cbioportal_cns2cna", "run"),
         log:
             **wf.get_log_file("cbioportal_cns2cna", "run"),
+        benchmark:
+            wf.get_benchmark_file("cbioportal_cns2cna", "run")
         threads: wf.get_resource("cbioportal_cns2cna", "run", "threads")
         resources:
             runtime=wf.get_resource("cbioportal_cns2cna", "run", "runtime"),
@@ -148,6 +158,8 @@ if step_config.copy_number_alteration.enabled:
             wf.get_output_files("cbioportal_cna", "log2"),
         log:
             **wf.get_log_file("cbioportal_cna", "log2"),
+        benchmark:
+            wf.get_benchmark_file("cbioportal_cna", "log2")
         threads: wf.get_resource("cbioportal_cna", "log2", "threads")
         resources:
             runtime=wf.get_resource("cbioportal_cna", "log2", "runtime"),
@@ -166,6 +178,8 @@ if step_config.copy_number_alteration.enabled:
             wf.get_output_files("cbioportal_cna", "gistic"),
         log:
             **wf.get_log_file("cbioportal_cna", "gistic"),
+        benchmark:
+            wf.get_benchmark_file("cbioportal_cna", "gistic")
         threads: wf.get_resource("cbioportal_cna", "gistic", "threads")
         resources:
             runtime=wf.get_resource("cbioportal_cna", "gistic", "runtime"),
@@ -185,6 +199,8 @@ if step_config.copy_number_alteration.enabled:
             wf.get_output_files("cbioportal_segment", "run"),
         log:
             **wf.get_log_file("cbioportal_segment", "run"),
+        benchmark:
+            wf.get_benchmark_file("cbioportal_segment", "run")
         threads: wf.get_resource("cbioportal_segment", "run", "threads")
         resources:
             runtime=wf.get_resource("cbioportal_segment", "run", "runtime"),
@@ -208,6 +224,8 @@ if step_config.expression.enabled:
             wf.get_output_files("cbioportal_expression", "run"),
         log:
             **wf.get_log_file("cbioportal_expression", "run"),
+        benchmark:
+            wf.get_benchmark_file("cbioportal_expression", "run")
         threads: wf.get_resource("cbioportal_expression", "run", "threads")
         resources:
             runtime=wf.get_resource("cbioportal_expression", "run", "runtime"),

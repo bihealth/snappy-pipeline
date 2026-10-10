@@ -44,12 +44,14 @@ for task in project.model.tasks:
     t_name = task.name
     t_step = task.step
     alias = t_name + "_"
+    # Each task writes below tasks/<name>/
+    prefixes = {d: f"tasks/{t_name}/{d}" for d in ("output/", "work/", "benchmarks/")}
 
     module:
         name: t_name
         snakefile: f"workflows/{t_step}/Snakefile"
         config: {"__task_name__": t_name}
-        replace_prefix: {"output/": f"tasks/{t_name}/output/", "work/": f"tasks/{t_name}/work/"}
+        replace_prefix: prefixes
 
     use rule * from t_name as alias*
 

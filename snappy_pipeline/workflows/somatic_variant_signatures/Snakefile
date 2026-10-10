@@ -51,6 +51,8 @@ rule somatic_variant_signatures_tabulate_vcf:
         **wf.get_output_files("tabulate_vcf", "run"),
     log:
         wf.get_log_file("tabulate_vcf", "run"),
+    benchmark:
+        wf.get_benchmark_file("tabulate_vcf", "run")
     threads: wf.get_resource("tabulate_vcf", "run", "threads")
     resources:
         runtime=wf.get_resource("tabulate_vcf", "run", "runtime"),
@@ -73,6 +75,8 @@ rule somatic_variant_signatures_deconstructsigs:
         **wf.get_output_files("deconstruct_sigs", "run"),
     log:
         wf.get_log_file("deconstruct_sigs", "run"),
+    benchmark:
+        wf.get_benchmark_file("deconstruct_sigs", "run")
     threads: wf.get_resource("deconstruct_sigs", "run", "threads")
     resources:
         runtime=wf.get_resource("deconstruct_sigs", "run", "runtime"),

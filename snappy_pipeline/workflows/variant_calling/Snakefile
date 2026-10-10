@@ -57,6 +57,8 @@ if tool == "bcftools_call":
             **wf.get_output_files("bcftools_call", "run"),
         log:
             **wf.get_log_file("bcftools_call", "run"),
+        benchmark:
+            wf.get_benchmark_file("bcftools_call", "run")
         threads: wf.get_resource("bcftools_call", "run", "threads")
         resources:
             runtime=wf.get_resource("bcftools_call", "run", "runtime"),
@@ -81,6 +83,8 @@ elif tool == "gatk3_hc":
             **wf.get_output_files("gatk3_hc", "run"),
         log:
             **wf.get_log_file("gatk3_hc", "run"),
+        benchmark:
+            wf.get_benchmark_file("gatk3_hc", "run")
         threads: wf.get_resource("gatk3_hc", "run", "threads")
         resources:
             runtime=wf.get_resource("gatk3_hc", "run", "runtime"),
@@ -105,6 +109,8 @@ elif tool == "gatk3_ug":
             **wf.get_output_files("gatk3_ug", "run"),
         log:
             **wf.get_log_file("gatk3_ug", "run"),
+        benchmark:
+            wf.get_benchmark_file("gatk3_ug", "run")
         threads: wf.get_resource("gatk3_ug", "run", "threads")
         resources:
             runtime=wf.get_resource("gatk3_ug", "run", "runtime"),
@@ -129,6 +135,8 @@ elif tool == "gatk4_hc_joint":
             **wf.get_output_files("gatk4_hc_joint", "run"),
         log:
             **wf.get_log_file("gatk4_hc_joint", "run"),
+        benchmark:
+            wf.get_benchmark_file("gatk4_hc_joint", "run")
         threads: wf.get_resource("gatk4_hc_joint", "run", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_joint", "run", "runtime"),
@@ -152,6 +160,8 @@ elif tool == "gatk4_hc_gvcf":
             **wf.get_output_files("gatk4_hc_gvcf", "discover"),
         log:
             **wf.get_log_file("gatk4_hc_gvcf", "discover"),
+        benchmark:
+            wf.get_benchmark_file("gatk4_hc_gvcf", "discover")
         threads: wf.get_resource("gatk4_hc_gvcf", "discover", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_gvcf", "discover", "runtime"),
@@ -171,6 +181,8 @@ elif tool == "gatk4_hc_gvcf":
             **wf.get_output_files("gatk4_hc_gvcf", "combine_gvcfs"),
         log:
             **wf.get_log_file("gatk4_hc_gvcf", "combine_gvcfs"),
+        benchmark:
+            wf.get_benchmark_file("gatk4_hc_gvcf", "combine_gvcfs")
         threads: wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_gvcf", "combine_gvcfs", "runtime"),
@@ -190,6 +202,8 @@ elif tool == "gatk4_hc_gvcf":
             **wf.get_output_files("gatk4_hc_gvcf", "genotype"),
         log:
             **wf.get_log_file("gatk4_hc_gvcf", "genotype"),
+        benchmark:
+            wf.get_benchmark_file("gatk4_hc_gvcf", "genotype")
         threads: wf.get_resource("gatk4_hc_gvcf", "genotype", "threads")
         resources:
             runtime=wf.get_resource("gatk4_hc_gvcf", "genotype", "runtime"),
@@ -216,6 +230,8 @@ if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
             **wf.get_output_files("bcftools_stats", "run"),
         log:
             **wf.get_log_file("bcftools_stats", "run"),
+        benchmark:
+            wf.get_benchmark_file("bcftools_stats", "run")
         threads: wf.get_resource("bcftools_stats", "run", "threads")
         resources:
             runtime=wf.get_resource("bcftools_stats", "run", "runtime"),
@@ -240,6 +256,8 @@ if wf.config.jannovar_stats and wf.config.jannovar_stats.enabled:
             **wf.get_output_files("jannovar_stats", "run"),
         log:
             **wf.get_log_file("jannovar_stats", "run"),
+        benchmark:
+            wf.get_benchmark_file("jannovar_stats", "run")
         threads: wf.get_resource("jannovar_stats", "run", "threads")
         resources:
             runtime=wf.get_resource("jannovar_stats", "run", "runtime"),
@@ -264,6 +282,8 @@ if wf.config.baf_file_generation and wf.config.baf_file_generation.enabled:
             **wf.get_output_files("baf_file_generation", "run"),
         log:
             **wf.get_log_file("baf_file_generation", "run"),
+        benchmark:
+            wf.get_benchmark_file("baf_file_generation", "run")
         threads: wf.get_resource("baf_file_generation", "run", "threads")
         resources:
             runtime=wf.get_resource("baf_file_generation", "run", "runtime"),
@@ -288,6 +308,8 @@ if wf.config.bcftools_roh and wf.config.bcftools_roh.enabled:
             **wf.get_output_files("bcftools_roh", "run"),
         log:
             **wf.get_log_file("bcftools_roh", "run"),
+        benchmark:
+            wf.get_benchmark_file("bcftools_roh", "run")
         threads: wf.get_resource("bcftools_roh", "run", "threads")
         resources:
             runtime=wf.get_resource("bcftools_roh", "run", "runtime"),
@@ -316,6 +338,8 @@ if tool == "mutect2":
                 **wf.get_output_files("mutect2", "pileup_normal"),
             log:
                 **wf.get_log_file("mutect2", "pileup_normal"),
+            benchmark:
+                wf.get_benchmark_file("mutect2", "pileup_normal")
             threads: wf.get_resource("mutect2", "pileup_normal", "threads")
             resources:
                 runtime=wf.get_resource("mutect2", "pileup_normal", "runtime"),
@@ -334,6 +358,8 @@ if tool == "mutect2":
                 **wf.get_output_files("mutect2", "pileup_tumor"),
             log:
                 **wf.get_log_file("mutect2", "pileup_tumor"),
+            benchmark:
+                wf.get_benchmark_file("mutect2", "pileup_tumor")
             threads: wf.get_resource("mutect2", "pileup_tumor", "threads")
             resources:
                 runtime=wf.get_resource("mutect2", "pileup_tumor", "runtime"),
@@ -352,6 +378,8 @@ if tool == "mutect2":
                 **wf.get_output_files("mutect2", "contamination"),
             log:
                 **wf.get_log_file("mutect2", "contamination"),
+            benchmark:
+                wf.get_benchmark_file("mutect2", "contamination")
             threads: wf.get_resource("mutect2", "contamination", "threads")
             resources:
                 runtime=wf.get_resource("mutect2", "contamination", "runtime"),
@@ -375,6 +403,8 @@ if tool == "mutect2":
             **wf.get_output_files("mutect2", "scatter"),
         log:
             **wf.get_log_file("mutect2", "scatter"),
+        benchmark:
+            wf.get_benchmark_file("mutect2", "scatter")
         localrule: True
         threads: 1
         resources:
@@ -394,6 +424,8 @@ if tool == "mutect2":
             **wf.get_output_files("mutect2", "run"),
         log:
             **wf.get_log_file("mutect2", "run"),
+        benchmark:
+            wf.get_benchmark_file("mutect2", "run")
         threads: wf.get_resource("mutect2", "run", "threads")
         resources:
             runtime=wf.get_resource("mutect2", "run", "runtime"),
@@ -412,6 +444,8 @@ if tool == "mutect2":
             **wf.get_output_files("mutect2", "gather"),
         log:
             **wf.get_log_file("mutect2", "gather"),
+        benchmark:
+            wf.get_benchmark_file("mutect2", "gather")
         threads: 1
         resources:
             runtime=wf.get_resource("mutect2", "gather", "runtime"),
@@ -428,6 +462,8 @@ if tool == "mutect2":
             **wf.get_output_files("mutect2", "filter"),
         log:
             **wf.get_log_file("mutect2", "filter"),
+        benchmark:
+            wf.get_benchmark_file("mutect2", "filter")
         threads: wf.get_resource("mutect2", "filter", "threads")
         resources:
             runtime=wf.get_resource("mutect2", "filter", "runtime"),

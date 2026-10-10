@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_access/output/panel_of_normals/out/panel_of_normals.accessible.bed",
    "tasks/panel_of_normals_access/output/panel_of_normals/log/panel_of_normals.accessible.log",
@@ -16,6 +17,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/panel_of_normals_access/benchmarks/panel_of_normals/panel_of_normals.accessible.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
@@ -49,6 +51,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/access"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_access/work/panel_of_normals/log/panel_of_normals.accessible.log"
   ],
@@ -68,6 +71,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_access/work/panel_of_normals/log/panel_of_normals.accessible.conda_info.txt"
   ],
@@ -87,6 +91,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_access/work/panel_of_normals/log/panel_of_normals.accessible.conda_list.txt"
   ],
@@ -106,6 +111,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed"
   ],

@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/helper_gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
    "tasks/helper_gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
@@ -15,6 +16,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/helper_gcnv_model_wgs/benchmarks/default/default.annotate_gc.tsv",
   "input": [
    "tasks/helper_gcnv_model_wgs/work/default/out/default.interval_list",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
@@ -42,6 +44,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/annotate_gc_wgs"
  },
  {
+  "benchmark": "tasks/helper_gcnv_model_wgs/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",
   "input": [
    "tasks/helper_gcnv_model_wgs/work/default/out/default.scatter_intervals"
   ],
@@ -69,6 +72,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls"
  },
  {
+  "benchmark": "tasks/helper_gcnv_model_wgs/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.coverage.tsv",
   "input": [
    "tasks/helper_gcnv_model_wgs/work/default/out/default.interval_list",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -97,6 +101,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/coverage"
  },
  {
+  "benchmark": "tasks/helper_gcnv_model_wgs/benchmarks/default/default.filter_intervals.tsv",
   "input": [
    "tasks/helper_gcnv_model_wgs/work/default/out/default.interval_list",
    "tasks/helper_gcnv_model_wgs/work/default/out/default.annotate_gc.tsv",
@@ -124,6 +129,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/filter_intervals"
  },
  {
+  "benchmark": "tasks/helper_gcnv_model_wgs/benchmarks/default/default.preprocess_intervals.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
@@ -149,6 +155,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals_wgs"
  },
  {
+  "benchmark": "tasks/helper_gcnv_model_wgs/benchmarks/default/default.scatter_intervals.tsv",
   "input": [
    "tasks/helper_gcnv_model_wgs/work/default/out/default.filter_intervals.interval_list"
   ],
@@ -174,6 +181,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/scatter_intervals"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -257,6 +265,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -303,6 +312,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -357,6 +367,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],

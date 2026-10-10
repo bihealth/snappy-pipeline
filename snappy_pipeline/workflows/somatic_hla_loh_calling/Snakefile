@@ -49,6 +49,8 @@ rule somatic_hla_loh_calling_lohhla:
         **wf.get_output_files("lohhla", "run"),
     log:
         **wf.get_log_file("lohhla", "run"),
+    benchmark:
+        wf.get_benchmark_file("lohhla", "run")
     threads: wf.get_resource("lohhla", "run", "threads")
     resources:
         runtime=wf.get_resource("lohhla", "run", "runtime"),

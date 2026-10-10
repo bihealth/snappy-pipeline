@@ -52,6 +52,8 @@ rule ngs_data_qc_fastqc_run:
         **wf.get_output_files("fastqc", "run"),
     log:
         **wf.get_log_file("fastqc", "run"),
+    benchmark:
+        wf.get_benchmark_file("fastqc", "run")
     threads: wf.get_resource("fastqc", "run", "threads")
     resources:
         runtime=wf.get_resource("fastqc", "run", "runtime"),
@@ -76,6 +78,8 @@ rule ngs_data_qc_picard_prepare:
         **wf.get_output_files("picard", "prepare"),
     log:
         **wf.get_log_file("picard", "prepare"),
+    benchmark:
+        wf.get_benchmark_file("picard", "prepare")
     threads: wf.get_resource("picard", "prepare", "threads")
     resources:
         runtime=wf.get_resource("picard", "prepare", "runtime"),
@@ -93,6 +97,8 @@ rule ngs_data_qc_picard_metrics:
         **wf.get_output_files("picard", "metrics"),
     log:
         **wf.get_log_file("picard", "metrics"),
+    benchmark:
+        wf.get_benchmark_file("picard", "metrics")
     threads: wf.get_resource("picard", "metrics", "threads")
     resources:
         runtime=wf.get_resource("picard", "metrics", "runtime"),

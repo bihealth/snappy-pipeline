@@ -5,6 +5,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_coverage:
         **wf.get_output_files("cnvkit", "coverage"),
     log:
         **wf.get_log_file("cnvkit", "coverage"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "coverage")
     threads: wf.get_resource("cnvkit", "coverage", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "coverage", "runtime"),
@@ -24,6 +26,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_fix:
         **wf.get_output_files("cnvkit", "fix"),
     log:
         **wf.get_log_file("cnvkit", "fix"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "fix")
     threads: wf.get_resource("cnvkit", "fix", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "fix", "runtime"),
@@ -43,6 +47,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_segment:
         **wf.get_output_files("cnvkit", "segment"),
     log:
         **wf.get_log_file("cnvkit", "segment"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "segment")
     threads: wf.get_resource("cnvkit", "segment", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "segment", "runtime"),
@@ -62,6 +68,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_call:
         **wf.get_output_files("cnvkit", "call"),
     log:
         **wf.get_log_file("cnvkit", "call"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "call")
     threads: wf.get_resource("cnvkit", "call", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "call", "runtime"),
@@ -81,6 +89,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_postprocess:
         **wf.get_output_files("cnvkit", "postprocess"),
     log:
         **wf.get_log_file("cnvkit", "postprocess"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "postprocess")
     threads: wf.get_resource("cnvkit", "postprocess", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "postprocess", "runtime"),
@@ -100,6 +110,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_plot:
         **wf.get_output_files("cnvkit", "plot"),
     log:
         **wf.get_log_file("cnvkit", "plot"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "plot")
     threads: wf.get_resource("cnvkit", "plot", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "plot", "runtime"),
@@ -119,6 +131,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_export:
         **wf.get_output_files("cnvkit", "export"),
     log:
         **wf.get_log_file("cnvkit", "export"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "export")
     threads: wf.get_resource("cnvkit", "export", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "export", "runtime"),
@@ -138,6 +152,8 @@ rule somatic_targeted_seq_cnv_calling_cnvkit_report:
         **wf.get_output_files("cnvkit", "report"),
     log:
         **wf.get_log_file("cnvkit", "report"),
+    benchmark:
+        wf.get_benchmark_file("cnvkit", "report")
     threads: wf.get_resource("cnvkit", "report", "threads")
     resources:
         runtime=wf.get_resource("cnvkit", "report", "runtime"),

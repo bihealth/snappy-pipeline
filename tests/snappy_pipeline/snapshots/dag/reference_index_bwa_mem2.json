@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa_mem2/output/reference_index/out/reference.dict",
@@ -28,6 +29,7 @@
   "wrapper": null
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -74,6 +76,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa_mem2/work/reference_index/out/reference.fa.fai",
@@ -128,6 +131,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa_mem2"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],

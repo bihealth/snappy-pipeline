@@ -1,5 +1,6 @@
 [
  {
+  "benchmark": null,
   "input": [
    "tasks/sv_calling_wgs_popdel/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/sv_calling_wgs_popdel/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.reorder_vcf.log",
@@ -18,6 +19,7 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
@@ -101,6 +103,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
@@ -147,6 +150,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -201,6 +205,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
  },
  {
+  "benchmark": null,
   "input": [
    "tasks/reference_download/output/reference_download/out/reference.fa"
   ],
@@ -244,6 +249,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-1-10020000/12-1-10020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -289,6 +295,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-109980000-120020000/12-109980000-120020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -334,6 +341,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-119980000-130020000/12-119980000-130020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -379,6 +387,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-129980000-133851895/12-129980000-133851895.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -424,6 +433,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-19980000-30020000/12-19980000-30020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -469,6 +479,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-29980000-40020000/12-29980000-40020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -514,6 +525,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-39980000-50020000/12-39980000-50020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -559,6 +571,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-49980000-60020000/12-49980000-60020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -604,6 +617,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-59980000-70020000/12-59980000-70020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -649,6 +663,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-69980000-80020000/12-69980000-80020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -694,6 +709,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-79980000-90020000/12-79980000-90020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -739,6 +755,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-89980000-100020000/12-89980000-100020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -784,6 +801,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-9980000-20020000/12-9980000-20020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -829,6 +847,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-99980000-110020000/12-99980000-110020000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
@@ -874,6 +893,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/cohort/cohort.concat_calls.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz",
    "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz",
@@ -922,6 +942,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/concat_calls"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.profile.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
@@ -958,6 +979,7 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/profile"
  },
  {
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.reorder_vcf.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz"
   ],
