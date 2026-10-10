@@ -557,6 +557,8 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
     #: Actions
     actions = ("run",)
 
+    get_log_file = cbioportalExportStepPart.get_log_file
+
     @listify
     def get_output_files(self, action):
         # Validate action

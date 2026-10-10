@@ -1,5 +1,4 @@
 import gzip
-import hashlib
 import os
 import re
 import shutil
@@ -9,27 +8,10 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
+from snappy_wrappers.snappy_wrapper import PythonWrapper
+
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
-
-
-def _md5sum(path: str) -> str:
-    digest = hashlib.md5()
-    with open(path, "rb") as f:  # noqa: S324
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _write_md5(path: str, md5_path: str) -> None:
-    base = os.path.basename(path)
-    with open(md5_path, "wt") as f:
-        f.write(f"{_md5sum(path)}  {base}\n")
-
-
-def _run_conda_cmd(cmd: list[str], path_out: str) -> None:
-    with open(path_out, "wt") as f:
-        subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, check=False)
 
 
 def _download(url: str, path_out: str) -> None:
@@ -99,11 +81,6 @@ def _symlink_output(work_path: str, out_path: str) -> None:
 
 def main() -> None:
     params = dict(snakemake.params.args)
-    log = snakemake.log
-
-    os.makedirs(os.path.dirname(log.log), exist_ok=True)
-    _run_conda_cmd(["conda", "info"], str(log.conda_info))
-    _run_conda_cmd(["conda", "list"], str(log.conda_list))
 
     url = _resolve_ucsc_url(params)
     contigs = list(params.get("contigs") or [])
@@ -123,14 +100,9 @@ def main() -> None:
 
         _filter_fasta(path_raw, str(snakemake.output.fasta), contigs, contigs_regex)
 
-    _write_md5(str(snakemake.output.fasta), str(snakemake.output.fasta_md5))
-    with open(log.log, "wt") as f:
-        f.write(f"Downloaded: {url}\n")
-        f.write(f"Contigs: {contigs}\n")
-        f.write(f"Regex: {contigs_regex}\n")
-    _write_md5(str(log.log), str(log.log_md5))
-    _write_md5(str(log.conda_info), str(log.conda_info_md5))
-    _write_md5(str(log.conda_list), str(log.conda_list_md5))
+    print(f"Downloaded: {url}")
+    print(f"Contigs: {contigs}")
+    print(f"Regex: {contigs_regex}")
 
     for dst in snakemake.output.output_links:
         src = str(dst).replace("output/", "work/", 1)
@@ -138,4 +110,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    PythonWrapper(snakemake).run(main)

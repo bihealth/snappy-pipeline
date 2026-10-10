@@ -3,7 +3,7 @@
 
 import os
 
-from snakemake import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
@@ -20,34 +20,8 @@ if "features" in snakemake.input.keys():
     extra["tx_obj"] = snakemake.input.features
 extra_args = ", ".join(['"{}"="{}"'.format(str(k), str(v)) for k, v in extra.items()])
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Write files for reproducibility -----------------------------------------------------------------
-
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-pushd $(dirname {snakemake.log.conda_list}) ; md5sum $(basename {snakemake.log.conda_list}) > $(basename {snakemake.log.conda_list_md5}) ; popd
-pushd $(dirname {snakemake.log.conda_info}) ; md5sum $(basename {snakemake.log.conda_info}) > $(basename {snakemake.log.conda_info_md5}) ; popd
-
-# Also pipe stderr to log file --------------------------------------------------------------------
-
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-
-# Create auto-cleaned temporary directory ---------------------------------------------------------
-
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
 # Run the R script --------------------------------------------------------------------------------
 
 R --vanilla --slave << __EOF
@@ -58,13 +32,5 @@ write.table(
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
 __EOF
-"""
-)
-
-# Compute MD5 sums of logs.
-shell(
-    r"""
-sleep 1s  # try to wait for log file flush
-pushd $(dirname {snakemake.log.conda_info}) ; md5sum $(basename {snakemake.log.log}) > $(basename {snakemake.log.log_md5}) ; popd
 """
 )

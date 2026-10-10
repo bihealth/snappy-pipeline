@@ -29,7 +29,14 @@
  },
  {
   "input": [],
-  "log": [],
+  "log": [
+   "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.log",
+   "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.log.md5",
+   "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.conda_info.txt",
+   "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.conda_info.txt.md5",
+   "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.conda_list.txt",
+   "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.conda_list.txt.md5"
+  ],
   "output": [
    "tasks/cbioportal_export/work/upload/case_lists/all_cases_with_mutation_data.txt",
    "tasks/cbioportal_export/work/upload/case_lists/all_cases_with_cna_data.txt",
@@ -284,7 +291,14 @@
  },
  {
   "input": [],
-  "log": [],
+  "log": [
+   "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.log",
+   "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.log.md5",
+   "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.conda_info.txt",
+   "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.conda_info.txt.md5",
+   "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.conda_list.txt",
+   "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.conda_list.txt.md5"
+  ],
   "output": [
    "tasks/cbioportal_export/work/upload/meta_study.txt",
    "tasks/cbioportal_export/work/upload/meta_clinical_patient.txt",
@@ -312,7 +326,14 @@
  },
  {
   "input": [],
-  "log": [],
+  "log": [
+   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.log",
+   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.log.md5",
+   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.conda_info.txt",
+   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.conda_info.txt.md5",
+   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.conda_list.txt",
+   "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.conda_list.txt.md5"
+  ],
   "output": [
    "tasks/cbioportal_export/work/upload/data_clinical_patient.txt",
    "tasks/cbioportal_export/work/upload/data_clinical_sample.txt"

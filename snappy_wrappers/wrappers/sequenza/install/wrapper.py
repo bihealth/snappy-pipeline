@@ -11,11 +11,17 @@ from pathlib import Path
 base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, base_dir)
 
+from snappy_wrappers.snappy_wrapper import PythonWrapper  # noqa: E402
 from snappy_wrappers.utils import install_R_packages  # noqa: E402
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-dest = os.path.dirname(str(snakemake.output.done))
-install_R_packages(dest, os.path.join(os.path.dirname(__file__), "R_environment.json"))
 
-Path(str(snakemake.output.done)).touch()
+
+def main():
+    dest = os.path.dirname(str(snakemake.output.done))
+    install_R_packages(dest, os.path.join(os.path.dirname(__file__), "R_environment.json"))
+    Path(str(snakemake.output.done)).touch()
+
+
+PythonWrapper(snakemake).run(main)

@@ -314,3 +314,34 @@ def test_files_are_inputs_not_params():
     assert not fixed, (
         f"{len(fixed)} file params are fixed; shrink the baseline with SNAPPY_UPDATE_SNAPSHOTS=1"
     )
+
+
+#: Wrappers that do not run through a base class yet, with the reason
+WRAPPERS_WITHOUT_BASE_CLASS = {
+    name: "on hold with somatic_neoepitope_prediction"
+    for name in (
+        "pvactools/combine",
+        "pvactools/create_proteome",
+        "pvactools/junction",
+        "pvactools/netchop",
+        "pvactools/normalize",
+        "pvactools/phasing",
+        "pvactools/pileup",
+        "pvactools/pvacfuse",
+        "pvactools/pvacseq",
+        "pvactools/pvacsplice",
+    )
+}
+
+
+def test_wrappers_use_a_base_class():
+    """Wrappers run through ShellWrapper, RWrapper or PythonWrapper (log, conda info, md5)."""
+    wrappers = REPO / "snappy_wrappers" / "wrappers"
+    found, base = [], re.compile(r"\b(ShellWrapper|RWrapper|PythonWrapper)\(")
+    for path in sorted(wrappers.rglob("wrapper.py")):
+        name = str(path.parent.relative_to(wrappers))
+        if not base.search(path.read_text(encoding="utf-8")):
+            found.append(name)
+    assert sorted(set(found) - set(WRAPPERS_WITHOUT_BASE_CLASS)) == []
+    stale = sorted(set(WRAPPERS_WITHOUT_BASE_CLASS) - set(found))
+    assert not stale, f"remove these entries from WRAPPERS_WITHOUT_BASE_CLASS: {stale}"

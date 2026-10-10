@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.workflows.cbioportal_export.model import CbioportalExport
+from snappy_wrappers.snappy_wrapper import PythonWrapper
 
 
 def write_clinical_patient_tsv(out, donors, config):
@@ -138,9 +139,15 @@ def write_clinical_samples_tsv(out, donors, config):
 
 
 args = getattr(snakemake.params, "args", {})
-write_clinical_patient_tsv(
-    str(snakemake.output.patient), args.get("donors", []), args.get("config", {})
-)
-write_clinical_samples_tsv(
-    str(snakemake.output.sample), args.get("donors", []), args.get("config", {})
-)
+
+
+def main():
+    write_clinical_patient_tsv(
+        str(snakemake.output.patient), args.get("donors", []), args.get("config", {})
+    )
+    write_clinical_samples_tsv(
+        str(snakemake.output.sample), args.get("donors", []), args.get("config", {})
+    )
+
+
+PythonWrapper(snakemake).run(main)

@@ -39,6 +39,8 @@ rule cbioportal_all:
 rule cbioportal_export_meta_files:
     output:
         wf.get_output_files("cbioportal_meta_files", "run"),
+    log:
+        **wf.get_log_file("cbioportal_meta_files", "run"),
     params:
         args=wf.get_params("cbioportal_meta_files", "run"),
     wrapper:
@@ -51,6 +53,8 @@ rule cbioportal_export_meta_files:
 rule cbioportal_export_patient_data:
     output:
         **wf.get_output_files("cbioportal_clinical_data", "run"),
+    log:
+        **wf.get_log_file("cbioportal_clinical_data", "run"),
     params:
         args=wf.get_params("cbioportal_clinical_data", "run"),
     wrapper:
@@ -60,6 +64,8 @@ rule cbioportal_export_patient_data:
 rule cbioportal_export_case_lists:
     output:
         **wf.get_output_files("cbioportal_case_lists", "run"),
+    log:
+        **wf.get_log_file("cbioportal_case_lists", "run"),
     params:
         args=wf.get_params("cbioportal_case_lists", "run"),
     wrapper:

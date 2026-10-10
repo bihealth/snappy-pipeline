@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
+from snappy_wrappers.snappy_wrapper import PythonWrapper
+
 args = getattr(snakemake.params, "args", {})
 
 
@@ -36,6 +38,10 @@ def write_case_list(case_list_args, outfile):
         f.write(s)
 
 
-for case_list, filename in snakemake.output.items():
-    assert case_list in args.keys()
-    write_case_list(args[case_list], filename)
+def main():
+    for case_list, filename in snakemake.output.items():
+        assert case_list in args.keys()
+        write_case_list(args[case_list], filename)
+
+
+PythonWrapper(snakemake).run(main)

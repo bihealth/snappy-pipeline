@@ -1,10 +1,12 @@
 """Abstract wrapper classes as utilities for snappy specific wrappers."""
-# Note that this file tries to target a baseline of python 3.8, so outdated wrappers don't crash
+# Snakemake runs wrappers with the Python of their environment if it is at least 3.7
+# (snakemake.script.MIN_PY_VERSION), so this file must stay valid Python 3.7.
 
 import contextlib
 import os
 import shutil
 import stat
+import sys
 import tempfile
 import textwrap
 from abc import ABCMeta, abstractmethod
@@ -220,15 +222,25 @@ class RWrapper(SnappyWrapper):
 class PythonWrapper:
     """Base class for pure-Python wrappers (no external script executed).
 
-    Re-routes ``stdout`` and ``stderr`` into the Snakemake log file declared
-    via ``snakemake.log.log`` using ``contextlib.redirect_stdout`` and
-    ``contextlib.redirect_stderr``.  This ensures that output produced by
-    Python code -- including output from nested in-process Snakemake runs --
-    ends up in the Snakemake log file regardless of whether a TTY is present.
+    Follows the log contract of ``ShellWrapper``: ``run(func)`` calls ``func`` with stdout and
+    stderr in ``snakemake.log.log``, then writes the conda information and the md5 sums of the
+    outputs and of the log.
     """
 
     def __init__(self, snakemake) -> None:
         self.snakemake = snakemake
+        self._log_path()  # raises if snakemake.log.log is missing
+
+    def run(self, func) -> None:
+        """Run ``func()`` with its output in the log, then write conda info and md5 sums."""
+        log_path = self._log_path()
+        if os.path.exists(log_path):
+            os.remove(log_path)  # the log holds this job only, as with ShellWrapper
+        with self.logging_context():
+            func()
+        self.write_conda_info()
+        self.compute_output_md5()
+        self.compute_log_md5()
 
     def _log_path(self) -> str:
         log = getattr(self.snakemake, "log", None)
@@ -241,16 +253,38 @@ class PythonWrapper:
 
     @contextlib.contextmanager
     def logging_context(self):
-        """Context manager capturing stdout/stderr into the Snakemake log file."""
+        """Context manager capturing stdout/stderr into the Snakemake log file.
+
+        Redirects the file descriptors as well, so the output of subprocesses (``shell()``,
+        R) ends up in the log, too.
+        """
         log_path = self._log_path()
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         with open(log_path, "at") as log_file:
-            with contextlib.redirect_stdout(log_file):
-                with contextlib.redirect_stderr(log_file):
-                    yield
+            sys.stdout.flush()
+            sys.stderr.flush()
+            saved = os.dup(1), os.dup(2)
+            os.dup2(log_file.fileno(), 1)
+            os.dup2(log_file.fileno(), 2)
+            try:
+                with contextlib.redirect_stdout(log_file):
+                    with contextlib.redirect_stderr(log_file):
+                        yield
+            finally:
+                log_file.flush()
+                os.dup2(saved[0], 1)
+                os.dup2(saved[1], 2)
+                os.close(saved[0])
+                os.close(saved[1])
 
     def compute_log_md5(self) -> None:
         shell(SnappyWrapper.md5_log.format(log=self._log_path()))
+
+    def compute_output_md5(self) -> None:
+        """Write ``<file>.md5`` next to each output file, as ``ShellWrapper``'s footer does."""
+        for path in self.snakemake.output:
+            if os.path.isfile(path) and not str(path).endswith(".md5"):
+                shell(SnappyWrapper.md5_log.format(log=path))
 
     def write_conda_info(self) -> None:
         """Write conda_list/conda_info files plus their md5 sums, if declared."""

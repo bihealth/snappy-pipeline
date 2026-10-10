@@ -67,54 +67,54 @@ def partition_lengths_with_splits(
     return partitions
 
 
+def main(fai_path, ignore_chroms, padding, output_regions):
+    with open(fai_path, "rt") as fai:
+        csv_reader = csv.reader(fai, delimiter="\t")
+        contigs = {
+            contig: int(length)
+            for contig, length, *_ in csv_reader
+            if not matches_any(contig, ignore_chroms)
+        }
+    num_regions = len(output_regions)
+    regions = partition_lengths_with_splits(contigs, num_regions)
+
+    for i, region in enumerate(regions):
+        size = sum(map(lambda r: r.end - r.start, region))
+        print(f"Region {i}, size {size}: {region}")
+
+    # Verify that all intervals for each contig sum up to the contig length:
+    covered = {contig: 0 for contig in contigs.keys()}
+    for region in regions:
+        for interval in region:
+            covered[interval.contig] += interval.end - interval.start
+    for contig, length in contigs.items():
+        assert covered[contig] == length, (
+            f"Total length of intervals for contig {contig} is {covered[contig]}, expected {length}"
+        )
+
+    for region, path in zip(regions, output_regions):
+        with open(path, "wt") as f:
+            for contig, start, end in region:
+                contig_length = contigs[contig]
+                # BED format is 0 based, end exclusive
+                padded_start = max(start - padding, 0)
+                padded_end = min(end + padding + 1, contig_length)
+                print(f"{contig}\t{padded_start}\t{padded_end}", file=f)
+
+
 if __name__ == "__main__":
     if snakemake := locals().get("snakemake", None):
-        log = lambda: open(snakemake.log.log, "wt")  # noqa: E731
-        fai_path = snakemake.input.fai
+        from snappy_wrappers.snappy_wrapper import PythonWrapper
+
         if args := getattr(snakemake.params, "args", None):
             ignore_chroms = args["ignore_chroms"]
             padding = args["padding"]
         else:
             ignore_chroms = snakemake.params.ignore_chroms
             padding = snakemake.params.padding
-        output_regions = snakemake.output.regions
+        PythonWrapper(snakemake).run(
+            lambda: main(snakemake.input.fai, ignore_chroms, padding, snakemake.output.regions)
+        )
     else:
-        log = lambda: sys.stderr  # noqa: E731
-        fai_path = sys.argv[1]
-        ignore_chroms = sys.argv[2].split(",")
-        padding = int(sys.argv[3])
-        output_regions = sys.argv[4:]
-
-    with log() as log, redirect_stderr(log), redirect_stdout(log):
-        with open(fai_path, "rt") as fai:
-            csv_reader = csv.reader(fai, delimiter="\t")
-            contigs = {
-                contig: int(length)
-                for contig, length, *_ in csv_reader
-                if not matches_any(contig, ignore_chroms)
-            }
-        num_regions = len(output_regions)
-        regions = partition_lengths_with_splits(contigs, num_regions)
-
-        for i, region in enumerate(regions):
-            size = sum(map(lambda r: r.end - r.start, region))
-            print(f"Region {i}, size {size}: {region}")
-
-        # Verify that all intervals for each contig sum up to the contig length:
-        covered = {contig: 0 for contig in contigs.keys()}
-        for region in regions:
-            for interval in region:
-                covered[interval.contig] += interval.end - interval.start
-        for contig, length in contigs.items():
-            assert covered[contig] == length, (
-                f"Total length of intervals for contig {contig} is {covered[contig]}, expected {length}"
-            )
-
-        for region, path in zip(regions, output_regions):
-            with open(path, "wt") as f:
-                for contig, start, end in region:
-                    contig_length = contigs[contig]
-                    # BED format is 0 based, end exclusive
-                    padded_start = max(start - padding, 0)
-                    padded_end = min(end + padding + 1, contig_length)
-                    print(f"{contig}\t{padded_start}\t{padded_end}", file=f)
+        with redirect_stderr(sys.stderr), redirect_stdout(sys.stderr):
+            main(sys.argv[1], sys.argv[2].split(","), int(sys.argv[3]), sys.argv[4:])
