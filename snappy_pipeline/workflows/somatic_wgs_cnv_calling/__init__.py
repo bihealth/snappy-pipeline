@@ -63,7 +63,9 @@ Available Somatic CNV Callers
 
 The following somatic CNV callers are currently available
 
-- ``"canvas"``
+- ``"cnvetti"``
+- ``"cnvkit"``
+- ``"control_freec"``
 
 =======
 Reports
@@ -104,7 +106,7 @@ BCF_EXT_VALUES = (".bcf", ".bcf.csi", ".bcf.md5", ".bcf.csi.md5")
 EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Available somatic WGS CNV callers
-SOMATIC_WGS_CNV_CALLERS = ("canvas", "cnvetti", "control_freec")
+SOMATIC_WGS_CNV_CALLERS = ("cnvetti", "control_freec")
 
 #: Default configuration for the somatic_variant_calling schema
 
@@ -172,42 +174,6 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-
-
-class CanvasSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
-    """Somatic WGS SV calling with Canvas"""
-
-    #: Step name
-    name = "canvas"
-
-    #: Class available actions
-    actions = ("run",)
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=16,
-            runtime="40h",  # 1 day and 16 hours
-            mem=f"{int(3.75 * 1024 * 16)}MB",
-        )
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield "reference", self.config.canvas.path_reference
-        yield "genome_folder", self.config.canvas.path_genome_folder
-        yield "filter_bed", self.config.canvas.path_filter_bed
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"tumor_library": wildcards.tumor_library}
 
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
@@ -778,8 +744,6 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         selected_tool = self.config.tool
         match selected_tool:
-            case Tool.canvas:
-                selected_sub_step = CanvasSomaticWgsStepPart
             case Tool.cnvetti:
                 selected_sub_step = CnvettiSomaticWgsStepPart
             case Tool.cnvkit:

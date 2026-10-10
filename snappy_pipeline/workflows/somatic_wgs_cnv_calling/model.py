@@ -17,19 +17,7 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 class Tool(enum.StrEnum):
     cnvetti = "cnvetti"
     control_freec = "control_freec"
-    canvas = "canvas"
     cnvkit = "cnvkit"
-
-
-class Canvas(SnappyModel):
-    path_reference: str
-    """Path to Canvas reference file"""
-
-    path_filter_bed: str
-    """Path to Canvas filter BED file"""
-
-    path_genome_folder: str
-    """Path to Canvas genome folder"""
 
 
 class CnvettiPreset(SnappyModel):
@@ -105,8 +93,6 @@ class SomaticWgsCnvCalling(SnappyStepModel):
     depends_on: SomaticWgsCnvCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]
-
-    canvas: Canvas | None = None
 
     cnvetti: Cnvetti | None = None
 

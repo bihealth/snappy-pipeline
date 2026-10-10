@@ -479,13 +479,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         }
     },
     ("somatic_targeted_seq_cnv_calling", "purecn"): {"purecn": {"path_container": PLACEHOLDER}},
-    ("somatic_wgs_cnv_calling", "canvas"): {
-        "canvas": {
-            "path_reference": REFERENCE,
-            "path_filter_bed": PLACEHOLDER,
-            "path_genome_folder": Fixture("star_index"),
-        }
-    },
     ("somatic_wgs_cnv_calling", "control_freec"): {
         "control_freec": {"path_chrlenfile": PLACEHOLDER, "path_mappability": PLACEHOLDER}
     },
