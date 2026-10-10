@@ -1420,8 +1420,6 @@ class NgsMappingWorkflow(BaseStep):
             case "bwa_mem2":
                 return [path + ext for ext in BWA_MEM2_INDEX_EXTENSIONS]
             case "star":
-                if self.config.depends_on.index:  # reference_index writes .done last
-                    return [os.path.join(path, ".done")]
                 return [os.path.join(path, name) for name in STAR_INDEX_FILES]
         return [path]
 

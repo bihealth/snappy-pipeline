@@ -10,6 +10,29 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from .model import ReferenceIndex as ReferenceIndexConfigModel
 from .model import Tool
 
+#: Files that ``STAR --runMode genomeGenerate`` writes into the index directory
+STAR_INDEX_FILES = (
+    "chrLength.txt",
+    "chrName.txt",
+    "chrNameLength.txt",
+    "chrStart.txt",
+    "Genome",
+    "genomeParameters.txt",
+    "SA",
+    "SAindex",
+)
+
+#: Additional files with splice junctions from a gene annotation (``--sjdbGTFfile``)
+STAR_SJDB_FILES = (
+    "exonGeTrInfo.tab",
+    "exonInfo.tab",
+    "geneInfo.tab",
+    "sjdbInfo.txt",
+    "sjdbList.fromGTF.out.tab",
+    "sjdbList.out.tab",
+    "transcriptInfo.tab",
+)
+
 
 class BuildReferenceCommonStepPart(BaseStepPart):
     name = "common"
@@ -134,7 +157,11 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
 class StarIndexStepPart(_IndexToolStepPart):
     name = "star"
     actions = ("run",)
-    output_suffixes = (".index/.done",)
+
+    @property
+    def output_suffixes(self) -> tuple[str, ...]:
+        files = STAR_INDEX_FILES + (STAR_SJDB_FILES if self.config.depends_on.features else ())
+        return tuple(f".index/{name}" for name in files)
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
