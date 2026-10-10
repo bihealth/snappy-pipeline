@@ -69,6 +69,8 @@ Wrappers read the params dict as ``snakemake.params.args``. Snakemake does not a
 Wrappers never read ``snakemake.config``. Every file a wrapper reads, such as the reference
 FASTA, is a rule input, and every other value is a param. Only inputs order the jobs that
 produce them first and trigger reruns when they change.
+``test_wrappers_get_the_params_they_read`` checks that the jobs in the DAG snapshots pass every
+``args`` key their wrapper reads.
 
 Defining input files and params
 ===============================

@@ -219,3 +219,49 @@ def test_upstream_paths_come_from_contracts():
         and node.func.attr == "upstream"
     ]
     assert not found, f"use get_upstream_paths(field, ...) instead of upstream(field): {found}"
+
+
+#: Keys a wrapper reads from ``params.args`` only in a case that the snapshot jobs do not take.
+WRAPPER_PARAM_EXCEPTIONS = {
+    ("cnvkit/report", "breaks"): "read only for a breaks output",
+    ("cnvkit/report", "genemetrics"): "read only for a genemetrics output",
+    ("cnvkit/report", "segmetrics"): "read only for a segmetrics output",
+    ("mbcs", "barcode_config"): "read only with mbcs.use_barcodes",
+    ("vembrane/tag", "expression"): "read only in filter mode",
+}
+
+_ARGS_LITERAL = re.compile(r"""(?:^|[^\w.]|snakemake\.params\.)args\[\s*["'](\w+)["']\s*\]""", re.M)
+_ARGS_TEMPLATE = re.compile(r"\{(?:snakemake\.params\.)?args\[(\w+)\]")
+_ARGS_GUARD = re.compile(
+    r"""["'](\w+)["']\s+(?:not\s+)?in\s+(?:snakemake\.params\.)?args\b"""
+    r"""|(?:snakemake\.params\.)?args\.get\(\s*["'](\w+)["']"""
+)
+
+
+def _wrapper_args_keys(wrapper: str) -> set[str]:
+    """Return the ``params.args`` keys that a wrapper reads without a guard or default."""
+    keys, guarded = set(), set()
+    for path in (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        keys |= set(_ARGS_LITERAL.findall(text)) | set(_ARGS_TEMPLATE.findall(text))
+        guarded |= {quoted or got for quoted, got in _ARGS_GUARD.findall(text)}
+    return keys - guarded
+
+
+def test_wrappers_get_the_params_they_read():
+    """Every ``args[...]`` key a wrapper reads is in the params of the snapshot jobs that run it."""
+    found, used_exceptions = set(), set()
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        for job in json.loads(snapshot.read_text(encoding="utf-8")):
+            wrapper = (job.get("wrapper") or "").partition("snappy_wrappers/wrappers/")[2]
+            args = (job.get("params") or {}).get("args", {})
+            if not wrapper or not isinstance(args, dict):  # params not known when dumping
+                continue
+            for key in sorted(_wrapper_args_keys(wrapper) - set(args)):
+                if (wrapper, key) in WRAPPER_PARAM_EXCEPTIONS:
+                    used_exceptions.add((wrapper, key))
+                else:
+                    found.add(f"{wrapper} reads args[{key}], missing in {job['rule']}")
+    assert not found, f"wrappers read params that their rules do not pass: {sorted(found)}"
+    stale = sorted(set(WRAPPER_PARAM_EXCEPTIONS) - used_exceptions)
+    assert not stale, f"remove these entries from WRAPPER_PARAM_EXCEPTIONS: {stale}"
