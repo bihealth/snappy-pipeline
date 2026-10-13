@@ -64,8 +64,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         self.index_ngs_library_to_pedigree = {}
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-        # Define mapper+caller tag
-        self.mapper_caller_tag = self._get_mapper_caller_tag()
 
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
@@ -86,19 +84,13 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         yield "refseq_ser", self.config.path_refseq_ser
         yield "ensembl_ser", self.config.path_ensembl_ser
         # VCF
-        tpl = (
-            f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
-            f"{self.mapper_caller_tag}{{index_ngs_library}}"
-        )
+        tpl = "work/{index_ngs_library}/out/{index_ngs_library}"
         for key, ext in KEY_EXT.items():
             yield key, tpl.format(**wildcards) + ext
 
     @dictify
     def _get_output_files_merge_vcf(self):
-        tpl = (
-            f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
-            f"{self.mapper_caller_tag}{{index_ngs_library}}"
-        )
+        tpl = "work/{index_ngs_library}/out/{index_ngs_library}"
         for key, ext in KEY_EXT.items():
             yield key, tpl + ext
 
@@ -127,12 +119,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         ]
 
     def _get_log_file_merge_vcf(self):
-        return {
-            "log": (
-                f"work/{self.mapper_caller_tag}{{index_ngs_library}}/log/"
-                f"{self.mapper_caller_tag}{{index_ngs_library}}.merge_vcf.log"
-            )
-        }
+        return {"log": ("work/{index_ngs_library}/log/{index_ngs_library}.merge_vcf.log")}
 
     def _get_log_file_annotate(self):
         return {
@@ -177,23 +164,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
             yield donor.name
-
-    def _get_mapper_caller_tag(self):
-        """Get mapper and caller tag
-
-        :return: Returns tag to be used to name intermediate and final files. Tag based on
-        information provided in configuration. Output examples: 'bwa.delly2.', 'dragen.', or ''.
-        """
-        mapper = self.config.tool_ngs_mapping
-        caller = self.config.tool_wgs_cnv_calling
-        if mapper and caller:
-            return ""
-        elif mapper or caller:
-            mapper = mapper or ""
-            caller = caller or ""
-            return ""
-        else:
-            return ""
 
 
 class WgsCnvExportExternalWorkflow(BaseStep):

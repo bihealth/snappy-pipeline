@@ -40,5 +40,7 @@ rule somatic_hla_loh_calling_lohhla:
         mem=wf.get_resource("lohhla", "run", "mem"),
         partition=wf.get_resource("lohhla", "run", "partition"),
         tmpdir=wf.get_resource("lohhla", "run", "tmpdir"),
+    params:
+        args=wf.get_params("lohhla", "run"),
     wrapper:
         wf.wrapper_path("lohhla")

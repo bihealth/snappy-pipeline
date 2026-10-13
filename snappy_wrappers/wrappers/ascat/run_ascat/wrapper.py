@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for actually running ASCAT"""
 
+import os
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -11,6 +12,23 @@ if TYPE_CHECKING:
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
+
+# ASCAT names its files after the tumor library; the declared outputs are the only ones kept.
+# The R script runs in $TMPDIR, so the targets are absolute.
+ascat_files = {
+    "goodness_of_fit": "goodness_of_fit.txt",
+    "ploidy": "ploidy.txt",
+    "purity": "aberrantcellfraction.txt",
+    "segments": "segments.txt",
+    "segments_raw": "segments_raw.txt",
+    "plot_tumour": "tumour.png",
+    "plot_germline": "germline.png",
+    "plot_aspcf": "ASPCF.png",
+}
+copy_results = "\n".join(
+    f"cp {args['tumor_library']}.{suffix} {os.path.abspath(snakemake.output[key])}"
+    for key, suffix in ascat_files.items()
+)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -60,36 +78,19 @@ ascat.plotSegmentedData(ascat.bc)
 ascat.output = ascat.runAscat(ascat.bc)
 
 # Write out results.
-write.table(ascat.output$nA, "{args[tumor_library]}.na.txt");
-write.table(ascat.output$nB, "{args[tumor_library]}.nb.txt");
 write.table(ascat.output$goodnessOfFit, "{args[tumor_library]}.goodness_of_fit.txt");
 write.table(ascat.output$ploidy, "{args[tumor_library]}.ploidy.txt");
-write.table(ascat.output$psi, "{args[tumor_library]}.psi.txt");
 write.table(ascat.output$segments, "{args[tumor_library]}.segments.txt");
 write.table(ascat.output$segments_raw, "{args[tumor_library]}.segments_raw.txt");
 write.table(ascat.output$aberrantcellfraction, "{args[tumor_library]}.aberrantcellfraction.txt");
 EOF
 
-out_dir=$(readlink -f $(dirname {snakemake.output.done}))
-
 cd $TMPDIR
 R --vanilla < run_ascat.R
 
 # -------------------------------------------------------------------------------------------------
-# Move out output
+# Keep the declared output
 #
-
-for suffix in .ASCATprofile.png .ASPCF.png .germline.png .rawprofile.png .sunrise.png .tumour.png \
-              .na.txt .nb.txt .goodness_of_fit.txt .ploidy.txt .segments.txt .segments_raw.txt \
-              .psi.txt .aberrantcellfraction.txt; do
-    if [ -f "{args[tumor_library]}$suffix" ]; then
-        cp \
-            {args[tumor_library]}$suffix \
-            $out_dir
-    else
-        echo "WARNING {args[tumor_library]}$suffix -- File does not exist"
-    fi
-
-done
+{copy_results}
 """
 )

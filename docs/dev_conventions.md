@@ -151,7 +151,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A step lists what its tasks produce in `produces`.
   If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
   For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
-- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `reference`, `features`, `dbsnp` and `index`.
+- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp` and `index`.
   A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`.
   `test_depends_on_keys_use_the_vocabulary` checks this.
 - `reference` (genome FASTA), `features` (gene annotation GTF) and `dbsnp` use the shared field types `Reference`, `Features` and `Dbsnp` from `snappy_pipeline.workflows.abstract.protocol`.
@@ -170,6 +170,8 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
   `get_output_paths` receives the picked signature and returns the matching file.
   `get_upstream_paths(field, signature=...)` narrows the requirement for a single lookup.
 - `load_project()` computes the signatures of every task in dependency order and checks each requirement before Snakemake builds any rule.
+  It also checks that the provider's `get_output_paths` for the picked signature has every required key of the field's `ExpectedPathSchema`.
+  So `get_output_paths` returns only the keys the task's config really produces.
   A mismatch fails with a message that names both tasks.
 - Consumers read upstream files only through `get_upstream_paths(field, library_name=...)`.
   It returns the provider's named outputs (`.bam`, `.vcf`, ...) wrapped in the field's `ExpectedPathSchema`, and the schema receives only the keys it declares.

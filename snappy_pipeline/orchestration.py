@@ -240,26 +240,28 @@ def _task_signatures(
                     f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
                 )
             upstream_signatures[field] = selected
-            _check_output_keys(task.name, field, fields[field], upstream, steps, task_configs)
+            _check_output_keys(
+                task.name, field, fields[field], upstream, selected, steps, task_configs
+            )
         signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
             config, upstream_signatures
         )
     return signatures
 
 
-def _check_output_keys(task_name, field, field_info, upstream, steps, task_configs) -> None:
-    """Raise if the upstream task does not provide the keys of the field's ``ExpectedPathSchema``.
-
-    Only tasks whose config determines their outputs (``output_keys()``) are checked.
-    """
+def _check_output_keys(
+    task_name, field, field_info, upstream, signature, steps, task_configs
+) -> None:
+    """Raise if the upstream task does not provide the keys of the field's ``ExpectedPathSchema``
+    for the signature the field selected."""
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     schema = next(
         (m.schema for m in field_info.metadata if isinstance(m, ExpectedPathSchema)), None
     )
-    keys = WORKFLOW_REGISTRY[steps[upstream]].output_keys(task_configs[upstream])
-    if schema is None or keys is None:
+    if schema is None:
         return
+    keys = WORKFLOW_REGISTRY[steps[upstream]].output_keys(task_configs[upstream], signature)
     missing = [
         name for name, f in schema.model_fields.items() if f.is_required() and name not in keys
     ]

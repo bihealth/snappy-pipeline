@@ -33,6 +33,13 @@ class ExpectedSomaticVariants(BaseModel):
     vcf_tbi: str
 
 
+class ExpectedPanelOfNormals(BaseModel):
+    """Consumer-driven contract: the panel of normals VCF of a mutect2 panel_of_normals task."""
+
+    vcf: str
+    vcf_tbi: str
+
+
 class BafFileGeneration(ToggleModel):
     min_dp: Annotated[int, Field(ge=1)] = 10
     """minimal DP of variant, must be >=1"""
@@ -121,12 +128,6 @@ class Contamination(ToggleModel, GATK):
 
 
 class Mutect2(Parallel, GATK):
-    # Sadly a type of
-    # `FilePath | None = None`
-    # still applies `FilePath` validation on `None`, which errors
-    panel_of_normals: str | None = ""
-    """Set path to panel of normals vcf if required"""
-
     germline_resource: str | None = ""
     """Germline variants resource (same as panel of normals)"""
 
@@ -155,6 +156,16 @@ class VariantCallingDependsOn(SnappyModel):
     dbsnp: Dbsnp = ""
     """Needed by the GATK callers"""
 
+    panel_of_normals: Annotated[
+        str,
+        DataSignature(DataType.MODELS, frozenset({"pon", "mutect2"})),
+        ExpectedPathSchema(ExpectedPanelOfNormals),
+    ] = ""
+    """
+    Optional for ``tool: mutect2``: a ``panel_of_normals`` task with ``tool: mutect2``,
+    whose panel VCF Mutect2 uses to filter recurrent artefacts.
+    """
+
 
 TOOL_DEPENDENCIES = {
     tool: ("dbsnp",)
@@ -168,6 +179,7 @@ class VariantCalling(SnappyStepModel):
     tool: Annotated[Tool, EnumField(Tool)]
 
     ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
+    """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
     baf_file_generation: BafFileGeneration = BafFileGeneration()
 

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference_path = snakemake.input.reference
-genome_path = snakemake.input.reference_genome
+fai_path = snakemake.input.reference_fai
 targets_bed = snakemake.input.targets_bed
 
 ShellWrapper(snakemake).run(
@@ -22,7 +22,7 @@ zcat --force {targets_bed} \
 
 bedtools sort \
     -i $TMPDIR/targets.tmp.bed \
-    -faidx {genome_path} \
+    -faidx {fai_path} \
 | uniq \
 > $TMPDIR/targets.bed
 

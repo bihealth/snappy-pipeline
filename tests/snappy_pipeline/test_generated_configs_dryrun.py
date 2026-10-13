@@ -71,15 +71,14 @@ GERMLINE_TASKS = {
     "variant_calling_gatk3_ug",
     "variant_calling_gatk4_hc_gvcf",
     "variant_calling_gatk4_hc_joint",
-    "variant_phasing",
+    "variant_phasing_gatk_phase_by_transmission",
+    "variant_phasing_gatk_read_backed_phasing",
     "igv_session_generation",
 }
 
 
 #: Closures whose DAG cannot be built yet, with the reason. Strict xfail, so a fix shows up.
-KNOWN_BROKEN = {
-    "igv_session_generation": "still builds tool-prefixed upstream paths",
-}
+KNOWN_BROKEN: dict[str, str] = {}
 
 #: Closures that target no files, with the reason. Every other closure must target at least one
 #: file, otherwise its snapshot checks nothing.

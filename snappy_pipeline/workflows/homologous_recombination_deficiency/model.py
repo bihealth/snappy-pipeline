@@ -8,7 +8,6 @@ from snappy_pipeline.workflows.abstract.protocol import (
     ExpectedPathSchema,
     Reference,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
 class ExpectedSomaticCnvCalls(SnappyModel):
@@ -41,12 +40,6 @@ class HomologousRecombinationDeficiencyDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
-    ]
-
-    alignments: Annotated[
-        str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
     ]
 
     reference: Reference

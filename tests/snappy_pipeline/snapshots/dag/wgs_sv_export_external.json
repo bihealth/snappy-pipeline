@@ -74,8 +74,6 @@
      "merge_vcf_flag": false,
      "relationships": null,
      "release": "GRCh37",
-     "tool_ngs_mapping": null,
-     "tool_sv_calling_wgs": null,
      "varfish_server_compatibility": false
     },
     "step_name": "wgs_sv_export_external",

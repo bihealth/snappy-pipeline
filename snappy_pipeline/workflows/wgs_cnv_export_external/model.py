@@ -31,12 +31,6 @@ class WgsCnvExportExternalDependsOn(SnappyModel):
 class WgsCnvExportExternal(SnappyStepModel):
     depends_on: WgsCnvExportExternalDependsOn
 
-    tool_ngs_mapping: str | None = None
-    """used to create output file prefix."""
-
-    tool_wgs_cnv_calling: str | None = None
-    """used to create output file prefix."""
-
     merge_vcf_flag: bool = False
     """true if pedigree VCFs still need merging (not recommended)."""
 

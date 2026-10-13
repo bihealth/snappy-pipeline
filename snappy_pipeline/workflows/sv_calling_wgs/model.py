@@ -144,7 +144,15 @@ class SvCallingWgs(SnappyStepModel):
 
     sniffles2: Sniffles2 | None = None
 
-    ignore_chroms: list[str] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "chrUn_*"]
+    ignore_chroms: list[str] = [
+        "^NC_007605$",
+        "^hs37d5$",
+        "^chrEBV$",
+        "_decoy$",
+        "^HLA-",
+        "^chrUn_",
+    ]
+    """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
     @model_validator(mode="after")
     def ensure_tools_are_configured(self):

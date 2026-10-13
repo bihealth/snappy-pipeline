@@ -29,6 +29,7 @@ The ``tool`` field selects the caller.
 The germline callers produce one result per cohort with ``group_by: cohort``, named after the index library, and one per library with ``group_by: library``.
 ``mutect2`` produces one result per tumor library.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
+With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_normals`` task with ``tool: mutect2``, whose panel VCF Mutect2 uses to filter recurrent artefacts.
 Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
 
 Outputs
@@ -609,20 +610,12 @@ class SomaticVariantCallingStepPart(BaseStepPart):
         return input_files
 
     def get_normal_lib_name(self, wildcards):
+        """Return the matched normal library of the tumor library, or None"""
         df = self.parent.build_library_dataframe()
         tumor_df = df[df["library_name"] == wildcards.library_name]
         if tumor_df.empty:
             return None
-        # Use relationship column if available (resolved via config relationships).
-        normal_lib = tumor_df.iloc[0].get("matched_normal_lib", "")
-        if normal_lib:
-            return normal_lib
-        # Fallback: find normal libraries for the same donor.
-        donor_name = tumor_df.iloc[0]["donor_name"]
-        normal_df = df[(df["donor_name"] == donor_name) & (df["role"] == "normal")]
-        if not normal_df.empty:
-            return normal_df.iloc[0]["library_name"]
-        return None
+        return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     def get_tumor_lib_name(self, wildcards):
         return wildcards.library_name
@@ -665,15 +658,8 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         }
 
     def _get_params_scatter(self, wildcards):
-        ignore_chroms = list(
-            set(
-                self.w_config.get("ignore_chroms", [])
-                + self.config.get("ignore_chroms", [])
-                + self.config.get(self.name).get("ignore_chroms", [])
-            )
-        )
         return {
-            "ignore_chroms": sorted(list(ignore_chroms)),
+            "ignore_chroms": sorted(set(self.config.ignore_chroms)),
             "padding": self.config.mutect2.padding,
             "java_options": self.config.mutect2.contamination.java_options,
             "extra_arguments": self.config.mutect2.contamination.extra_arguments,
@@ -701,9 +687,6 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "java_options": self.config.mutect2.java_options,
             "extra_arguments": self.config.mutect2.extra_arguments,
         }
-
-    def _get_params_gather(self, wildcards):
-        return {}
 
     def _get_params_filter(self, wildcards):
         return self.config.mutect2.filtration.model_dump(by_alias=True)
@@ -746,8 +729,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         if self.config.mutect2.germline_resource:
             input_files["germline_resource"] = self.config.mutect2.germline_resource
-        if self.config.mutect2.panel_of_normals:
-            input_files["panel_of_normals"] = self.config.mutect2.panel_of_normals
+        if self.config.depends_on.panel_of_normals:
+            pon = self.parent.get_upstream_paths("panel_of_normals")
+            input_files["panel_of_normals"] = pon.vcf
+            input_files["panel_of_normals_tbi"] = pon.vcf_tbi
 
         return input_files
 

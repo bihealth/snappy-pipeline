@@ -33,9 +33,9 @@ export R_LIBS_USER="{lib_path}"
 export VROOM_CONNECTION_SIZE=2000000000
 
 # Necessary because scarHRD litters the current directory
-pushd $(dirname {snakemake.output.scarHRD})
+pushd $(dirname {snakemake.output.hrd})
 
-fn=$(basename "{snakemake.output.scarHRD}")
+fn=$(basename "{snakemake.output.hrd}")
 
 cat << __EOF | R --vanilla --slave
 library("scarHRD")

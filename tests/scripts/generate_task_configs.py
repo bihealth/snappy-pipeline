@@ -41,7 +41,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "germline_variants": "variant_filtration_bcftools",
     "hla_types": "hla_typing_optitype",
     "index": "reference_index_bwa",
-    "phased_variants": "variant_phasing",
+    "phased_variants": "variant_phasing_gatk_read_backed_phasing",
     "reads": "data_sets",
     "reference": "genome",
     "somatic_variants": "variant_calling_mutect2",
@@ -61,6 +61,8 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
     ("homologous_recombination_deficiency", "copy_number"): (
         "somatic_targeted_seq_cnv_calling_sequenza"
     ),
+    # The neoepitope steps read RNA alignments with their strandedness.
+    ("somatic_neoepitope_prediction", "alignments"): "ngs_mapping_star",
     ("somatic_neoepitope_prediction", "germline_variants"): None,
     # Annotation of germline calls; revisit when the neoepitope steps are ported.
     ("somatic_neoepitope_prediction", "somatic_variants"): "variant_annotation_vep",
@@ -344,9 +346,8 @@ def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[s
     return {
         "reference": resolve(reference),
         "star_index": str(FIXTURES / "star_index"),
-        "mehari_db": str(FIXTURES / "mehari_db"),
         "cnvkit_targets": str(FIXTURES / "cnvkit_targets.bed"),
-        "cnvkit_antitargets": str(FIXTURES / "cnvkit_antitargets.bed"),
+        "mehari_db": str(FIXTURES / "mehari_db"),
         "gcnv_targeted": gcnv_models("default"),
         "gcnv_wgs": gcnv_models("wgs"),
         "placeholder_file": PLACEHOLDER_FILE,
@@ -399,7 +400,15 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("ngs_mapping", None): {
         "target_coverage_report": {"enabled": False, "path_target_interval_list_mapping": []}
     },
-    ("ngs_mapping", "bwa"): {"library_selection": DNA},
+    ("ngs_mapping", "bwa"): {
+        "library_selection": DNA,
+        "target_coverage_report": {
+            "enabled": Overwrite(True),
+            "path_target_interval_list_mapping": Overwrite(
+                [{"name": "__default__", "pattern": ".*", "path": Fixture("cnvkit_targets")}]
+            ),
+        },
+    },
     ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA},
     ("ngs_mapping", "minimap2"): {"library_selection": DNA},
     ("ngs_mapping", "mbcs"): {
@@ -457,13 +466,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "rna": {"class_i": None, "class_ii": None},
         }
     },
-    ("somatic_targeted_seq_cnv_calling", "cnvkit"): {
-        "cnvkit": {
-            "path_target": Fixture("cnvkit_targets"),
-            "path_antitarget": Fixture("cnvkit_antitargets"),
-        }
-    },
-    ("somatic_targeted_seq_cnv_calling", "purecn"): {"purecn": {"path_container": PLACEHOLDER}},
     ("somatic_wgs_cnv_calling", "control_freec"): {
         "control_freec": {"path_chrlenfile": PLACEHOLDER, "path_mappability": PLACEHOLDER}
     },
@@ -498,7 +500,9 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "path_exon_bed": PLACEHOLDER,
     },
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
-    ("variant_phasing", None): {"gatk_read_backed_phasing": {"num_jobs": Overwrite(2)}},
+    ("variant_phasing", "gatk_read_backed_phasing"): {
+        "gatk_read_backed_phasing": {"num_jobs": Overwrite(2)}
+    },
     ("variant_filtration", "bcftools"): {"bcftools": {"exclude": "FILTER ~ 'low_depth'"}},
     ("variant_filtration", "regions"): {"regions": {"exclude": REFERENCE}},
     ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},
@@ -595,9 +599,19 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
     if step_name == "ngs_mapping" and tool is not None:
         depends_on["index"] = f"reference_index_{'bwa' if tool == 'mbcs' else tool}"
 
-    # The purecn panel of normals builds on the mutect2 one.
+    # The purecn panel of normals builds on the mutect2 one, the cnvkit one uses the access regions.
     if step_name == "panel_of_normals" and tool == "purecn":
         depends_on["panel_of_normals"] = f"{step_name}_mutect2"
+    if step_name == "panel_of_normals" and tool == "cnvkit":
+        depends_on["access"] = f"{step_name}_access"
+
+    # Read-backed phasing refines the result of phasing by transmission.
+    if step_name == "variant_phasing" and tool == "gatk_read_backed_phasing":
+        depends_on["variants"] = "variant_phasing_gatk_phase_by_transmission"
+
+    # Mutect2 calling filters with the mutect2 panel of normals.
+    if step_name == "variant_calling" and tool == "mutect2":
+        depends_on["panel_of_normals"] = "panel_of_normals_mutect2"
 
     # cnvkit and purecn read the panel of normals built with the same tool.
     if step_name == "somatic_targeted_seq_cnv_calling" and tool in ("cnvkit", "purecn"):

@@ -94,7 +94,7 @@ class ExternalDataWorkflow(BaseStep):
         return (DataSignature(DataType(config.produces.type), frozenset(config.produces.tags)),)
 
     @classmethod
-    def output_keys(cls, config) -> set[str]:
+    def output_keys(cls, config, signature=None) -> set[str]:
         """The keys of ``files``, or the keys of the search patterns."""
         if config.files:
             return set(config.files)

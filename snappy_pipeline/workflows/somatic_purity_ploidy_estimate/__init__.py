@@ -15,19 +15,20 @@ Outputs
 The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
 - ``{tumor_library}/out/{tumor_library}.ploidy.txt``: the estimated ploidy.
+- ``{tumor_library}/out/{tumor_library}.aberrantcellfraction.txt``: the estimated purity.
 - ``{tumor_library}/out/{tumor_library}.goodness_of_fit.txt``
 - ``{tumor_library}/out/{tumor_library}.segments.txt`` and ``{tumor_library}/out/{tumor_library}.segments_raw.txt``: the fitted and the raw copy number segments.
+- ``{tumor_library}/out/{tumor_library}.tumour.png``, ``.germline.png`` and ``.ASPCF.png``: the raw tumor and germline data, and the segmentation.
 
-Downstream tasks read the key ``done``, the marker file ``{tumor_library}/out/.done`` in ``work/``.
+Downstream tasks read the keys ``ploidy``, ``purity``, ``goodness_of_fit``, ``segments`` and ``segments_raw``.
 The B-allele frequency and coverage files per library are intermediate files.
-The purity (``{tumor_library}.aberrantcellfraction.txt``), the ASCAT plots and other ASCAT results are written to the same directory in ``work/``.
-They are not published.
+ASCAT also writes the profile plots (``.ASCATprofile.png``, ``.rawprofile.png`` and ``.sunrise.png``) when it finds a solution.
+They are not kept.
 """
 
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -64,8 +65,6 @@ class AscatStepPart(BaseStepPart):
         "baf_normal",
         "cnv_tumor",
         "cnv_normal",
-        "cnv_tumor_wes",
-        "cnv_normal_wes",
         "run_ascat",
     )
 
@@ -75,18 +74,19 @@ class AscatStepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = {
-        "run_ascat": (
-            "goodness_of_fit",
-            "goodness_of_fit_md5",
-            "ploidy",
-            "ploidy_md5",
-            "segments",
-            "segments_md5",
-            "segments_raw",
-            "segments_raw_md5",
-        )
+    #: Files of ``run_ascat``: output key and suffix
+    result_suffixes = {
+        "goodness_of_fit": "goodness_of_fit.txt",
+        "ploidy": "ploidy.txt",
+        "purity": "aberrantcellfraction.txt",
+        "segments": "segments.txt",
+        "segments_raw": "segments_raw.txt",
+        "plot_tumour": "tumour.png",
+        "plot_germline": "germline.png",
+        "plot_aspcf": "ASPCF.png",
     }
+
+    published_keys = {"run_ascat": tuple(k + md5 for k in result_suffixes for md5 in ("", "_md5"))}
 
     default_resource_usage = ResourceUsage(threads=8, runtime="2d", mem=f"{10 * 1024 * 8}MB")
 
@@ -130,20 +130,6 @@ class AscatStepPart(BaseStepPart):
         """Return input files for generating CNV file for the normal."""
         return self._get_input_files_baf_normal(wildcards)
 
-    def _get_input_files_cnv_tumor_wes(self, wildcards):
-        """Return input files for generating CNV file from copywriter for tumor."""
-        raise NotImplementedError(
-            "Copywriter-based WES CNV input is not available: no somatic_targeted_seq_cnv_calling "
-            "tool writes copywriter bins."
-        )
-
-    def _get_input_files_cnv_normal_wes(self, wildcards):
-        """Return input files for generating CNV file from copywriter for normal."""
-        raise NotImplementedError(
-            "Copywriter-based WES CNV input is not available: no somatic_targeted_seq_cnv_calling "
-            "tool writes copywriter bins."
-        )
-
     @dictify
     def _get_input_files_run_ascat(self, wildcards):
         """Return input files for actually running ASCAT."""
@@ -180,12 +166,10 @@ class AscatStepPart(BaseStepPart):
     @dictify
     def _get_output_files_run_ascat(self):
         """Return output files for actually running ASCAT."""
-        yield "done", touch("work/{tumor_library}/out/.done")
-        infixes = ("goodness_of_fit", "ploidy", "segments", "segments_raw")
-        for infix in infixes:
-            path = ("work/{tumor_library}/out/{tumor_library}.%s.txt") % infix
-            yield infix, path
-            yield infix + "_md5", path + ".md5"
+        for key, suffix in self.result_suffixes.items():
+            path = f"work/{{tumor_library}}/out/{{tumor_library}}.{suffix}"
+            yield key, path
+            yield key + "_md5", path + ".md5"
 
     def _get_params_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
@@ -195,7 +179,6 @@ class AscatStepPart(BaseStepPart):
 
     def _get_log_file(self, action):
         """Return path to log file"""
-        # TODO: implement log option for actions `cnv_tumor_wes` and `cnv_normal_wes`.
         log_dict = {
             "baf_tumor": "work/{tumor_library}/log/{tumor_library}.baf_tumor.log",
             "baf_normal": "work/{normal_library}/log/{normal_library}.baf_normal.log",
@@ -233,7 +216,11 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local purity/ploidy output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"work/{lib}/out/.done"}
+        return {
+            key: f"work/{lib}/out/{lib}.{suffix}"
+            for key, suffix in AscatStepPart.result_suffixes.items()
+            if not key.startswith("plot_")
+        }
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

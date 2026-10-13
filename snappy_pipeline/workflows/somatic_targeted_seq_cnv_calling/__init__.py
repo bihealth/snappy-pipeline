@@ -4,9 +4,9 @@
 The step detects copy number alterations in cancer samples from targeted sequencing (exomes or large panels).
 The ``tool`` field selects the caller, which starts from the aligned reads:
 
-- ``cnvkit`` compares the tumor coverage with a CNVkit panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: cnvkit``).
+- ``cnvkit`` compares the tumor coverage with a CNVkit panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: cnvkit``) and reads its target and antitarget regions.
 - ``sequenza`` compares the tumor with its matched normal and estimates the purity and ploidy.
-- ``purecn`` needs a PureCN panel of normals (``depends_on.panel_of_normals``) and somatic variants (``depends_on.variants``).
+- ``purecn`` needs a PureCN panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: purecn``, which also gives the container) and somatic variants (``depends_on.variants``).
   The variants must come from Mutect2 and include the germline variants.
   See :ref:`step_panel_of_normals`.
 
@@ -308,7 +308,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "normaldb", pon.panel_of_normals
         yield "mapping_bias", pon.mapping_bias
         yield "intervals", pon.intervals
-        yield "container", self.config.purecn.path_container
+        yield "container", pon.container
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
@@ -317,8 +317,9 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         )
         yield "bam", alignments.bam
         yield "bai", alignments.bai
-        yield "intervals", self.parent.get_upstream_paths("panel_of_normals").intervals
-        yield "container", self.config.purecn.path_container
+        pon = self.parent.get_upstream_paths("panel_of_normals")
+        yield "intervals", pon.intervals
+        yield "container", pon.container
 
     _prefix = "work/{tumor_library}/out/{tumor_library}"
 
@@ -423,12 +424,13 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.tumor_library
         )
+        pon = self.parent.get_upstream_paths("panel_of_normals")
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "target": self.config.cnvkit.path_target,
-            "antitarget": self.config.cnvkit.path_antitarget,
+            "target": pon.target,
+            "antitarget": pon.antitarget,
         }
 
     def _get_input_files_fix(self, wildcards):
@@ -603,6 +605,18 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     produces = [DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"}))]
 
     config_model_class = SomaticTargetedSeqCnvCallingConfigModel
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """The somatic CNVs; the panel of normals must have been built with the task's tool."""
+        pon = upstream.get("panel_of_normals")
+        if config.tool in (Tool.cnvkit, Tool.purecn) and str(config.tool) not in pon.tags:
+            raise ValueError(
+                f"tool={config.tool} needs a panel_of_normals task with tool={config.tool}, "
+                f"but depends_on.panel_of_normals is {config.depends_on.panel_of_normals!r}, "
+                f"which produces {pon}"
+            )
+        return tuple(cls.produces)
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet

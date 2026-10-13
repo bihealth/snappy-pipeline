@@ -30,9 +30,14 @@ The individual files per normal stay in ``work/``, so the panel can be extended 
 - ``purecn``: ``panel_of_normals/out/panel_of_normals.rds``, ``panel_of_normals.mapping_bias.rds``, ``panel_of_normals.intervals.list`` and ``panel_of_normals.intervals.bed.gz`` (with ``.tbi``).
 - ``access``: ``panel_of_normals/out/panel_of_normals.accessible.bed``.
 
-Downstream tasks read the keys ``genomicsdb`` (``mutect2``), ``panel_of_normals`` (``cnvkit``, ``purecn``), and ``mapping_bias`` and ``intervals`` (``purecn``) through their ``depends_on.panel_of_normals``.
-The ``access`` task has no keys.
-Its file is passed to a ``cnvkit`` task in ``cnvkit.path_access``.
+Downstream tasks read these keys through their ``depends_on.panel_of_normals``:
+
+- ``mutect2``: ``vcf`` and ``vcf_tbi`` (the panel, read by ``variant_calling``), and ``genomicsdb`` (read by the ``purecn`` task).
+- ``cnvkit``: ``panel_of_normals``, ``target`` and ``antitarget``.
+- ``purecn``: ``panel_of_normals``, ``mapping_bias``, ``intervals`` and ``container``.
+
+The ``access`` task gives the key ``access``.
+A ``cnvkit`` task names it in ``depends_on.access``, as it can an ``external_data`` task that produces ``{type: raw, tags: [access]}`` with the key ``access``.
 
 The CNVkit authors recommend checking the metrics and sex reports before a panel is used.
 The sex report predicts the donor sex from the coverage of the chromosomes X and Y.
@@ -48,7 +53,7 @@ The step follows the common practice and distributes the computations over sever
 An empty ``cnvkit.path_target`` selects the whole genome mode.
 For exomes, the access file only restricts the antitarget regions.
 For whole genomes, ``autobin`` uses it to compute the average target size.
-Without a ``path_access``, whole genome mode creates an access file with default settings.
+Without ``depends_on.access``, whole genome mode creates an access file with default settings.
 The CNVkit distribution provides an access file for ``GRCh37``, but it is incomplete for ``GRCh38``.
 Run a task with ``tool: access`` to create one from regions to exclude (``access.exclude``).
 
@@ -370,9 +375,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "extra_arguments": self.config.mutect2.extra_arguments,
         }
 
-    def _get_params_gather(self, wildcards):
-        return {}
-
     def _get_params_create_panel(self, wildcards):
         return self.config.mutect2.genomicsdb.model_dump(by_alias=True)
 
@@ -469,9 +471,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             args["bp_per_bin"] = cfg.bp_per_bin
         return args
 
-    def _get_input_files_access(self, wildcards):
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
-
     def _get_input_files_target(self, wildcards):
         """Helper wrapper function to estimate target average size in wgs mode"""
         if not self.is_wgs:
@@ -488,8 +487,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "bais": [x.bai for x in alignments],
             "reference": self.parent.get_upstream_paths("reference").fasta,
         }
-        if self.config.cnvkit.path_access:
-            input_files["access"] = self.config.cnvkit.path_access
+        if self.config.depends_on.access:
+            input_files["access"] = self.parent.get_upstream_paths("access").access
         if self.config.cnvkit.path_annotation:
             input_files["annotate"] = self.config.cnvkit.path_annotation
         return input_files
@@ -501,8 +500,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         result = {
             "target": "work/panel_of_normals/out/panel_of_normals.target.bed".format(**wildcards),
         }
-        if path_access := self.config.cnvkit.path_access:
-            result["access"] = path_access
+        if self.config.depends_on.access:
+            result["access"] = self.parent.get_upstream_paths("access").access
         return result
 
     def _get_input_files_coverage(self, wildcards):
@@ -605,10 +604,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
 
     def _get_output_files_run(self):
         tpl = "work/panel_of_normals/out/panel_of_normals.accessible.bed"
-        # Only published (and so hashed) when access is the task's tool
-        if self.config.tool == "access":
-            return {"access": tpl, "access_md5": tpl + ".md5"}
-        return {"access": tpl}
+        return {"access": tpl, "access_md5": tpl + ".md5"}
 
 
 class PanelOfNormalsWorkflow(BaseStep):
@@ -617,6 +613,13 @@ class PanelOfNormalsWorkflow(BaseStep):
     # Workflow name
     name = "panel_of_normals"
     produces = [DataSignature(DataType.MODELS, frozenset({"pon"}))]
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """The panel of normals of the task's tool; the access regions for ``tool: access``."""
+        if config.tool == Tool.access:
+            return (DataSignature(DataType.RAW, frozenset({"access"})),)
+        return (DataSignature(DataType.MODELS, frozenset({"pon", str(config.tool)})),)
 
     config_model_class = PanelOfNormalsConfigModel
 
@@ -632,17 +635,28 @@ class PanelOfNormalsWorkflow(BaseStep):
         """Return local panel-of-normals output paths for downstream consumers."""
         match config.tool:
             case Tool.mutect2:
+                prefix = "work/panel_of_normals/out/panel_of_normals"
                 return {
-                    "genomicsdb": "work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
+                    "vcf": prefix + ".vcf.gz",
+                    "vcf_tbi": prefix + ".vcf.gz.tbi",
+                    "genomicsdb": prefix + ".genomicsDB.tar.gz",
                 }
             case Tool.cnvkit:
-                return {"panel_of_normals": "work/panel_of_normals/out/panel_of_normals.cnn"}
+                prefix = "work/panel_of_normals/out/panel_of_normals"
+                return {
+                    "panel_of_normals": prefix + ".cnn",
+                    "target": prefix + ".target.bed",
+                    "antitarget": prefix + ".antitarget.bed",
+                }
             case Tool.purecn:
                 return {
                     "panel_of_normals": "work/panel_of_normals/out/panel_of_normals.rds",
                     "mapping_bias": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
                     "intervals": "work/panel_of_normals/out/panel_of_normals.intervals.list",
+                    "container": "work/containers/out/container.simg",
                 }
+            case Tool.access:
+                return {"access": "work/panel_of_normals/out/panel_of_normals.accessible.bed"}
         return {}
 
     def __init__(self, workflow, project, task_name):
@@ -659,8 +673,7 @@ class PanelOfNormalsWorkflow(BaseStep):
                 selected = PureCnStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        extra = [AccessStepPart] if self.config.tool == "cnvkit" else []
-        self.register_sub_step_classes((selected, *extra))
+        self.register_sub_step_classes((selected,))
 
     @listify
     def get_result_files(self):

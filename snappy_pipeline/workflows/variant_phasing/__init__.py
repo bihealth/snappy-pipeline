@@ -1,47 +1,46 @@
-# -*- coding: utf-8 -*-
 """Variant phasing with GATK
 
-Phases the annotated germline variants of ``depends_on.variants`` with GATK, using the alignments of ``depends_on.alignments``.
+Phases the germline variants of ``depends_on.variants`` with GATK.
 The task produces one result per child in a pedigree whose parents are both sequenced.
 
-The ``phasings`` field selects what runs and is published.
-``gatk_phase_by_transmission`` runs PhaseByTransmission, ``gatk_read_backed_phasing`` runs ReadBackedPhasing, and ``gatk_phasing_both`` runs the first, then the second on its result.
-Both tools have limitations:
+The ``tool`` field selects the phasing:
 
-- PhaseByTransmission changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
-- Read-backed phasing is not fully reliable.
+- ``gatk_phase_by_transmission`` runs PhaseByTransmission on the annotated variants. It changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
+- ``gatk_read_backed_phasing`` runs ReadBackedPhasing with the alignments of the trio (``depends_on.alignments``), scattered over ``gatk_read_backed_phasing.num_jobs`` chunks of the genome. It is not fully reliable.
 
+One task runs one tool.
+To use both, add a ``gatk_read_backed_phasing`` task whose ``depends_on.variants`` names the ``gatk_phase_by_transmission`` task.
 Only results of the GATK variant callers can be phased.
 It is unclear how useful the phasing is for clinical studies.
 
 Outputs
 -------
 
-Below ``tasks/<task>/output/``, for each selected phasing:
+Below ``tasks/<task>/output/``:
 
-- ``{library_name}/out/{phasing}.{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
+- ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
-``{phasing}`` is ``gatk_pbt`` for phase by transmission, ``gatk_rbp`` for read-backed phasing and ``gatk_pbt.gatk_rbp`` for both.
-Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``, and name the phasing they need.
+Here ``library_name`` is the library of the child.
+The output has the tags of the input plus ``phased``.
+Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 import os
 from collections import OrderedDict
+from functools import cached_property
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
-from snakemake.io import expand
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
 
 from .model import VariantPhasing as VariantPhasingConfigModel
 
@@ -53,14 +52,7 @@ _OUTPUTS = {
     "vcf_tbi_md5": ".vcf.gz.tbi.md5",
 }
 
-#: Translate name in configuration to token.
-CONFIG_TO_TOKEN = {
-    "gatk_read_backed_phasing": "gatk_rbp",
-    "gatk_phase_by_transmission": "gatk_pbt",
-    "gatk_phasing_both": "gatk_pbt.gatk_rbp",
-}
-
-#: Default configuration of the wgs_sv_filtration step
+_BASE_PATH_OUT = "work/{library_name}/out/{library_name}"
 
 
 class WriteTrioPedigreeStepPart(BaseStepPart):
@@ -115,10 +107,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
 
 
 class VariantPhasingBaseStep(BaseStepPart):
-    """Base step for variant phasing."""
-
-    #: The file name token.
-    name_pattern = None
+    """Base class of the phasing tools"""
 
     #: Class available actions
     actions = ("run",)
@@ -133,26 +122,21 @@ class VariantPhasingBaseStep(BaseStepPart):
                     if donor.dna_ngs_library:
                         self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
-    @property
-    def intermediate_outputs(self) -> dict[str, tuple[str, ...]]:
-        # Only feeds read-backed phasing when not published
-        published = self.name_pattern in (CONFIG_TO_TOKEN[p] for p in self.config.phasings)
-        return {} if published else {"run": ("vcf", "vcf_tbi")}
+    def _yield_vcf(self, wildcards):
+        """Yield the VCF to phase and its index
 
-    @property
-    def base_path_out(self):
-        return f"work/{{index_library}}/out/{self.name_pattern}.{{index_library}}"
-
-    @dictify
-    def _get_output_files_run(self):
-        # md5 files only for published phasings; gatk_pbt may only feed gatk_phasing_both
-        published = self.name_pattern in (CONFIG_TO_TOKEN[p] for p in self.config.phasings)
-        for key, ext in _OUTPUTS.items():
-            if published or not key.endswith("_md5"):
-                yield key, self.base_path_out + ext
+        Annotated variants are stored under the library of the pedigree's index, phased variants
+        under the library of the child.
+        """
+        library_name = wildcards.library_name
+        if not self.parent.variants_are_phased:
+            library_name = self.ngs_library_to_pedigree[library_name].index.dna_ngs_library.name
+        variants = self.parent.get_upstream_paths("variants", library_name=library_name)
+        yield "vcf", variants.vcf
+        yield "vcf_tbi", variants.vcf_tbi
 
     def _get_log_file_run(self):
-        return {"log": f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.log"}
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
 
 class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
@@ -161,29 +145,22 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     #: Name of the step in the pipeline.
     name = "gatk_phase_by_transmission"
 
-    #: The file name token.
-    name_pattern = "gatk_pbt"
+    published_keys = tuple(_OUTPUTS)
 
     @dictify
     def _get_input_files_run(self, wildcards):
         # Pedigree file required for PhaseByTransmission.
         yield (
             "ped",
-            f"work/write_pedigree.{wildcards.index_library}/out/{wildcards.index_library}.ped",
+            f"work/write_pedigree.{wildcards.library_name}/out/{wildcards.library_name}.ped",
         )
-        # Get name of real index
-        real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
-        # Annotated variant file resolved via CDC broker
-        upstream_vcf = self.parent.get_upstream_paths(
-            self.parent.previous_step, library_name=real_index.dna_ngs_library.name
-        )
-        vcf = getattr(upstream_vcf, "vcf", None) or upstream_vcf["vcf"]
-        vcf_tbi = getattr(upstream_vcf, "vcf_tbi", None) or upstream_vcf.get(
-            "vcf_tbi", vcf + ".tbi"
-        )
-        yield "vcf", vcf
-        yield "vcf_tbi", vcf_tbi
+        yield from self._yield_vcf(wildcards)
         yield "reference", self.parent.get_upstream_paths("reference").fasta
+
+    @dictify
+    def _get_output_files_run(self):
+        for key, ext in _OUTPUTS.items():
+            yield key, _BASE_PATH_OUT + ext
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {"de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior}
@@ -191,11 +168,16 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{14 * 1024}MB")
 
 
-class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
-    """Read-backed phasing, scattered over chunks of the genome and gathered per index."""
+class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
+    """Read-backed phasing, scattered over chunks of the genome and gathered per child."""
+
+    #: Name of the step in the pipeline.
+    name = "gatk_read_backed_phasing"
 
     #: Class available actions
     actions = ("scatter", "run", "gather")
+
+    published_keys = {"gather": tuple(_OUTPUTS)}
 
     temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi")}
 
@@ -205,26 +187,23 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         "gather": ResourceUsage(threads=1, runtime="4h", mem="2048MB"),
     }
 
-    #: Name in the Snakefile's ``scattergather`` directive
-    scattergather = "gatk_read_backed_phasing"
-
     def __init__(self, parent):
         super().__init__(parent)
-        # Build shortcut from library name to pedigree
+        # Build shortcut from library name to donor
         self.ngs_library_to_donor = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
             for donor in sheet.donors:
                 if donor.dna_ngs_library:
                     self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
-        self.region_tpl = f"work/{self.name_pattern}.scatter/{{scatteritem}}.region.bed"
-        self.chunk_tpl = f"work/{{index_library}}/out/{self.name_pattern}.{{index_library}}.chunks/{{scatteritem}}"
+        self.region_tpl = "work/scatter/{scatteritem}.region.bed"
+        self.chunk_tpl = "work/{library_name}/chunks/{scatteritem}"
 
     def _scattergather(self, kind):
-        return getattr(self.parent.workflow.globals.get(kind), self.scattergather)
+        return getattr(self.parent.workflow.globals.get(kind), self.name)
 
     def _yield_bams(self, wildcards):
-        """Helper function used in subclass input_function"""
-        donor = self.ngs_library_to_donor[wildcards.index_library]
+        """Yield the alignments of the trio"""
+        donor = self.ngs_library_to_donor[wildcards.library_name]
         if not (
             donor.dna_ngs_library
             and donor.father
@@ -238,20 +217,11 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
             donor.father.dna_ngs_library.name,
             donor.mother.dna_ngs_library.name,
         ]
-        bams = []
-        bais = []
-        for lib in trio_libs:
-            aln: ExpectedAlignments = self.parent.get_upstream_paths("alignments", library_name=lib)
-            bam = getattr(aln, "bam", None) or aln["bam"]
-            bai = getattr(aln, "bai", None) or aln["bai"]
-            bams.append(bam)
-            bais.append(bai)
-        yield "bam", bams
-        yield "bai", bais
-
-    def _yield_vcf(self, wildcards):
-        """Yield the VCF to phase and its index"""
-        raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
+        alignments = [
+            self.parent.get_upstream_paths("alignments", library_name=lib) for lib in trio_libs
+        ]
+        yield "bam", [aln.bam for aln in alignments]
+        yield "bai", [aln.bai for aln in alignments]
 
     def _get_input_files_scatter(self, wildcards):
         return {"fai": self.parent.get_upstream_paths("reference").fasta + ".fai"}
@@ -288,57 +258,22 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
     @dictify
     def _get_output_files_gather(self):
         for key, ext in _OUTPUTS.items():
-            yield key, self.base_path_out + ext
+            yield key, _BASE_PATH_OUT + ext
 
     def _get_log_file_scatter(self):
-        return {"log": f"work/{self.name_pattern}.scatter/log.log"}
+        return {"log": "work/scatter/log.log"}
 
     def _get_log_file_run(self):
-        prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.chunks"
-        return {"log": prefix + "/{scatteritem}.log"}
+        return {"log": "work/{library_name}/log/{library_name}.chunks/{scatteritem}.log"}
 
     def _get_log_file_gather(self):
         return super()._get_log_file_run()
 
 
-class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
-    """Read backed phasing (as primary and only step)"""
-
-    #: Name of the step in the pipeline.
-    name = "gatk_read_backed_phasing_only"
-
-    #: The file name token.
-    name_pattern = "gatk_rbp"
-
-    def _yield_vcf(self, wildcards):
-        real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
-        # Annotated variant file resolved via CDC broker
-        upstream_vcf = self.parent.get_upstream_paths(
-            self.parent.previous_step, library_name=real_index.dna_ngs_library.name
-        )
-        vcf = getattr(upstream_vcf, "vcf", None) or upstream_vcf["vcf"]
-        vcf_tbi = getattr(upstream_vcf, "vcf_tbi", None) or upstream_vcf.get(
-            "vcf_tbi", vcf + ".tbi"
-        )
-        yield "vcf", vcf
-        yield "vcf_tbi", vcf_tbi
-
-
-class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
-    """Read backed phasing (as step after phase by transmission)"""
-
-    #: Name of the step in the pipeline.
-    name = "gatk_read_backed_phasing_also"
-
-    #: The file name token.
-    name_pattern = "gatk_pbt.gatk_rbp"
-
-    def _yield_vcf(self, wildcards):
-        # Result of PhaseByTransmission step
-        infix = "work/{index_library}/out/gatk_pbt.{index_library}"
-        base_in = infix.format(**wildcards)
-        yield "vcf", base_in + ".vcf.gz"
-        yield "vcf_tbi", base_in + ".vcf.gz.tbi"
+_TOOL_STEP_PART = {
+    "gatk_phase_by_transmission": PhaseByTransmissionStepPart,
+    "gatk_read_backed_phasing": ReadBackedPhasingStepPart,
+}
 
 
 class VariantPhasingWorkflow(BaseStep):
@@ -350,60 +285,43 @@ class VariantPhasingWorkflow(BaseStep):
     sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
+    def task_produces(cls, config, upstream):
+        """The variants this task reads, tagged ``phased``."""
+        return (upstream["variants"].with_tags("phased"),)
+
+    @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local phased-variant output paths for downstream consumers."""
-        if "phasing" not in kwargs:
-            raise ValueError(
-                "Parameter 'phasing' is required when requesting output paths from "
-                "'variant_phasing' (e.g., phasing='gatk_pbt.gatk_rbp', "
-                "phasing='gatk_pbt', or phasing='gatk_rbp')."
-            )
         lib = kwargs.get("library_name", "{library_name}")
-        phasing = kwargs["phasing"]
-        prefix = f"work/{lib}/out/{phasing}.{lib}"
+        prefix = f"work/{lib}/out/{lib}"
         return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-
-        self.previous_step = "variants"
-
-        # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
-            (
-                WriteTrioPedigreeStepPart,
-                PhaseByTransmissionStepPart,
-                ReadBackedPhasingOnlyStepPart,
-                ReadBackedPhasingAlsoStepPart,
-            )
+            (WriteTrioPedigreeStepPart, _TOOL_STEP_PART[self.config.tool])
         )
 
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the variant phasing workflow."""
-        phasings = [
-            token for name, token in CONFIG_TO_TOKEN.items() if name in self.config.phasings
-        ]
-        for phasing_token in phasings:
-            yield from self._yield_result_files(
-                f"output/{{index_library.name}}/out/{phasing_token}.{{index_library.name}}{{ext}}",
-                ext=_OUTPUTS.values(),
-            )
+    @cached_property
+    def variants_are_phased(self) -> bool:
+        """Whether ``depends_on.variants`` is a phasing task, whose results are per child."""
+        dependency = self.resolve_dependency("variants")
+        produced = self.project.signatures[dependency.task_name]
+        return "phased" in select_signature(produced, dependency.signature).tags
 
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list."""
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                for donor in pedigree.donors:
-                    if (
-                        donor.dna_ngs_library
-                        and donor.father
-                        and donor.father.dna_ngs_library
-                        and donor.mother
-                        and donor.mother.dna_ngs_library
-                    ):  # only phase if both parents present
-                        yield from expand(
-                            tpl,
-                            index_library=[donor.dna_ngs_library],
-                            **kwargs,
-                        )
+    @cached_property
+    def output_entities(self) -> list[str]:
+        """The children whose parents are both sequenced: their DNA libraries."""
+        return [
+            donor.dna_ngs_library.name
+            for sheet in filter(is_not_background, self.shortcut_sheets)
+            for pedigree in sheet.cohort.pedigrees
+            for donor in pedigree.donors
+            if (
+                donor.dna_ngs_library
+                and donor.father
+                and donor.father.dna_ngs_library
+                and donor.mother
+                and donor.mother.dna_ngs_library
+            )
+        ]

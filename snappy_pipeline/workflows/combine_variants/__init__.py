@@ -65,29 +65,31 @@ class CombineVariantsStepPart(BaseStepPart):
         )
         yield "somatic_vcf", somatic.vcf
 
+        normal_lib = self.get_normal_lib_name(wildcards.tumor_library)
+        germline = self.parent.get_upstream_paths("germline_variants", library_name=normal_lib)
+        yield "germline_vcf", germline.vcf
+
+    def get_normal_lib_name(self, tumor_library: str) -> str:
+        """Return the matched normal library of the tumor library; fail if there is none"""
         df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == wildcards.tumor_library]
-        normal_lib = None
-        if not tumor_df.empty:
-            normal_lib = tumor_df.iloc[0].get("matched_normal_lib") or None
-        if normal_lib:
-            germline = self.parent.get_upstream_paths("germline_variants", library_name=normal_lib)
-            yield "germline_vcf", germline.vcf
+        tumor_df = df[df["library_name"] == tumor_library]
+        normal_lib = None if tumor_df.empty else tumor_df.iloc[0].get("matched_normal_lib")
+        if not normal_lib:
+            raise ValueError(
+                f"Tumor library {tumor_library!r} has no matched normal library, "
+                "which combine_variants needs for the germline variants"
+            )
+        return normal_lib
 
     def _get_output_files_run(self) -> dict[str, str]:
         return {key: f"{_OUT_PREFIX}{ext}" for key, ext in _OUTPUTS.items()}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if name_origin := self.config.rename_combined:
-            df = self.parent.build_library_dataframe()
-            tumor_df = df[df["library_name"] == wildcards.tumor_library]
             if name_origin == RenameCombine.TUMOR:
                 sample_name = wildcards.tumor_library
             elif name_origin == RenameCombine.GERMLINE:
-                if not tumor_df.empty:
-                    sample_name = tumor_df.iloc[0].get("matched_normal_lib") or ""
-                else:
-                    sample_name = ""
+                sample_name = self.get_normal_lib_name(wildcards.tumor_library)
             else:
                 raise MissingConfiguration(f"Unimplemented sample name type {name_origin}")
             return {"tumor_library": wildcards.tumor_library, "sample_name": sample_name}
@@ -98,6 +100,7 @@ class CombineVariantsStepPart(BaseStepPart):
         df = self.parent.build_library_dataframe()
         result = []
         for tumor_library in df[df["role"] == "tumor"]["library_name"].unique():
+            self.get_normal_lib_name(tumor_library)
             for path in self.get_output_files("run").values():
                 result += expand(path.replace("work/", "output/", 1), tumor_library=[tumor_library])
         return result

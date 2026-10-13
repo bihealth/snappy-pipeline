@@ -10,7 +10,7 @@ from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling.model import Cnv
 def _cnvkit_part(**cfg):
     # The params only read the CNVkit config section, so skip the full step setup.
     part = object.__new__(CnvKitStepPart)
-    part.cfg = Cnvkit(path_target="targets.bed", path_antitarget="antitargets.bed", **cfg)
+    part.cfg = Cnvkit(**cfg)
     return part
 
 

@@ -20,7 +20,7 @@ The task installs these R packages in a job of its own.
 Outputs
 -------
 
-The task publishes ``scarHRD.{library_name}/out/scarHRD.{library_name}.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+The task publishes ``{library_name}/out/{library_name}.hrd.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
 Downstream tasks read the key ``json``.
 """
 
@@ -55,7 +55,7 @@ class ScarHRDStepPart(BaseStepPart):
         "run",
     )
 
-    published_keys = {"run": ("scarHRD", "scarHRD_md5")}
+    published_keys = {"run": ("hrd", "hrd_md5")}
 
     resource_usage = {"run": ResourceUsage(threads=1, mem="32GB", runtime="24h")}
 
@@ -73,8 +73,8 @@ class ScarHRDStepPart(BaseStepPart):
 
     def _get_output_files_run(self):
         return {
-            "scarHRD": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json",
-            "scarHRD_md5": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json.md5",
+            "hrd": "work/{library_name}/out/{library_name}.hrd.json",
+            "hrd_md5": "work/{library_name}/out/{library_name}.hrd.json.md5",
         }
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -84,7 +84,7 @@ class ScarHRDStepPart(BaseStepPart):
         return {"log": "work/R_packages/log/scarHRD.log"}
 
     def _get_log_file_run(self):
-        return {"log": "work/scarHRD.{library_name}/log/scarHRD.{library_name}.log"}
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
 
 class HomologousRecombinationDeficiencyWorkflow(BaseStep):
@@ -103,7 +103,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HRD output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"json": f"work/scarHRD.{lib}/out/scarHRD.{lib}.json"}
+        return {"json": f"work/{lib}/out/{lib}.hrd.json"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

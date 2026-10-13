@@ -1,5 +1,5 @@
 import csv
-import fnmatch
+import re
 import sys
 import heapq
 from collections import namedtuple
@@ -8,8 +8,9 @@ from math import ceil
 
 
 def matches_any(query, patterns):
+    """Whether any regular expression matches ``query`` (``re.search``, i.e. unanchored)."""
     for pattern in patterns:
-        if fnmatch.fnmatch(query, pattern):
+        if re.search(pattern, query):
             return True
     return False
 
@@ -106,14 +107,11 @@ if __name__ == "__main__":
     if snakemake := locals().get("snakemake", None):
         from snappy_wrappers.snappy_wrapper import PythonWrapper
 
-        if args := getattr(snakemake.params, "args", None):
-            ignore_chroms = args["ignore_chroms"]
-            padding = args["padding"]
-        else:
-            ignore_chroms = snakemake.params.ignore_chroms
-            padding = snakemake.params.padding
+        args = snakemake.params.args
         PythonWrapper(snakemake).run(
-            lambda: main(snakemake.input.fai, ignore_chroms, padding, snakemake.output.regions)
+            lambda: main(
+                snakemake.input.fai, args["ignore_chroms"], args["padding"], snakemake.output.regions
+            )
         )
     else:
         with redirect_stderr(sys.stderr), redirect_stdout(sys.stderr):

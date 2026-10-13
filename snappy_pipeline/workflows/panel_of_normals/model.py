@@ -16,17 +16,16 @@ from snappy_pipeline.workflows.abstract.protocol import (
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
-class ExpectedPonPaths(BaseModel):
-    """Consumer-driven contract for panel-of-normals provider outputs; which are set depends on
-    the provider's tool."""
+class ExpectedGenomicsDb(BaseModel):
+    """Consumer-driven contract: the GenomicsDB of a mutect2 panel of normals task."""
 
-    #: mutect2: the GenomicsDB of the normals
-    genomicsdb: str | None = None
-    #: cnvkit (``.cnn``) and purecn (``.rds``): the panel of normals
-    panel_of_normals: str | None = None
-    #: purecn: mapping bias and interval list
-    mapping_bias: str | None = None
-    intervals: str | None = None
+    genomicsdb: str
+
+
+class ExpectedAccess(BaseModel):
+    """Consumer-driven contract: the accessible regions (BED)."""
+
+    access: str
 
 
 class Tool(enum.StrEnum):
@@ -122,8 +121,8 @@ class PanelOfNormalsDependsOn(SnappyModel):
 
     panel_of_normals: Annotated[
         str,
-        DataSignature(DataType.MODELS, frozenset({"pon"})),
-        ExpectedPathSchema(ExpectedPonPaths),
+        DataSignature(DataType.MODELS, frozenset({"pon", "mutect2"})),
+        ExpectedPathSchema(ExpectedGenomicsDb),
     ] = ""
     """
     Required when ``tool: purecn``.
@@ -131,11 +130,23 @@ class PanelOfNormalsDependsOn(SnappyModel):
     to produce the Mutect2 genomicsDB used by PureCN's NormalDB.R step.
     """
 
+    access: Annotated[
+        str,
+        DataSignature(DataType.RAW, frozenset({"access"})),
+        ExpectedPathSchema(ExpectedAccess),
+    ] = ""
+    """
+    Optional for ``tool: cnvkit``: the accessible regions.
+    Names a ``panel_of_normals`` task with ``tool: access``, or an ``external_data`` task
+    that produces ``{type: raw, tags: [access]}`` with the key ``access``.
+    """
+
     reference: Reference = ""
 
 
 #: The ``depends_on`` fields each tool reads; see also ``validate_purecn_dependencies``.
 TOOL_DEPENDENCIES = {
+    Tool.access: ("reference",),
     Tool.mutect2: ("alignments", "reference"),
     Tool.cnvkit: ("alignments", "reference"),
     Tool.purecn: ("alignments", "reference"),
@@ -151,25 +162,25 @@ class PanelOfNormals(SnappyStepModel):
         list[str],
         Field(
             examples=[
-                ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*", "GL000220.*"],
+                ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-", "^GL000220"],
                 [
-                    "chrEBV",
-                    "HPV*",
-                    "CMV",
-                    "HBV",
-                    "HCV-*",
-                    "HIV-*",
-                    "KSHV",
-                    "HTLV-1",
-                    "MCV",
-                    "*_decoy",
-                    "chrUn_GL00220*",
-                    "SV40",
+                    "^chrEBV$",
+                    "^HPV",
+                    "^CMV$",
+                    "^HBV$",
+                    "^HCV-",
+                    "^HIV-",
+                    "^KSHV$",
+                    "^HTLV-1$",
+                    "^MCV$",
+                    "_decoy$",
+                    "^chrUn_GL00220",
+                    "^SV40$",
                 ],
             ]
         ),
     ] = []
-    """Patterns of contig names to ignore"""
+    """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
     mutect2: Mutect2 | None = None
 

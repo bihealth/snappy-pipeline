@@ -1,6 +1,8 @@
+import enum
 from typing import Annotated
 
 from snappy_pipeline.models import (
+    EnumField,
     SnappyModel,
     SnappyStepModel,
 )
@@ -12,6 +14,11 @@ from snappy_pipeline.workflows.abstract.protocol import (
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotatedVariants
+
+
+class Tool(enum.StrEnum):
+    gatk_phase_by_transmission = "gatk_phase_by_transmission"
+    gatk_read_backed_phasing = "gatk_read_backed_phasing"
 
 
 class GatkReadBackedPhasing(SnappyModel):
@@ -42,9 +49,10 @@ class VariantPhasingDependsOn(SnappyModel):
     ]
     variants: Annotated[
         str,
-        DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
+        DataSignature(DataType.VARIANTS, frozenset({"germline", ("annotated", "phased")})),
         ExpectedPathSchema(ExpectedAnnotatedVariants),
     ]
+    """Annotated germline variants, or the phased variants of a ``gatk_phase_by_transmission`` task"""
 
     reference: Reference
 
@@ -52,10 +60,10 @@ class VariantPhasingDependsOn(SnappyModel):
 class VariantPhasing(SnappyStepModel):
     depends_on: VariantPhasingDependsOn
 
-    phasings: list[str] = ["gatk_phasing_both"]
+    tool: Annotated[Tool, EnumField(Tool)]
 
-    ignore_chroms: list[str] = ["NC_007605", "hs37d5", "chrEBV", "*_decoy", "HLA-*"]
-    """patterns of chromosome names to ignore"""
+    ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
+    """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
     gatk_read_backed_phasing: GatkReadBackedPhasing = GatkReadBackedPhasing()
 

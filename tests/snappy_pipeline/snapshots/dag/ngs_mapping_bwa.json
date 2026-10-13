@@ -127,6 +127,70 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.target_cov_report.tsv",
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.target_cov_report.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "20 GB",
+   "mem_mb": 20000,
+   "mem_mib": 19074,
+   "partition": "medium",
+   "runtime": 240
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_target_coverage_report_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/alfred/qc"
+ },
+ {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.target_cov_report.tsv",
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.target_cov_report.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "20 GB",
+   "mem_mb": 20000,
+   "mem_mib": 19074,
+   "partition": "medium",
+   "runtime": 240
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_target_coverage_report_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/alfred/qc"
+ },
+ {
   "benchmark": null,
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -148,7 +212,11 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz.md5"
   ],
   "log": [],
   "output": [

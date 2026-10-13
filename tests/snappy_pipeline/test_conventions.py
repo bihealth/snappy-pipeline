@@ -182,6 +182,7 @@ DEPENDS_ON_KEYS = {
     "hla_types",
     "strandedness",
     "panel_of_normals",
+    "access",
     "reference",
     "features",
     "dbsnp",
@@ -222,7 +223,9 @@ def test_upstream_paths_come_from_contracts():
     assert not found, f"use get_upstream_paths(field, ...) instead of upstream(field): {found}"
 
 
-#: Keys a wrapper reads from ``params.args`` only in a case that the snapshot jobs do not take.
+#: Params a wrapper reads only in a case that the snapshot jobs do not take.
+#: Keys are ``(wrapper, name)``; ``name`` is a key of ``params.args`` or, with the
+#: ``params.`` prefix, a top-level param.
 WRAPPER_PARAM_EXCEPTIONS = {
     ("cnvkit/report", "breaks"): "read only for a breaks output",
     ("cnvkit/report", "genemetrics"): "read only for a genemetrics output",
@@ -231,38 +234,85 @@ WRAPPER_PARAM_EXCEPTIONS = {
     ("vembrane/tag", "expression"): "read only in filter mode",
 }
 
-_ARGS_LITERAL = re.compile(r"""(?:^|[^\w.]|snakemake\.params\.)args\[\s*["'](\w+)["']\s*\]""", re.M)
-_ARGS_TEMPLATE = re.compile(r"\{(?:snakemake\.params\.)?args\[(\w+)\]")
-_ARGS_GUARD = re.compile(
-    r"""["'](\w+)["']\s+(?:not\s+)?in\s+(?:snakemake\.params\.)?args\b"""
-    r"""|(?:snakemake\.params\.)?args\.get\(\s*["'](\w+)["']"""
+_ARGS_ALIAS = re.compile(
+    r"""^[ \t]*(\w+)[ \t]*(?::[ \t]*[\w\[\], |]+)?=[ \t]*(?:dict\(\s*)?"""
+    r"""(?:snakemake\.params\.args\b|getattr\(\s*snakemake\.params\s*,\s*["']args["'])""",
+    re.M,
+)
+_PARAMS_ATTR = re.compile(r"""\bsnakemake\.params\.(?!args\b)(\w+)\b(?!\s*\()""")
+_PARAMS_ITEM = re.compile(r"""\bsnakemake\.params\[\s*["'](\w+)["']\s*\]""")
+_PARAMS_GETATTR = re.compile(r"""\bgetattr\(\s*snakemake\.params\s*,\s*["'](\w+)["']\s*\)""")
+_PARAMS_GUARD = re.compile(
+    r"""\bhasattr\(\s*snakemake\.params\s*,\s*["'](\w+)["']"""
+    r"""|\bgetattr\(\s*snakemake\.params\s*,\s*["'](\w+)["']\s*,"""
+    r"""|\bsnakemake\.params\.get\(\s*["'](\w+)["']"""
+    r"""|["'](\w+)["']\s+(?:not\s+)?in\s+snakemake\.params\b"""
+)
+_ARGS_GUARD = (
+    r"""["'](\w+)["']\s+(?:not\s+)?in\s+(?:snakemake\.params\.)?{name}\b"""
+    r"""|(?:snakemake\.params\.)?{name}\.get\(\s*["'](\w+)["']"""
 )
 
 
-def _wrapper_args_keys(wrapper: str) -> set[str]:
-    """Return the ``params.args`` keys that a wrapper reads without a guard or default."""
-    keys, guarded = set(), set()
+def _wrapper_reads(wrapper: str) -> tuple[set[str], set[str]]:
+    """Return the (args keys, top-level params) that a wrapper reads without guard or default.
+
+    Reads are found textually in the wrapper's Python files:
+
+    - ``snakemake.params.<name>``, ``snakemake.params["<name>"]`` and
+      ``getattr(snakemake.params, "<name>")`` for top-level params;
+    - ``args[...]`` and ``{args[...]}`` in command templates, for ``params.args`` keys, with the
+      same for every variable assigned ``snakemake.params.args`` (also via ``getattr`` or
+      ``dict(...)``).
+
+    Reads with a default or a guard (``.get``, ``in``, ``hasattr``, three-argument ``getattr``) are
+    optional. A name guarded anywhere in the wrapper's files is optional in all of them.
+    """
+    args_keys, top, guarded_args, guarded_top = set(), set(), set(), set()
     for path in (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py"):
         text = path.read_text(encoding="utf-8")
-        keys |= set(_ARGS_LITERAL.findall(text)) | set(_ARGS_TEMPLATE.findall(text))
-        guarded |= {quoted or got for quoted, got in _ARGS_GUARD.findall(text)}
-    return keys - guarded
+        for name in {"args"} | set(_ARGS_ALIAS.findall(text)):
+            literal = re.compile(
+                rf"""(?:^|[^\w.]|snakemake\.params\.){name}\[\s*["'](\w+)["']\s*\]""", re.M
+            )
+            template = re.compile(rf"\{{(?:snakemake\.params\.)?{name}\[(\w+)\]")
+            guard = re.compile(_ARGS_GUARD.replace("{name}", name))
+            args_keys |= set(literal.findall(text)) | set(template.findall(text))
+            guarded_args |= {a or b for a, b in guard.findall(text)}
+        top |= (
+            set(_PARAMS_ATTR.findall(text))
+            | set(_PARAMS_ITEM.findall(text))
+            | set(_PARAMS_GETATTR.findall(text))
+        )
+        guarded_top |= {next(g for g in groups if g) for groups in _PARAMS_GUARD.findall(text)}
+    return args_keys - guarded_args, top - guarded_top
 
 
 def test_wrappers_get_the_params_they_read():
-    """Every ``args[...]`` key a wrapper reads is in the params of the snapshot jobs that run it."""
+    """Every param a wrapper reads is in the params of the snapshot jobs that run it.
+
+    A read counts when it is unconditional: ``snakemake.params.<name>``, ``snakemake.params[...]``,
+    ``getattr(snakemake.params, "<name>")`` and ``args[...]`` (``args`` being ``params.args``).
+    Reads with a default or a guard (``.get(...)``, ``in``, ``hasattr``, three-argument ``getattr``)
+    may be absent. A name guarded anywhere in the wrapper's files counts as optional.
+    ``WRAPPER_PARAM_EXCEPTIONS`` lists reads that are conditional in another way.
+    """
     found, used_exceptions = set(), set()
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         for job in json.loads(snapshot.read_text(encoding="utf-8")):
             wrapper = (job.get("wrapper") or "").partition("snappy_wrappers/wrappers/")[2]
-            args = (job.get("params") or {}).get("args", {})
-            if not wrapper or not isinstance(args, dict):  # params not known when dumping
-                continue
-            for key in sorted(_wrapper_args_keys(wrapper) - set(args)):
+            params = job.get("params")
+            args = (params or {}).get("args", {})
+            if not wrapper or not isinstance(params, dict) or not isinstance(args, dict):
+                continue  # params not known when dumping
+            args_keys, top = _wrapper_reads(wrapper)
+            missing = [(k, f"args[{k}]") for k in sorted(args_keys - set(args))]
+            missing += [(f"params.{k}", f"params.{k}") for k in sorted(top - set(params))]
+            for key, label in missing:
                 if (wrapper, key) in WRAPPER_PARAM_EXCEPTIONS:
                     used_exceptions.add((wrapper, key))
                 else:
-                    found.add(f"{wrapper} reads args[{key}], missing in {job['rule']}")
+                    found.add(f"{wrapper} reads {label}, missing in {job['rule']}")
     assert not found, f"wrappers read params that their rules do not pass: {sorted(found)}"
     stale = sorted(set(WRAPPER_PARAM_EXCEPTIONS) - used_exceptions)
     assert not stale, f"remove these entries from WRAPPER_PARAM_EXCEPTIONS: {stale}"
@@ -580,8 +630,8 @@ def test_temp_files_are_intermediates():
     assert not found, f"temp files that are no intermediates: {sorted(found)[:20]} ({len(found)})"
 
 
-#: Steps that publish without md5 files: a legacy step whose wrappers do not exist, and steps
-#: whose results are not uploaded to SODAR (reference indices, gCNV models, cBioPortal files)
+#: Steps that publish without md5 files: steps whose results are not uploaded to SODAR
+#: (reference indices, gCNV models, cBioPortal files)
 UNCHECKED_PUBLISHING = (
     "reference_index",
     "helper_gcnv_model",

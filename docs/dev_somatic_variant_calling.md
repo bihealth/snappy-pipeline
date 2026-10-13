@@ -48,6 +48,9 @@ tasks:
         contamination: {}
 ```
 
+An optional `depends_on.panel_of_normals` names a `panel_of_normals` task with `tool: mutect2`.
+The `run` action then reads the panel VCF and its index from the keys `vcf` and `vcf_tbi` of that task, through `get_upstream_paths()`.
+
 ## Step parts and actions
 
 `VariantCallingWorkflow` registers `WritePedigreeStepPart`, the step part of the selected tool and the report step parts.

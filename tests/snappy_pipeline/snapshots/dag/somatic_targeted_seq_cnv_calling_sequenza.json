@@ -282,14 +282,15 @@
      "qlimit": 20.0
     },
     "ignore_chroms": [
-     "X",
-     "Y",
-     "MT",
-     "NC_007605. hs37d5",
-     "chrEBV",
-     "*_decoy",
-     "HLA-*",
-     "GL000220.*"
+     "^X$",
+     "^Y$",
+     "^MT$",
+     "^NC_007605$",
+     "^hs37d5$",
+     "^chrEBV$",
+     "_decoy$",
+     "^HLA-",
+     "^GL000220"
     ],
     "length": 50
    }
@@ -451,14 +452,15 @@
      "segment.filter": 3000000
     },
     "ignore_chroms": [
-     "X",
-     "Y",
-     "MT",
-     "NC_007605. hs37d5",
-     "chrEBV",
-     "*_decoy",
-     "HLA-*",
-     "GL000220.*"
+     "^X$",
+     "^Y$",
+     "^MT$",
+     "^NC_007605$",
+     "^hs37d5$",
+     "^chrEBV$",
+     "_decoy$",
+     "^HLA-",
+     "^GL000220"
     ],
     "library_name": "case001subregion-T1-DNA1-WES1"
    }

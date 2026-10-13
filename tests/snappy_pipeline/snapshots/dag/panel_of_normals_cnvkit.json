@@ -71,6 +71,36 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
  },
  {
+  "benchmark": "tasks/panel_of_normals_access/benchmarks/panel_of_normals/panel_of_normals.accessible.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/panel_of_normals_access/work/panel_of_normals/log/panel_of_normals.accessible.log"
+  ],
+  "output": [
+   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed",
+   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed.md5"
+  ],
+  "params": {
+   "args": {
+    "min_gap_size": 0
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "panel_of_normals_access_panel_of_normals_access_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/access"
+ },
+ {
   "benchmark": "tasks/panel_of_normals_cnvkit/benchmarks/panel_of_normals/panel_of_normals.antitarget.tsv",
   "input": [],
   "log": [
@@ -211,7 +241,8 @@
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed"
   ],
   "log": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log"

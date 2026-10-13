@@ -10,8 +10,8 @@ Usage::
 
 import argparse
 import csv
-import fnmatch
 import os
+import re
 import sys
 
 # The following is required for being able to import snappy_wrappers modules
@@ -34,8 +34,9 @@ CHOICES_FORMAT = ("regions", "bed")
 
 
 def matches_any(query, patterns):
+    """Whether any regular expression matches ``query`` (``re.search``, i.e. unanchored)."""
     for pattern in patterns:
-        if fnmatch.fnmatch(query, pattern):
+        if re.search(pattern, query):
             return True
     return False
 

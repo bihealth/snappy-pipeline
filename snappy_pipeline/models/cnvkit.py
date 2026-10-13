@@ -178,17 +178,6 @@ class Autobin(SnappyModel):
 
 
 class Cnvkit(SnappyModel):
-    path_target: Annotated[
-        str, Field(examples=["../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed"])
-    ]
-    """Path to target regions"""
-
-    path_antitarget: Annotated[
-        str,
-        Field(examples=["../panel_of_normals/output/cnvkit.antitarget/out/cnvkit.antitarget.bed"]),
-    ]
-    """Path to antitarget regions"""
-
     coverage: Coverage = Coverage()
     fix: Fix = Fix()
     segment: Segment = Segment()
@@ -212,16 +201,8 @@ class Cnvkit(SnappyModel):
 
 
 class PanelOfNormals(SnappyModel):
-    path_target: Annotated[
-        str, Field(examples=["../panel_of_normals/output/cnvkit.target/out/cnvkit.target.bed"])
-    ]
-    """Path to target regions"""
-
-    path_access: Annotated[
-        str | None,
-        Field(examples=["/path/to/access-10kb.hg38.bed"]),
-    ] = None
-    """Path to accessible regions"""
+    path_target: Annotated[str, Field(examples=["/path/to/exome_baits.bed"])]
+    """Path to target regions, empty for whole genome data"""
 
     path_annotation: Annotated[
         str | None,

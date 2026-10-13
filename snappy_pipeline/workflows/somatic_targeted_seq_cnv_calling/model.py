@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated, Any, Literal
 
-from pydantic import ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit
@@ -12,8 +12,21 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Reference,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.panel_of_normals.model import ExpectedPonPaths
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
+
+
+class ExpectedPonPaths(BaseModel):
+    """Consumer-driven contract: the files of a ``cnvkit`` or ``purecn`` panel of normals task."""
+
+    #: cnvkit (``.cnn``) and purecn (``.rds``): the panel of normals
+    panel_of_normals: str
+    #: cnvkit: the target and antitarget regions the panel was built with
+    target: str | None = None
+    antitarget: str | None = None
+    #: purecn: mapping bias, interval list and the container that built them
+    mapping_bias: str | None = None
+    intervals: str | None = None
+    container: str | None = None
 
 
 class Tool(enum.StrEnum):
@@ -113,16 +126,17 @@ class Sequenza(SnappyModel):
     """Extra arguments for sequenza bam2seqz"""
 
     ignore_chroms: list[str] = [
-        "X",
-        "Y",
-        "MT",
-        "NC_007605. hs37d5",
-        "chrEBV",
-        "*_decoy",
-        "HLA-*",
-        "GL000220.*",
+        "^X$",
+        "^Y$",
+        "^MT$",
+        "^NC_007605$",
+        "^hs37d5$",
+        "^chrEBV$",
+        "_decoy$",
+        "^HLA-",
+        "^GL000220",
     ]
-    """patterns of chromosome names to ignore"""
+    """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
     extra_args_extract: Annotated[
         SequenzaExtractExtraArgs | dict[str, Any], Field(union_mode="left_to_right")
@@ -165,11 +179,6 @@ class PureCn(SnappyModel):
     }
     """Recommended extra arguments for PureCN, extra_commands: {} to clear them all"""
 
-    path_container: Annotated[
-        str, Field(examples=["../panel_of_normals/work/containers/out/container.simg"])
-    ]
-    """Path to the PureCN apptainer/singularity container image"""
-
     somatic_variant_caller: str = "mutect2"
     """
     IMPORTANT NOTE:
@@ -191,14 +200,14 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     ]
     panel_of_normals: Annotated[
         str,
-        DataSignature(DataType.MODELS, frozenset({"pon"})),
+        DataSignature(DataType.MODELS, frozenset({"pon", ("cnvkit", "purecn")})),
         ExpectedPathSchema(ExpectedPonPaths),
     ] = ""
     """
     Required when ``tool: cnvkit`` or ``tool: purecn``.
-    Must name the upstream ``panel_of_normals`` task that produced the matching PON
+    Must name the upstream ``panel_of_normals`` task with the same ``tool``
     (e.g. ``panel_of_normals_cnvkit`` or ``panel_of_normals_purecn``).
-    Snakemake tracks the PON outputs as proper input files via this dependency.
+    The CNVkit target and antitarget regions and the PureCN container come from this task, too.
     """
 
     reference: Reference = ""

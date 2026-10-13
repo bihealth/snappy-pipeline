@@ -332,3 +332,16 @@ def test_single_task():
 def test_unknown_single_task_raises():
     with pytest.raises(ValueError, match="Unknown task 'calls'"):
         select_target_tasks(CHAIN, target_task="calls")
+
+
+def test_load_project_rejects_upstream_without_the_output_keys_a_consumer_needs():
+    cnv = ("somatic_wgs_cnv_calling", "cnv", {"tool": "cnvetti", "cnvetti": {}})
+    cnv[2]["depends_on"] = {"alignments": "mapping", "reference": "genome"}
+    check = ("somatic_cnv_checking", "cnv_check", {})
+    check[2]["depends_on"] = {"alignments": "mapping", "copy_number": "cnv", "reference": "genome"}
+    with pytest.raises(
+        ValueError,
+        match=r"Task 'cnv_check': depends_on.copy_number needs dnacopy_seg, which task 'cnv' "
+        r"does not provide; it provides bcf, bcf_csi",
+    ):
+        load_project(_config(_mapping(), cnv, check), WORK_DIR)

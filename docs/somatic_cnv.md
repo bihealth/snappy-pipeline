@@ -48,7 +48,7 @@ They are only stored as R objects in `tasks/<task>/work/<library>/report/<librar
 
 `cnvkit` and `purecn` need a panel of normals, see {ref}`panel_of_normals`.
 A `cnvkit` task names the `cnvkit` panel task in `depends_on.panel_of_normals`.
-It takes the target and antitarget regions from the panel task:
+It reads the target and antitarget regions from the panel task, so the config has no paths to them:
 
 ```yaml
 - name: cnv_cnvkit
@@ -59,9 +59,7 @@ It takes the target and antitarget regions from the panel task:
       reference: genome
       panel_of_normals: pon_cnvkit
     tool: cnvkit
-    cnvkit:
-      path_target: tasks/pon_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed
-      path_antitarget: tasks/pon_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed
+    cnvkit: {}
 ```
 
 ## PureCN
@@ -72,6 +70,7 @@ It takes the target and antitarget regions from the panel task:
 2. VCF files with germline and somatic variants.
    Mutect2 must call these with other options than the usual somatic calling, so the `variant_calling` step runs a second time as its own task.
 3. The container of the panel task, so that the PureCN version of the panel and the calls are the same.
+   The `cnv_purecn` task reads it from `depends_on.panel_of_normals`.
 
 The second `mutect2` task needs `--genotype-germline-sites true` and `--genotype-pon-sites true`, and the `mutect2` panel of normals.
 
@@ -128,12 +127,12 @@ tasks:
       depends_on:
         alignments: mapping
         reference: genome
+        panel_of_normals: pon_mutect2
       tool: mutect2
       mutect2:
         extra_arguments:
           - "--genotype-germline-sites true"
           - "--genotype-pon-sites true"
-        panel_of_normals: tasks/pon_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz
         germline_resource: /path/to/af-only-gnomad.raw.sites.vcf.gz
         contamination:
           enabled: true
@@ -152,9 +151,8 @@ tasks:
         genome_name: hg19
         enrichment_kit_name: exome
         somatic_variant_caller: mutect2
-        path_container: tasks/pon_purecn/work/containers/out/container.simg
 ```
 
-The `cnv_purecn` task reads the normal database, the mapping bias and the intervals from `pon_purecn`.
+The `cnv_purecn` task reads the normal database, the mapping bias, the intervals and the container from `pon_purecn`.
 The intervals depend only on the genome and the exome kit.
 The normal database and the mapping bias can change with the mapper.

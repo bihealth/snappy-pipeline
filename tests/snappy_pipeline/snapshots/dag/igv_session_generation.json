@@ -2,13 +2,62 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_phasing/output/.manifest.tsv"
+   "tasks/igv_session_generation/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz"
+  ],
+  "log": [],
+  "output": [
+   "tasks/igv_session_generation/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.igv_session.xml",
+   "tasks/igv_session_generation/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.igv_session.xml.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 60
+  },
+  "rule": "igv_session_generation_igv_session_generation_write_igv_session_file",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/igv_session_generation/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.igv_session.xml",
+   "tasks/igv_session_generation/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.igv_session.xml.md5"
+  ],
+  "log": [],
+  "output": [
+   "tasks/igv_session_generation/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/igv_session_generation"
+  },
+  "resources": {},
+  "rule": "igv_session_generation_publish",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -612,58 +661,21 @@
   "wrapper": null
  },
  {
-  "benchmark": null,
+  "benchmark": "tasks/variant_phasing_gatk_phase_by_transmission/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.tsv",
   "input": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/variant_phasing/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/variant_phasing"
-  },
-  "resources": {},
-  "rule": "variant_phasing_publish",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/variant_phasing/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "variant_phasing_variant_checking_write_trio_pedigree_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": "tasks/variant_phasing/benchmarks/case001subregion-N1-DNA1-WES1/gatk_pbt.case001subregion-N1-DNA1-WES1.tsv",
-  "input": [
-   "tasks/variant_phasing/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
    "tasks/variant_annotation_vep/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/variant_annotation_vep/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/log/gatk_pbt.case001subregion-N1-DNA1-WES1.log"
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
   ],
   "output": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi"
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {
    "args": {
@@ -677,33 +689,47 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "variant_phasing_variant_phasing_gatk_phase_by_transmission_run",
-  "temp": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi"
-  ],
+  "rule": "variant_phasing_gatk_phase_by_transmission_variant_phasing_gatk_phase_by_transmission_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_library": "case001subregion-N1-DNA1-WES1"
+   "library_name": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk_phase_by_transmission"
  },
  {
-  "benchmark": "tasks/variant_phasing/benchmarks/case001subregion-N1-DNA1-WES1/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.tsv",
+  "benchmark": null,
+  "input": [],
+  "log": [],
+  "output": [
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
+  ],
+  "params": {},
+  "resources": {},
+  "rule": "variant_phasing_gatk_phase_by_transmission_variant_phasing_write_trio_pedigree_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": null
+ },
+ {
+  "benchmark": "tasks/variant_phasing_gatk_read_backed_phasing/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.tsv",
   "input": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.vcf.gz.tbi",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.vcf.gz.tbi"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/1-of-2.vcf.gz",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/2-of-2.vcf.gz",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/1-of-2.vcf.gz.tbi",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/2-of-2.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/log/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.log"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
   ],
   "output": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {
@@ -713,16 +739,16 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "variant_phasing_variant_phasing_gatk_read_backed_phasing_also_gather",
+  "rule": "variant_phasing_gatk_read_backed_phasing_variant_phasing_gatk_read_backed_phasing_gather",
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_library": "case001subregion-N1-DNA1-WES1"
+   "library_name": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
  },
  {
-  "benchmark": "tasks/variant_phasing/benchmarks/case001subregion-N1-DNA1-WES1/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.tsv",
+  "benchmark": "tasks/variant_phasing_gatk_read_backed_phasing/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.chunks/1-of-2.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
@@ -730,17 +756,17 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/variant_phasing/work/gatk_pbt.gatk_rbp.scatter/1-of-2.region.bed"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/1-of-2.region.bed"
   ],
   "log": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/log/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.log"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.chunks/1-of-2.log"
   ],
   "output": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.vcf.gz.tbi"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/1-of-2.vcf.gz",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/1-of-2.vcf.gz.tbi"
   ],
   "params": {
    "args": {
@@ -754,20 +780,20 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "variant_phasing_variant_phasing_gatk_read_backed_phasing_also_run",
+  "rule": "variant_phasing_gatk_read_backed_phasing_variant_phasing_gatk_read_backed_phasing_run",
   "temp": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/1-of-2.vcf.gz.tbi"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/1-of-2.vcf.gz",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/1-of-2.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
-   "index_library": "case001subregion-N1-DNA1-WES1",
+   "library_name": "case001subregion-N1-DNA1-WES1",
    "scatteritem": "1-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk_read_backed_phasing"
  },
  {
-  "benchmark": "tasks/variant_phasing/benchmarks/case001subregion-N1-DNA1-WES1/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.tsv",
+  "benchmark": "tasks/variant_phasing_gatk_read_backed_phasing/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.chunks/2-of-2.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
@@ -775,17 +801,17 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/variant_phasing/work/gatk_pbt.gatk_rbp.scatter/2-of-2.region.bed"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/2-of-2.region.bed"
   ],
   "log": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/log/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.log"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.chunks/2-of-2.log"
   ],
   "output": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.vcf.gz.tbi"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/2-of-2.vcf.gz",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/2-of-2.vcf.gz.tbi"
   ],
   "params": {
    "args": {
@@ -799,38 +825,38 @@
    "partition": "medium",
    "runtime": 240
   },
-  "rule": "variant_phasing_variant_phasing_gatk_read_backed_phasing_also_run",
+  "rule": "variant_phasing_gatk_read_backed_phasing_variant_phasing_gatk_read_backed_phasing_run",
   "temp": [
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.vcf.gz",
-   "tasks/variant_phasing/work/case001subregion-N1-DNA1-WES1/out/gatk_pbt.gatk_rbp.case001subregion-N1-DNA1-WES1.chunks/2-of-2.vcf.gz.tbi"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/2-of-2.vcf.gz",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/chunks/2-of-2.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
-   "index_library": "case001subregion-N1-DNA1-WES1",
+   "library_name": "case001subregion-N1-DNA1-WES1",
    "scatteritem": "2-of-2"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk_read_backed_phasing"
  },
  {
-  "benchmark": "tasks/variant_phasing/benchmarks/gatk_pbt.gatk_rbp.scatter/log.tsv",
+  "benchmark": "tasks/variant_phasing_gatk_read_backed_phasing/benchmarks/scatter/log.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
   "log": [
-   "tasks/variant_phasing/work/gatk_pbt.gatk_rbp.scatter/log.log"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/log.log"
   ],
   "output": [
-   "tasks/variant_phasing/work/gatk_pbt.gatk_rbp.scatter/1-of-2.region.bed",
-   "tasks/variant_phasing/work/gatk_pbt.gatk_rbp.scatter/2-of-2.region.bed"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/1-of-2.region.bed",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/2-of-2.region.bed"
   ],
   "params": {
    "args": {
     "ignore_chroms": [
-     "NC_007605",
-     "hs37d5",
-     "chrEBV",
-     "*_decoy",
-     "HLA-*"
+     "^NC_007605$",
+     "^hs37d5$",
+     "^chrEBV$",
+     "_decoy$",
+     "^HLA-"
     ],
     "padding": 0
    }
@@ -842,10 +868,10 @@
    "partition": "medium",
    "runtime": 2
   },
-  "rule": "variant_phasing_variant_phasing_gatk_read_backed_phasing_also_scatter",
+  "rule": "variant_phasing_gatk_read_backed_phasing_variant_phasing_gatk_read_backed_phasing_scatter",
   "temp": [
-   "tasks/variant_phasing/work/gatk_pbt.gatk_rbp.scatter/1-of-2.region.bed",
-   "tasks/variant_phasing/work/gatk_pbt.gatk_rbp.scatter/2-of-2.region.bed"
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/1-of-2.region.bed",
+   "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/2-of-2.region.bed"
   ],
   "threads": 1,
   "wildcards": {},

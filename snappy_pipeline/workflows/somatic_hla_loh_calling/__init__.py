@@ -66,6 +66,9 @@ class LohhlaStepPart(BaseStepPart):
             "picard_dir": self.config.path_picard_dir,
         }
 
+    def _get_params_run(self, wildcards):
+        return {"tumor_library": wildcards.tumor_library}
+
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
         df = self.parent.build_library_dataframe()

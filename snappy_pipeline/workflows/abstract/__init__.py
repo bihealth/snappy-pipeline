@@ -770,13 +770,14 @@ class BaseStep:
         return tuple(cls.produces)
 
     @classmethod
-    def output_keys(cls, config: SnappyStepModel) -> set[str] | None:
-        """Return the keys of ``get_output_paths`` if the config alone determines them.
+    def output_keys(
+        cls, config: SnappyStepModel, signature: "DataSignature | None" = None
+    ) -> set[str]:
+        """Return the keys of ``get_output_paths`` for ``signature``.
 
-        ``load_project()`` checks them against the consumers' ``ExpectedPathSchema``. ``None``
-        (the default) skips that check.
+        ``load_project()`` checks them against the consumers' ``ExpectedPathSchema``.
         """
-        return None
+        return set(cls.get_output_paths(config, signature))
 
     @classmethod
     def get_output_paths(

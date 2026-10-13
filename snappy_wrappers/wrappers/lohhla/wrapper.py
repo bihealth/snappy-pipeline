@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for LOHHLA: Snakemake wrapper.py"""
 
+import os
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Clemens Messerschmidt"
+
+args = snakemake.params.args
+normal_bam = os.path.basename(snakemake.input.normal_bam)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -17,18 +22,7 @@ ln -sr {snakemake.input.normal_bai} -t $TMPDIR/bams
 ln -sr {snakemake.input.tumor_bam} -t $TMPDIR/bams
 ln -sr {snakemake.input.tumor_bai} -t $TMPDIR/bams
 
-for i in $TMPDIR/bams/*; do
-    mv $i $(echo $i | sed 's/bwa.//')
-done
-
-normal=$(echo $TMPDIR/bams/*-N1-*.bam)
-
 lohhla_script=$(which lohhla)
-
-#Rscript LOHHLAscript.R \
-#Rscript lohhla \
-
-jellyfish -h
 
 Rscript $lohhla_script \
     --BAMDir $TMPDIR/bams/  \
@@ -40,13 +34,11 @@ Rscript $lohhla_script \
     --hlaPath $(realpath {snakemake.input.hla} ) \
     --mappingStep TRUE \
     --minCoverageFilter 10 \
-    --normalBAMfile $normal \
+    --normalBAMfile $TMPDIR/bams/{normal_bam} \
     --novoDir $(dirname $(realpath $lohhla_script)) \
     --outputDir $(dirname $(realpath {snakemake.output.done} )) \
-    --patientId example
-    ##--CopyNumLoc $(realpath example-file/solutions.txt) \
-    ##--normalBAMfile $(realpath {snakemake.input.normal_bam} ) \
+    --patientId {args[tumor_library]}
 
-#touch {snakemake.output.done}
+touch {snakemake.output.done}
 """
 )

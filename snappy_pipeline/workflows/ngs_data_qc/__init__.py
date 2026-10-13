@@ -143,8 +143,8 @@ class PicardStepPart(BaseStepPart):
         if self.config.depends_on.dbsnp:
             yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
         if "CollectHsMetrics" in self.config.picard.programs:
-            yield "baits", "work/static_data/out/baits.interval_list"
-            yield "targets", "work/static_data/out/targets.interval_list"
+            yield "baits", "work/intervals/out/baits.interval_list"
+            yield "targets", "work/intervals/out/targets.interval_list"
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
         )
@@ -154,8 +154,8 @@ class PicardStepPart(BaseStepPart):
     def _get_output_files_prepare(self):
         if self.name != self.config.tool:
             return
-        yield "baits", "work/static_data/out/baits.interval_list"
-        yield "targets", "work/static_data/out/targets.interval_list"
+        yield "baits", "work/intervals/out/baits.interval_list"
+        yield "targets", "work/intervals/out/targets.interval_list"
 
     @dictify
     def _get_output_files_metrics(self):
@@ -172,7 +172,7 @@ class PicardStepPart(BaseStepPart):
                 yield pgm + "_md5", base_out + pgm + ".txt.md5"
 
     def _get_log_file_prepare(self):
-        return {"log": "work/static_data/log/prepare.log"}
+        return {"log": "work/intervals/log/prepare.log"}
 
     def _get_log_file_metrics(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}

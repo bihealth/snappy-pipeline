@@ -35,7 +35,8 @@ class ExpectedAlignmentQc(BaseModel):
     bamstats: str
     flagstats: str
     idxstats: str
-    alfred_qc: str
+    alfred_qc: str | None = None
+    """only if the task enables ``target_coverage_report``"""
 
 
 class ExpectedRnaAlignments(BaseModel):

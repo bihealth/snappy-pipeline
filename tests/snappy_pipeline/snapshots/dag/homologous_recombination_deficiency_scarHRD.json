@@ -53,18 +53,18 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/scarHRD/install"
  },
  {
-  "benchmark": "tasks/homologous_recombination_deficiency_scarHRD/benchmarks/scarHRD.case001subregion-T1-DNA1-WES1/scarHRD.case001subregion-T1-DNA1-WES1.tsv",
+  "benchmark": "tasks/homologous_recombination_deficiency_scarHRD/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/out/scarHRD.done",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/log/scarHRD.case001subregion-T1-DNA1-WES1.log"
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
   "output": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json",
-   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json.md5"
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json",
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json.md5"
   ],
   "params": {
    "args": {
@@ -91,8 +91,8 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json",
-   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json.md5"
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json",
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json.md5"
   ],
   "log": [],
   "output": [
@@ -353,14 +353,15 @@
      "qlimit": 20.0
     },
     "ignore_chroms": [
-     "X",
-     "Y",
-     "MT",
-     "NC_007605. hs37d5",
-     "chrEBV",
-     "*_decoy",
-     "HLA-*",
-     "GL000220.*"
+     "^X$",
+     "^Y$",
+     "^MT$",
+     "^NC_007605$",
+     "^hs37d5$",
+     "^chrEBV$",
+     "_decoy$",
+     "^HLA-",
+     "^GL000220"
     ],
     "length": 50
    }

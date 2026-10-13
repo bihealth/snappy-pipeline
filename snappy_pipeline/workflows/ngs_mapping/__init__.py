@@ -568,20 +568,24 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        mapper_lib = f"{self.config.tool}.{wildcards.library_name}"
-        yield "bam", f"work/{mapper_lib}/out/{mapper_lib}.bam"
-        yield "bai", f"work/{mapper_lib}/out/{mapper_lib}.bam.bai"
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
-        yield "reference_genome", self.parent.get_upstream_paths("reference").fasta + ".genome"
-        # Find bed file associated with library kit
         library_name = wildcards.library_name
-        path_targets_bed = ""
+        yield "bam", f"work/{library_name}/out/{library_name}.bam"
+        yield "bai", f"work/{library_name}/out/{library_name}.bam.bai"
+        reference = self.parent.get_upstream_paths("reference").fasta
+        yield "reference", reference
+        yield "reference_fai", reference + ".fai"
+        yield "targets_bed", self._path_targets_bed(library_name)
+
+    def _path_targets_bed(self, library_name: str) -> str:
+        """Return the BED file of the library's kit"""
         kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
         for item in self.config.target_coverage_report.path_target_interval_list_mapping:
             if item.name == kit_name:
-                path_targets_bed = item.path
-                break
-        yield "targets_bed", path_targets_bed
+                return item.path
+        raise InvalidConfiguration(
+            f"No target interval list found for library '{library_name}' with kit '{kit_name}'. "
+            "Please check the configuration."
+        )
 
     def _get_output_files_run(self):
         prefix = "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
@@ -589,26 +593,6 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.target_cov_report.log"}
-
-    def _get_params_run(self, wildcards):
-        # Find bed file associated with library kit
-        library_name = wildcards.library_name
-        path_targets_bed = ""
-        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
-        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
-            if item.name == kit_name:
-                path_targets_bed = item.path
-                break
-
-        if not path_targets_bed:
-            raise InvalidConfiguration(
-                f"No target interval list found for library '{library_name}' with kit '{kit_name}'. "
-                "Please check the configuration."
-            )
-
-        return {
-            "path_targets_bed": path_targets_bed,
-        }
 
     default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
 
@@ -721,17 +705,20 @@ class NgsMappingWorkflow(BaseStep):
                 the ``{library_name}`` wildcard placeholder.
         """
         lib = kwargs.get("library_name", "{library_name}")
-        return {
+        paths = {
             "bam": f"work/{lib}/out/{lib}.bam",
             "bai": f"work/{lib}/out/{lib}.bam.bai",
             "bamstats": f"work/{lib}/report/bam_qc/{lib}.bam.bamstats.txt",
             "flagstats": f"work/{lib}/report/bam_qc/{lib}.bam.flagstats.txt",
             "idxstats": f"work/{lib}/report/bam_qc/{lib}.bam.idxstats.txt",
-            "alfred_qc": f"work/{lib}/report/alfred_qc/{lib}.alfred.json.gz",
-            # RNA libraries: strandedness inference and the gene counts it passes on
-            "gene_counts": f"work/{lib}/out/{lib}.GeneCounts.tab",
-            "strandedness": f"work/{lib}/strandedness/{lib}.decision.json",
         }
+        if config.target_coverage_report and config.target_coverage_report.enabled:
+            paths["alfred_qc"] = f"work/{lib}/report/alfred_qc/{lib}.alfred.json.gz"
+        if config.tool == "star":
+            # Strandedness inference and the gene counts it passes on
+            paths["gene_counts"] = f"work/{lib}/out/{lib}.GeneCounts.tab"
+            paths["strandedness"] = f"work/{lib}/strandedness/{lib}.decision.json"
+        return paths
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet

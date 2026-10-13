@@ -18,8 +18,12 @@ Each file has an ``.md5`` file.
 - ``{library_name}/out/{library_name}.txt``
 - ``{library_name}/out/{library_name}.json``
 
+With ``optitype``, the task also publishes the result table and the coverage plot:
+
+- ``{library_name}/out/{library_name}.result.tsv``
+- ``{library_name}/out/{library_name}.coverage_plot.pdf``
+
 Downstream tasks read the keys ``txt`` and ``calls_json`` (the ``.json`` file).
-With ``optitype``, the result table and the coverage plot stay in ``work/{library_name}/out/``.
 """
 
 import re
@@ -41,6 +45,14 @@ from .model import HlaTyping as HlaTypingConfigModel
 
 #: Output keys and extensions of the main payload
 _OUTPUTS = {"txt": ".txt", "txt_md5": ".txt.md5", "json": ".json", "json_md5": ".json.md5"}
+
+#: Output keys and extensions that only ``optitype`` writes
+_OPTITYPE_OUTPUTS = {
+    "tsv": ".result.tsv",
+    "tsv_md5": ".result.tsv.md5",
+    "cov_pdf": ".coverage_plot.pdf",
+    "cov_pdf_md5": ".coverage_plot.pdf.md5",
+}
 
 _OUT_PATTERN = "work/{library_name}/out/{library_name}"
 
@@ -68,8 +80,7 @@ class OptiTypeStepPart(BaseStepPart):
     def _get_output_files_run(self):
         if self.name != str(self.config.tool):
             return {}
-        # additional optitype output files
-        outputs = _OUTPUTS | {"tsv": ".result.tsv", "cov_pdf": ".coverage_plot.pdf"}
+        outputs = _OUTPUTS | _OPTITYPE_OUTPUTS
         return {key: _OUT_PATTERN + ext for key, ext in outputs.items()}
 
     def _get_log_file_run(self):
@@ -178,8 +189,9 @@ class HlaTypingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
+        outputs = _OUTPUTS | _OPTITYPE_OUTPUTS if self.config.tool == "optitype" else _OUTPUTS
         yield from self._yield_result_files(
-            "output/{library_name}/out/{library_name}{ext}", ext=_OUTPUTS.values()
+            "output/{library_name}/out/{library_name}{ext}", ext=outputs.values()
         )
 
     def _yield_result_files(self, tpl, **kwargs):

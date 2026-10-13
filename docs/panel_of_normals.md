@@ -31,6 +31,7 @@ By default, all normal DNA libraries of the sample sheets build the panel.
 These are used even if the sample sheet does not flag them as normal.
 
 `ignore_chroms` restricts the panel to the sequences of interest.
+It lists regular expressions, matched with `re.search` against the contig names.
 
 ```yaml
 tasks:
@@ -63,14 +64,14 @@ tasks:
         alignments: mapping
         reference: genome
       tool: mutect2
-      ignore_chroms: [NC_007605, hs37d5, chrEBV, '*_decoy', 'HLA-*', 'GL000220.*']  # for hs37d5
+      ignore_chroms: ['^NC_007605$', '^hs37d5$', '^chrEBV$', '_decoy$', '^HLA-', '^GL000220']  # for hs37d5
       mutect2:
         germline_resource: /path/to/af-only-gnomad.raw.sites.vcf.gz
         path_normals_list: ""   # empty: all normal libraries
 ```
 
 The panel is `tasks/pon_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz`.
-A `mutect2` variant calling task takes it in `mutect2.panel_of_normals`.
+A `mutect2` variant calling task takes it from the panel task in `depends_on.panel_of_normals`.
 
 ## Copy numbers of exome data
 
@@ -85,7 +86,8 @@ An access file lists the regions that are suitable for coverage analysis, withou
 CNVkit provides one for `GRCh37` but not for `GRCh38`.
 A task with `tool: access` creates it from the reference and from BED files of regions to exclude, such as mappability regions.
 Its file is `tasks/<access task>/work/panel_of_normals/out/panel_of_normals.accessible.bed`.
-The `cnvkit` task takes it in `cnvkit.path_access`.
+The `cnvkit` task names the access task in `depends_on.access`.
+An `external_data` task with `produces: {type: raw, tags: [access]}` and `files: {access: <BED file>}` serves as well.
 
 The access file is optional.
 Without it, exome mode does not restrict the antitarget regions, and whole genome mode creates an access file with default settings.
@@ -106,10 +108,10 @@ Without it, exome mode does not restrict the antitarget regions, and whole genom
     depends_on:
       alignments: mapping
       reference: genome
+      access: pon_access
     tool: cnvkit
     cnvkit:
       path_target: /path/to/exome_baits.bed
-      path_access: tasks/pon_access/work/panel_of_normals/out/panel_of_normals.accessible.bed
 ```
 
 The panel task writes `metrics.tsv` and `sex.tsv` reports in `panel_of_normals/report/`.
