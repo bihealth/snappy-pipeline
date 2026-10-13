@@ -743,29 +743,14 @@ class BaseStep:
     sheet_shortcut_kwargs = None
 
     @classmethod
-    def default_config_yaml(cls):
-        """Return default configuration YAML for this workflow step.
-
-        The configuration is generated from the step's ``config_model_class`` and should be a
-        YAML fragment with a top-level ``step_config`` key. Your default configuration is then
-        merged into the main configuration where the main configuration takes precedence.
-
-        Example: ::
-
-            def default_config_yaml(self):
-                return textwrap.dedent(""\"
-                    schema_config:
-                      ngs_mapping:
-                        max_threads: 16
-                ""\").lstrip())
-
-        Return ``None`` for no default configuration.
-
-        You can also return an iterable of configurations, these will be merged in the order given
-        (earlier ones will be overwritten by later ones).  This is useful if your schema needs
-        configuration for a later one.
-        """
-        return cls.config_model_class.default_config_yaml_string()
+    def default_config_yaml(cls) -> str:
+        """Return the annotated default configuration of a task of this step: a ``tasks:``
+        list with one entry, generated from ``config_model_class``."""
+        config = cls.config_model_class.default_config_yaml_string()
+        lines = "".join(
+            " " * 6 + line if line.strip() else line for line in config.splitlines(keepends=True)
+        )
+        return f"tasks:\n  - step: {cls.name}\n    name: {cls.name}\n    config:\n{lines}"
 
     #: Override with the Pydantic model class for configuration validation
     config_model_class: type[SnappyStepModel]

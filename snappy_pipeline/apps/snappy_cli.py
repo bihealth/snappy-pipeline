@@ -282,7 +282,7 @@ class AddTaskApp:
 
         comment_optional = self.config_mode == ConfigMode.COMMENTED
         step_config_yaml_str = step_cls.config_model_class.default_config_yaml_string(
-            comment_optional=comment_optional, with_step_config=False
+            comment_optional=comment_optional
         )
 
         if self.config_mode == ConfigMode.MINIMAL:

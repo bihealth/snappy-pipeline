@@ -21,11 +21,6 @@ def test_registry_entry_contract(step_name, workflow_cls):
 
 
 @pytest.mark.parametrize("step_name, workflow_cls", sorted(WORKFLOW_REGISTRY.items()))
-def test_default_config_yaml_has_valid_top_level_shape(step_name, workflow_cls):
-    _ = step_name
-    yaml = ruamel_yaml.YAML()
-    config_text = workflow_cls.default_config_yaml()
-    assert isinstance(config_text, str)
-    config = yaml.load(config_text)
-    assert isinstance(config, dict)
-    assert "tasks" in config or "step_config" in config
+def test_default_config_yaml_is_a_task_entry(step_name, workflow_cls):
+    config = ruamel_yaml.YAML().load(workflow_cls.default_config_yaml())
+    assert [(task["step"], task["name"]) for task in config["tasks"]] == [(step_name, step_name)]

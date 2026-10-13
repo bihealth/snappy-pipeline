@@ -89,23 +89,9 @@ def dump_yaml(path: Path, data: dict[str, Any]) -> None:
         yaml.dump(data, f)
 
 
-def parse_default_step_config(workflow_cls: type, step_name: str) -> dict[str, Any]:
-    text = (workflow_cls.default_config_yaml() or "").strip()
-    if not text:
-        return {}
-
-    parsed = yaml.load(text)
-    if not isinstance(parsed, dict):
-        return {}
-
-    step_config = parsed.get("step_config", {})
-    if not isinstance(step_config, dict):
-        return {}
-
-    if step_name in step_config and isinstance(step_config[step_name], dict):
-        return copy.deepcopy(step_config[step_name])
-
-    return copy.deepcopy(step_config)
+def parse_default_step_config(workflow_cls: type) -> dict[str, Any]:
+    config = yaml.load(workflow_cls.default_config_yaml())["tasks"][0]["config"]
+    return copy.deepcopy(config) if isinstance(config, dict) else {}
 
 
 def _placeholder_for_annotation(annotation: Any) -> Any:
@@ -627,7 +613,7 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
     tasks: list[dict[str, Any]] = []
     for step_name, cls in sorted(WORKFLOW_REGISTRY.items()):
         for tool in get_possible_tools(cls) or [None]:
-            config = parse_default_step_config(cls, step_name)
+            config = parse_default_step_config(cls)
             if tool is not None:
                 config["tool"] = tool
                 # The selected tool's section must be present, even if empty.

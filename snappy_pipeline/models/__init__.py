@@ -201,9 +201,8 @@ class RelationshipDefinition(SnappyModel):
     the column value is a single ``str`` (or ``""`` if no match)."""
 
 
-# This exists to distinguish workflow step_config models from other snappy specific models
-# It also provides a default_config_yaml_string method that includes the step_config section
-# by default.
+# This exists to distinguish the task config models of workflow steps from other snappy
+# specific models.
 class SnappyStepModel(SnappyModel, object):
     """A base class for all workflow step configuration models.
 
@@ -258,23 +257,9 @@ class SnappyStepModel(SnappyModel, object):
         return self
 
     @classmethod
-    def default_config_yaml_string(
-        cls, comment_optional: bool = True, with_step_config: bool = True
-    ):
-        config_str = default_config_yaml_string(cls, comment_optional)
-        if with_step_config:
-            config_str = (
-                (" " * INDENTATION * 2 + line) for line in config_str.splitlines(keepends=True)
-            )
-
-            def camel_to_snake(name: str) -> str:
-                name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-                return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
-
-            name = camel_to_snake(cls.__name__)
-            config_str = f"step_config:\n{' ' * INDENTATION}{name}:\n{''.join(config_str)}"
-
-        return config_str
+    def default_config_yaml_string(cls, comment_optional: bool = True):
+        """Return the annotated default ``config`` block of a task of this step."""
+        return default_config_yaml_string(cls, comment_optional)
 
     def model_dump_yaml(self, **kwargs) -> str:
         cfg, _ = _model_to_commented_yaml(self, **kwargs)
