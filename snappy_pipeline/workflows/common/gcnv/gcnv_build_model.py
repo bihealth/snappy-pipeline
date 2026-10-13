@@ -168,8 +168,8 @@ class BuildGcnvModelStepPart(
         "post_germline_calls",
     )
 
+    #: The preprocessed interval list is no intermediate: the callers of the model read it
     intermediate_outputs = {
-        "preprocess_intervals": ("interval_list",),
         "annotate_gc": ("tsv",),
         "filter_intervals": ("interval_list",),
         "coverage": ("tsv",),

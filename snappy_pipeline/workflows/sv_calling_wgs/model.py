@@ -3,14 +3,14 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.models.gcnv import PrecomputedModelEntry
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
     Reference,
 )
+from snappy_pipeline.workflows.gcnv_model.model import ExpectedGcnvModel
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -24,21 +24,6 @@ class Tool(enum.StrEnum):
 
 
 class Gcnv(SnappyModel):
-    # path_par_intervals: str
-    # """Path to interval block list with PAR region for contig calling."""
-
-    # path_uniquely_mapable_bed: str
-    # """path to BED file with uniquely mappable regions."""
-
-    precomputed_model_paths: list[PrecomputedModelEntry] = []
-    """
-    Path to gCNV model - will execute analysis in CASE MODE.
-    Example:
-      - library: "Agilent SureSelect Human All Exon V6"  # Kit name, match in path_target_interval_list_mapping
-        contig_ploidy: /path/to/ploidy-model         # Output from `DetermineGermlineContigPloidy`
-        model_pattern: /path/to/model_*              # Output from `GermlineCNVCaller`
-    """
-
     skip_libraries: list[str] = []
     """
     Skip processing of the following libraries.
@@ -126,6 +111,16 @@ class SvCallingWgsDependsOn(SnappyModel):
 
     reference: Reference
 
+    gcnv_model: Annotated[
+        str,
+        DataSignature(DataType.MODELS, frozenset({"gcnv", "wgs"})),
+        ExpectedPathSchema(ExpectedGcnvModel),
+    ] = ""
+    """Required for ``tool: gcnv``: a ``gcnv_model`` task with ``intervals: wgs``."""
+
+
+TOOL_DEPENDENCIES = {Tool.gcnv: ("gcnv_model",)}
+
 
 class SvCallingWgs(SnappyStepModel):
     depends_on: SvCallingWgsDependsOn
@@ -158,4 +153,9 @@ class SvCallingWgs(SnappyStepModel):
     def ensure_tools_are_configured(self):
         if not getattr(self, self.tool):
             raise ValueError(f"Tool {self.tool} not configured")
+        return self
+
+    @model_validator(mode="after")
+    def validate_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
         return self

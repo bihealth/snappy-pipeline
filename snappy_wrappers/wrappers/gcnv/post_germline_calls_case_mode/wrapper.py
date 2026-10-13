@@ -46,7 +46,7 @@ fi
 
 gatk PostprocessGermlineCNVCalls \
     $(for x in {paths_calls}; do echo --calls-shard-path $(dirname $x)/cnv_calls-calls; done) \
-    $(for x in {paths_models}; do echo --model-shard-path $x; done) \
+    $(for x in {paths_models}; do echo --model-shard-path $(dirname $x)/cnv_calls-model; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
     --sample-index $sample_index \
     --autosomal-ref-copy-number 2 \

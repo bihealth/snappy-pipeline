@@ -49,6 +49,10 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "variants": "variant_calling_gatk4_hc_gvcf",
 }
 
+#: Steps with one task per value of a config field instead of per tool: step -> field.
+#: The tasks are named ``<step>_<value>``, and ``TASK_CONFIG`` keys them by the value.
+VARIANT_FIELDS: dict[str, str] = {"gcnv_model": "intervals"}
+
 #: Exceptions to ``DEPENDENCY_TASKS``: (step, field) -> upstream task, or ``None`` to leave the
 #: field unset. ``strandedness`` and ``panel_of_normals`` are wired per tool in build_all_tasks.
 STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
@@ -303,7 +307,7 @@ def dependency_fields(workflow_cls: type) -> list[str]:
     return [] if dep_field is None else list(dep_field.annotation.model_fields)
 
 
-#: Test fixtures (index directories, BED files, gCNV models)
+#: Test fixtures (index directories, BED files)
 FIXTURES = Path(__file__).resolve().parents[1] / "snappy_pipeline" / "fixtures"
 
 #: An existing file for config fields that must name one but whose content is never read
@@ -333,23 +337,11 @@ def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[s
     def resolve(path: str) -> str:
         return path if path.startswith("/") else str((base_config_path.parent / path).resolve())
 
-    def gcnv_models(library: str) -> list[dict[str, str]]:
-        models = FIXTURES / "gcnv_models"
-        return [
-            {
-                "library": library,
-                "contig_ploidy": str(models / "ploidy_model"),
-                "model_pattern": str(models / "call_model_*"),
-            }
-        ]
-
     return {
         "reference": resolve(reference),
         "star_index": str(FIXTURES / "star_index"),
         "cnvkit_targets": str(FIXTURES / "cnvkit_targets.bed"),
         "mehari_db": str(FIXTURES / "mehari_db"),
-        "gcnv_targeted": gcnv_models("default"),
-        "gcnv_wgs": gcnv_models("wgs"),
         "placeholder_file": PLACEHOLDER_FILE,
         "raw_data_dir": [raw_data_dir(base_config, base_config_path)],
     }
@@ -470,14 +462,16 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "control_freec": {"path_chrlenfile": PLACEHOLDER, "path_mappability": PLACEHOLDER}
     },
     ("tumor_mutational_burden", None): {"target_regions": PLACEHOLDER},
-    ("helper_gcnv_model_targeted", None): {"gcnv": {"path_uniquely_mapable_bed": PLACEHOLDER}},
-    ("helper_gcnv_model_wgs", None): {"gcnv": {"path_uniquely_mapable_bed": PLACEHOLDER}},
+    ("gcnv_model", None): {"gcnv": {"path_uniquely_mapable_bed": PLACEHOLDER}},
+    ("gcnv_model", "targeted"): {
+        "gcnv": {
+            "path_target_interval_list_mapping": Overwrite(
+                [{"name": "default", "pattern": ".*", "path": Fixture("cnvkit_targets")}]
+            )
+        }
+    },
     ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
     ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
-    ("sv_calling_targeted", "gcnv"): {
-        "gcnv": {"precomputed_model_paths": Fixture("gcnv_targeted")}
-    },
-    ("sv_calling_wgs", "gcnv"): {"gcnv": {"precomputed_model_paths": Fixture("gcnv_wgs")}},
     ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},
     ("variant_annotation", "mehari"): {
         "mehari": {"reference": REFERENCE, "transcripts": [PLACEHOLDER]}
@@ -562,6 +556,14 @@ def fill_config(config: dict[str, Any], fragment: dict[str, Any], fixtures: dict
             config[key] = _resolve(value, fixtures)
 
 
+def get_possible_variants(workflow_cls: type, step_name: str) -> list[str]:
+    """Return the values of the field that splits a step into tasks; empty if it has none."""
+    if step_name not in VARIANT_FIELDS:
+        return []
+    annotation = workflow_cls.config_model_class.model_fields[VARIANT_FIELDS[step_name]].annotation
+    return [str(item.value) for item in annotation]
+
+
 def get_possible_tools(workflow_cls: type) -> list[str]:
     """Return the values of a step's ``tool`` enum; empty for steps without a tool."""
     tool_field = workflow_cls.config_model_class.model_fields.get("tool")
@@ -613,6 +615,12 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
     if step_name == "variant_calling" and tool == "mutect2":
         depends_on["panel_of_normals"] = "panel_of_normals_mutect2"
 
+    # The gCNV callers read the model of their own kind of intervals.
+    if step_name == "sv_calling_targeted" and tool == "gcnv":
+        depends_on["gcnv_model"] = "gcnv_model_targeted"
+    if step_name == "sv_calling_wgs" and tool == "gcnv":
+        depends_on["gcnv_model"] = "gcnv_model_wgs"
+
     # cnvkit and purecn read the panel of normals built with the same tool.
     if step_name == "somatic_targeted_seq_cnv_calling" and tool in ("cnvkit", "purecn"):
         depends_on["panel_of_normals"] = f"panel_of_normals_{tool}"
@@ -625,9 +633,12 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
     generation_notes: list[str] = []
     tasks: list[dict[str, Any]] = []
     for step_name, cls in sorted(WORKFLOW_REGISTRY.items()):
-        for tool in get_possible_tools(cls) or [None]:
+        variants = get_possible_variants(cls, step_name)
+        for tool in variants or get_possible_tools(cls) or [None]:
             config = parse_default_step_config(cls)
-            if tool is not None:
+            if variants:
+                config[VARIANT_FIELDS[step_name]] = tool
+            elif tool is not None:
                 config["tool"] = tool
                 # The selected tool's section must be present, even if empty.
                 if tool in cls.config_model_class.model_fields:

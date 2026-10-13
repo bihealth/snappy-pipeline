@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-"""CUBI Pipeline helper_gcnv_model_targeted step Snakefile"""
+"""CUBI Pipeline gcnv_model step Snakefile"""
 
 from snappy_pipeline.orchestration import task_instance
 
 # WorkflowImpl Object Setup ===================================================
 
 wf = task_instance(config["__task_name__"])
+# Whole genomes are binned without target regions
+wgs = "_wgs" if wf.config.intervals == "wgs" else ""
 
 
 # Rules =======================================================================
@@ -13,23 +15,23 @@ wf = task_instance(config["__task_name__"])
 
 localrules:
     # Writing out pedigrees can be done locally
-    build_gcnv_model_write_pedigree_run,
+    gcnv_model_write_pedigree_run,
 
 
-rule build_gcnv_model_all:
+rule gcnv_model_all:
     default_target: True
     input:
         wf.get_result_files(),
 
 
-rule build_gcnv_model_write_pedigree_run:
+rule gcnv_model_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
     run:
         wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 
 
-rule build_gcnv_model_preprocess_intervals:
+rule gcnv_model_preprocess_intervals:
     input:
         unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
     output:
@@ -45,10 +47,10 @@ rule build_gcnv_model_preprocess_intervals:
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
         tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
     wrapper:
-        wf.wrapper_path("gcnv/preprocess_intervals")
+        wf.wrapper_path(f"gcnv/preprocess_intervals{wgs}")
 
 
-rule build_gcnv_model_annotate_gc:
+rule gcnv_model_annotate_gc:
     input:
         unpack(wf.get_input_files("gcnv", "annotate_gc")),
     output:
@@ -64,10 +66,10 @@ rule build_gcnv_model_annotate_gc:
         partition=wf.get_resource("gcnv", "annotate_gc", "partition"),
         tmpdir=wf.get_resource("gcnv", "annotate_gc", "tmpdir"),
     wrapper:
-        wf.wrapper_path("gcnv/annotate_gc")
+        wf.wrapper_path(f"gcnv/annotate_gc{wgs}")
 
 
-rule build_gcnv_model_coverage:
+rule gcnv_model_coverage:
     input:
         unpack(wf.get_input_files("gcnv", "coverage")),
     output:
@@ -86,7 +88,7 @@ rule build_gcnv_model_coverage:
         wf.wrapper_path("gcnv/coverage")
 
 
-rule build_gcnv_model_filter_intervals:
+rule gcnv_model_filter_intervals:
     input:
         unpack(wf.get_input_files("gcnv", "filter_intervals")),
     output:
@@ -105,7 +107,7 @@ rule build_gcnv_model_filter_intervals:
         wf.wrapper_path("gcnv/filter_intervals")
 
 
-rule build_gcnv_model_contig_ploidy:
+rule gcnv_model_contig_ploidy:
     input:
         unpack(wf.get_input_files("gcnv", "contig_ploidy")),
     output:
@@ -124,7 +126,7 @@ rule build_gcnv_model_contig_ploidy:
         wf.wrapper_path("gcnv/contig_ploidy")
 
 
-rule build_gcnv_model_call_cnvs:
+rule gcnv_model_call_cnvs:
     input:
         unpack(wf.get_input_files("gcnv", "call_cnvs")),
     output:
@@ -143,11 +145,11 @@ rule build_gcnv_model_call_cnvs:
         wf.wrapper_path("gcnv/call_cnvs_cohort_mode")
 
 
-def build_gcnv_model_post_germline_calls_input(wildcards):
+def gcnv_model_post_germline_calls_input(wildcards):
     return wf.get_input_files("gcnv", "post_germline_calls")(wildcards, checkpoints)
 
 
-checkpoint build_gcnv_model_scatter_intervals:
+checkpoint gcnv_model_scatter_intervals:
     input:
         unpack(wf.get_input_files("gcnv", "scatter_intervals")),
     output:
@@ -166,9 +168,9 @@ checkpoint build_gcnv_model_scatter_intervals:
         wf.wrapper_path("gcnv/scatter_intervals")
 
 
-rule build_gcnv_model_calling_gcnv_post_germline_calls:
+rule gcnv_model_calling_gcnv_post_germline_calls:
     input:
-        unpack(build_gcnv_model_post_germline_calls_input),
+        unpack(gcnv_model_post_germline_calls_input),
     output:
         **wf.get_output_files("gcnv", "post_germline_calls"),
     log:

@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV CASE mode run methods."""
 
-import json
-import os
 import re
 import warnings
-from glob import glob
+from pathlib import Path
 
 from snakemake.io import expand, touch
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import (
     GcnvCommonStepPart,
     InconsistentLibraryKitsWarning,
+    build_ngs_library_to_kit,
 )
 
 #: Predefined file name keys and extensions for the overall results files.
@@ -31,188 +29,22 @@ PUBLISHED_RESULT_EXTENSIONS = {
 }
 
 
-def get_model_dir_list(pattern):
-    """Get model directories.
-
-    :param pattern: Pattern of model directory paths. Expects models to be based on scattered
-    step: ``gatk IntervalListTools``.
-    :type pattern: str
-
-    :return: Returns list with all directories that match the inputted pattern.
-    """
-    return [path_ for path_ in glob(pattern) if os.path.isdir(path_)]
-
-
-def get_model_dir_to_dict(pattern):
-    """Get model directories dictionary.
-
-    :param pattern: Pattern of model directory paths. Expects models to be based on scattered
-    step: ``gatk IntervalListTools``.
-    :type pattern: str
-
-    :return: Returns dictionary with model directories' information.
-    Key: shard (e.g., '01_of_42'); Value: directory path (e.g., '/path/to/model_01_of_42').
-    """
-    # Initialise variables
-    out_dict = {}
-    default_key = "001"
-    re_pattern = pattern.replace("*", "(.*)")
-    # Get all model directories
-    path_list = get_model_dir_list(pattern)
-    # Populate dictionary
-    # Assumption: if no group, a single path was provided instead of a pattern.
-    for path in path_list:
-        try:
-            key = re.search(re_pattern, path).group(1)
-            out_dict[key] = path
-        except IndexError:
-            out_dict[default_key] = path
-    return out_dict
-
-
-class ValidationMixin:
-    """Mixin that provides validation methods for input model"""
-
-    def validate_request(self):
-        """Validate request.
-
-        Checks if the request can be performed given the provided information and parameters:
-        Given a path to a model provided in the config (``precomputed_model_paths``), it will
-        check that the path were provided for each available library kit and that the paths
-        contain the necessary files for analysis.
-
-        :raises InvalidConfiguration: if information provided in configuration isn't enough to run
-        the analysis.
-        """
-        if self.config.tool != "gcnv":
-            return
-
-        # Get precomputed models from configurations
-        path_to_models = self.config.gcnv.precomputed_model_paths
-
-        # No model provided
-        if not path_to_models:
-            msg_tpl = "Precomputed model paths must be configured (key: 'precomputed_model_paths')."
-            raise InvalidConfiguration(msg_tpl)
-        else:
-            # Check model directories content
-            for model in path_to_models:
-                # Validate ploidy-model
-                ploidy_path = model.get("contig_ploidy")
-                if not self.validate_ploidy_model_directory(path=ploidy_path):
-                    msg_tpl = (
-                        "Provided path either not a directory or "
-                        "does not contain all required contig-ploidy model files: {0}"
-                    )
-                    raise InvalidConfiguration(msg_tpl.format(str(model)))
-                # Find all model directories
-                model_pattern = model.get("model_pattern")
-                path_list = get_model_dir_list(pattern=model_pattern)
-                if len(path_list) == 0:
-                    msg_tpl = "Could not find any directory path with the provided pattern: '{0}' "
-                    raise InvalidConfiguration(msg_tpl.format(model_pattern))
-                # Validate directory
-                for path in path_list:
-                    if not self.validate_call_model_directory(path=path):
-                        msg_tpl = (
-                            "Provided path either not a directory or "
-                            "does not contain all required call model files: {0}"
-                        )
-                        raise InvalidConfiguration(msg_tpl.format(str(model)))
-
-    def _pretty_print_config(self, config):
-        """Pretty format configuration.
-
-        :param config: Configuration dictionary to be formatted.
-        :type config: OrderedDict
-
-        :return: Configuration as a nicely formatted string.
-        """
-        return str(json.dumps(config, sort_keys=False, indent=4))
-
-    def validate_ploidy_model_directory(self, path):
-        """Validate gCNV ploidy-model directory.
-
-        :param path: Path to gCNV ploidy-model directory.
-        :return: Returns True if path is a directory and contains all required files; otherwise,
-        False.
-        """
-        # Model required files
-        model_files = [
-            "contig_ploidy_prior.tsv",
-            "gcnvkernel_version.json",
-            "interval_list.tsv",
-            "mu_mean_bias_j_interval__.tsv",
-            "mu_psi_j_log__.tsv",
-            "ploidy_config.json",
-            "std_mean_bias_j_interval__.tsv",
-            "std_psi_j_log__.tsv",
-        ]
-        # Check if path is a directory
-        if not os.path.isdir(path):
-            return False
-        # Check if directory contains required model files
-        if not all(os.path.isfile(os.path.join(path, m_file)) for m_file in model_files):
-            return False
-        return True
-
-    def validate_call_model_directory(self, path):
-        """Validate gCNV call-model directory.
-
-        :param path: Path to gCNV call-model directory. Files created using COHORT mode.
-        :return: Returns True if path is a directory and contains all required files; otherwise,
-        False.
-        """
-        # Model required files
-        model_files = [
-            "calling_config.json",
-            "gcnvkernel_version.json",
-            "log_q_tau_tk.tsv",
-            "mu_ard_u_interval__.tsv",
-            "mu_psi_t_log__.tsv",
-            "std_ard_u_interval__.tsv",
-            "std_psi_t_log__.tsv",
-            "denoising_config.json",
-            "interval_list.tsv",
-            "mu_W_tu.tsv",
-            "mu_log_mean_bias_t.tsv",
-            "std_W_tu.tsv",
-            "std_log_mean_bias_t.tsv",
-        ]
-        # Check if path is a directory
-        if not os.path.isdir(path):
-            return False
-        # Check if directory contains required model files
-        if not all(os.path.isfile(os.path.join(path, m_file)) for m_file in model_files):
-            return False
-        return True
-
-
 class ContigPloidyMixin:
     """Methods for ``contig_ploidy``."""
 
-    def _precomputed_ploidy_model(self, library_kit: str) -> str:
-        """Return the precomputed contig-ploidy model directory of the library kit."""
-        path = "__no_ploidy_model_for_library_in_config__"
-        for model in self.config.gcnv.precomputed_model_paths:
-            # Adjust library kit name from config to wildcard
-            library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            if library_to_wildcard == library_kit:
-                path = model.get("contig_ploidy")
-        return path
-
     @dictify
     def _get_input_files_contig_ploidy(self, wildcards: Wildcards):
-        """Yield input files for ``contig_ploidy`` rule  in CASE MODE using precomputed model.
+        """Yield input files for ``contig_ploidy`` rule in CASE MODE using the model task.
 
         :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         """
+        kit = wildcards.library_kit
         tsvs = []
         for lib in sorted(
             self.parent.primary_dna_libraries(include_background=True)["library_name"]
         ):
-            if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
+            if self.ngs_library_to_kit.get(lib) == kit:
                 tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "tsv", tsvs
         # Yield path to pedigree file
@@ -221,7 +53,7 @@ class ContigPloidyMixin:
             name_pattern = f"write_pedigree.{library_name}"
             peds.append(f"work/{name_pattern}/out/{library_name}.ped")
         yield "ped", peds
-        yield "model", self._precomputed_ploidy_model(wildcards.library_kit)
+        yield "model", self.parent.get_upstream_paths("gcnv_model", library_kit=kit).ploidy
 
     @dictify
     def _get_output_files_contig_ploidy(self):
@@ -253,16 +85,9 @@ class CallCnvsMixin:
         kit = wildcards.library_kit
         yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy/.done"
 
-        # Yield the precomputed model shard directory
-        path = "__no_model_for_library_in_config__"
-        for model in self.config.gcnv.precomputed_model_paths:
-            # Adjust library kit name from config to wildcard
-            library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            if library_to_wildcard == kit:
-                pattern = model.get("model_pattern")
-                model_dir_dict = get_model_dir_to_dict(pattern)
-                path = model_dir_dict.get(wildcards.shard)
-        yield "model", path
+        # Yield the model of the shard
+        model = self.parent.get_upstream_paths("gcnv_model", library_kit=kit, shard=wildcards.shard)
+        yield "model", model.calls
 
     @dictify
     def _get_output_files_call_cnvs(self):
@@ -285,45 +110,42 @@ class PostGermlineCallsMixin:
             yield key, touch(f"{prefix}{ext}")
 
     @dictify
-    def _get_input_files_post_germline_calls(self, wildcards):
+    def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
         """Yield input files for ``post_germline_calls`` in CASE mode.
 
-        :param wildcards: Snakemake wildcards associated with rule, namely: 'mapper' (e.g., 'bwa')
-        and 'library_name' (e.g., 'P001-N1-DNA1-WGS1').
+        The shards of the model task come from its checkpoint, through the local checkpoint
+        ``<step>_gcnv_shards`` (a Snakemake module cannot use the checkpoints of another one).
+        The Snakefile calls this function with Snakemake's ``checkpoints`` object.
+
+        :param wildcards: Snakemake wildcards associated with rule, namely: 'library_name'
+        (e.g., 'P001-N1-DNA1-WGS1').
         :type wildcards: snakemake.io.Wildcards
         """
-        # Get library kit associated with library
         library_kit = self.ngs_library_to_kit.get(wildcards.library_name)
-
-        # Get shards - based on scattered step
-        model_dir_dict = None
-        for model in self.config.gcnv.precomputed_model_paths:
-            # Adjust library name to wildcard
-            library_to_wildcard = model.get("library").strip().replace(" ", "_")
-            if library_to_wildcard == library_kit:
-                pattern = model.get("model_pattern")
-                model_dir_dict = get_model_dir_to_dict(pattern)
-                break
-
-        # Validate model
-        if not model_dir_dict:
-            msg_error = f"Configuration doesn't contain model for library '{library_kit}'"
-            raise InvalidConfiguration(msg_error)
+        shards_file = getattr(checkpoints, f"{self.parent.name}_gcnv_shards").get(
+            library_kit=library_kit
+        )
+        shards = Path(shards_file.output[0]).read_text().split()
 
         # Yield cnv calls output
         yield (
             "calls",
-            [
-                f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done"
-                for shard in model_dir_dict
-            ],
+            [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done" for shard in shards],
         )
 
         # Yield contig-ploidy output
         yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
 
-        # Yield the precomputed model shard directories (same order as the calls)
-        yield "model", list(model_dir_dict.values())
+        # Yield the model shards (same order as the calls)
+        yield (
+            "model",
+            [
+                self.parent.get_upstream_paths(
+                    "gcnv_model", library_kit=library_kit, shard=shard
+                ).calls
+                for shard in shards
+            ],
+        )
 
 
 class JointGermlineCnvSegmentationMixin:
@@ -357,7 +179,7 @@ class JointGermlineCnvSegmentationMixin:
         yield "vcf", vcfs
         # Yield path to interval list file
         kit = wildcards.kit
-        yield "interval_list", f"work/{kit}/out/{kit}.interval_list"
+        yield "interval_list", self._interval_list_path(kit)
         # Yield path to pedigree file
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
@@ -400,8 +222,27 @@ class MergeMultikitFamiliesMixin:
         yield "vcf_tbi", [f"{vcf}.tbi" for vcf in vcfs]
 
 
+class ShardsMixin:
+    """Methods for ``shards``, the local checkpoint that lists the shards of the model task."""
+
+    @dictify
+    def _get_input_files_shards(self, wildcards):
+        model = self.parent.get_upstream_paths("gcnv_model", library_kit=wildcards.library_kit)
+        yield "shards", model.shards
+
+    @dictify
+    def _get_output_files_shards(self):
+        yield "shards", "work/{library_kit}/out/{library_kit}.shards.txt"
+
+    def write_shards(self, input, output):
+        """Write the names of the shard directories ``temp_{shard}`` of the model task, sorted."""
+        directories = Path(input.shards).glob("temp_*")
+        shards = sorted(path.name.removeprefix("temp_") for path in directories if path.is_dir())
+        Path(output.shards).write_text("".join(f"{shard}\n" for shard in shards))
+
+
 class RunGcnvStepPart(
-    ValidationMixin,
+    ShardsMixin,
     ContigPloidyMixin,
     CallCnvsMixin,
     PostGermlineCallsMixin,
@@ -413,7 +254,7 @@ class RunGcnvStepPart(
 
     #: Class available actions
     actions = (
-        "preprocess_intervals",
+        "shards",
         "coverage",
         "contig_ploidy",
         "call_cnvs",
@@ -425,7 +266,6 @@ class RunGcnvStepPart(
     temp_outputs = {"call_cnvs": ("done",)}
 
     intermediate_outputs = {
-        "preprocess_intervals": ("interval_list",),
         "coverage": ("tsv",),
         "contig_ploidy": ("done",),
         "post_germline_calls": ("seg_vcf",),
@@ -434,8 +274,14 @@ class RunGcnvStepPart(
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Validate configuration, precomputed models must be present
-        self.validate_request()
+        self.ngs_library_to_kit = build_ngs_library_to_kit(
+            self.parent.primary_dna_libraries(include_background=True),
+            self.parent.get_task_config("gcnv_model"),
+        )
+
+    def _interval_list_path(self, library_kit: str) -> str:
+        """Return the interval list of the model task, which also fixes the intervals of the calls."""
+        return self.parent.get_upstream_paths("gcnv_model", library_kit=library_kit).interval_list
 
     @listify
     def get_result_files(self):

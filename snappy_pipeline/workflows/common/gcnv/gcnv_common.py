@@ -9,20 +9,25 @@ from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 
 
-def build_ngs_library_to_kit(libraries: pd.DataFrame, mapping=None) -> dict[str, str]:
+#: The kit name of whole genome models
+WGS_KIT = "wgs"
+
+
+def build_ngs_library_to_kit(libraries: pd.DataFrame, model_config) -> dict[str, str]:
     """Return the library kit of each library in ``libraries``, the primary DNA library rows.
 
-    Without ``mapping`` (``path_target_interval_list_mapping``) every library gets the kit
-    ``default``.  Otherwise a library gets the ``name`` of the last mapping item whose ``pattern``
-    matches its ``library_kit`` column, and libraries without a matching item are left out.
+    ``model_config`` is the config of a ``gcnv_model`` task.  With ``intervals: wgs`` every
+    library gets the kit ``wgs``.  Otherwise a library gets the ``name`` of the last item of
+    ``gcnv.path_target_interval_list_mapping`` whose ``pattern`` matches its ``library_kit``
+    column, and libraries without a matching item are left out.
     """
-    if not mapping:
-        return {name: "default" for name in libraries["library_name"]}
+    if model_config.intervals == "wgs":
+        return {name: WGS_KIT for name in libraries["library_name"]}
     result = {}
     if "library_kit" in libraries.columns:
         for name, library_kit in zip(libraries["library_name"], libraries["library_kit"]):
             if pd.notna(library_kit) and library_kit:
-                for item in mapping:
+                for item in model_config.gcnv.path_target_interval_list_mapping:
                     if re.match(item.pattern, library_kit):
                         result[name] = item.name
     return result
@@ -78,7 +83,7 @@ class CoverageCommonMixin:
         """
         # Yield .interval list file.
         library_kit = self.ngs_library_to_kit[wildcards.library_name]
-        yield "interval_list", f"work/{library_kit}/out/{library_kit}.interval_list"
+        yield "interval_list", self._interval_list_path(library_kit)
         # Yield input BAM and BAI files
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
@@ -131,6 +136,10 @@ class GcnvCommonStepPart(
 
     #: Dictionary: Key: library name (str); Value: library kit (str).
     ngs_library_to_kit = None
+
+    def _interval_list_path(self, library_kit: str) -> str:
+        """Return the preprocessed interval list of the kit, a local path of the model task."""
+        return f"work/{library_kit}/out/{library_kit}.interval_list"
 
     #: Resource usage of the actions that run the gCNV model
     resource_usage = dict.fromkeys(

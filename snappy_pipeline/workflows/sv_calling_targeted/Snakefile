@@ -41,23 +41,22 @@ if tool == "gcnv":
 
     # GATK-gCNV ----------------------------------------------------------------
 
-    rule sv_calling_targeted_gcnv_preprocess_intervals:
+    # The shards of the model are known after the checkpoint of the model task. A module cannot
+    # use the checkpoints of another one, so this local checkpoint lists them for this task.
+
+    localrules:
+        sv_calling_targeted_gcnv_shards,
+
+    checkpoint sv_calling_targeted_gcnv_shards:
         input:
-            unpack(wf.get_input_files("gcnv", "preprocess_intervals")),
+            unpack(wf.get_input_files("gcnv", "shards")),
         output:
-            **wf.get_output_files("gcnv", "preprocess_intervals"),
-        log:
-            wf.get_log_file("gcnv", "preprocess_intervals"),
-        benchmark:
-            wf.get_benchmark_file("gcnv", "preprocess_intervals")
-        threads: wf.get_resource("gcnv", "preprocess_intervals", "threads")
-        resources:
-            runtime=wf.get_resource("gcnv", "preprocess_intervals", "runtime"),
-            mem=wf.get_resource("gcnv", "preprocess_intervals", "mem"),
-            partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
-            tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
-        wrapper:
-            wf.wrapper_path("gcnv/preprocess_intervals")
+            **wf.get_output_files("gcnv", "shards"),
+        run:
+            wf.substep_dispatch("gcnv", "write_shards", input, output)
+
+    def sv_calling_targeted_gcnv_post_germline_calls_input(wildcards):
+        return wf.get_input_files("gcnv", "post_germline_calls")(wildcards, checkpoints)
 
     rule sv_calling_targeted_gcnv_coverage:
         input:
@@ -115,7 +114,7 @@ if tool == "gcnv":
 
     rule sv_calling_targeted_gcnv_post_germline_calls:
         input:
-            unpack(wf.get_input_files("gcnv", "post_germline_calls")),
+            unpack(sv_calling_targeted_gcnv_post_germline_calls_input),
         output:
             **wf.get_output_files("gcnv", "post_germline_calls"),
         log:

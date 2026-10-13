@@ -25,8 +25,8 @@ PATH_BASELINE = SNAPSHOTS / "path_convention_violations.json"
 
 #: Input functions that a Snakefile calls with Snakemake's ``checkpoints`` object.
 CHECKPOINT_INPUT_FUNCTIONS = {
-    ("BuildGcnvTargetSeqModelStepPart", "_get_input_files_post_germline_calls"),
-    ("BuildGcnvWgsModelStepPart", "_get_input_files_post_germline_calls"),
+    ("GcnvModelStepPart", "_get_input_files_post_germline_calls"),
+    ("PostGermlineCallsMixin", "_get_input_files_post_germline_calls"),
 }
 
 
@@ -187,6 +187,7 @@ DEPENDS_ON_KEYS = {
     "features",
     "dbsnp",
     "index",
+    "gcnv_model",
 }
 
 
@@ -563,6 +564,8 @@ _PROJECT_RESOURCES = re.compile(
 #: Intermediates that stay, with the reason
 NOT_TEMP = {
     r"\.scatter_intervals$": "checkpoint output that is globbed while the DAG is built",
+    r"\.shards\.txt$": "checkpoint output that is read while the DAG is built",
+    r"^tasks/gcnv_model\w*/work/[^/]+/out/[^/.]+\.interval_list$": "the callers read it",
     r"gatk4_hc_gvcf_combine_gvcfs\.[^/]+/out/[^/]+\.g\.vcf\.gz(\.tbi)?$": (
         "the published {library}.g.vcf.gz of the genotype rule links to it"
     ),
@@ -634,7 +637,7 @@ def test_temp_files_are_intermediates():
 #: (reference indices, gCNV models, cBioPortal files)
 UNCHECKED_PUBLISHING = (
     "reference_index",
-    "helper_gcnv_model",
+    "gcnv_model",
     "cbioportal_export",
 )
 

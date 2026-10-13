@@ -5,9 +5,9 @@ The ``tool`` field selects the caller:
 
 - ``delly2`` calls the variants per library, merges the sites of a pedigree and genotypes them in every member.
 - ``manta`` calls the variants of all members of a pedigree together.
-- ``gcnv`` runs GATK gCNV in case mode, with the models in ``gcnv.precomputed_model_paths``.
-  The models come from the step :ref:`step_helper_gcnv_model_targeted`.
-  ``gcnv.path_target_interval_list_mapping`` maps the library kit to its target intervals.
+- ``gcnv`` runs GATK gCNV in case mode, with the model of the task in ``depends_on.gcnv_model``.
+  That task is a :ref:`step_gcnv_model` task with ``intervals: targeted``.
+  It also maps the library kits to their target intervals, and its intervals are the ones of the calls.
 - ``melt`` calls mobile element insertions.
 
 The task gives one result per pedigree, named after its index library.
@@ -27,15 +27,12 @@ Here ``library_name`` is the index library of the pedigree.
 Downstream tasks read the key ``vcf``.
 """
 
-from collections import Counter
-
 from biomedsheets.shortcuts import GermlineCaseSheet
 
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
-from snappy_pipeline.workflows.common.gcnv.gcnv_common import build_ngs_library_to_kit
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 
@@ -48,15 +45,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 GCNV_MIN_KIT_SAMPLES = 10
 
 #: Default configuration for the sv_calling_targeted step
-
-
-class GcnvTargetedStepPart(RunGcnvStepPart):
-    """Targeted seq. CNV calling with GATK4 gCNV"""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Take shortcut from library to library kit.
-        self.ngs_library_to_kit = self.parent.ngs_library_to_kit
 
 
 class SvCallingTargetedWorkflow(BaseStep):
@@ -72,21 +60,9 @@ class SvCallingTargetedWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         selected_tool = self.config.tool
-        # gCNV-specific shortcuts must be initialized BEFORE registering sub-step classes
-        # so that GcnvTargetedStepPart.__init__ can access them.
-        if selected_tool == Tool.gcnv:
-            self.ngs_library_to_kit = build_ngs_library_to_kit(
-                self.primary_dna_libraries(include_background=True),
-                self.get_task_config("sv_calling_targeted").gcnv.path_target_interval_list_mapping,
-            )
-            self.library_kit_counts_dict = dict(Counter(self.ngs_library_to_kit.values()))
-        else:
-            self.ngs_library_to_kit = {}
-            self.library_kit_counts_dict = {}
-
         match selected_tool:
             case Tool.gcnv:
-                selected_sub_step = GcnvTargetedStepPart
+                selected_sub_step = RunGcnvStepPart
             case Tool.delly2:
                 selected_sub_step = Delly2StepPart
             case Tool.manta:
@@ -103,14 +79,3 @@ class SvCallingTargetedWorkflow(BaseStep):
         """Return local targeted SV output paths for downstream consumers."""
         library_name = kwargs.get("library_name", "{library_name}")
         return {"vcf": f"work/{library_name}/out/{library_name}.vcf.gz"}
-
-    def get_library_count(self, library_kit):
-        """Get library count.
-
-        :param library_kit: Library kit name.
-        :type library_kit: str
-
-        :return: Returns number of samples with inputted library kit. If library name not defined,
-        it returns zero.
-        """
-        return self.library_kit_counts_dict.get(library_kit, 0)

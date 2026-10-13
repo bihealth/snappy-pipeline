@@ -5,8 +5,7 @@ implementations from the modules implementing the workflows here.
 
 Overall, there are the following SNAPPY related pipeline steps:
 
-- ``helper_gcnv_build_model_wgs``
-- ``helper_gcnv_build_model_targeted_seq``
+- ``gcnv_model``
 - ``sv_calling_targeted``
 - ``sv_calling_wgs``
 

@@ -6,8 +6,8 @@ The ``tool`` field selects the caller:
 - ``delly2`` calls the variants per library, merges the sites of a pedigree and genotypes them in every member.
 - ``manta`` calls the variants of all members of a pedigree together.
 - ``popdel`` profiles each library and then calls the deletions of all libraries together.
-- ``gcnv`` runs GATK gCNV in case mode, with the models in ``gcnv.precomputed_model_paths``.
-  The models come from the step :ref:`step_helper_gcnv_model_wgs`.
+- ``gcnv`` runs GATK gCNV in case mode, with the model of the task in ``depends_on.gcnv_model``.
+  That task is a :ref:`step_gcnv_model` task with ``intervals: wgs``, and its intervals are the ones of the calls.
 - ``melt`` calls mobile element insertions.
 
 The task gives one result per pedigree, named after its index library.
@@ -58,23 +58,6 @@ from .model import Tool
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Default configuration for the sv_calling_wgs step
-
-
-class GcnvWgsStepPart(RunGcnvStepPart):
-    """WGS CNV calling with GATK4 gCNV"""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Take shortcut from library to library kit.
-        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-
-    @dictify
-    def _build_ngs_library_to_kit(self):
-        # No mapping given for WGS; we will use the "wgs" one for all.
-        for library_name in self.parent.primary_dna_libraries(include_background=True)[
-            "library_name"
-        ]:
-            yield library_name, "wgs"
 
 
 def escape_dots_dashes(s: str) -> str:
@@ -262,7 +245,7 @@ class SvCallingWgsWorkflow(BaseStep):
             case Tool.popdel:
                 selected_sub_step = PopDelStepPart
             case Tool.gcnv:
-                selected_sub_step = GcnvWgsStepPart
+                selected_sub_step = RunGcnvStepPart
             case Tool.melt:
                 selected_sub_step = MeltStepPart
             # case Tool.sniffles2:

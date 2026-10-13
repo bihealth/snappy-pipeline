@@ -140,7 +140,9 @@ Rules:
   Snakemake adds the task prefix to function results just as it does to static patterns.
 
 The exception is an input function that needs Snakemake's `checkpoints` object.
-The Snakefile calls it as `wf.get_input_files(...)(wildcards, checkpoints)` from a Snakefile-level function (`helper_gcnv_model_*`).
+The Snakefile calls it as `wf.get_input_files(...)(wildcards, checkpoints)` from a Snakefile-level function (`gcnv_model`).
+Each task is a Snakemake module with its own `checkpoints` object, so a task cannot use the checkpoint of an upstream task.
+It declares a local checkpoint instead, whose input is the upstream checkpoint output and whose output lists what the upstream checkpoint produced (`sv_calling_*` with `tool: gcnv`).
 
 ### Libraries, donors and pedigrees
 
@@ -158,7 +160,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A step lists what its tasks produce in `produces`.
   If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
   For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
-- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp` and `index`.
+- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp`, `index` and `gcnv_model`.
   A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`.
   `test_depends_on_keys_use_the_vocabulary` checks this.
 - `reference` (genome FASTA), `features` (gene annotation GTF) and `dbsnp` use the shared field types `Reference`, `Features` and `Dbsnp` from `snappy_pipeline.workflows.abstract.protocol`.

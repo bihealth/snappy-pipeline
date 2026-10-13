@@ -45,7 +45,7 @@ then
 fi
 
 gatk DetermineGermlineContigPloidy \
-    --model {snakemake.input.model} \
+    --model $(dirname {snakemake.input.model})/ploidy-model \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --output $(dirname {snakemake.output}) \
     --output-prefix ploidy

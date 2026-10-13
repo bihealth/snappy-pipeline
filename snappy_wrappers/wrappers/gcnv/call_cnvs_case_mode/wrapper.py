@@ -35,7 +35,7 @@ gatk GermlineCNVCaller \
     --run-mode CASE \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
-    --model {snakemake.input.model} \
+    --model $(dirname {snakemake.input.model})/cnv_calls-model \
     --output $(dirname {snakemake.output.done}) \
     --output-prefix cnv_calls
 """

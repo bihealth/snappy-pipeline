@@ -2,7 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/helper_gcnv_model_targeted/output/.manifest.tsv"
+   "tasks/gcnv_model_wgs/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -15,17 +15,17 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/helper_gcnv_model_targeted/benchmarks/default/default.annotate_gc.tsv",
+  "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.annotate_gc.tsv",
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list",
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/default/log/default.annotate_gc.log"
+   "tasks/gcnv_model_wgs/work/wgs/log/wgs.annotate_gc.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.annotate_gc.tsv"
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.annotate_gc.tsv"
   ],
   "params": {},
   "resources": {
@@ -35,28 +35,28 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "helper_gcnv_model_targeted_build_gcnv_model_annotate_gc",
+  "rule": "gcnv_model_wgs_gcnv_model_annotate_gc",
   "temp": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.annotate_gc.tsv"
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.annotate_gc.tsv"
   ],
   "threads": 1,
   "wildcards": {
-   "library_kit": "default"
+   "library_kit": "wgs"
   },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/annotate_gc"
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/annotate_gc_wgs"
  },
  {
-  "benchmark": "tasks/helper_gcnv_model_targeted/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",
+  "benchmark": "tasks/gcnv_model_wgs/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.scatter_intervals"
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.scatter_intervals"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.post_germline_calls.log"
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.post_germline_calls.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
   "params": {},
   "resources": {
@@ -66,7 +66,7 @@
    "partition": "medium",
    "runtime": 5760
   },
-  "rule": "helper_gcnv_model_targeted_build_gcnv_model_calling_gcnv_post_germline_calls",
+  "rule": "gcnv_model_wgs_gcnv_model_calling_gcnv_post_germline_calls",
   "temp": [],
   "threads": 1,
   "wildcards": {
@@ -75,18 +75,18 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/post_germline_calls"
  },
  {
-  "benchmark": "tasks/helper_gcnv_model_targeted/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.coverage.tsv",
+  "benchmark": "tasks/gcnv_model_wgs/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.coverage.tsv",
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list",
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
   "params": {},
   "resources": {
@@ -96,9 +96,9 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "helper_gcnv_model_targeted_build_gcnv_model_coverage",
+  "rule": "gcnv_model_wgs_gcnv_model_coverage",
   "temp": [
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
   "threads": 1,
   "wildcards": {
@@ -107,46 +107,46 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/coverage"
  },
  {
-  "benchmark": "tasks/helper_gcnv_model_targeted/benchmarks/default/default.filter_intervals.tsv",
+  "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.filter_intervals.tsv",
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list",
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.annotate_gc.tsv",
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list",
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.annotate_gc.tsv",
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/default/log/default.filter_intervals.log"
+   "tasks/gcnv_model_wgs/work/wgs/log/wgs.filter_intervals.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.filter_intervals.interval_list"
   ],
   "params": {},
   "resources": {
-   "mem": "7.68 GB",
-   "mem_mb": 7680,
-   "mem_mib": 7325,
+   "mem": "20.48 GB",
+   "mem_mb": 20480,
+   "mem_mib": 19532,
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "helper_gcnv_model_targeted_build_gcnv_model_filter_intervals",
+  "rule": "gcnv_model_wgs_gcnv_model_filter_intervals",
   "temp": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.filter_intervals.interval_list"
   ],
   "threads": 1,
   "wildcards": {
-   "library_kit": "default"
+   "library_kit": "wgs"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/filter_intervals"
  },
  {
-  "benchmark": "tasks/helper_gcnv_model_targeted/benchmarks/default/default.preprocess_intervals.tsv",
+  "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.preprocess_intervals.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/helper_gcnv_model_targeted/work/default/log/default.preprocess_intervals.log"
+   "tasks/gcnv_model_wgs/work/wgs/log/wgs.preprocess_intervals.log"
   ],
   "output": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list"
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list"
   ],
   "params": {},
   "resources": {
@@ -156,59 +156,57 @@
    "partition": "medium",
    "runtime": 1440
   },
-  "rule": "helper_gcnv_model_targeted_build_gcnv_model_preprocess_intervals",
-  "temp": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "library_kit": "default"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals"
- },
- {
-  "benchmark": "tasks/helper_gcnv_model_targeted/benchmarks/default/default.scatter_intervals.tsv",
-  "input": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
-  ],
-  "log": [
-   "tasks/helper_gcnv_model_targeted/work/default/log/default.scatter_intervals.log"
-  ],
-  "output": [
-   "tasks/helper_gcnv_model_targeted/work/default/out/default.scatter_intervals"
-  ],
-  "params": {},
-  "resources": {
-   "mem": "7.68 GB",
-   "mem_mb": 7680,
-   "mem_mib": 7325,
-   "partition": "medium",
-   "runtime": 1440
-  },
-  "rule": "helper_gcnv_model_targeted_build_gcnv_model_scatter_intervals",
+  "rule": "gcnv_model_wgs_gcnv_model_preprocess_intervals",
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_kit": "default"
+   "library_kit": "wgs"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals_wgs"
+ },
+ {
+  "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.scatter_intervals.tsv",
+  "input": [
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.filter_intervals.interval_list"
+  ],
+  "log": [
+   "tasks/gcnv_model_wgs/work/wgs/log/wgs.scatter_intervals.log"
+  ],
+  "output": [
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.scatter_intervals"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "7.68 GB",
+   "mem_mb": 7680,
+   "mem_mib": 7325,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "gcnv_model_wgs_gcnv_model_scatter_intervals",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_kit": "wgs"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/scatter_intervals"
  },
  {
   "benchmark": null,
   "input": [
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
-   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.ratio.tsv",
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
+   "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
   "log": [],
   "output": [
-   "tasks/helper_gcnv_model_targeted/output/.manifest.tsv"
+   "tasks/gcnv_model_wgs/output/.manifest.tsv"
   ],
   "params": {
-   "task_dir": "tasks/helper_gcnv_model_targeted"
+   "task_dir": "tasks/gcnv_model_wgs"
   },
   "resources": {},
-  "rule": "helper_gcnv_model_targeted_publish",
+  "rule": "gcnv_model_wgs_publish",
   "temp": [],
   "threads": 1,
   "wildcards": {},

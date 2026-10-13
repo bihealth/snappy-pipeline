@@ -2,13 +2,10 @@ from snappy_pipeline.workflows.adapter_trimming import AdapterTrimmingWorkflow
 from snappy_pipeline.workflows.cbioportal_export import cbioportalExportWorkflow
 from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
 from snappy_pipeline.workflows.create_proteome import CreateProteomeWorkflow
+from snappy_pipeline.workflows.gcnv_model import GcnvModelWorkflow
 from snappy_pipeline.workflows.gene_expression_quantification import (
     GeneExpressionQuantificationWorkflow,
 )
-from snappy_pipeline.workflows.helper_gcnv_model_targeted import (
-    HelperBuildTargetSeqGcnvModelWorkflow,
-)
-from snappy_pipeline.workflows.helper_gcnv_model_wgs import HelperBuildWgsGcnvModelWorkflow
 from snappy_pipeline.workflows.hla_typing import HlaTypingWorkflow
 from snappy_pipeline.workflows.homologous_recombination_deficiency import (
     HomologousRecombinationDeficiencyWorkflow,
@@ -57,9 +54,8 @@ WORKFLOW_REGISTRY = {
     "cbioportal_export": cbioportalExportWorkflow,
     "combine_variants": CombineVariantsWorkflow,
     "create_proteome": CreateProteomeWorkflow,
+    "gcnv_model": GcnvModelWorkflow,
     "gene_expression_quantification": GeneExpressionQuantificationWorkflow,
-    "helper_gcnv_model_targeted": HelperBuildTargetSeqGcnvModelWorkflow,
-    "helper_gcnv_model_wgs": HelperBuildWgsGcnvModelWorkflow,
     "hla_typing": HlaTypingWorkflow,
     "homologous_recombination_deficiency": HomologousRecombinationDeficiencyWorkflow,
     "igv_session_generation": IgvSessionGenerationWorkflow,
