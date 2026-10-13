@@ -10,6 +10,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -42,6 +43,10 @@
    "runtime": 120
   },
   "rule": "variant_export_external_variant_export_external_gvcf_to_vcf",
+  "temp": [
+   "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/out/dragen.case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/out/dragen.case001subregion-N1-DNA1-WES1.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"
@@ -62,6 +67,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_export_external_variant_export_external_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
@@ -83,6 +89,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_export_external_variant_export_external_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
@@ -142,6 +149,7 @@
    "runtime": 5760
   },
   "rule": "variant_export_external_variant_export_external_varfish_annotator_annotate",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"
@@ -158,6 +166,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_export_external_variant_export_external_write_pedigree_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"

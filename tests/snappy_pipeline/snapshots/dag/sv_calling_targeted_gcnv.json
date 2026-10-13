@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -72,6 +73,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -116,6 +118,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -157,6 +160,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -187,6 +191,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -213,6 +218,9 @@
    "runtime": 5760
   },
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_call_cnvs",
+  "temp": [
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.001.call_cnvs/.done"
+  ],
   "threads": 1,
   "wildcards": {
    "library_kit": "default",
@@ -242,6 +250,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_contig_ploidy",
+  "temp": [
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.contig_ploidy/.done"
+  ],
   "threads": 1,
   "wildcards": {
    "library_kit": "default"
@@ -271,6 +282,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_coverage",
+  "temp": [
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -301,6 +315,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_joint_germline_cnv_segmentation",
+  "temp": [
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "kit": "default",
@@ -311,7 +329,8 @@
  {
   "benchmark": "tasks/sv_calling_targeted_gcnv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.merge_multikit_families.tsv",
   "input": [
-   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz"
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz",
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.default.joint_segmentation.vcf.gz.tbi"
   ],
   "log": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_multikit_families.log"
@@ -335,6 +354,7 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_merge_multikit_families",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -365,6 +385,9 @@
    "runtime": 5760
   },
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_post_germline_calls",
+  "temp": [
+   "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -391,6 +414,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_gcnv_preprocess_intervals",
+  "temp": [
+   "tasks/sv_calling_targeted_gcnv/work/default/out/default.interval_list"
+  ],
   "threads": 1,
   "wildcards": {
    "library_kit": "default"
@@ -407,6 +433,7 @@
   "params": {},
   "resources": {},
   "rule": "sv_calling_targeted_gcnv_sv_calling_targeted_write_pedigree_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"

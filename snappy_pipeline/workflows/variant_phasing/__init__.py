@@ -167,6 +167,12 @@ class VariantPhasingBaseStep(BaseStepPart):
                     if donor.dna_ngs_library:
                         self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
+    @property
+    def temp_outputs(self) -> dict[str, tuple[str, ...]]:
+        # Only feeds read-backed phasing when not published
+        published = self.name_pattern in (CONFIG_TO_TOKEN[p] for p in self.config.phasings)
+        return {} if published else {"run": ("vcf", "vcf_tbi")}
+
     @dictify
     def get_output_files(self, action):
         assert action == "run"
@@ -241,6 +247,8 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
 
     #: Class available actions
     actions = ("scatter", "run", "gather")
+
+    temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi")}
 
     resource_usage = {
         "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),

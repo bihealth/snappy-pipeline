@@ -18,6 +18,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -91,6 +92,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_mbcs_ngs_mapping_mbcs_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -166,6 +168,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_mbcs_ngs_mapping_mbcs_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -210,6 +213,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -251,6 +255,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -281,6 +286,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"

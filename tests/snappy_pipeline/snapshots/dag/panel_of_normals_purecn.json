@@ -12,6 +12,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -75,6 +76,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -85,6 +87,7 @@
   "benchmark": "tasks/panel_of_normals_mutect2/benchmarks/panel_of_normals/panel_of_normals.tsv",
   "input": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
@@ -113,6 +116,7 @@
    "runtime": 2880
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_create_panel",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/mutect2/create_panel"
@@ -143,7 +147,31 @@
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/21-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/22-of-24.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/23-of-24.vcf.gz",
-   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/24-of-24.vcf.gz"
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/24-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/1-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/2-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/3-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/4-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/5-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/6-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/7-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/8-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/9-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/10-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/11-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/12-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/13-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/14-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/15-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/16-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/17-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/18-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/19-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/20-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/21-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/22-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/23-of-24.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/24-of-24.vcf.gz.tbi"
   ],
   "log": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
@@ -161,6 +189,10 @@
    "runtime": 240
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_gather",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.prepare.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1"
@@ -197,6 +229,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/1-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/1-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -234,6 +270,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/10-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/10-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -271,6 +311,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/11-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/11-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -308,6 +352,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/12-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/12-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -345,6 +393,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/13-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/13-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -382,6 +434,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/14-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/14-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -419,6 +475,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/15-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/15-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -456,6 +516,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/16-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/16-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -493,6 +557,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/17-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/17-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -530,6 +598,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/18-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/18-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -567,6 +639,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/19-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/19-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -604,6 +680,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/2-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/2-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -641,6 +721,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/20-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/20-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -678,6 +762,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/21-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/21-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -715,6 +803,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/22-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/22-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -752,6 +844,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/23-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/23-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -789,6 +885,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/24-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/24-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -826,6 +926,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/3-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/3-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -863,6 +967,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/4-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/4-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -900,6 +1008,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/5-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/5-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -937,6 +1049,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/6-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/6-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -974,6 +1090,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/7-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/7-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -1011,6 +1131,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/8-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/8-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -1048,6 +1172,10 @@
    "runtime": 4320
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_prepare_panel",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/9-of-24.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/run/9-of-24.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1",
@@ -1103,6 +1231,32 @@
    "runtime": 2
   },
   "rule": "panel_of_normals_mutect2_panel_of_normals_mutect2_scatter",
+  "temp": [
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/1-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/10-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/11-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/12-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/13-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/14-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/15-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/16-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/17-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/18-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/19-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/2-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/20-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/21-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/22-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/23-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/24-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/3-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/4-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/5-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/6-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/7-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/8-of-24.region.bed",
+   "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/par/scatter/9-of-24.region.bed"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1"
@@ -1127,6 +1281,7 @@
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_purecn_panel_of_normals_link_out_indexed",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "panel_of_normals.intervals.bed.gz",
@@ -1148,6 +1303,7 @@
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_purecn_panel_of_normals_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "panel_of_normals.intervals.list",
@@ -1169,6 +1325,7 @@
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_purecn_panel_of_normals_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "panel_of_normals.mapping_bias.rds",
@@ -1190,6 +1347,7 @@
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_purecn_panel_of_normals_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "panel_of_normals.rds",
@@ -1229,6 +1387,9 @@
    "runtime": 240
   },
   "rule": "panel_of_normals_purecn_panel_of_normals_purecn_coverage",
+  "temp": [
+   "tasks/panel_of_normals_purecn/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage_loess.txt.gz"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -1271,6 +1432,7 @@
    "runtime": 720
   },
   "rule": "panel_of_normals_purecn_panel_of_normals_purecn_create_panel",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/purecn/create_panel"
@@ -1295,6 +1457,7 @@
    "runtime": 60
   },
   "rule": "panel_of_normals_purecn_panel_of_normals_purecn_install",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/singularity"
@@ -1334,6 +1497,7 @@
    "runtime": 240
   },
   "rule": "panel_of_normals_purecn_panel_of_normals_purecn_prepare",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/purecn/prepare"
@@ -1376,6 +1540,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -1417,6 +1582,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -1447,6 +1613,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"

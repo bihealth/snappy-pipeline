@@ -14,6 +14,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -77,6 +78,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -142,6 +144,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -186,6 +189,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -227,6 +231,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -257,6 +262,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -266,7 +272,9 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi"
   ],
   "log": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_combine_gvcfs.log"
@@ -299,6 +307,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_combine_gvcfs",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -343,6 +352,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -387,6 +397,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -435,6 +446,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_genotype",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -459,6 +471,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_link_out_indexed",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
@@ -493,6 +506,7 @@
    "runtime": 600
   },
   "rule": "variant_checking_peddy_variant_checking_peddy_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-T1-DNA1-WES1"
@@ -509,6 +523,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_checking_peddy_variant_checking_write_pedigree_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-T1-DNA1-WES1"

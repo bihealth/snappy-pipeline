@@ -100,6 +100,8 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
     name = "pileup"
     actions = ("normal", "tumor")
 
+    temp_outputs = {"normal": ("vcf", "vcf_tbi"), "tumor": ("vcf", "vcf_tbi")}
+
     def _get_input_files_normal(self, wildcards):
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.tumor_library

@@ -316,6 +316,8 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     #: Class available actions
     actions = ("coverage", "run")
 
+    temp_outputs = {"coverage": ("coverage",)}
+
     resource_usage = {
         "coverage": ResourceUsage(
             threads=1,
@@ -436,6 +438,12 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "plot",
         "report",
     )
+
+    temp_outputs = {
+        "coverage": ("target", "antitarget"),
+        "segment": ("segments",),
+        "call": ("calls",),
+    }
 
     default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="7680MB")
 

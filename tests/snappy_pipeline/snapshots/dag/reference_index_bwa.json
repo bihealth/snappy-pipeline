@@ -16,6 +16,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -58,6 +59,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -99,6 +101,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -129,6 +132,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"

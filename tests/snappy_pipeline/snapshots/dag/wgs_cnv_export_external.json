@@ -11,6 +11,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -29,6 +30,7 @@
   "params": {},
   "resources": {},
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
@@ -50,6 +52,7 @@
   "params": {},
   "resources": {},
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
@@ -71,6 +74,7 @@
   "params": {},
   "resources": {},
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
@@ -129,6 +133,7 @@
    "runtime": 5760
   },
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_varfish_annotator_external_annotate_svs",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"
@@ -164,6 +169,10 @@
    "runtime": 120
   },
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_varfish_annotator_external_merge_vcf",
+  "temp": [
+   "tasks/wgs_cnv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/wgs_cnv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"
@@ -180,6 +189,7 @@
   "params": {},
   "resources": {},
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_write_pedigree_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"

@@ -10,6 +10,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -28,6 +29,7 @@
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
@@ -49,6 +51,7 @@
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-RNA1-mRNA_seq1.transcript.sf",
@@ -89,6 +92,7 @@
    "runtime": 240
   },
   "rule": "gene_expression_quantification_salmon_gene_expression_quantification_salmon_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"

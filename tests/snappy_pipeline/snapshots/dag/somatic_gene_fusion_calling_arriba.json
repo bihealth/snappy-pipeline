@@ -11,6 +11,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -67,6 +68,7 @@
    "runtime": 1440
   },
   "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_arriba_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
@@ -85,6 +87,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_marker",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": ".done",
@@ -106,6 +109,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-RNA1-mRNA_seq1.discarded_fusions.tsv.gz",
@@ -127,6 +131,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-RNA1-mRNA_seq1.fusions.tsv",

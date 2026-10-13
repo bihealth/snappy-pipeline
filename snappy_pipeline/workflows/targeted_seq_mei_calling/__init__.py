@@ -112,6 +112,8 @@ class ScrambleStepPart(BaseStepPart):
     #: Class available actions
     actions = ("cluster", "analysis")
 
+    temp_outputs = {"cluster": ("txt",)}
+
     def __init__(self, parent):
         super().__init__(parent)
 

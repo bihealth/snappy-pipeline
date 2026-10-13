@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -34,6 +35,7 @@
    "runtime": 7200
   },
   "rule": "somatic_gene_fusion_calling_fusioncatcher_somatic_gene_fusion_calling_fusioncatcher_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
@@ -52,6 +54,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_gene_fusion_calling_fusioncatcher_somatic_gene_fusion_calling_link_out_marker",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": ".done",

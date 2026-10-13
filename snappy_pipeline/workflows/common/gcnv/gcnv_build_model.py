@@ -160,6 +160,13 @@ class BuildGcnvModelStepPart(
         "post_germline_calls",
     )
 
+    temp_outputs = {
+        "preprocess_intervals": ("interval_list",),
+        "annotate_gc": ("tsv",),
+        "filter_intervals": ("interval_list",),
+        "coverage": ("tsv",),
+    }
+
     @listify
     def get_result_files(self):
         """Return list of concrete output paths"""

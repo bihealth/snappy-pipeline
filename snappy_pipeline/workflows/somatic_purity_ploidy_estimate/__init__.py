@@ -62,6 +62,10 @@ class AscatStepPart(BaseStepPart):
         "run_ascat",
     )
 
+    temp_outputs = {
+        action: ("txt",) for action in ("baf_tumor", "baf_normal", "cnv_tumor", "cnv_normal")
+    }
+
     def __init__(self, parent):
         super().__init__(parent)
 

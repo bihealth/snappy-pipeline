@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -72,6 +73,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -116,6 +118,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -157,6 +160,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -187,6 +191,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -196,6 +201,9 @@
   "input": [
    "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -222,6 +230,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_genotype",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -235,6 +246,9 @@
   "input": [
    "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -261,6 +275,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_genotype",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -274,6 +291,9 @@
   "input": [
    "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -300,6 +320,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_genotype",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -344,6 +367,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_group_analysis",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -387,6 +413,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_group_analysis",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -430,6 +459,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_group_analysis",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -441,7 +473,9 @@
   "benchmark": "tasks/sv_calling_targeted_melt/benchmarks/indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/case001subregion-N1-DNA1-WES1.ALU.tsv",
   "input": [
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -467,6 +501,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_indiv_analysis",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1",
@@ -478,7 +515,9 @@
   "benchmark": "tasks/sv_calling_targeted_melt/benchmarks/indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/case001subregion-N1-DNA1-WES1.LINE1.tsv",
   "input": [
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -504,6 +543,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_indiv_analysis",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1",
@@ -515,7 +557,9 @@
   "benchmark": "tasks/sv_calling_targeted_melt/benchmarks/indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/case001subregion-N1-DNA1-WES1.SVA.tsv",
   "input": [
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
@@ -541,6 +585,9 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_indiv_analysis",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1",
@@ -581,6 +628,10 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_make_vcf",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.final_comp.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -621,6 +672,10 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_make_vcf",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.final_comp.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -661,6 +716,10 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_make_vcf",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "index_library_name": "case001subregion-N1-DNA1-WES1",
@@ -673,7 +732,10 @@
   "input": [
    "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.final_comp.vcf.gz",
    "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.final_comp.vcf.gz",
-   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz"
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz",
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.final_comp.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.final_comp.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_melt/work/make_vcf.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.final_comp.vcf.gz.tbi"
   ],
   "log": [
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.log"
@@ -697,6 +759,7 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_merge_vcf",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -730,6 +793,12 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_melt_sv_calling_targeted_melt_preprocess",
+  "temp": [
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
+   "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"

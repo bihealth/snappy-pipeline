@@ -486,6 +486,13 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     actions = ("discover", "combine_gvcfs", "genotype")
 
+    @property
+    def temp_outputs(self) -> dict[str, tuple[str, ...]]:
+        # The combined gVCF is linked into ``output/`` by the genotype rule, so it stays
+        if self.config.gatk4_hc_gvcf.keep_gvcfs:
+            return {}
+        return {"discover": ("gvcf", "gvcf_tbi")}
+
     @dictify
     def _get_input_files_discover(self, wildcards):
         yield "reference", self.parent.get_upstream_paths("reference").fasta
@@ -541,6 +548,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             infix = f"gatk4_hc_gvcf_discover.{row['library_name']}"
             gvcfs.append(f"work/{infix}/out/{infix}.g.vcf.gz")
         yield "gvcf", gvcfs
+        yield "gvcf_tbi", [f"{gvcf}.tbi" for gvcf in gvcfs]
 
     @dictify
     def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
@@ -897,6 +905,15 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         "pileup_tumor",
     )
 
+    temp_outputs = {
+        "scatter": ("regions",),
+        "run": ("vcf", "vcf_tbi", "stats", "f1r2"),
+        "gather": ("vcf", "vcf_tbi", "stats", "orientation"),
+        "pileup_normal": ("pileup",),
+        "pileup_tumor": ("pileup",),
+        "contamination": ("table", "segments"),
+    }
+
     resource_usage_dict = {
         "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
         "run": ResourceUsage(threads=1, runtime="5d", mem="8000MB"),
@@ -1014,6 +1031,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         )
         input_files = {
             "vcf": scatteritem_base_path + ".raw.vcf.gz",
+            "vcf_tbi": scatteritem_base_path + ".raw.vcf.gz.tbi",
             "stats": scatteritem_base_path + ".raw.vcf.stats",
             "f1r2": scatteritem_base_path + ".raw.f1r2.tar.gz",
         }
@@ -1023,6 +1041,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         base_path = "work/{library_name}/out/{library_name}".format(**wildcards)
         input_files = {
             "raw": base_path + ".raw.vcf.gz",
+            "raw_tbi": base_path + ".raw.vcf.gz.tbi",
             "stats": base_path + ".raw.vcf.stats",
             "orientation": base_path + ".raw.read_orientation_model.tar.gz",
             "reference": self.parent.get_upstream_paths("reference").fasta,

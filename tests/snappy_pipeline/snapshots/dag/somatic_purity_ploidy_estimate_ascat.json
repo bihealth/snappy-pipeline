@@ -12,6 +12,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -75,6 +76,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -140,6 +142,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -184,6 +187,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -225,6 +229,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -255,6 +260,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -282,6 +288,9 @@
    "runtime": 2880
   },
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_ascat_baf_normal",
+  "temp": [
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.baf_normal.txt"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1"
@@ -311,6 +320,9 @@
    "runtime": 2880
   },
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_ascat_baf_tumor",
+  "temp": [
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.baf_tumor.txt"
+  ],
   "threads": 1,
   "wildcards": {
    "tumor_library": "case001subregion-T1-DNA1-WES1"
@@ -340,6 +352,9 @@
    "runtime": 2880
   },
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_ascat_cnv_normal",
+  "temp": [
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cnv_normal.txt"
+  ],
   "threads": 1,
   "wildcards": {
    "normal_library": "case001subregion-N1-DNA1-WES1"
@@ -373,6 +388,9 @@
    "runtime": 2880
   },
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_ascat_cnv_tumor",
+  "temp": [
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnv_tumor.txt"
+  ],
   "threads": 1,
   "wildcards": {
    "tumor_library": "case001subregion-T1-DNA1-WES1"
@@ -414,6 +432,7 @@
    "runtime": 2880
   },
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_ascat_run_ascat",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "tumor_library": "case001subregion-T1-DNA1-WES1"
@@ -434,6 +453,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.goodness_of_fit.txt",
@@ -455,6 +475,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.ploidy.txt",
@@ -476,6 +497,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.segments.txt",
@@ -497,6 +519,7 @@
   "params": {},
   "resources": {},
   "rule": "somatic_purity_ploidy_estimate_ascat_somatic_purity_ploidy_estimate_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.segments_raw.txt",

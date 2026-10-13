@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -38,6 +39,7 @@
    "runtime": 120
   },
   "rule": "panel_of_normals_access_panel_of_normals_access_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/access"
@@ -56,6 +58,7 @@
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_access_panel_of_normals_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "panel_of_normals.accessible.bed",

@@ -171,6 +171,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     #: Actions
     actions = ("run",)
 
+    temp_outputs = {"run": ("maf",)}
+
     def __init__(self, parent):
         super().__init__(parent)
         self.name_pattern = "{tumor_library}"
@@ -308,6 +310,8 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
 
     #: Actions
     actions = ("run",)
+
+    temp_outputs = {"run": ("cna",)}
 
     @dictify
     def _get_input_files_run(self, wildcards):

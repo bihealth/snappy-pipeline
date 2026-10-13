@@ -33,6 +33,12 @@ class Delly2StepPart(
     name = "delly2"
     actions = ("call", "merge_calls", "genotype", "merge_genotypes")
 
+    temp_outputs = {
+        "call": ("bcf", "bcf_csi"),
+        "merge_calls": ("bcf", "bcf_csi"),
+        "genotype": ("bcf", "bcf_csi"),
+    }
+
     _cheap_resource_usage = ResourceUsage(
         threads=1,
         runtime="1d",
@@ -95,6 +101,7 @@ class Delly2StepPart(
                 library_name = donor.dna_ngs_library.name
                 bcfs.append(f"work/{library_name}/out/{library_name}.call.bcf")
         yield "bcf", bcfs
+        yield "bcf_csi", [f"{bcf}.csi" for bcf in bcfs]
 
     @dictify
     def _get_output_files_merge_calls(self):
@@ -107,7 +114,9 @@ class Delly2StepPart(
         yield from self._get_input_files_call(wildcards).items()
         pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
         index_library_name = pedigree.index.dna_ngs_library.name
-        yield "bcf", f"work/{index_library_name}/out/{index_library_name}.merge_calls.bcf"
+        bcf = f"work/{index_library_name}/out/{index_library_name}.merge_calls.bcf"
+        yield "bcf", bcf
+        yield "bcf_csi", f"{bcf}.csi"
 
     @dictify
     def _get_output_files_genotype(self):
@@ -124,6 +133,7 @@ class Delly2StepPart(
                 library_name = donor.dna_ngs_library.name
                 bcfs.append(f"work/{library_name}/out/{library_name}.genotype.bcf")
         yield "bcf", bcfs
+        yield "bcf_csi", [f"{bcf}.csi" for bcf in bcfs]
 
     @dictify
     def _get_output_files_merge_genotypes(self):

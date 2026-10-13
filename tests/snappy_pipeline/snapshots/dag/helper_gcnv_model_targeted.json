@@ -11,6 +11,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -37,6 +38,9 @@
    "runtime": 1440
   },
   "rule": "helper_gcnv_model_targeted_build_gcnv_model_annotate_gc",
+  "temp": [
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.annotate_gc.tsv"
+  ],
   "threads": 1,
   "wildcards": {
    "library_kit": "default"
@@ -65,6 +69,7 @@
    "runtime": 5760
   },
   "rule": "helper_gcnv_model_targeted_build_gcnv_model_calling_gcnv_post_germline_calls",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -94,6 +99,9 @@
    "runtime": 1440
   },
   "rule": "helper_gcnv_model_targeted_build_gcnv_model_coverage",
+  "temp": [
+   "tasks/helper_gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -122,6 +130,9 @@
    "runtime": 1440
   },
   "rule": "helper_gcnv_model_targeted_build_gcnv_model_filter_intervals",
+  "temp": [
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
+  ],
   "threads": 1,
   "wildcards": {
    "library_kit": "default"
@@ -148,6 +159,9 @@
    "runtime": 1440
   },
   "rule": "helper_gcnv_model_targeted_build_gcnv_model_preprocess_intervals",
+  "temp": [
+   "tasks/helper_gcnv_model_targeted/work/default/out/default.interval_list"
+  ],
   "threads": 1,
   "wildcards": {
    "library_kit": "default"
@@ -174,6 +188,7 @@
    "runtime": 1440
   },
   "rule": "helper_gcnv_model_targeted_build_gcnv_model_scatter_intervals",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_kit": "default"
@@ -239,6 +254,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -283,6 +299,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -324,6 +341,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -354,6 +372,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"

@@ -10,6 +10,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -28,6 +29,7 @@
   "params": {},
   "resources": {},
   "rule": "hla_typing_optitype_hla_typing_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.json",
@@ -49,6 +51,7 @@
   "params": {},
   "resources": {},
   "rule": "hla_typing_optitype_hla_typing_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.txt",
@@ -92,6 +95,7 @@
    "runtime": 2400
   },
   "rule": "hla_typing_optitype_hla_typing_optitype_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"

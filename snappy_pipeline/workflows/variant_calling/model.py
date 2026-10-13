@@ -97,6 +97,8 @@ class Gatk4HcGvcf(SnappyModel):
     window_length: int = 10000000
     num_threads: int = 16
     allow_seq_dict_incompatibility: bool = False
+    keep_gvcfs: bool = True
+    """Keep the gVCFs for joint re-genotyping; with false the per-library gVCFs are temp files"""
 
 
 class TumorNormalMode(enum.StrEnum):

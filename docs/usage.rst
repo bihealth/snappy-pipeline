@@ -85,3 +85,30 @@ the run's Snakemake log, the logs of the jobs that ran (with their SLURM logs), 
 searched. Dry-runs write no archive. If the Snakemake process was killed (walltime,
 ``scancel``), its end hooks did not run; ``snappy logs`` builds the archive from the newest
 Snakemake log, or from the one given as argument.
+
+Temporary files
+===============
+
+Intermediate files that only later rules of the same task read, such as the per-region outputs
+of a scattered caller, are ``temp()`` files: Snakemake deletes them once every job that reads
+them is done. Files in ``output/``, the files a task passes to other tasks, and project-wide
+resources (installed software, prepared references) are never deleted, so ``--task`` and
+``--frozen`` runs always find what they need. ``gatk4_hc_gvcf`` keeps its gVCFs for joint
+re-genotyping unless ``keep_gvcfs: false``.
+
+Once a temporary file is gone, a change to a later rule (a parameter, its code) also reruns the
+rules that produced the file, for example all scatter jobs of a caller.
+
+Snakemake options for temporary files (after ``--``):
+
+``--notemp``
+    Keep all temporary files of this run, for debugging.
+
+``--all-temp``
+    Treat every output as temporary, to save space in test runs.
+
+``--delete-temp-output``
+    Delete temporary files left over by earlier runs; with ``--dry-run``, only list them.
+
+``--keep-incomplete``
+    Keep the outputs of failed jobs, for debugging.

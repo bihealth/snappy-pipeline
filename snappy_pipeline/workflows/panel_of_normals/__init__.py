@@ -217,6 +217,9 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     #: Actions
     actions = ("install", "prepare", "coverage", "create_panel")
 
+    #: Per-library coverage is only read by ``create_panel``
+    temp_outputs = {"coverage": ("coverage",)}
+
     #: Resources
     resource_usage = {
         "install": ResourceUsage(
@@ -348,6 +351,13 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     #: Class available actions
     actions = ("scatter", "prepare_panel", "gather", "create_panel")
 
+    #: The genomicsDB of ``create_panel`` is read by the PureCN panel task, so it stays
+    temp_outputs = {
+        "scatter": ("regions",),
+        "prepare_panel": ("vcf", "vcf_tbi"),
+        "gather": ("vcf", "vcf_tbi"),
+    }
+
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
         "scatter": ResourceUsage(
@@ -392,7 +402,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         gather = self.parent.workflow.globals.get("gather")
         gather = getattr(gather, self.name)
         tpl = "work/{normal_library}/par/run/{{scatteritem}}.vcf.gz".format(**wildcards)
-        return {"vcf": gather(tpl)}
+        return {"vcf": gather(tpl), "vcf_tbi": gather(tpl + ".tbi")}
 
     def _get_input_files_create_panel(self, wildcards):
         """Helper wrapper function for merging individual results & panel creation"""
@@ -402,6 +412,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             paths.append(tpl.format(normal_library=normal, **wildcards))
         return {
             "normals": paths,
+            "normals_tbi": [path + ".tbi" for path in paths],
             "reference": self.parent.get_upstream_paths("reference").fasta,
             "germline_resource": self.config.mutect2.germline_resource,
         }
@@ -498,6 +509,9 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         "create_panel",
         "report",
     )
+
+    #: Per-library coverage is only read by ``create_panel``
+    temp_outputs = {"coverage": ("target", "antitarget")}
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {

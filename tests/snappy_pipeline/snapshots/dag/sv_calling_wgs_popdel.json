@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -72,6 +73,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -116,6 +118,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -157,6 +160,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -187,6 +191,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -218,6 +223,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "1",
@@ -253,6 +262,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "109980000",
@@ -288,6 +301,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "119980000",
@@ -323,6 +340,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "129980000",
@@ -358,6 +379,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "19980000",
@@ -393,6 +418,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "29980000",
@@ -428,6 +457,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "39980000",
@@ -463,6 +496,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "49980000",
@@ -498,6 +535,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "59980000",
@@ -533,6 +574,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "69980000",
@@ -568,6 +613,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "79980000",
@@ -603,6 +652,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "89980000",
@@ -638,6 +691,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "9980000",
@@ -673,6 +730,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "begin": "99980000",
@@ -697,7 +758,21 @@
    "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz",
    "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz",
    "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz"
+   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz.tbi",
+   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz.tbi"
   ],
   "log": [
    "tasks/sv_calling_wgs_popdel/work/cohort/log/cohort.concat_calls.log"
@@ -715,6 +790,10 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_concat_calls",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/concat_calls"
@@ -740,6 +819,9 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_profile",
+  "temp": [
+   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -749,7 +831,8 @@
  {
   "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.reorder_vcf.tsv",
   "input": [
-   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz"
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/cohort/out/cohort.concat_calls.vcf.gz.tbi"
   ],
   "log": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.reorder_vcf.log"
@@ -777,6 +860,7 @@
    "runtime": 5760
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_reorder_vcf",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"

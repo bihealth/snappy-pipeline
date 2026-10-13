@@ -84,6 +84,7 @@
    "runtime": 720
   },
   "rule": "adapter_trimming_fastp_adapter_trimming_fastp_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -104,6 +105,7 @@
   "params": {},
   "resources": {},
   "rule": "adapter_trimming_fastp_adapter_trimming_link_out_fastq_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -121,6 +123,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null

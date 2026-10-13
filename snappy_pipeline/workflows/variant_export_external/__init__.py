@@ -166,6 +166,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     #: Class available actions
     actions = ("annotate", "bam_qc", "gvcf_to_vcf", "merge_vcf")
 
+    temp_outputs = {"gvcf_to_vcf": ("vcf", "vcf_tbi"), "merge_vcf": ("vcf", "vcf_tbi")}
+
     #: VCF key to file extensions
     vcf_key_ext_dict = {
         "vcf": ".vcf.gz",

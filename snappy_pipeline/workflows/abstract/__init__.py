@@ -27,7 +27,7 @@ from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import ShortcutSampleSheet
 from snakemake.api import Workflow
-from snakemake.io import report
+from snakemake.io import report, temp
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
@@ -139,6 +139,10 @@ class BaseStepPart:
 
     #: Outputs that the Snakemake report shows, by action and output key
     report_outputs: dict[str, dict[str, ReportOutput]] = {}
+
+    #: Output keys by action that are ``temp()``: intermediates that only later rules of the same
+    #: task read. Published files and contract outputs never are (plans.md W3).
+    temp_outputs: dict[str, tuple[str, ...]] = {}
 
     def __init__[P: BaseStep](self, parent: P):
         self.name = self.__class__.name
@@ -1198,8 +1202,9 @@ class BaseStep:
     def get_output_files(self, sub_step: str, action: str) -> Outputs:
         """Return list of strings with output files/patterns
 
-        Delegates to the sub step object's get_output_files function and flags the outputs in
-        its ``report_outputs`` for the Snakemake report.
+        Delegates to the sub step object's get_output_files function, flags the outputs in its
+        ``report_outputs`` for the Snakemake report and marks those in its ``temp_outputs`` as
+        ``temp()``.
         """
         part = self._get_sub_step(sub_step)
         outputs = part.get_output_files(action)
@@ -1208,6 +1213,8 @@ class BaseStep:
                 key: self._report(part, value, specs[key]) if key in specs else value
                 for key, value in outputs.items()
             }
+        if keys := part.temp_outputs.get(action):
+            outputs = {key: temp(value) if key in keys else value for key, value in outputs.items()}
         return outputs
 
     def _report(self, part: BaseStepPart, path: str, spec: ReportOutput):

@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -31,6 +32,7 @@
   "params": {},
   "resources": {},
   "rule": "combine_variants_combine_variants_link_out_indexed",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
@@ -67,6 +69,7 @@
    "runtime": 240
   },
   "rule": "combine_variants_combine_variants_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "tumor_library": "case001subregion-T1-DNA1-WES1"
@@ -132,6 +135,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -197,6 +201,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -241,6 +246,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -282,6 +288,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -312,6 +319,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -334,6 +342,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_annotation_vep_variant_annotation_link_out_indexed",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-N1-DNA1-WES1.vcf.gz",
@@ -391,6 +400,7 @@
    "runtime": 1440
   },
   "rule": "variant_annotation_vep_variant_annotation_vep",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -402,7 +412,9 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi"
   ],
   "log": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.gatk4_hc_gvcf_combine_gvcfs.log"
@@ -435,6 +447,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_combine_gvcfs",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -479,6 +492,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -523,6 +537,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -571,6 +586,7 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_genotype",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -595,6 +611,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_link_out_indexed",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-N1-DNA1-WES1.vcf.gz",
@@ -620,6 +637,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_calling_mutect2_variant_calling_link_out_indexed",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
@@ -631,6 +649,7 @@
   "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.filter.tsv",
   "input": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.gz.tbi",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.stats",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.read_orientation_model.tar.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
@@ -660,6 +679,7 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_filter",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -693,6 +713,30 @@
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/22-of-24.raw.vcf.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/23-of-24.raw.vcf.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/24-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/1-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/2-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/3-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/4-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/5-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/6-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/7-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/8-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/9-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/10-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/11-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/12-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/13-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/14-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/15-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/16-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/17-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/18-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/19-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/20-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/21-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/22-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/23-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/24-of-24.raw.vcf.gz.tbi",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/1-of-24.raw.vcf.stats",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/2-of-24.raw.vcf.stats",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/3-of-24.raw.vcf.stats",
@@ -760,6 +804,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_gather",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.read_orientation_model.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -800,6 +850,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/1-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/1-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/1-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/1-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -841,6 +897,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/10-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/10-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/10-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/10-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -882,6 +944,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/11-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/11-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/11-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/11-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -923,6 +991,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/12-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/12-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/12-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/12-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -964,6 +1038,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/13-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/13-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/13-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/13-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1005,6 +1085,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/14-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/14-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/14-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/14-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1046,6 +1132,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/15-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/15-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/15-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/15-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1087,6 +1179,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/16-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/16-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/16-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/16-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1128,6 +1226,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/17-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/17-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/17-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/17-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1169,6 +1273,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/18-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/18-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/18-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/18-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1210,6 +1320,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/19-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/19-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/19-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/19-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1251,6 +1367,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/2-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/2-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/2-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/2-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1292,6 +1414,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/20-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/20-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/20-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/20-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1333,6 +1461,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/21-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/21-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/21-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/21-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1374,6 +1508,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/22-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/22-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/22-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/22-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1415,6 +1555,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/23-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/23-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/23-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/23-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1456,6 +1602,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/24-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/24-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/24-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/24-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1497,6 +1649,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/3-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/3-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/3-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/3-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1538,6 +1696,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/4-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/4-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/4-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/4-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1579,6 +1743,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/5-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/5-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/5-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/5-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1620,6 +1790,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/6-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/6-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/6-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/6-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1661,6 +1837,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/7-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/7-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/7-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/7-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1702,6 +1884,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/8-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/8-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/8-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/8-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1743,6 +1931,12 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/9-of-24.raw.f1r2.tar.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/9-of-24.raw.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/9-of-24.raw.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/run/9-of-24.raw.vcf.stats"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1",
@@ -1806,6 +2000,32 @@
    "runtime": 60
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_scatter",
+  "temp": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/1-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/10-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/11-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/12-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/13-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/14-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/15-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/16-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/17-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/18-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/19-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/2-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/20-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/21-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/22-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/23-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/24-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/3-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/4-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/5-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/6-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/7-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/8-of-24.region.bed",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/mutect2par/scatter/9-of-24.region.bed"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -1843,6 +2063,7 @@
    "runtime": 240
   },
   "rule": "variant_filtration_bcftools_variant_filtration_filter_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "tumor_library": "case001subregion-N1-DNA1-WES1"
@@ -1867,6 +2088,7 @@
   "params": {},
   "resources": {},
   "rule": "variant_filtration_bcftools_variant_filtration_link_out_indexed",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-N1-DNA1-WES1.vcf.gz",

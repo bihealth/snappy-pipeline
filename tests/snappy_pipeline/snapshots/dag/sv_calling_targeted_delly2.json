@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -72,6 +73,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -116,6 +118,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -157,6 +160,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -187,6 +191,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -223,6 +228,10 @@
    "runtime": 2880
   },
   "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_call",
+  "temp": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf.csi"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -235,7 +244,8 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.merge_calls.bcf"
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.merge_calls.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.merge_calls.bcf.csi"
   ],
   "log": [
    "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.genotype.log"
@@ -262,6 +272,10 @@
    "runtime": 2880
   },
   "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_genotype",
+  "temp": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf.csi"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -271,7 +285,8 @@
  {
   "benchmark": "tasks/sv_calling_targeted_delly2/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.merge_calls.tsv",
   "input": [
-   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf"
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf.csi"
   ],
   "log": [
    "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_calls.log"
@@ -289,6 +304,10 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_merge_calls",
+  "temp": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.merge_calls.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.merge_calls.bcf.csi"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -298,7 +317,8 @@
  {
   "benchmark": "tasks/sv_calling_targeted_delly2/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.merge_genotypes.tsv",
   "input": [
-   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf"
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf.csi"
   ],
   "log": [
    "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_genotypes.log"
@@ -322,6 +342,7 @@
    "runtime": 1440
   },
   "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_merge_genotypes",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"

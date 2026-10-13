@@ -9,6 +9,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -39,6 +40,7 @@
    "runtime": 240
   },
   "rule": "ngs_data_qc_fastqc_ngs_data_qc_fastqc_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
@@ -57,6 +59,7 @@
   "params": {},
   "resources": {},
   "rule": "ngs_data_qc_fastqc_ngs_data_qc_link_out_marker",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": ".done",

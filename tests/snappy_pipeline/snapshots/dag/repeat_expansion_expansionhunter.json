@@ -10,6 +10,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -73,6 +74,7 @@
    "runtime": 4320
   },
   "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -117,6 +119,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -158,6 +161,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
@@ -188,6 +192,7 @@
    "runtime": 120
   },
   "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -212,6 +217,7 @@
    "runtime": 60
   },
   "rule": "repeat_expansion_expansionhunter_repeat_expansion_annotate_expansionhunter",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -232,6 +238,7 @@
   "params": {},
   "resources": {},
   "rule": "repeat_expansion_expansionhunter_repeat_expansion_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "annotated.case001subregion-N1-DNA1-WES1.json",
@@ -253,6 +260,7 @@
   "params": {},
   "resources": {},
   "rule": "repeat_expansion_expansionhunter_repeat_expansion_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-N1-DNA1-WES1.vcf",
@@ -289,6 +297,9 @@
    "runtime": 60
   },
   "rule": "repeat_expansion_expansionhunter_repeat_expansion_run_expansionhunter",
+  "temp": [
+   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"

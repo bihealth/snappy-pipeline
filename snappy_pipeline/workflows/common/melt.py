@@ -40,6 +40,14 @@ class MeltStepPart(
         "merge_vcf",
     )
 
+    temp_outputs = {
+        "preprocess": ("orig_bam", "orig_bai", "disc_bam", "disc_bai"),
+        "indiv_analysis": ("done",),
+        "group_analysis": ("done",),
+        "genotype": ("done",),
+        "make_vcf": ("vcf", "vcf_tbi"),
+    }
+
     _resource_usage = ResourceUsage(
         threads=1,
         runtime="1d",
@@ -112,7 +120,9 @@ class MeltStepPart(
     def _get_input_files_indiv_analysis(self, wildcards):
         prefix = f"work/{wildcards.library_name}/out/{wildcards.library_name}"
         yield "orig_bam", f"{prefix}.bam"
+        yield "orig_bai", f"{prefix}.bam.bai"
         yield "disc_bam", f"{prefix}.bam.disc"
+        yield "disc_bai", f"{prefix}.bam.disc.bai"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield from self._melt_files("jar", "me_refs").items()
 
@@ -163,7 +173,11 @@ class MeltStepPart(
     def _get_input_files_genotype(self, wildcards):
         infix_done = f"group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
         yield "done", f"work/{infix_done}/out/.done"
-        yield "bam", f"work/{wildcards.library_name}/out/{wildcards.library_name}.bam"
+        prefix = f"work/{wildcards.library_name}/out/{wildcards.library_name}"
+        yield "bam", f"{prefix}.bam"
+        yield "bai", f"{prefix}.bam.bai"
+        yield "disc_bam", f"{prefix}.bam.disc"
+        yield "disc_bai", f"{prefix}.bam.disc.bai"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield from self._melt_files("jar", "me_refs").items()
 
@@ -214,6 +228,7 @@ class MeltStepPart(
             out_dir = f"work/make_vcf.{wildcards.library_name}.{me_type}/out"
             vcfs.append(f"{out_dir}/{wildcards.library_name}.{me_type}.final_comp.vcf.gz")
         yield "vcf", vcfs
+        yield "vcf_tbi", [f"{vcf}.tbi" for vcf in vcfs]
 
     @dictify
     def _get_output_files_merge_vcf(self):

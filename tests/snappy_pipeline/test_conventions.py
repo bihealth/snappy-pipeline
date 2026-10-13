@@ -494,6 +494,91 @@ def test_wrappers_read_no_md5_or_conda_files():
     assert not found, f"wrapper jobs reading md5 or conda files: {sorted(found)[:20]}"
 
 
+#: Rules that build project-wide resources, which later samples need again: never temp
+_PROJECT_RESOURCES = re.compile(
+    r"_(install|prepare_reference|gcreference|write_pedigree_run|write_trio_pedigree_run|"
+    r"write_panel)$"
+)
+
+#: Intermediates that stay, with the reason
+NOT_TEMP = {
+    r"\.scatter_intervals$": "checkpoint output that is globbed while the DAG is built",
+    r"^tasks/gene_expression_report/": "legacy step whose wrappers do not exist",
+}
+
+
+def _task_of(path: str) -> str:
+    return path.split("/")[1]
+
+
+def _intermediate_jobs() -> Iterator[tuple[str, dict, list[dict], set[tuple[str, str]], dict]]:
+    """Yield (snapshot, job, jobs, published files, readers) for jobs of the targeted tasks."""
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        jobs = [
+            job
+            for job in json.loads(snapshot.read_text(encoding="utf-8"))
+            if not job["rule"].startswith(ON_HOLD_RULES)
+        ]
+        targets = {_task_of(path) for job in jobs if job["rule"] == "all" for path in job["input"]}
+        published = {
+            (_task_of(path), path.rsplit("/", 1)[1])
+            for job in jobs
+            for path in job["output"]
+            if "/output/" in path
+        }
+        readers = collections.defaultdict(set)
+        for job in jobs:
+            for path in job["input"]:
+                readers[path].add(job["rule"])
+        rule_task = {job["rule"]: _task_of(job["output"][0]) for job in jobs if job["output"]}
+        readers = {
+            path: {rule_task.get(rule) for rule in rules if rule != "all"}
+            for path, rules in readers.items()
+        }
+        for job in jobs:
+            if job["output"] and _task_of(job["output"][0]) in targets:
+                yield snapshot.stem, job, jobs, published, readers
+
+
+def test_intermediates_are_temp():
+    """Files that only later rules of the same task read are temp() (plans.md W3)."""
+    found = set()
+    for name, job, _, published, readers in _intermediate_jobs():
+        if _PROJECT_RESOURCES.search(job["rule"]):
+            continue
+        for path in job["output"]:
+            tasks = readers.get(path)
+            if (
+                path in job.get("temp", ())
+                or "/work/" not in path
+                or path.endswith(".md5")
+                or (_task_of(path), path.rsplit("/", 1)[1]) in published
+                or tasks != {_task_of(path)}
+                or any(re.search(pattern, path) for pattern in NOT_TEMP)
+            ):
+                continue
+            found.add(f"{name}: {path}")
+    assert not found, f"intermediates that are not temp: {sorted(found)[:20]} ({len(found)})"
+
+
+def test_temp_files_are_intermediates():
+    """A temp file is unpublished and has a declared reader; its index is temp, too."""
+    found = set()
+    for name, job, _, published, readers in _intermediate_jobs():
+        temp = set(job.get("temp", ()))
+        for path in temp:
+            if "/output/" in path or (_task_of(path), path.rsplit("/", 1)[1]) in published:
+                found.add(f"{name}: {path} is published")
+            if not readers.get(path):
+                found.add(f"{name}: {path} has no reader, Snakemake deletes it right away")
+            elif readers[path] != {_task_of(path)}:
+                found.add(f"{name}: {path} is read by another task")
+            for ext in (".tbi", ".csi", ".bai"):
+                if path + ext in job["output"] and path + ext not in temp:
+                    found.add(f"{name}: the index {path}{ext} is not temp")
+    assert not found, f"temp files that are no intermediates: {sorted(found)[:20]} ({len(found)})"
+
+
 #: Steps that publish without md5 files: a legacy step whose wrappers do not exist, and the
 #: reference indices, which are not uploaded to SODAR
 UNCHECKED_PUBLISHING = ("gene_expression_report", "reference_index")

@@ -396,6 +396,7 @@ class MergeMultikitFamiliesMixin:
         for kit in kits:
             vcfs.append(f"work/{library_name}/out/{library_name}.{kit}.joint_segmentation.vcf.gz")
         yield "vcf", vcfs
+        yield "vcf_tbi", [f"{vcf}.tbi" for vcf in vcfs]
 
 
 class RunGcnvStepPart(
@@ -419,6 +420,15 @@ class RunGcnvStepPart(
         "joint_germline_cnv_segmentation",
         "merge_multikit_families",
     )
+
+    temp_outputs = {
+        "preprocess_intervals": ("interval_list",),
+        "coverage": ("tsv",),
+        "contig_ploidy": ("done",),
+        "call_cnvs": ("done",),
+        "post_germline_calls": ("seg_vcf",),
+        "joint_germline_cnv_segmentation": ("vcf", "vcf_tbi"),
+    }
 
     def __init__(self, parent):
         super().__init__(parent)

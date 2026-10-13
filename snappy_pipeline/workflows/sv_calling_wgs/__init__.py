@@ -74,6 +74,12 @@ class PopDelStepPart(
     name = "popdel"
     actions = ("profile", "call", "concat_calls", "reorder_vcf")
 
+    temp_outputs = {
+        "profile": ("profile",),
+        "call": ("vcf", "vcf_tbi"),
+        "concat_calls": ("vcf", "vcf_tbi"),
+    }
+
     _resource_usage = ResourceUsage(
         threads=2,
         runtime="4d",
@@ -157,6 +163,7 @@ class PopDelStepPart(
                 infix = f"{chrom}-{r.begin}-{r.end}"
                 vcfs.append(f"work/{infix}/out/{infix}.call.vcf.gz")
         yield "vcf", vcfs
+        yield "vcf_tbi", [f"{vcf}.tbi" for vcf in vcfs]
 
     def _get_fai_path(self):
         return self.parent.get_upstream_paths("reference").fasta + ".fai"
@@ -176,6 +183,7 @@ class PopDelStepPart(
     @dictify
     def _get_input_files_reorder_vcf(self, wildcards):
         yield "vcf", "work/cohort/out/cohort.concat_calls.vcf.gz"
+        yield "vcf_tbi", "work/cohort/out/cohort.concat_calls.vcf.gz.tbi"
 
     @dictify
     def _get_output_files_reorder_vcf(self):

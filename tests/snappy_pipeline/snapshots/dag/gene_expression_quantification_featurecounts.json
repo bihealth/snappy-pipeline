@@ -10,6 +10,7 @@
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": null
@@ -44,6 +45,7 @@
    "runtime": 1440
   },
   "rule": "gene_expression_quantification_featurecounts_gene_expression_quantification_featurecounts_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
@@ -64,6 +66,7 @@
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_featurecounts_gene_expression_quantification_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-RNA1-mRNA_seq1.tsv",
@@ -85,6 +88,7 @@
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_featurecounts_gene_expression_quantification_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-RNA1-mRNA_seq1.tsv.summary",
@@ -106,6 +110,7 @@
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_link_out_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "name": "case001subregion-T1-RNA1-mRNA_seq1.decision",
@@ -146,6 +151,7 @@
    "runtime": 720
   },
   "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_strandedness_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
@@ -228,6 +234,7 @@
    "runtime": 2880
   },
   "rule": "ngs_mapping_star_ngs_mapping_star_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
@@ -272,6 +279,7 @@
    "runtime": 120
   },
   "rule": "reference_download_reference_download_ensembl_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
@@ -302,6 +310,7 @@
    "runtime": 120
   },
   "rule": "reference_index_star_reference_index_common_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
@@ -364,6 +373,7 @@
    "runtime": 1440
   },
   "rule": "reference_index_star_reference_index_star_run",
+  "temp": [],
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/star"

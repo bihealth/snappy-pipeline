@@ -105,6 +105,14 @@ needs conda). A symlinked ``environment.yaml`` gets a symlink to its target's pi
 request per environment. ``test_wrapper_envs_are_pinned`` checks that each environment has its
 pin file and that the pin file holds the exact versions of the environment file.
 
+Intermediate files that only later rules of the same task read are ``temp()``: a step part
+lists their output keys per action in ``temp_outputs``, and ``BaseStep.get_output_files``
+marks them. Published files, contract outputs, files other tasks read and project-wide
+resources (installs, prepared references, pedigree files) are never temp. Every temp file needs
+a declared reader, otherwise Snakemake deletes it right after its job; a job that reads a temp
+file's index implicitly declares the index as input. ``test_intermediates_are_temp`` and
+``test_temp_files_are_intermediates`` check this in the DAG snapshots.
+
 Outputs for the Snakemake report are declared per action in a step part's ``report_outputs``
 (output key to ``ReportOutput``: subcategory, caption, ``htmlindex`` for a directory).
 ``BaseStep.get_output_files`` flags them with ``report()``, in the task's category and labelled
