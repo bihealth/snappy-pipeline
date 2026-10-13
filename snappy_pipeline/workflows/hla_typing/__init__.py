@@ -65,7 +65,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -267,7 +267,7 @@ class HlaTypingWorkflow(BaseStep):
                 selected = ArcasHlaStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((LinkOutStepPart, selected))
+        self.register_sub_step_classes((PublishStepPart, selected))
         #: Mapping from library name to library object
         self.ngs_library_name_to_ngs_library = OrderedDict()
         for sheet in self.shortcut_sheets:

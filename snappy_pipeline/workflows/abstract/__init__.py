@@ -480,6 +480,59 @@ class LinkOutStepPart(BaseStepPart):
             os.symlink(target, path_out)
 
 
+class PublishStepPart(LinkOutStepPart):
+    """Link a work file into ``output/`` together with its md5 file, which SODAR needs for every
+    published file, and for bgzipped VCF and BED files also the tabix index and its md5 file.
+
+    The file name constraints of the actions never match the same file, so each published file
+    has exactly one link job, and the steps declare these companions next to the file.
+    ``marker`` links ``.done`` files of steps that publish a directory, without an md5 file.
+    """
+
+    actions = ("run", "indexed", "marker")
+
+    #: Constraint of the file name per action; lookbehinds, because ``$`` would anchor at the
+    #: end of the whole path
+    _names = {
+        "run": r"[^/]+(?<!\.md5)(?<!\.tbi)(?<!\.vcf\.gz)(?<!\.bed\.gz)(?<!\.done)",
+        "indexed": r"[^/]+\.(?:vcf|bed)\.gz",
+        "marker": r"[^/]*\.done",
+    }
+
+    #: Suffixes of the linked files per action
+    _suffixes = {
+        "run": ("", ".md5"),
+        "indexed": ("", ".md5", ".tbi", ".tbi.md5"),
+        "marker": ("",),
+    }
+
+    def _work_paths(self, action: str, wildcards: Wildcards) -> list[str]:
+        return [f"work/{wildcards.path}/{wildcards.name}{s}" for s in self._suffixes[action]]
+
+    def _get_input_files_run(self, wildcards: Wildcards) -> list[str]:
+        return self._work_paths("run", wildcards)
+
+    def _get_input_files_indexed(self, wildcards: Wildcards) -> list[str]:
+        return self._work_paths("indexed", wildcards)
+
+    def _get_input_files_marker(self, wildcards: Wildcards) -> list[str]:
+        return self._work_paths("marker", wildcards)
+
+    def get_output_files(self, action: str) -> list[str]:
+        self._validate_action(action)
+        name = f"{{name,{self._names[action]}}}"
+        return [f"output/{{path}}/{name}{s}" for s in self._suffixes[action]]
+
+    def run_locally(self, action: str, wildcards: Wildcards) -> None:
+        self._validate_action(action)
+        prefix = self.parent.task_path_prefix()
+        for path in self._work_paths(action, wildcards):
+            path_in = prefix + path
+            path_out = prefix + "output/" + path.removeprefix("work/")
+            if not os.path.islink(path_out):
+                os.symlink(os.path.relpath(path_in, start=os.path.dirname(path_out)), path_out)
+
+
 @lru_cache()
 def _cached_read_cancer_tsv_sheet(path_abs, path_rel, naming_scheme):
     """Cached reading of cancer TSV sheets."""

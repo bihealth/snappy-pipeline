@@ -57,7 +57,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -423,7 +423,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         self.register_sub_step_classes(
             (
                 selected_sub_step,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
 

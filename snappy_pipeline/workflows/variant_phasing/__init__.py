@@ -71,7 +71,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -425,7 +425,7 @@ class VariantPhasingWorkflow(BaseStep):
                 PhaseByTransmissionStepPart,
                 ReadBackedPhasingOnlyStepPart,
                 ReadBackedPhasingAlsoStepPart,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
 

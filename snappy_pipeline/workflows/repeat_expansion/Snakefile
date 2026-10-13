@@ -36,6 +36,15 @@ rule repeat_expansion_link_out_run:
         wf.run_locally("link_out", "run", wildcards)
 
 
+rule repeat_expansion_link_out_indexed:
+    input:
+        wf.get_input_files("link_out", "indexed"),
+    output:
+        wf.get_output_files("link_out", "indexed"),
+    run:
+        wf.run_locally("link_out", "indexed", wildcards)
+
+
 rule repeat_expansion_run_expansionhunter:
     input:
         unpack(wf.get_input_files("expansionhunter", "run")),

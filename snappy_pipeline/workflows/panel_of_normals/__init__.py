@@ -155,7 +155,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -809,7 +809,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         extra = [AccessStepPart] if self.config.tool == "cnvkit" else []
-        self.register_sub_step_classes((selected, *extra, LinkOutStepPart))
+        self.register_sub_step_classes((selected, *extra, PublishStepPart))
 
     @listify
     def get_result_files(self):

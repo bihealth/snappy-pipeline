@@ -16,19 +16,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json"
+   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json",
+   "tasks/homologous_recombination_deficiency_scarHRD/work/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json.md5"
   ],
   "log": [],
   "output": [
-   "tasks/homologous_recombination_deficiency_scarHRD/output/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json"
+   "tasks/homologous_recombination_deficiency_scarHRD/output/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json",
+   "tasks/homologous_recombination_deficiency_scarHRD/output/scarHRD.case001subregion-T1-DNA1-WES1/out/scarHRD.case001subregion-T1-DNA1-WES1.json.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "homologous_recombination_deficiency_scarHRD_homologous_recombination_deficiency_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "json",
-   "file": "scarHRD.case001subregion-T1-DNA1-WES1",
+   "name": "scarHRD.case001subregion-T1-DNA1-WES1.json",
    "path": "scarHRD.case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -351,19 +352,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "case001subregion-T1-DNA1-WES1.seqz",
+   "name": "case001subregion-T1-DNA1-WES1.seqz.gz",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

@@ -494,6 +494,43 @@ def test_wrappers_read_no_md5_or_conda_files():
     assert not found, f"wrapper jobs reading md5 or conda files: {sorted(found)[:20]}"
 
 
+#: Steps that publish without md5 files: a legacy step whose wrappers do not exist, and the
+#: reference indices, which are not uploaded to SODAR
+UNCHECKED_PUBLISHING = ("gene_expression_report", "reference_index")
+
+
+def test_published_files_come_with_md5_and_index():
+    """SODAR needs an md5 for every published file; bgzipped VCF and BED files need their index.
+
+    ``PublishStepPart`` links a file together with these companions. ``.done`` markers of
+    directories have none.
+    """
+    found = set()
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        jobs = [
+            job
+            for job in json.loads(snapshot.read_text(encoding="utf-8"))
+            if not job["rule"].startswith(ON_HOLD_RULES + UNCHECKED_PUBLISHING)
+        ]
+        targets = {
+            path.split("/")[1] for job in jobs if job["rule"] == "all" for path in job["input"]
+        }
+        published = {
+            path
+            for job in jobs
+            for path in job["output"]
+            if "/output/" in path and path.split("/")[1] in targets
+        }
+        for path in published:
+            if path.endswith((".md5", ".done")):
+                continue
+            companions = [path + ".md5"]
+            if re.search(r"\.(vcf|bed)\.gz$", path):
+                companions += [path + ".tbi", path + ".tbi.md5"]
+            found.update(f"{snapshot.stem}: {c}" for c in companions if c not in published)
+    assert not found, f"published files without md5 or index: {sorted(found)[:20]} ({len(found)})"
+
+
 #: Wrapper directories on hold (plans.md), not pinned yet
 UNPINNED_WRAPPERS = {"pvactools"}
 

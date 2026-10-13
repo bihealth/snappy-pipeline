@@ -401,19 +401,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped"
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped"
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "varfish_export_varfish_export_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "ped",
-   "file": "mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1",
+   "name": "mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
    "path": "varfish_export.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -421,19 +422,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "varfish_export_varfish_export_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv",
+   "name": "mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
    "path": "varfish_export.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -441,19 +443,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz"
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped.md5"
   ],
   "log": [],
   "output": [
-   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz"
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped",
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "varfish_export_varfish_export_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv",
+   "name": "mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped",
    "path": "varfish_export.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -461,19 +464,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "varfish_export_varfish_export_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv",
+   "name": "mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
    "path": "varfish_export.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -481,19 +485,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz"
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz"
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "varfish_export_varfish_export_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv",
+   "name": "mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
    "path": "varfish_export.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -501,19 +506,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz"
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz"
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/varfish_export/output/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "varfish_export_varfish_export_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv",
+   "name": "mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
    "path": "varfish_export.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -788,19 +794,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_link_out_run",
+  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "case001subregion-N1-DNA1-WES1.vcf",
+   "name": "case001subregion-N1-DNA1-WES1.vcf.gz",
    "path": "case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null

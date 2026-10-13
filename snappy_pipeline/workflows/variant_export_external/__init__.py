@@ -71,7 +71,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
@@ -437,7 +437,7 @@ class VariantExportExternalWorkflow(BaseStep):
                 WritePedigreeSampleNameStepPart,
                 VarfishAnnotatorAnnotateStepPart,
                 BamReportsExternalStepPart,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
         self.ngs_library_list = self._build_ngs_library_list()

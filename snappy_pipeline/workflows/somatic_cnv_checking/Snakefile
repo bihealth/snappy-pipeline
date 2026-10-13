@@ -38,6 +38,15 @@ rule somatic_cnv_checking_link_out_run:
         wf.run_locally("link_out", "run", wildcards)
 
 
+rule somatic_cnv_checking_link_out_indexed:
+    input:
+        wf.get_input_files("link_out", "indexed"),
+    output:
+        wf.get_output_files("link_out", "indexed"),
+    run:
+        wf.run_locally("link_out", "indexed", wildcards)
+
+
 # Somatic CNV Checking ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Run pileup to identify heterozygous variants in normal sample ---------------

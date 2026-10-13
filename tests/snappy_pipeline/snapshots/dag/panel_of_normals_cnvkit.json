@@ -247,19 +247,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.cnn"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.antitarget.bed",
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.antitarget.bed.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "cnn",
-   "file": "panel_of_normals",
+   "name": "panel_of_normals.antitarget.bed",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
@@ -267,19 +268,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.antitarget.bed"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.cnn",
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.cnn.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "bed",
-   "file": "panel_of_normals.antitarget",
+   "name": "panel_of_normals.cnn",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
@@ -287,19 +289,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.target.bed"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.target.bed",
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.target.bed.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "bed",
-   "file": "panel_of_normals.target",
+   "name": "panel_of_normals.target.bed",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
@@ -307,19 +310,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.metrics.tsv"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.metrics.tsv",
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.metrics.tsv.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "tsv",
-   "file": "panel_of_normals.metrics",
+   "name": "panel_of_normals.metrics.tsv",
    "path": "panel_of_normals/report"
   },
   "wrapper": null
@@ -327,19 +331,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.sex.tsv"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.sex.tsv",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.sex.tsv.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.sex.tsv"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.sex.tsv",
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.sex.tsv.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "tsv",
-   "file": "panel_of_normals.sex",
+   "name": "panel_of_normals.sex.tsv",
    "path": "panel_of_normals/report"
   },
   "wrapper": null

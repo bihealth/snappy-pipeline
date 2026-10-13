@@ -16,19 +16,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv"
+   "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv",
+   "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_stats/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv"
+   "tasks/gene_expression_quantification_stats/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv",
+   "tasks/gene_expression_quantification_stats/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_stats_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "tsv",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -69,19 +70,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "decision",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.decision",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null

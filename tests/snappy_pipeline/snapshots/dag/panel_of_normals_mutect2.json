@@ -82,19 +82,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.md5",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.vcf.gz",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.vcf.gz.md5",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "panel_of_normals_mutect2_panel_of_normals_link_out_run",
+  "rule": "panel_of_normals_mutect2_panel_of_normals_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "panel_of_normals.genomicsDB.tar",
+   "name": "panel_of_normals.vcf.gz",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
@@ -102,19 +107,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz"
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.vcf.gz"
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz",
+   "tasks/panel_of_normals_mutect2/output/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_mutect2_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "panel_of_normals.vcf",
+   "name": "panel_of_normals.genomicsDB.tar.gz",
    "path": "panel_of_normals/out"
   },
   "wrapper": null

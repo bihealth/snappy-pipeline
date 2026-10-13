@@ -17,19 +17,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json"
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5"
   ],
   "log": [],
   "output": [
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json"
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "hla_typing_optitype_hla_typing_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "json",
-   "file": "case001subregion-T1-DNA1-WES1",
+   "name": "case001subregion-T1-DNA1-WES1.json",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -37,19 +38,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt"
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt"
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
+   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "hla_typing_optitype_hla_typing_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-DNA1-WES1",
+   "name": "case001subregion-T1-DNA1-WES1.txt",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

@@ -86,7 +86,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, PublishStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.repeat_expansion.annotate_expansionhunter import (
@@ -293,7 +293,7 @@ class RepeatExpansionWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((LinkOutStepPart, ExpansionHunterStepPart))
+        self.register_sub_step_classes((PublishStepPart, ExpansionHunterStepPart))
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

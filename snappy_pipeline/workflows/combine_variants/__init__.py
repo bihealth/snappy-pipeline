@@ -9,7 +9,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -113,7 +113,7 @@ class CombineVariantsWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
 
         super().__init__(workflow, project, task_name)
-        self.register_sub_step_classes((CombineVariantsStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((CombineVariantsStepPart, PublishStepPart))
 
     @listify
     def get_result_files(self):

@@ -20,7 +20,7 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, PublishStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 
@@ -166,6 +166,7 @@ class AscatStepPart(BaseStepPart):
         for infix in infixes:
             path = ("work/{tumor_library}/out/{tumor_library}.%s.txt") % infix
             yield infix, path
+            yield infix + "_md5", path + ".md5"
 
     def _get_params_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
@@ -235,7 +236,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        self.register_sub_step_classes((AscatStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((AscatStepPart, PublishStepPart))
 
     @listify
     def get_result_files(self):

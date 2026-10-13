@@ -392,19 +392,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_wgs_cnv_calling_cnvetti_somatic_wgs_cnv_calling_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "bcf",
-   "file": "case001subregion-T1-DNA1-WES1",
+   "name": "case001subregion-T1-DNA1-WES1.bcf",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -412,19 +413,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvetti/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_wgs_cnv_calling_cnvetti_somatic_wgs_cnv_calling_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "csi",
-   "file": "case001subregion-T1-DNA1-WES1.bcf",
+   "name": "case001subregion-T1-DNA1-WES1.bcf.csi",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

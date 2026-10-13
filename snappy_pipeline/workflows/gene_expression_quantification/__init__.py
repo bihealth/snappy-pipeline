@@ -81,7 +81,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -540,7 +540,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                 QCStepPartRnaseqc,
                 QCStepPartStats,
                 SalmonStepPart,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
         # Inputs are resolved via get_upstream_paths() in step parts.

@@ -68,7 +68,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -375,7 +375,7 @@ class VarfishExportWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
 
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, PublishStepPart))
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
 

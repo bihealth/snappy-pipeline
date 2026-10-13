@@ -33,6 +33,7 @@ else:
 
 print(f"[snappy] Targeting {_mode_desc}", flush=True)
 
+# md5 and index files are outputs of the job that links their file
 for task_name in target_task_names:
     for f in task_instances[task_name].get_result_files():
         if not f.endswith((".md5", ".tbi")):

@@ -88,7 +88,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -274,7 +274,7 @@ class MeiWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((LinkOutStepPart, ScrambleStepPart))
+        self.register_sub_step_classes((PublishStepPart, ScrambleStepPart))
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

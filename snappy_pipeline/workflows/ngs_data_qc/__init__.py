@@ -22,7 +22,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ReportOutput,
     ResourceUsage,
 )
@@ -226,7 +226,7 @@ class NgsDataQcWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        self.register_sub_step_classes((LinkOutStepPart, FastQcReportStepPart, PicardStepPart))
+        self.register_sub_step_classes((PublishStepPart, FastQcReportStepPart, PicardStepPart))
 
     @listify
     def get_result_files(self):

@@ -25,19 +25,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_high.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -45,19 +46,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_low.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -65,19 +67,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.gapLengthHist_medium.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -85,19 +88,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_high.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -105,19 +109,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_low.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -125,19 +130,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverageNorm_medium.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -145,19 +151,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_high.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -165,19 +172,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_low.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -185,19 +193,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium.txt"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium.txt",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium.txt"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium.txt",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.meanCoverage_medium.txt",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -205,19 +214,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.metrics.tsv"
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.metrics.tsv",
+   "tasks/gene_expression_quantification_rnaseqc/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.metrics.tsv.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.metrics.tsv"
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.metrics.tsv",
+   "tasks/gene_expression_quantification_rnaseqc/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.metrics.tsv.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_rnaseqc_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "tsv",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.metrics",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.metrics.tsv",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -278,19 +288,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "decision",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.decision",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null

@@ -266,6 +266,7 @@
   ],
   "output": [
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv",
+   "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv.md5",
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.pdf"
   ],
   "params": {},
@@ -286,19 +287,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv"
+   "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv",
+   "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_variant_signatures/output/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv"
+   "tasks/somatic_variant_signatures/output/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv",
+   "tasks/somatic_variant_signatures/output/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_variant_signatures_somatic_variant_signatures_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "tsv",
-   "file": "deconstruct_sigs.case001subregion-T1-DNA1-WES1",
+   "name": "deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -338,39 +340,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "variant_calling_mutect2_variant_calling_link_out_run",
+  "rule": "variant_calling_mutect2_variant_calling_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "case001subregion-T1-DNA1-WES1.vcf",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
-  ],
-  "log": [],
-  "output": [
-   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "variant_calling_mutect2_variant_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "tbi",
-   "file": "case001subregion-T1-DNA1-WES1.vcf.gz",
+   "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

@@ -15,7 +15,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, PublishStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
@@ -131,6 +131,7 @@ class DeconstructSigsStepPart(SignaturesStepPart):
         self._validate_action(action)
         name_pattern = "deconstruct_sigs." + self.name_postfix
         yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
+        yield "tsv_md5", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv.md5")
         yield "pdf", os.path.join("work", "{tumor_library}", "out", name_pattern + ".pdf")
 
 
@@ -168,7 +169,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes(
-            (TabulateVariantsStepPart, DeconstructSigsStepPart, LinkOutStepPart)
+            (TabulateVariantsStepPart, DeconstructSigsStepPart, PublishStepPart)
         )
 
     @listify

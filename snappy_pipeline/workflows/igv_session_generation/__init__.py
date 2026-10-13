@@ -53,7 +53,7 @@ from snakemake import shell
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, PublishStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import IgvSessionGeneration as IgvSessionGenerationConfigModel
@@ -199,7 +199,7 @@ class IgvSessionGenerationWorkflow(BaseStep):
             "variants": "",
         }[self.previous_step]
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((WriteIgvSessionFileStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((WriteIgvSessionFileStepPart, PublishStepPart))
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
 
     @listify

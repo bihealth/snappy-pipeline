@@ -775,19 +775,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "seg",
-   "file": "case001subregion-T1-DNA1-WES1.dnacopy",
+   "name": "case001subregion-T1-DNA1-WES1.dnacopy.seg",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -795,19 +796,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "variant_calling_mutect2_variant_calling_link_out_run",
+  "rule": "variant_calling_mutect2_variant_calling_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "case001subregion-T1-DNA1-WES1.vcf",
+   "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

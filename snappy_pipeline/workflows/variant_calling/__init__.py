@@ -189,7 +189,7 @@ from snappy_pipeline.utils import dictify, flatten, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ReportOutput,
     ResourceUsage,
     WritePedigreeStepPart,
@@ -1246,7 +1246,7 @@ class VariantCallingWorkflow(BaseStep):
                 BcftoolsRohStepPart,
                 JannovarStatisticsStepPart,
                 BafFileGenerationStepPart,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
 

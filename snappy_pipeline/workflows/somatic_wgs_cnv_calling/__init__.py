@@ -88,7 +88,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -636,6 +636,8 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                     expand(self.base_path_out, ext=transform_ext_values),
                 )
             )
+            for name in ("log2", "call", "segments"):  # published
+                result[name + "_md5"] = result[name] + ".md5"
         elif action == "plot":
             plot_ext_names = ("heatmap", "scatter", "diagram")
             plot_ext_values = (".heatmap.png", ".scatter.png", ".diagram.pdf")
@@ -645,11 +647,16 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                     expand(self.base_path_out, ext=plot_ext_values),
                 )
             )
+            result.update({name + "_md5": path + ".md5" for name, path in result.items()})
 
         return result
 
     def _get_input_files_transform(self, wildcards):
         return {"ratio": self.base_path_out.format(ext=".ratio.txt")}
+
+    def _get_input_files_plot(self, wildcards):
+        transform = self.get_output_files("transform").items()
+        return {k: v.format(**wildcards) for k, v in transform if not k.endswith("_md5")}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -735,7 +742,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
         self.register_sub_step_classes(
             (
                 selected_sub_step,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
 

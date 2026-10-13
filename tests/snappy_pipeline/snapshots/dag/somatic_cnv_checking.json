@@ -335,19 +335,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv"
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv"
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "somatic_cnv_checking_somatic_cnv_checking_link_out_run",
+  "rule": "somatic_cnv_checking_somatic_cnv_checking_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "tsv",
-   "file": "case001subregion-T1-DNA1-WES1",
+   "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -355,19 +360,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv",
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_cnv_checking_somatic_cnv_checking_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "case001subregion-T1-DNA1-WES1.vcf",
+   "name": "case001subregion-T1-DNA1-WES1.tsv",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -375,19 +381,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf"
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf"
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf",
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.cnv.pdf.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_cnv_checking_somatic_cnv_checking_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "pdf",
-   "file": "case001subregion-T1-DNA1-WES1.cnv",
+   "name": "case001subregion-T1-DNA1-WES1.cnv.pdf",
    "path": "case001subregion-T1-DNA1-WES1/report"
   },
   "wrapper": null
@@ -395,19 +402,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf"
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf"
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf",
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.locus.pdf.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_cnv_checking_somatic_cnv_checking_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "pdf",
-   "file": "case001subregion-T1-DNA1-WES1.locus",
+   "name": "case001subregion-T1-DNA1-WES1.locus.pdf",
    "path": "case001subregion-T1-DNA1-WES1/report"
   },
   "wrapper": null
@@ -415,19 +423,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf"
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf",
+   "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf"
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf",
+   "tasks/somatic_cnv_checking/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segment.pdf.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_cnv_checking_somatic_cnv_checking_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "pdf",
-   "file": "case001subregion-T1-DNA1-WES1.segment",
+   "name": "case001subregion-T1-DNA1-WES1.segment.pdf",
    "path": "case001subregion-T1-DNA1-WES1/report"
   },
   "wrapper": null
@@ -677,19 +686,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_wgs_cnv_calling_cnvkit/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_wgs_cnv_calling_cnvkit_somatic_wgs_cnv_calling_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "seg",
-   "file": "case001subregion-T1-DNA1-WES1.dnacopy",
+   "name": "case001subregion-T1-DNA1-WES1.dnacopy.seg",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

@@ -76,7 +76,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ReportOutput,
     ResourceUsage,
 )
@@ -707,7 +707,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         self.register_sub_step_classes(
             (
                 selected_sub_step,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
 

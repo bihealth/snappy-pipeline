@@ -68,7 +68,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -280,7 +280,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         sub_steps = [SomaticCnvCheckingPileupStepPart]
         if self.has_cnv_calling:
             sub_steps += [SomaticCnvCheckingCnvStepPart, SomaticCnvCheckingReportStepPart]
-        sub_steps.append(LinkOutStepPart)
+        sub_steps.append(PublishStepPart)
         self.register_sub_step_classes(tuple(sub_steps))
 
     def _get_normal_lib(self, tumor_library: str) -> str | None:

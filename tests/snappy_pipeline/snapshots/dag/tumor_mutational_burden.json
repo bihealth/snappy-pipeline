@@ -293,19 +293,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/tumor_mutational_burden/work/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json"
+   "tasks/tumor_mutational_burden/work/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json",
+   "tasks/tumor_mutational_burden/work/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json.md5"
   ],
   "log": [],
   "output": [
-   "tasks/tumor_mutational_burden/output/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json"
+   "tasks/tumor_mutational_burden/output/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json",
+   "tasks/tumor_mutational_burden/output/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "tumor_mutational_burden_tumor_mutational_burden_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "json",
-   "file": "tmb.case001subregion-T1-DNA1-WES1",
+   "name": "tmb.case001subregion-T1-DNA1-WES1.json",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -313,39 +314,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "variant_calling_mutect2_variant_calling_link_out_run",
+  "rule": "variant_calling_mutect2_variant_calling_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "case001subregion-T1-DNA1-WES1.vcf",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
-  ],
-  "log": [],
-  "output": [
-   "tasks/variant_calling_mutect2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "variant_calling_mutect2_variant_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "tbi",
-   "file": "case001subregion-T1-DNA1-WES1.vcf.gz",
+   "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

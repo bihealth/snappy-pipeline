@@ -221,19 +221,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json"
+   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json",
+   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json.md5"
   ],
   "log": [],
   "output": [
-   "tasks/repeat_expansion_expansionhunter/output/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json"
+   "tasks/repeat_expansion_expansionhunter/output/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json",
+   "tasks/repeat_expansion_expansionhunter/output/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "repeat_expansion_expansionhunter_repeat_expansion_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "json",
-   "file": "annotated.case001subregion-N1-DNA1-WES1",
+   "name": "annotated.case001subregion-N1-DNA1-WES1.json",
    "path": "annotated.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -241,19 +242,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf"
+   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf",
+   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.md5"
   ],
   "log": [],
   "output": [
-   "tasks/repeat_expansion_expansionhunter/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf"
+   "tasks/repeat_expansion_expansionhunter/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf",
+   "tasks/repeat_expansion_expansionhunter/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "repeat_expansion_expansionhunter_repeat_expansion_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "vcf",
-   "file": "case001subregion-N1-DNA1-WES1",
+   "name": "case001subregion-N1-DNA1-WES1.vcf",
    "path": "case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null

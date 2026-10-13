@@ -56,12 +56,11 @@
   ],
   "params": {},
   "resources": {},
-  "rule": "ngs_data_qc_fastqc_ngs_data_qc_link_out_run",
+  "rule": "ngs_data_qc_fastqc_ngs_data_qc_link_out_marker",
   "threads": 1,
   "wildcards": {
-   "ext": "done",
-   "file": "report/",
-   "path": "case001subregion-T1-DNA1-WES1"
+   "name": ".done",
+   "path": "case001subregion-T1-DNA1-WES1/report"
   },
   "wrapper": null
  }

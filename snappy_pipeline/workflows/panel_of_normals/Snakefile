@@ -40,6 +40,15 @@ rule panel_of_normals_link_out_run:
         wf.run_locally("link_out", "run", wildcards)
 
 
+rule panel_of_normals_link_out_indexed:
+    input:
+        wf.get_input_files("link_out", "indexed"),
+    output:
+        wf.get_output_files("link_out", "indexed"),
+    run:
+        wf.run_locally("link_out", "indexed", wildcards)
+
+
 # Panel of normals (Mutect2) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Select normals --------------------------------------------------------------

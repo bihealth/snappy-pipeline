@@ -1112,19 +1112,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.rds"
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.md5",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.tbi",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.rds"
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.bed.gz",
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.bed.gz.md5",
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.bed.gz.tbi",
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.bed.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "panel_of_normals_purecn_panel_of_normals_link_out_run",
+  "rule": "panel_of_normals_purecn_panel_of_normals_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "rds",
-   "file": "panel_of_normals",
+   "name": "panel_of_normals.intervals.bed.gz",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
@@ -1132,19 +1137,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list"
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.list"
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.list",
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.list.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_purecn_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "list",
-   "file": "panel_of_normals.intervals",
+   "name": "panel_of_normals.intervals.list",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
@@ -1152,19 +1158,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz"
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.mapping_bias.rds.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.intervals.bed.gz"
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.mapping_bias.rds.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_purecn_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "panel_of_normals.intervals.bed",
+   "name": "panel_of_normals.mapping_bias.rds",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
@@ -1172,19 +1179,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.mapping_bias.rds"
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.rds",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.rds.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.mapping_bias.rds"
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.rds",
+   "tasks/panel_of_normals_purecn/output/panel_of_normals/out/panel_of_normals.rds.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_purecn_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "rds",
-   "file": "panel_of_normals.mapping_bias",
+   "name": "panel_of_normals.rds",
    "path": "panel_of_normals/out"
   },
   "wrapper": null

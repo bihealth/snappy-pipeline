@@ -68,7 +68,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
@@ -282,7 +282,7 @@ class WgsSvExportExternalWorkflow(BaseStep):
             (
                 WritePedigreeSampleNameStepPart,
                 VarfishAnnotatorExternalStepPart,
-                LinkOutStepPart,
+                PublishStepPart,
             )
         )
 

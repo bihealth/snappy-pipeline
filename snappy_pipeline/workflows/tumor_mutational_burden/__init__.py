@@ -7,7 +7,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -95,7 +95,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
 
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart, PublishStepPart))
 
     @listify
     def get_result_files(self):

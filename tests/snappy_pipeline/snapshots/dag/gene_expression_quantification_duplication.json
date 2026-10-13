@@ -52,19 +52,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls"
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls"
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls",
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_duplication_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "xls",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.pos.DupRate.xls",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -72,19 +73,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls"
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls",
+   "tasks/gene_expression_quantification_duplication/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls"
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls",
+   "tasks/gene_expression_quantification_duplication/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_duplication_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "xls",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.seq.DupRate.xls",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null
@@ -92,19 +94,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
+   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
   ],
   "log": [],
   "output": [
-   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
+   "tasks/gene_expression_quantification_strandedness/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "decision",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1",
+   "name": "case001subregion-T1-RNA1-mRNA_seq1.decision",
    "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
   },
   "wrapper": null

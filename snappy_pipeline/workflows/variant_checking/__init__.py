@@ -55,7 +55,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    LinkOutStepPart,
+    PublishStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -161,7 +161,7 @@ class VariantCheckingWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, LinkOutStepPart))
+        self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, PublishStepPart))
 
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
 

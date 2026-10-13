@@ -16,19 +16,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/ngs_data_qc_picard/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt"
+   "tasks/ngs_data_qc_picard/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/output/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "ngs_data_qc_picard_ngs_data_qc_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics",
+   "name": "case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
    "path": "case001subregion-T1-DNA1-WES1/report"
   },
   "wrapper": null

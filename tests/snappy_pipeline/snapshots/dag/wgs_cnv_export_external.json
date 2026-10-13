@@ -18,19 +18,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
+   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv",
+   "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
    "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -38,19 +39,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz"
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz"
+   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
+   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv",
+   "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
    "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -58,19 +60,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz"
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5"
   ],
   "log": [],
   "output": [
-   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz"
+   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/wgs_cnv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "wgs_cnv_export_external_wgs_cnv_export_external_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv",
+   "name": "varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
    "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null

@@ -194,19 +194,24 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
-   "tasks/targeted_seq_mei_calling_scramble/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz"
+   "tasks/targeted_seq_mei_calling_scramble/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/targeted_seq_mei_calling_scramble/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/targeted_seq_mei_calling_scramble/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/targeted_seq_mei_calling_scramble/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "params": {},
   "resources": {},
-  "rule": "targeted_seq_mei_calling_scramble_mobile_element_insertion_link_out_run",
+  "rule": "targeted_seq_mei_calling_scramble_mobile_element_insertion_link_out_indexed",
   "threads": 1,
   "wildcards": {
-   "ext": "gz",
-   "file": "case001subregion-N1-DNA1-WES1.vcf",
+   "name": "case001subregion-N1-DNA1-WES1.vcf.gz",
    "path": "case001subregion-N1-DNA1-WES1/out"
   },
   "wrapper": null

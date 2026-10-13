@@ -260,19 +260,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt"
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt",
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_msi_calling_mantis_msi2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt"
+   "tasks/somatic_msi_calling_mantis_msi2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt",
+   "tasks/somatic_msi_calling_mantis_msi2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_msi_calling_mantis_msi2_somatic_msi_calling_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-DNA1-WES1.results",
+   "name": "case001subregion-T1-DNA1-WES1.results.txt",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null
@@ -280,19 +281,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status"
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status",
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status.md5"
   ],
   "log": [],
   "output": [
-   "tasks/somatic_msi_calling_mantis_msi2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status"
+   "tasks/somatic_msi_calling_mantis_msi2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status",
+   "tasks/somatic_msi_calling_mantis_msi2/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "somatic_msi_calling_mantis_msi2_somatic_msi_calling_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "status",
-   "file": "case001subregion-T1-DNA1-WES1.results.txt",
+   "name": "case001subregion-T1-DNA1-WES1.results.txt.status",
    "path": "case001subregion-T1-DNA1-WES1/out"
   },
   "wrapper": null

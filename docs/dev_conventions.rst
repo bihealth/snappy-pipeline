@@ -86,12 +86,16 @@ Snakemake's metadata in ``.snakemake/`` records the code, params, inputs and con
 of every output, and the pinned environments (``environment.linux-64.pin.txt``) fix the package
 versions.
 Logs are not linked into ``output/``; ``snappy run`` archives them per run.
-Only published files, those linked into ``output/``, have an md5 file: SODAR needs one per
-uploaded file. A step declares ``<file>.md5`` next to ``<file>`` in the outputs, and the wrapper
-base classes write it. Wrappers never read md5 files.
+Only published files, those linked into ``output/``, have an md5 file, and every published
+file has one: SODAR needs one per uploaded file. A step declares ``<file>.md5`` next to
+``<file>`` in the outputs, and the wrapper base classes write it. Wrappers never read md5 files.
+``PublishStepPart`` links a file together with its md5 file in one job (rule
+``<step>_link_out_run``); bgzipped VCF and BED files also with ``.tbi`` and ``.tbi.md5``
+(``<step>_link_out_indexed``). ``.done`` markers of published directories are linked alone
+(``<step>_link_out_marker``).
 ``test_logs_hold_only_logs``, ``test_logs_are_not_published``,
-``test_md5_files_only_for_published_files`` and ``test_wrappers_read_no_md5_or_conda_files``
-check this.
+``test_md5_files_only_for_published_files``, ``test_published_files_come_with_md5_and_index``
+and ``test_wrappers_read_no_md5_or_conda_files`` check this.
 
 Every wrapper environment is pinned: Snakemake builds it from the exact package URLs in
 ``environment.linux-64.pin.txt`` next to ``environment.yaml``. After changing an environment

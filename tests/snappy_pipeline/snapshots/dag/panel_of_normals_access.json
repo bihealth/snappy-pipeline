@@ -45,19 +45,20 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed"
+   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed",
+   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed.md5"
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_access/output/panel_of_normals/out/panel_of_normals.accessible.bed"
+   "tasks/panel_of_normals_access/output/panel_of_normals/out/panel_of_normals.accessible.bed",
+   "tasks/panel_of_normals_access/output/panel_of_normals/out/panel_of_normals.accessible.bed.md5"
   ],
   "params": {},
   "resources": {},
   "rule": "panel_of_normals_access_panel_of_normals_link_out_run",
   "threads": 1,
   "wildcards": {
-   "ext": "bed",
-   "file": "panel_of_normals.accessible",
+   "name": "panel_of_normals.accessible.bed",
    "path": "panel_of_normals/out"
   },
   "wrapper": null
