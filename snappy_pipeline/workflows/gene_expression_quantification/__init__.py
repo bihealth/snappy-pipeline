@@ -200,14 +200,7 @@ class SalmonStepPart(BaseStepPart):
         if self.name != tool:
             return {}
         prefix = "work/{library_name}/log/{library_name}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
     def _get_params_run(self, wildcards):
         """Return dict for the wrapper"""
@@ -285,14 +278,7 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
         if self.name != tool:
             return {}
         prefix = "work/{library_name}/log/{library_name}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
 
 class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):

@@ -54,22 +54,9 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
             yield key, tpl + ext
             yield key + "_md5", tpl + ext + ".md5"
 
-    @dictify
     def get_log_file(self, action):
         self._validate_action(action)
-
-        base_name = "tmb.{tumor_library}"
-
-        tpl = os.path.join("work", "{tumor_library}", "log", base_name)
-
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, tpl + ext
-            yield key + "_md5", tpl + ext + ".md5"
+        return {"log": "work/{tumor_library}/log/tmb.{tumor_library}.log"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -113,22 +100,9 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the TMB workflow."""
-        log_exts = (
-            ".log",
-            ".log.md5",
-            ".conda_info.txt",
-            ".conda_info.txt.md5",
-            ".conda_list.txt",
-            ".conda_list.txt.md5",
-        )
         for entity in self.output_entities:
             yield from expand(
                 os.path.join("output", "{tumor_library}", "out", "tmb.{tumor_library}{ext}"),
                 tumor_library=[entity],
                 ext=EXT_VALUES,
-            )
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "log", "tmb.{tumor_library}{ext}"),
-                tumor_library=[entity],
-                ext=log_exts,
             )

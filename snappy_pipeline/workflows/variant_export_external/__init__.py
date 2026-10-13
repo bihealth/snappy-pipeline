@@ -39,20 +39,6 @@ will be generated if BAM files are also available:
     |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz.md5
     |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz
     |   |   +-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz.md5
-    |   |
-    |   +-- log
-    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_info.txt
-    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_info.txt.md5
-    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_list.txt
-    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.conda_list.txt.md5
-    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.log
-    |       |-- varfish_annotated.annotate.P001-N1-DNA1-WGS1.log.md5
-    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_info.txt
-    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_info.txt.md5
-    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_list.txt
-    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.conda_list.txt.md5
-    |       |-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.log
-    |       +-- varfish_annotated.bam_qc.P001-N1-DNA1-WGS1.log.md5
     |
     [...]
 
@@ -146,14 +132,12 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     @dictify
     def _get_output_files_collect_work(self):
         yield "report", "work/target_cov_report/out/target_coverage_summary.txt"
-        yield "report_md5", "work/target_cov_report/out/target_coverage_summary.txt.md5"
 
     @dictify
     def _get_output_files_bam_qc_work(self):
         for report in ("bamstats", "flagstats", "idxstats"):
             report_path = f"work/{{library_name}}/report/bam_qc/{{library_name}}.bam.{report}.txt"
             yield report, report_path
-            yield report + "_md5", report_path + ".md5"
 
     def get_log_file(self, action):
         self._validate_action(action)
@@ -165,19 +149,8 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
             return "work/target_cov_report/log/snakemake.target_coverage.log"
 
     @staticmethod
-    @dictify
     def _get_log_file_bam_qc():
-        prefix = "work/{library_name}/log/{library_name}.bam_qc"
-        key_ext = (
-            ("log", ".log"),
-            ("log_md5", ".log.md5"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_info_md5", ".conda_info.txt.md5"),
-            ("conda_list", ".conda_list.txt"),
-            ("conda_list_md5", ".conda_list.txt.md5"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
+        return {"log": "work/{library_name}/log/{library_name}.bam_qc.log"}
 
     def _collect_bam_files(self, wildcards):
         """Yield the BAM file of the library."""
@@ -196,9 +169,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     #: VCF key to file extensions
     vcf_key_ext_dict = {
         "vcf": ".vcf.gz",
-        "vcf_md5": ".vcf.gz.md5",
         "vcf_tbi": ".vcf.gz.tbi",
-        "vcf_tbi_md5": ".vcf.gz.tbi.md5",
     }
 
     def __init__(self, parent):
@@ -315,7 +286,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             paths_work[key] = prefix + f".{infix}.tsv.gz"
             paths_work[key + "_md5"] = prefix + f".{infix}.tsv.gz.md5"
         paths_work["ped"] = f"{prefix}.ped"
-        paths_work["ped_md5"] = f"{prefix}.ped.md5"
         yield from paths_work.items()
         yield "output_links", []
 
@@ -337,40 +307,20 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         else:
             return self._get_log_file_annotation_generic(action)
 
-    @dictify
     def _get_log_file_complete_set(self, action):
         prefix = (
             f"work/{self.external_tool_prefix}{{index_ngs_library}}/"
             f"log/{self.external_tool_prefix}{{index_ngs_library}}.{action}"
         )
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {"log": prefix + ".log"}
 
     @staticmethod
-    @dictify
     def _get_log_file_annotation_generic(action):
         prefix = (
             f"work/varfish_annotated.{{index_ngs_library}}/log/"
             f"varfish_annotated.{action}.{{index_ngs_library}}"
         )
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {"log": prefix + ".log"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -513,36 +463,14 @@ class VariantExportExternalWorkflow(BaseStep):
 
         # Define infixes and actions - check if BAM QC is possible
         infixes = ("gts", "db-infos")
-        performed_actions = ("annotate",)
         if self.config.bam_available_flag:
             infixes += ("bam-qc",)
-            performed_actions += ("bam_qc",)
 
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + ".{infix}{ext}"),
             infix=infixes,
             ext=file_exts,
         )
-        for action in performed_actions:
-            name_pattern_action = name_pattern.replace(
-                "varfish_annotated.", f"varfish_annotated.{action}."
-            )
-            prefix = os.path.join("output", name_pattern, "log", name_pattern_action + "{ext}")
-            yield from self._yield_result_files(
-                prefix,
-                ext=(
-                    ".log",
-                    ".log.md5",
-                    ".conda_info.txt",
-                    ".conda_info.txt.md5",
-                    ".conda_list.txt",
-                    ".conda_list.txt.md5",
-                    ".wrapper.py",
-                    ".wrapper.py.md5",
-                    ".environment.yaml",
-                    ".environment.yaml.md5",
-                ),
-            )
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""

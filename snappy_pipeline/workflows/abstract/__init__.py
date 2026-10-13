@@ -250,20 +250,10 @@ class BaseStepPart:
     def get_log_file(self, action: str) -> Outputs:
         """Return path to log file
 
-        The default implementation tries to call ``self._get_log_files()`` and in the case of
-        this function returning a ``dict``, augments it with paths to MD5 files.
+        The default implementation returns ``self._get_log_file(action)``.
         """
         if hasattr(self, "_get_log_file"):
-            inner = self._get_log_file(action)
-            if not isinstance(inner, dict):
-                return inner
-            else:
-                result = {}
-                for k, v in inner.items():
-                    result[k] = v
-                    if not k.endswith("_md5") and (k + "_md5") not in inner:
-                        result[k + "_md5"] = v + ".md5"
-                return result
+            return self._get_log_file(action)
         else:
             raise NotImplementedError(
                 "Log file name generation not implemented!"

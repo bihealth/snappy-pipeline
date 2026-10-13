@@ -6,14 +6,7 @@
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done.md5",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log.md5",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
   "output": [
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done",
@@ -100,13 +93,11 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/.done",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done"
   ],
   "log": [],
   "output": [
-   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/log/.done",
    "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/report/.done",
    "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/out/.done"
   ],
@@ -123,8 +114,7 @@
   "benchmark": null,
   "input": [
    "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/out/.done",
-   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/report/.done",
-   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/log/.done"
+   "tasks/adapter_trimming_fastp/output/case001subregion-T1-DNA1-WES1/report/.done"
   ],
   "log": [],
   "output": [],

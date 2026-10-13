@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """Tests for the base wrapper classes in snappy_wrappers.snappy_wrapper."""
 
+import hashlib
 import os
 
 import pytest
 
-from snappy_wrappers.snappy_wrapper import PythonWrapper, SnappyWrapper
+from snappy_wrappers.snappy_wrapper import PythonWrapper, SnappyWrapper, write_declared_md5s
 
 
 class _Log:
     def __init__(self, path):
         self.log = path
-        self.conda_list = path + ".conda_list.txt"
-        self.conda_info = path + ".conda_info.txt"
 
 
 class _FakeSnakemake:
@@ -81,41 +80,50 @@ def test_python_wrapper_logging_context_requires_log(tmp_path):
             pass
 
 
-def test_python_wrapper_compute_log_md5(mocker, tmp_path):
-    log_path = str(tmp_path / "rule.log")
-    wrapper = PythonWrapper(_FakeSnakemake(log_path))
-    shell_mock = mocker.patch("snappy_wrappers.snappy_wrapper.shell")
-
-    wrapper.compute_log_md5()
-
-    assert shell_mock.call_count == 1
-    cmd = shell_mock.call_args.args[0]
-    assert os.path.realpath(log_path) in cmd
-    assert ".md5" in cmd
+class _Output(list):
+    output_links = ()
 
 
-def test_python_wrapper_write_conda_info(mocker, tmp_path):
-    log_path = str(tmp_path / "rule.log")
-    wrapper = PythonWrapper(_FakeSnakemake(log_path))
-    shell_mock = mocker.patch("snappy_wrappers.snappy_wrapper.shell")
-
-    wrapper.write_conda_info()
-
-    cmds = [call.args[0] for call in shell_mock.call_args_list]
-    assert len(cmds) == 4  # conda list, list.md5, conda info, info.md5
-    assert cmds[0] == "conda list > {}.conda_list.txt".format(log_path)
-    assert cmds[2] == "conda info > {}.conda_info.txt".format(log_path)
-    assert "md5sum $f > $f.md5" in cmds[1]
-    assert "md5sum $f > $f.md5" in cmds[3]
+def _md5sum(path):
+    return f"{hashlib.md5(path.read_bytes()).hexdigest()}  {path.name}\n"
 
 
-def test_python_wrapper_run_logs_output_and_writes_md5_files(mocker, tmp_path):
+def test_write_declared_md5s_hashes_only_outputs_with_a_declared_md5(tmp_path):
+    published, intermediate = tmp_path / "out.vcf.gz", tmp_path / "out.tsv"
+    published.write_text("published\n")
+    intermediate.write_text("intermediate\n")
+    snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
+    snakemake.output = _Output([str(published), str(published) + ".md5", str(intermediate)])
+
+    write_declared_md5s(snakemake)
+
+    assert (tmp_path / "out.vcf.gz.md5").read_text() == _md5sum(published)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["out.tsv", "out.vcf.gz", "out.vcf.gz.md5"]
+
+
+def test_write_declared_md5s_replaces_a_link_and_skips_output_links(tmp_path):
+    upstream, output = tmp_path / "in.vcf.gz.md5", tmp_path / "out.vcf.gz"
+    upstream.write_text("upstream\n")
+    output.write_text("filtered\n")
+    (tmp_path / "out.vcf.gz.md5").symlink_to(upstream)
+    snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
+    link = str(tmp_path / "output" / "out.vcf.gz.md5")
+    snakemake.output = _Output([str(output), str(output) + ".md5", link])
+    snakemake.output.output_links = [link]
+
+    write_declared_md5s(snakemake)
+
+    assert upstream.read_text() == "upstream\n"
+    assert not (tmp_path / "out.vcf.gz.md5").is_symlink()
+    assert (tmp_path / "out.vcf.gz.md5").read_text() == _md5sum(output)
+
+
+def test_python_wrapper_run_logs_output_and_writes_md5_files(tmp_path):
     log_path = str(tmp_path / "rule.log")
     (tmp_path / "rule.log").write_text("previous job\n")
     output = tmp_path / "out.txt"
     snakemake = _FakeSnakemake(log_path)
     snakemake.output = [str(output), str(tmp_path / "out.txt.md5")]
-    shell_mock = mocker.patch("snappy_wrappers.snappy_wrapper.shell")
 
     def main():
         print("hello from main")
@@ -124,11 +132,8 @@ def test_python_wrapper_run_logs_output_and_writes_md5_files(mocker, tmp_path):
     PythonWrapper(snakemake).run(main)
 
     assert (tmp_path / "rule.log").read_text() == "hello from main\n"
-    cmds = [call.args[0] for call in shell_mock.call_args_list]
-    assert cmds[0].startswith("conda list") and cmds[2].startswith("conda info")
-    md5_of = [cmd for cmd in cmds if "md5sum $f > $f.md5" in cmd]
-    assert len(md5_of) == 4  # conda_list, conda_info, out.txt, log
-    assert str(output.name) in md5_of[2] and os.path.realpath(log_path) in md5_of[3]
+    assert (tmp_path / "out.txt.md5").read_text() == _md5sum(output)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["out.txt", "out.txt.md5", "rule.log"]
 
 
 def test_python_wrapper_logging_context_captures_subprocess_output(tmp_path):

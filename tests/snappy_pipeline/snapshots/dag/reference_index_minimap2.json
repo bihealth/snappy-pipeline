@@ -5,15 +5,7 @@
    "tasks/reference_index_minimap2/output/reference_index/out/reference.fa.fai",
    "tasks/reference_index_minimap2/output/reference_index/out/reference.dict",
    "tasks/reference_index_minimap2/output/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.conda_info.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.conda_list.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.script",
-   "tasks/reference_index_minimap2/output/reference_index/out/reference.mmi",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.conda_info.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.conda_list.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.script"
+   "tasks/reference_index_minimap2/output/reference_index/out/reference.mmi"
   ],
   "log": [],
   "output": [],
@@ -28,12 +20,7 @@
   "benchmark": null,
   "input": [],
   "log": [
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt.md5"
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log"
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
@@ -78,13 +65,7 @@
   ],
   "log": [
    "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.log.md5",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.conda_info.txt",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.conda_info.txt.md5",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.conda_list.txt",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.conda_list.txt.md5",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.script",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.script.md5"
+   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.script"
   ],
   "output": [
    "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.fai",
@@ -92,15 +73,7 @@
    "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.genome",
    "tasks/reference_index_minimap2/output/reference_index/out/reference.fa.fai",
    "tasks/reference_index_minimap2/output/reference_index/out/reference.dict",
-   "tasks/reference_index_minimap2/output/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.log.md5",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.conda_info.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.conda_info.txt.md5",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.conda_list.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.conda_list.txt.md5",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.script",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.common.script.md5"
+   "tasks/reference_index_minimap2/output/reference_index/out/reference.fa.genome"
   ],
   "params": {},
   "resources": {
@@ -125,25 +98,11 @@
   ],
   "log": [
    "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.log.md5",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.conda_info.txt",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.conda_info.txt.md5",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.conda_list.txt",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.conda_list.txt.md5",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.script",
-   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.script.md5"
+   "tasks/reference_index_minimap2/work/reference_index/log/reference_index.index.script"
   ],
   "output": [
    "tasks/reference_index_minimap2/work/reference_index/out/reference.mmi",
-   "tasks/reference_index_minimap2/output/reference_index/out/reference.mmi",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.log.md5",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.conda_info.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.conda_info.txt.md5",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.conda_list.txt",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.conda_list.txt.md5",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.script",
-   "tasks/reference_index_minimap2/output/reference_index/log/reference_index.index.script.md5"
+   "tasks/reference_index_minimap2/output/reference_index/out/reference.mmi"
   ],
   "params": {
    "args": {

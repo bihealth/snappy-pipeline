@@ -4,14 +4,7 @@
   "input": [
    "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done",
    "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.fusions.tsv",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.discarded_fusions.tsv.gz",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/Log.out",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/Log.std.out",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/Log.final.out",
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/SJ.out.tab"
+   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.discarded_fusions.tsv.gz"
   ],
   "log": [],
   "output": [],
@@ -33,19 +26,10 @@
   ],
   "log": [
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log.md5",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt.md5",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt.md5",
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.out",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.out.md5",
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.final.out",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.final.out.md5",
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.std.out",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.std.out.md5",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/SJ.out.tab",
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/SJ.out.tab.md5"
+   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/SJ.out.tab"
   ],
   "output": [
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.fusions.tsv",
@@ -106,146 +90,6 @@
    "ext": "done",
    "file": "out/",
    "path": "case001subregion-T1-RNA1-mRNA_seq1"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.out"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/Log.out"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "out",
-   "file": "Log",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.final.out"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/Log.final.out"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "out",
-   "file": "Log.final",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/Log.std.out"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/Log.std.out"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "out",
-   "file": "Log.std",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/SJ.out.tab"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/SJ.out.tab"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "tab",
-   "file": "SJ.out",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.conda_info",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_arriba/output/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-RNA1-mRNA_seq1.conda_list",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
   },
   "wrapper": null
  },

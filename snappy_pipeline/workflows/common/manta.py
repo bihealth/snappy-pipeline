@@ -79,6 +79,4 @@ class MantaStepPart(
             "vcf_tbi": f"{prefix}.vcf.gz.tbi",
             "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
         }
-        yield from augment_work_dir_with_output_links(
-            work_files, self.get_log_file().values()
-        ).items()
+        yield from augment_work_dir_with_output_links(work_files).items()

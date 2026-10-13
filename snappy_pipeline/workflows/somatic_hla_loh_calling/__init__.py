@@ -27,7 +27,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, LinkOutStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
@@ -90,19 +90,10 @@ class LohhlaStepPart(BaseStepPart):
         self._validate_action(action)
         return {"done": self.base_path_out.replace("{ext}", ".done")}
 
-    @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
         _ = action
-        prefix = "work/{tumor_library}/log/{tumor_library}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
 
 
 class SomaticHlaLohCallingWorkflow(BaseStep):
@@ -142,22 +133,9 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
     @listify
     def get_result_files(self):
         """Return list of result files for the somatic hla loh calling workflow."""
-        log_exts = (
-            ".log",
-            ".log.md5",
-            ".conda_info.txt",
-            ".conda_info.txt.md5",
-            ".conda_list.txt",
-            ".conda_list.txt.md5",
-        )
         for entity in self.output_entities:
             yield from expand(
                 os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
                 tumor_library=[entity],
                 ext=".done",
-            )
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "log", "{tumor_library}{ext}"),
-                tumor_library=[entity],
-                ext=log_exts,
             )

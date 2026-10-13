@@ -352,15 +352,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     def get_log_file(self, action):
         """Return dict of log files."""
         _ = action
-        prefix = "work/{library_name}/log/{library_name}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", "work/{library_name}/log/{library_name}.log"
         prefix = "work/{library_name}/log/"
         key_ext = (
             ("out", "Log.out"),
@@ -370,7 +362,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         )
         for key, ext in key_ext:
             yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get resource Usage
@@ -460,21 +451,9 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
             yield os.path.join("output", name_pattern_value, "out", ".done")
             if fusion_tool == "arriba":
                 yield from self._yield_arriba_files(library_name)
-            else:
-                yield os.path.join(
-                    "output", name_pattern_value, "log", "snakemake.gene_fusion_calling.log"
-                )
 
     def _yield_arriba_files(self, library_name):
         tpl = "output/{library_name}/out/{library_name}.{ext}"
         for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
-            yield tpl.format(library_name=library_name, ext=ext)
-            yield tpl.format(library_name=library_name, ext=ext + ".md5")
-        tpl = "output/{library_name}/log/{library_name}.{ext}"
-        for ext in ("log", "conda_list.txt", "conda_info.txt"):
-            yield tpl.format(library_name=library_name, ext=ext)
-            yield tpl.format(library_name=library_name, ext=ext + ".md5")
-        tpl = "output/{library_name}/log/{ext}"
-        for ext in ("Log.out", "Log.std.out", "Log.final.out", "SJ.out.tab"):
             yield tpl.format(library_name=library_name, ext=ext)
             yield tpl.format(library_name=library_name, ext=ext + ".md5")

@@ -1,7 +1,6 @@
 """Implementation of the ``sv_calling_wgs`` step"""
 
 import re
-from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -115,7 +114,6 @@ class PopDelStepPart(
     def _get_output_files_profile(self):
         prefix = "work/{library_name}/out/{library_name}"
         yield "profile", f"{prefix}.profile"
-        yield "profile_md5", f"{prefix}.profile.md5"
 
     @dictify
     def _get_input_files_call(self, wildcards):
@@ -136,9 +134,7 @@ class PopDelStepPart(
     def _get_output_files_call(self):
         infix = self._get_log_file_infix_call()
         yield "vcf", f"work/{infix}/out/{infix}.call.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.call.vcf.gz.md5"
         yield "vcf_tbi", f"work/{infix}/out/{infix}.call.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.call.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_call(self):
         return "{chrom}-{begin}-{end}"
@@ -172,9 +168,7 @@ class PopDelStepPart(
     def _get_output_files_concat_calls(self):
         infix = self._get_log_file_infix_concat_calls()
         yield "vcf", f"work/{infix}/out/{infix}.concat_calls.vcf.gz"
-        yield "vcf_md5", f"work/{infix}/out/{infix}.concat_calls.vcf.gz.md5"
         yield "vcf_tbi", f"work/{infix}/out/{infix}.concat_calls.vcf.gz.tbi"
-        yield "vcf_tbi_md5", f"work/{infix}/out/{infix}.concat_calls.vcf.gz.tbi.md5"
 
     def _get_log_file_infix_concat_calls(self):
         return "cohort"
@@ -194,12 +188,7 @@ class PopDelStepPart(
         yield from work_files.items()
         yield (
             "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(
-                    work_files.values(), self.get_log_file("reorder_vcf").values()
-                )
-            ],
+            [re.sub(r"^work/", "output/", work_path) for work_path in work_files.values()],
         )
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:

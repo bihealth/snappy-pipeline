@@ -63,12 +63,7 @@
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log",
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log.md5",
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.conda_info.txt",
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.conda_list.txt",
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.conda_list.txt.md5"
+   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
   ],
   "output": [
    "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.txt",
@@ -110,12 +105,7 @@
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
   ],
   "log": [
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log.md5",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt.md5",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt.md5"
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
   "output": [
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",

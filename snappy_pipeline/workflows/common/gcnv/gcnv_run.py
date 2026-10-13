@@ -6,7 +6,6 @@ import os
 import re
 import warnings
 from glob import glob
-from itertools import chain
 
 from snakemake.io import expand, touch
 from snakemake.iocontainers import Wildcards
@@ -21,23 +20,14 @@ from snappy_pipeline.workflows.common.gcnv.gcnv_common import (
 #: Predefined file name keys and extensions for the overall results files.
 RESULT_EXTENSIONS = {
     "vcf": ".vcf.gz",
-    "vcf_md5": ".vcf.gz.md5",
     "vcf_tbi": ".vcf.gz.tbi",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
 }
 
-#: Predefined file name keys and extensions for log files.
-LOG_EXTENSIONS = {
-    "conda_info": ".conda_info.txt",
-    "conda_info_md5": ".conda_info.txt.md5",
-    "conda_list": ".conda_list.txt",
-    "conda_list_md5": ".conda_list.txt.md5",
-    "wrapper": ".wrapper.py",
-    "wrapper_md5": ".wrapper.py.md5",
-    "env_yaml": ".environment.yaml",
-    "env_yaml_md5": ".environment.yaml.md5",
-    "log": ".log",
-    "log_md5": ".log.md5",
+#: The published results files also get md5 files.
+PUBLISHED_RESULT_EXTENSIONS = {
+    **RESULT_EXTENSIONS,
+    "vcf_md5": ".vcf.gz.md5",
+    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
 }
 
 
@@ -343,12 +333,9 @@ class JointGermlineCnvSegmentationMixin:
             work_files[key] = f"{prefix}{suffix}"
         yield from work_files.items()
 
-    @dictify
     def _get_log_file_joint_germline_cnv_segmentation(self):
         """Return log file **pattern** for the step ``joint_germline_cnv_segmentation``."""
-        prefix = "work/{library_name}/log/{library_name}.{kit}.joint_segmentation"
-        for key, ext in LOG_EXTENSIONS.items():
-            yield key, f"{prefix}{ext}"
+        return {"log": "work/{library_name}/log/{library_name}.{kit}.joint_segmentation.log"}
 
     @dictify
     def _get_input_files_joint_germline_cnv_segmentation(self, wildcards):
@@ -384,25 +371,14 @@ class MergeMultikitFamiliesMixin:
     def _get_output_files_merge_multikit_families(self):
         prefix = "work/{library_name}/out/{library_name}"
         work_files = {}
-        for key, suffix in RESULT_EXTENSIONS.items():
+        for key, suffix in PUBLISHED_RESULT_EXTENSIONS.items():
             work_files[key] = f"{prefix}{suffix}"
         yield from work_files.items()
-        yield (
-            "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(
-                    work_files.values(), self.get_log_file("merge_multikit_families").values()
-                )
-            ],
-        )
+        yield "output_links", [re.sub(r"^work/", "output/", path) for path in work_files.values()]
 
-    @dictify
     def _get_log_file_merge_multikit_families(self):
         """Return log file **pattern** for the step ``merge_multikit_families``."""
-        prefix = "work/{library_name}/log/{library_name}.merge_multikit_families"
-        for key, ext in LOG_EXTENSIONS.items():
-            yield key, f"{prefix}{ext}"
+        return {"log": "work/{library_name}/log/{library_name}.merge_multikit_families.log"}
 
     @dictify
     def _get_input_files_merge_multikit_families(self, wildcards):

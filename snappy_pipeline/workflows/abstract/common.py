@@ -2,7 +2,6 @@
 
 import re
 import typing
-from itertools import chain
 
 from snakemake.iocontainers import Wildcards
 
@@ -64,16 +63,10 @@ class ForwardResourceUsageMixin:
         return self.resource_usage_dict[action]
 
 
-def augment_work_dir_with_output_links(
-    work_dir_dict: SnakemakeDict, log_files: typing.Optional[typing.List[str]] = None
-) -> SnakemakeDict:
-    """Augment a dictionary with key/value pairs to work directory with ``"output_links"`` key.
-
-    Optionally, the output files will be augmented from the paths in ``log_files``.
-    """
+def augment_work_dir_with_output_links(work_dir_dict: SnakemakeDict) -> SnakemakeDict:
+    """Augment a dictionary with key/value pairs to work directory with ``"output_links"`` key."""
     result = dict(work_dir_dict)
     result["output_links"] = [
-        re.sub(r"^work/", "output/", work_path)
-        for work_path in chain(work_dir_dict.values(), log_files or [])
+        re.sub(r"^work/", "output/", work_path) for work_path in work_dir_dict.values()
     ]
     return result

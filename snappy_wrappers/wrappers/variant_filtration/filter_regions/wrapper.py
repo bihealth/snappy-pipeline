@@ -20,13 +20,12 @@ args = getattr(snakemake.params, "args", {})
 # Short-circuit in case of performing no filtration
 if args["filter_mode"] == "whole_genome":
     from snakemake.shell import shell
+
     shell(
         r"""
     # Regions set to "whole_genome", just link out the data.
     ln -sr {snakemake.input.vcf} {snakemake.output.vcf}
-    ln -sr {snakemake.input.vcf_md5} {snakemake.output.vcf_md5}
     ln -sr {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
-    ln -sr {snakemake.input.vcf_tbi_md5} {snakemake.output.vcf_tbi_md5}
     """
     )
     sys.exit(0)  # everything went well!
@@ -51,9 +50,7 @@ if [[ "{args[filter_mode]}" != whole_genome ]]; then
     tabix -f {snakemake.output.vcf}
 else  # else, "all"
     ln -sr {snakemake.input.vcf} {snakemake.output.vcf}
-    ln -sr {snakemake.input.vcf_md5} {snakemake.output.vcf_md5}
     ln -sr {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
-    ln -sr {snakemake.input.vcf_tbi_md5} {snakemake.output.vcf_tbi_md5}
 fi
 """
 )

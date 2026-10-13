@@ -89,17 +89,9 @@ EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 class SomaticCnvCheckingStepPart(BaseStepPart):
     """Base class for CNV checking sub-steps"""
 
-    @dictify
     def _get_log_file(self, prefix):
         """Return dict of log files."""
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {"log": prefix + ".log"}
 
 
 class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
@@ -136,13 +128,11 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
         }
 
     def get_output_files(self, action):
-        """Return output files that all somatic variant calling sub steps must
-        return (VCF + TBI file)
-        """
+        """Return the pileup VCF + TBI file (intermediate, so without md5 files)"""
         # Validate action
         self._validate_action(action)
         base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}.{action}{ext}"
-        return dict(zip(EXT_NAMES, expand(base_path_out, action=action, ext=EXT_VALUES)))
+        return dict(zip(EXT_NAMES[:2], expand(base_path_out, action=action, ext=EXT_VALUES[:2])))
 
     def _get_params_normal(self, wildcards):
         return {
@@ -314,13 +304,3 @@ class SomaticCnvCheckingWorkflow(BaseStep):
             report_tpl = os.path.join("output", "{tumor_library}", "report", "{tumor_library}{ext}")
             for entity in self.output_entities:
                 yield from expand(report_tpl, tumor_library=[entity], ext=report_ext)
-        chksum = ("", ".md5")
-        log_ext = ("log", "conda_info.txt", "conda_list.txt")
-        log_tpl = os.path.join(
-            "output",
-            "{tumor_library}",
-            "log",
-            "{tumor_library}.tumor.{ext}{chksum}",
-        )
-        for entity in self.output_entities:
-            yield from expand(log_tpl, tumor_library=[entity], ext=log_ext, chksum=chksum)

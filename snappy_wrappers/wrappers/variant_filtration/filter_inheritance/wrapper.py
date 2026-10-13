@@ -106,9 +106,7 @@ elif [[ "{args[filter_mode]}" == dominant ]]; then
 else
     links=1
     ln -sr {snakemake.input.vcf} {snakemake.output.vcf}
-    ln -sr {snakemake.input.vcf_md5} {snakemake.output.vcf_md5}
     ln -sr {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
-    ln -sr {snakemake.input.vcf_tbi_md5} {snakemake.output.vcf_tbi_md5}
 fi
 
 if [[ "${{links-0}}" -ne 1 ]]; then

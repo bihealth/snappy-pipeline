@@ -54,23 +54,15 @@ class BuildReferenceCommonStepPart(BaseStepPart):
             "reference_dict": work_prefix + ".dict",
             "reference_genome": work_prefix + ".fa.genome",
         }
-        log_files = self.get_log_file(action)
-        output_links = [p.replace("work/", "output/", 1) for p in outputs.values()]
-        output_links.extend(p.replace("work/", "output/", 1) for p in log_files.values())
         yield from outputs.items()
-        yield "output_links", output_links
+        yield "output_links", [p.replace("work/", "output/", 1) for p in outputs.values()]
 
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
         prefix = "work/reference_index/log/reference_index.common"
-        for key, ext in (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("script", ".script"),
-        ):
-            yield key, prefix + ext
+        yield "log", prefix + ".log"
+        yield "script", prefix + ".script"
 
 
 class _IndexToolStepPart(BaseStepPart):
@@ -93,23 +85,15 @@ class _IndexToolStepPart(BaseStepPart):
             key = suffix.strip(".").replace(".", "_").replace("/", "_")
             outputs[key] = work_prefix + suffix
 
-        log_files = self.get_log_file(action)
-        output_links = [p.replace("work/", "output/", 1) for p in outputs.values()]
-        output_links.extend(p.replace("work/", "output/", 1) for p in log_files.values())
         yield from outputs.items()
-        yield "output_links", output_links
+        yield "output_links", [p.replace("work/", "output/", 1) for p in outputs.values()]
 
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
         prefix = "work/reference_index/log/reference_index.index"
-        for key, ext in (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("script", ".script"),
-        ):
-            yield key, prefix + ext
+        yield "log", prefix + ".log"
+        yield "script", prefix + ".script"
 
 
 class BwaIndexStepPart(_IndexToolStepPart):

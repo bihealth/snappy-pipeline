@@ -44,13 +44,7 @@ class _ReferenceDownloadStepPart(BaseStepPart):
     @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        prefix = f"work/reference_download/log/reference_download.{self.name}"
-        for key, ext in (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        ):
-            yield key, prefix + ext
+        yield "log", f"work/reference_download/log/reference_download.{self.name}.log"
 
     @dictify
     def _get_params_run(self, wildcards):

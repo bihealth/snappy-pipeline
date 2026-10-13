@@ -426,7 +426,6 @@ Fingerprinting (.npz)
 
 import os
 import re
-from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
@@ -618,10 +617,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         # Return list of paths to the links that will be created in ``output/``
         yield (
             "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(paths_work.values(), self.get_log_file(action).values())
-            ],
+            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
         )
 
     @dictify
@@ -648,16 +644,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             return
         # Unique log paths per tool
         prefix = "work/{library_name}/log/{library_name}.mapping"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
 
 class BwaStepPart(ReadMappingStepPart):
@@ -789,7 +776,6 @@ class StarStepPart(ReadMappingStepPart):
             return output_files
 
         output_files["gene_counts"] = self.base_path_out.format(ext=".GeneCounts.tab")
-        output_files["gene_counts_md5"] = output_files["gene_counts"] + ".md5"
         output_files["junctions"] = self.base_path_out.format(ext=".Junctions.tab")
         output_files["junctions_md5"] = output_files["junctions"] + ".md5"
         if cfg.transcriptome:
@@ -809,9 +795,7 @@ class StarStepPart(ReadMappingStepPart):
                 key,
                 list(
                     filter(
-                        lambda x: (
-                            not (x.endswith(".GeneCounts.tab") or x.endswith(".GeneCounts.tab.md5"))
-                        ),
+                        lambda x: not x.endswith(".GeneCounts.tab"),
                         paths,
                     )
                 ),
@@ -864,74 +848,41 @@ class StrandednessStepPart(BaseStepPart):
     def get_output_files(self, action):
         self._validate_action(action)
         if action == "infer":
-            for key, ext in (("tsv", ".infer.txt"), ("decision", ".decision.json")):
-                yield key, "work/{library_name}/strandedness/{library_name}" + ext
-                yield (
-                    key + "_md5",
-                    "work/{library_name}/strandedness/{library_name}" + ext + ".md5",
-                )
-            key, ext = ("output", ".decision.json")
-            yield key, "output/{library_name}/strandedness/{library_name}" + ext
+            tpl = "work/{library_name}/strandedness/{library_name}"
+            yield "tsv", tpl + ".infer.txt"
+            yield "decision", tpl + ".decision.json"
+            yield "decision_md5", tpl + ".decision.json.md5"
             yield (
-                key + "_md5",
-                "output/{library_name}/strandedness/{library_name}" + ext + ".md5",
+                "output_links",
+                [
+                    "output/{library_name}/strandedness/{library_name}.decision.json",
+                    "output/{library_name}/strandedness/{library_name}.decision.json.md5",
+                ],
             )
-            for key, ext in (
-                ("log", ".log"),
-                ("conda_list", ".conda_list.txt"),
-                ("conda_info", ".conda_info.txt"),
-            ):
-                yield (
-                    key,
-                    "output/{library_name}/log/{library_name}.strandedness" + ext,
-                )
-                yield (
-                    key + "_md5",
-                    "output/{library_name}/log/{library_name}.strandedness" + ext + ".md5",
-                )
         elif action == "counts":
-            key, ext = ("counts", ".GeneCounts.tab")
-            yield key, "work/{library_name}/strandedness/{library_name}" + ext
-            yield (
-                key + "_md5",
-                "work/{library_name}/strandedness/{library_name}" + ext + ".md5",
-            )
-            key, ext = ("output", ".GeneCounts.tab")
-            yield key, "output/{library_name}/out/{library_name}" + ext
-            yield (
-                key + "_md5",
-                "output/{library_name}/out/{library_name}" + ext + ".md5",
-            )
+            yield "counts", "work/{library_name}/strandedness/{library_name}.GeneCounts.tab"
+            yield "counts_md5", "work/{library_name}/strandedness/{library_name}.GeneCounts.tab.md5"
+            yield "output", "output/{library_name}/out/{library_name}.GeneCounts.tab"
+            yield "output_md5", "output/{library_name}/out/{library_name}.GeneCounts.tab.md5"
 
     def get_result_files(self):
         if self.config.tool != "star":
             return
         tpl_out = "output/{library_name}/out/{library_name}.GeneCounts.tab"
         tpl_strandedness = "output/{library_name}/strandedness/{library_name}.decision.json"
-        tpl_log = "output/{library_name}/log/{library_name}.strandedness.{ext}"
         for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
             if extra_info["extractionType"] == "RNA":
                 yield tpl_out.format(library_name=library_name)
                 yield tpl_out.format(library_name=library_name) + ".md5"
                 yield tpl_strandedness.format(library_name=library_name)
                 yield tpl_strandedness.format(library_name=library_name) + ".md5"
-                for ext in ("log", "conda_info.txt", "conda_list.txt"):
-                    yield tpl_log.format(library_name=library_name, ext=ext)
-                    yield (tpl_log.format(library_name=library_name, ext=ext) + ".md5")
 
     @dictify
     def get_log_file(self, action):
         """Return dict of log files in the "log" directory."""
         _ = action
         prefix = "work/{library_name}/log/{library_name}.strandedness"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
     def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, "strandedness", None)
@@ -1032,15 +983,10 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         paths_work = getattr(self, f"_get_output_files_{action}_work")()
         yield from paths_work.items()
         # Return list of paths to the links that will be created in ``output/``
-        paths_all = list(paths_work.values())
-        paths_logs = self.get_log_file(action)
-        if isinstance(paths_logs, dict):
-            paths_all += list(paths_logs.values())
-        elif isinstance(paths_logs, list):
-            paths_all += paths_logs
-        elif isinstance(paths_logs, str):
-            paths_all.append(paths_logs)
-        yield "output_links", [re.sub(r"^work/", "output/", work_path) for work_path in paths_all]
+        yield (
+            "output_links",
+            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
+        )
 
     @dictify
     def _get_output_files_run_work(self):
@@ -1058,16 +1004,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         self._validate_action(action)
         if action == "run":
             prefix = "work/{library_name}/log/{library_name}.target_cov_report"
-            key_ext = (
-                ("log", ".log"),
-                ("conda_info", ".conda_info.txt"),
-                ("conda_list", ".conda_list.txt"),
-                ("wrapper", ".wrapper.py"),
-                ("env_yaml", ".environment.yaml"),
-            )
-            for key, ext in key_ext:
-                yield key, prefix + ext
-                yield key + "_md5", prefix + ext + ".md5"
+            yield "log", prefix + ".log"
         else:
             yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
 
@@ -1152,10 +1089,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         # Return list of paths to the links that will be created in ``output/``
         yield (
             "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(paths_work.values(), self.get_log_file(action).values())
-            ],
+            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
         )
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -1179,16 +1113,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def get_log_file(self, action):
         _ = action
         prefix = "work/{library_name}/log/{library_name}.bam_collect_doc"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -1245,10 +1170,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
         # Return list of paths to the links that will be created in ``output/``
         yield (
             "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(paths_work.values(), self.get_log_file(action).values())
-            ],
+            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
         )
 
     @dictify
@@ -1266,16 +1188,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_log_files_fingerprint(self):
         prefix = "work/{library_name}/log/{library_name}.ngs_chew_fingerprint"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage

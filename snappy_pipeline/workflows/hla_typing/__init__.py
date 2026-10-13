@@ -129,14 +129,7 @@ class OptiTypeStepPart(BaseStepPart):
         if self.name != str(self.config.tool):
             return {}
         prefix = "work/{library_name}/log/{library_name}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
     def _get_params_run(self, wildcards):
         """Return dict for the wrapper"""
@@ -223,14 +216,7 @@ class ArcasHlaStepPart(BaseStepPart):
         """Return dict of log files."""
         self._validate_action(action)
         prefix = "work/{library_name}/log/{library_name}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -300,10 +286,6 @@ class HlaTypingWorkflow(BaseStep):
         name_pattern = "{library_name}"
         yield from self._yield_result_files(
             join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
-        )
-        log_ext = [e + m for e in ("log", "conda_list.txt", "conda_info.txt") for m in ("", ".md5")]
-        yield from self._yield_result_files(
-            join("output", name_pattern, "log", name_pattern + ".{ext}"), ext=log_ext
         )
 
     def _yield_result_files(self, tpl, **kwargs):

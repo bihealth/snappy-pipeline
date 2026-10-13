@@ -35,14 +35,6 @@ will be generated:
     |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz.md5
     |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz
     |   |   +-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz.md5
-    |   |
-    |   +-- log
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_info.txt.md5
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.conda_list.txt.md5
-    |       |-- varfish_annotated.P001-N1-DNA1-WGS1.log
-    |       +-- varfish_annotated.P001-N1-DNA1-WGS1.log.md5
     |
     [...]
 
@@ -91,12 +83,7 @@ EXTS = (".tsv.gz", ".tsv.gz.md5")
 INFIXES = ("gts", "feature-effects", "db-infos")
 
 #: VCF key to file extensions
-KEY_EXT = {
-    "vcf": ".vcf.gz",
-    "vcf_md5": ".vcf.gz.md5",
-    "vcf_tbi": ".vcf.gz.tbi",
-    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
-}
+KEY_EXT = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
 
 #: Default configuration for the wgs_cnv_export_external step
 
@@ -175,38 +162,19 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         self._validate_action(action)
         return getattr(self, f"_get_log_file_{action}")()
 
-    @dictify
     def _get_log_file_merge_vcf(self):
-        prefix = (
-            f"work/{self.mapper_caller_tag}{{index_ngs_library}}/log/"
-            f"{self.mapper_caller_tag}{{index_ngs_library}}.merge_vcf"
-        )
-        key_ext = (
-            ("log", ".log"),
-            ("log_md5", ".log.md5"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_info_md5", ".conda_info.txt.md5"),
-            ("conda_list", ".conda_list.txt"),
-            ("conda_list_md5", ".conda_list.txt.md5"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
+        return {
+            "log": (
+                f"work/{self.mapper_caller_tag}{{index_ngs_library}}/log/"
+                f"{self.mapper_caller_tag}{{index_ngs_library}}.merge_vcf.log"
+            )
+        }
 
-    @dictify
     def _get_log_file_annotate(self):
-        prefix = (
-            "work/varfish_annotated.{index_ngs_library}/log/varfish_annotated.{index_ngs_library}"
-        )
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {
+            "log": "work/varfish_annotated.{index_ngs_library}/log/"
+            "varfish_annotated.{index_ngs_library}.log"
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -325,21 +293,6 @@ class WgsCnvExportExternalWorkflow(BaseStep):
             os.path.join("output", name_pattern, "out", name_pattern + ".{infix}{ext}"),
             infix=INFIXES,
             ext=EXTS,
-        )
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "log", name_pattern + "{ext}"),
-            ext=(
-                ".log",
-                ".log.md5",
-                ".conda_info.txt",
-                ".conda_info.txt.md5",
-                ".conda_list.txt",
-                ".conda_list.txt.md5",
-                ".wrapper.py",
-                ".wrapper.py.md5",
-                ".environment.yaml",
-                ".environment.yaml.md5",
-            ),
         )
 
     def _yield_result_files(self, tpl, **kwargs):

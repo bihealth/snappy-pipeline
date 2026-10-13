@@ -159,7 +159,6 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         self._validate_action(action)
         return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
 
-    @dictify
     def _get_log_file(self, action):
         """Return path to log file"""
         # Validate action
@@ -169,13 +168,7 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
         prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
         if len(self.actions) > 1:  # one log per action, not one shared by all
             prefix += f".{action}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
+        return {"log": prefix + ".log"}
 
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
@@ -188,12 +181,10 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     actions = ("coverage", "tumor_normal_ratio", "segment")
 
     #: Extension file dictionary. Key: file type (string); Value: file extension (string)
-    bcf_dict = {
-        "bcf": ".bcf",
-        "bcf_csi": ".bcf.csi",
-        "bcf_md5": ".bcf.md5",
-        "bcf_csi_md5": ".bcf.csi.md5",
-    }
+    bcf_dict = {"bcf": ".bcf", "bcf_csi": ".bcf.csi"}
+
+    #: The BCF files of the last action are published, so they get md5 files
+    bcf_md5_dict = {"bcf_md5": ".bcf.md5", "bcf_csi_md5": ".bcf.csi.md5"}
 
     #: Parameters to pass to the wrapper
     params_for_action = {
@@ -270,7 +261,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @dictify
     def _get_output_files_segment(self):
-        for key, ext in self.bcf_dict.items():
+        for key, ext in (self.bcf_dict | self.bcf_md5_dict).items():
             name_pattern = "{tumor_library}"
             yield (
                 key,
@@ -313,7 +304,6 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return params
 
-    @dictify
     def get_log_file(self, action):
         """Return path to log file"""
         wildcard_name = (
@@ -321,13 +311,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         )
         name_pattern = f"{{{wildcard_name}}}"
         prefix = f"work/{name_pattern}/log/{name_pattern}.{action}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
+        return {"log": prefix + ".log"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -502,7 +486,6 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             output_files[target] = os.path.join(
                 "work", name_pattern, "out", name_pattern + ".{}coverage.cnn".format(target)
             )
-            output_files[target + "_md5"] = output_files[target] + ".md5"
         return output_files
 
     @staticmethod
@@ -515,13 +498,13 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_segment():
         name_pattern = "{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".segment.cns")
-        return {"segments": tpl, "segments_md5": tpl + ".md5"}
+        return {"segments": tpl}
 
     @staticmethod
     def _get_output_files_call():
         name_pattern = "{library_name}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".call.cns")
-        return {"calls": tpl, "calls_md5": tpl + ".md5"}
+        return {"calls": tpl}
 
     @staticmethod
     def _get_output_files_postprocess():
@@ -580,16 +563,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         # Validate action
         self._validate_action(action)
         prefix = f"work/{{library_name}}/log/{action}.{{library_name}}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        log_files = {}
-        for key, ext in key_ext:
-            log_files[key] = prefix + ext
-            log_files[key + "_md5"] = prefix + ext + ".md5"
-        return log_files
+        return {"log": prefix + ".log"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -673,6 +647,9 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             )
 
         return result
+
+    def _get_input_files_transform(self, wildcards):
+        return {"ratio": self.base_path_out.format(ext=".ratio.txt")}
 
     @dictify
     def _get_input_files_run(self, wildcards):

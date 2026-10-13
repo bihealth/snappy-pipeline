@@ -3,14 +3,8 @@
   "benchmark": null,
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/report/.done",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_list.txt"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/report/.done"
   ],
   "log": [],
   "output": [],
@@ -33,16 +27,7 @@
    "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
   ],
   "log": [
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log"
   ],
   "output": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -64,17 +49,7 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5"
   ],
   "params": {
    "args": {
@@ -117,16 +92,7 @@
    "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
   ],
   "log": [
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log"
   ],
   "output": [
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
@@ -148,17 +114,7 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
    "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_info.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.conda_list.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.wrapper.py.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.environment.yaml.md5"
+   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5"
   ],
   "params": {
    "args": {
@@ -193,12 +149,7 @@
   "benchmark": null,
   "input": [],
   "log": [
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt.md5"
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log"
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
@@ -246,13 +197,7 @@
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_info.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_info.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_list.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_list.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script.md5"
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script"
   ],
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
@@ -264,15 +209,7 @@
    "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
    "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
    "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.sa",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.log.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_info.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_info.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_list.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_list.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.script",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.script.md5"
+   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
   ],
   "params": {
    "args": {
@@ -298,13 +235,7 @@
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_info.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_info.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_list.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_list.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script.md5"
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script"
   ],
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -312,15 +243,7 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
    "tasks/reference_index_bwa/output/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa/output/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.log.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_info.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_info.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_list.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_list.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.script",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.script.md5"
+   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.genome"
   ],
   "params": {},
   "resources": {
@@ -352,126 +275,6 @@
    "ext": "done",
    "file": "report/",
    "path": "case001subregion-T1-DNA1-WES1"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "case001subregion-T1-DNA1-WES1.coverage",
-   "path": "case001subregion-T1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-DNA1-WES1.coverage.conda_info",
-   "path": "case001subregion-T1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-DNA1-WES1.coverage.conda_list",
-   "path": "case001subregion-T1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "case001subregion-T1-DNA1-WES1.run",
-   "path": "case001subregion-T1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-DNA1-WES1.run.conda_info",
-   "path": "case001subregion-T1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "case001subregion-T1-DNA1-WES1.run.conda_list",
-   "path": "case001subregion-T1-DNA1-WES1/log"
   },
   "wrapper": null
  },
@@ -527,12 +330,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
   "log": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_info.txt.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.conda_list.txt.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log"
   ],
   "output": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
@@ -579,12 +377,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.log.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_info.txt.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_list.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.conda_list.txt.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/log/gc.50.log"
   ],
   "output": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/static_data/out/gc.50.wig.gz"
@@ -610,12 +403,7 @@
   "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/R_packages/packages.tsv",
   "input": [],
   "log": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.log.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.conda_info.txt.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.conda_list.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.conda_list.txt.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.log"
   ],
   "output": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/out/packages.done"
@@ -653,12 +441,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
   "log": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_info.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_info.txt.md5",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_list.txt",
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.conda_list.txt.md5"
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log"
   ],
   "output": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",

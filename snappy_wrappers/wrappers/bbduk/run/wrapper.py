@@ -34,8 +34,6 @@ assert len(input_path_right) == len(filename_right)
 if input_path_right:
     assert len(input_path_left) == len(input_path_right)
 
-this_file = __file__
-
 config = args["config"]
 adapter_sequences = snakemake.input.adapter_sequences
 barcodes = snakemake.input.get("barcodes", "")
@@ -43,11 +41,6 @@ barcodes = snakemake.input.get("barcodes", "")
 ShellWrapper(snakemake).run(
     r"""
 set -x
-
-# TODO: remove this again, is for fail early
-# Additional logging for transparency & reproducibility
-# Logging: Save a copy this wrapper (with the pickle details in the header)
-cp {this_file} $(dirname {snakemake.log.log})/wrapper_bbduk.py
 
 mkdir -p $TMPDIR/out $TMPDIR/rejected $TMPDIR/report
 

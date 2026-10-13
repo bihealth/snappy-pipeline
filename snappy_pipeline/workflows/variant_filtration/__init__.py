@@ -87,18 +87,9 @@ class VariantFiltrationStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, _OUT_PREFIX + ext
 
-    @dictify
     def get_log_file(self, action):
         self._validate_action(action)
-        for key, ext in (
-            ("log", ".log"),
-            ("log_md5", ".log.md5"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_info_md5", ".conda_info.txt.md5"),
-            ("conda_list", ".conda_list.txt"),
-            ("conda_list_md5", ".conda_list.txt.md5"),
-        ):
-            yield key, _LOG_PREFIX + ext
+        return {"log": _LOG_PREFIX + ".log"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, self.config.tool)

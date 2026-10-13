@@ -135,7 +135,7 @@ elif str(wf.config.tool) == "control_freec":
 
     rule somatic_wgs_cnv_calling_control_freec_transform_output:
         input:
-            **(wf.get_output_files("control_freec", "run")),
+            unpack(wf.get_input_files("control_freec", "transform")),
         output:
             **wf.get_output_files("control_freec", "transform"),
         log:

@@ -77,8 +77,6 @@ if wf.config.tool == "arcashla":
             done="work/prepare_reference/out/.done",
         log:
             log="work/prepare_reference/log/prepare_reference.log",
-            conda_list="work/prepare_reference/log/prepare_reference.conda_list.txt",
-            conda_info="work/prepare_reference/log/prepare_reference.conda_info.txt",
         benchmark:
             "benchmarks/prepare_reference/prepare_reference.tsv"
         params:

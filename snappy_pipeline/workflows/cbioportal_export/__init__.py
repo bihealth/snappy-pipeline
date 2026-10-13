@@ -156,17 +156,7 @@ class cbioportalExportStepPart(BaseStepPart):
         # Validate action
         self._validate_action(action)
 
-        tpl = "work/log/{name}.{action}{ext}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        log_files = {}
-        for key, ext in key_ext:
-            log_files[key] = tpl.format(name=self.name, action=action, ext=ext)
-            log_files[key + "_md5"] = log_files[key] + ".md5"
-        return log_files
+        return {"log": f"work/log/{self.name}.{action}.log"}
 
     def _get_params_run(self, wildcards):
         return dict(self.config)
@@ -240,21 +230,13 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         variants = self.parent.get_upstream_paths("variants", library_name=wildcards.tumor_library)
         yield "vcf", variants.vcf
 
-    @dictify
     def get_log_file(self, action):
         """Return path to log files for all data files"""
         # Validate action
         self._validate_action(action)
 
         tpl = os.path.join("work/maf/", self.name_pattern, "log", self.name_pattern)
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, tpl + ext
-            yield key + "_md5", tpl + ext + ".md5"
+        return {"log": tpl + ".log"}
 
     def _get_params_run(self, wildcards):
         return {
@@ -344,21 +326,13 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         name_pattern = "{tumor_library}"
         yield "cna", os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
 
-    @dictify
     def get_log_file(self, action):
         """Return path to log files for all data files"""
         # Validate action
         self._validate_action(action)
         name_pattern = "{tumor_library}"
         tpl = os.path.join("work/cna/", name_pattern, "log", name_pattern)
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, tpl + ext
-            yield key + "_md5", tpl + ext + ".md5"
+        return {"log": tpl + ".log"}
 
     def _get_params_run(self, wildcards):
         return {"pipeline_id": "ENSEMBL"}

@@ -17,12 +17,7 @@
   "benchmark": null,
   "input": [],
   "log": [
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt.md5"
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log"
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",

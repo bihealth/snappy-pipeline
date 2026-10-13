@@ -3,6 +3,7 @@
 # (snakemake.script.MIN_PY_VERSION), so this file must stay valid Python 3.7.
 
 import contextlib
+import hashlib
 import os
 import shutil
 import stat
@@ -19,6 +20,27 @@ __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 
+def write_declared_md5s(snakemake) -> None:
+    """Write ``<file>.md5`` for each output whose ``.md5`` is a declared output, too.
+
+    Only published files declare an ``.md5`` (SODAR needs one per file). The format is that of
+    ``md5sum``. Output links are skipped; they point to the md5 files written here.
+    """
+    links = set(map(str, getattr(snakemake.output, "output_links", None) or ()))
+    for md5_path in map(str, snakemake.output):
+        if not md5_path.endswith(".md5") or md5_path in links:
+            continue
+        path = md5_path[: -len(".md5")]
+        digest = hashlib.md5()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(1 << 20), b""):
+                digest.update(chunk)
+        if os.path.lexists(md5_path):
+            os.remove(md5_path)  # may be a link to the md5 file of an input
+        with open(md5_path, "wt") as f:
+            f.write("{}  {}\n".format(digest.hexdigest(), os.path.basename(path)))
+
+
 class SnappyWrapper(metaclass=ABCMeta):
     header = r"""
         #!/usr/bin/env bash
@@ -30,22 +52,6 @@ class SnappyWrapper(metaclass=ABCMeta):
             rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
             exec > >(tee -a "{snakemake.log.log}") 2>&1
         fi
-
-        # Compute md5 except when filename ends with .md5
-        compute_md5() {{
-            fn=$1
-            f=$(basename $fn)
-            d=$(dirname $fn)
-            pushd $d 1> /dev/null 2>&1
-            md5sum $f > $f.md5
-            popd 1> /dev/null 2>&1
-        }}
-
-        # Write out information about conda installation.
-        conda list >{snakemake.log.conda_list}
-        conda info >{snakemake.log.conda_info}
-        compute_md5 {snakemake.log.conda_list}
-        compute_md5 {snakemake.log.conda_info}
 
         # Create temp directory
         TMPDIR=$(mktemp -d)
@@ -59,22 +65,6 @@ class SnappyWrapper(metaclass=ABCMeta):
         # --------------------------------- End command -------------------------------------------
 
         set +x
-
-        for fn in {snakemake.output}
-        do
-            if [[ -f "$fn" ]] && ! [[ $fn =~ \.md5$ ]]
-            then
-                compute_md5 $fn
-            fi
-        done
-    """
-
-    md5_log = r"""
-        f=$(basename {log})
-        d=$(dirname {log})
-        pushd $d 1> /dev/null 2>&1
-        md5sum $f > $f.md5
-        popd 1> /dev/null 2>&1
     """
 
     output_links = r"""
@@ -96,10 +86,6 @@ class SnappyWrapper(metaclass=ABCMeta):
             raise AttributeError("snakemake.log is not defined")
         if not getattr(self._snakemake.log, "log", None):
             raise AttributeError("snakemake.log.log is not defined")
-        if not getattr(self._snakemake.log, "conda_list", None):
-            raise AttributeError("snakemake.log.conda_list is not defined")
-        if not getattr(self._snakemake.log, "conda_info", None):
-            raise AttributeError("snakemake.log.conda_info is not defined")
 
     def _create_output_links(self) -> None:
         r"""Create output/ symlinks pointing into work/ for all entries in output_links.
@@ -126,7 +112,7 @@ class SnappyWrapper(metaclass=ABCMeta):
 
     def _run(self, cmd: str, filename: Optional[str]) -> None:
         """
-        Creates a temp file for the script, executes it & computes the md5 sum of the log
+        Creates a temp file for the script, executes it & writes the declared md5 files
 
         The shell script is first created as a temporary file, and then copied over to
         the log directory.
@@ -183,7 +169,7 @@ class SnappyWrapper(metaclass=ABCMeta):
                 except OSError:
                     pass
 
-        shell(SnappyWrapper.md5_log.format(log=str(self._snakemake.log.log)))
+        write_declared_md5s(self._snakemake)
 
         if (
             self._with_output_links
@@ -194,10 +180,7 @@ class SnappyWrapper(metaclass=ABCMeta):
 
 class ShellWrapper(SnappyWrapper):
     def _run_bash(self, cmd: str) -> None:
-        script_log = getattr(self._snakemake.log, "script", None)
-        self._run(cmd, script_log)
-        if script_log:
-            shell(SnappyWrapper.md5_log.format(log=script_log))
+        self._run(cmd, getattr(self._snakemake.log, "script", None))
 
     def run(self, cmd: str) -> None:
         self._run_bash(cmd)
@@ -212,7 +195,6 @@ class RWrapper(SnappyWrapper):
     def _run_R(self, cmd: str) -> None:
         with open(self._snakemake.log.script, "wt") as f:
             print(snakemake_format(cmd, stepout=4, snakemake=self._snakemake), file=f)
-        shell(SnappyWrapper.md5_log.format(log=self._snakemake.log.script))
         self._run(f"Rscript --vanilla {self._snakemake.log.script}", None)
 
     def run(self, cmd: str) -> None:
@@ -223,8 +205,7 @@ class PythonWrapper:
     """Base class for pure-Python wrappers (no external script executed).
 
     Follows the log contract of ``ShellWrapper``: ``run(func)`` calls ``func`` with stdout and
-    stderr in ``snakemake.log.log``, then writes the conda information and the md5 sums of the
-    outputs and of the log.
+    stderr in ``snakemake.log.log``, then writes the declared md5 files.
     """
 
     def __init__(self, snakemake) -> None:
@@ -232,15 +213,13 @@ class PythonWrapper:
         self._log_path()  # raises if snakemake.log.log is missing
 
     def run(self, func) -> None:
-        """Run ``func()`` with its output in the log, then write conda info and md5 sums."""
+        """Run ``func()`` with its output in the log, then write the declared md5 files."""
         log_path = self._log_path()
         if os.path.exists(log_path):
             os.remove(log_path)  # the log holds this job only, as with ShellWrapper
         with self.logging_context():
             func()
-        self.write_conda_info()
-        self.compute_output_md5()
-        self.compute_log_md5()
+        write_declared_md5s(self.snakemake)
 
     def _log_path(self) -> str:
         log = getattr(self.snakemake, "log", None)
@@ -276,24 +255,3 @@ class PythonWrapper:
                 os.dup2(saved[1], 2)
                 os.close(saved[0])
                 os.close(saved[1])
-
-    def compute_log_md5(self) -> None:
-        shell(SnappyWrapper.md5_log.format(log=self._log_path()))
-
-    def compute_output_md5(self) -> None:
-        """Write ``<file>.md5`` next to each output file, as ``ShellWrapper``'s footer does."""
-        for path in self.snakemake.output:
-            if os.path.isfile(path) and not str(path).endswith(".md5"):
-                shell(SnappyWrapper.md5_log.format(log=path))
-
-    def write_conda_info(self) -> None:
-        """Write conda_list/conda_info files plus their md5 sums, if declared."""
-        log = getattr(self.snakemake, "log", None)
-        if log is None:
-            return
-        for key, command in (("conda_list", "conda list"), ("conda_info", "conda info")):
-            path = getattr(log, key, None)
-            if not path:
-                continue
-            shell("{} > {}".format(command, path))
-            shell(SnappyWrapper.md5_log.format(log=path))

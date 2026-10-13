@@ -54,7 +54,7 @@ from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import expand
 
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -136,21 +136,12 @@ class Mantis2StepPart(BaseStepPart):
             key: self.base_path_out.replace("{ext}", ext) for key, ext in zip(EXT_NAMES, EXT_VALUES)
         }
 
-    @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
         # Validate action
         self._validate_action(action)
 
-        prefix = "work/{tumor_library}/log/{tumor_library}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         """Get Resource Usage
@@ -210,22 +201,9 @@ class SomaticMsiCallingWorkflow(BaseStep):
         if msi_tool not in MSI_CALLERS_MATCHED:
             return
         payload_exts = EXT_MATCHED[msi_tool].values() if msi_tool in EXT_MATCHED else EXT_VALUES
-        log_exts = (
-            ".log",
-            ".log.md5",
-            ".conda_info.txt",
-            ".conda_info.txt.md5",
-            ".conda_list.txt",
-            ".conda_list.txt.md5",
-        )
         for entity in self.output_entities:
             yield from expand(
                 os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
                 tumor_library=[entity],
                 ext=payload_exts,
-            )
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "log", "{tumor_library}{ext}"),
-                tumor_library=[entity],
-                ext=log_exts,
             )

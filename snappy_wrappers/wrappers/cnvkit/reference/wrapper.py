@@ -43,12 +43,5 @@ else
         {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
         {snakemake.input.target} {snakemake.input.antitarget}
 fi
-
-if [[ -n "{snakemake.input.logs}" ]]
-then
-    tar -zcvf {snakemake.output.log} {snakemake.input.logs}
-else
-    touch {snakemake.output.log}
-fi
 """
 )

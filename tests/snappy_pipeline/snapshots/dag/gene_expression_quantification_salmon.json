@@ -64,12 +64,7 @@
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log.md5",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_info.txt.md5",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.conda_list.txt.md5"
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log"
   ],
   "output": [
    "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",

@@ -203,19 +203,9 @@ class PanelOfNormalsStepPart(BaseStepPart):
                                 yield ngs_library.name
 
     @staticmethod
-    @dictify
     def _get_log_file(tpl):
-        """Return all log files files"""
-        ext_dict = {
-            "conda_list": "conda_list.txt",
-            "conda_list_md5": "conda_list.txt.md5",
-            "conda_info": "conda_info.txt",
-            "conda_info_md5": "conda_info.txt.md5",
-            "log": "log",
-            "log_md5": "log.md5",
-        }
-        for key, ext in ext_dict.items():
-            yield key, tpl + "." + ext
+        """Return the log file"""
+        return {"log": tpl + ".log"}
 
 
 class PureCnStepPart(PanelOfNormalsStepPart):
@@ -426,12 +416,9 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             tpl = "work/{{normal_library}}/par/scatter/{scatteritem}.region.bed"
             return {"regions": scatter(tpl)}
 
-        ext_dict = {
-            "vcf": "vcf.gz",
-            "vcf_md5": "vcf.gz.md5",
-            "vcf_tbi": "vcf.gz.tbi",
-            "vcf_tbi_md5": "vcf.gz.tbi.md5",
-        }
+        ext_dict = {"vcf": "vcf.gz", "vcf_tbi": "vcf.gz.tbi"}
+        if action == "create_panel":
+            ext_dict |= {"vcf_md5": "vcf.gz.md5", "vcf_tbi_md5": "vcf.gz.tbi.md5"}
 
         tpls = {
             "prepare_panel": "work/{normal_library}/par/run/{scatteritem}",
@@ -636,12 +623,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         targets = [tpl.format(normal_library=x) for x in self.normal_libraries]
         tpl = "work/{normal_library}/out/{normal_library}.antitargetcoverage.cnn"
         antitargets = [tpl.format(normal_library=x) for x in self.normal_libraries]
-        tpl = "work/{normal_library}/log/{normal_library}.coverage.{ext}"
-        logs = [
-            tpl.format(normal_library=x, ext=ext)
-            for x in self.normal_libraries
-            for ext in ("log", "conda_list.txt", "conda_info.txt")
-        ]
         return {
             "target": (
                 targets
@@ -653,7 +634,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
                 if antitargets
                 else "work/panel_of_normals/out/panel_of_normals.antitarget.bed".format(**wildcards)
             ),
-            "logs": logs if targets or antitargets else [],
             "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
@@ -702,17 +682,13 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     def _get_output_files_coverage(self):
         return {
             "target": "work/{normal_library}/out/{normal_library}.targetcoverage.cnn",
-            "target_md5": "work/{normal_library}/out/{normal_library}.targetcoverage.cnn.md5",
             "antitarget": "work/{normal_library}/out/{normal_library}.antitargetcoverage.cnn",
-            "antitarget_md5": "work/{normal_library}/out/{normal_library}.antitargetcoverage.cnn.md5",
         }
 
     def _get_output_files_create_panel(self):
         return {
             "panel": "work/panel_of_normals/out/panel_of_normals.cnn",
             "panel_md5": "work/panel_of_normals/out/panel_of_normals.cnn.md5",
-            "log": "work/panel_of_normals/log/panel_of_normals.merged.tar.gz",
-            "log_md5": "work/panel_of_normals/log/panel_of_normals.merged.tar.gz.md5",
         }
 
     def _get_output_files_report(self):
@@ -772,7 +748,10 @@ class AccessStepPart(PanelOfNormalsStepPart):
         # Validate action
         self._validate_action(action)
         tpl = "work/panel_of_normals/out/panel_of_normals.accessible.bed"
-        return {"access": tpl, "access_md5": tpl + ".md5"}
+        # Only published (and so hashed) when access is the task's tool
+        if self.config.tool == "access":
+            return {"access": tpl, "access_md5": tpl + ".md5"}
+        return {"access": tpl}
 
     @classmethod
     def get_log_file(cls, action):
@@ -840,15 +819,6 @@ class PanelOfNormalsWorkflow(BaseStep):
         """
         result_files = []
 
-        log_ext_list = [
-            "log",
-            "log.md5",
-            "conda_list.txt",
-            "conda_list.txt.md5",
-            "conda_info.txt",
-            "conda_info.txt.md5",
-        ]
-
         if self.config.tool == "mutect2":
             tpl = "output/panel_of_normals/out/panel_of_normals.{ext}"
             ext_list = (
@@ -860,8 +830,6 @@ class PanelOfNormalsWorkflow(BaseStep):
                 "genomicsDB.tar.gz.md5",
             )
             result_files.extend(self._expand_result_files(tpl, ext_list))
-            tpl = "output/panel_of_normals/log/panel_of_normals.{ext}"
-            result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         if self.config.tool == "cnvkit":
             tpls = [
@@ -885,22 +853,10 @@ class PanelOfNormalsWorkflow(BaseStep):
             ]
             for tpl, ext_list in tpls:
                 result_files.extend(self._expand_result_files(tpl, ext_list))
-            tpls = [
-                "output/panel_of_normals/log/panel_of_normals.target.{ext}",
-                "output/panel_of_normals/log/panel_of_normals.antitarget.{ext}",
-                "output/panel_of_normals/log/panel_of_normals.{ext}",
-                "output/panel_of_normals/log/panel_of_normals.report.{ext}",
-            ]
-            for tpl in tpls:
-                result_files.extend(self._expand_result_files(tpl, log_ext_list))
-            tpl = "output/panel_of_normals/log/panel_of_normals.merged.tar.gz{ext}"
-            result_files.extend(self._expand_result_files(tpl, ("", ".md5")))
 
         if self.config.tool == "access":
             tpl = "output/panel_of_normals/out/panel_of_normals.accessible.bed"
             result_files.extend([tpl + md5 for md5 in ("", ".md5")])
-            tpl = "output/panel_of_normals/log/panel_of_normals.accessible.{ext}"
-            result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         if self.config.tool == "purecn":
             tpl = "output/panel_of_normals/out/panel_of_normals.{ext}"
@@ -909,13 +865,9 @@ class PanelOfNormalsWorkflow(BaseStep):
             tpl = "output/panel_of_normals/out/panel_of_normals.mapping_bias.{ext}"
             ext_list = ("rds", "rds.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
-            tpl = "output/panel_of_normals/log/panel_of_normals.{ext}"
-            result_files.extend(self._expand_result_files(tpl, log_ext_list))
             tpl = "output/panel_of_normals/out/panel_of_normals.intervals.{ext}"
             ext_list = ("list", "list.md5", "bed.gz", "bed.gz.md5", "bed.gz.tbi", "bed.gz.tbi.md5")
             result_files.extend(self._expand_result_files(tpl, ext_list))
-            tpl = "output/panel_of_normals/log/panel_of_normals.prepare.{ext}"
-            result_files.extend(self._expand_result_files(tpl, log_ext_list))
 
         return result_files
 

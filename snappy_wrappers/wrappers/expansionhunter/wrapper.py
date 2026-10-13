@@ -9,8 +9,6 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
-this_file = __file__
-
 args = getattr(snakemake.params, "args", {})
 
 # Define prefix based on json output
@@ -27,10 +25,6 @@ if args["sex"] in valid_sex_list:
 
 ShellWrapper(snakemake).run(
     r"""
-# Additional logging for transparency & reproducibility
-# Logging: Save a copy this wrapper (with the pickle details in the header)
-cp {this_file} $(dirname {snakemake.log})/wrapper_expansionhunter.py
-
 # Create out dir
 mkdir -p $(dirname {snakemake.output.json})
 

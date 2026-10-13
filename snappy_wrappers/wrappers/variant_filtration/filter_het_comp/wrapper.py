@@ -28,9 +28,7 @@ if args["filter_mode"] == "passthrough":
         r"""
     # Het. comp. mode set to "passthrough", just copy out the data.
     ln -sr {snakemake.input.vcf} {snakemake.output.vcf}
-    ln -sr {snakemake.input.vcf_md5} {snakemake.output.vcf_md5}
     ln -sr {snakemake.input.vcf_tbi} {snakemake.output.vcf_tbi}
-    ln -sr {snakemake.input.vcf_tbi_md5} {snakemake.output.vcf_tbi_md5}
     """
     )
     sys.exit(0)  # everything went well!

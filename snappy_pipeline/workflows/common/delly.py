@@ -84,9 +84,7 @@ class Delly2StepPart(
     def _get_output_files_call(self):
         prefix = "work/{library_name}/out/{library_name}.call"
         yield "bcf", f"{prefix}.bcf"
-        yield "bcf_md5", f"{prefix}.bcf.md5"
         yield "bcf_csi", f"{prefix}.bcf.csi"
-        yield "bcf_csi_md5", f"{prefix}.bcf.csi.md5"
 
     @dictify
     def _get_input_files_merge_calls(self, wildcards):
@@ -102,9 +100,7 @@ class Delly2StepPart(
     def _get_output_files_merge_calls(self):
         prefix = "work/{library_name}/out/{library_name}.merge_calls"
         yield "bcf", f"{prefix}.bcf"
-        yield "bcf_md5", f"{prefix}.bcf.md5"
         yield "bcf_csi", f"{prefix}.bcf.csi"
-        yield "bcf_csi_md5", f"{prefix}.bcf.csi.md5"
 
     @dictify
     def _get_input_files_genotype(self, wildcards):
@@ -117,9 +113,7 @@ class Delly2StepPart(
     def _get_output_files_genotype(self):
         prefix = "work/{library_name}/out/{library_name}.genotype"
         yield "bcf", f"{prefix}.bcf"
-        yield "bcf_md5", f"{prefix}.bcf.md5"
         yield "bcf_csi", f"{prefix}.bcf.csi"
-        yield "bcf_csi_md5", f"{prefix}.bcf.csi.md5"
 
     @dictify
     def _get_input_files_merge_genotypes(self, wildcards):
@@ -140,6 +134,4 @@ class Delly2StepPart(
             "vcf_tbi": f"{prefix}.vcf.gz.tbi",
             "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
         }
-        yield from augment_work_dir_with_output_links(
-            work_files, self.get_log_file("merge_genotypes").values()
-        ).items()
+        yield from augment_work_dir_with_output_links(work_files).items()

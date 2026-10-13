@@ -34,8 +34,6 @@ assert len(input_path_right) == len(filename_right)
 if input_path_right:
     assert len(input_path_left) == len(input_path_right)
 
-this_file = __file__
-
 config = args["config"]
 filter_by_index1 = snakemake.input.get("filter_by_index1", "")
 filter_by_index2 = snakemake.input.get("filter_by_index2", "")
@@ -44,10 +42,6 @@ ShellWrapper(snakemake).run(
     r"""
 set -x
 
-# TODO: remove this again, is for fail early
-# Additional logging for transparency & reproducibility
-# Logging: Save a copy this wrapper (with the pickle details in the header)
-cp {this_file} $(dirname {snakemake.log.log})/wrapper_fastp.py
 mkdir -p $TMPDIR/out $TMPDIR/report
 
 # Define left and right reads as Bash arrays

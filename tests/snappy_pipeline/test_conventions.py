@@ -401,3 +401,94 @@ def test_logs_and_benchmarks_are_unique_per_job():
         paths = [p for job in jobs for p in job["log"] + [job.get("benchmark")] if p]
         found += [f"{snapshot.stem}: {p}" for p, n in collections.Counter(paths).items() if n > 1]
     assert not found, f"files shared by several jobs: {found}"
+
+
+#: Rules of steps on hold (plans.md); their own wrappers still write conda files and md5 files
+ON_HOLD_RULES = ("somatic_neoepitope_prediction", "create_proteome")
+
+_CONDA_OR_COPY = re.compile(r"\.(conda_info\.txt|conda_list\.txt|wrapper\.py|environment\.yaml)$")
+
+
+def _snapshot_jobs() -> Iterator[tuple[str, dict]]:
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        for job in json.loads(snapshot.read_text(encoding="utf-8")):
+            if not job["rule"].startswith(ON_HOLD_RULES):
+                yield snapshot.stem, job
+
+
+def test_logs_hold_only_logs():
+    """A rule's log is its log (plus a script copy); Snakemake records the rest (plans.md W2)."""
+    found = {
+        f"{name}: {path}"
+        for name, job in _snapshot_jobs()
+        for path in job["log"]
+        if path.endswith(".md5") or _CONDA_OR_COPY.search(path)
+    }
+    assert not found, f"md5, conda or copied files declared as logs: {sorted(found)[:20]}"
+
+
+def test_logs_are_not_published():
+    """Logs go into the run's log archive, not into output/ (plans.md F3, W2)."""
+    found = {
+        f"{name}: {path}"
+        for name, job in _snapshot_jobs()
+        for path in job["output"]
+        if "/output/" in path
+        and (
+            "/log/" in path
+            or path.removesuffix(".md5").endswith(".log")
+            or _CONDA_OR_COPY.search(path)
+        )
+    }
+    assert not found, f"logs linked into output/: {sorted(found)[:20]}"
+
+
+def test_md5_files_only_for_published_files():
+    """SODAR needs an md5 per published file; nothing reads the md5 of an intermediate file.
+
+    The wrapper base classes write ``<file>.md5`` when it is declared next to ``<file>``. Only
+    the target tasks of a snapshot link their files into output/, so only they are checked. A
+    link may sit in another directory than its file, so file names are compared. The orchestrator
+    does not target ``.tbi`` files, so an index counts as published with the file it indexes.
+    """
+    found = set()
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        jobs = [
+            job
+            for job in json.loads(snapshot.read_text(encoding="utf-8"))
+            if not job["rule"].startswith(ON_HOLD_RULES)
+        ]
+        targets = {
+            path.split("/")[1] for job in jobs if job["rule"] == "all" for path in job["input"]
+        }
+        published = {
+            (path.split("/")[1], path.rsplit("/", 1)[1])
+            for job in jobs
+            for path in job["output"]
+            if "/output/" in path
+        }
+        for job in jobs:
+            for path in job["output"]:
+                if not path.endswith(".md5") or "/work/" not in path:
+                    continue
+                if path.split("/")[1] not in targets:
+                    continue
+                payload = path.removesuffix(".md5")
+                if payload not in job["output"]:
+                    found.add(f"{snapshot.stem}: {path} (its file is no output of the job)")
+                elif (path.split("/")[1], payload.rsplit("/", 1)[1].removesuffix(".tbi")) not in (
+                    published
+                ):
+                    found.add(f"{snapshot.stem}: {path} (its file is not published)")
+    assert not found, f"md5 files of unpublished files: {sorted(found)[:20]} ({len(found)} total)"
+
+
+def test_wrappers_read_no_md5_or_conda_files():
+    found = {
+        f"{name}: {job['rule']}: {path}"
+        for name, job in _snapshot_jobs()
+        if job.get("wrapper")
+        for path in job["input"]
+        if path.endswith(".md5") or _CONDA_OR_COPY.search(path)
+    }
+    assert not found, f"wrapper jobs reading md5 or conda files: {sorted(found)[:20]}"

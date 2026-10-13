@@ -199,7 +199,6 @@ class ScrambleStepPart(BaseStepPart):
         name_pattern = "{library_name}"
         ext_dict = {
             "txt": ".MEIs.txt",
-            "txt_md5": ".MEIs.txt.md5",
             "vcf": ".vcf",
             "vcf_gz": ".vcf.gz",
             "vcf_gz_md5": ".vcf.gz.md5",

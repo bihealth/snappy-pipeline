@@ -99,8 +99,6 @@ class FastQcReportStepPart(BaseStepPart):
         self._validate_action(action)
         prefix = "work/{library_name}/log/{library_name}"
         yield "log", prefix + ".log"
-        yield "conda_info", prefix + ".conda_info.txt"
-        yield "conda_list", prefix + ".conda_list.txt"
 
 
 class PicardStepPart(BaseStepPart):
@@ -180,16 +178,7 @@ class PicardStepPart(BaseStepPart):
                 f"Action '{action}' is not supported. Valid options: {actions_str}"
             )
 
-        key_ext = (
-            ("wrapper", ".wrapper.py"),
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", prefix + ".log"
 
     def _get_params_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {

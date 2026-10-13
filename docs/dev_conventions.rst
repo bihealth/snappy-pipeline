@@ -81,6 +81,17 @@ Rules cached between workflows (``cache:``) cannot have a benchmark.
 ``test_wrapper_rules_write_a_benchmark`` and ``test_logs_and_benchmarks_are_unique_per_job``
 check this.
 
+A rule's log holds only its log file (plus a copy of the script, if the wrapper writes one).
+Snakemake's metadata in ``.snakemake/`` records the code, params, inputs and conda environment
+of every output.
+Logs are not linked into ``output/``; ``snappy run`` archives them per run.
+Only published files, those linked into ``output/``, have an md5 file: SODAR needs one per
+uploaded file. A step declares ``<file>.md5`` next to ``<file>`` in the outputs, and the wrapper
+base classes write it. Wrappers never read md5 files.
+``test_logs_hold_only_logs``, ``test_logs_are_not_published``,
+``test_md5_files_only_for_published_files`` and ``test_wrappers_read_no_md5_or_conda_files``
+check this.
+
 Outputs for the Snakemake report are declared per action in a step part's ``report_outputs``
 (output key to ``ReportOutput``: subcategory, caption, ``htmlindex`` for a directory).
 ``BaseStep.get_output_files`` flags them with ``report()``, in the task's category and labelled

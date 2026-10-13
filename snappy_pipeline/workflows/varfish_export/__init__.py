@@ -107,22 +107,11 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         self._validate_action(action)
         return getattr(self, f"_get_output_files_{action}")()
 
-    @dictify
-    def get_log_file(self, action: str) -> SnakemakeDictItemsGenerator:
+    def get_log_file(self, action: str) -> SnakemakeDict:
         self._validate_action(action)
-        prefix = (
-            f"work/varfish_export.{{index_ngs_library}}/log/mehari_{action}.{{index_ngs_library}}"
-        )
-        key_ext = (
-            ("wrapper", ".wrapper.py"),
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {
+            "log": f"work/varfish_export.{{index_ngs_library}}/log/mehari_{action}.{{index_ngs_library}}.log"
+        }
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)

@@ -26,7 +26,6 @@ if reads_right:
 else:
     read_flag = "-r"
 
-this_file = __file__
 
 ShellWrapper(snakemake).run(
     r"""
@@ -98,11 +97,5 @@ cp $TMPDIR/logs/salmon_quant.log $log/salmon_quant.log
 aux=$(dirname {snakemake.output.transcript_sf})/aux
 mkdir -p $aux
 cp -R $TMPDIR/aux/* $aux/.
-
-# Logging: Save a copy this wrapper (with the pickle details in the header)
-cp {this_file} $(dirname $log)/wrapper_star.py
-# Logging: Save a permanent copy of the environment file used
-# Commented out: this_file is the temp copy, not the original
-# cp $(dirname {this_file})/environment.yaml $(dirname $log)/environment_wrapper_star.yaml
 """
 )

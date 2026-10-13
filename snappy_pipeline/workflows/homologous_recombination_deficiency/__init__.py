@@ -122,7 +122,6 @@ class ScarHRDStepPart(BaseStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.scarHRD.model_dump(by_alias=True)
 
-    @dictify
     def _get_log_file(self, action):
         """Return dict of log files."""
         if action == "install":
@@ -135,14 +134,7 @@ class ScarHRDStepPart(BaseStepPart):
                     action=action, valid=", ".join(self.actions)
                 )
             )
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {"log": prefix + ".log"}
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
         self._validate_action(action)
@@ -191,7 +183,6 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
                 except AttributeError:
                     tpls = self.sub_steps[tool].get_output_files(action)
                 tpls = list(tpls)
-                tpls += list(self.sub_steps[tool].get_log_file(action).values())
                 for tpl in tpls:
                     filenames = expand(
                         tpl,

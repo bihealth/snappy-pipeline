@@ -2,8 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_gene_fusion_calling_fusioncatcher/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done",
-   "tasks/somatic_gene_fusion_calling_fusioncatcher/output/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
+   "tasks/somatic_gene_fusion_calling_fusioncatcher/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
   ],
   "log": [],
   "output": [],
@@ -58,26 +57,6 @@
    "ext": "done",
    "file": "out/",
    "path": "case001subregion-T1-RNA1-mRNA_seq1"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_fusioncatcher/work/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_fusioncatcher/output/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_fusioncatcher_somatic_gene_fusion_calling_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "snakemake.gene_fusion_calling",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/log"
   },
   "wrapper": null
  }

@@ -137,16 +137,8 @@ class SomaticTargetedSeqCnvCallingStepPart(BaseStepPart):
         return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     @staticmethod
-    @dictify
     def _get_log_file_from_prefix(prefix):
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        return {"log": prefix + ".log"}
 
 
 def expand_id(*args):
@@ -579,7 +571,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             output_files[target] = os.path.join(
                 "work", name_pattern, "out", name_pattern + ".{}coverage.cnn".format(target)
             )
-            output_files[target + "_md5"] = output_files[target] + ".md5"
         return output_files
 
     @staticmethod
@@ -592,13 +583,13 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def _get_output_files_segment():
         name_pattern = "{tumor_library}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".segment.cns")
-        return {"segments": tpl, "segments_md5": tpl + ".md5"}
+        return {"segments": tpl}
 
     @staticmethod
     def _get_output_files_call():
         name_pattern = "{tumor_library}"
         tpl = os.path.join("work", name_pattern, "out", name_pattern + ".call.cns")
-        return {"calls": tpl, "calls_md5": tpl + ".md5"}
+        return {"calls": tpl}
 
     @staticmethod
     def _get_output_files_postprocess():
@@ -739,16 +730,3 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                 if isinstance(p, str) and p.startswith("work/"):
                     out_p = re.sub(r"^work/", "output/", p)
                     yield from expand(out_p, tumor_library=self.output_entities)
-
-            log_files = sub_step.get_log_file(action)
-            log_paths = (
-                list(log_files.values())
-                if isinstance(log_files, dict)
-                else [log_files]
-                if isinstance(log_files, str)
-                else []
-            )
-            for lp in log_paths:
-                if isinstance(lp, str) and lp.startswith("work/"):
-                    out_lp = re.sub(r"^work/", "output/", lp)
-                    yield from expand(out_lp, tumor_library=self.output_entities)

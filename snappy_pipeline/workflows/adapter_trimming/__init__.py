@@ -66,19 +66,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
         if self.name != tool:
             return []
         _ = action
-        prefix = "work/{library_name}/log/{library_name}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        yield (
-            "done",
-            "work/{library_name}/log/.done",
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", "work/{library_name}/log/{library_name}.log"
 
     def _get_params_run(self, wildcards):
         # The trimmed files keep the sub-directory and name of each input file, in input order.
@@ -137,7 +125,7 @@ class LinkOutFastqStepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_in = "work/{wildcards.library_name}/{{sub_dir}}/.done"
         self.base_path_out = "output/{{library_name}}/{sub_dir}/.done"
-        self.sub_dirs = ["log", "report", "out"]
+        self.sub_dirs = ["report", "out"]
 
     def get_input_files(self, action):
         def input_function(wildcards):
@@ -200,7 +188,6 @@ class AdapterTrimmingWorkflow(BaseStep):
         tpls = (
             "output/{library_name}/out/.done",
             "output/{library_name}/report/.done",
-            "output/{library_name}/log/.done",
         )
         for library_name in self.output_entities:
             for tpl in tpls:

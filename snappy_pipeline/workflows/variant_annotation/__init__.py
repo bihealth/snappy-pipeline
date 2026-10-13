@@ -53,15 +53,9 @@ class VariantAnnotationStepPart(BaseStepPart):
         for name, ext in zip(EXT_NAMES, EXT_VALUES):
             yield name, _OUT_PREFIX + ext
 
-    @dictify
     def _get_log_file(self, action):
         self._validate_action(action)
-        for key, ext in (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        ):
-            yield key, _LOG_PREFIX + ext
+        return {"log": _LOG_PREFIX + ".log"}
 
     def _get_params_run(self, wildcards):
         return {"config": getattr(self.config, self.name).model_dump(by_alias=True)}
@@ -160,16 +154,4 @@ class VariantAnnotationWorkflow(BaseStep):
                 os.path.join("output", "{library_name}", "out", "{library_name}{ext}"),
                 library_name=[entity_name],
                 ext=EXT_VALUES,
-            )
-            yield from expand(
-                os.path.join("output", "{library_name}", "log", "{library_name}{ext}"),
-                library_name=[entity_name],
-                ext=(
-                    ".log",
-                    ".log.md5",
-                    ".conda_info.txt",
-                    ".conda_info.txt.md5",
-                    ".conda_list.txt",
-                    ".conda_list.txt.md5",
-                ),
             )

@@ -79,17 +79,10 @@ class CombineVariantsStepPart(BaseStepPart):
         else:
             return {"tumor_library": wildcards.tumor_library}
 
-    @dictify
     def get_log_file(self, action: str):
         match action:
             case "run":
-                for k, ext in (
-                    ("log", ".log"),
-                    ("conda_list", ".conda_list.txt"),
-                    ("conda_info", ".conda_info.txt"),
-                ):
-                    yield k, _LOG_PREFIX + ext
-                    yield k + "_md5", _LOG_PREFIX + ext + ".md5"
+                return {"log": _LOG_PREFIX + ".log"}
             case _:
                 raise MissingConfiguration(f"Unimplemented action {action}")
 
@@ -129,6 +122,3 @@ class CombineVariantsWorkflow(BaseStep):
         for t in tumor_libs:
             for ext in ("", ".tbi", ".md5", ".tbi.md5"):
                 yield f"output/{t}/out/{t}.vcf.gz{ext}"
-            for ext in ("log", "conda_list.txt", "conda_info.txt"):
-                for hash_suffix in ("", ".md5"):
-                    yield f"output/{t}/log/{t}.{ext}{hash_suffix}"

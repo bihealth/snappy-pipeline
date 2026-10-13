@@ -59,14 +59,4 @@ class SvCallingGetLogFileMixin:
             infix = getattr(self, f"_get_log_file_infix_{action}")()
         else:
             infix = "{library_name}"
-        prefix = f"work/{infix}/log/{infix}.{action}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
-            yield key + "_md5", prefix + ext + ".md5"
+        yield "log", f"work/{infix}/log/{infix}.{action}.log"

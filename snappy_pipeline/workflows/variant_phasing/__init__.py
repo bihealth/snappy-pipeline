@@ -170,21 +170,16 @@ class VariantPhasingBaseStep(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         assert action == "run"
+        # md5 files only for published phasings; gatk_pbt may only feed gatk_phasing_both
+        published = self.name_pattern in (CONFIG_TO_TOKEN[p] for p in self.config.phasings)
         for key, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield key, self.base_path_out + ext
+            if published or not key.endswith("_md5"):
+                yield key, self.base_path_out + ext
 
     @dictify
     def _get_log_file(self, action):
         assert action == "run"
-        prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}"
-
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
+        yield "log", f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.log"
 
 
 class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
@@ -219,8 +214,6 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
         )
         yield "vcf", vcf
         yield "vcf_tbi", vcf_tbi
-        yield "vcf_md5", vcf + ".md5"
-        yield "vcf_tbi_md5", vcf_tbi + ".md5"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
@@ -332,8 +325,8 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
         if action == "scatter":
             yield "regions", self._scattergather("scatter")(self.region_tpl)
         elif action == "run":
-            for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield key, self.chunk_tpl + ext
+            yield "vcf", self.chunk_tpl + ".vcf.gz"
+            yield "vcf_tbi", self.chunk_tpl + ".vcf.gz.tbi"
         else:
             for key, ext in zip(EXT_NAMES, EXT_VALUES):
                 yield key, self.base_path_out + ext
@@ -347,13 +340,7 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
             prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.chunks/{{scatteritem}}"
         else:
             prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}"
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-        )
-        for key, ext in key_ext:
-            yield key, prefix + ext
+        yield "log", prefix + ".log"
 
 
 class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
@@ -381,8 +368,6 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
         )
         yield "vcf", vcf
         yield "vcf_tbi", vcf_tbi
-        yield "vcf_md5", vcf + ".md5"
-        yield "vcf_tbi_md5", vcf_tbi + ".md5"
 
 
 class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
@@ -404,8 +389,6 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
         base_in = infix.format(**wildcards)
         yield "vcf", base_in + ".vcf.gz"
         yield "vcf_tbi", base_in + ".vcf.gz.tbi"
-        yield "vcf_md5", base_in + ".vcf.gz.md5"
-        yield "vcf_tbi_md5", base_in + ".vcf.gz.tbi.md5"
 
 
 class VariantPhasingWorkflow(BaseStep):

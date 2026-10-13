@@ -4,12 +4,7 @@
   "input": [
    "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
    "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.log",
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_info.txt",
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_list.txt",
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.wrapper.py",
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.environment.yaml"
+   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz"
   ],
   "log": [],
   "output": [],
@@ -18,106 +13,6 @@
   "rule": "all",
   "threads": 1,
   "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1",
-   "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1.conda_info",
-   "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1.conda_list",
-   "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.environment.yaml"
-  ],
-  "log": [],
-  "output": [
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.environment.yaml"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "yaml",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1.environment",
-   "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.wrapper.py"
-  ],
-  "log": [],
-  "output": [
-   "tasks/wgs_sv_export_external/output/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.wrapper.py"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "wgs_sv_export_external_wgs_sv_export_external_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "py",
-   "file": "varfish_annotated.case001subregion-N1-DNA1-WES1.wrapper",
-   "path": "varfish_annotated.case001subregion-N1-DNA1-WES1/log"
-  },
   "wrapper": null
  },
  {
@@ -189,21 +84,10 @@
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
    "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi"
   ],
   "log": [
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.log",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.log.md5",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_info.txt",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_info.txt.md5",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_list.txt",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.conda_list.txt.md5",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.wrapper.py",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.wrapper.py.md5",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.environment.yaml",
-   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.environment.yaml.md5"
+   "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/log/varfish_annotated.case001subregion-N1-DNA1-WES1.log"
   ],
   "output": [
    "tasks/wgs_sv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
@@ -254,18 +138,11 @@
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz"
   ],
   "log": [
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.log",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.log.md5",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.conda_info.txt",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.conda_info.txt.md5",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.conda_list.txt",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.conda_list.txt.md5"
+   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.merge_vcf.log"
   ],
   "output": [
    "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/wgs_sv_export_external/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi"
   ],
   "params": {
    "args": {

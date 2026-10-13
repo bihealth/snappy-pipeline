@@ -6,20 +6,7 @@
    "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.antitarget.bed",
    "tasks/panel_of_normals_cnvkit/output/panel_of_normals/out/panel_of_normals.cnn",
    "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.sex.tsv",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.metrics.tsv",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.target.log",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.target.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.target.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.antitarget.log",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.log",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.report.log",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.report.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.report.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.merged.tar.gz"
+   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/report/panel_of_normals.metrics.tsv"
   ],
   "log": [],
   "output": [],
@@ -42,16 +29,7 @@
    "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
   ],
   "log": [
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log"
   ],
   "output": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -73,17 +51,7 @@
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
    "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_info.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.conda_list.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.wrapper.py.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.environment.yaml.md5"
+   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5"
   ],
   "params": {
    "args": {
@@ -118,12 +86,7 @@
   "benchmark": "tasks/panel_of_normals_cnvkit/benchmarks/panel_of_normals/panel_of_normals.antitarget.tsv",
   "input": [],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.log",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.log"
   ],
   "output": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
@@ -157,18 +120,11 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
   ],
   "output": [
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn.md5",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn.md5"
+   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn"
   ],
   "params": {
    "args": {
@@ -195,24 +151,14 @@
   "input": [
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.conda_info.txt",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log"
   ],
   "output": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.merged.tar.gz",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.merged.tar.gz.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn.md5"
   ],
   "params": {
    "args": {
@@ -242,12 +188,7 @@
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn"
   ],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.log",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.log"
   ],
   "output": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.sex.tsv",
@@ -278,12 +219,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_list.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_list.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_info.txt",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_info.txt.md5",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log",
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log.md5"
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log"
   ],
   "output": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed",
@@ -307,266 +243,6 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/target"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "panel_of_normals",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.antitarget.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "panel_of_normals.antitarget",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.antitarget.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.antitarget.conda_info",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.antitarget.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.antitarget.conda_list",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.conda_info",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.conda_list",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.merged.tar.gz"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.merged.tar.gz"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "gz",
-   "file": "panel_of_normals.merged.tar",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.report.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "panel_of_normals.report",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.report.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.report.conda_info",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.report.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.report.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.report.conda_list",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.log"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.target.log"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "log",
-   "file": "panel_of_normals.target",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_info.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.target.conda_info.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.target.conda_info",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.target.conda_list.txt"
-  ],
-  "log": [],
-  "output": [
-   "tasks/panel_of_normals_cnvkit/output/panel_of_normals/log/panel_of_normals.target.conda_list.txt"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "panel_of_normals_cnvkit_panel_of_normals_link_out_run",
-  "threads": 1,
-  "wildcards": {
-   "ext": "txt",
-   "file": "panel_of_normals.target.conda_list",
-   "path": "panel_of_normals/log"
-  },
-  "wrapper": null
  },
  {
   "benchmark": null,
@@ -672,12 +348,7 @@
   "benchmark": null,
   "input": [],
   "log": [
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_info.txt.md5",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt",
-   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.conda_list.txt.md5"
+   "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log"
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
@@ -725,13 +396,7 @@
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_info.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_info.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_list.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.conda_list.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script.md5"
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script"
   ],
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
@@ -743,15 +408,7 @@
    "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
    "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
    "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.sa",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.log.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_info.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_info.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_list.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.conda_list.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.script",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.index.script.md5"
+   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
   ],
   "params": {
    "args": {
@@ -777,13 +434,7 @@
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_info.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_info.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_list.txt",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.conda_list.txt.md5",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script.md5"
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script"
   ],
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -791,15 +442,7 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
    "tasks/reference_index_bwa/output/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa/output/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.log.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_info.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_info.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_list.txt",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.conda_list.txt.md5",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.script",
-   "tasks/reference_index_bwa/output/reference_index/log/reference_index.common.script.md5"
+   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.genome"
   ],
   "params": {},
   "resources": {

@@ -1,5 +1,4 @@
 import re
-from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import is_not_background
@@ -81,16 +80,7 @@ class MeltStepPart(
     @dictify
     def _get_log_file_with_prefix(self, prefix: str):
         """Return dict of log files whose paths start with ``prefix``"""
-        key_ext = (
-            ("log", ".log"),
-            ("conda_info", ".conda_info.txt"),
-            ("conda_list", ".conda_list.txt"),
-            ("wrapper", ".wrapper.py"),
-            ("env_yaml", ".environment.yaml"),
-        )
-        for key, ext in key_ext:
-            yield key, f"{prefix}{ext}"
-            yield key + "_md5", f"{prefix}{ext}.md5"
+        yield "log", f"{prefix}.log"
 
     @dictify
     def _get_input_files_preprocess(self, wildcards):
@@ -237,10 +227,7 @@ class MeltStepPart(
         yield from work_files.items()
         yield (
             "output_links",
-            [
-                re.sub(r"^work/", "output/", work_path)
-                for work_path in chain(work_files.values(), self.get_log_file("merge_vcf").values())
-            ],
+            [re.sub(r"^work/", "output/", work_path) for work_path in work_files.values()],
         )
 
     @dictify
