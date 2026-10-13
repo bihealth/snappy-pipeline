@@ -765,25 +765,19 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         "contamination": ("table", "segments"),
     }
 
-    resource_usage_dict = {
-        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
-        "run": ResourceUsage(threads=1, runtime="5d", mem="8000MB"),
-        "gather": ResourceUsage(threads=1, runtime="4h", mem="32768MB"),
-        "filter": ResourceUsage(threads=2, runtime="4h", mem="15872MB"),
-        "contamination": ResourceUsage(threads=2, runtime="4h", mem="7680MB"),
-        "pileup_normal": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
-        "pileup_tumor": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
-    }
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        if self.config.tool == "mutect2":
-            run_resource_usage = self.resource_usage_dict["run"]
-            self.resource_usage_dict["run"] = ResourceUsage(
-                threads=self.config.mutect2.num_cores or run_resource_usage.threads,
-                runtime=run_resource_usage.runtime,
-                mem=run_resource_usage.mem,
-            )
+    @property
+    def resource_usage(self) -> dict[str, ResourceUsage]:
+        return {
+            "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
+            "run": ResourceUsage(
+                threads=self.config.mutect2.num_cores or 1, runtime="5d", mem="8000MB"
+            ),
+            "gather": ResourceUsage(threads=1, runtime="4h", mem="32768MB"),
+            "filter": ResourceUsage(threads=2, runtime="4h", mem="15872MB"),
+            "contamination": ResourceUsage(threads=2, runtime="4h", mem="7680MB"),
+            "pileup_normal": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+            "pileup_tumor": ResourceUsage(threads=2, runtime="4h", mem="8000MB"),
+        }
 
     def _get_params_scatter(self, wildcards):
         ignore_chroms = list(

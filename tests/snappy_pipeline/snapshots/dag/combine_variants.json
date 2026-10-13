@@ -568,11 +568,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "15.87 GB",
+   "mem_mb": 15872,
+   "mem_mib": 15137,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 240
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_filter",
   "temp": [],
@@ -693,11 +693,11 @@
   ],
   "params": {},
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "32.77 GB",
+   "mem_mb": 32768,
+   "mem_mib": 31250,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 240
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_gather",
   "temp": [
@@ -739,11 +739,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -786,11 +786,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -833,11 +833,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -880,11 +880,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -927,11 +927,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -974,11 +974,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1021,11 +1021,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1068,11 +1068,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1115,11 +1115,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1162,11 +1162,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1209,11 +1209,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1256,11 +1256,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1303,11 +1303,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1350,11 +1350,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1397,11 +1397,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1444,11 +1444,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1491,11 +1491,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1538,11 +1538,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1585,11 +1585,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1632,11 +1632,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1679,11 +1679,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1726,11 +1726,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1773,11 +1773,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1820,11 +1820,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 7200
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_run",
   "temp": [
@@ -1889,11 +1889,11 @@
    }
   },
   "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
+   "mem": "1 GB",
+   "mem_mb": 1000,
+   "mem_mib": 954,
    "partition": "medium",
-   "runtime": 60
+   "runtime": 2
   },
   "rule": "variant_calling_mutect2_variant_calling_mutect2_scatter",
   "temp": [
