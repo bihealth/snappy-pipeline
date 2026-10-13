@@ -316,7 +316,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     #: Class available actions
     actions = ("coverage", "run")
 
-    temp_outputs = {"coverage": ("coverage",)}
+    intermediate_outputs = {"coverage": ("coverage",)}
 
     resource_usage = {
         "coverage": ResourceUsage(
@@ -439,7 +439,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "report",
     )
 
-    temp_outputs = {
+    intermediate_outputs = {
         "coverage": ("target", "antitarget"),
         "segment": ("segments",),
         "call": ("calls",),

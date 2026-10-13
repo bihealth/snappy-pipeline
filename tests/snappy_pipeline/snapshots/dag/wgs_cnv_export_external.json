@@ -107,6 +107,7 @@
   "params": {
    "args": {
     "config": {
+     "delete_intermediates": true,
      "depends_on": {
       "reference": "genome",
       "variants": "external_cnv"

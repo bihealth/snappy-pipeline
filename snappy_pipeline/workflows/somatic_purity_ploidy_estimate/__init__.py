@@ -62,7 +62,7 @@ class AscatStepPart(BaseStepPart):
         "run_ascat",
     )
 
-    temp_outputs = {
+    intermediate_outputs = {
         action: ("txt",) for action in ("baf_tumor", "baf_normal", "cnv_tumor", "cnv_normal")
     }
 

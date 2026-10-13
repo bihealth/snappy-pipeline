@@ -160,7 +160,7 @@ class BuildGcnvModelStepPart(
         "post_germline_calls",
     )
 
-    temp_outputs = {
+    intermediate_outputs = {
         "preprocess_intervals": ("interval_list",),
         "annotate_gc": ("tsv",),
         "filter_intervals": ("interval_list",),

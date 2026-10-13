@@ -168,7 +168,7 @@ class VariantPhasingBaseStep(BaseStepPart):
                         self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
     @property
-    def temp_outputs(self) -> dict[str, tuple[str, ...]]:
+    def intermediate_outputs(self) -> dict[str, tuple[str, ...]]:
         # Only feeds read-backed phasing when not published
         published = self.name_pattern in (CONFIG_TO_TOKEN[p] for p in self.config.phasings)
         return {} if published else {"run": ("vcf", "vcf_tbi")}

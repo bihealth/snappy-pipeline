@@ -111,7 +111,7 @@ class ExpansionHunterStepPart(BaseStepPart):
     #: Valid actions
     actions = ("run", "annotate")
 
-    temp_outputs = {"run": ("json",)}
+    intermediate_outputs = {"run": ("json",)}
 
     def __init__(self, *args, **kwargs):
         """Constructor."""

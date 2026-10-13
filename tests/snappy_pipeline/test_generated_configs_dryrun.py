@@ -258,6 +258,8 @@ def _write_closure_project(
     for task in closure_config["tasks"]:
         if task["step"] == "external_data" and "search_paths" in task["config"]:
             task["config"]["search_paths"] = [str(raw_dir)]
+        # The snapshots record every declared intermediate as temp, not only scatter fragments
+        task["config"]["delete_intermediates"] = True
 
     # Touch dummy FASTQ files, and VCFs for the external_data tasks
     for folder in _task_raw_folders(task_name):

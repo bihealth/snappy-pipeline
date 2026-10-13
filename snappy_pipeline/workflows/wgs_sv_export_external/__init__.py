@@ -100,7 +100,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     #: Class available actions
     actions = ("annotate", "merge_vcf")
 
-    temp_outputs = {"merge_vcf": ("vcf", "vcf_tbi")}
+    intermediate_outputs = {"merge_vcf": ("vcf", "vcf_tbi")}
 
     def __init__(self, parent):
         super().__init__(parent)

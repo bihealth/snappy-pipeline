@@ -122,6 +122,7 @@
    "args": {
     "config": {
      "bam_available_flag": false,
+     "delete_intermediates": true,
      "depends_on": {
       "alignments": "ngs_mapping_bwa",
       "reference": "genome",

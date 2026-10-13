@@ -140,9 +140,14 @@ class BaseStepPart:
     #: Outputs that the Snakemake report shows, by action and output key
     report_outputs: dict[str, dict[str, ReportOutput]] = {}
 
-    #: Output keys by action that are ``temp()``: intermediates that only later rules of the same
-    #: task read. Published files and contract outputs never are (plans.md W3).
+    #: Output keys by action of scatter fragments (per-region or per-chunk pieces that a gather
+    #: rule joins): always ``temp()`` (plans.md W3)
     temp_outputs: dict[str, tuple[str, ...]] = {}
+
+    #: Output keys by action of per-sample intermediates that only later rules of the same task
+    #: read: ``temp()`` when the task sets ``delete_intermediates``. Published files, contract
+    #: outputs and project-wide resources are neither.
+    intermediate_outputs: dict[str, tuple[str, ...]] = {}
 
     def __init__[P: BaseStep](self, parent: P):
         self.name = self.__class__.name
@@ -1203,8 +1208,8 @@ class BaseStep:
         """Return list of strings with output files/patterns
 
         Delegates to the sub step object's get_output_files function, flags the outputs in its
-        ``report_outputs`` for the Snakemake report and marks those in its ``temp_outputs`` as
-        ``temp()``.
+        ``report_outputs`` for the Snakemake report and marks its ``temp_outputs`` (and, if the
+        task deletes intermediates, its ``intermediate_outputs``) as ``temp()``.
         """
         part = self._get_sub_step(sub_step)
         outputs = part.get_output_files(action)
@@ -1213,7 +1218,10 @@ class BaseStep:
                 key: self._report(part, value, specs[key]) if key in specs else value
                 for key, value in outputs.items()
             }
-        if keys := part.temp_outputs.get(action):
+        keys = set(part.temp_outputs.get(action, ()))
+        if self.config.delete_intermediates:
+            keys |= set(part.intermediate_outputs.get(action, ()))
+        if keys:
             outputs = {key: temp(value) if key in keys else value for key, value in outputs.items()}
         return outputs
 

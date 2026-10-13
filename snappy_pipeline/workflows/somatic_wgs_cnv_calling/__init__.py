@@ -180,7 +180,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     #: Class available actions
     actions = ("coverage", "tumor_normal_ratio", "segment")
 
-    temp_outputs = {
+    intermediate_outputs = {
         "coverage": ("bcf", "bcf_csi"),
         "tumor_normal_ratio": ("bcf", "bcf_csi"),
     }
@@ -357,7 +357,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "report",
     )
 
-    temp_outputs = {
+    intermediate_outputs = {
         "coverage": ("target", "antitarget"),
         "segment": ("segments",),
         "call": ("calls",),
@@ -607,7 +607,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     #: Class available actions
     actions = ("run", "transform", "plot")
 
-    temp_outputs = {"transform": ("cns", "cnr")}
+    intermediate_outputs = {"transform": ("cns", "cnr")}
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage_dict = {

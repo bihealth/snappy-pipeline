@@ -89,15 +89,17 @@ Snakemake log, or from the one given as argument.
 Temporary files
 ===============
 
-Intermediate files that only later rules of the same task read, such as the per-region outputs
-of a scattered caller, are ``temp()`` files: Snakemake deletes them once every job that reads
-them is done. Files in ``output/``, the files a task passes to other tasks, and project-wide
-resources (installed software, prepared references) are never deleted, so ``--task`` and
-``--frozen`` runs always find what they need. ``gatk4_hc_gvcf`` keeps its gVCFs for joint
-re-genotyping unless ``keep_gvcfs: false``.
+Scatter fragments, the per-region or per-chunk pieces that a later rule of the task joins, are
+``temp()`` files: Snakemake deletes them once the joining job is done. Per-sample intermediates
+that only later rules of the same task read (raw calls before filtering, coverage files, the
+normals of a panel, gVCFs, ...) are kept, unless the task sets ``delete_intermediates: true``.
+Files in ``output/``, the files a task passes to other tasks, and project-wide resources
+(installed software, prepared references) are never deleted, so ``--task`` and ``--frozen`` runs
+always find what they need.
 
 Once a temporary file is gone, a change to a later rule (a parameter, its code) also reruns the
-rules that produced the file, for example all scatter jobs of a caller.
+rules that produced the file: for example all scatter jobs of a caller, or with
+``delete_intermediates`` the calling when only the filter changed.
 
 Snakemake options for temporary files (after ``--``):
 

@@ -421,11 +421,12 @@ class RunGcnvStepPart(
         "merge_multikit_families",
     )
 
-    temp_outputs = {
+    temp_outputs = {"call_cnvs": ("done",)}
+
+    intermediate_outputs = {
         "preprocess_intervals": ("interval_list",),
         "coverage": ("tsv",),
         "contig_ploidy": ("done",),
-        "call_cnvs": ("done",),
         "post_germline_calls": ("seg_vcf",),
         "joint_germline_cnv_segmentation": ("vcf", "vcf_tbi"),
     }

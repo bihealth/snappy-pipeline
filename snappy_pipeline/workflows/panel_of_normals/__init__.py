@@ -218,7 +218,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     actions = ("install", "prepare", "coverage", "create_panel")
 
     #: Per-library coverage is only read by ``create_panel``
-    temp_outputs = {"coverage": ("coverage",)}
+    intermediate_outputs = {"coverage": ("coverage",)}
 
     #: Resources
     resource_usage = {
@@ -352,11 +352,9 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     actions = ("scatter", "prepare_panel", "gather", "create_panel")
 
     #: The genomicsDB of ``create_panel`` is read by the PureCN panel task, so it stays
-    temp_outputs = {
-        "scatter": ("regions",),
-        "prepare_panel": ("vcf", "vcf_tbi"),
-        "gather": ("vcf", "vcf_tbi"),
-    }
+    temp_outputs = {"scatter": ("regions",), "prepare_panel": ("vcf", "vcf_tbi")}
+
+    intermediate_outputs = {"gather": ("vcf", "vcf_tbi")}
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
@@ -511,7 +509,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     )
 
     #: Per-library coverage is only read by ``create_panel``
-    temp_outputs = {"coverage": ("target", "antitarget")}
+    intermediate_outputs = {"coverage": ("target", "antitarget")}
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {

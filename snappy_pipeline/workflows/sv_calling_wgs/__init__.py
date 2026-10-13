@@ -74,11 +74,9 @@ class PopDelStepPart(
     name = "popdel"
     actions = ("profile", "call", "concat_calls", "reorder_vcf")
 
-    temp_outputs = {
-        "profile": ("profile",),
-        "call": ("vcf", "vcf_tbi"),
-        "concat_calls": ("vcf", "vcf_tbi"),
-    }
+    temp_outputs = {"call": ("vcf", "vcf_tbi")}
+
+    intermediate_outputs = {"profile": ("profile",), "concat_calls": ("vcf", "vcf_tbi")}
 
     _resource_usage = ResourceUsage(
         threads=2,

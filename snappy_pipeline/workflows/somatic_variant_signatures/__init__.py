@@ -68,7 +68,7 @@ class TabulateVariantsStepPart(SignaturesStepPart):
     #: Step name
     name = "tabulate_vcf"
 
-    temp_outputs = {"run": ("tsv",)}
+    intermediate_outputs = {"run": ("tsv",)}
 
     @dictify
     def _get_input_files_run(self, wildcards):

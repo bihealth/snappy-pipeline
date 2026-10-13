@@ -486,12 +486,8 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     actions = ("discover", "combine_gvcfs", "genotype")
 
-    @property
-    def temp_outputs(self) -> dict[str, tuple[str, ...]]:
-        # The combined gVCF is linked into ``output/`` by the genotype rule, so it stays
-        if self.config.gatk4_hc_gvcf.keep_gvcfs:
-            return {}
-        return {"discover": ("gvcf", "gvcf_tbi")}
+    #: The combined gVCF is linked into ``output/`` by the genotype rule, so it is no intermediate
+    intermediate_outputs = {"discover": ("gvcf", "gvcf_tbi")}
 
     @dictify
     def _get_input_files_discover(self, wildcards):
@@ -905,9 +901,9 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         "pileup_tumor",
     )
 
-    temp_outputs = {
-        "scatter": ("regions",),
-        "run": ("vcf", "vcf_tbi", "stats", "f1r2"),
+    temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi", "stats", "f1r2")}
+
+    intermediate_outputs = {
         "gather": ("vcf", "vcf_tbi", "stats", "orientation"),
         "pileup_normal": ("pileup",),
         "pileup_tumor": ("pileup",),

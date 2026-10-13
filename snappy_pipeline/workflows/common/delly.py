@@ -33,7 +33,7 @@ class Delly2StepPart(
     name = "delly2"
     actions = ("call", "merge_calls", "genotype", "merge_genotypes")
 
-    temp_outputs = {
+    intermediate_outputs = {
         "call": ("bcf", "bcf_csi"),
         "merge_calls": ("bcf", "bcf_csi"),
         "genotype": ("bcf", "bcf_csi"),

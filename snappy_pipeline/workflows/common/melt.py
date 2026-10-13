@@ -40,7 +40,7 @@ class MeltStepPart(
         "merge_vcf",
     )
 
-    temp_outputs = {
+    intermediate_outputs = {
         "preprocess": ("orig_bam", "orig_bai", "disc_bam", "disc_bai"),
         "indiv_analysis": ("done",),
         "group_analysis": ("done",),

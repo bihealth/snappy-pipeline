@@ -328,6 +328,7 @@
       "copy_number_tool": "cnvkit",
       "enabled": true
      },
+     "delete_intermediates": true,
      "depends_on": {
       "alignments": "",
       "copy_number": "somatic_wgs_cnv_calling_cnvkit",

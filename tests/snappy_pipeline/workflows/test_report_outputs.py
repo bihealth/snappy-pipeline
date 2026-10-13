@@ -2,6 +2,7 @@
 """Tests for outputs flagged for the Snakemake report (plans.md F5)."""
 
 import os
+from types import SimpleNamespace
 
 from click.testing import CliRunner
 from snakemake.io import get_flag_value, is_flagged
@@ -21,6 +22,7 @@ class _PlotPart(BaseStepPart):
 
 def _outputs():
     step = object.__new__(BaseStep)
+    step.config = SimpleNamespace(delete_intermediates=False)
     step.task_name = "qc"
     step._get_sub_step = lambda name: object.__new__(_PlotPart)
     return step.get_output_files("plot", "run")

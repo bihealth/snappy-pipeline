@@ -423,7 +423,10 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
-  "temp": [],
+  "temp": [
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-N1-DNA1-WES1"
@@ -468,7 +471,10 @@
    "runtime": 2880
   },
   "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_gatk4_hc_gvcf_discover",
-  "temp": [],
+  "temp": [
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-DNA1-WES1"
