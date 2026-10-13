@@ -1,0 +1,44 @@
+---
+name: conda-autobump
+
+# Updates the wrapper conda environments to the newest compatible versions and pins them again,
+# with one pull request per environment (snakedeploy, as in snakemake-wrappers).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "50 0 * * 5"
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  autobump:
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        # first letters of the wrapper directories; each job must find environment files
+        prefix: [a, b, c, d, e, f, g, h, j, l, m, n, o, p, r, s, v]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update and pin conda environments
+        uses: snakemake/snakedeploy-github-action@v1
+        env:
+          # Pull requests opened with the default token trigger no CI; a PAT or GitHub App
+          # token in SNAKEDEPLOY_TOKEN does.
+          GITHUB_TOKEN: ${{ secrets.SNAKEDEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
+        with:
+          subcommand: update-conda-envs
+          # Symlinked environment files share their target's environment; pvactools is on hold.
+          args: >-
+            $(find snappy_wrappers/wrappers -path 'snappy_wrappers/wrappers/${{ matrix.prefix }}*'
+            -name environment.yaml -type f -not -path '*/pvactools/*')
+            --create-prs --warn-on-error --pr-add-label --pin-envs
+            --entity-regex '(?P<entity>.+)/environment.yaml'

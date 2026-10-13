@@ -492,3 +492,49 @@ def test_wrappers_read_no_md5_or_conda_files():
         if path.endswith(".md5") or _CONDA_OR_COPY.search(path)
     }
     assert not found, f"wrapper jobs reading md5 or conda files: {sorted(found)[:20]}"
+
+
+#: Wrapper directories on hold (plans.md), not pinned yet
+UNPINNED_WRAPPERS = {"pvactools"}
+
+#: Environments that conda cannot solve as written (unavailable versions, a defunct channel,
+#: no dependencies); each needs new versions before it can be pinned
+UNSOLVABLE_ENVS = {
+    "ascat/run_ascat",
+    "cbioportal/case_lists",
+    "cbioportal/clinical_data",
+    "cbioportal/meta_files",
+    "gatk_phase_by_transmission",
+    "gatk_read_backed_phasing",
+    "hera/quant",
+    "star_fusion",
+}
+
+_EXACT_DEPENDENCY = re.compile(r"^(?:[\w-]+::)?([\w.-]+)==([\w.]+)$")
+
+
+def test_wrapper_envs_are_pinned():
+    """Snakemake builds a wrapper environment from its pin file, so versions never drift.
+
+    ``snakedeploy pin-conda-envs`` writes ``environment.linux-64.pin.txt``; a symlinked
+    ``environment.yaml`` needs a symlink to its target's pin file.
+    """
+    import yaml
+
+    wrappers = REPO / "snappy_wrappers" / "wrappers"
+    found = []
+    for env in sorted(wrappers.rglob("environment.yaml")):
+        name = str(env.parent.relative_to(wrappers))
+        if env.relative_to(wrappers).parts[0] in UNPINNED_WRAPPERS or name in UNSOLVABLE_ENVS:
+            continue
+        pin = env.with_name("environment.linux-64.pin.txt")
+        if not pin.exists() or pin.resolve() != env.resolve().with_name(pin.name):
+            found.append(f"{name}: no pin file of its environment next to it")
+            continue
+        pinned = pin.read_text(encoding="utf-8")
+        for dependency in yaml.safe_load(env.read_text(encoding="utf-8"))["dependencies"]:
+            m = isinstance(dependency, str) and _EXACT_DEPENDENCY.match(dependency.replace(" ", ""))
+            # conda reads ==4.0 as 4.0.0
+            if m and not re.search(rf"/{re.escape(m[1])}-{re.escape(m[2])}(\.[\w.]+)?-", pinned):
+                found.append(f"{name}: the pin file does not hold {dependency}")
+    assert not found, f"wrapper environments to pin again: {found}"

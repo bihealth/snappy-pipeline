@@ -1,0 +1,33 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: linux-64
+# created-by: conda 26.7.1
+@EXPLICIT
+https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.7.22-hbd8a1cb_0.conda#0f51e2391ade309db462a55611263e9c
+https://conda.anaconda.org/conda-forge/linux-64/libgomp-16.2.0-he0feb66_7.conda#d904c7ddd95e026254b4b80808ee9e12
+https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda#a9f577daf3de00bca7c3c76c0ecbd1de
+https://conda.anaconda.org/conda-forge/linux-64/libgcc-16.2.0-ha9f2e26_7.conda#735629b400b70eeab21a2ba8f5b1c2ce
+https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda#e675fabcf81499adc7edf58124fb1e01
+https://conda.anaconda.org/conda-forge/linux-64/c-ares-1.34.8-hebe6cf0_2.conda#3ad2b403be8fc5612b9159e2ce621f69
+https://conda.anaconda.org/conda-forge/linux-64/keyutils-1.6.3-h7cc23a3_1.conda#ba55d1b89fd7775e67de8291029b4059
+https://conda.anaconda.org/conda-forge/linux-64/libdeflate-1.26-h351257e_0.conda#d0c17fc12939a990f0865b7a14b49cfe
+https://conda.anaconda.org/conda-forge/linux-64/libev-4.33-h280c20c_3.conda#7bc31538d6e3fb349e897353969237ec
+https://conda.anaconda.org/conda-forge/linux-64/libgcc-ng-16.2.0-h69a702a_7.conda#2005515ac9340f816fb2ac7e83afe553
+https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-16.2.0-h934c35e_7.conda#9b6707e0caca917fa6ea9ee473f37a5d
+https://conda.anaconda.org/conda-forge/linux-64/oniguruma-6.9.10-hebe6cf0_1.conda#d0d628a0259bb9cbcd73f792b0b61387
+https://conda.anaconda.org/conda-forge/linux-64/openssl-3.6.5-h781a0a9_0.conda#5a51a2ea653f120240b1a9bf76e0aae9
+https://conda.anaconda.org/conda-forge/linux-64/jq-1.8.1-h73b1eb8_0.conda#2714e43bfc035f7ef26796632aa1b523
+https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-ng-16.2.0-hdf11a46_7.conda#25a23bde5e26d548374f3e02b4669670
+https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.2.11-h166bdaf_1014.tar.bz2#757138ba3ddc6777b82e91d9ff62e7b9
+https://conda.anaconda.org/conda-forge/linux-64/xz-5.2.6-h166bdaf_0.tar.bz2#2161070d867d1b1204ea749c8eec4ef0
+https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.1-hf484d3e_1002.tar.bz2#17f2190cdcbc753893307b4c81aff478
+https://conda.anaconda.org/conda-forge/linux-64/zlib-1.2.11-h166bdaf_1014.tar.bz2#def3b82d1a03aa695bb38ac1dd072ff2
+https://conda.anaconda.org/conda-forge/linux-64/libedit-3.1.20191231-h46ee950_2.tar.bz2#0ab53415cb437d37131f2041d75c1895
+https://conda.anaconda.org/conda-forge/linux-64/libnghttp2-1.47.0-he49606f_0.tar.bz2#2a45132d4afadacf23f401c997ac163b
+https://conda.anaconda.org/conda-forge/linux-64/libssh2-1.10.0-ha35d2d1_2.tar.bz2#e0adb0915b3e6971a84e347f998ca837
+https://conda.anaconda.org/bioconda/linux-64/subread-1.6.0-2.tar.bz2#206ce3fd022ee7ea2e8ac8f0fd391af7
+https://conda.anaconda.org/conda-forge/linux-64/krb5-1.19.3-h08a2579_0.tar.bz2#d25e05e7ee0e302b52d24491db4891eb
+https://conda.anaconda.org/conda-forge/linux-64/libcurl-7.83.1-h2283fc2_0.tar.bz2#2a10689a8be25009984735be9a2b26a9
+https://conda.anaconda.org/conda-forge/linux-64/curl-7.83.1-h2283fc2_0.tar.bz2#8968421d2c89a6b89dfc28d283971de1
+https://conda.anaconda.org/bioconda/linux-64/htslib-1.9-h244ad75_9.tar.bz2#8007a4b2f354481d744a38e00ac1cf9f
+https://conda.anaconda.org/bioconda/linux-64/samtools-1.9-h10a08f8_12.tar.bz2#a30f9567459497443fb98c5d46384769
