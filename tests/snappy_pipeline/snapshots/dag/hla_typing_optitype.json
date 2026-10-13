@@ -2,8 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json"
+   "tasks/hla_typing_optitype/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -13,50 +12,6 @@
   "temp": [],
   "threads": 1,
   "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "hla_typing_optitype_hla_typing_link_out_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-DNA1-WES1.json",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt.md5"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "hla_typing_optitype_hla_typing_link_out_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-DNA1-WES1.txt",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
   "wrapper": null
  },
  {
@@ -101,5 +56,27 @@
    "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/optitype"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.txt.md5",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5"
+  ],
+  "log": [],
+  "output": [
+   "tasks/hla_typing_optitype/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/hla_typing_optitype"
+  },
+  "resources": {},
+  "rule": "hla_typing_optitype_publish",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

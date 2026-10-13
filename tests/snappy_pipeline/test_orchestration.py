@@ -321,8 +321,8 @@ CHAIN = _project(
 )
 
 
-def test_default_targets_leaf_tasks_in_config_order():
-    assert select_target_tasks(CHAIN) == ["filtration", "qc"]
+def test_default_targets_every_task_in_config_order():
+    assert select_target_tasks(CHAIN) == ["mapping", "calling", "annotation", "filtration", "qc"]
 
 
 def test_single_task():
@@ -332,13 +332,3 @@ def test_single_task():
 def test_unknown_single_task_raises():
     with pytest.raises(ValueError, match="Unknown task 'calls'"):
         select_target_tasks(CHAIN, target_task="calls")
-
-
-def test_all_tasks():
-    assert select_target_tasks(CHAIN, all_tasks=True) == [
-        "mapping",
-        "calling",
-        "annotation",
-        "filtration",
-        "qc",
-    ]

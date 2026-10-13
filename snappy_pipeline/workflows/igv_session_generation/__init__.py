@@ -46,6 +46,7 @@ Currently, no reports are generated.
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 import os
+import re
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from jinja2 import Environment, FileSystemLoader
@@ -53,7 +54,7 @@ from snakemake import shell
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, PublishStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import IgvSessionGeneration as IgvSessionGenerationConfigModel
@@ -101,6 +102,14 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             kwargs["phasing"] = "gatk_pbt.gatk_rbp"
         return self.parent.get_upstream_paths(self.previous_step, **kwargs).vcf
 
+    @staticmethod
+    def _published(path):
+        """Return the published ``output/`` path of an upstream ``work/`` path.
+
+        The session file references the published files, not the ``work/`` files other tasks read.
+        """
+        return re.sub(r"(^|/)work/", r"\1output/", path, count=1)
+
     @dictify
     def _get_input_files_run(self, wildcards):
         # Get name of real index, used when input is not variant_phasing
@@ -134,7 +143,9 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
             "bams": [
                 {
                     "label": donor.name,
-                    "path": os.path.relpath(self._get_path_bam(wildcards, donor), output.xml),
+                    "path": os.path.relpath(
+                        self._published(self._get_path_bam(wildcards, donor)), output.xml
+                    ),
                 }
                 for donor in pedigree.donors
             ],
@@ -142,7 +153,8 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
                 {
                     "label": "Variant Calls",
                     "path": os.path.relpath(
-                        self._get_path_vcf(wildcards, pedigree.index), output.xml
+                        self._published(self._get_path_vcf(wildcards, pedigree.index)),
+                        output.xml,
                     ),
                 }
             ],
@@ -181,7 +193,7 @@ class IgvSessionGenerationWorkflow(BaseStep):
         token = kwargs.get("token", "")
         if token:
             token = token + "."
-        prefix = f"output/{token}{lib}/out/{token}{lib}"
+        prefix = f"work/{token}{lib}/out/{token}{lib}"
         return {"xml": f"{prefix}.igv_session.xml"}
 
     def __init__(self, workflow, project, task_name):
@@ -199,7 +211,7 @@ class IgvSessionGenerationWorkflow(BaseStep):
             "variants": "",
         }[self.previous_step]
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((WriteIgvSessionFileStepPart, PublishStepPart))
+        self.register_sub_step_classes((WriteIgvSessionFileStepPart,))
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
 
     @listify

@@ -2,12 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.background_pca.json",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv"
+   "tasks/variant_checking_peddy/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -24,11 +19,11 @@
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
   ],
   "log": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log"
@@ -43,17 +38,7 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5"
   ],
   "params": {
    "args": {
@@ -90,11 +75,11 @@
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
   ],
   "log": [
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log"
@@ -109,17 +94,7 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5"
   ],
   "params": {
    "args": {
@@ -159,9 +134,7 @@
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
-   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download/output/reference_download/out/reference.fa",
-   "tasks/reference_download/output/reference_download/out/reference.fa.md5"
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5"
   ],
   "params": {
    "args": {
@@ -197,7 +170,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
@@ -211,12 +184,7 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
    "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
    "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.sa",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
   ],
   "params": {
    "args": {
@@ -239,7 +207,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_download/output/reference_download/out/reference.fa"
+   "tasks/reference_download/work/reference_download/out/reference.fa"
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log",
@@ -248,10 +216,7 @@
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.genome"
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
   "params": {},
   "resources": {
@@ -319,7 +284,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/ngs_mapping_bwa/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam"
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam"
   ],
   "log": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.gatk4_hc_gvcf_discover.log"
@@ -367,7 +332,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam"
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam"
   ],
   "log": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.gatk4_hc_gvcf_discover.log"
@@ -422,7 +387,9 @@
   ],
   "output": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.g.vcf.gz.tbi.md5",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
@@ -462,46 +429,56 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.background_pca.json",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.background_pca.json.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5"
   ],
   "log": [],
   "output": [
-   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_checking_peddy/output/.manifest.tsv"
   ],
-  "params": {},
+  "params": {
+   "task_dir": "tasks/variant_checking_peddy"
+  },
   "resources": {},
-  "rule": "variant_calling_gatk4_hc_gvcf_variant_calling_link_out_indexed",
+  "rule": "variant_checking_peddy_publish",
   "temp": [],
   "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-DNA1-WES1.vcf.gz",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
+  "wildcards": {},
   "wrapper": null
  },
  {
   "benchmark": "tasks/variant_checking_peddy/benchmarks/case001subregion-T1-DNA1-WES1/snakemake.filter.tsv",
   "input": [
    "tasks/variant_checking_peddy/work/write_pedigree.case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
-   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_gvcf/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
   ],
   "log": [
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/log/snakemake.filter.log"
   ],
   "output": [
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.background_pca.json",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.background_pca.json.md5",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv.md5",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html.md5",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv.md5",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv"
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5"
   ],
   "params": {},
   "resources": {

@@ -71,7 +71,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
@@ -119,9 +118,8 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     @dictify
     def get_output_files(self, action):
         """Return output files"""
-        result = super().get_output_files(action)
-        result["output_links"] = []
-        yield from result.items()
+        self._validate_action(action)
+        yield from getattr(self, f"_get_output_files_{action}_work")().items()
 
     @listify
     def _get_input_files_collect(self, wildcards):
@@ -289,7 +287,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             paths_work[key + "_md5"] = prefix + f".{infix}.tsv.gz.md5"
         paths_work["ped"] = f"{prefix}.ped"
         yield from paths_work.items()
-        yield "output_links", []
 
     @dictify
     def _get_output_files_bam_qc(self):
@@ -299,7 +296,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         )
         yield key, prefix + ".bam-qc.tsv.gz"
         yield key + "_md5", prefix + ".bam-qc.tsv.gz.md5"
-        yield "output_links", []
 
     @dictify
     def get_log_file(self, action):
@@ -425,7 +421,7 @@ class VariantExportExternalWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local external-export output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"output/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
+        prefix = f"work/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
         return {
             "gts": f"{prefix}.gts.tsv.gz",
             "db_infos": f"{prefix}.db-infos.tsv.gz",
@@ -439,7 +435,6 @@ class VariantExportExternalWorkflow(BaseStep):
                 WritePedigreeSampleNameStepPart,
                 VarfishAnnotatorAnnotateStepPart,
                 BamReportsExternalStepPart,
-                PublishStepPart,
             )
         )
         self.ngs_library_list = self._build_ngs_library_list()

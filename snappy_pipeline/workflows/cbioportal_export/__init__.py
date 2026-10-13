@@ -8,6 +8,7 @@ files.
 """
 
 import os
+import re
 import sys
 from collections import namedtuple
 from typing import Iterator
@@ -674,8 +675,8 @@ class cbioportalExportWorkflow(BaseStep):
         """Return local cBioPortal export output paths for downstream consumers."""
         _ = kwargs
         return {
-            "meta_study": "output/upload/meta_study.txt",
-            "clinical_patient": "output/upload/data_clinical_patient.txt",
+            "meta_study": "work/upload/meta_study.txt",
+            "clinical_patient": "work/upload/data_clinical_patient.txt",
         }
 
     def __init__(self, workflow, project, task_name):
@@ -713,6 +714,11 @@ class cbioportalExportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
+        """Return the upload files, published below ``output/``"""
+        for path in self._get_work_files():
+            yield re.sub(r"^work/", "output/", path)
+
+    def _get_work_files(self):
         yield from self.sub_steps["cbioportal_meta_files"].get_output_files("run")
         yield from self.sub_steps["cbioportal_clinical_data"].get_output_files("run").values()
         yield from self.sub_steps["cbioportal_case_lists"].get_output_files("run").values()

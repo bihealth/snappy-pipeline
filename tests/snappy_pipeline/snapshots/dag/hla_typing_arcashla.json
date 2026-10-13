@@ -2,8 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt",
-   "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json"
+   "tasks/hla_typing_arcashla/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -38,7 +37,7 @@
   "benchmark": "tasks/hla_typing_arcashla/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
   "input": [
    "tasks/hla_typing_arcashla/work/prepare_reference/out/.done",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam"
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam"
   ],
   "log": [
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log"
@@ -68,45 +67,23 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt",
+   "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt.md5",
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json",
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json.md5"
   ],
   "log": [],
   "output": [
-   "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json",
-   "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json.md5"
+   "tasks/hla_typing_arcashla/output/.manifest.tsv"
   ],
-  "params": {},
+  "params": {
+   "task_dir": "tasks/hla_typing_arcashla"
+  },
   "resources": {},
-  "rule": "hla_typing_arcashla_hla_typing_link_out_run",
+  "rule": "hla_typing_arcashla_publish",
   "temp": [],
   "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-RNA1-mRNA_seq1.json",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt",
-   "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt",
-   "tasks/hla_typing_arcashla/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.txt.md5"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "hla_typing_arcashla_hla_typing_link_out_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-RNA1-mRNA_seq1.txt",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
-  },
+  "wildcards": {},
   "wrapper": null
  },
  {
@@ -114,11 +91,11 @@
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
   ],
   "log": [
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log"
@@ -133,17 +110,7 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_bwa/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5"
   ],
   "params": {
    "args": {
@@ -183,9 +150,7 @@
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
-   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download/output/reference_download/out/reference.fa",
-   "tasks/reference_download/output/reference_download/out/reference.fa.md5"
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5"
   ],
   "params": {
    "args": {
@@ -221,7 +186,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
@@ -235,12 +200,7 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
    "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
    "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.sa",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.amb",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.ann",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.bwt",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.sa"
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
   ],
   "params": {
    "args": {
@@ -263,7 +223,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_download/output/reference_download/out/reference.fa"
+   "tasks/reference_download/work/reference_download/out/reference.fa"
   ],
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log",
@@ -272,10 +232,7 @@
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/output/reference_index/out/reference.fa.genome"
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
   "params": {},
   "resources": {

@@ -24,11 +24,10 @@ def write_declared_md5s(snakemake) -> None:
     """Write ``<file>.md5`` for each output whose ``.md5`` is a declared output, too.
 
     Only published files declare an ``.md5`` (SODAR needs one per file). The format is that of
-    ``md5sum``. Output links are skipped; they point to the md5 files written here.
+    ``md5sum``.
     """
-    links = set(map(str, getattr(snakemake.output, "output_links", None) or ()))
     for md5_path in map(str, snakemake.output):
-        if not md5_path.endswith(".md5") or md5_path in links:
+        if not md5_path.endswith(".md5"):
             continue
         path = md5_path[: -len(".md5")]
         digest = hashlib.md5()
@@ -67,18 +66,8 @@ class SnappyWrapper(metaclass=ABCMeta):
         set +x
     """
 
-    output_links = r"""
-        for path in {snakemake.output.output_links}; do
-          dst=$path
-          src=${{dst/\/output\//\/work\/}}
-          mkdir -p "$(dirname "$dst")"
-          ln -snrf "$src" "$dst"
-        done
-    """
-
-    def __init__(self, snakemake, with_output_links: bool = True) -> None:
+    def __init__(self, snakemake) -> None:
         self._snakemake = snakemake
-        self._with_output_links = with_output_links
         self._check_snakemake_attributes()
 
     def _check_snakemake_attributes(self) -> None:
@@ -86,25 +75,6 @@ class SnappyWrapper(metaclass=ABCMeta):
             raise AttributeError("snakemake.log is not defined")
         if not getattr(self._snakemake.log, "log", None):
             raise AttributeError("snakemake.log.log is not defined")
-
-    def _create_output_links(self) -> None:
-        r"""Create output/ symlinks pointing into work/ for all entries in output_links.
-
-        Replaces the first ``/output/`` path component with ``/work/`` to
-        locate the real file produced in the work directory, then creates a
-        relative symlink at the output path.  Pure-Python implementation avoids
-        the double-format issue that arises when the bash pattern
-        ``${dst/\/output\//\/work\/}`` is processed first by Python's
-        ``.format()`` and then again by Snakemake's ``shell()``.
-        """
-        for dst in self._snakemake.output.output_links:
-            src = dst.replace("/output/", "/work/", 1)
-            dst_dir = os.path.dirname(dst)
-            if dst_dir:
-                os.makedirs(dst_dir, exist_ok=True)
-            if os.path.lexists(dst):
-                os.remove(dst)
-            os.symlink(os.path.relpath(src, dst_dir or "."), dst)
 
     @abstractmethod
     def run(self, cmd: str) -> None:
@@ -170,12 +140,6 @@ class SnappyWrapper(metaclass=ABCMeta):
                     pass
 
         write_declared_md5s(self._snakemake)
-
-        if (
-            self._with_output_links
-            and getattr(self._snakemake.output, "output_links", None) is not None
-        ):
-            self._create_output_links()
 
 
 class ShellWrapper(SnappyWrapper):

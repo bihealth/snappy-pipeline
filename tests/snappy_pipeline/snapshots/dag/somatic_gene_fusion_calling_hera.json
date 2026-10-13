@@ -2,13 +2,32 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_gene_fusion_calling_hera/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+   "tasks/somatic_gene_fusion_calling_hera/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
   "params": {},
   "resources": {},
   "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/somatic_gene_fusion_calling_hera/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+  ],
+  "log": [],
+  "output": [
+   "tasks/somatic_gene_fusion_calling_hera/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/somatic_gene_fusion_calling_hera"
+  },
+  "resources": {},
+  "rule": "somatic_gene_fusion_calling_hera_publish",
   "temp": [],
   "threads": 1,
   "wildcards": {},
@@ -43,25 +62,5 @@
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/hera/quant"
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/somatic_gene_fusion_calling_hera/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
-  ],
-  "log": [],
-  "output": [
-   "tasks/somatic_gene_fusion_calling_hera/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "somatic_gene_fusion_calling_hera_somatic_gene_fusion_calling_link_out_marker",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": ".done",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
-  },
-  "wrapper": null
  }
 ]

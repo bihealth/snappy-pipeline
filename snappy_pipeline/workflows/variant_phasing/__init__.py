@@ -71,7 +71,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -418,7 +417,7 @@ class VariantPhasingWorkflow(BaseStep):
             )
         lib = kwargs.get("library_name", "{library_name}")
         phasing = kwargs["phasing"]
-        prefix = f"output/{lib}/out/{phasing}.{lib}"
+        prefix = f"work/{lib}/out/{phasing}.{lib}"
         return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
 
     def __init__(self, workflow, project, task_name):
@@ -433,7 +432,6 @@ class VariantPhasingWorkflow(BaseStep):
                 PhaseByTransmissionStepPart,
                 ReadBackedPhasingOnlyStepPart,
                 ReadBackedPhasingAlsoStepPart,
-                PublishStepPart,
             )
         )
 

@@ -117,7 +117,7 @@ def _path_violations() -> dict[str, list[str]]:
     found: dict[str, set[str]] = {}
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         for job in json.loads(snapshot.read_text(encoding="utf-8")):
-            if job["rule"] == "all":
+            if job["rule"] == "all" or job["rule"].endswith("_publish"):
                 continue
             step = next(s for s in steps if job["rule"].startswith(s + "_"))
             values = sorted(job["wildcards"].items(), key=lambda kv: (-len(str(kv[1])), kv[0]))
@@ -416,6 +416,50 @@ def _snapshot_jobs() -> Iterator[tuple[str, dict]]:
                 yield snapshot.stem, job
 
 
+def _snapshot_dags() -> Iterator[tuple[str, list[dict], set[str]]]:
+    """Yield (snapshot, jobs, published files) per DAG snapshot, without the steps on hold.
+
+    The published files are the inputs of the ``<task>_publish`` jobs: ``work/`` files that the
+    publish job links into ``output/`` (plans.md W1).
+    """
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        jobs = [
+            job
+            for job in json.loads(snapshot.read_text(encoding="utf-8"))
+            if not job["rule"].startswith(ON_HOLD_RULES)
+        ]
+        published = {
+            path for job in jobs if job["rule"].endswith("_publish") for path in job["input"]
+        }
+        yield snapshot.stem, jobs, published
+
+
+def test_only_the_publish_job_writes_into_output():
+    """``work/`` is the contract between tasks; ``output/`` is publication only (plans.md W1)."""
+    found = {
+        f"{name}: {job['rule']}: {path}"
+        for name, jobs, _ in _snapshot_dags()
+        for job in jobs
+        if not job["rule"].endswith("_publish")
+        for path in job["output"]
+        if "/output/" in path
+    }
+    assert not found, f"jobs writing into output/: {sorted(found)[:20]}"
+
+
+def test_no_job_reads_from_output():
+    """Consumers read the ``work/`` paths that ``get_output_paths`` returns."""
+    found = {
+        f"{name}: {job['rule']}: {path}"
+        for name, jobs, _ in _snapshot_dags()
+        for job in jobs
+        if job["rule"] != "all"
+        for path in job["input"]
+        if "/output/" in path and not path.startswith(("tasks/create_proteome/",))
+    }
+    assert not found, f"jobs reading from output/: {sorted(found)[:20]}"
+
+
 def test_logs_hold_only_logs():
     """A rule's log is its log (plus a script copy); Snakemake records the rest (plans.md W2)."""
     found = {
@@ -431,55 +475,33 @@ def test_logs_are_not_published():
     """Logs go into the run's log archive, not into output/ (plans.md F3, W2)."""
     found = {
         f"{name}: {path}"
-        for name, job in _snapshot_jobs()
-        for path in job["output"]
-        if "/output/" in path
-        and (
-            "/log/" in path
-            or path.removesuffix(".md5").endswith(".log")
-            or _CONDA_OR_COPY.search(path)
-        )
+        for name, _, published in _snapshot_dags()
+        for path in published
+        if "/log/" in path
+        or path.removesuffix(".md5").endswith(".log")
+        or _CONDA_OR_COPY.search(path)
     }
-    assert not found, f"logs linked into output/: {sorted(found)[:20]}"
+    assert not found, f"published logs: {sorted(found)[:20]}"
 
 
 def test_md5_files_only_for_published_files():
     """SODAR needs an md5 per published file; nothing reads the md5 of an intermediate file.
 
     The wrapper base classes write ``<file>.md5`` when it is declared next to ``<file>``. Only
-    the target tasks of a snapshot link their files into output/, so only they are checked. A
-    link may sit in another directory than its file, so file names are compared. The orchestrator
-    does not target ``.tbi`` files, so an index counts as published with the file it indexes.
+    tasks with a publish job in the snapshot are checked.
     """
     found = set()
-    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
-        jobs = [
-            job
-            for job in json.loads(snapshot.read_text(encoding="utf-8"))
-            if not job["rule"].startswith(ON_HOLD_RULES)
-        ]
-        targets = {
-            path.split("/")[1] for job in jobs if job["rule"] == "all" for path in job["input"]
-        }
-        published = {
-            (path.split("/")[1], path.rsplit("/", 1)[1])
-            for job in jobs
-            for path in job["output"]
-            if "/output/" in path
-        }
+    for name, jobs, published in _snapshot_dags():
+        targets = {_task_of(path) for path in published}
         for job in jobs:
             for path in job["output"]:
-                if not path.endswith(".md5") or "/work/" not in path:
-                    continue
-                if path.split("/")[1] not in targets:
+                if not path.endswith(".md5") or _task_of(path) not in targets:
                     continue
                 payload = path.removesuffix(".md5")
                 if payload not in job["output"]:
-                    found.add(f"{snapshot.stem}: {path} (its file is no output of the job)")
-                elif (path.split("/")[1], payload.rsplit("/", 1)[1].removesuffix(".tbi")) not in (
-                    published
-                ):
-                    found.add(f"{snapshot.stem}: {path} (its file is not published)")
+                    found.add(f"{name}: {path} (its file is no output of the job)")
+                elif payload not in published:
+                    found.add(f"{name}: {path} (its file is not published)")
     assert not found, f"md5 files of unpublished files: {sorted(found)[:20]} ({len(found)} total)"
 
 
@@ -504,6 +526,9 @@ _PROJECT_RESOURCES = re.compile(
 NOT_TEMP = {
     r"\.scatter_intervals$": "checkpoint output that is globbed while the DAG is built",
     r"^tasks/gene_expression_report/": "legacy step whose wrappers do not exist",
+    r"gatk4_hc_gvcf_combine_gvcfs\.[^/]+/out/[^/]+\.g\.vcf\.gz(\.tbi)?$": (
+        "the published {library}.g.vcf.gz of the genotype rule links to it"
+    ),
 }
 
 
@@ -511,21 +536,10 @@ def _task_of(path: str) -> str:
     return path.split("/")[1]
 
 
-def _intermediate_jobs() -> Iterator[tuple[str, dict, list[dict], set[tuple[str, str]], dict]]:
-    """Yield (snapshot, job, jobs, published files, readers) for jobs of the targeted tasks."""
-    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
-        jobs = [
-            job
-            for job in json.loads(snapshot.read_text(encoding="utf-8"))
-            if not job["rule"].startswith(ON_HOLD_RULES)
-        ]
-        targets = {_task_of(path) for job in jobs if job["rule"] == "all" for path in job["input"]}
-        published = {
-            (_task_of(path), path.rsplit("/", 1)[1])
-            for job in jobs
-            for path in job["output"]
-            if "/output/" in path
-        }
+def _intermediate_jobs() -> Iterator[tuple[str, dict, list[dict], set[str], dict]]:
+    """Yield (snapshot, job, jobs, published files, readers) for jobs of the published tasks."""
+    for name, jobs, published in _snapshot_dags():
+        targets = {_task_of(path) for path in published}
         readers = collections.defaultdict(set)
         for job in jobs:
             for path in job["input"]:
@@ -537,7 +551,7 @@ def _intermediate_jobs() -> Iterator[tuple[str, dict, list[dict], set[tuple[str,
         }
         for job in jobs:
             if job["output"] and _task_of(job["output"][0]) in targets:
-                yield snapshot.stem, job, jobs, published, readers
+                yield name, job, jobs, published, readers
 
 
 def test_intermediates_are_temp():
@@ -552,7 +566,7 @@ def test_intermediates_are_temp():
                 path in job.get("temp", ())
                 or "/work/" not in path
                 or path.endswith(".md5")
-                or (_task_of(path), path.rsplit("/", 1)[1]) in published
+                or path in published
                 or tasks != {_task_of(path)}
                 or any(re.search(pattern, path) for pattern in NOT_TEMP)
             ):
@@ -567,7 +581,7 @@ def test_temp_files_are_intermediates():
     for name, job, _, published, readers in _intermediate_jobs():
         temp = set(job.get("temp", ()))
         for path in temp:
-            if "/output/" in path or (_task_of(path), path.rsplit("/", 1)[1]) in published:
+            if path in published:
                 found.add(f"{name}: {path} is published")
             if not readers.get(path):
                 found.add(f"{name}: {path} has no reader, Snakemake deletes it right away")
@@ -579,40 +593,32 @@ def test_temp_files_are_intermediates():
     assert not found, f"temp files that are no intermediates: {sorted(found)[:20]} ({len(found)})"
 
 
-#: Steps that publish without md5 files: a legacy step whose wrappers do not exist, and the
-#: reference indices, which are not uploaded to SODAR
-UNCHECKED_PUBLISHING = ("gene_expression_report", "reference_index")
+#: Steps that publish without md5 files: a legacy step whose wrappers do not exist, and steps
+#: whose results are not uploaded to SODAR (reference indices, gCNV models, cBioPortal files)
+UNCHECKED_PUBLISHING = (
+    "gene_expression_report",
+    "reference_index",
+    "helper_gcnv_model",
+    "cbioportal_export",
+)
 
 
 def test_published_files_come_with_md5_and_index():
     """SODAR needs an md5 for every published file; bgzipped VCF and BED files need their index.
 
-    ``PublishStepPart`` links a file together with these companions. ``.done`` markers of
-    directories have none.
+    ``.done`` markers of directories have none.
     """
     found = set()
-    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
-        jobs = [
-            job
-            for job in json.loads(snapshot.read_text(encoding="utf-8"))
-            if not job["rule"].startswith(ON_HOLD_RULES + UNCHECKED_PUBLISHING)
-        ]
-        targets = {
-            path.split("/")[1] for job in jobs if job["rule"] == "all" for path in job["input"]
-        }
-        published = {
-            path
-            for job in jobs
-            for path in job["output"]
-            if "/output/" in path and path.split("/")[1] in targets
-        }
+    for name, _, published in _snapshot_dags():
         for path in published:
-            if path.endswith((".md5", ".done")):
+            if path.endswith((".md5", ".done")) or path.startswith(
+                tuple(f"tasks/{step}" for step in UNCHECKED_PUBLISHING)
+            ):
                 continue
             companions = [path + ".md5"]
             if re.search(r"\.(vcf|bed)\.gz$", path):
                 companions += [path + ".tbi", path + ".tbi.md5"]
-            found.update(f"{snapshot.stem}: {c}" for c in companions if c not in published)
+            found.update(f"{name}: {c}" for c in companions if c not in published)
     assert not found, f"published files without md5 or index: {sorted(found)[:20]} ({len(found)})"
 
 

@@ -1,6 +1,5 @@
 """Implementation of the ``sv_calling_wgs`` step"""
 
-import re
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -192,10 +191,6 @@ class PopDelStepPart(
         work_files["vcf_tbi"] = f"{prefix}.vcf.gz.tbi"
         work_files["vcf_tbi_md5"] = f"{prefix}.vcf.gz.tbi.md5"
         yield from work_files.items()
-        yield (
-            "output_links",
-            [re.sub(r"^work/", "output/", work_path) for work_path in work_files.values()],
-        )
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
@@ -278,7 +273,7 @@ class SvCallingWgsWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local WGS SV output paths for downstream consumers."""
         library_name = kwargs.get("library_name", "{library_name}")
-        return {"vcf": f"output/{library_name}/out/{library_name}.vcf.gz"}
+        return {"vcf": f"work/{library_name}/out/{library_name}.vcf.gz"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

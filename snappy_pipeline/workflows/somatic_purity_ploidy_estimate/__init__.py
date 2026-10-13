@@ -20,7 +20,7 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, PublishStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 
@@ -236,15 +236,17 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local purity/ploidy output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"output/{lib}/out/.done"}
+        return {"done": f"work/{lib}/out/.done"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        self.register_sub_step_classes((AscatStepPart, PublishStepPart))
+        self.register_sub_step_classes((AscatStepPart,))
 
     @listify
     def get_result_files(self):
         """Return list of result files for the purity/ploidy estimation workflow."""
         tpl = os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}")
         for entity in self.output_entities:
-            yield from expand(tpl, tumor_library=[entity], ext=EXT_VALUES)
+            yield from expand(
+                tpl, tumor_library=[entity], ext=[*EXT_VALUES, *(e + ".md5" for e in EXT_VALUES)]
+            )

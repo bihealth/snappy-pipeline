@@ -155,7 +155,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -797,12 +796,12 @@ class PanelOfNormalsWorkflow(BaseStep):
                     "genomicsdb": "work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
                 }
             case Tool.cnvkit:
-                return {"panel_of_normals": "output/panel_of_normals/out/panel_of_normals.cnn"}
+                return {"panel_of_normals": "work/panel_of_normals/out/panel_of_normals.cnn"}
             case Tool.purecn:
                 return {
-                    "panel_of_normals": "output/panel_of_normals/out/panel_of_normals.rds",
-                    "mapping_bias": "output/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
-                    "intervals": "output/panel_of_normals/out/panel_of_normals.intervals.list",
+                    "panel_of_normals": "work/panel_of_normals/out/panel_of_normals.rds",
+                    "mapping_bias": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
+                    "intervals": "work/panel_of_normals/out/panel_of_normals.intervals.list",
                 }
         return {}
 
@@ -821,7 +820,7 @@ class PanelOfNormalsWorkflow(BaseStep):
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         extra = [AccessStepPart] if self.config.tool == "cnvkit" else []
-        self.register_sub_step_classes((selected, *extra, PublishStepPart))
+        self.register_sub_step_classes((selected, *extra))
 
     @listify
     def get_result_files(self):

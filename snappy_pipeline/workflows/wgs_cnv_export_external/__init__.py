@@ -68,7 +68,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
     WritePedigreeSampleNameStepPart,
 )
@@ -158,7 +157,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             key = infix.replace("-", "_")
             yield key, prefix + f".{infix}.tsv.gz"
             yield key + "_md5", prefix + f".{infix}.tsv.gz.md5"
-        yield "output_links", []
 
     def get_log_file(self, action):
         self._validate_action(action)
@@ -266,7 +264,7 @@ class WgsCnvExportExternalWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local external WGS CNV export output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"output/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
+        prefix = f"work/varfish_annotated.{lib}/out/varfish_annotated.{lib}"
         return {
             "gts": f"{prefix}.gts.tsv.gz",
             "db_infos": f"{prefix}.db-infos.tsv.gz",
@@ -280,7 +278,6 @@ class WgsCnvExportExternalWorkflow(BaseStep):
             (
                 WritePedigreeSampleNameStepPart,
                 VarfishAnnotatorExternalStepPart,
-                PublishStepPart,
             )
         )
 

@@ -51,7 +51,7 @@ The configuration snippet would then be similar to:
           tool: bwa
           ...
 
-The ``fastq`` files are then searched in the ``output/`` directory of the ``trimming`` task instead
+The ``fastq`` files are then taken from the ``work/`` directory of the ``trimming`` task instead
 of the ``search_paths`` of the ``data_sets``. The pattern matching remains unchanged, as the
 ``adapter_trimming`` step does **not** rename any of the ``fastq`` files.
 

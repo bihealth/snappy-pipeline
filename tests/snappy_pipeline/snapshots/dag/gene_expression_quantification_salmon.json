@@ -2,8 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
-   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf"
+   "tasks/gene_expression_quantification_salmon/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -13,50 +12,6 @@
   "temp": [],
   "threads": 1,
   "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
-   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf.md5"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_out_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf",
-   "tasks/gene_expression_quantification_salmon/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf.md5"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "gene_expression_quantification_salmon_gene_expression_quantification_link_out_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-RNA1-mRNA_seq1.transcript.sf",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
-  },
   "wrapper": null
  },
  {
@@ -98,5 +53,27 @@
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/salmon"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf.md5",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf.md5"
+  ],
+  "log": [],
+  "output": [
+   "tasks/gene_expression_quantification_salmon/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/gene_expression_quantification_salmon"
+  },
+  "resources": {},
+  "rule": "gene_expression_quantification_salmon_publish",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

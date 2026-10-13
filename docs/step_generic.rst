@@ -42,7 +42,8 @@ Directory ``work/``
 -------------------
 
 This is the working directory that contains all results of the pipeline, including logs as well as intermediary and final results.
-Intermediary results should be marked by the Snakemake ``temp()`` directive but there is no guarantee that temporary files are removed after the pipeline step finishes.
+Other tasks read their inputs from here.
+Scatter fragments are temporary files; see ``delete_intermediates`` for per-sample intermediates.
 Also note that you as a user have to consider the directory structure and file names in ``work/`` as **unstable**.
 
 In short: in ``work/``, the pipeline step authors can do whatever they want, including changing it between minor versions.
@@ -52,10 +53,9 @@ Directory ``output/``
 
 This is the "public" output directory.
 It contains a **stable** directory structure with **stable** names.
-The ``output/`` directory contains no files but rather **symlinks** into the ``work/`` directory.
-
-By convention, the directories and file names should mirror the ones in ``work/`` (and thus form a subset) for simplicity.
-However, in order to keep `semantic versioning <http://semver.org>`_, this convention might be broken to keep paths in the ``output/`` directory stable when something in ``work/`` changes.
+The ``output/`` directory contains no files but rather **symlinks** into the ``work/`` directory, which mirror the paths below ``work/``.
+One local job per task, ``<task>_publish``, creates them for all result files of the task (each with its ``.md5``, VCF and BED files also with their index) and writes ``output/.manifest.tsv``, which lists path, size and md5 file of each published file.
+It removes links to files that are no longer published.
 
 Configuration
 =============

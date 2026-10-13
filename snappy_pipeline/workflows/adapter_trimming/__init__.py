@@ -4,7 +4,6 @@
 import os
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -118,48 +117,6 @@ class FastpStepPart(AdapterTrimmingStepPart):
         )
 
 
-class LinkOutFastqStepPart(BaseStepPart):
-    name = "link_out_fastq"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_in = "work/{wildcards.library_name}/{{sub_dir}}/.done"
-        self.base_path_out = "output/{{library_name}}/{sub_dir}/.done"
-        self.sub_dirs = ["report", "out"]
-
-    def get_input_files(self, action):
-        def input_function(wildcards):
-            return expand(self.base_path_in.format(wildcards=wildcards), sub_dir=self.sub_dirs)
-
-        self._validate_action(action)
-        return input_function
-
-    def get_output_files(self, action):
-        self._validate_action(action)
-        return expand(self.base_path_out, sub_dir=self.sub_dirs)
-
-    def run_locally(self, action, wildcards):
-        self._validate_action(action)
-        for sub_dir in self.sub_dirs:
-            in_ = os.path.dirname(
-                self.base_path_in.format(wildcards=wildcards).format(sub_dir=sub_dir)
-            )
-            out = os.path.dirname(self.base_path_out.format(sub_dir=sub_dir).format(**wildcards))
-            os.makedirs(out, exist_ok=True)
-            for root, d_names, f_names in os.walk(in_):
-                rel_path = os.path.relpath(root, start=in_)
-                for d_name in d_names:
-                    os.makedirs(os.path.join(out, d_name), exist_ok=True)
-                for f_name in f_names:
-                    f = os.path.join(root, f_name)
-                    if not os.path.islink(f):
-                        target = os.path.relpath(f, start=os.path.join(out, rel_path))
-                        os.symlink(target, os.path.join(out, rel_path, f_name))
-
-    def _validate_action(self, action):
-        assert action == "run"
-
-
 class AdapterTrimmingWorkflow(BaseStep):
     name = "adapter_trimming"
     produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
@@ -170,7 +127,7 @@ class AdapterTrimmingWorkflow(BaseStep):
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local output paths for trimmed/raw FASTQ consumption."""
-        return {"fastq_dir": "output"}
+        return {"fastq_dir": "work"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -181,7 +138,7 @@ class AdapterTrimmingWorkflow(BaseStep):
                 selected = FastpStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((LinkOutFastqStepPart, selected))
+        self.register_sub_step_classes((selected,))
 
     @listify
     def get_result_files(self):

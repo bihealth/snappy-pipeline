@@ -14,29 +14,10 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-localrules:
-    # Linking files from work/ to output/ should be done locally
-    gene_expression_report_link_out_run,
-
-
 rule gene_expression_report_all:
     default_target: True
     input:
         wf.get_result_files(),
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule gene_expression_report_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        wf.run_locally("link_out", "run", wildcards)
 
 
 # Fetch gene expression counts, aggregate and process them --------------------

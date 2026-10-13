@@ -433,7 +433,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
-from snappy_pipeline.utils import dictify, flatten, listify
+from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -483,6 +483,9 @@ class MappingGetResultFilesMixin:
 
     tool_category = None
 
+    #: Keys of the output files that are not published
+    unpublished_keys: tuple[str, ...] = ()
+
     def skip_result_files_for_library(self, library_name: str) -> bool:
         """Override function such that the mapper is applicable to the library"""
         extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
@@ -501,8 +504,9 @@ class MappingGetResultFilesMixin:
     def get_result_files(self):
         """Return list of concrete output paths in ``output/``.
 
-        The implementation will return a list of all paths with prefix ``output/` that are
-        returned by ``self.get_output_files()`` for all actions in ``self.actions``.
+        The implementation will return the paths returned by ``self.get_output_files()`` for all
+        actions in ``self.actions``, with the prefix ``work/`` replaced by ``output/``. Keys in
+        ``unpublished_keys`` are skipped.
 
         You can override the ``skip_result_files_for_library()`` method to skip result files for
         a library.
@@ -513,17 +517,11 @@ class MappingGetResultFilesMixin:
 
         for action in self.actions:
             # Get list of result path templates.
-            output_files_tmp = self.get_output_files(action)
-            if isinstance(output_files_tmp, dict):
-                output_files = output_files_tmp.values()
-            else:
-                output_files = output_files_tmp
-            result_paths_tpls = list(
-                filter(
-                    lambda p: p.startswith("output/"),
-                    flatten(output_files),
-                )
-            )
+            result_paths_tpls = [
+                re.sub(r"^work/", "output/", path)
+                for key, path in self.get_output_files(action).items()
+                if key not in self.unpublished_keys
+            ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
                 for library_name in self.parent.ngs_library_to_extra_infos.keys():
@@ -551,8 +549,8 @@ class ReportGetResultFilesMixin:
     def get_result_files(self):
         """Return list of concrete output paths in ``output/``.
 
-        The implementation will return a list of all paths with prefix ``output/` that are
-        returned by ``self.get_output_files()`` for all actions in ``self.actions``.
+        The implementation will return the paths returned by ``self.get_output_files()`` for all
+        actions in ``self.actions``, with the prefix ``work/`` replaced by ``output/``.
 
         You can override the ``skip_result_files_for_library()`` method to skip result files for
         a library.
@@ -560,17 +558,10 @@ class ReportGetResultFilesMixin:
         # Skip if step part has a tool category and it is not enabled
         for action in self.actions:
             # Get list of result path templates.
-            output_files_tmp = self.get_output_files(action)
-            if isinstance(output_files_tmp, dict):
-                output_files = output_files_tmp.values()
-            else:
-                output_files = output_files_tmp
-            result_paths_tpls = list(
-                filter(
-                    lambda p: p.startswith("output/"),
-                    flatten(output_files),
-                )
-            )
+            result_paths_tpls = [
+                re.sub(r"^work/", "output/", path)
+                for path in self.get_output_files(action).values()
+            ]
             #: Generate all concrete output paths.
             for library_name in self.parent.ngs_library_to_extra_infos.keys():
                 for sub_step in self.parent.sub_steps.values():
@@ -611,14 +602,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         assert action in self.actions
         if self.name != self.config.tool:
             return
-        # Obtain and yield the paths in the ``work/`` directory
-        paths_work = self._get_output_files_run_work()
-        yield from paths_work.items()
-        # Return list of paths to the links that will be created in ``output/``
-        yield (
-            "output_links",
-            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
-        )
+        yield from self._get_output_files_run_work().items()
 
     @dictify
     def _get_output_files_run_work(self):
@@ -768,6 +752,12 @@ class StarStepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "rna"
 
+    #: The gene counts of STAR (all strands) are input of the strandedness step, which publishes
+    #: the counts of the inferred strand
+    unpublished_keys = ("gene_counts",)
+
+    intermediate_outputs = {"run": ("gene_counts",)}
+
     @dictify
     def _get_output_files_run_work(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
@@ -775,31 +765,13 @@ class StarStepPart(ReadMappingStepPart):
         if (cfg := self.config.get(self.name)) is None:
             return output_files
 
-        output_files["gene_counts"] = self.base_path_out.format(ext=".GeneCounts.tab")
+        output_files["gene_counts"] = self.base_path_out.format(ext=".ReadsPerGene.tab")
         output_files["junctions"] = self.base_path_out.format(ext=".Junctions.tab")
         output_files["junctions_md5"] = output_files["junctions"] + ".md5"
         if cfg.transcriptome:
             output_files["transcriptome"] = self.base_path_out.format(ext=".toTranscriptome.bam")
             output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
         return output_files
-
-    @dictify
-    def get_output_files(self, action):
-        """Skip link to the gene counts file to delegate it to strandedness"""
-        assert action in self.actions
-        for key, paths in super().get_output_files(action).items():
-            if key != "output_links":
-                yield key, paths
-                continue
-            yield (
-                key,
-                list(
-                    filter(
-                        lambda x: not x.endswith(".GeneCounts.tab"),
-                        paths,
-                    )
-                ),
-            )
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
@@ -838,7 +810,7 @@ class StrandednessStepPart(BaseStepPart):
 
     def _get_input_files_counts(self, wildcards):
         return {
-            "counts": "work/{library_name}/out/{library_name}.GeneCounts.tab".format(**wildcards),
+            "counts": "work/{library_name}/out/{library_name}.ReadsPerGene.tab".format(**wildcards),
             "decision": "work/{library_name}/strandedness/{library_name}.decision.json".format(
                 **wildcards
             ),
@@ -852,18 +824,9 @@ class StrandednessStepPart(BaseStepPart):
             yield "tsv", tpl + ".infer.txt"
             yield "decision", tpl + ".decision.json"
             yield "decision_md5", tpl + ".decision.json.md5"
-            yield (
-                "output_links",
-                [
-                    "output/{library_name}/strandedness/{library_name}.decision.json",
-                    "output/{library_name}/strandedness/{library_name}.decision.json.md5",
-                ],
-            )
         elif action == "counts":
-            yield "counts", "work/{library_name}/strandedness/{library_name}.GeneCounts.tab"
-            yield "counts_md5", "work/{library_name}/strandedness/{library_name}.GeneCounts.tab.md5"
-            yield "output", "output/{library_name}/out/{library_name}.GeneCounts.tab"
-            yield "output_md5", "output/{library_name}/out/{library_name}.GeneCounts.tab.md5"
+            yield "counts", "work/{library_name}/out/{library_name}.GeneCounts.tab"
+            yield "counts_md5", "work/{library_name}/out/{library_name}.GeneCounts.tab.md5"
 
     def get_result_files(self):
         if self.config.tool != "star":
@@ -979,14 +942,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         self._validate_action(action)
-        # Obtain and yield the paths in the ``work/`` directory
-        paths_work = getattr(self, f"_get_output_files_{action}_work")()
-        yield from paths_work.items()
-        # Return list of paths to the links that will be created in ``output/``
-        yield (
-            "output_links",
-            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
-        )
+        yield from getattr(self, f"_get_output_files_{action}_work")().items()
 
     @dictify
     def _get_output_files_run_work(self):
@@ -1083,14 +1039,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         self._check_action(action)
-        # Obtain and yield the paths in the ``work/`` directory
-        paths_work = self._get_output_files_run_work()
-        yield from paths_work.items()
-        # Return list of paths to the links that will be created in ``output/``
-        yield (
-            "output_links",
-            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
-        )
+        yield from self._get_output_files_run_work().items()
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
@@ -1164,14 +1113,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def get_output_files(self, action):
         """Return output files"""
         self._check_action(action)
-        # Obtain and yield the paths in the ``work/`` directory
-        paths_work = self._get_output_files_fingerprint_work()
-        yield from paths_work.items()
-        # Return list of paths to the links that will be created in ``output/``
-        yield (
-            "output_links",
-            [re.sub(r"^work/", "output/", work_path) for work_path in paths_work.values()],
-        )
+        yield from self._get_output_files_fingerprint_work().items()
 
     @dictify
     def _get_output_files_fingerprint_work(self):
@@ -1238,15 +1180,15 @@ class NgsMappingWorkflow(BaseStep):
         """
         lib = kwargs.get("library_name", "{library_name}")
         return {
-            "bam": f"output/{lib}/out/{lib}.bam",
-            "bai": f"output/{lib}/out/{lib}.bam.bai",
-            "bamstats": f"output/{lib}/report/bam_qc/{lib}.bam.bamstats.txt",
-            "flagstats": f"output/{lib}/report/bam_qc/{lib}.bam.flagstats.txt",
-            "idxstats": f"output/{lib}/report/bam_qc/{lib}.bam.idxstats.txt",
-            "alfred_qc": f"output/{lib}/report/alfred_qc/{lib}.alfred.json.gz",
+            "bam": f"work/{lib}/out/{lib}.bam",
+            "bai": f"work/{lib}/out/{lib}.bam.bai",
+            "bamstats": f"work/{lib}/report/bam_qc/{lib}.bam.bamstats.txt",
+            "flagstats": f"work/{lib}/report/bam_qc/{lib}.bam.flagstats.txt",
+            "idxstats": f"work/{lib}/report/bam_qc/{lib}.bam.idxstats.txt",
+            "alfred_qc": f"work/{lib}/report/alfred_qc/{lib}.alfred.json.gz",
             # RNA libraries: strandedness inference and the gene counts it passes on
-            "gene_counts": f"output/{lib}/out/{lib}.GeneCounts.tab",
-            "strandedness": f"output/{lib}/strandedness/{lib}.decision.json",
+            "gene_counts": f"work/{lib}/out/{lib}.GeneCounts.tab",
+            "strandedness": f"work/{lib}/strandedness/{lib}.decision.json",
         }
 
     #: Default biomed sheet class

@@ -80,10 +80,6 @@ def test_python_wrapper_logging_context_requires_log(tmp_path):
             pass
 
 
-class _Output(list):
-    output_links = ()
-
-
 def _md5sum(path):
     return f"{hashlib.md5(path.read_bytes()).hexdigest()}  {path.name}\n"
 
@@ -93,7 +89,7 @@ def test_write_declared_md5s_hashes_only_outputs_with_a_declared_md5(tmp_path):
     published.write_text("published\n")
     intermediate.write_text("intermediate\n")
     snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
-    snakemake.output = _Output([str(published), str(published) + ".md5", str(intermediate)])
+    snakemake.output = [str(published), str(published) + ".md5", str(intermediate)]
 
     write_declared_md5s(snakemake)
 
@@ -101,15 +97,13 @@ def test_write_declared_md5s_hashes_only_outputs_with_a_declared_md5(tmp_path):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["out.tsv", "out.vcf.gz", "out.vcf.gz.md5"]
 
 
-def test_write_declared_md5s_replaces_a_link_and_skips_output_links(tmp_path):
+def test_write_declared_md5s_replaces_a_link(tmp_path):
     upstream, output = tmp_path / "in.vcf.gz.md5", tmp_path / "out.vcf.gz"
     upstream.write_text("upstream\n")
     output.write_text("filtered\n")
     (tmp_path / "out.vcf.gz.md5").symlink_to(upstream)
     snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
-    link = str(tmp_path / "output" / "out.vcf.gz.md5")
-    snakemake.output = _Output([str(output), str(output) + ".md5", link])
-    snakemake.output.output_links = [link]
+    snakemake.output = [str(output), str(output) + ".md5"]
 
     write_declared_md5s(snakemake)
 

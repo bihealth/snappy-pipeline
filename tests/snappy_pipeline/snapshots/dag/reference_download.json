@@ -2,7 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_download/output/reference_download/out/reference.fa"
+   "tasks/reference_download/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -16,15 +16,33 @@
  },
  {
   "benchmark": null,
+  "input": [
+   "tasks/reference_download/work/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5"
+  ],
+  "log": [],
+  "output": [
+   "tasks/reference_download/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_download"
+  },
+  "resources": {},
+  "rule": "reference_download_publish",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log"
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
-   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download/output/reference_download/out/reference.fa",
-   "tasks/reference_download/output/reference_download/out/reference.fa.md5"
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5"
   ],
   "params": {
    "args": {

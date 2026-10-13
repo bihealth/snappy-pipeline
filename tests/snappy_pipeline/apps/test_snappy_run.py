@@ -57,8 +57,8 @@ def test_run_passes_target_selection_as_config(mocker, tmp_path):
     argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--task", "calling"])
     assert argv[argv.index("--config") + 1 :][:1] == ["task=calling"]
 
-    argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--all-tasks"])
-    assert argv[argv.index("--config") + 1 :][:1] == ["all_tasks=True"]
+    argv = _invoke_run(mocker, ["--directory", str(tmp_path)])
+    assert "--config" not in argv or not argv[argv.index("--config") + 1].startswith("task=")
 
 
 def test_run_passes_frozen_mode_as_config(mocker, tmp_path):

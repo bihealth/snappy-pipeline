@@ -150,24 +150,17 @@ def register_hooks(workflow: Workflow) -> None:
     workflow.onsuccess(lambda logs: finish(logs, "All done; have a nice day!"))
 
 
-def select_target_tasks(
-    project: Project, target_task: str | None = None, all_tasks: bool = False
-) -> list[str]:
-    """Return the names of the tasks whose result files ``snappy run`` targets, in config order.
+def select_target_tasks(project: Project, target_task: str | None = None) -> list[str]:
+    """Return the names of the tasks that ``snappy run`` builds and publishes, in config order.
 
-    * ``target_task`` given: only that task. Raises ``ValueError`` if no task has that name.
-    * ``all_tasks``: every task.
-    * Otherwise the leaf tasks: tasks that no other task depends on.
+    Every task, or only ``target_task`` if given. Raises ``ValueError`` if no task has that name.
     """
     names = [task.name for task in project.model.tasks]
     if target_task is not None:
         if target_task not in names:
             raise ValueError(f"Unknown task {target_task!r}; configured tasks: {', '.join(names)}")
         return [target_task]
-    if all_tasks:
-        return names
-    depended_on = {name for deps in project.dependencies.values() for name in deps.values()}
-    return [name for name in names if name not in depended_on]
+    return names
 
 
 def _without_nulls(data: Any, path: str = "") -> Any:

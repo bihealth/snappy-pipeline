@@ -2,14 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json"
+   "tasks/ngs_mapping_star/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -24,15 +17,13 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.ReadsPerGene.tab",
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json"
   ],
   "log": [],
   "output": [
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab.md5"
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab.md5"
   ],
   "params": {
    "tool": "star"
@@ -58,9 +49,7 @@
   "output": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.infer.txt",
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json",
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json.md5"
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json.md5"
   ],
   "params": {
    "args": {
@@ -92,9 +81,9 @@
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/Genome",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/SA",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/SAindex"
+   "tasks/reference_index_star/work/reference_index/out/reference.index/Genome",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/SA",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/SAindex"
   ],
   "log": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.mapping.log"
@@ -110,21 +99,9 @@
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.ReadsPerGene.tab",
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab",
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab",
-   "tasks/ngs_mapping_star/output/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab.md5"
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab.md5"
   ],
   "params": {
    "args": {
@@ -162,12 +139,48 @@
    "runtime": 2880
   },
   "rule": "ngs_mapping_star_ngs_mapping_star_run",
-  "temp": [],
+  "temp": [
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.ReadsPerGene.tab"
+  ],
   "threads": 1,
   "wildcards": {
    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/star"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json.md5"
+  ],
+  "log": [],
+  "output": [
+   "tasks/ngs_mapping_star/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/ngs_mapping_star"
+  },
+  "resources": {},
+  "rule": "ngs_mapping_star_publish",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  },
  {
   "benchmark": null,
@@ -177,9 +190,7 @@
   ],
   "output": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
-   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download/output/reference_download/out/reference.fa",
-   "tasks/reference_download/output/reference_download/out/reference.fa.md5"
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5"
   ],
   "params": {
    "args": {
@@ -215,7 +226,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_download/output/reference_download/out/reference.fa"
+   "tasks/reference_download/work/reference_download/out/reference.fa"
   ],
   "log": [
    "tasks/reference_index_star/work/reference_index/log/reference_index.common.log",
@@ -224,10 +235,7 @@
   "output": [
    "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_star/work/reference_index/out/reference.dict",
-   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_star/output/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_star/output/reference_index/out/reference.dict",
-   "tasks/reference_index_star/output/reference_index/out/reference.fa.genome"
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome"
   ],
   "params": {},
   "resources": {
@@ -246,7 +254,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_download/output/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa",
    "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_star/work/reference_index/out/reference.dict",
    "tasks/reference_index_star/work/reference_index/out/reference.fa.genome",
@@ -271,22 +279,7 @@
    "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbInfo.txt",
    "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbList.fromGTF.out.tab",
    "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbList.out.tab",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/transcriptInfo.tab",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/chrLength.txt",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/chrName.txt",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/chrNameLength.txt",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/chrStart.txt",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/Genome",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/genomeParameters.txt",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/SA",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/SAindex",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/exonGeTrInfo.tab",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/exonInfo.tab",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/geneInfo.tab",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/sjdbInfo.txt",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/sjdbList.fromGTF.out.tab",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/sjdbList.out.tab",
-   "tasks/reference_index_star/output/reference_index/out/reference.index/transcriptInfo.tab"
+   "tasks/reference_index_star/work/reference_index/out/reference.index/transcriptInfo.tab"
   ],
   "params": {
    "args": {

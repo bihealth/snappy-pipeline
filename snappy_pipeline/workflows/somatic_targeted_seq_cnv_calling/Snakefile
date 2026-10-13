@@ -15,11 +15,6 @@ tool = str(wf.config.tool)
 # Rules =======================================================================
 
 
-localrules:
-    # Linking files from work/ to output/ should be done locally
-    somatic_targeted_seq_cnv_calling_link_out_run,
-
-
 rule somatic_targeted_seq_cnv_calling_all:
     default_target: True
     input:
@@ -27,36 +22,6 @@ rule somatic_targeted_seq_cnv_calling_all:
 
 
 # House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule somatic_targeted_seq_cnv_calling_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        wf.run_locally("link_out", "run", wildcards)
-
-
-rule somatic_targeted_seq_cnv_calling_link_out_indexed:
-    input:
-        wf.get_input_files("link_out", "indexed"),
-    output:
-        wf.get_output_files("link_out", "indexed"),
-    run:
-        wf.run_locally("link_out", "indexed", wildcards)
-
-
-rule somatic_targeted_seq_cnv_calling_link_out_marker:
-    input:
-        wf.get_input_files("link_out", "marker"),
-    output:
-        wf.get_output_files("link_out", "marker"),
-    run:
-        wf.run_locally("link_out", "marker", wildcards)
-
 
 # Somatic Targeted Sequencing CNV Calling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

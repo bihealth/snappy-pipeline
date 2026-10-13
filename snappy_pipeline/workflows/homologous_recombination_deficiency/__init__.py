@@ -68,7 +68,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -164,12 +163,12 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HRD output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"json": f"output/scarHRD.{lib}/out/scarHRD.{lib}.json"}
+        return {"json": f"work/scarHRD.{lib}/out/scarHRD.{lib}.json"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((ScarHRDStepPart, PublishStepPart))
+        self.register_sub_step_classes((ScarHRDStepPart,))
 
     @listify
     def get_result_files(self):

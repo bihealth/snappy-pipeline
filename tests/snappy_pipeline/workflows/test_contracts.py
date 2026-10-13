@@ -124,8 +124,8 @@ def test_get_upstream_paths_namespaces_and_wraps_in_schema():
     paths = _filtration_step().get_upstream_paths("variants", library_name="L1")
 
     assert paths == ExpectedVariantVcf(
-        vcf="tasks/annotation/output/L1/out/L1.vcf.gz",
-        vcf_tbi="tasks/annotation/output/L1/out/L1.vcf.gz.tbi",
+        vcf="tasks/annotation/work/L1/out/L1.vcf.gz",
+        vcf_tbi="tasks/annotation/work/L1/out/L1.vcf.gz.tbi",
     )
 
 
@@ -133,8 +133,8 @@ def test_get_upstream_paths_keeps_wildcards_without_identifiers():
     paths = _filtration_step(alignments="mapping").get_upstream_paths("alignments")
 
     assert paths == ExpectedAlignments(
-        bam="tasks/mapping/output/{library_name}/out/{library_name}.bam",
-        bai="tasks/mapping/output/{library_name}/out/{library_name}.bam.bai",
+        bam="tasks/mapping/work/{library_name}/out/{library_name}.bam",
+        bai="tasks/mapping/work/{library_name}/out/{library_name}.bam.bai",
     )
 
 
@@ -210,8 +210,8 @@ def test_mutect2_calling_provides_pass_calls_by_default_and_all_calls_on_request
     unfiltered = annotation.get_upstream_paths(
         "variants", signature=_signature(DataType.VARIANTS, "-filtered"), library_name="T1"
     )
-    assert default.vcf == "tasks/calling/output/T1/out/T1.vcf.gz"
-    assert unfiltered.vcf == "tasks/calling/output/T1/out/T1.full.vcf.gz"
+    assert default.vcf == "tasks/calling/work/T1/out/T1.vcf.gz"
+    assert unfiltered.vcf == "tasks/calling/work/T1/out/T1.full.vcf.gz"
 
 
 def test_unfiltered_calls_are_not_available_after_annotation():

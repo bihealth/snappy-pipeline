@@ -127,14 +127,6 @@ def _suffixes_for_datatype(params: dict) -> list[str]:
     raise ValueError("invalid datatype, must be one of dna, cdna, cds, ncrna, pep")
 
 
-def _symlink_output(work_path: str, out_path: str) -> None:
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    if os.path.lexists(out_path):
-        os.remove(out_path)
-    target = os.path.relpath(work_path, start=os.path.dirname(out_path))
-    os.symlink(target, out_path)
-
-
 def main() -> None:
     params = dict(snakemake.params.args)
 
@@ -214,10 +206,6 @@ def main() -> None:
         print(f"- {item}")
     print(f"Contigs: {contigs}")
     print(f"Regex: {contigs_regex}")
-
-    for dst in snakemake.output.output_links:
-        src = str(dst).replace("output/", "work/", 1)
-        _symlink_output(src, str(dst))
 
 
 if __name__ == "__main__":

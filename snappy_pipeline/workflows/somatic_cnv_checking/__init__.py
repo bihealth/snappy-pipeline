@@ -68,7 +68,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -273,7 +272,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local CNV checking output paths for downstream consumers."""
         lib = kwargs.get("tumor_library", "{tumor_library}")
-        return {"vcf": f"output/{lib}/out/{lib}.vcf.gz"}
+        return {"vcf": f"work/{lib}/out/{lib}.vcf.gz"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -282,7 +281,6 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         sub_steps = [SomaticCnvCheckingPileupStepPart]
         if self.has_cnv_calling:
             sub_steps += [SomaticCnvCheckingCnvStepPart, SomaticCnvCheckingReportStepPart]
-        sub_steps.append(PublishStepPart)
         self.register_sub_step_classes(tuple(sub_steps))
 
     def _get_normal_lib(self, tumor_library: str) -> str | None:
@@ -298,11 +296,18 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         tpl = os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}")
         ext = list(EXT_VALUES)
         if self.has_cnv_calling:
-            ext += [".tsv"]
+            ext += [".tsv", ".tsv.md5"]
         for entity in self.output_entities:
             yield from expand(tpl, tumor_library=[entity], ext=ext)
         if self.has_cnv_calling:
-            report_ext = [".cnv.pdf", ".locus.pdf", ".segment.pdf"]
+            report_ext = [
+                ".cnv.pdf",
+                ".cnv.pdf.md5",
+                ".locus.pdf",
+                ".locus.pdf.md5",
+                ".segment.pdf",
+                ".segment.pdf.md5",
+            ]
             report_tpl = os.path.join("output", "{tumor_library}", "report", "{tumor_library}{ext}")
             for entity in self.output_entities:
                 yield from expand(report_tpl, tumor_library=[entity], ext=report_ext)

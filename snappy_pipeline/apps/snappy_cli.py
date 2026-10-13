@@ -612,16 +612,6 @@ def task_steps():
     help="The specific task name from config.yaml to run",
 )
 @click.option(
-    "--all-tasks",
-    "all_tasks",
-    is_flag=True,
-    default=False,
-    help=(
-        "Target all tasks, not just leaf tasks. "
-        "By default only leaf tasks (tasks not depended on by any other task) are targeted."
-    ),
-)
-@click.option(
     "--frozen",
     is_flag=True,
     default=False,
@@ -632,7 +622,7 @@ def task_steps():
 )
 @click.option("--verbose", is_flag=True, help="Increase verbosity level")
 @click.pass_context
-def run(ctx, directory, slurm, task_name, all_tasks, frozen, verbose):
+def run(ctx, directory, slurm, task_name, frozen, verbose):
     """Run snappy pipeline workflows."""
     if frozen and not task_name:
         raise click.UsageError("--frozen requires --task")
@@ -640,18 +630,14 @@ def run(ctx, directory, slurm, task_name, all_tasks, frozen, verbose):
     setup_logging(verbose)
     if task_name:
         logging.info("Targeting single task: %s", task_name)
-    elif all_tasks:
-        logging.info("Targeting all tasks (--all-tasks flag set).")
     else:
-        logging.info("No specific --task provided. Targeting leaf tasks only (default).")
+        logging.info("No specific --task provided. Targeting all tasks (default).")
 
     snakemake_args = list(ctx.args)
 
     config_args = []
     if task_name:
         config_args.append(f"task={task_name}")
-    if all_tasks:
-        config_args.append("all_tasks=True")
     if frozen:
         config_args.append("frozen=True")
     if verbose:

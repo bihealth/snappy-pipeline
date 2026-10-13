@@ -15,7 +15,7 @@ from snakemake.io import expand
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, PublishStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
@@ -164,15 +164,13 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local signature output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"tsv": f"output/{lib}/out/deconstruct_sigs.{lib}.tsv"}
+        return {"tsv": f"work/{lib}/out/deconstruct_sigs.{lib}.tsv"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
 
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (TabulateVariantsStepPart, DeconstructSigsStepPart, PublishStepPart)
-        )
+        self.register_sub_step_classes((TabulateVariantsStepPart, DeconstructSigsStepPart))
 
     @listify
     def get_result_files(self):
@@ -180,7 +178,8 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
         for entity in self.output_entities:
             yield from expand(
                 os.path.join(
-                    "output", "{tumor_library}", "out", "deconstruct_sigs.{tumor_library}.tsv"
+                    "output", "{tumor_library}", "out", "deconstruct_sigs.{tumor_library}{ext}"
                 ),
                 tumor_library=[entity],
+                ext=(".tsv", ".tsv.md5"),
             )

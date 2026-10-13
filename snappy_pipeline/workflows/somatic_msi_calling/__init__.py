@@ -58,7 +58,6 @@ from snappy_pipeline.utils import listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -187,12 +186,12 @@ class SomaticMsiCallingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local MSI calling output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"results": f"output/{lib}/out/{lib}.results.txt"}
+        return {"results": f"work/{lib}/out/{lib}.results.txt"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((Mantis2StepPart, PublishStepPart))
+        self.register_sub_step_classes((Mantis2StepPart,))
 
     @listify
     def get_result_files(self):

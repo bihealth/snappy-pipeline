@@ -190,8 +190,8 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
         """Return local helper gCNV WGS model output paths for downstream consumers."""
         _ = kwargs
         return {
-            "ploidy_done": "output/default/out/default.contig_ploidy/.done",
-            "calls_done": "output/default/out/default.{shard}.call_cnvs/.done",
+            "ploidy_done": "work/default/out/default.contig_ploidy/.done",
+            "calls_done": "work/default/out/default.{shard}.call_cnvs/.done",
         }
 
     def __init__(self, workflow, project, task_name):

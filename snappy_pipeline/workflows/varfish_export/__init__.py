@@ -68,7 +68,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -139,7 +138,7 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
             if not self.parent.get_task_config("alignments").target_coverage_report.enabled:
                 return
             raw_path_tpls = self._get_output_files_bam_qc().values()
-        # Derive output/ paths from work/ paths (the link_out step handles the symlinking).
+        # Derive output/ paths from work/ paths (the task's publish job symlinks them).
         work_path_tpls = [tpl for tpl in flatten(raw_path_tpls) if tpl.startswith("work/")]
         path_tpls = dict.fromkeys(re.sub(r"^work/", "output/", tpl) for tpl in work_path_tpls)
 
@@ -365,7 +364,7 @@ class VarfishExportWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local VarFish export output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"output/varfish_export.{lib}/out/mehari_annotate_seqvars.{lib}"
+        prefix = f"work/varfish_export.{lib}/out/mehari_annotate_seqvars.{lib}"
         return {
             "gts": f"{prefix}.gts.tsv.gz",
             "db_infos": f"{prefix}.db-infos.tsv.gz",
@@ -375,7 +374,7 @@ class VarfishExportWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
 
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart, PublishStepPart))
+        self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart))
 
         # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
 

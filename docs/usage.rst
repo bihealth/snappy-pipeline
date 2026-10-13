@@ -47,16 +47,13 @@ snappy run options
 ==================
 
 ``--task <name>``
-    Build only the named task (overrides the default leaf-task selection). Upstream tasks
-    whose outputs are missing or outdated are built as well.
+    Build and publish only the named task (by default, every task is). Upstream tasks whose
+    outputs are missing or outdated are built as well, but not published.
 
 ``--frozen``
     With ``--task``: load only that task's rules. Outputs of upstream tasks are used as they
     are and never rebuilt; if one is missing, Snakemake stops with a missing-input error that
     names the file.
-
-``--all-tasks``
-    Build every task in the config.
 
 ``--slurm``
     Enable SLURM cluster execution (layers a SLURM profile on top of the

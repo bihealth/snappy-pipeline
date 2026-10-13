@@ -12,7 +12,6 @@ from snappy_pipeline.workflows.abstract import BaseStepPart
 from snappy_pipeline.workflows.abstract.common import (
     ForwardResourceUsageMixin,
     ForwardSnakemakeFilesMixin,
-    augment_work_dir_with_output_links,
 )
 from snappy_pipeline.workflows.common.sv_calling import (
     SvCallingGetLogFileMixin,
@@ -144,4 +143,4 @@ class Delly2StepPart(
             "vcf_tbi": f"{prefix}.vcf.gz.tbi",
             "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
         }
-        yield from augment_work_dir_with_output_links(work_files).items()
+        yield from work_files.items()

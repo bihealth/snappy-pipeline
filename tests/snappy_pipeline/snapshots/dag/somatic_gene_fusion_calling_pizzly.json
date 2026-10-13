@@ -2,7 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_gene_fusion_calling_pizzly/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+   "tasks/somatic_gene_fusion_calling_pizzly/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -21,17 +21,16 @@
   ],
   "log": [],
   "output": [
-   "tasks/somatic_gene_fusion_calling_pizzly/output/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+   "tasks/somatic_gene_fusion_calling_pizzly/output/.manifest.tsv"
   ],
-  "params": {},
+  "params": {
+   "task_dir": "tasks/somatic_gene_fusion_calling_pizzly"
+  },
   "resources": {},
-  "rule": "somatic_gene_fusion_calling_pizzly_somatic_gene_fusion_calling_link_out_marker",
+  "rule": "somatic_gene_fusion_calling_pizzly_publish",
   "temp": [],
   "threads": 1,
-  "wildcards": {
-   "name": ".done",
-   "path": "case001subregion-T1-RNA1-mRNA_seq1/out"
-  },
+  "wildcards": {},
   "wrapper": null
  },
  {

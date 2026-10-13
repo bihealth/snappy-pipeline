@@ -1,4 +1,3 @@
-import re
 from typing import Any
 
 from biomedsheets.shortcuts import is_not_background
@@ -240,10 +239,6 @@ class MeltStepPart(
             "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
         }
         yield from work_files.items()
-        yield (
-            "output_links",
-            [re.sub(r"^work/", "output/", work_path) for work_path in work_files.values()],
-        )
 
     @dictify
     def _get_log_file_merge_vcf(self):

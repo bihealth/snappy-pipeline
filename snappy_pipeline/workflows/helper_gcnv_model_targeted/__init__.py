@@ -160,8 +160,8 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
         """Return local helper gCNV model output paths for downstream consumers."""
         kit = kwargs.get("library_kit", "{library_kit}")
         return {
-            "ploidy_done": f"output/{kit}/out/{kit}.contig_ploidy/.done",
-            "calls_done": f"output/{kit}/out/{kit}.{{shard}}.call_cnvs/.done",
+            "ploidy_done": f"work/{kit}/out/{kit}.contig_ploidy/.done",
+            "calls_done": f"work/{kit}/out/{kit}.{{shard}}.call_cnvs/.done",
         }
 
     def __init__(self, workflow, project, task_name):

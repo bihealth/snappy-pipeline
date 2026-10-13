@@ -374,7 +374,6 @@ class MergeMultikitFamiliesMixin:
         for key, suffix in PUBLISHED_RESULT_EXTENSIONS.items():
             work_files[key] = f"{prefix}{suffix}"
         yield from work_files.items()
-        yield "output_links", [re.sub(r"^work/", "output/", path) for path in work_files.values()]
 
     def _get_log_file_merge_multikit_families(self):
         """Return log file **pattern** for the step ``merge_multikit_families``."""
@@ -447,9 +446,8 @@ class RunGcnvStepPart(
 
         # Get list with all result path template strings.
         result_path_tpls = [
-            path
+            re.sub(r"^work/", "output/", path)
             for path in flatten(self._get_output_files_merge_multikit_families().values())
-            if path.startswith("output/")
         ]
 
         # Iterate over all pedigrees.  Check library kit consistency for each pedigree.  In case of inconsistent

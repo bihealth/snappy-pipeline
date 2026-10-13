@@ -82,11 +82,6 @@ KNOWN_BROKEN = {
     "igv_session_generation": "still builds tool-prefixed upstream paths (plans.md K3, C3)",
 }
 
-_GERMLINE_CALLER_RESULTS = (
-    "germline callers declare only work/ outputs, and get_result_files keeps only output/ paths "
-    "(plans.md W1)"
-)
-
 #: Closures that target no files, with the reason. Every other closure must target at least one
 #: file, otherwise its snapshot checks nothing.
 EXPECTED_EMPTY = {
@@ -98,11 +93,6 @@ EXPECTED_EMPTY = {
     "external_cnv": "provides existing files; has no rules",
     "external_sv": "provides existing files; has no rules",
     "ngs_mapping_minimap2": "minimap2 maps only long-read libraries; there is no long-read fixture",
-    "variant_calling_bcftools_call": _GERMLINE_CALLER_RESULTS,
-    "variant_calling_gatk3_hc": _GERMLINE_CALLER_RESULTS,
-    "variant_calling_gatk3_ug": _GERMLINE_CALLER_RESULTS,
-    "variant_calling_gatk4_hc_gvcf": _GERMLINE_CALLER_RESULTS,
-    "variant_calling_gatk4_hc_joint": _GERMLINE_CALLER_RESULTS,
 }
 
 
@@ -348,7 +338,7 @@ def test_frozen_run_uses_existing_upstream_outputs(
 
     assert dump.returncode != 0
     assert "MissingInputException" in output
-    assert "tasks/variant_calling_gatk4_hc_gvcf/output/" in output
+    assert "tasks/variant_calling_gatk4_hc_gvcf/work/" in output
 
 
 def _mapping_job_with_reads_from(
@@ -383,10 +373,10 @@ def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp
     lib = job["wildcards"]["library_name"]
 
     # Only the .done file is a job output, so the FASTQs are params, not inputs.
-    assert f"tasks/trimming/output/{lib}/out/.done" in job["input"]
+    assert f"tasks/trimming/work/{lib}/out/.done" in job["input"]
     assert not [path for path in job["input"] if path.endswith(".fastq.gz")]
     assert job["params"]["args"]["input"]["reads_left"] == [
-        f"tasks/trimming/output/{lib}/out/{lib}.R1.fastq.gz"
+        f"tasks/trimming/work/{lib}/out/{lib}.R1.fastq.gz"
     ]
     assert any(j["rule"].startswith("trimming_adapter_trimming_fastp") for j in jobs)
 

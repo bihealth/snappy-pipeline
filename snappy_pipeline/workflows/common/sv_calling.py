@@ -1,5 +1,6 @@
 """Code shared by steps in ``sv_calling_{targeted,wgs}``"""
 
+import re
 import typing
 
 from snakemake.io import expand
@@ -14,8 +15,8 @@ class SvCallingGetResultFilesMixin:
     def get_result_files(self):
         """Return list of concrete output paths in ``output/``.
 
-        The implementation will return a list of all paths with prefix ``output/` that are
-        returned by ``self.get_output_files()`` for all actions in ``self.actions``.
+        The implementation will return the paths of ``self.get_output_files()`` of the last
+        action, with the prefix ``work/`` replaced by ``output/``.
         """
         if self.name != self.config.tool:
             return  # tool not enabled, no result files
@@ -34,12 +35,11 @@ class SvCallingGetResultFilesMixin:
                 output_files = output_files_tmp.values()
             else:
                 output_files = output_files_tmp
-            result_paths_tpls = list(
-                filter(
-                    lambda p: p.startswith("output/"),
-                    flatten(output_files),
-                )
-            )
+            result_paths_tpls = [
+                re.sub(r"^work/", "output/", p)
+                for p in flatten(output_files)
+                if p.startswith("work/")
+            ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
                 for library_name in self.index_ngs_library_to_pedigree.keys():

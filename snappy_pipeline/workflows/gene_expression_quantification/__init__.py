@@ -81,7 +81,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -516,7 +515,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return the local paths of the expression or strandedness outputs of the task's tool."""
         lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"output/{lib}/out/{lib}"
+        prefix = f"work/{lib}/out/{lib}"
         match config.tool:
             case Tool.featurecounts:
                 return {"tsv": f"{prefix}.tsv"}
@@ -540,7 +539,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                 QCStepPartRnaseqc,
                 QCStepPartStats,
                 SalmonStepPart,
-                PublishStepPart,
             )
         )
         # Inputs are resolved via get_upstream_paths() in step parts.

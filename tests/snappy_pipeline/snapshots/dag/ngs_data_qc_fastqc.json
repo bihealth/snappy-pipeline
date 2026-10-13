@@ -2,7 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/ngs_data_qc_fastqc/output/case001subregion-T1-DNA1-WES1/report/.done"
+   "tasks/ngs_data_qc_fastqc/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -54,17 +54,16 @@
   ],
   "log": [],
   "output": [
-   "tasks/ngs_data_qc_fastqc/output/case001subregion-T1-DNA1-WES1/report/.done"
+   "tasks/ngs_data_qc_fastqc/output/.manifest.tsv"
   ],
-  "params": {},
+  "params": {
+   "task_dir": "tasks/ngs_data_qc_fastqc"
+  },
   "resources": {},
-  "rule": "ngs_data_qc_fastqc_ngs_data_qc_link_out_marker",
+  "rule": "ngs_data_qc_fastqc_publish",
   "temp": [],
   "threads": 1,
-  "wildcards": {
-   "name": ".done",
-   "path": "case001subregion-T1-DNA1-WES1/report"
-  },
+  "wildcards": {},
   "wrapper": null
  }
 ]

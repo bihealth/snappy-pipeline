@@ -2,7 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/panel_of_normals_access/output/panel_of_normals/out/panel_of_normals.accessible.bed"
+   "tasks/panel_of_normals_access/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],
@@ -52,18 +52,16 @@
   ],
   "log": [],
   "output": [
-   "tasks/panel_of_normals_access/output/panel_of_normals/out/panel_of_normals.accessible.bed",
-   "tasks/panel_of_normals_access/output/panel_of_normals/out/panel_of_normals.accessible.bed.md5"
+   "tasks/panel_of_normals_access/output/.manifest.tsv"
   ],
-  "params": {},
+  "params": {
+   "task_dir": "tasks/panel_of_normals_access"
+  },
   "resources": {},
-  "rule": "panel_of_normals_access_panel_of_normals_link_out_run",
+  "rule": "panel_of_normals_access_publish",
   "temp": [],
   "threads": 1,
-  "wildcards": {
-   "name": "panel_of_normals.accessible.bed",
-   "path": "panel_of_normals/out"
-  },
+  "wildcards": {},
   "wrapper": null
  }
 ]

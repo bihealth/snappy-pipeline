@@ -55,7 +55,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -116,6 +115,7 @@ class PeddyStepPart(BaseStepPart):
         }
         for key, ext in key_ext.items():
             yield key, prefix + ext
+            yield f"{key}_md5", prefix + ext + ".md5"
 
     def get_log_file(self, action):
         # Validate action
@@ -154,14 +154,14 @@ class VariantCheckingWorkflow(BaseStep):
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local variant-checking output paths for downstream consumers."""
+        """Return the ``work/`` paths of the variant-checking files for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"ped_check": f"output/{lib}/out/{lib}.ped_check.csv"}
+        return {"ped_check": f"work/{lib}/out/{lib}.ped_check.csv"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, PublishStepPart))
+        self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart))
 
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
 
@@ -174,6 +174,6 @@ class VariantCheckingWorkflow(BaseStep):
         for index_library in self.output_entities:
             for path in self.sub_steps["peddy"].get_output_files("run").values():
                 yield from expand(
-                    path,
+                    path.replace("work/", "output/", 1),
                     index_ngs_library=[index_library],
                 )

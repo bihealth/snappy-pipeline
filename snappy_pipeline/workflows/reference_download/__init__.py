@@ -21,11 +21,9 @@ class _ReferenceDownloadStepPart(BaseStepPart):
     @dictify
     def get_output_files(self, action):
         self._validate_action(action)
-        output_fasta = self.config.path_output_fasta or "output/reference_download/out/reference.fa"
         work_fasta = "work/reference_download/out/reference.fa"
         yield "fasta", work_fasta
         yield "fasta_md5", work_fasta + ".md5"
-        yield "output_links", [output_fasta, output_fasta + ".md5"]
 
     def _base_args(self) -> dict:
         source_cfg = getattr(self.config, self.name)
@@ -122,7 +120,7 @@ class ReferenceDownloadWorkflow(BaseStep):
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        fasta = kwargs.get("fasta", "output/reference_download/out/reference.fa")
+        fasta = kwargs.get("fasta", "work/reference_download/out/reference.fa")
         return {"fasta": fasta}
 
     def __init__(self, workflow, project, task_name):
@@ -134,12 +132,7 @@ class ReferenceDownloadWorkflow(BaseStep):
         }
         self.register_sub_step_classes((source_to_class[self.config.source],))
 
-    def get_output_fasta_path(self) -> str:
-        if self.config.path_output_fasta:
-            return self.config.path_output_fasta
-        return "output/reference_download/out/reference.fa"
-
     @listify
     def get_result_files(self):
-        yield self.get_output_fasta_path()
-        yield self.get_output_fasta_path() + ".md5"
+        yield "output/reference_download/out/reference.fa"
+        yield "output/reference_download/out/reference.fa.md5"

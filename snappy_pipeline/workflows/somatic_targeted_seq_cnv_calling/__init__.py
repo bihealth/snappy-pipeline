@@ -76,7 +76,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ReportOutput,
     ResourceUsage,
 )
@@ -694,9 +693,9 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic targeted CNV output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        paths = {"dnacopy_seg": f"output/{lib}/out/{lib}.dnacopy.seg"}
+        paths = {"dnacopy_seg": f"work/{lib}/out/{lib}.dnacopy.seg"}
         if config.tool == Tool.sequenza:
-            paths["seqz"] = f"output/{lib}/out/{lib}.seqz.gz"
+            paths["seqz"] = f"work/{lib}/out/{lib}.seqz.gz"
         return paths
 
     def __init__(self, workflow, project, task_name):
@@ -712,12 +711,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             case _:
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                selected_sub_step,
-                PublishStepPart,
-            )
-        )
+        self.register_sub_step_classes((selected_sub_step,))
 
     @listify
     def get_result_files(self):

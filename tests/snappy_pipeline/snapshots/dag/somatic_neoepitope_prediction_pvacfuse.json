@@ -18,50 +18,6 @@
   "wrapper": null
  },
  {
-  "benchmark": null,
-  "input": [
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json",
-   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/hla_typing_optitype/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json",
-   "tasks/hla_typing_optitype/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json.md5"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "hla_typing_optitype_hla_typing_link_out_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-N1-DNA1-WES1.json",
-   "path": "case001subregion-N1-DNA1-WES1/out"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
-   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json.md5"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "hla_typing_optitype_hla_typing_link_out_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "name": "case001subregion-T1-DNA1-WES1.json",
-   "path": "case001subregion-T1-DNA1-WES1/out"
-  },
-  "wrapper": null
- },
- {
   "benchmark": "tasks/hla_typing_optitype/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
@@ -261,8 +217,8 @@
   "benchmark": "tasks/somatic_neoepitope_prediction_pvacfuse/benchmarks/case001subregion-T1-DNA1-WES1/MHC_Class_I.case001subregion-T1-DNA1-WES1.MHC_I.filtered.tsv",
   "input": [
    "tasks/somatic_neoepitope_prediction_pvacfuse/work/containers/out/pvactools.sif",
-   "tasks/hla_typing_optitype/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
-   "tasks/hla_typing_optitype/output/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json"
+   "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.json",
+   "tasks/hla_typing_optitype/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json"
   ],
   "log": [
    "tasks/somatic_neoepitope_prediction_pvacfuse/work/case001subregion-T1-DNA1-WES1/log/MHC_Class_I.case001subregion-T1-DNA1-WES1.MHC_I.filtered.log",

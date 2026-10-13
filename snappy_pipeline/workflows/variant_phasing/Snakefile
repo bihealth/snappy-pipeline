@@ -15,8 +15,6 @@ wf = task_instance(config["__task_name__"])
 
 
 localrules:
-    # Linking files from work/ to output/ should be done locally
-    variant_phasing_link_out_run,
     # Writing pedigrees should be done locally as well
     variant_checking_write_trio_pedigree_run,
 
@@ -25,29 +23,6 @@ rule variant_phasing_all:
     default_target: True
     input:
         wf.get_result_files(),
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule variant_phasing_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        wf.run_locally("link_out", "run", wildcards)
-
-
-rule variant_phasing_link_out_indexed:
-    input:
-        wf.get_input_files("link_out", "indexed"),
-    output:
-        wf.get_output_files("link_out", "indexed"),
-    run:
-        wf.run_locally("link_out", "indexed", wildcards)
 
 
 # Variant Phasing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

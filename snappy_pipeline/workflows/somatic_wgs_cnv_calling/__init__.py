@@ -88,7 +88,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -741,7 +740,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local somatic WGS CNV output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"dnacopy_seg": f"output/{lib}/out/{lib}.dnacopy.seg"}
+        return {"dnacopy_seg": f"work/{lib}/out/{lib}.dnacopy.seg"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -756,12 +755,7 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
             case _:
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes(
-            (
-                selected_sub_step,
-                PublishStepPart,
-            )
-        )
+        self.register_sub_step_classes((selected_sub_step,))
 
     @listify
     def get_result_files(self):
@@ -782,11 +776,17 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                         ".ratio.txt",
                         ".ratio.txt.md5",
                         ".gene_log2.txt",
+                        ".gene_log2.txt.md5",
                         ".gene_call.txt",
+                        ".gene_call.txt.md5",
                         ".segments.txt",
+                        ".segments.txt.md5",
                         ".scatter.png",
+                        ".scatter.png.md5",
                         ".heatmap.png",
+                        ".heatmap.png.md5",
                         ".diagram.pdf",
+                        ".diagram.pdf.md5",
                     ],
                 )
             elif tool == "cnvkit":

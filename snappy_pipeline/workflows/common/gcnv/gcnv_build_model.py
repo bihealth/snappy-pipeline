@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV COHORT mode methods - used to build models."""
 
+import re
+
 from snakemake.io import expand, touch
 
 from snappy_pipeline.utils import dictify, listify
@@ -175,7 +177,10 @@ class BuildGcnvModelStepPart(
         # the output files for the post germline calls step (will create coverage and ploidy models).
         #
         # NB: the conversion to ``str`` is necessary here as we use ``touch()`` above.
-        result_path_tpls = list(map(str, self._get_output_files_post_germline_calls().values()))
+        result_path_tpls = [
+            re.sub(r"^work/", "output/", str(path))
+            for path in self._get_output_files_post_germline_calls().values()
+        ]
 
         # Generate output files for all mappers and library names.
         for _, pedigree in self.index_ngs_library_to_pedigree.items():

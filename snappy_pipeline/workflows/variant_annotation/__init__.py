@@ -14,7 +14,6 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
-    PublishStepPart,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -138,14 +137,14 @@ class VariantAnnotationWorkflow(BaseStep):
         """Return local annotated VCF output paths for somatic or germline variants."""
         lib = kwargs.get("library_name", "{library_name}")
         return {
-            "vcf": f"output/{lib}/out/{lib}.vcf.gz",
-            "vcf_tbi": f"output/{lib}/out/{lib}.vcf.gz.tbi",
+            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
         }
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         tool_cls = _TOOL_STEP_PART[self.config.tool]
-        self.register_sub_step_classes((tool_cls, PublishStepPart))
+        self.register_sub_step_classes((tool_cls,))
 
     @listify
     def get_result_files(self):

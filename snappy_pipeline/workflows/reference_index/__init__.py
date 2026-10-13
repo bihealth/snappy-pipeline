@@ -55,7 +55,6 @@ class BuildReferenceCommonStepPart(BaseStepPart):
             "reference_genome": work_prefix + ".fa.genome",
         }
         yield from outputs.items()
-        yield "output_links", [p.replace("work/", "output/", 1) for p in outputs.values()]
 
     @dictify
     def _get_log_file(self, action):
@@ -86,7 +85,6 @@ class _IndexToolStepPart(BaseStepPart):
             outputs[key] = work_prefix + suffix
 
         yield from outputs.items()
-        yield "output_links", [p.replace("work/", "output/", 1) for p in outputs.values()]
 
     @dictify
     def _get_log_file(self, action):
@@ -181,7 +179,7 @@ class ReferenceIndexWorkflow(BaseStep):
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        prefix = kwargs.get("prefix", "output/reference_index/out/reference")
+        prefix = kwargs.get("prefix", "work/reference_index/out/reference")
         index = {Tool.minimap2: prefix + ".mmi", Tool.star: prefix + ".index"}
         return {
             "index": index.get(Tool(config.tool), prefix),
@@ -206,5 +204,6 @@ class ReferenceIndexWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        yield from self.get_output_files("common", "run")["output_links"]
-        yield from self.get_output_files(str(self.config.tool), "run")["output_links"]
+        for tool in ("common", str(self.config.tool)):
+            for path in self.get_output_files(tool, "run").values():
+                yield path.replace("work/", "output/", 1)

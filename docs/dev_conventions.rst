@@ -85,14 +85,17 @@ A rule's log holds only its log file (plus a copy of the script, if the wrapper 
 Snakemake's metadata in ``.snakemake/`` records the code, params, inputs and conda environment
 of every output, and the pinned environments (``environment.linux-64.pin.txt``) fix the package
 versions.
-Logs are not linked into ``output/``; ``snappy run`` archives them per run.
+Logs are not published; ``snappy run`` archives them per run.
 Only published files, those linked into ``output/``, have an md5 file, and every published
 file has one: SODAR needs one per uploaded file. A step declares ``<file>.md5`` next to
 ``<file>`` in the outputs, and the wrapper base classes write it. Wrappers never read md5 files.
-``PublishStepPart`` links a file together with its md5 file in one job (rule
-``<step>_link_out_run``); bgzipped VCF and BED files also with ``.tbi`` and ``.tbi.md5``
-(``<step>_link_out_indexed``). ``.done`` markers of published directories are linked alone
-(``<step>_link_out_marker``).
+A step's ``get_result_files`` lists the published files below ``output/``, each with its md5
+file, and bgzipped VCF and BED files also with ``.tbi`` and ``.tbi.md5``. They mirror files
+below ``work/``. One local job per task, ``<task>_publish`` (``snappy_pipeline/publish.py``),
+links them and writes ``output/.manifest.tsv``; no other rule writes into ``output/``.
+``get_output_paths`` returns ``work/`` paths, so tasks read each other's ``work/`` files and
+never ``output/``.
+``test_only_the_publish_job_writes_into_output``, ``test_no_job_reads_from_output``,
 ``test_logs_hold_only_logs``, ``test_logs_are_not_published``,
 ``test_md5_files_only_for_published_files``, ``test_published_files_come_with_md5_and_index``
 and ``test_wrappers_read_no_md5_or_conda_files`` check this.
@@ -181,7 +184,7 @@ A task's outputs are described by ``DataSignature`` objects: a data type plus ta
   tools read defaults to ``""`` and is listed per tool in the step's ``TOOL_DEPENDENCIES``,
   which ``validators.require_tool_dependencies`` checks. Other optional keys default to ``""``,
   meaning "not used". No key defaults to a task name.
-- ``reads`` names an ``external_data`` task, a task whose ``output/`` holds FASTQs (such as
+- ``reads`` names an ``external_data`` task, a task that writes FASTQs (such as
   ``adapter_trimming``), or the reserved value ``data_sets``, which searches the FASTQs in the
   data sets' search paths. No task may be called ``data_sets``.
 - Each ``depends_on`` field states what it requires with a ``DataSignature`` in its

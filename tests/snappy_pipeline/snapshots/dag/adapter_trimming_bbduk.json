@@ -139,29 +139,27 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/report/.done",
-   "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/out/.done"
+   "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/out/.done",
+   "tasks/adapter_trimming_bbduk/work/case001subregion-T1-DNA1-WES1/report/.done"
   ],
   "log": [],
   "output": [
-   "tasks/adapter_trimming_bbduk/output/case001subregion-T1-DNA1-WES1/report/.done",
-   "tasks/adapter_trimming_bbduk/output/case001subregion-T1-DNA1-WES1/out/.done"
+   "tasks/adapter_trimming_bbduk/output/.manifest.tsv"
   ],
-  "params": {},
+  "params": {
+   "task_dir": "tasks/adapter_trimming_bbduk"
+  },
   "resources": {},
-  "rule": "adapter_trimming_bbduk_adapter_trimming_link_out_fastq_run",
+  "rule": "adapter_trimming_bbduk_publish",
   "temp": [],
   "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-DNA1-WES1"
-  },
+  "wildcards": {},
   "wrapper": null
  },
  {
   "benchmark": null,
   "input": [
-   "tasks/adapter_trimming_bbduk/output/case001subregion-T1-DNA1-WES1/out/.done",
-   "tasks/adapter_trimming_bbduk/output/case001subregion-T1-DNA1-WES1/report/.done"
+   "tasks/adapter_trimming_bbduk/output/.manifest.tsv"
   ],
   "log": [],
   "output": [],

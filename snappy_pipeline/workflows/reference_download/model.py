@@ -4,7 +4,7 @@ from typing import Annotated
 
 from pydantic import AnyUrl, BaseModel, BeforeValidator, TypeAdapter, model_validator
 
-from snappy_pipeline.models import ResolvablePath, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 
 
 class ExpectedReferenceDownloadFiles(BaseModel):
@@ -131,9 +131,6 @@ class Ucsc(DownloadCommon):
 
 class ReferenceDownload(SnappyStepModel):
     source: Source = Source.ensembl
-
-    path_output_fasta: ResolvablePath = ""
-    """Optional output FASTA path override. When empty, standard task-local output path is used."""
 
     ensembl: Ensembl = Ensembl()
     refseq: Refseq = Refseq()

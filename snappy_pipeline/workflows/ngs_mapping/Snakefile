@@ -266,6 +266,4 @@ rule ngs_mapping_counts_with_strand:
             pushd $(dirname {output.counts})
             md5sum $(basename {output.counts}) > $(basename {output.counts_md5})
             popd
-            ln -sr {output.counts} {output.output}
-            ln -sr {output.counts_md5} {output.output_md5}
         """

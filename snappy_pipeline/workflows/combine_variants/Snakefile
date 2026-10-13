@@ -5,32 +5,10 @@ from snappy_pipeline.orchestration import task_instance
 wf = task_instance(config["__task_name__"])
 
 
-localrules:
-    combine_variants_link_out_run,
-
-
 rule combine_variants_all:
     default_target: True
     input:
         wf.get_result_files(),
-
-
-rule combine_variants_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        wf.run_locally("link_out", "run", wildcards)
-
-
-rule combine_variants_link_out_indexed:
-    input:
-        wf.get_input_files("link_out", "indexed"),
-    output:
-        wf.get_output_files("link_out", "indexed"),
-    run:
-        wf.run_locally("link_out", "indexed", wildcards)
 
 
 rule combine_variants_run:

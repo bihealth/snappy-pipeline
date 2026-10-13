@@ -11,38 +11,10 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-localrules:
-    # Linking files from work/ to output/ should be done locally
-    mobile_element_insertion_link_out_run,
-
-
 rule targeted_seq_mei_calling_all:
     default_target: True
     input:
         wf.get_result_files(),
-
-
-# House-Keeping ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Generic linking out ---------------------------------------------------------
-
-
-rule mobile_element_insertion_link_out_run:
-    input:
-        wf.get_input_files("link_out", "run"),
-    output:
-        wf.get_output_files("link_out", "run"),
-    run:
-        wf.run_locally("link_out", "run", wildcards)
-
-
-rule mobile_element_insertion_link_out_indexed:
-    input:
-        wf.get_input_files("link_out", "indexed"),
-    output:
-        wf.get_output_files("link_out", "indexed"),
-    run:
-        wf.run_locally("link_out", "indexed", wildcards)
 
 
 rule mobile_element_insertion_scramble_cluster:
