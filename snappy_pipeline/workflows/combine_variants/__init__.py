@@ -1,11 +1,12 @@
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet
+from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -21,6 +22,14 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 _OUT_PREFIX = "work/{tumor_library}/out/{tumor_library}"
 _LOG_PREFIX = "work/{tumor_library}/log/{tumor_library}"
+
+#: Output keys and extensions of the combined VCF
+_OUTPUTS = {
+    "vcf": ".vcf.gz",
+    "vcf_tbi": ".vcf.gz.tbi",
+    "vcf_md5": ".vcf.gz.md5",
+    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
+}
 
 
 class CombineVariantsStepPart(BaseStepPart):
@@ -46,20 +55,8 @@ class CombineVariantsStepPart(BaseStepPart):
             germline = self.parent.get_upstream_paths("germline_variants", library_name=normal_lib)
             yield "germline_vcf", germline.vcf
 
-    def get_output_files(self, action: str) -> dict[str, Any]:
-        match action:
-            case "run":
-                return {
-                    k: _OUT_PREFIX + ext
-                    for k, ext in (
-                        ("vcf", ".vcf.gz"),
-                        ("vcf_tbi", ".vcf.gz.tbi"),
-                        ("vcf_md5", ".vcf.gz.md5"),
-                        ("vcf_tbi_md5", ".vcf.gz.tbi.md5"),
-                    )
-                }
-            case _:
-                raise MissingConfiguration(f"Unimplemented action {action}")
+    def _get_output_files_run(self) -> dict[str, str]:
+        return {key: f"{_OUT_PREFIX}{ext}" for key, ext in _OUTPUTS.items()}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if name_origin := self.config.rename_combined:
@@ -78,12 +75,16 @@ class CombineVariantsStepPart(BaseStepPart):
         else:
             return {"tumor_library": wildcards.tumor_library}
 
-    def get_log_file(self, action: str):
-        match action:
-            case "run":
-                return {"log": _LOG_PREFIX + ".log"}
-            case _:
-                raise MissingConfiguration(f"Unimplemented action {action}")
+    def get_result_files(self) -> list[str]:
+        df = self.parent.build_library_dataframe()
+        result = []
+        for tumor_library in df[df["role"] == "tumor"]["library_name"].unique():
+            for path in self.get_output_files("run").values():
+                result += expand(path.replace("work/", "output/", 1), tumor_library=[tumor_library])
+        return result
+
+    def _get_log_file_run(self) -> dict[str, str]:
+        return {"log": _LOG_PREFIX + ".log"}
 
 
 class CombineVariantsWorkflow(BaseStep):
@@ -113,11 +114,3 @@ class CombineVariantsWorkflow(BaseStep):
 
         super().__init__(workflow, project, task_name)
         self.register_sub_step_classes((CombineVariantsStepPart,))
-
-    @listify
-    def get_result_files(self):
-        df = self.build_library_dataframe()
-        tumor_libs = df[df["role"] == "tumor"]["library_name"].unique()
-        for t in tumor_libs:
-            for ext in ("", ".tbi", ".md5", ".tbi.md5"):
-                yield f"output/{t}/out/{t}.vcf.gz{ext}"

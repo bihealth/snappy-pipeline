@@ -6,21 +6,12 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
-from snappy_pipeline.workflows.abstract.common import (
-    ForwardResourceUsageMixin,
-    ForwardSnakemakeFilesMixin,
-)
 from snappy_pipeline.workflows.common.sv_calling import SvCallingGetResultFilesMixin
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 
-class MeltStepPart(
-    SvCallingGetResultFilesMixin,
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
-    BaseStepPart,
-):
+class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     """MEI calling using MELT
 
     We implement the workflow as per-pedigree calling.  Generally, this leads to consistent
@@ -47,20 +38,7 @@ class MeltStepPart(
         "make_vcf": ("vcf", "vcf_tbi"),
     }
 
-    _resource_usage = ResourceUsage(
-        threads=1,
-        runtime="1d",
-        mem="16GB",
-    )
-    resource_usage_dict = {
-        "preprocess": _resource_usage,
-        "indiv_analysis": _resource_usage,
-        "group_analysis": _resource_usage,
-        "genotype": _resource_usage,
-        "make_vcf": _resource_usage,
-        "merge_vcf": _resource_usage,
-        "reorder_vcf": _resource_usage,
-    }
+    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="16GB")
 
     def __init__(self, parent):
         super().__init__(parent)

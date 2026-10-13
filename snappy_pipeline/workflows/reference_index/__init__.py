@@ -38,30 +38,22 @@ class BuildReferenceCommonStepPart(BaseStepPart):
     name = "common"
     actions = ("run",)
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=1, runtime="2h", mem="2GB")
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="2GB")
 
     def _get_input_files_run(self, wildcards):
         return {"reference": self.parent.get_reference_path()}
 
-    @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
+    def _get_output_files_run(self):
         work_prefix = "work/reference_index/out/reference"
-        outputs = {
+        return {
             "reference_fai": work_prefix + ".fa.fai",
             "reference_dict": work_prefix + ".dict",
             "reference_genome": work_prefix + ".fa.genome",
         }
-        yield from outputs.items()
 
-    @dictify
-    def _get_log_file(self, action):
-        self._validate_action(action)
+    def _get_log_file_run(self):
         prefix = "work/reference_index/log/reference_index.common"
-        yield "log", prefix + ".log"
-        yield "script", prefix + ".script"
+        return {"log": prefix + ".log", "script": prefix + ".script"}
 
 
 class _IndexToolStepPart(BaseStepPart):
@@ -75,23 +67,16 @@ class _IndexToolStepPart(BaseStepPart):
             "reference_genome": "work/reference_index/out/reference.fa.genome",
         }
 
-    @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
+    def _get_output_files_run(self):
         work_prefix = "work/reference_index/out/reference"
-        outputs = {}
-        for suffix in self.output_suffixes:
-            key = suffix.strip(".").replace(".", "_").replace("/", "_")
-            outputs[key] = work_prefix + suffix
+        return {
+            suffix.strip(".").replace(".", "_").replace("/", "_"): work_prefix + suffix
+            for suffix in self.output_suffixes
+        }
 
-        yield from outputs.items()
-
-    @dictify
-    def _get_log_file(self, action):
-        self._validate_action(action)
+    def _get_log_file_run(self):
         prefix = "work/reference_index/log/reference_index.index"
-        yield "log", prefix + ".log"
-        yield "script", prefix + ".script"
+        return {"log": prefix + ".log", "script": prefix + ".script"}
 
 
 class BwaIndexStepPart(_IndexToolStepPart):
@@ -99,9 +84,7 @@ class BwaIndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     output_suffixes = (".amb", ".ann", ".bwt", ".pac", ".sa")
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=8, runtime="24h", mem="16GB")
+    default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
     @dictify
     def _get_params_run(self, wildcards):
@@ -113,9 +96,7 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     output_suffixes = (".0123", ".amb", ".ann", ".bwt.2bit.64", ".pac")
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=8, runtime="24h", mem="16GB")
+    default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
     @dictify
     def _get_params_run(self, wildcards):
@@ -127,9 +108,7 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
     actions = ("run",)
     output_suffixes = (".mmi",)
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=8, runtime="12h", mem="16GB")
+    default_resource_usage = ResourceUsage(threads=8, runtime="12h", mem="16GB")
 
     @dictify
     def _get_params_run(self, wildcards):
@@ -145,9 +124,7 @@ class StarIndexStepPart(_IndexToolStepPart):
         files = STAR_INDEX_FILES + (STAR_SJDB_FILES if self.config.depends_on.features else ())
         return tuple(f".index/{name}" for name in files)
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=16, runtime="24h", mem="64GB")
+    default_resource_usage = ResourceUsage(threads=16, runtime="24h", mem="64GB")
 
     @dictify
     def _get_params_run(self, wildcards):

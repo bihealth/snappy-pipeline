@@ -13,9 +13,6 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import Expec
 
 from .model import GeneExpressionReport as GeneExpressionReportConfigModel
 
-#: Names of the files to create for the extension (snakemake output)
-EXT_NAMES = ("tsv",)
-
 #: Extensions of files to create as main payload
 EXT_VALUES = (".tsv",)
 
@@ -30,8 +27,7 @@ class GeneExpressionReportStepPart(BaseStepPart):
         super().__init__(parent)
         self.base_path_out = "work/{{ngs_library}}/out/{{ngs_library}}{ext}"
 
-    def get_log_file(self, action):
-        _ = action
+    def _get_log_file(self, action):
         return "work/{ngs_library}/log/snakemake.gene_expression_quantification.log"
 
 
@@ -58,11 +54,8 @@ class GeneExpressionReportAggreateFeaturecounts(GeneExpressionReportStepPart):
                                     )
                                     yield expression.tsv
 
-    @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        yield "tsv", "work/gene_exp.tsv"
+    def _get_output_files_run(self):
+        return {"tsv": "work/gene_exp.tsv"}
 
 
 class GeneExpressionReportRankExpression(GeneExpressionReportStepPart):
@@ -75,11 +68,8 @@ class GeneExpressionReportRankExpression(GeneExpressionReportStepPart):
     def _get_input_files_run(self, wildcards):
         yield "tsv", "work/gene_exp.tsv"
 
-    def get_output_files(self, action):
-        """Return output files that sub steps must return"""
-        # Validate action
-        self._validate_action(action)
-        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
+    def _get_output_files_run(self):
+        return {"tsv": self.base_path_out.format(ext=".tsv")}
 
 
 class GeneExpressionReportComputeSignatures(GeneExpressionReportStepPart):
@@ -92,10 +82,7 @@ class GeneExpressionReportComputeSignatures(GeneExpressionReportStepPart):
     def _get_input_files_run(self, wildcards):
         yield "tsv", self.base_path_out.format(ext=".tsv").format(**wildcards)
 
-    def get_output_files(self, action):
-        """Return output files that sub steps must return"""
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         return {"pdf": expand(self.base_path_out, ext=".pdf")}
 
 
@@ -109,10 +96,7 @@ class GeneExpressionReportPlotGeneDistribution(GeneExpressionReportStepPart):
     def _get_input_files_run(self, wildcards):
         yield "tsv", self.base_path_out.format(ext=".tsv").format(**wildcards)
 
-    def get_output_files(self, action):
-        """Return output files that sub steps must return"""
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         return {"pdf": expand(self.base_path_out, ext=".genes.pdf")}
 
 

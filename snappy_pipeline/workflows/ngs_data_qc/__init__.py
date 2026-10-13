@@ -17,7 +17,6 @@ from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import directory, expand, touch
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -85,19 +84,13 @@ class FastQcReportStepPart(BaseStepPart):
         return reads_input_files(self.parent, wildcards.library_name)
 
     @dictify
-    def get_output_files(self, action):
-        """Return output files for the (raw) data QC steps"""
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         yield "fastqc_done", touch("work/{library_name}/report/.done")
         # One report per FASTQ file, so a directory with an index of them
         yield "html", directory("work/{library_name}/report/html")
 
-    @dictify
-    def _get_log_file(self, action):
-        self._validate_action(action)
-        prefix = "work/{library_name}/log/{library_name}"
-        yield "log", prefix + ".log"
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
 
 class PicardStepPart(BaseStepPart):
@@ -113,13 +106,6 @@ class PicardStepPart(BaseStepPart):
         programs = self.config.picard.programs
         metrics = {pgm: ReportOutput(f"Picard {pgm}", caption="picard.rst") for pgm in programs}
         return {"metrics": metrics}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def get_input_files(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_input_files_{action}")
 
     @dictify
     def _get_input_files_prepare(self, wildcards):
@@ -143,41 +129,31 @@ class PicardStepPart(BaseStepPart):
         yield "bam", alignments.bam
 
     @dictify
-    def get_output_files(self, action):
+    def _get_output_files_prepare(self):
         if self.name != self.config.tool:
-            return {}
-        if action == "prepare":
-            yield "baits", "work/static_data/out/baits.interval_list"
-            yield "targets", "work/static_data/out/targets.interval_list"
-        elif action == "metrics":
-            base_out = "work/{library_name}/report/{library_name}."
-            for pgm in self.config.picard.programs:
-                if pgm in MULTIPLE_METRICS.keys():
-                    first = MULTIPLE_METRICS[pgm][0]
-                    yield pgm, base_out + f"CollectMultipleMetrics.{first}.txt"
-                    yield pgm + "_md5", base_out + f"CollectMultipleMetrics.{first}.txt.md5"
-                else:
-                    yield pgm, base_out + pgm + ".txt"
-                    yield pgm + "_md5", base_out + pgm + ".txt.md5"
-        else:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
+            return
+        yield "baits", "work/static_data/out/baits.interval_list"
+        yield "targets", "work/static_data/out/targets.interval_list"
 
     @dictify
-    def get_log_file(self, action):
-        if action == "prepare":
-            prefix = "work/static_data/log/prepare"
-        elif action == "metrics":
-            prefix = "work/{library_name}/log/{library_name}"
-        else:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
+    def _get_output_files_metrics(self):
+        if self.name != self.config.tool:
+            return
+        base_out = "work/{library_name}/report/{library_name}."
+        for pgm in self.config.picard.programs:
+            if pgm in MULTIPLE_METRICS.keys():
+                first = MULTIPLE_METRICS[pgm][0]
+                yield pgm, base_out + f"CollectMultipleMetrics.{first}.txt"
+                yield pgm + "_md5", base_out + f"CollectMultipleMetrics.{first}.txt.md5"
+            else:
+                yield pgm, base_out + pgm + ".txt"
+                yield pgm + "_md5", base_out + pgm + ".txt.md5"
 
-        yield "log", prefix + ".log"
+    def _get_log_file_prepare(self):
+        return {"log": "work/static_data/log/prepare.log"}
+
+    def _get_log_file_metrics(self):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_metrics(self, wildcards: Wildcards) -> dict[str, Any]:
         params = {
@@ -188,25 +164,7 @@ class PicardStepPart(BaseStepPart):
             params["bait_name"] = self.config.picard.bait_name
         return params
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action == "prepare":
-            return super().get_resource_usage(action, **kwargs)
-        elif action == "metrics":
-            return ResourceUsage(threads=1, runtime="24h", mem="64GB")
-        else:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
+    resource_usage = {"metrics": ResourceUsage(threads=1, runtime="24h", mem="64GB")}
 
 
 class NgsDataQcWorkflow(BaseStep):

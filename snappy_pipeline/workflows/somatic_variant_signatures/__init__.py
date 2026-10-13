@@ -8,13 +8,10 @@ The result it a data.frame tsv with the fraction of variants that each
 signature explains as well as a plot.
 """
 
-import os
-
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand
 
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
@@ -34,32 +31,12 @@ class SignaturesStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    entity_wildcard = "tumor_library"
 
-        self.name_postfix = "{tumor_library}"
+    default_resource_usage = ResourceUsage(threads=2, runtime="1h", mem=f"{7 * 1024 * 2}MB")
 
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        name_pattern = f"{self.name}." + self.name_postfix
-        return os.path.join("work", "{tumor_library}", "log", name_pattern + ".log")
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="1h",  # 1 hour
-            mem=f"{7 * 1024 * 2}MB",
-        )
+    def _get_log_file(self, action):
+        return f"work/{{tumor_library}}/log/{self.name}.{{tumor_library}}.log"
 
 
 class TabulateVariantsStepPart(SignaturesStepPart):
@@ -79,13 +56,8 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files to tabulate vcf"""
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "tabulate_vcf." + self.name_postfix
-        yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
+    def _get_output_files_run(self):
+        return {"tsv": "work/{tumor_library}/out/tabulate_vcf.{tumor_library}.tsv"}
 
     def _get_params_run(self, wildcards):
         """Return arguments to pass down."""
@@ -112,29 +84,19 @@ class DeconstructSigsStepPart(SignaturesStepPart):
     #: Step name
     name = "deconstruct_sigs"
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    published_keys = ("tsv", "tsv_md5")
 
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files to deconstruct signatures"""
-        name_pattern = "tabulate_vcf." + self.name_postfix
         yield (
             "tsv",
-            os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv").format(
-                **wildcards
-            ),
+            f"work/{wildcards.tumor_library}/out/tabulate_vcf.{wildcards.tumor_library}.tsv",
         )
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files to deconstruct signatures"""
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "deconstruct_sigs." + self.name_postfix
-        yield "tsv", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv")
-        yield "tsv_md5", os.path.join("work", "{tumor_library}", "out", name_pattern + ".tsv.md5")
-        yield "pdf", os.path.join("work", "{tumor_library}", "out", name_pattern + ".pdf")
+    def _get_output_files_run(self):
+        base = "work/{tumor_library}/out/deconstruct_sigs.{tumor_library}"
+        return {"tsv": base + ".tsv", "tsv_md5": base + ".tsv.md5", "pdf": base + ".pdf"}
 
 
 class SomaticVariantSignaturesWorkflow(BaseStep):
@@ -171,15 +133,3 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TabulateVariantsStepPart, DeconstructSigsStepPart))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for workflow"""
-        for entity in self.output_entities:
-            yield from expand(
-                os.path.join(
-                    "output", "{tumor_library}", "out", "deconstruct_sigs.{tumor_library}{ext}"
-                ),
-                tumor_library=[entity],
-                ext=(".tsv", ".tsv.md5"),
-            )

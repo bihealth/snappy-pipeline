@@ -48,13 +48,9 @@ Available Somatic Targeted CNV Caller
 
 """
 
-import os
-
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand
 
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -67,26 +63,13 @@ from .model import SomaticMsiCalling as SomaticMsiCallingConfigModel
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".results.txt", ".results.txt.status", ".results.txt.md5", ".results.txt.status.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("result", "status", "result_md5", "status_md5")
-
-EXT_MATCHED = {
-    "mantis_msi2": {
-        "result": ".results.txt",
-        "status": ".results.txt.status",
-        "result_md5": ".results.txt.md5",
-        "status_md5": ".results.txt.status.md5",
-    },
+#: Output keys and extensions of the MANTIS2 results
+_OUTPUTS = {
+    "result": ".results.txt",
+    "status": ".results.txt.status",
+    "result_md5": ".results.txt.md5",
+    "status_md5": ".results.txt.status.md5",
 }
-
-#: Available somatic variant callers assuming matched samples.
-MSI_CALLERS_MATCHED = ("mantis_msi2",)
-
-
-#: Default configuration for the somatic_msi_calling step
 
 
 class Mantis2StepPart(BaseStepPart):
@@ -96,9 +79,12 @@ class Mantis2StepPart(BaseStepPart):
 
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
+    entity_wildcard = "tumor_library"
+
+    published_keys = tuple(_OUTPUTS)
+
+    # Single thread because of https://github.com/OSU-SRLab/MANTIS/issues/57
+    default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem=f"{30 * 1024 * 3}MB")
 
     def _get_input_files_run(self, wildcards):
         # Get names of primary libraries of the selected cancer bio sample and the
@@ -128,35 +114,14 @@ class Mantis2StepPart(BaseStepPart):
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
 
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         return {
-            key: self.base_path_out.replace("{ext}", ext) for key, ext in zip(EXT_NAMES, EXT_VALUES)
+            key: f"work/{{tumor_library}}/out/{{tumor_library}}{ext}"
+            for key, ext in _OUTPUTS.items()
         }
 
-    def _get_log_file(self, action):
-        """Return dict of log files."""
-        # Validate action
-        self._validate_action(action)
-
+    def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,  # Because of https://github.com/OSU-SRLab/MANTIS/issues/57
-            runtime="24h",  # 24 hours
-            mem=f"{30 * 1024 * 3}MB",
-        )
 
 
 class SomaticMsiCallingWorkflow(BaseStep):
@@ -192,17 +157,3 @@ class SomaticMsiCallingWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((Mantis2StepPart,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the MSI calling workflow"""
-        msi_tool = str(self.config.tool)
-        if msi_tool not in MSI_CALLERS_MATCHED:
-            return
-        payload_exts = EXT_MATCHED[msi_tool].values() if msi_tool in EXT_MATCHED else EXT_VALUES
-        for entity in self.output_entities:
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                tumor_library=[entity],
-                ext=payload_exts,
-            )

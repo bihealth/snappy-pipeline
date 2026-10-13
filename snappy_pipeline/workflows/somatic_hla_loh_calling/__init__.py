@@ -21,13 +21,9 @@ Step Output
 A report file.
 """
 
-import os
-
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand
 
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
@@ -36,8 +32,6 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from .model import SomaticHlaLohCalling as SomaticHlaLohCallingConfigModel
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
-
-#: Default configuration for the somatic_msi_calling step
 
 
 class LohhlaStepPart(BaseStepPart):
@@ -49,9 +43,9 @@ class LohhlaStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{tumor_library}/out/{tumor_library}{ext}"
+    entity_wildcard = "tumor_library"
+
+    published_keys = ("done",)
 
     def _get_input_files_run(self, wildcards):
         normal_lib = self.get_normal_lib_name(wildcards)
@@ -84,15 +78,10 @@ class LohhlaStepPart(BaseStepPart):
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
 
-    def get_output_files(self, action):
-        """Return output files from LOHHLA"""
-        # Validate action
-        self._validate_action(action)
-        return {"done": self.base_path_out.replace("{ext}", ".done")}
+    def _get_output_files_run(self):
+        return {"done": "work/{tumor_library}/out/{tumor_library}.done"}
 
-    def _get_log_file(self, action):
-        """Return dict of log files."""
-        _ = action
+    def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
 
 
@@ -129,13 +118,3 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((LohhlaStepPart,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the somatic hla loh calling workflow."""
-        for entity in self.output_entities:
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                tumor_library=[entity],
-                ext=".done",
-            )

@@ -13,12 +13,10 @@ dkfz        – DKFZ bias filter (requires aligned BAMs, cancer sheet)
 ebfilter    – EBFilter (requires aligned BAMs, cancer sheet)
 """
 
-import os
 import random
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -40,14 +38,13 @@ from .model import (
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
-
-
-# Path template helpers
-_WORK_PREFIX = os.path.join("work", "{tumor_library}")
-_OUT_PREFIX = os.path.join(_WORK_PREFIX, "out", "{tumor_library}")
-_LOG_PREFIX = os.path.join(_WORK_PREFIX, "log", "{tumor_library}")
+#: Output keys and extensions of the filtered VCF
+_OUTPUTS = {
+    "vcf": ".vcf.gz",
+    "vcf_tbi": ".vcf.gz.tbi",
+    "vcf_md5": ".vcf.gz.md5",
+    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +64,8 @@ class VariantFiltrationStepPart(BaseStepPart):
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
     }
+    published_keys = {"run": tuple(_OUTPUTS)}
+    entity_wildcard = "tumor_library"
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -80,15 +79,14 @@ class VariantFiltrationStepPart(BaseStepPart):
             yield "vcf", variant.vcf
             yield "vcf_tbi", variant.vcf_tbi
 
-    @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, _OUT_PREFIX + ext
+    def _get_output_files_run(self):
+        return {
+            key: f"work/{{tumor_library}}/out/{{tumor_library}}{ext}"
+            for key, ext in _OUTPUTS.items()
+        }
 
-    def get_log_file(self, action):
-        self._validate_action(action)
-        return {"log": _LOG_PREFIX + ".log"}
+    def _get_log_file(self, action):
+        return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, self.config.tool)
@@ -243,12 +241,6 @@ class EbfilterStepPart(_BamAwareStepPart):
     def _get_output_files_write_panel(self):
         return {"txt": "work/eb_filter.panel_of_normals/out/eb_filter.panel_of_normals.txt"}
 
-    def get_output_files(self, action):
-        self._validate_action(action)
-        if action == "write_panel":
-            return self._get_output_files_write_panel()
-        return super().get_output_files(action)
-
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
         params.pop("path_panel_of_normals_sample_list", None)
@@ -338,12 +330,3 @@ class VariantFiltrationWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         tool_cls = _TOOL_STEP_PART[self.config.tool]
         self.register_sub_step_classes((tool_cls,))
-
-    @listify
-    def get_result_files(self):
-        for entity_name in self.output_entities:
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                tumor_library=[entity_name],
-                ext=EXT_VALUES,
-            )

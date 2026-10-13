@@ -1,9 +1,6 @@
-import os
-
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -14,14 +11,6 @@ from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVaria
 
 from .model import TumorMutationalBurden as TumorMutationalBurdenConfigModel
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".json", ".json.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("json", "json_md5")
-
-#: Default configuration for the tmb calculation step
-
 
 class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     """Calculation tumor mutational burden for each sample"""
@@ -29,6 +18,12 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
     name = "tmb_gathering"
 
     actions = ("run",)
+
+    entity_wildcard = "tumor_library"
+
+    published_keys = ("json", "json_md5")
+
+    default_resource_usage = ResourceUsage(threads=2, runtime="1h", mem="4096MB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -39,32 +34,12 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         yield "vcf_tbi", variants.vcf_tbi
         yield "target_regions", self.config.target_regions
 
-    @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
+        tpl = "work/{tumor_library}/out/tmb.{tumor_library}.json"
+        return {"json": tpl, "json_md5": tpl + ".md5"}
 
-        base_name = "tmb.{tumor_library}"
-
-        tpl = os.path.join("work", "{tumor_library}", "out", base_name)
-
-        key_ext = {"json": ".json"}
-        for key, ext in key_ext.items():
-            yield key, tpl + ext
-            yield key + "_md5", tpl + ext + ".md5"
-
-    def get_log_file(self, action):
-        self._validate_action(action)
+    def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/tmb.{tumor_library}.log"}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        mem_mb = 4 * 1024  # 4GB
-        return ResourceUsage(
-            threads=2,
-            runtime="1h",  # 1 hour
-            mem=f"{mem_mb}MB",
-        )
 
     def _get_params_run(self, wildcards):
         return {
@@ -95,13 +70,3 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the TMB workflow."""
-        for entity in self.output_entities:
-            yield from expand(
-                os.path.join("output", "{tumor_library}", "out", "tmb.{tumor_library}{ext}"),
-                tumor_library=[entity],
-                ext=EXT_VALUES,
-            )

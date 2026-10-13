@@ -180,7 +180,6 @@ files would be created into ``output/``
 from typing import Any
 
 from biomedsheets.shortcuts import GermlineCaseSheet
-from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -195,7 +194,6 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDict,
     SnakemakeDictItemsGenerator,
-    SnakemakeListItemsGenerator,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -204,12 +202,6 @@ from snappy_pipeline.workflows.variant_calling.model import Tool, TumorNormalMod
 from .model import VariantCalling as VariantCallingConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-#: Extensions of files to create as main payload
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
 
 #: Available germline variant callers
 VARIANT_CALLERS = (
@@ -223,74 +215,7 @@ VARIANT_CALLERS = (
 #: Default configuration for the variant_calling step
 
 
-class GetResultFilesMixin:
-    """Mixin to provide ``get_result_files()`` function for variant calling and
-    variant annotation steps.
-
-    The function will use ``get_output_files()`` for all actions to obtain the ``work/`` files of
-    the keys in ``published_keys``, and return their paths below ``output/``.
-    """
-
-    #: Output keys that are published (each with its md5 file and index, if it has one), for
-    #: all actions or by action
-    published_keys: tuple[str, ...] | dict[str, tuple[str, ...]] = ()
-
-    @listify
-    def get_result_files(self) -> SnakemakeListItemsGenerator:
-        """Return concrete result file paths"""
-
-        def strip_tpl(tpl):
-            return tpl.replace(r",[^\.]+", "")
-
-        group_by = self.parent.effective_group_by
-        members = self.parent.cohort_members if group_by == "cohort" else {}
-
-        for action in self.actions:
-            output_files = self.get_output_files(action)
-            keys = self.published_keys
-            if isinstance(keys, dict):
-                keys = keys.get(action, ())
-            result_paths_tpls = [
-                strip_tpl(p).replace("work/", "output/", 1)
-                for key, p in output_files.items()
-                if key in keys
-            ]
-            for path_tpl in result_paths_tpls:
-                for entity_name in self.parent.output_entities:
-                    kwargs = {}
-                    if "index_library_name" in path_tpl:
-                        kwargs["index_library_name"] = [entity_name]
-                        # Find member libs for this cohort's primary library.
-                        for cohort_name, member_libs in members.items():
-                            if entity_name in member_libs:
-                                kwargs["donor_library_name"] = member_libs
-                                break
-                    else:
-                        kwargs["library_name"] = [entity_name]
-                    for key, value in self.get_extra_kv_pairs().items():
-                        if "{%s}" % key in path_tpl:
-                            kwargs[key] = value
-                    yield from expand(
-                        path_tpl,
-                        **kwargs,
-                    )
-
-    def get_extra_kv_pairs(self):
-        return {}
-
-
-class VariantCallingGetLogFileMixin:
-    """Mixin to provide the generic ``get_log_file()`` function for variant calling"""
-
-    @dictify
-    def get_log_file(self, action) -> SnakemakeDictItemsGenerator:
-        """Return dict of log files in the "log" directory."""
-        _ = action
-        token = "{library_name}"
-        yield "log", f"work/{token}/log/{token}.{self.name}_{action}.log"
-
-
-class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin, BaseStepPart):
+class VariantCallingStepPart(BaseStepPart):
     """Base class for germline variant calling step parts
 
     Variant calling is performed on a per-pedigree level.  The (single) index individual is used
@@ -302,10 +227,9 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
 
     published_keys = ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{index_library_name}/out/{index_library_name}{ext}"
-        self.base_path_tmp = self.base_path_out.replace("/out/", "/tmp/")
+    def _get_log_file(self, action: str) -> SnakemakeDict:
+        token = "{library_name}"
+        return {"log": f"work/{token}/log/{token}.{self.name}_{action}.log"}
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
@@ -355,10 +279,6 @@ class VariantCallingStepPart(GetResultFilesMixin, VariantCallingGetLogFileMixin,
             bams.append(aln.bam)
         yield "bam", bams
 
-    def get_output_files(self, action) -> SnakemakeDict:
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
-
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         token = "{library_name}"
@@ -377,17 +297,9 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
     #: Step name
     name = "bcftools_call"
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{library_name}/out/{library_name}"
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=16,
-            runtime="2d",
-            mem=f"{int(3.75 * 1024 * 16)}MB",
-        )
+    default_resource_usage = ResourceUsage(
+        threads=16, runtime="2d", mem=f"{int(3.75 * 1024 * 16)}MB"
+    )
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
@@ -431,16 +343,12 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
         yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
         num_threads = self.config[self.name].num_threads
         mem_per_thread = 5.5
         mem_total = int(mem_per_thread * num_threads + 0.5)
-        return ResourceUsage(
-            threads=num_threads,
-            runtime="2d",
-            mem=f"{mem_total}GB",
-        )
+        return ResourceUsage(threads=num_threads, runtime="2d", mem=f"{mem_total}GB")
 
 
 class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
@@ -617,25 +525,32 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
     _get_params_genotype = _get_params_discover
 
 
-class ReportGetLogFileMixin:
-    """Log file generation for reports"""
+class ReportStepPart(BaseStepPart):
+    """Base class for the reports on the called variants, one per index library (and donor)"""
+
+    actions = ("run",)
+
+    entity_wildcard = "index_library_name"
 
     #: Whether we generate per-donor files.
-    report_per_donor = None
+    report_per_donor: bool
 
-    @dictify
-    def get_log_file(self, action: str) -> SnakemakeDictItemsGenerator:
-        """Return dict of log files in the "log" directory."""
-        self._validate_action(action)
-        assert self.report_per_donor is not None
+    def _get_log_file(self, action: str) -> SnakemakeDict:
         token = "{index_library_name}"
-        prefix = f"work/{token}/log/{token}.{{donor_library_name}}.{self.name}_{action}"
-        if not self.report_per_donor:
-            prefix = prefix.replace("{donor_library_name}.", "")
-        yield "log", f"{prefix}.log"
+        donor = "{donor_library_name}." if self.report_per_donor else ""
+        return {"log": f"work/{token}/log/{token}.{donor}{self.name}_{action}.log"}
+
+    def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
+        result = super()._result_wildcards(entity)
+        if self.report_per_donor and self.parent.effective_group_by == "cohort":
+            for members in self.parent.cohort_members.values():
+                if entity in members:
+                    result["donor_library_name"] = members
+                    break
+        return result
 
 
-class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPart):
+class BcftoolsStatsStepPart(ReportStepPart):
     """VCF statistics computation with ``bcftools stats``.
 
     Statistics are computed overall and per-sample
@@ -645,14 +560,11 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
 
     report_outputs = {"run": {"txt": ReportOutput("bcftools stats", caption="bcftools_stats.rst")}}
 
-    actions = ("run",)
-
     report_per_donor = True
 
     published_keys = ("txt", "txt_md5")
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
@@ -660,11 +572,6 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
             "vcf",
             "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
         )
-
-    def get_output_files(self, action: str) -> SnakemakeDict:
-        """Return step part output files"""
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
@@ -679,29 +586,14 @@ class BcftoolsStatsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStep
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"donor_library_name": wildcards.donor_library_name}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
 
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="2h",
-            mem="1024MB",
-        )
-
-
-class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPart):
+class BcftoolsRohStepPart(ReportStepPart):
     """ROH calling with `bcftools roh`."""
 
     name = "bcftools_roh"
-    actions = ("run",)
     report_per_donor = False
     published_keys = ("txt", "txt_md5")
+    default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="4GB")
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
@@ -712,11 +604,6 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
         if self.config.get(self.name).get("path_targets"):
             yield "path_targets", self.config.get(self.name).get("path_targets")
-
-    def get_output_files(self, action: str) -> SnakemakeDict:
-        """Return step part output files"""
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
 
     def _get_params_run(self, wildcards):
         return {
@@ -735,32 +622,17 @@ class BcftoolsRohStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPa
         for key, ext in ext_names.items():
             yield key, f"{base_path}{ext}"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
 
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="1h",
-            mem="4GB",
-        )
-
-
-class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPart):
+class JannovarStatisticsStepPart(ReportStepPart):
     """Base class for VCF statistics computation with "jannovar statistics"
 
     Statistics are computed overall and per-sample
     """
 
     name = "jannovar_stats"
-    actions = ("run",)
     report_per_donor = False
     published_keys = ("report", "report_md5")
+    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem=f"{int(3.75 * 1024 * 2)}MB")
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
@@ -789,23 +661,8 @@ class JannovarStatisticsStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Bas
     def _get_params_run(self, wildcards):
         return {"path_ser": self.config.get(self.name).get("path_ser")}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
 
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="4h",
-            mem=f"{int(3.75 * 1024 * 2)}MB",
-        )
-
-
-class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, BaseStepPart):
+class BafFileGenerationStepPart(ReportStepPart):
     """Class for computing B allele fraction files.
 
     One file is generated per sample in the output VCF files.
@@ -814,13 +671,12 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     #: Step name
     name = "baf_file_generation"
 
-    #: Class available actions
-    actions = ("run",)
-
     #: Whether to report results per donor
     report_per_donor = True
 
     published_keys = ("bw", "bw_md5")
+
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
 
     @dictify
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
@@ -831,8 +687,7 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
         yield "reference_index", self.parent.get_upstream_paths("reference").fasta + ".fai"
 
     @dictify
-    def get_output_files(self, action: str) -> SnakemakeDictItemsGenerator:
-        self._validate_action(action)
+    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         base_path = (
             "{index_library_name}/report/baf/{index_library_name}.{donor_library_name,[^\\.]+}.baf"
         )
@@ -845,20 +700,8 @@ class BafFileGenerationStepPart(GetResultFilesMixin, ReportGetLogFileMixin, Base
     def _get_params_run(self, wildcards):
         return {"min_dp": self.config.baf_file_generation.min_dp}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="2h",
-            mem="1024MB",
-        )
-
 
 class SomaticVariantCallingStepPart(BaseStepPart):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{library_name}/out/{library_name}{ext}"
-
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         tumor = self.parent.get_upstream_paths("alignments", library_name=wildcards.library_name)
@@ -898,16 +741,6 @@ class SomaticVariantCallingStepPart(BaseStepPart):
 
     def get_tumor_lib_name(self, wildcards):
         return wildcards.library_name
-
-    def get_output_files(self, action):
-        self._validate_action(action)
-        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
-
-    @dictify
-    def get_log_file(self, action):
-        self._validate_action(action)
-
-        yield "log", "work/{library_name}/log/{library_name}.log"
 
 
 class Mutect2StepPart(SomaticVariantCallingStepPart):
@@ -1100,51 +933,44 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
-    def get_output_files(self, action):
-        exts = {}
-        output_files = {}
+    def _get_output_files_scatter(self):
+        scatter = getattr(self.parent.workflow.globals.get("scatter"), self.name)
+        template = (
+            "work/{{library_name}}/out/{{library_name}}/mutect2par/scatter/{scatteritem}.region.bed"
+        )
+        return {"regions": scatter(template)}
 
-        self._validate_action(action)
-        tool = self.config.tool
-        if self.name != tool:
-            return {}
-        base_path_out = self.base_path_out
+    def _get_output_files_run(self):
+        prefix = "work/{library_name}/out/{library_name}/mutect2par/run/{scatteritem}"
+        return {
+            "vcf": prefix + ".raw.vcf.gz",
+            "vcf_tbi": prefix + ".raw.vcf.gz.tbi",
+            "stats": prefix + ".raw.vcf.stats",
+            "f1r2": prefix + ".raw.f1r2.tar.gz",
+        }
 
-        if action == "scatter":
-            scatter = self.parent.workflow.globals.get("scatter")
-            scatter = getattr(scatter, self.name)
-            template = "work/{{library_name}}/out/{{library_name}}/mutect2par/scatter/{scatteritem}.region.bed"
-            return {"regions": scatter(template)}
-
-        if action == "run":
-            base_path_out = (
-                "work/{library_name}/out/{library_name}/mutect2par/run/{scatteritem}{ext}"
-            )
-            exts = {
-                "vcf": ".raw.vcf.gz",
-                "vcf_tbi": ".raw.vcf.gz.tbi",
-                "stats": ".raw.vcf.stats",
-                "f1r2": ".raw.f1r2.tar.gz",
-            }
-        if action == "gather":
-            exts = {
+    def _get_output_files_gather(self):
+        return self._with_exts(
+            {
                 "vcf": ".raw.vcf.gz",
                 "vcf_tbi": ".raw.vcf.gz.tbi",
                 "stats": ".raw.vcf.stats",
                 "orientation": ".raw.read_orientation_model.tar.gz",
             }
-        elif action == "pileup_normal" or action == "pileup_tumor":
-            ext_name = "normal" if action == "pileup_normal" else "tumor"
-            exts = {
-                "pileup": f".{ext_name}.pileup",
-            }
-        elif action == "contamination":
-            exts = {
-                "table": ".contamination.tbl",
-                "segments": ".segments.tbl",
-            }
-        elif action == "filter":
-            exts = {
+        )
+
+    def _get_output_files_pileup_normal(self):
+        return self._with_exts({"pileup": ".normal.pileup"})
+
+    def _get_output_files_pileup_tumor(self):
+        return self._with_exts({"pileup": ".tumor.pileup"})
+
+    def _get_output_files_contamination(self):
+        return self._with_exts({"table": ".contamination.tbl", "segments": ".segments.tbl"})
+
+    def _get_output_files_filter(self):
+        return self._with_exts(
+            {
                 "vcf": ".vcf.gz",
                 "vcf_md5": ".vcf.gz.md5",
                 "vcf_tbi": ".vcf.gz.tbi",
@@ -1152,24 +978,19 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                 "full_vcf": ".full.vcf.gz",
                 "full_vcf_tbi": ".full.vcf.gz.tbi",
             }
-        for key, ext in exts.items():
-            output_files[key] = base_path_out.replace("{ext}", ext)
-        return output_files
+        )
 
-    def get_log_file(self, action):
-        postfix = ""
+    @staticmethod
+    def _with_exts(exts: dict[str, str]) -> dict[str, str]:
+        return {key: "work/{library_name}/out/{library_name}" + ext for key, ext in exts.items()}
 
-        self._validate_action(action)
-        tool = self.config.tool
-        if self.name != tool:
-            return {}
-
-        if action != "gather":
-            if action == "run":
-                postfix = ".{scatteritem}"
-            else:
-                postfix = "." + action
-
+    def _get_log_file(self, action):
+        if action == "run":
+            postfix = ".{scatteritem}"
+        elif action == "gather":
+            postfix = ""
+        else:
+            postfix = "." + action
         return {"log": f"work/{{library_name}}/log/{{library_name}}{postfix}.log"}
 
     @listify
@@ -1287,10 +1108,11 @@ class VariantCallingWorkflow(BaseStep):
             )
         )
 
-    @listify
-    def get_result_files(self) -> SnakemakeListItemsGenerator:
-        yield from self.sub_steps[self.config.tool].get_result_files()
+    def get_result_files(self) -> list[str]:
+        """The files of the caller and of the enabled reports"""
+        names = [self.config.tool]
         for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
             name_config = self.config.get(name)
             if name_config and name_config.enabled:
-                yield from self.sub_steps[name].get_result_files()
+                names.append(name)
+        return [path for name in names for path in self.sub_steps[name].get_result_files()]

@@ -432,7 +432,7 @@ from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
+from snappy_pipeline.base import InvalidConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -450,12 +450,6 @@ from .model import NgsMapping as NgsMappingConfigModel
 from .model import Tool
 
 # TODO: Need something smarter still for @RG
-
-#: Extensions of files to create as main payload
-EXT_VALUES = (".bam", ".bam.bai", ".bam.md5", ".bam.bai.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("bam", "bai", "bam_md5", "bai_md5")
 
 #: Available read mappers for (short/Illumina) DNA-seq data
 READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "mbcs")
@@ -582,10 +576,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     #: Class available actions. Read mapping step parts only support action "run".
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
-        self.extensions = EXT_VALUES
+    base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
@@ -597,38 +588,25 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         return reads_input_files(self.parent, wildcards.library_name)
 
     @dictify
-    def get_output_files(self, action):
-        """Return concrete output files that all read mapping sub steps will write"""
-        assert action in self.actions
+    def _get_output_files_run(self):
+        """Return the output files that all read mapping sub steps write."""
         if self.name != self.config.tool:
             return
-        yield from self._get_output_files_run_work().items()
-
-    @dictify
-    def _get_output_files_run_work(self):
-        """Return dict of output files to write to the ``work/`` directory."""
-        for ext in self.extensions:
+        for ext in (".bam", ".bam.bai", ".bam.md5", ".bam.bai.md5"):
             yield ext[1:].replace(".", "_"), self.base_path_out.format(ext=ext)
-        for ext in (".bamstats.txt", ".flagstats.txt", ".idxstats.txt"):
-            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
-            yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_"), path
-        for ext in (
-            ".bamstats.txt.md5",
-            ".flagstats.txt.md5",
-            ".idxstats.txt.md5",
-        ):
-            path = ("work/{{library_name}}/report/bam_qc/{{library_name}}.bam{ext}").format(ext=ext)
-            yield "report_" + ".".join(ext.split(".")[1:3]).replace(".", "_") + "_md5", path
+        reports = ("bamstats", "flagstats", "idxstats")
+        for suffix in ("", ".md5"):
+            for report in reports:
+                key = f"report_{report}_txt" + suffix.replace(".", "_")
+                yield (
+                    key,
+                    f"work/{{library_name}}/report/bam_qc/{{library_name}}.bam.{report}.txt{suffix}",
+                )
 
-    @dictify
-    def get_log_file(self, action):
-        """Return dict of log files in the "log" directory."""
-        _ = action
+    def _get_log_file_run(self):
         if self.name != self.config.tool:
-            return
-        # Unique log paths per tool
-        prefix = "work/{library_name}/log/{library_name}.mapping"
-        yield "log", prefix + ".log"
+            return {}
+        return {"log": "work/{library_name}/log/{library_name}.mapping.log"}
 
 
 class BwaStepPart(ReadMappingStepPart):
@@ -640,25 +618,10 @@ class BwaStepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "dna"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
-        mem_mb = int(4.5 * 1024 * self.config.bwa.num_threads_align)
-        return ResourceUsage(
-            threads=self.config.bwa.num_threads_align, runtime="3d", mem=f"{mem_mb}MB"
-        )
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.bwa.num_threads_align
+        return ResourceUsage(threads=threads, runtime="3d", mem=f"{int(4.5 * 1024 * threads)}MB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
@@ -674,16 +637,10 @@ class BwaMem2StepPart(ReadMappingStepPart):
     name = "bwa_mem2"
     tool_category = "dna"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
-        mem_mb = int(4.5 * 1024 * self.config.bwa_mem2.num_threads_align)
-        return ResourceUsage(
-            threads=self.config.bwa_mem2.num_threads_align, runtime="3d", mem=f"{mem_mb}MB"
-        )
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.bwa_mem2.num_threads_align
+        return ResourceUsage(threads=threads, runtime="3d", mem=f"{int(4.5 * 1024 * threads)}MB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
@@ -701,18 +658,7 @@ class MBCsStepPart(ReadMappingStepPart):
     name = "mbcs"
     tool_category = "dna"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        self._validate_action(action)
-        return ResourceUsage(threads=1, runtime="72h", mem="4GB", partition="medium")
+    default_resource_usage = ResourceUsage(threads=1, runtime="72h", mem="4GB", partition="medium")
 
     def _get_input_files_run(self, wildcards):
         inputs = super()._get_input_files_run(wildcards) | {
@@ -758,10 +704,9 @@ class StarStepPart(ReadMappingStepPart):
 
     intermediate_outputs = {"run": ("gene_counts",)}
 
-    @dictify
-    def _get_output_files_run_work(self):
+    def _get_output_files_run(self):
         """Override base class' function to make Snakemake aware of extra files for STAR."""
-        output_files = super()._get_output_files_run_work()
+        output_files = super()._get_output_files_run()
         if (cfg := self.config.get(self.name)) is None:
             return output_files
 
@@ -785,16 +730,10 @@ class StarStepPart(ReadMappingStepPart):
             "index": self.parent.get_index_files("star"),
         }
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
-        mem_gb = int(3.5 * self.config.star.num_threads_align)
-        return ResourceUsage(
-            threads=self.config.star.num_threads_align, runtime="2d", mem=f"{mem_gb}GB"
-        )
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.star.num_threads_align
+        return ResourceUsage(threads=threads, runtime="2d", mem=f"{int(3.5 * threads)}GB")
 
 
 class StrandednessStepPart(BaseStepPart):
@@ -816,17 +755,19 @@ class StrandednessStepPart(BaseStepPart):
             ),
         }
 
-    @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
-        if action == "infer":
-            tpl = "work/{library_name}/strandedness/{library_name}"
-            yield "tsv", tpl + ".infer.txt"
-            yield "decision", tpl + ".decision.json"
-            yield "decision_md5", tpl + ".decision.json.md5"
-        elif action == "counts":
-            yield "counts", "work/{library_name}/out/{library_name}.GeneCounts.tab"
-            yield "counts_md5", "work/{library_name}/out/{library_name}.GeneCounts.tab.md5"
+    def _get_output_files_infer(self):
+        tpl = "work/{library_name}/strandedness/{library_name}"
+        return {
+            "tsv": tpl + ".infer.txt",
+            "decision": tpl + ".decision.json",
+            "decision_md5": tpl + ".decision.json.md5",
+        }
+
+    def _get_output_files_counts(self):
+        return {
+            "counts": "work/{library_name}/out/{library_name}.GeneCounts.tab",
+            "counts_md5": "work/{library_name}/out/{library_name}.GeneCounts.tab.md5",
+        }
 
     def get_result_files(self):
         if self.config.tool != "star":
@@ -840,12 +781,8 @@ class StrandednessStepPart(BaseStepPart):
                 yield tpl_strandedness.format(library_name=library_name)
                 yield tpl_strandedness.format(library_name=library_name) + ".md5"
 
-    @dictify
-    def get_log_file(self, action):
-        """Return dict of log files in the "log" directory."""
-        _ = action
-        prefix = "work/{library_name}/log/{library_name}.strandedness"
-        yield "log", prefix + ".log"
+    def _get_log_file(self, action):
+        return {"log": "work/{library_name}/log/{library_name}.strandedness.log"}
 
     def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, "strandedness", None)
@@ -867,25 +804,10 @@ class Minimap2StepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "dna_long"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
-        mem_gb = int(3.5 * self.config.minimap2.mapping_threads)
-        return ResourceUsage(
-            threads=self.config.minimap2.mapping_threads, runtime="2d", mem=f"{mem_gb}GB"
-        )
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.minimap2.mapping_threads
+        return ResourceUsage(threads=threads, runtime="2d", mem=f"{int(3.5 * threads)}GB")
 
     def _get_input_files_run(self, wildcards):
         inputs = super()._get_input_files_run(wildcards)
@@ -938,31 +860,12 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
                 break
         yield "targets_bed", path_targets_bed
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        self._validate_action(action)
-        yield from getattr(self, f"_get_output_files_{action}_work")().items()
+    def _get_output_files_run(self):
+        prefix = "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
+        return {"json": prefix, "json_md5": prefix + ".md5"}
 
-    @dictify
-    def _get_output_files_run_work(self):
-        yield (
-            "json",
-            "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz",
-        )
-        yield (
-            "json_md5",
-            "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz.md5",
-        )
-
-    @dictify
-    def get_log_file(self, action):
-        self._validate_action(action)
-        if action == "run":
-            prefix = "work/{library_name}/log/{library_name}.target_cov_report"
-            yield "log", prefix + ".log"
-        else:
-            yield "log", "work/target_cov_report/log/snakemake.target_coverage.log"
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.target_cov_report.log"}
 
     def _get_params_run(self, wildcards):
         # Find bed file associated with library kit
@@ -984,22 +887,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
             "path_targets_bed": path_targets_bed,
         }
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="4h",  # 4 hours
-            mem="20GB",
-        )
+    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
 
 
 class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
@@ -1022,24 +910,11 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def _check_action(self, action):
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
-
     @dictify
     def _get_input_files_run(self, wildcards):
         yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
         yield "bai", "work/{library_name}/out/{library_name}.bam.bai".format(**wildcards)
         yield "reference", self.parent.get_upstream_paths("reference").fasta
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        self._check_action(action)
-        yield from self._get_output_files_run_work().items()
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
@@ -1047,7 +922,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         }
 
     @dictify
-    def _get_output_files_run_work(self):
+    def _get_output_files_run(self):
         prefix = "work/{library_name}/report/cov/{library_name}"
         yield "vcf", prefix + ".cov.vcf.gz"
         yield "vcf_md5", prefix + ".cov.vcf.gz.md5"
@@ -1058,28 +933,10 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
         yield "mq_bw", prefix + ".mq.bw"
         yield "mq_bw_md5", prefix + ".mq.bw.md5"
 
-    @dictify
-    def get_log_file(self, action):
-        _ = action
-        prefix = "work/{library_name}/log/{library_name}.bam_collect_doc"
-        yield "log", prefix + ".log"
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.bam_collect_doc.log"}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        self._check_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="24h",
-            mem="2GB",
-        )
+    default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="2GB")
 
 
 class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
@@ -1097,57 +954,19 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def skip_result_files_for_library(self, library_name: str) -> bool:
         return not self.config.ngs_chew_fingerprint.enabled
 
-    def _check_action(self, action):
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            raise UnsupportedActionException(
-                f"Action '{action}' is not supported. Valid options: {actions_str}"
-            )
-
     @dictify
     def _get_input_files_fingerprint(self, wildcards):
         yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
         yield "reference", self.parent.get_upstream_paths("reference").fasta
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        self._check_action(action)
-        yield from self._get_output_files_fingerprint_work().items()
+    def _get_output_files_fingerprint(self):
+        prefix = "work/{library_name}/report/fingerprint/{library_name}.npz"
+        return {"npz": prefix, "npz_md5": prefix + ".md5"}
 
-    @dictify
-    def _get_output_files_fingerprint_work(self):
-        yield "npz", "work/{library_name}/report/fingerprint/{library_name}.npz"
-        yield (
-            "npz_md5",
-            "work/{library_name}/report/fingerprint/{library_name}.npz.md5",
-        )
+    def _get_log_file_fingerprint(self):
+        return {"log": "work/{library_name}/log/{library_name}.ngs_chew_fingerprint.log"}
 
-    def get_log_file(self, action):
-        self._check_action(action)
-        return getattr(self, "_get_log_files_{action}".format(action=action))()
-
-    @dictify
-    def _get_log_files_fingerprint(self):
-        prefix = "work/{library_name}/log/{library_name}.ngs_chew_fingerprint"
-        yield "log", prefix + ".log"
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        self._check_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="4h",
-            mem="2GB",
-        )
+    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="2GB")
 
 
 class NgsMappingWorkflow(BaseStep):
@@ -1288,15 +1107,6 @@ class NgsMappingWorkflow(BaseStep):
         for sheet in sheets:
             for entity in sheet.bio_entities.values():
                 yield entity
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all test samples in all sample sheets.
-        """
-        for sub_step in self.sub_steps.values():
-            yield from sub_step.get_result_files()
 
     def validate_project(self, config, sample_sheets_list):
         """Validates project.

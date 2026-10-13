@@ -12,16 +12,13 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
     WritePedigreeStepPart,
 )
-from snappy_pipeline.workflows.abstract.common import (
-    ForwardResourceUsageMixin,
-    ForwardSnakemakeFilesMixin,
-)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 from snappy_pipeline.workflows.common.sv_calling import (
+    VCF_OUTPUTS,
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
 )
@@ -60,8 +57,6 @@ def escape_dots_dashes(s: str) -> str:
 class PopDelStepPart(
     SvCallingGetResultFilesMixin,
     SvCallingGetLogFileMixin,
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
     BaseStepPart,
 ):
     """WGS SV identification using PopDel.
@@ -77,17 +72,7 @@ class PopDelStepPart(
 
     intermediate_outputs = {"profile": ("profile",), "concat_calls": ("vcf", "vcf_tbi")}
 
-    _resource_usage = ResourceUsage(
-        threads=2,
-        runtime="4d",
-        mem="24GB",
-    )
-    resource_usage_dict = {
-        "profile": _resource_usage,
-        "call": _resource_usage,
-        "concat_calls": _resource_usage,
-        "reorder_vcf": _resource_usage,
-    }
+    default_resource_usage = ResourceUsage(threads=2, runtime="4d", mem="24GB")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -182,15 +167,8 @@ class PopDelStepPart(
         yield "vcf", "work/cohort/out/cohort.concat_calls.vcf.gz"
         yield "vcf_tbi", "work/cohort/out/cohort.concat_calls.vcf.gz.tbi"
 
-    @dictify
     def _get_output_files_reorder_vcf(self):
-        prefix = "work/{library_name}/out/{library_name}"
-        work_files = {}
-        work_files["vcf"] = f"{prefix}.vcf.gz"
-        work_files["vcf_md5"] = f"{prefix}.vcf.gz.md5"
-        work_files["vcf_tbi"] = f"{prefix}.vcf.gz.tbi"
-        work_files["vcf_tbi_md5"] = f"{prefix}.vcf.gz.tbi.md5"
-        yield from work_files.items()
+        return dict(VCF_OUTPUTS)
 
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
@@ -215,11 +193,7 @@ class Sniffles2StepPart(BaseStepPart):
     name = "sniffles2"
     actions = ("bam_to_snf", "snf_to_vcf")
 
-    _resource_usage = ResourceUsage(threads=2, runtime="2h", mem="4GB")
-    resource_usage_dict = {
-        "bam_to_snf": _resource_usage,
-        "snf_to_vcf": _resource_usage,
-    }
+    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="4GB")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -305,12 +279,3 @@ class SvCallingWgsWorkflow(BaseStep):
         for sheet in sheets:
             for pedigree in sheet.cohort.pedigrees:
                 yield from pedigree.donors
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all test samples in all sample sheets.
-        """
-        for sub_step in self.sub_steps.values():
-            yield from sub_step.get_result_files()

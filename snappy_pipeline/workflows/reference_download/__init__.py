@@ -18,12 +18,11 @@ class _ReferenceDownloadStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards):
         return []
 
-    @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
+    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="2GB")
+
+    def _get_output_files_run(self):
         work_fasta = "work/reference_download/out/reference.fa"
-        yield "fasta", work_fasta
-        yield "fasta_md5", work_fasta + ".md5"
+        return {"fasta": work_fasta, "fasta_md5": work_fasta + ".md5"}
 
     def _base_args(self) -> dict:
         source_cfg = getattr(self.config, self.name)
@@ -39,10 +38,8 @@ class _ReferenceDownloadStepPart(BaseStepPart):
             "molecule": source_cfg.molecule,
         }
 
-    @dictify
-    def _get_log_file(self, action):
-        self._validate_action(action)
-        yield "log", f"work/reference_download/log/reference_download.{self.name}.log"
+    def _get_log_file_run(self):
+        return {"log": f"work/reference_download/log/reference_download.{self.name}.log"}
 
     @dictify
     def _get_params_run(self, wildcards):
@@ -63,10 +60,6 @@ class EnsemblReferenceDownloadStepPart(_ReferenceDownloadStepPart):
         yield "chromosome", cfg.chromosome
         yield "branch", cfg.branch
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=2, runtime="2h", mem="2GB")
-
 
 class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "refseq"
@@ -80,10 +73,6 @@ class RefseqReferenceDownloadStepPart(_ReferenceDownloadStepPart):
         yield "assembly_name", cfg.assembly_name
         yield "file_name", cfg.file_name
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=2, runtime="2h", mem="2GB")
-
 
 class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
     name = "ucsc"
@@ -95,10 +84,6 @@ class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
         cfg = self.config.ucsc
         yield "db", cfg.db
         yield "file_name", cfg.file_name
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(threads=2, runtime="2h", mem="2GB")
 
 
 class ReferenceDownloadWorkflow(BaseStep):

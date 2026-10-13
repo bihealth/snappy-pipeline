@@ -61,9 +61,6 @@ Parallel Execution
 Parallel execution is not performed currently.
 """
 
-import os
-import sys
-
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
@@ -115,12 +112,6 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         if self.config.target_coverage_report.path_targets_bed:
             yield "targets_bed", self.config.target_coverage_report.path_targets_bed
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        self._validate_action(action)
-        yield from getattr(self, f"_get_output_files_{action}_work")().items()
-
     @listify
     def _get_input_files_collect(self, wildcards):
         _ = wildcards
@@ -128,27 +119,27 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.alfred.json.gz"
 
     @dictify
-    def _get_output_files_collect_work(self):
+    def _get_output_files_collect(self):
         yield "report", "work/target_cov_report/out/target_coverage_summary.txt"
 
     @dictify
-    def _get_output_files_bam_qc_work(self):
+    def _get_output_files_bam_qc(self):
         for report in ("bamstats", "flagstats", "idxstats"):
             report_path = f"work/{{library_name}}/report/bam_qc/{{library_name}}.bam.{report}.txt"
             yield report, report_path
 
-    def get_log_file(self, action):
-        self._validate_action(action)
-        if action == "run":
-            return "work/{library_name}/log/snakemake.target_coverage.log"
-        elif action == "bam_qc":
-            return self._get_log_file_bam_qc()
-        else:
-            return "work/target_cov_report/log/snakemake.target_coverage.log"
+    def _get_log_file_run(self):
+        return "work/{library_name}/log/snakemake.target_coverage.log"
 
-    @staticmethod
-    def _get_log_file_bam_qc():
+    def _get_log_file_collect(self):
+        return "work/target_cov_report/log/snakemake.target_coverage.log"
+
+    def _get_log_file_bam_qc(self):
         return {"log": "work/{library_name}/log/{library_name}.bam_qc.log"}
+
+    def get_result_files(self):
+        """The reports are not published."""
+        return []
 
     def _collect_bam_files(self, wildcards):
         """Yield the BAM file of the library."""
@@ -165,6 +156,27 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     actions = ("annotate", "bam_qc", "gvcf_to_vcf", "merge_vcf")
 
     intermediate_outputs = {"gvcf_to_vcf": ("vcf", "vcf_tbi"), "merge_vcf": ("vcf", "vcf_tbi")}
+
+    def get_result_files(self) -> list[str]:
+        """The files of the export, for the index of each pedigree"""
+        indexes = [
+            pedigree.index.dna_ngs_library.name
+            for sheet in filter(is_not_background, self.parent.shortcut_sheets)
+            for pedigree in sheet.cohort.pedigrees
+            if pedigree.index and pedigree.index.dna_ngs_library
+        ]
+        keys = ["gts", "gts_md5", "db_infos", "db_infos_md5"]
+        outputs = self.get_output_files("annotate")
+        if self.config.bam_available_flag:
+            outputs |= self.get_output_files("bam_qc")
+            keys += ["bam_qc", "bam_qc_md5"]
+        return [
+            path
+            for key in keys
+            for path in expand(
+                outputs[key].replace("work/", "output/", 1), index_ngs_library=indexes
+            )
+        ]
 
     #: VCF key to file extensions
     vcf_key_ext_dict = {
@@ -252,12 +264,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         return result
 
     @dictify
-    def get_output_files(self, action):
-        """Return output files for action"""
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
-
-    @dictify
     def _get_output_files_gvcf_to_vcf(self):
         tpl = (
             f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
@@ -266,14 +272,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         for key, ext in self.vcf_key_ext_dict.items():
             yield key, tpl + ext
 
-    @dictify
-    def _get_output_files_merge_vcf(self):
-        tpl = (
-            f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
-            f"{self.external_tool_prefix}{{index_ngs_library}}"
-        )
-        for key, ext in self.vcf_key_ext_dict.items():
-            yield key, tpl + ext
+    _get_output_files_merge_vcf = _get_output_files_gvcf_to_vcf
 
     @dictify
     def _get_output_files_annotate(self):
@@ -297,50 +296,23 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         yield key, prefix + ".bam-qc.tsv.gz"
         yield key + "_md5", prefix + ".bam-qc.tsv.gz.md5"
 
-    @dictify
-    def get_log_file(self, action):
-        self._validate_action(action)
+    def _get_log_file(self, action):
         if action in ("gvcf_to_vcf", "merge_vcf"):
-            return self._get_log_file_complete_set(action)
-        else:
-            return self._get_log_file_annotation_generic(action)
-
-    def _get_log_file_complete_set(self, action):
-        prefix = (
-            f"work/{self.external_tool_prefix}{{index_ngs_library}}/"
-            f"log/{self.external_tool_prefix}{{index_ngs_library}}.{action}"
-        )
-        return {"log": prefix + ".log"}
-
-    @staticmethod
-    def _get_log_file_annotation_generic(action):
-        prefix = (
-            f"work/varfish_annotated.{{index_ngs_library}}/log/"
-            f"varfish_annotated.{action}.{{index_ngs_library}}"
-        )
-        return {"log": prefix + ".log"}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        self._validate_action(action)
-        if action == "annotate":
-            return ResourceUsage(
-                threads=2,
-                runtime="4d",  # 4 days
-                mem=f"{7 * 1024 * 2}MB",
+            prefix = (
+                f"work/{self.external_tool_prefix}{{index_ngs_library}}/"
+                f"log/{self.external_tool_prefix}{{index_ngs_library}}.{action}"
             )
         else:
-            return ResourceUsage(
-                threads=1,
-                runtime="2h",  # 2 hours
-                mem=f"{7 * 1024 * 2}MB",
+            prefix = (
+                f"work/varfish_annotated.{{index_ngs_library}}/log/"
+                f"varfish_annotated.{action}.{{index_ngs_library}}"
             )
+        return {"log": prefix + ".log"}
+
+    resource_usage = {
+        "annotate": ResourceUsage(threads=2, runtime="4d", mem=f"{7 * 1024 * 2}MB"),
+    }
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem=f"{7 * 1024 * 2}MB")
 
     def _get_params_gvcf_to_vcf(self, wildcards):
         result = {
@@ -447,45 +419,3 @@ class VariantExportExternalWorkflow(BaseStep):
                     for test_sample in bio_sample.test_samples.values():
                         for library in test_sample.ngs_libraries.values():
                             yield library.name
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all primary DNA libraries and perform joint calling within pedigrees
-        """
-        # Initialise variables
-        name_pattern = "varfish_annotated.{index.dna_ngs_library.name}"
-        file_exts = (".tsv.gz", ".tsv.gz.md5")
-
-        # Define infixes and actions - check if BAM QC is possible
-        infixes = ("gts", "db-infos")
-        if self.config.bam_available_flag:
-            infixes += ("bam-qc",)
-
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "out", name_pattern + ".{infix}{ext}"),
-            infix=infixes,
-            ext=file_exts,
-        )
-
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list"""
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                if not pedigree.index:  # pragma: no cover
-                    msg = "INFO: pedigree without index (names: {})"
-                    print(
-                        msg.format(list(sorted(d.name for d in pedigree.donors))), file=sys.stderr
-                    )
-                    continue
-                elif not pedigree.index.dna_ngs_library:  # pragma: no cover
-                    msg = "INFO: pedigree index without DNA NGS library (names: {})"
-                    print(
-                        msg.format(  # pragma: no cover
-                            list(sorted(d.name for d in pedigree.donors))
-                        ),
-                        file=sys.stderr,
-                    )
-                    continue  # pragma: no cover
-                yield from expand(tpl, index=[pedigree.index], **kwargs)

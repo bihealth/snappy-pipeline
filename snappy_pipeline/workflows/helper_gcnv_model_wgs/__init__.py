@@ -80,6 +80,7 @@ The default configuration is as follows.
 
 """
 
+import dataclasses
 import os
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
@@ -89,11 +90,15 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
-from snappy_wrappers.resource_usage import ResourceUsage
 
 from .model import HelperGcnvModelWgs as HelperGcnvModelWgsConfigModel
 
 #: Default configuration for the helper_gcnv_model_wgs schema
+
+
+def _filter_intervals_memory(wildcards, input=None, threads=None, attempt=1):
+    _, _, _ = wildcards, input, threads  # unused but cannot be renamed
+    return f"{attempt * 4 * 1024 + 16 * 1024}MB"
 
 
 class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
@@ -149,29 +154,12 @@ class BuildGcnvWgsModelStepPart(BuildGcnvModelStepPart):
         )
         yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        result = super().get_resource_usage(action)
-
-        def get_memory(wildcards, input=None, threads=None, attempt=1):
-            _, _, _ = wildcards, input, threads  # unused but cannot be renamed
-            return f"{attempt * 4 * 1024 + 16 * 1024}MB"
-
-        if action == "filter_intervals":
-            import dataclasses
-
-            result = dataclasses.replace(
-                result,
-                mem=get_memory,
-            )
-
-        return result
+    resource_usage = {
+        **BuildGcnvModelStepPart.resource_usage,
+        "filter_intervals": dataclasses.replace(
+            BuildGcnvModelStepPart.default_resource_usage, mem=_filter_intervals_memory
+        ),
+    }
 
 
 class HelperBuildWgsGcnvModelWorkflow(BaseStep):
@@ -203,11 +191,6 @@ class HelperBuildWgsGcnvModelWorkflow(BaseStep):
                 BuildGcnvWgsModelStepPart,
             )
         )
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the gCNV build model workflow"""
-        yield from self.sub_steps["gcnv"].get_result_files()
 
     @listify
     def all_donors(self, include_background=True):

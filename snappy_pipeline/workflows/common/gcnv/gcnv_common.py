@@ -111,19 +111,13 @@ class GcnvCommonStepPart(
     #: Dictionary: Key: library name (str); Value: library kit (str).
     ngs_library_to_kit = None
 
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "high_resource": ResourceUsage(
-            threads=16,
-            runtime="4d",
-            mem="46080MB",
-        ),
-        "default": ResourceUsage(
-            threads=1,
-            runtime="1d",
-            mem="7680MB",
-        ),
-    }
+    #: Resource usage of the actions that run the gCNV model
+    resource_usage = dict.fromkeys(
+        ("call_cnvs", "post_germline_calls", "joint_germline_cnv_segmentation"),
+        ResourceUsage(threads=16, runtime="4d", mem="46080MB"),
+    )
+
+    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="7680MB")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -139,47 +133,3 @@ class GcnvCommonStepPart(
         self.index_ngs_library_to_pedigree = OrderedDict()
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-    def get_output_files(self, action):
-        """Get output function for gCNV build model rule.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns output function for gCNV rule based on inputted action.
-        """
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
-
-    def get_log_file(self, action):
-        """Get log file.
-
-        :param action: Action (i.e., step) in the workflow, examples: 'filter_intervals',
-        'coverage'.
-        :type action: str
-
-        :return: Returns template path to log file.
-        """
-        # TODO: move out the _get_log_file* functions where they belong
-        self._validate_action(action)
-        return getattr(self, f"_get_log_file_{action}")()
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        self._validate_action(action)
-        high_resource_action_list = (
-            "call_cnvs",
-            "post_germline_calls",
-            "joint_germline_cnv_segmentation",
-        )
-        if action in high_resource_action_list:
-            return self.resource_usage_dict.get("high_resource")
-        else:
-            return self.resource_usage_dict.get("default")

@@ -78,11 +78,13 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import VariantPhasing as VariantPhasingConfigModel
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
+#: Output keys and extensions of a phased VCF
+_OUTPUTS = {
+    "vcf": ".vcf.gz",
+    "vcf_tbi": ".vcf.gz.tbi",
+    "vcf_md5": ".vcf.gz.md5",
+    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
+}
 
 #: Translate name in configuration to token.
 CONFIG_TO_TOKEN = {
@@ -116,9 +118,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
     def _get_input_files_run(self, wildcards):
         return []
 
-    @staticmethod
-    def get_output_files(action):
-        assert action == "run"
+    def _get_output_files_run(self):
         return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
 
     def run(self, wildcards, output):
@@ -172,19 +172,20 @@ class VariantPhasingBaseStep(BaseStepPart):
         published = self.name_pattern in (CONFIG_TO_TOKEN[p] for p in self.config.phasings)
         return {} if published else {"run": ("vcf", "vcf_tbi")}
 
+    @property
+    def base_path_out(self):
+        return f"work/{{index_library}}/out/{self.name_pattern}.{{index_library}}"
+
     @dictify
-    def get_output_files(self, action):
-        assert action == "run"
+    def _get_output_files_run(self):
         # md5 files only for published phasings; gatk_pbt may only feed gatk_phasing_both
         published = self.name_pattern in (CONFIG_TO_TOKEN[p] for p in self.config.phasings)
-        for key, ext in zip(EXT_NAMES, EXT_VALUES):
+        for key, ext in _OUTPUTS.items():
             if published or not key.endswith("_md5"):
                 yield key, self.base_path_out + ext
 
-    @dictify
-    def _get_log_file(self, action):
-        assert action == "run"
-        yield "log", f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.log"
+    def _get_log_file_run(self):
+        return {"log": f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.log"}
 
 
 class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
@@ -195,10 +196,6 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
 
     #: The file name token.
     name_pattern = "gatk_pbt"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{index_library}/out/gatk_pbt.{index_library}"
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -224,21 +221,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     def _get_params_run(self, wildcards) -> dict[str, Any]:
         return {"de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="1d",  # 1 day
-            mem=f"{14 * 1024}MB",
-        )
+    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{14 * 1024}MB")
 
 
 class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
@@ -326,28 +309,29 @@ class ReadBackedPhasingBaseStep(VariantPhasingBaseStep):
             "phase_quality_threshold": self.config.gatk_read_backed_phasing.phase_quality_threshold
         }
 
-    @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
-        if action == "scatter":
-            yield "regions", self._scattergather("scatter")(self.region_tpl)
-        elif action == "run":
-            yield "vcf", self.chunk_tpl + ".vcf.gz"
-            yield "vcf_tbi", self.chunk_tpl + ".vcf.gz.tbi"
-        else:
-            for key, ext in zip(EXT_NAMES, EXT_VALUES):
-                yield key, self.base_path_out + ext
+    def _get_output_files_scatter(self):
+        return {"regions": self._scattergather("scatter")(self.region_tpl)}
+
+    def _get_output_files_run(self):
+        return {
+            "vcf": self.chunk_tpl + ".vcf.gz",
+            "vcf_tbi": self.chunk_tpl + ".vcf.gz.tbi",
+        }
 
     @dictify
-    def _get_log_file(self, action):
-        self._validate_action(action)
-        if action == "scatter":
-            prefix = f"work/{self.name_pattern}.scatter/log"
-        elif action == "run":
-            prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.chunks/{{scatteritem}}"
-        else:
-            prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}"
-        yield "log", prefix + ".log"
+    def _get_output_files_gather(self):
+        for key, ext in _OUTPUTS.items():
+            yield key, self.base_path_out + ext
+
+    def _get_log_file_scatter(self):
+        return {"log": f"work/{self.name_pattern}.scatter/log.log"}
+
+    def _get_log_file_run(self):
+        prefix = f"work/{{index_library}}/log/{self.name_pattern}.{{index_library}}.chunks"
+        return {"log": prefix + "/{scatteritem}.log"}
+
+    def _get_log_file_gather(self):
+        return super()._get_log_file_run()
 
 
 class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
@@ -358,10 +342,6 @@ class ReadBackedPhasingOnlyStepPart(ReadBackedPhasingBaseStep):
 
     #: The file name token.
     name_pattern = "gatk_rbp"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{index_library}/out/gatk_rbp.{index_library}"
 
     def _yield_vcf(self, wildcards):
         real_index = self.ngs_library_to_pedigree[wildcards.index_library].index
@@ -385,10 +365,6 @@ class ReadBackedPhasingAlsoStepPart(ReadBackedPhasingBaseStep):
 
     #: The file name token.
     name_pattern = "gatk_pbt.gatk_rbp"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{index_library}/out/gatk_pbt.gatk_rbp.{index_library}"
 
     def _yield_vcf(self, wildcards):
         # Result of PhaseByTransmission step
@@ -444,7 +420,7 @@ class VariantPhasingWorkflow(BaseStep):
         for phasing_token in phasings:
             yield from self._yield_result_files(
                 f"output/{{index_library.name}}/out/{phasing_token}.{{index_library.name}}{{ext}}",
-                ext=EXT_VALUES,
+                ext=_OUTPUTS.values(),
             )
 
     def _yield_result_files(self, tpl, **kwargs):

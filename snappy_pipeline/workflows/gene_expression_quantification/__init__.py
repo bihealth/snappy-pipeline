@@ -69,14 +69,12 @@ contains the needed files (e.g. sa.bin, rsd.bin, txpInfo.bin, etc).
 Additionally, one can provide a gtf for the mapping between transcripts and genes.
 """
 
-import os
 from typing import Any
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -151,82 +149,6 @@ EXTENSIONS = {
 }
 
 
-class SalmonStepPart(BaseStepPart):
-    """Gene expression quantification for raw data using salmon"""
-
-    #: Step name
-    name = "salmon"
-
-    #: Class available actions
-    actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.cfg: SalmonConfigModel = self.config.salmon
-        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
-        self.extensions = EXTENSIONS["salmon"]
-        if self.config.salmon and self.config.salmon.path_transcript_to_gene:
-            self.extensions["gene_sf"] = ".gene.sf"
-            self.extensions["gene_sf_md5"] = ".gene.sf.md5"
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        """Return input files"""
-        if self.config.tool != self.name:
-            return
-        yield from reads_input_files(self.parent, wildcards.library_name).items()
-        yield "features", self.parent.get_upstream_paths("features").gtf
-        if self.cfg and self.cfg.path_index:
-            yield "index", self.cfg.path_index
-        if self.cfg and self.cfg.path_transcript_to_gene:
-            yield "transcript_to_gene", self.cfg.path_transcript_to_gene
-
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        assert action == "run"
-        tool = self.config.tool
-        if self.name != tool:
-            return {}
-        for k, v in self.extensions.items():
-            yield k, self.base_path_out.format(ext=v)
-
-    @dictify
-    def get_log_file(self, action):
-        """Return mapping of log files."""
-        assert action == "run"
-        tool = self.config.tool
-        if self.name != tool:
-            return {}
-        prefix = "work/{library_name}/log/{library_name}"
-        yield "log", prefix + ".log"
-
-    def _get_params_run(self, wildcards):
-        """Return dict for the wrapper"""
-        result = reads_params(self.parent, wildcards.library_name)
-        result |= self.config.salmon.model_dump(
-            by_alias=True, exclude={"path_index", "path_transcript_to_gene"}
-        )
-        result["strand"] = self.config.strand
-        return result
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=16,
-            runtime="4h",  # 4 hours
-            mem="32GB",
-        )
-
-
 class GeneExpressionQuantificationStepPart(BaseStepPart):
     """Base class for gene expression quantifiers"""
 
@@ -253,31 +175,57 @@ class GeneExpressionQuantificationStepPart(BaseStepPart):
             input_files["decision"] = strandedness.decision
         return input_files
 
-    def get_output_files(self, action):
-        """Return output files that sub steps must return"""
-        assert action == "run"
-        tool = self.config.tool
-        if self.name != tool:
+    def _get_output_files_run(self):
+        if self.name != self.config.tool:
             return {}
-        return dict(
-            zip(
-                EXTENSIONS[self.name].keys(),
-                expand(self.base_path_out, ext=EXTENSIONS[self.name].values()),
-            )
-        )
+        return {
+            key: self.base_path_out.format(ext=ext) for key, ext in EXTENSIONS[self.name].items()
+        }
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"strand": self.config.strand}
 
-    @dictify
-    def get_log_file(self, action):
-        """Return mapping of log files."""
-        assert action == "run"
-        tool = self.config.tool
-        if self.name != tool:
+    def _get_log_file_run(self):
+        if self.name != self.config.tool:
             return {}
-        prefix = "work/{library_name}/log/{library_name}"
-        yield "log", prefix + ".log"
+        return {"log": "work/{library_name}/log/{library_name}.log"}
+
+
+class SalmonStepPart(GeneExpressionQuantificationStepPart):
+    """Gene expression quantification for raw data using salmon"""
+
+    #: Step name
+    name = "salmon"
+
+    #: Class available actions
+    actions = ("run",)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.cfg: SalmonConfigModel = self.config.salmon
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        """Return input files"""
+        if self.config.tool != self.name:
+            return
+        yield from reads_input_files(self.parent, wildcards.library_name).items()
+        yield "features", self.parent.get_upstream_paths("features").gtf
+        if self.cfg and self.cfg.path_index:
+            yield "index", self.cfg.path_index
+        if self.cfg and self.cfg.path_transcript_to_gene:
+            yield "transcript_to_gene", self.cfg.path_transcript_to_gene
+
+    def _get_params_run(self, wildcards):
+        """Return dict for the wrapper"""
+        result = reads_params(self.parent, wildcards.library_name)
+        result |= self.config.salmon.model_dump(
+            by_alias=True, exclude={"path_index", "path_transcript_to_gene"}
+        )
+        result["strand"] = self.config.strand
+        return result
+
+    default_resource_usage = ResourceUsage(threads=16, runtime="4h", mem="32GB")
 
 
 class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
@@ -296,25 +244,7 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "features", self.parent.get_upstream_paths("features").gtf
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=2,
-            runtime="1d",  # 1 day
-            mem="6700MB",
-        )
+    default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="6700MB")
 
 
 class StrandednessStepPart(GeneExpressionQuantificationStepPart):
@@ -333,25 +263,7 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
             return
         yield "exon_bed", self.config.strandedness.path_exon_bed
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=2,
-            runtime="12h",  # 12 hours
-            mem="6700MB",
-        )
+    default_resource_usage = ResourceUsage(threads=2, runtime="12h", mem="6700MB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if self.config.tool != self.name:
@@ -371,21 +283,7 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="3d",  # 3 days
-            mem="127GB",
-        )
+    default_resource_usage = ResourceUsage(threads=1, runtime="3d", mem="127GB")
 
 
 class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
@@ -411,21 +309,7 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
             "num_threads": self.config.dupradar.num_threads,
         }
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=8,
-            runtime="4d",  # 4 days
-            mem="6700MB",
-        )
+    default_resource_usage = ResourceUsage(threads=8, runtime="4d", mem="6700MB")
 
 
 class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
@@ -445,21 +329,7 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
         yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield "rnaseqc_path_annotation_gtf", self.config.rnaseqc.rnaseqc_path_annotation_gtf
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="4h",  # 4 hours
-            mem="16GB",
-        )
+    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="16GB")
 
 
 class QCStepPartStats(GeneExpressionQuantificationStepPart):
@@ -471,21 +341,7 @@ class QCStepPartStats(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="4h",  # 4 hours
-            mem="4GB",
-        )
+    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="4GB")
 
 
 class GeneExpressionQuantificationWorkflow(BaseStep):
@@ -549,15 +405,7 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
         We will process all NGS libraries of all bio samples in all sample sheets.
         """
-        tool = self.config.tool
-        name_pattern = "{library_name}"
-
-        # Salmon special case
-        salmon_name_pattern = "{library_name}"
-        salmon_exts = EXTENSIONS["salmon"]
-        if self.config.salmon and self.config.salmon.path_transcript_to_gene:
-            salmon_exts["gene_sf"] = ".gene.sf"
-            salmon_exts["gene_sf_md5"] = ".gene.sf.md5"
+        exts = EXTENSIONS[self.config.tool].values()
 
         df = self.build_library_dataframe()
         if df.empty:
@@ -570,24 +418,10 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
                 continue
             extraction_type = row.iloc[0].get("extraction_type", "")
             if extraction_type.lower() == "rna":
-                if tool == "salmon":
-                    fns = expand(
-                        os.path.join(
-                            "output",
-                            salmon_name_pattern,
-                            "out",
-                            salmon_name_pattern + "{ext}",
-                        ),
-                        library_name=[library_name],
-                        ext=salmon_exts.values(),
-                    )
-                    all_fns.extend(fns)
-                else:
-                    fns = expand(
-                        os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-                        library_name=[library_name],
-                        ext=EXTENSIONS[tool].values(),
-                    )
-                    all_fns.extend(fns)
+                all_fns += expand(
+                    "output/{library_name}/out/{library_name}{ext}",
+                    library_name=[library_name],
+                    ext=exts,
+                )
 
         return all_fns

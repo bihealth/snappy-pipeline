@@ -5,7 +5,7 @@ import os
 
 from biomedsheets.shortcuts import GenericSampleSheet
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -34,10 +34,6 @@ class AdapterTrimmingStepPart(BaseStepPart):
     #: Keys of the tool config that name files, which are inputs and not params
     file_keys: tuple[str, ...] = ()
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{library_name}"
-
     def _get_input_files_run(self, wildcards):
         inputs = reads_input_files(self.parent, wildcards.library_name)
         tool_config = self.config.get(self.name)
@@ -46,25 +42,24 @@ class AdapterTrimmingStepPart(BaseStepPart):
                 inputs[key] = value
         return inputs
 
+    published_keys = ("out_done", "report_done")
+
     @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
+    def _get_output_files_run(self):
         tool = self.config.tool
         if self.name != tool:
             return []
         return (
-            ("out_done", self.base_path_out + "/out/.done"),
-            ("report_done", self.base_path_out + "/report/.done"),
-            ("rejected_done", self.base_path_out + "/rejected/.done"),
+            ("out_done", "work/{library_name}/out/.done"),
+            ("report_done", "work/{library_name}/report/.done"),
+            ("rejected_done", "work/{library_name}/rejected/.done"),
         )
 
     @dictify
     def _get_log_file(self, action):
-        self._validate_action(action)
         tool = self.config.tool
         if self.name != tool:
             return []
-        _ = action
         yield "log", "work/{library_name}/log/{library_name}.log"
 
     def _get_params_run(self, wildcards):
@@ -95,26 +90,18 @@ class BbdukStepPart(AdapterTrimmingStepPart):
     name = "bbduk"
     file_keys = ("adapter_sequences", "barcodes")
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=self.config.bbduk.num_threads,
-            runtime="12h",
-            mem="24000MB",
-        )
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.bbduk.num_threads, runtime="12h", mem="24000MB")
 
 
 class FastpStepPart(AdapterTrimmingStepPart):
     name = "fastp"
     file_keys = ("filter_by_index1", "filter_by_index2")
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=self.config.fastp.num_threads,
-            runtime="12h",
-            mem="24000MB",
-        )
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.fastp.num_threads, runtime="12h", mem="24000MB")
 
 
 class AdapterTrimmingWorkflow(BaseStep):
@@ -139,13 +126,3 @@ class AdapterTrimmingWorkflow(BaseStep):
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes((selected,))
-
-    @listify
-    def get_result_files(self):
-        tpls = (
-            "output/{library_name}/out/.done",
-            "output/{library_name}/report/.done",
-        )
-        for library_name in self.output_entities:
-            for tpl in tpls:
-                yield tpl.format(library_name=library_name)

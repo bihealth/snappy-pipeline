@@ -5,12 +5,9 @@ One task = one annotation tool. Chain via ``depends_on.variants`` to annotate
 somatic or germline VCF inputs with either VEP or Mehari.
 """
 
-import os
-
 from biomedsheets.shortcuts import GenericSampleSheet
-from snakemake.io import expand
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -23,18 +20,21 @@ from .model import VariantAnnotation as VariantAnnotationConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
-
-_WORK_PREFIX = os.path.join("work", "{library_name}")
-_OUT_PREFIX = os.path.join(_WORK_PREFIX, "out", "{library_name}")
-_LOG_PREFIX = os.path.join(_WORK_PREFIX, "log", "{library_name}")
+#: Output keys and extensions of the annotated VCF
+_OUTPUTS = {
+    "vcf": ".vcf.gz",
+    "vcf_tbi": ".vcf.gz.tbi",
+    "vcf_md5": ".vcf.gz.md5",
+    "vcf_tbi_md5": ".vcf.gz.tbi.md5",
+}
 
 
 class VariantAnnotationStepPart(BaseStepPart):
     """Base class for concrete variant annotation tool step parts."""
 
     actions = ("run",)
+
+    published_keys = tuple(_OUTPUTS)
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -46,15 +46,13 @@ class VariantAnnotationStepPart(BaseStepPart):
         yield "vcf_tbi", variant.vcf_tbi
         yield "reference", self.parent.get_upstream_paths("reference").fasta
 
-    @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, _OUT_PREFIX + ext
+    def _get_output_files_run(self):
+        return {
+            key: f"work/{{library_name}}/out/{{library_name}}{ext}" for key, ext in _OUTPUTS.items()
+        }
 
-    def _get_log_file(self, action):
-        self._validate_action(action)
-        return {"log": _LOG_PREFIX + ".log"}
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards):
         return {"config": getattr(self.config, self.name).model_dump(by_alias=True)}
@@ -72,14 +70,10 @@ class VepStepPart(VariantAnnotationStepPart):
     def _get_params_run(self, wildcards):
         return {"config": self.config.vep.model_dump(by_alias=True, exclude={"cache_dir"})}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
         num_threads = self.config.vep.num_threads
-        return ResourceUsage(
-            threads=num_threads,
-            runtime="1d",
-            mem=f"{2 * num_threads}GB",
-        )
+        return ResourceUsage(threads=num_threads, runtime="1d", mem=f"{2 * num_threads}GB")
 
 
 class MehariStepPart(VariantAnnotationStepPart):
@@ -100,13 +94,9 @@ class MehariStepPart(VariantAnnotationStepPart):
         if self.config.mehari and self.config.mehari.clinvar:
             yield "clinvar", self.config.mehari.clinvar
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=self.config.mehari.threads,
-            runtime="20m",
-            mem="8GB",
-        )
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        return ResourceUsage(threads=self.config.mehari.threads, runtime="20m", mem="8GB")
 
 
 _TOOL_STEP_PART = {
@@ -145,12 +135,3 @@ class VariantAnnotationWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         tool_cls = _TOOL_STEP_PART[self.config.tool]
         self.register_sub_step_classes((tool_cls,))
-
-    @listify
-    def get_result_files(self):
-        for entity_name in self.output_entities:
-            yield from expand(
-                os.path.join("output", "{library_name}", "out", "{library_name}{ext}"),
-                library_name=[entity_name],
-                ext=EXT_VALUES,
-            )

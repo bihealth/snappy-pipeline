@@ -59,11 +59,8 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import IgvSessionGeneration as IgvSessionGenerationConfigModel
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".igv_session.xml", ".igv_session.xml.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("xml", "xml_md5")
+#: Output keys and extensions of the session file
+_OUTPUTS = {"xml": ".igv_session.xml", "xml_md5": ".igv_session.xml.md5"}
 
 #: Default configuration of the wgs_sv_filtration step
 
@@ -119,14 +116,11 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         # Input file comes from previous step.
         yield "vcf", self._get_path_vcf(wildcards, pedigree.index)
 
-    @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{index_library}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + "%s")
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, tpl % ext
+    def _get_output_files_run(self):
+        return {
+            key: f"work/{{index_library}}/out/{{index_library}}{ext}"
+            for key, ext in _OUTPUTS.items()
+        }
 
     @staticmethod
     def render_from_template(directory, template_name, **kwargs):
@@ -221,7 +215,7 @@ class IgvSessionGenerationWorkflow(BaseStep):
         name_pattern = "%s.{index_library.name}" % (self.prev_token,)
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
-            ext=EXT_VALUES,
+            ext=_OUTPUTS.values(),
         )
 
     def _yield_result_files(self, tpl, **kwargs):

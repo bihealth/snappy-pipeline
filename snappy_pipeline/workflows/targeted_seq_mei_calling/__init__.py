@@ -113,44 +113,13 @@ class ScrambleStepPart(BaseStepPart):
 
     intermediate_outputs = {"cluster": ("txt",)}
 
+    default_resource_usage = ResourceUsage(threads=1, runtime="6h", mem=f"{8 * 1024}MB")
+
     def __init__(self, parent):
         super().__init__(parent)
 
-    def get_output_files(self, action):
-        """Return output function for scramble rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns output function for scramble rule based on inputted action.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        self._validate_action(action=action)
-        return getattr(self, "_get_output_files_{}".format(action))()
-
-    def get_log_file(self, action):
-        """Return log function for scramble rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns log function for scramble rule based on inputted action.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate action
-        self._validate_action(action=action)
-        # Set log
-        name_pattern = "{library_name}"
-        if action == "annotate":
-            name_pattern_annotated = "{library_name}.annotated"
-            return "work/{name_pattern}/log/{name_pattern}.log".format(
-                name_pattern=name_pattern_annotated
-            )
-        return "work/{name_pattern}/log/{name_pattern}.{action}.log".format(
-            name_pattern=name_pattern, action=action
-        )
+    def _get_log_file(self, action):
+        return f"work/{{library_name}}/log/{{library_name}}.{action}.log"
 
     @listify
     def _get_input_files_cluster(self, wildcards):
@@ -180,24 +149,13 @@ class ScrambleStepPart(BaseStepPart):
         if self.config.scramble.mei_refs:
             yield "mei_refs", self.config.scramble.mei_refs
 
-    @staticmethod
-    @dictify
-    def _get_output_files_cluster():
-        """Yield output files' patterns for scramble cluster call."""
-        name_pattern = "{library_name}"
-        ext = "txt"
-        yield (
-            ext,
-            "work/{name_pattern}/out/{name_pattern}.cluster.{ext}".format(
-                name_pattern=name_pattern, ext=ext
-            ),
-        )
+    def _get_output_files_cluster(self):
+        """Return output files' patterns for scramble cluster call."""
+        return {"txt": "work/{library_name}/out/{library_name}.cluster.txt"}
 
-    @staticmethod
     @dictify
-    def _get_output_files_analysis():
+    def _get_output_files_analysis(self):
         """Yield output files' patterns for scramble call."""
-        name_pattern = "{library_name}"
         ext_dict = {
             "txt": ".MEIs.txt",
             "vcf": ".vcf",
@@ -207,12 +165,7 @@ class ScrambleStepPart(BaseStepPart):
             "vcf_tbi_md5": ".vcf.gz.tbi.md5",
         }
         for key, ext in ext_dict.items():
-            yield (
-                key,
-                "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                ),
-            )
+            yield key, f"work/{{library_name}}/out/{{library_name}}{ext}"
 
     def _get_params_analysis(self, wildcards):
         """Get parameters.
@@ -241,24 +194,6 @@ class ScrambleStepPart(BaseStepPart):
             "mei_polya_frac": self.config.scramble.mei_polya_frac,
         }
         return params
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="6h",  # 6 hours
-            mem=f"{8 * 1024}MB",
-        )
 
 
 class MeiWorkflow(BaseStep):

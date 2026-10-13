@@ -201,10 +201,11 @@ class PanelOfNormalsStepPart(BaseStepPart):
                             for _, ngs_library in test_sample.ngs_libraries.items():
                                 yield ngs_library.name
 
-    @staticmethod
-    def _get_log_file(tpl):
-        """Return the log file"""
-        return {"log": tpl + ".log"}
+    #: Log file prefix by action
+    log_templates: dict[str, str] = {}
+
+    def _get_log_file(self, action):
+        return {"log": self.log_templates[action] + ".log"}
 
 
 class PureCnStepPart(PanelOfNormalsStepPart):
@@ -218,6 +219,13 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     #: Per-library coverage is only read by ``create_panel``
     intermediate_outputs = {"coverage": ("coverage",)}
+
+    log_templates = {
+        "install": "work/containers/log/container",
+        "prepare": "work/panel_of_normals/log/panel_of_normals.prepare",
+        "coverage": "work/{library_name}/log/{library_name}.coverage",
+        "create_panel": "work/panel_of_normals/log/panel_of_normals",
+    }
 
     #: Resources
     resource_usage = {
@@ -275,35 +283,33 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         # The Mutect2 genomicsDB is the output of the upstream panel_of_normals (mutect2) task.
         yield "genomicsdb", self.parent.get_upstream_paths("panel_of_normals").genomicsdb
 
-    def get_output_files(self, action):
-        if self.name != self.config.tool:
-            return {}
-        self._validate_action(action)
+    def _get_output_files_install(self):
+        return {"container": "work/containers/out/container.simg"}
 
-        if action == "install":
-            return {"container": "work/containers/out/container.simg"}
-        if action == "prepare":
-            base_out = "work/panel_of_normals/out/panel_of_normals.intervals"
-            return {
-                "intervals": base_out + ".list",
-                "optimized": base_out + ".bed.gz",
-                "tbi": base_out + ".bed.gz.tbi",
-                "intervals_md5": base_out + ".list.md5",
-                "optimized_md5": base_out + ".bed.gz.md5",
-                "tbi_md5": base_out + ".bed.gz.tbi.md5",
-            }
-        if action == "coverage":
-            return {"coverage": "work/{library_name}/out/{library_name}.coverage_loess.txt.gz"}
-        if action == "create_panel":
-            return {
-                "db": "work/panel_of_normals/out/panel_of_normals.rds",
-                "db_md5": "work/panel_of_normals/out/panel_of_normals.rds.md5",
-                "mapbias": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
-                "mapbias_md5": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds.md5",
-                "lowcov": "work/panel_of_normals/out/panel_of_normals.low_coverage_targets.bed",
-                "hq": "work/panel_of_normals/out/panel_of_normals.hq_sites.bed",
-                "plot": "work/panel_of_normals/out/panel_of_normals.interval_weights.png",
-            }
+    def _get_output_files_prepare(self):
+        base_out = "work/panel_of_normals/out/panel_of_normals.intervals"
+        return {
+            "intervals": base_out + ".list",
+            "optimized": base_out + ".bed.gz",
+            "tbi": base_out + ".bed.gz.tbi",
+            "intervals_md5": base_out + ".list.md5",
+            "optimized_md5": base_out + ".bed.gz.md5",
+            "tbi_md5": base_out + ".bed.gz.tbi.md5",
+        }
+
+    def _get_output_files_coverage(self):
+        return {"coverage": "work/{library_name}/out/{library_name}.coverage_loess.txt.gz"}
+
+    def _get_output_files_create_panel(self):
+        return {
+            "db": "work/panel_of_normals/out/panel_of_normals.rds",
+            "db_md5": "work/panel_of_normals/out/panel_of_normals.rds.md5",
+            "mapbias": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
+            "mapbias_md5": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds.md5",
+            "lowcov": "work/panel_of_normals/out/panel_of_normals.low_coverage_targets.bed",
+            "hq": "work/panel_of_normals/out/panel_of_normals.hq_sites.bed",
+            "plot": "work/panel_of_normals/out/panel_of_normals.interval_weights.png",
+        }
 
     #: Config paths reach the wrappers as inputs, so they are left out of the params
     _config_files = {"path_normals_list", "path_bait_regions", "mappability", "reptiming"}
@@ -328,18 +334,6 @@ class PureCnStepPart(PanelOfNormalsStepPart):
             "library_name": wildcards.library_name,
         }
 
-    def get_log_file(self, action):
-        if self.name != self.config.tool:
-            return {}
-        tpls = {
-            "install": "work/containers/log/container",
-            "prepare": "work/panel_of_normals/log/panel_of_normals.prepare",
-            "coverage": "work/{library_name}/log/{library_name}.coverage",
-            "create_panel": "work/panel_of_normals/log/panel_of_normals",
-        }
-        assert action in self.actions
-        return self._get_log_file(tpls[action])
-
 
 class Mutect2StepPart(PanelOfNormalsStepPart):
     """Somatic variant calling with MuTect 2"""
@@ -354,6 +348,13 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     temp_outputs = {"scatter": ("regions",), "prepare_panel": ("vcf", "vcf_tbi")}
 
     intermediate_outputs = {"gather": ("vcf", "vcf_tbi")}
+
+    log_templates = {
+        "scatter": "work/{normal_library}/log/{normal_library}.scatter",
+        "prepare_panel": "work/{normal_library}/log/{normal_library}.{scatteritem}",
+        "gather": "work/{normal_library}/log/{normal_library}",
+        "create_panel": "work/panel_of_normals/log/panel_of_normals",
+    }
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
@@ -414,34 +415,31 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "germline_resource": self.config.mutect2.germline_resource,
         }
 
-    def get_output_files(self, action):
-        """Return panel of normal files"""
-        self._validate_action(action)
+    def _get_output_files_scatter(self):
+        scatter = self.parent.workflow.globals.get("scatter")
+        scatter = getattr(scatter, self.name)
+        tpl = "work/{{normal_library}}/par/scatter/{scatteritem}.region.bed"
+        return {"regions": scatter(tpl)}
 
-        if action == "scatter":
-            scatter = self.parent.workflow.globals.get("scatter")
-            scatter = getattr(scatter, self.name)
-            tpl = "work/{{normal_library}}/par/scatter/{scatteritem}.region.bed"
-            return {"regions": scatter(tpl)}
+    @staticmethod
+    def _vcf_outputs(prefix):
+        return {"vcf": prefix + ".vcf.gz", "vcf_tbi": prefix + ".vcf.gz.tbi"}
 
-        ext_dict = {"vcf": "vcf.gz", "vcf_tbi": "vcf.gz.tbi"}
-        if action == "create_panel":
-            ext_dict |= {"vcf_md5": "vcf.gz.md5", "vcf_tbi_md5": "vcf.gz.tbi.md5"}
+    def _get_output_files_prepare_panel(self):
+        return self._vcf_outputs("work/{normal_library}/par/run/{scatteritem}")
 
-        tpls = {
-            "prepare_panel": "work/{normal_library}/par/run/{scatteritem}",
-            "gather": "work/{normal_library}/out/{normal_library}.prepare",
-            "create_panel": "work/panel_of_normals/out/panel_of_normals",
+    def _get_output_files_gather(self):
+        return self._vcf_outputs("work/{normal_library}/out/{normal_library}.prepare")
+
+    def _get_output_files_create_panel(self):
+        prefix = "work/panel_of_normals/out/panel_of_normals"
+        return {
+            **self._vcf_outputs(prefix),
+            "vcf_md5": prefix + ".vcf.gz.md5",
+            "vcf_tbi_md5": prefix + ".vcf.gz.tbi.md5",
+            "db": prefix + ".genomicsDB.tar.gz",
+            "db_md5": prefix + ".genomicsDB.tar.gz.md5",
         }
-        output_files = {}
-        for key, ext in ext_dict.items():
-            output_files[key] = tpls[action] + "." + ext
-        if action == "create_panel":
-            output_files["db"] = "work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
-            output_files["db_md5"] = (
-                "work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz.md5"
-            )
-        return output_files
 
     def _get_params_scatter(self, wildcards):
         return {
@@ -462,35 +460,6 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     def _get_params_create_panel(self, wildcards):
         return self.config.mutect2.genomicsdb.model_dump(by_alias=True)
 
-    def get_log_file(self, action):
-        """Get log files for Mutect2 rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns dictionary with expected log files based on inputted action.
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate action
-        self._validate_action(action)
-
-        # Set expected format based on action
-        tpl = "{normal_library}"
-        match action:
-            case "gather":
-                postfix = ""
-            case "prepare_panel":
-                postfix = ".{scatteritem}"
-            case "create_panel":
-                tpl = "panel_of_normals"
-                postfix = ""
-            case _:
-                postfix = "." + action
-
-        prefix = f"work/{tpl}/log/{tpl}{postfix}"
-
-        return self._get_log_file(prefix)
-
 
 class CnvkitStepPart(PanelOfNormalsStepPart):
     """Somatic variant calling with MuTect 2"""
@@ -509,6 +478,14 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     #: Per-library coverage is only read by ``create_panel``
     intermediate_outputs = {"coverage": ("target", "antitarget")}
+
+    log_templates = {
+        "target": "work/panel_of_normals/log/panel_of_normals.target",
+        "antitarget": "work/panel_of_normals/log/panel_of_normals.antitarget",
+        "coverage": "work/{normal_library}/log/{normal_library}.coverage",
+        "create_panel": "work/panel_of_normals/log/panel_of_normals",
+        "report": "work/panel_of_normals/log/panel_of_normals.report",
+    }
 
     #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
     resource_usage = {
@@ -541,8 +518,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        if self.name == self.config.tool:
-            self.is_wgs = self.config.cnvkit.path_target == ""
+        self.is_wgs = self.config.cnvkit.path_target == ""
 
     def _get_params_target(self, wildcards):
         return self._cnvkit_params("target")
@@ -659,25 +635,6 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "antitarget": antitargets,
         }
 
-    def get_output_files(self, action):
-        """Return panel of normal files"""
-        if self.name != self.config.tool:
-            return {}  # cnvkit not enabled, skip
-        if action == "target":
-            return self._get_output_files_target()
-        elif action == "antitarget":
-            return self._get_output_files_antitarget()
-        elif action == "coverage":
-            return self._get_output_files_coverage()
-        elif action == "create_panel":
-            return self._get_output_files_create_panel()
-        elif action == "report":
-            return self._get_output_files_report()
-        elif action == "access":
-            return self._get_output_files_access()
-        else:
-            self._validate_action(action)
-
     def _get_output_files_target(self):
         return {
             "target": "work/panel_of_normals/out/panel_of_normals.target.bed",
@@ -710,32 +667,16 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             "metrics_md5": "work/panel_of_normals/report/panel_of_normals.metrics.tsv.md5",
         }
 
-    def _get_output_files_access(self):
-        return {
-            "access": "work/panel_of_normals/out/panel_of_normals.accessible.bed",
-            "access_md5": "work/panel_of_normals/out/panel_of_normals.accessible.bed.md5",
-        }
-
-    @classmethod
-    def get_log_file(cls, action):
-        """Return panel of normal files"""
-        tpls = {
-            "target": "work/panel_of_normals/log/panel_of_normals.target",
-            "antitarget": "work/panel_of_normals/log/panel_of_normals.antitarget",
-            "coverage": "work/{normal_library}/log/{normal_library}.coverage",
-            "create_panel": "work/panel_of_normals/log/panel_of_normals",
-            "report": "work/panel_of_normals/log/panel_of_normals.report",
-            "access": "work/panel_of_normals/log/panel_of_normals.accessible",
-        }
-        assert action in cls.actions
-        return cls._get_log_file(tpls[action])
-
 
 class AccessStepPart(PanelOfNormalsStepPart):
     """Utility to create access file for cnvkit"""
 
     name = "access"
     actions = ("run",)
+
+    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="8GB")
+
+    log_templates = {"run": "work/panel_of_normals/log/panel_of_normals.accessible"}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -746,29 +687,12 @@ class AccessStepPart(PanelOfNormalsStepPart):
     def _get_params_run(self, wildcards):
         return {"min_gap_size": self.config.access.min_gap_size}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="2h",  # 2 hours
-            mem="8GB",
-        )
-
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         tpl = "work/panel_of_normals/out/panel_of_normals.accessible.bed"
         # Only published (and so hashed) when access is the task's tool
         if self.config.tool == "access":
             return {"access": tpl, "access_md5": tpl + ".md5"}
         return {"access": tpl}
-
-    @classmethod
-    def get_log_file(cls, action):
-        """Return log files"""
-        assert action in cls.actions
-        return cls._get_log_file("work/panel_of_normals/log/panel_of_normals.accessible")
 
 
 class PanelOfNormalsWorkflow(BaseStep):

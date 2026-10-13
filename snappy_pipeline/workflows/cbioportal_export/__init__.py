@@ -7,7 +7,6 @@ formats expected by cBioPortal and writes out the necessary metadata and data
 files.
 """
 
-import os
 import re
 import sys
 from collections import namedtuple
@@ -76,6 +75,9 @@ CASE_LIST_FILES = {
         "category": "all_cases_with_mutation_and_cna_and_mrna_data",
     },
 }
+
+#: Resources of the steps that merge or convert copy number and expression tables
+_TABLE_RESOURCE_USAGE = ResourceUsage(threads=2, runtime="2h", mem="8192MB")
 
 LibraryPair = namedtuple("LibraryPair", ("normal", "tumor"))
 
@@ -146,17 +148,12 @@ class cbioportalExportStepPart(BaseStepPart):
         """Return the sample names of the merged tables, in input order"""
         return [lib.test_sample.bio_sample.name for lib in self._yield_libraries()]
 
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         assert self.output_file is not None
         return self.output_file
 
-    def get_log_file(self, action):
+    def _get_log_file(self, action):
         """Return path to log files for all data files"""
-        # Validate action
-        self._validate_action(action)
-
         return {"log": f"work/log/{self.name}.{action}.log"}
 
     def _get_params_run(self, wildcards):
@@ -174,9 +171,10 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     intermediate_outputs = {"run": ("maf",)}
 
+    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="5120MB")
+
     def __init__(self, parent):
         super().__init__(parent)
-        self.name_pattern = "{tumor_library}"
 
         # Build shortcut from cancer bio sample name to matched cancer sample
         donors = {}
@@ -220,12 +218,9 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     def _get_pair(self, wildcards: Wildcards) -> LibraryPair:
         return self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
 
-    @dictify
-    def get_output_files(self, action):
+    def _get_output_files_run(self):
         """Return maf output file"""
-        # Validate action
-        self._validate_action(action)
-        yield "maf", os.path.join("work/maf", self.name_pattern, "out", self.name_pattern + ".maf")
+        return {"maf": "work/maf/{tumor_library}/out/{tumor_library}.maf"}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -233,13 +228,9 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         variants = self.parent.get_upstream_paths("variants", library_name=wildcards.tumor_library)
         yield "vcf", variants.vcf
 
-    def get_log_file(self, action):
+    def _get_log_file_run(self):
         """Return path to log files for all data files"""
-        # Validate action
-        self._validate_action(action)
-
-        tpl = os.path.join("work/maf/", self.name_pattern, "log", self.name_pattern)
-        return {"log": tpl + ".log"}
+        return {"log": "work/maf/{tumor_library}/log/{tumor_library}.log"}
 
     def _get_params_run(self, wildcards):
         return {
@@ -264,22 +255,6 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
         """Return normal bio sample to tumor dna ngs library"""
         return (n := self._get_pair(wildcards).normal) and n.test_sample.bio_sample.name
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="2h",  # 2 hours
-            mem="5120MB",
-        )
-
 
 class cbioportalMutationsStepPart(cbioportalExportStepPart):
     """Merges sample MAF files into data_mutation_extended.txt"""
@@ -296,11 +271,7 @@ class cbioportalMutationsStepPart(cbioportalExportStepPart):
     #: Output file name
     output_file = "work/upload/data_mutation_extended.txt"
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        name_pattern = "{{library_name}}"
-        tpl = os.path.join("work/maf", name_pattern, "out", name_pattern + "{ext}")
-        self.input_tpl = tpl.format(ext=".maf")
+    input_tpl = "work/maf/{library_name}/out/{library_name}.maf"
 
 
 class cbioportalCns2CnaStepPart(BaseStepPart):
@@ -314,6 +285,8 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
 
     intermediate_outputs = {"run": ("cna",)}
 
+    default_resource_usage = _TABLE_RESOURCE_USAGE
+
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return the library"""
@@ -323,40 +296,16 @@ class cbioportalCns2CnaStepPart(BaseStepPart):
         )
         yield "DNAcopy", copy_number.dnacopy_seg
 
-    @dictify
-    def get_output_files(self, action):
-        """Return maf output file"""
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{tumor_library}"
-        yield "cna", os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
+    def _get_output_files_run(self):
+        """Return cna output file"""
+        return {"cna": "work/cna/{tumor_library}/out/{tumor_library}.cna"}
 
-    def get_log_file(self, action):
+    def _get_log_file_run(self):
         """Return path to log files for all data files"""
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{tumor_library}"
-        tpl = os.path.join("work/cna/", name_pattern, "log", name_pattern)
-        return {"log": tpl + ".log"}
+        return {"log": "work/cna/{tumor_library}/log/{tumor_library}.log"}
 
     def _get_params_run(self, wildcards):
         return {"pipeline_id": "ENSEMBL"}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="2h",  # 2 hours
-            mem="8192MB",
-        )
 
 
 class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
@@ -371,10 +320,9 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
     #: Actions
     actions = ("log2", "gistic")
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        name_pattern = "{library_name}"
-        self.input_tpl = os.path.join("work/cna", name_pattern, "out", name_pattern + ".cna")
+    default_resource_usage = _TABLE_RESOURCE_USAGE
+
+    input_tpl = "work/cna/{library_name}/out/{library_name}.cna"
 
     # Both actions merge the same per-library inputs
     @dictify
@@ -402,26 +350,11 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
             },  # Amplification: cn >= 9 (https://doi.org/10.1038/s41586-022-04738-6)
         }
 
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        return "work/upload/data_cna_{action}.txt".format(action=action)
+    def _get_output_files_log2(self):
+        return "work/upload/data_cna_log2.txt"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="2h",  # 2 hours
-            mem="8192MB",
-        )
+    def _get_output_files_gistic(self):
+        return "work/upload/data_cna_gistic.txt"
 
 
 class cbioportalSegmentStepPart(cbioportalExportStepPart):
@@ -437,10 +370,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
     #: Output file name
     output_file = "work/upload/data_segment.txt"
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        name_pattern = "{library_name}"
-        self._seg_name_pattern = name_pattern
+    default_resource_usage = _TABLE_RESOURCE_USAGE
 
     def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
@@ -453,22 +383,6 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
 
     def _get_params_run(self, wildcards):
         return {"action_type": "segment", "samples": self._samples()}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="2h",  # 2 hours
-            mem="8192MB",
-        )
 
 
 class cbioportalExpressionStepPart(cbioportalExportStepPart):
@@ -486,8 +400,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
     #: Output file name
     output_file = "work/upload/data_expression.txt"
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    default_resource_usage = _TABLE_RESOURCE_USAGE
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -510,22 +423,6 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
             "extra_args": {"pipeline_id": "ENSEMBL"},
         }
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="2h",  # 2 hours
-            mem="8192MB",
-        )
-
 
 class cbioportalMetaFilesStepPart(BaseStepPart):
     """Generate cbioportal meta data files"""
@@ -536,20 +433,19 @@ class cbioportalMetaFilesStepPart(BaseStepPart):
     #: Actions
     actions = ("run",)
 
-    get_log_file = cbioportalExportStepPart.get_log_file
+    _get_log_file = cbioportalExportStepPart._get_log_file
 
     @listify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        yield from [os.path.join("work/upload", f) for f in META_FILES["always_present"]]
-        yield from [os.path.join("work/upload", f) for f in META_FILES["sequenced"]]
+    def _get_output_files_run(self):
+        files = [*META_FILES["always_present"], *META_FILES["sequenced"]]
         if self.config.copy_number_alteration.enabled:
-            yield from [os.path.join("work/upload", f) for f in META_FILES["cna"]]
+            files += META_FILES["cna"]
             if self.config.study.reference_genome == "hg19":
-                yield from [os.path.join("work/upload", f) for f in META_FILES["segment"]]
+                files += META_FILES["segment"]
         if self.config.expression.enabled:
-            yield from [os.path.join("work/upload", f) for f in META_FILES["rna_seq_mrna"]]
+            files += META_FILES["rna_seq_mrna"]
+        for f in files:
+            yield f"work/upload/{f}"
 
     def _get_params_run(self, wildcards):
         return self.config.study.model_dump(by_alias=True)
@@ -584,12 +480,11 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
         config = self.config.model_dump(by_alias=True, exclude={"path_gene_id_mappings"})
         return {"donors": donors, "config": config}
 
-    @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        for data_type in ("patient", "sample"):
-            yield data_type, "work/upload/data_clinical_{data_type}.txt".format(data_type=data_type)
+    def _get_output_files_run(self):
+        return {
+            data_type: f"work/upload/data_clinical_{data_type}.txt"
+            for data_type in ("patient", "sample")
+        }
 
 
 class cbioportalCaseListsStepPart(cbioportalExportStepPart):
@@ -630,9 +525,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         return args
 
     @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         case_lists = {}
         case_lists["sequenced"] = CASE_LIST_FILES["sequenced"]["filename"]
         if self.config.copy_number_alteration.enabled:
@@ -643,7 +536,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
             if self.config.copy_number_alteration.enabled:
                 case_lists["3way_complete"] = CASE_LIST_FILES["3way_complete"]["filename"]
         for case, filename in case_lists.items():
-            yield case, os.path.join("work/upload/case_lists", filename)
+            yield case, f"work/upload/case_lists/{filename}"
 
 
 # ================================================================================================

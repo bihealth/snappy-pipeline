@@ -21,12 +21,6 @@ from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Extensions of files to create as main payload (VCF)
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
-
 #: Minimum number of samples per kit to apply gCNV calling criteria to be analyzed
 GCNV_MIN_KIT_SAMPLES = 10
 
@@ -129,15 +123,6 @@ class SvCallingTargetedWorkflow(BaseStep):
         for sheet in sheets:
             for pedigree in sheet.cohort.pedigrees:
                 yield from pedigree.donors
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all NGS libraries of all test samples in all sample sheets.
-        """
-        for sub_step in self.sub_steps.values():
-            yield from sub_step.get_result_files()
 
     def pick_kits_and_donors(self):
         """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a

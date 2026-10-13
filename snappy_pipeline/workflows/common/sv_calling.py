@@ -1,11 +1,19 @@
 """Code shared by steps in ``sv_calling_{targeted,wgs}``"""
 
 import re
-import typing
 
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, flatten, listify
+
+
+#: Output keys and paths of the VCF that the SV callers publish
+VCF_OUTPUTS = {
+    "vcf": "work/{library_name}/out/{library_name}.vcf.gz",
+    "vcf_md5": "work/{library_name}/out/{library_name}.vcf.gz.md5",
+    "vcf_tbi": "work/{library_name}/out/{library_name}.vcf.gz.tbi",
+    "vcf_tbi_md5": "work/{library_name}/out/{library_name}.vcf.gz.tbi.md5",
+}
 
 
 class SvCallingGetResultFilesMixin:
@@ -49,12 +57,11 @@ class SvCallingGetResultFilesMixin:
 
 
 class SvCallingGetLogFileMixin:
-    """Mixin that provides ``get_log_files()`` for SV calling steps"""
+    """Mixin that provides the log file of SV calling steps"""
 
     @dictify
-    def get_log_file(self, action: typing.Optional[str] = None):
+    def _get_log_file(self, action: str):
         """Return dict of log files in the "log" directory"""
-        action = action or self.actions[-1]
         if hasattr(self, f"_get_log_file_infix_{action}"):
             infix = getattr(self, f"_get_log_file_infix_{action}")()
         else:

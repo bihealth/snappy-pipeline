@@ -59,12 +59,11 @@ import warnings
 from pathlib import Path
 
 from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
-from matplotlib.cbook import flatten
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import SkipLibraryWarning
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -75,7 +74,6 @@ from snappy_pipeline.workflows.abstract.common import SnakemakeDict, SnakemakeDi
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.abstract.warnings import InconsistentPedigreeWarning
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import InconsistentLibraryKitsWarning
-from snappy_pipeline.workflows.variant_calling import VariantCallingGetLogFileMixin
 
 from .model import VarfishExport as VarfishExportConfigModel
 
@@ -89,11 +87,12 @@ EXTS = (".tsv.gz", ".tsv.gz.md5")
 #: Default configuration for the somatic_variant_calling step
 
 
-class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
+class MehariStepPart(BaseStepPart):
     """This step part is responsible for annotating the variants with Mehari"""
 
     name = "mehari"
     actions = ("annotate_seqvars", "annotate_strucvars", "bam_qc")
+    default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="14GB")
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -102,57 +101,38 @@ class MehariStepPart(VariantCallingGetLogFileMixin, BaseStepPart):
         for sheet in self.parent.shortcut_sheets:
             self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
-    def get_output_files(self, action) -> SnakemakeDict:
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
-
-    def get_log_file(self, action: str) -> SnakemakeDict:
-        self._validate_action(action)
+    def _get_log_file(self, action: str) -> SnakemakeDict:
         return {
             "log": f"work/varfish_export.{{index_ngs_library}}/log/mehari_{action}.{{index_ngs_library}}.log"
         }
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="1d",
-            mem="14GB",
-        )
 
     def _sv_calling_is_targeted(self) -> bool:
         """Whether ``depends_on.structural_variants`` names an ``sv_calling_targeted`` task."""
         task_name = self.parent.config.depends_on.structural_variants
         return self.parent.project.task(task_name).step == "sv_calling_targeted"
 
-    @listify
-    def get_result_files(self, action):
-        # Collect work paths from the output files method, then derive output paths.
-        if action == "annotate_seqvars":
-            raw_path_tpls = self._get_output_files_annotate_seqvars().values()
-        elif action == "annotate_strucvars":
-            if not self.parent.config.depends_on.structural_variants:
-                return
-            raw_path_tpls = self._get_output_files_annotate_strucvars().values()
-        elif action == "bam_qc":
-            if not self.parent.get_task_config("alignments").target_coverage_report.enabled:
-                return
-            raw_path_tpls = self._get_output_files_bam_qc().values()
-        # Derive output/ paths from work/ paths (the task's publish job symlinks them).
-        work_path_tpls = [tpl for tpl in flatten(raw_path_tpls) if tpl.startswith("work/")]
-        path_tpls = dict.fromkeys(re.sub(r"^work/", "output/", tpl) for tpl in work_path_tpls)
+    def _is_published(self, action: str) -> bool:
+        """Whether the config asks for the files of the action."""
+        if action == "annotate_strucvars":
+            return bool(self.parent.config.depends_on.structural_variants)
+        if action == "bam_qc":
+            return self.parent.get_task_config("alignments").target_coverage_report.enabled
+        return True
 
-        # Create concrete paths for all pedigrees in the sample sheet.
-        index_ngs_libraries = self._get_index_ngs_libraries(
-            require_consistent_pedigree_kits=(
-                action == "annotate_strucvars" and self._sv_calling_is_targeted()
+    def get_result_files(self):
+        result = []
+        for action in filter(self._is_published, self.actions):
+            index_ngs_libraries = self._get_index_ngs_libraries(
+                require_consistent_pedigree_kits=(
+                    action == "annotate_strucvars" and self._sv_calling_is_targeted()
+                )
             )
-        )
-        kwargs = {
-            "index_ngs_library": list(index_ngs_libraries.keys()),
-        }
-        for path_tpl in path_tpls:
-            yield from expand(path_tpl, **kwargs)
+            for path in self.get_output_files(action).values():
+                result += expand(
+                    path.replace("work/", "output/", 1),
+                    index_ngs_library=list(index_ngs_libraries),
+                )
+        return result
 
     @dictify
     def _get_index_ngs_libraries(
@@ -402,12 +382,3 @@ class VarfishExportWorkflow(BaseStep):
                                     if re.match(pattern, library_kit):
                                         yield library.name, name
         return result
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all primary DNA libraries and perform joint calling within pedigrees
-        """
-        for action in self.sub_steps["mehari"].actions:
-            yield from self.sub_steps["mehari"].get_result_files(action)

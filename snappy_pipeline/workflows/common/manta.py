@@ -3,14 +3,10 @@
 These are used in both ``sv_calling_targeted`` and ``sv_calling_wgs``.
 """
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart
-from snappy_pipeline.workflows.abstract.common import (
-    ForwardResourceUsageMixin,
-    ForwardSnakemakeFilesMixin,
-)
 from snappy_pipeline.workflows.common.sv_calling import (
+    VCF_OUTPUTS,
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
 )
@@ -20,8 +16,6 @@ from snappy_wrappers.resource_usage import ResourceUsage
 class MantaStepPart(
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
     BaseStepPart,
 ):
     """Perform SV calling on exomes using Manta"""
@@ -29,20 +23,8 @@ class MantaStepPart(
     name = "manta"
     actions = ("run",)
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
         num_threads = self.config.manta.num_threads
         return ResourceUsage(
             threads=num_threads,
@@ -69,13 +51,5 @@ class MantaStepPart(
         yield "bam", bams
         yield "reference", self.parent.get_upstream_paths("reference").fasta
 
-    @dictify
     def _get_output_files_run(self):
-        prefix = "work/{library_name}/out/{library_name}"
-        work_files = {
-            "vcf": f"{prefix}.vcf.gz",
-            "vcf_md5": f"{prefix}.vcf.gz.md5",
-            "vcf_tbi": f"{prefix}.vcf.gz.tbi",
-            "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
-        }
-        yield from work_files.items()
+        return dict(VCF_OUTPUTS)

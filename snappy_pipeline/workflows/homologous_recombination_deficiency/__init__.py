@@ -60,11 +60,10 @@ Available HRD tools
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet
-from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import InvalidConfiguration, UnsupportedActionException
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -75,8 +74,6 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from .model import HomologousRecombinationDeficiency as HomologousRecombinationDeficiencyConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
-
-#: Default configuration for the homologous recombination deficiency step
 
 
 class ScarHRDStepPart(BaseStepPart):
@@ -91,8 +88,9 @@ class ScarHRDStepPart(BaseStepPart):
         "run",
     )
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    published_keys = {"run": ("scarHRD", "scarHRD_md5")}
+
+    resource_usage = {"run": ResourceUsage(threads=1, mem="32GB", runtime="24h")}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -103,48 +101,23 @@ class ScarHRDStepPart(BaseStepPart):
         yield "seqz", copy_number.seqz
         yield "reference", self.parent.get_upstream_paths("reference").fasta
 
-    def get_output_files(self, action):
-        if action == "install":
-            return {"done": "work/R_packages/out/scarHRD.done"}
-        elif action == "run":
-            return {
-                "scarHRD": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json",
-                "scarHRD_md5": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json.md5",
-            }
-        else:
-            raise UnsupportedActionException(
-                "Action '{action}' is not supported. Valid options: {valid}".format(
-                    action=action, valid=", ".join(self.actions)
-                )
-            )
+    def _get_output_files_install(self):
+        return {"done": "work/R_packages/out/scarHRD.done"}
+
+    def _get_output_files_run(self):
+        return {
+            "scarHRD": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json",
+            "scarHRD_md5": "work/scarHRD.{library_name}/out/scarHRD.{library_name}.json.md5",
+        }
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.scarHRD.model_dump(by_alias=True)
 
-    def _get_log_file(self, action):
-        """Return dict of log files."""
-        if action == "install":
-            prefix = "work/R_packages/log/scarHRD"
-        elif action == "run":
-            prefix = "work/scarHRD.{library_name}/log/scarHRD.{library_name}"
-        else:
-            raise UnsupportedActionException(
-                "Action '{action}' is not supported. Valid options: {valid}".format(
-                    action=action, valid=", ".join(self.actions)
-                )
-            )
-        return {"log": prefix + ".log"}
+    def _get_log_file_install(self):
+        return {"log": "work/R_packages/log/scarHRD.log"}
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        self._validate_action(action)
-        if action == "run":
-            return ResourceUsage(
-                threads=1,
-                mem="32GB",
-                runtime="24h",
-            )
-        else:
-            return super().get_resource_usage(action, **kwargs)
+    def _get_log_file_run(self):
+        return {"log": "work/scarHRD.{library_name}/log/scarHRD.{library_name}.log"}
 
 
 class HomologousRecombinationDeficiencyWorkflow(BaseStep):
@@ -169,27 +142,6 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((ScarHRDStepPart,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the homologous recombination deficiency step"""
-        tool_actions = {"scarHRD": ("run",)}
-        tool = str(self.config.tool)
-        for library_name in self.output_entities:
-            for action in tool_actions[tool]:
-                try:
-                    tpls = self.sub_steps[tool].get_output_files(action).values()
-                except AttributeError:
-                    tpls = self.sub_steps[tool].get_output_files(action)
-                tpls = list(tpls)
-                for tpl in tpls:
-                    filenames = expand(
-                        tpl,
-                        library_name=[library_name],
-                    )
-                    for f in filenames:
-                        if ".tmp." not in f and not f.endswith(".done"):
-                            yield f.replace("work/", "output/")
 
     def check_config(self):
         """Check that the upstream CNV calling tool is supported.

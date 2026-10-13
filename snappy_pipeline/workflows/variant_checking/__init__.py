@@ -49,9 +49,8 @@ Currently, no reports are generated.
 """
 
 from biomedsheets.shortcuts import GermlineCaseSheet
-from snakemake.io import expand
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -68,7 +67,15 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 #: Available tools for checking variants
 VARIANT_CHECKERS = "peddy"
 
-#: Default configuration for the somatic_gene_fusion_calling step
+#: Output keys and extensions of the peddy step
+_OUTPUTS = {
+    "background_pca": ".background_pca.json",
+    "het_check": ".het_check.csv",
+    "html": ".html",
+    "ped_check": ".ped_check.csv",
+    "ped": ".ped",
+    "sex_check": ".sex_check.csv",
+}
 
 
 class PeddyStepPart(BaseStepPart):
@@ -80,11 +87,9 @@ class PeddyStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.variant_tool = str(self.parent.get_task_config("variants").tool)
-        self.base_path_out = "work/{index_ngs_library}/out/.done"
-        self.log_path = "work/{index_ngs_library}/log/snakemake.filter.log"
+    published_keys = tuple(f"{key}{suffix}" for key in _OUTPUTS for suffix in ("", "_md5"))
+    entity_wildcard = "index_ngs_library"
+    default_resource_usage = ResourceUsage(threads=1, runtime="10h", mem=f"{15 * 1024}MB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -99,46 +104,16 @@ class PeddyStepPart(BaseStepPart):
         yield "vcf", calling.vcf
         yield "vcf_tbi", calling.vcf_tbi
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files for the filtration"""
-        # Validate action
-        self._validate_action(action)
+    def _get_output_files_run(self):
         prefix = "work/{index_ngs_library}/out/{index_ngs_library}"
-        key_ext = {
-            "background_pca": ".background_pca.json",
-            "het_check": ".het_check.csv",
-            "html": ".html",
-            "ped_check": ".ped_check.csv",
-            "ped": ".ped",
-            "sex_check": ".sex_check.csv",
-        }
-        for key, ext in key_ext.items():
-            yield key, prefix + ext
-            yield f"{key}_md5", prefix + ext + ".md5"
+        result = {}
+        for key, ext in _OUTPUTS.items():
+            result[key] = prefix + ext
+            result[f"{key}_md5"] = prefix + ext + ".md5"
+        return result
 
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        return self.log_path
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=1,
-            runtime="10h",  # 10 hours
-            mem=f"{15 * 1024}MB",
-        )
+    def _get_log_file_run(self):
+        return "work/{index_ngs_library}/log/snakemake.filter.log"
 
 
 class VariantCheckingWorkflow(BaseStep):
@@ -164,16 +139,3 @@ class VariantCheckingWorkflow(BaseStep):
         self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart))
 
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the variant checking workflow"""
-        yield from self._yield_peddy_results()
-
-    def _yield_peddy_results(self):
-        for index_library in self.output_entities:
-            for path in self.sub_steps["peddy"].get_output_files("run").values():
-                yield from expand(
-                    path.replace("work/", "output/", 1),
-                    index_ngs_library=[index_library],
-                )

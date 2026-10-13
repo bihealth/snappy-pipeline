@@ -178,11 +178,6 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
         self.ngs_library_to_kit = self.sub_steps["gcnv"].ngs_library_to_kit
 
     @listify
-    def get_result_files(self):
-        """Return list of result files for the gCNV build model workflow"""
-        yield from self.sub_steps["gcnv"].get_result_files()
-
-    @listify
     def all_donors(self, include_background=True):
         """Get all donors.
 

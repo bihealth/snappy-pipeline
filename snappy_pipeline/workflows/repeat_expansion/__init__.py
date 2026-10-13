@@ -84,7 +84,6 @@ from collections import OrderedDict
 from biomedsheets.shortcuts import KEY_SEX, GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -137,44 +136,6 @@ class ExpansionHunterStepPart(BaseStepPart):
                     for ngs_library in test_sample.ngs_libraries.values():
                         yield ngs_library.name, sex
 
-    def get_output_files(self, action):
-        """Return output function for ExpansionHunter rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns output function for ExpansionHunter rule based on inputted action.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
-        return getattr(self, "_get_output_files_{}".format(action))()
-
-    def get_log_file(self, action):
-        """Return log function for ExpansionHunter rules.
-
-        :param action: Action (i.e., step) in the workflow.
-        :type action: str
-
-        :return: Returns log function for ExpansionHunter rule based on inputted action.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        # Validate inputted action
-        if action not in self.actions:
-            valid_actions_str = ", ".join(self.actions)
-            error_message = "Action '{action}' is not supported. Valid options: {options}".format(
-                action=action, options=valid_actions_str
-            )
-            raise UnsupportedActionException(error_message)
-        return getattr(self, "_get_log_files_{}".format(action))()
-
     def _get_input_files_run(self, wildcards):
         """Yield BAM files based on subworkflow `ngs_mapping` results.
 
@@ -207,45 +168,21 @@ class ExpansionHunterStepPart(BaseStepPart):
         )
         yield "annotation", self.config.repeat_annotation
 
-    @staticmethod
     @dictify
-    def _get_output_files_run():
+    def _get_output_files_run(self):
         """Yield output files' patterns for rule `run` - ExpansionHunter call."""
-        # Initialise variables
-        name_pattern = "{library_name}"
-        ext_dict = {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}
-        # Yield
-        for key, ext in ext_dict.items():
-            yield (
-                key,
-                "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                ),
-            )
+        for key, ext in {"json": "json", "vcf": "vcf", "vcf_md5": "vcf.md5"}.items():
+            yield key, f"work/{{library_name}}/out/{{library_name}}.{ext}"
 
-    @staticmethod
     @dictify
-    def _get_output_files_annotate():
+    def _get_output_files_annotate(self):
         """Yield output files' patterns for rule `annotate`."""
-        # Initialise variables
-        name_pattern = "annotated.{library_name}"
-        ext_dict = {"json": "json", "json_md5": "json.md5"}
-        # Yield
-        for key, ext in ext_dict.items():
-            yield (
-                key,
-                "work/{name_pattern}/out/{name_pattern}.{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                ),
-            )
+        for key, ext in {"json": "json", "json_md5": "json.md5"}.items():
+            yield key, f"work/annotated.{{library_name}}/out/annotated.{{library_name}}.{ext}"
 
-    @staticmethod
-    def _get_log_files_run():
-        """
-        :return: Returns log file pattern for rule `run` - ExpansionHunter call.
-        """
-        name_pattern = "{library_name}"
-        return "work/{name_pattern}/log/{name_pattern}.log".format(name_pattern=name_pattern)
+    def _get_log_file_run(self):
+        """Return the log file pattern for rule `run` - ExpansionHunter call."""
+        return "work/{library_name}/log/{library_name}.log"
 
     def _get_params_run(self, wildcards):
         """Get donor's sex.

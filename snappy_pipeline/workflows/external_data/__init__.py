@@ -94,7 +94,3 @@ class ExternalDataWorkflow(BaseStep):
             return {key: os.path.abspath(path) for key, path in config.files.items()}
         roots = [os.path.abspath(path) for path in config.search_paths]
         return discovery.find_files(roots, library_name, config.search_patterns)
-
-    def get_result_files(self):
-        """No output files: the data already exists."""
-        return []

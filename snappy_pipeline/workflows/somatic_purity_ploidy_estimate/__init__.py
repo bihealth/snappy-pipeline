@@ -11,15 +11,14 @@ The default configuration is as follows.
 
 """
 
-import os
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand, touch
+from snakemake.io import touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
@@ -30,11 +29,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 #: Tools for estimating purity and ploidy.
 PURITY_PLOIDY_TOOLS = "ascat"
-
-#: Default configuration for the somatic_gene_fusion_calling step
-
-#: Extensions of output payload files
-EXT_VALUES = (".goodness_of_fit.txt", ".ploidy.txt", ".segments.txt", ".segments_raw.txt")
 
 
 class AscatStepPart(BaseStepPart):
@@ -66,8 +60,22 @@ class AscatStepPart(BaseStepPart):
         action: ("txt",) for action in ("baf_tumor", "baf_normal", "cnv_tumor", "cnv_normal")
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    entity_wildcard = "tumor_library"
+
+    published_keys = {
+        "run_ascat": (
+            "goodness_of_fit",
+            "goodness_of_fit_md5",
+            "ploidy",
+            "ploidy_md5",
+            "segments",
+            "segments_md5",
+            "segments_raw",
+            "segments_raw_md5",
+        )
+    }
+
+    default_resource_usage = ResourceUsage(threads=8, runtime="2d", mem=f"{10 * 1024 * 8}MB")
 
     def get_normal_lib_name(self, wildcards):
         """Return name of normal (non-cancer) library"""
@@ -136,12 +144,6 @@ class AscatStepPart(BaseStepPart):
         for key, value in result.items():
             yield key, value.format(normal_library=normal_library, **wildcards)
 
-    def get_output_files(self, action):
-        """Return output files"""
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_output_files_{}".format(action))()
-
     @staticmethod
     def _get_output_files_baf_tumor():
         """Return output files for generating BAF file for the tumor."""
@@ -178,11 +180,9 @@ class AscatStepPart(BaseStepPart):
     def _get_params_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
 
-    def get_log_file(self, action):
+    def _get_log_file(self, action):
         """Return path to log file"""
         # TODO: implement log option for actions `cnv_tumor_wes` and `cnv_normal_wes`.
-        # Validate action
-        self._validate_action(action)
         log_dict = {
             "baf_tumor": "work/{tumor_library}/log/{tumor_library}.baf_tumor.log",
             "baf_normal": "work/{normal_library}/log/{normal_library}.baf_normal.log",
@@ -191,22 +191,6 @@ class AscatStepPart(BaseStepPart):
             "run_ascat": "work/{tumor_library}/log/{tumor_library}.run.log",
         }
         return {"log": log_dict[action]}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=8,
-            runtime="2d",  # 2 days
-            mem=f"{10 * 1024 * 8}MB",
-        )
 
 
 class SomaticPurityPloidyEstimateWorkflow(BaseStep):
@@ -241,12 +225,3 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         self.register_sub_step_classes((AscatStepPart,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the purity/ploidy estimation workflow."""
-        tpl = os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}")
-        for entity in self.output_entities:
-            yield from expand(
-                tpl, tumor_library=[entity], ext=[*EXT_VALUES, *(e + ".md5" for e in EXT_VALUES)]
-            )

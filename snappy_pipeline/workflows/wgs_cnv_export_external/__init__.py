@@ -58,13 +58,10 @@ Parallel Execution
 Parallel execution is not performed currently.
 """
 
-import os
-import sys
-
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
 from snakemake.io import expand
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -74,9 +71,6 @@ from snappy_pipeline.workflows.abstract import (
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
 from .model import WgsCnvExportExternal as WgsCnvExportExternalConfigModel
-
-#: Extension of files
-EXTS = (".tsv.gz", ".tsv.gz.md5")
 
 #: Infixes to use for file name generation
 INFIXES = ("gts", "feature-effects", "db-infos")
@@ -134,12 +128,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             yield key, tpl.format(**wildcards) + ext
 
     @dictify
-    def get_output_files(self, action):
-        """Return output files for the export"""
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
-
-    @dictify
     def _get_output_files_merge_vcf(self):
         tpl = (
             f"work/{self.mapper_caller_tag}{{index_ngs_library}}/out/"
@@ -158,9 +146,19 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             yield key, prefix + f".{infix}.tsv.gz"
             yield key + "_md5", prefix + f".{infix}.tsv.gz.md5"
 
-    def get_log_file(self, action):
-        self._validate_action(action)
-        return getattr(self, f"_get_log_file_{action}")()
+    def get_result_files(self) -> list[str]:
+        """The files of the export, for the index of each pedigree"""
+        indexes = [
+            pedigree.index.dna_ngs_library.name
+            for sheet in filter(is_not_background, self.parent.shortcut_sheets)
+            for pedigree in sheet.cohort.pedigrees
+            if pedigree.index and pedigree.index.dna_ngs_library
+        ]
+        return [
+            path
+            for tpl in self.get_output_files("annotate").values()
+            for path in expand(tpl.replace("work/", "output/", 1), index_ngs_library=indexes)
+        ]
 
     def _get_log_file_merge_vcf(self):
         return {
@@ -176,27 +174,10 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
             "varfish_annotated.{index_ngs_library}.log"
         }
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        self._validate_action(action)
-        if action == "annotate":
-            return ResourceUsage(
-                threads=2,
-                runtime="4d",  # 4 days
-                mem=f"{7 * 1024 * 2}MB",
-            )
-        else:
-            return ResourceUsage(
-                threads=1,
-                runtime="2h",  # 2 hours
-                mem=f"{7 * 1024 * 2}MB",
-            )
+    resource_usage = {
+        "annotate": ResourceUsage(threads=2, runtime="4d", mem=f"{7 * 1024 * 2}MB"),
+    }
+    default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem=f"{7 * 1024 * 2}MB")
 
     def _get_params_merge_vcf(self, wildcards):
         result = {
@@ -280,41 +261,3 @@ class WgsCnvExportExternalWorkflow(BaseStep):
                 VarfishAnnotatorExternalStepPart,
             )
         )
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow
-
-        We will process all primary DNA libraries and perform joint calling within pedigrees
-        """
-        name_pattern = "varfish_annotated.{index_library.name}"
-        yield from self._yield_result_files(
-            os.path.join("output", name_pattern, "out", name_pattern + ".{infix}{ext}"),
-            infix=INFIXES,
-            ext=EXTS,
-        )
-
-    def _yield_result_files(self, tpl, **kwargs):
-        """Build output paths from path template and extension list"""
-        for sheet in filter(is_not_background, self.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                if not pedigree.index:  # pragma: no cover
-                    msg = "INFO: pedigree without index (names: {})"
-                    print(
-                        msg.format(list(sorted(d.name for d in pedigree.donors))), file=sys.stderr
-                    )
-                    continue
-                elif not pedigree.index.dna_ngs_library:  # pragma: no cover
-                    msg = "INFO: pedigree index without DNA NGS library (names: {})"
-                    print(
-                        msg.format(  # pragma: no cover
-                            list(sorted(d.name for d in pedigree.donors))
-                        ),
-                        file=sys.stderr,
-                    )
-                    continue  # pragma: no cover
-                yield from expand(
-                    tpl,
-                    index_library=[pedigree.index.dna_ngs_library],
-                    **kwargs,
-                )

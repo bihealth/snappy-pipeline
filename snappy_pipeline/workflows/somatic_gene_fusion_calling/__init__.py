@@ -48,8 +48,6 @@ Available Gene Fusion Callers
 
 """
 
-import os
-
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
@@ -86,10 +84,6 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{library_name}/out/.done"
-
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return the ordered mates, and the upstream ``.done`` file when a task wrote the reads"""
@@ -103,17 +97,10 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         if done := [path for path in self.parent.reads_input(library_name) if path not in written]:
             yield "reads_done", done
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files that all read mapping sub steps must return (BAM + BAI file)"""
-        # Validate action
-        self._validate_action(action)
-        yield "done", touch(self.base_path_out)
+    def _get_output_files_run(self):
+        return {"done": touch("work/{library_name}/out/.done")}
 
-    def get_log_file(self, action):
-        """Return path to log file"""
-        # Validate action
-        self._validate_action(action)
+    def _get_log_file_run(self):
         return "work/{library_name}/log/snakemake.gene_fusion_calling.log"
 
     def _collect_reads(self, wildcards, library_name, prefix):
@@ -134,21 +121,7 @@ class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
     #: Step name
     name = "fusioncatcher"
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=4,
-            runtime="5d",  # 5 days
-            mem=f"{7500 * 4}MB",
-        )
+    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{7500 * 4}MB")
 
 
 class JaffaStepPart(SomaticGeneFusionCallingStepPart):
@@ -162,21 +135,7 @@ class JaffaStepPart(SomaticGeneFusionCallingStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "reference_files", self.config.jaffa.path_reference_files
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=4,
-            runtime="5d",  # 5 days
-            mem=f"{40 * 1024 * 4}MB",
-        )
+    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{40 * 1024 * 4}MB")
 
 
 class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
@@ -201,21 +160,7 @@ class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
         assert action == "run", "Unsupported actions"
         return args_function
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=4,
-            runtime="5d",  # 5 days
-            mem=f"{20 * 1024 * 4}MB",
-        )
+    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{20 * 1024 * 4}MB")
 
 
 class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
@@ -229,21 +174,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "ctat_resource_lib", self.config.star_fusion.path_ctat_resource_lib
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=4,
-            runtime="5d",  # 5 days
-            mem=f"{30 * 1024 * 4}MB",
-        )
+    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
 
 
 class DefuseStepPart(SomaticGeneFusionCallingStepPart):
@@ -257,21 +188,7 @@ class DefuseStepPart(SomaticGeneFusionCallingStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "dataset_directory", self.config.defuse.path_dataset_directory
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=8,
-            runtime="5d",  # 5 days
-            mem=f"{10 * 1024 * 8}MB",
-        )
+    default_resource_usage = ResourceUsage(threads=8, runtime="5d", mem=f"{10 * 1024 * 8}MB")
 
 
 class HeraStepPart(SomaticGeneFusionCallingStepPart):
@@ -286,21 +203,7 @@ class HeraStepPart(SomaticGeneFusionCallingStepPart):
         yield "genome", self.config.hera.path_genome
         yield "index", self.config.hera.path_index
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=8,
-            runtime="5d",  # 5 days
-            mem=f"{20 * 1024 * 8}MB",
-        )
+    default_resource_usage = ResourceUsage(threads=8, runtime="5d", mem=f"{20 * 1024 * 8}MB")
 
 
 class ArribaStepPart(SomaticGeneFusionCallingStepPart):
@@ -334,23 +237,20 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         return args_function
 
     @dictify
-    def get_output_files(self, action):
-        self._validate_action(action)
-        base_path_out = "work/{{library_name}}/out/{{library_name}}.{ext}"
+    def _get_output_files_run(self):
         key_ext = (
             ("fusions", "fusions.tsv"),
             ("discarded", "discarded_fusions.tsv.gz"),
         )
         for key, ext in key_ext:
-            path = base_path_out.format(ext=ext)
+            path = f"work/{{library_name}}/out/{{library_name}}.{ext}"
             yield key, path
             yield key + "_md5", path + ".md5"
         yield "done", "work/{library_name}/out/.done"
 
     @dictify
-    def get_log_file(self, action):
+    def _get_log_file_run(self):
         """Return dict of log files."""
-        _ = action
         yield "log", "work/{library_name}/log/{library_name}.log"
         prefix = "work/{library_name}/log/"
         key_ext = (
@@ -362,19 +262,11 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         for key, ext in key_ext:
             yield key, prefix + ext
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
         return ResourceUsage(
             threads=self.config.arriba.num_threads, runtime="24h", mem=f"{96 * 1024}MB"
-        )  # 1 day
+        )
 
 
 class SomaticGeneFusionCallingWorkflow(BaseStep):
@@ -432,8 +324,6 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         if df.empty:
             return []
 
-        fusion_tool = str(self.config.tool)
-        name_pattern = "{library_name}"
         for library_name in self.output_entities:
             row = df[df["library_name"] == library_name]
             if row.empty:
@@ -441,13 +331,8 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
             extraction_type = row.iloc[0].get("extraction_type", "")
             if extraction_type.lower() != "rna":
                 continue
-            name_pattern_value = name_pattern.format(library_name=library_name)
-            yield os.path.join("output", name_pattern_value, "out", ".done")
-            if fusion_tool == "arriba":
-                yield from self._yield_arriba_files(library_name)
-
-    def _yield_arriba_files(self, library_name):
-        tpl = "output/{library_name}/out/{library_name}.{ext}"
-        for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
-            yield tpl.format(library_name=library_name, ext=ext)
-            yield tpl.format(library_name=library_name, ext=ext + ".md5")
+            yield f"output/{library_name}/out/.done"
+            if self.config.tool == Tool.arriba:
+                for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
+                    yield f"output/{library_name}/out/{library_name}.{ext}"
+                    yield f"output/{library_name}/out/{library_name}.{ext}.md5"

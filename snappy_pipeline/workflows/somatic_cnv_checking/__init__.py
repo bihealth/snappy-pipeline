@@ -60,11 +60,10 @@ import os
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -76,30 +75,19 @@ from .model import SomaticCnvChecking as SomaticCnvCheckingConfigModel
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
-#: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
-
-#: Default configuration for the somatic_cnv_checking schema
-
-
-class SomaticCnvCheckingStepPart(BaseStepPart):
-    """Base class for CNV checking sub-steps"""
-
-    def _get_log_file(self, prefix):
-        """Return dict of log files."""
-        return {"log": prefix + ".log"}
-
-
-class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
+class SomaticCnvCheckingPileupStepPart(BaseStepPart):
     """Perform pileups at a set of locations"""
 
     name = "pileup"
     actions = ("normal", "tumor")
 
     intermediate_outputs = {"normal": ("vcf", "vcf_tbi"), "tumor": ("vcf", "vcf_tbi")}
+
+    resource_usage = {
+        "normal": ResourceUsage(threads=2, runtime="12h", mem=f"{int(3.7 * 1024 * 2)}MB"),
+        "tumor": ResourceUsage(threads=2, runtime="1h", mem=f"{int(3.7 * 1024 * 2)}MB"),
+    }
 
     def _get_input_files_normal(self, wildcards):
         alignments = self.parent.get_upstream_paths(
@@ -128,12 +116,17 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
             "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
-    def get_output_files(self, action):
+    @staticmethod
+    def _pileup_outputs(action):
         """Return the pileup VCF + TBI file (intermediate, so without md5 files)"""
-        # Validate action
-        self._validate_action(action)
-        base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}.{action}{ext}"
-        return dict(zip(EXT_NAMES[:2], expand(base_path_out, action=action, ext=EXT_VALUES[:2])))
+        base = f"work/{{tumor_library}}/out/{{tumor_library}}.{action}.vcf.gz"
+        return {"vcf": base, "vcf_tbi": base + ".tbi"}
+
+    def _get_output_files_normal(self):
+        return self._pileup_outputs("normal")
+
+    def _get_output_files_tumor(self):
+        return self._pileup_outputs("tumor")
 
     def _get_params_normal(self, wildcards):
         return {
@@ -144,26 +137,19 @@ class SomaticCnvCheckingPileupStepPart(SomaticCnvCheckingStepPart):
 
     _get_params_tumor = _get_params_normal
 
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        return self._get_log_file("work/{tumor_library}/log/{tumor_library}." + action)
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=2,
-            runtime="1h" if action == "tumor" else "12h",  # 1 hour
-            mem=f"{int(3.7 * 1024 * 2)}MB",
-        )
+    def _get_log_file(self, action):
+        return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
 
 
-class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
+class SomaticCnvCheckingCnvStepPart(BaseStepPart):
     """Merging heterozygous variants with CNV data"""
 
     name = "cnv"
     actions = ("run",)
+
+    entity_wildcard = "tumor_library"
+
+    published_keys = ("vcf", "vcf_md5", "tbi", "tbi_md5", "tsv", "tsv_md5")
 
     def _get_input_files_run(self, wildcards):
         normal_library = self.parent._get_normal_lib(wildcards.tumor_library)
@@ -184,29 +170,32 @@ class SomaticCnvCheckingCnvStepPart(SomaticCnvCheckingStepPart):
         return filenames
 
     @dictify
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi"}
-        name_pattern = "{tumor_library}"
-        key_ext["tsv"] = ".tsv"
-        base_path_out = "work/" + name_pattern + "/out/" + name_pattern
+    def _get_output_files_run(self):
+        key_ext = {"vcf": ".vcf.gz", "tbi": ".vcf.gz.tbi", "tsv": ".tsv"}
         for key, ext in key_ext.items():
-            yield (key, base_path_out + ext)
-            yield (key + "_md5", base_path_out + ext + ".md5")
+            yield key, "work/{tumor_library}/out/{tumor_library}" + ext
+            yield key + "_md5", "work/{tumor_library}/out/{tumor_library}" + ext + ".md5"
 
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{tumor_library}"
-        return self._get_log_file(os.path.join("work", name_pattern, "log", name_pattern))
+    def _get_log_file_run(self):
+        return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
 
 
-class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
+class SomaticCnvCheckingReportStepPart(BaseStepPart):
     """Plots of BAF vs CNV"""
 
     name = "report"
     actions = ("run",)
+
+    entity_wildcard = "tumor_library"
+
+    published_keys = (
+        "cnv",
+        "cnv_md5",
+        "locus",
+        "locus_md5",
+        "segment",
+        "segment_md5",
+    )
 
     def _get_input_files_run(self, wildcards):
         name_pattern = "{tumor_library}".format(**wildcards)
@@ -217,11 +206,8 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "reference": self.parent.get_upstream_paths("reference").fasta,
         }
 
-    def get_output_files(self, action):
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{tumor_library}"
-        base_path_out = "work/" + name_pattern + "/report/" + name_pattern
+    def _get_output_files_run(self):
+        base_path_out = "work/{tumor_library}/report/{tumor_library}"
         return {
             "cnv": base_path_out + ".cnv.pdf",
             "cnv_md5": base_path_out + ".cnv.pdf.md5",
@@ -236,13 +222,8 @@ class SomaticCnvCheckingReportStepPart(SomaticCnvCheckingStepPart):
             "tumor_library": wildcards.tumor_library,
         }
 
-    def get_log_file(self, action):
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{tumor_library}"
-        return self._get_log_file(
-            os.path.join("work", name_pattern, "log", name_pattern + ".report")
-        )
+    def _get_log_file_run(self):
+        return {"log": "work/{tumor_library}/log/{tumor_library}.report.log"}
 
 
 class SomaticCnvCheckingWorkflow(BaseStep):
@@ -290,24 +271,3 @@ class SomaticCnvCheckingWorkflow(BaseStep):
         if tumor_df.empty:
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
-
-    @listify
-    def get_result_files(self):
-        tpl = os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}")
-        ext = list(EXT_VALUES)
-        if self.has_cnv_calling:
-            ext += [".tsv", ".tsv.md5"]
-        for entity in self.output_entities:
-            yield from expand(tpl, tumor_library=[entity], ext=ext)
-        if self.has_cnv_calling:
-            report_ext = [
-                ".cnv.pdf",
-                ".cnv.pdf.md5",
-                ".locus.pdf",
-                ".locus.pdf.md5",
-                ".segment.pdf",
-                ".segment.pdf.md5",
-            ]
-            report_tpl = os.path.join("output", "{tumor_library}", "report", "{tumor_library}{ext}")
-            for entity in self.output_entities:
-                yield from expand(report_tpl, tumor_library=[entity], ext=report_ext)

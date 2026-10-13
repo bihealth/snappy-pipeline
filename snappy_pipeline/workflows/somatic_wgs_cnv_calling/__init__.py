@@ -79,12 +79,11 @@ from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -97,18 +96,6 @@ from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
-BCF_EXT_VALUES = (".bcf", ".bcf.csi", ".bcf.md5", ".bcf.csi.md5")
-
-#: Names of the files to create for the extension
-EXT_NAMES = ("vcf", "vcf_tbi", "vcf_md5", "vcf_tbi_md5")
-
-#: Available somatic WGS CNV callers
-SOMATIC_WGS_CNV_CALLERS = ("cnvetti", "control_freec")
-
-#: Default configuration for the somatic_variant_calling schema
-
 
 class SomaticWgsCnvCallingStepPart(BaseStepPart):
     """Base class for somatic WGS CNV calling steps
@@ -119,10 +106,6 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
     """
 
     # TODO: unify with somatic (small) variant calling base class?
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{{tumor_library}}/out/{{tumor_library}}{ext}"
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -150,25 +133,6 @@ class SomaticWgsCnvCallingStepPart(BaseStepPart):
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
 
-    def get_output_files(self, action):
-        """Return output files that all somatic variant calling sub steps must
-        return (VCF + TBI file)
-        """
-        # Validate action
-        self._validate_action(action)
-        return dict(zip(EXT_NAMES, expand(self.base_path_out, ext=EXT_VALUES)))
-
-    def _get_log_file(self, action):
-        """Return path to log file"""
-        # Validate action
-        self._validate_action(action)
-
-        name_pattern = "{{tumor_library}}".format()
-        prefix = "work/{name_pattern}/log/{name_pattern}".format(name_pattern=name_pattern)
-        if len(self.actions) > 1:  # one log per action, not one shared by all
-            prefix += f".{action}"
-        return {"log": prefix + ".log"}
-
 
 class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with CNVetti"""
@@ -178,6 +142,12 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     #: Class available actions
     actions = ("coverage", "tumor_normal_ratio", "segment")
+
+    entity_wildcard = "tumor_library"
+
+    published_keys = {"segment": ("bcf", "bcf_csi", "bcf_md5", "bcf_csi_md5")}
+
+    default_resource_usage = ResourceUsage(threads=4, runtime="4h", mem=f"{int(3.75 * 1024 * 4)}MB")
 
     intermediate_outputs = {
         "coverage": ("bcf", "bcf_csi"),
@@ -238,12 +208,6 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                     name_pattern=name_pattern, ext=ext
                 ),
             )
-
-    def get_output_files(self, action):
-        """Return output files that CNVetti creates for the given action"""
-        # Validate action
-        self._validate_action(action)
-        return getattr(self, "_get_output_files_{}".format(action))()
 
     @dictify
     def _get_output_files_coverage(self):
@@ -312,7 +276,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
         return params
 
-    def get_log_file(self, action):
+    def _get_log_file(self, action):
         """Return path to log file"""
         wildcard_name = (
             "library_name" if action in {"coverage", "tumor_normal_ratio"} else "tumor_library"
@@ -320,22 +284,6 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         name_pattern = f"{{{wildcard_name}}}"
         prefix = f"work/{name_pattern}/log/{name_pattern}.{action}"
         return {"log": prefix + ".log"}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return ResourceUsage(
-            threads=4,
-            runtime="4h",  # 4 hours
-            mem=f"{int(3.75 * 1024 * 4)}MB",
-        )
 
 
 class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
@@ -362,27 +310,22 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "call": ("calls",),
     }
 
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "plot": ResourceUsage(
-            threads=1,
-            runtime="1d",  # 1 day
-            mem=f"{30 * 1024}MB",
-        ),
-        "coverage": ResourceUsage(
-            threads=8,
-            runtime="1d",  # 1 day
-            mem=f"{16 * 1024}MB",
-        ),
-        "default": ResourceUsage(
-            threads=1,
-            runtime="1d",  # 1 day
-            mem=f"{int(7.5 * 1024)}MB",
-        ),
+    resource_usage = {
+        "plot": ResourceUsage(threads=1, runtime="1d", mem=f"{30 * 1024}MB"),
+        "coverage": ResourceUsage(threads=8, runtime="1d", mem=f"{16 * 1024}MB"),
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{int(7.5 * 1024)}MB")
+
+    @property
+    def published_keys(self):
+        return {
+            "fix": ("ratios", "ratios_md5"),
+            "postprocess": ("final", "final_md5"),
+            "export": tuple(self._get_output_files_export()),
+            "plot": tuple(self._get_output_files_plot()),
+            "report": tuple(self._get_output_files_report()),
+        }
 
     def _cnvkit_params(self, action: str) -> dict[str, Any]:
         cfg = self.config.cnvkit
@@ -476,22 +419,6 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         }
         return input_files
 
-    def get_output_files(self, action):
-        """Return output files for the given action"""
-        # Validate action
-        self._validate_action(action)
-        method_mapping = {
-            "coverage": self._get_output_files_coverage,
-            "fix": self._get_output_files_fix,
-            "call": self._get_output_files_call,
-            "postprocess": self._get_output_files_postprocess,
-            "segment": self._get_output_files_segment,
-            "export": self._get_output_files_export,
-            "plot": self._get_output_files_plot,
-            "report": self._get_output_files_report,
-        }
-        return method_mapping[action]()
-
     @staticmethod
     def _get_output_files_coverage():
         name_pattern = "{library_name}"
@@ -572,29 +499,9 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             output_files[report + "_md5"] = output_files[report] + ".md5"
         return output_files
 
-    def get_log_file(self, action):
+    def _get_log_file(self, action):
         """Return path to log file for the given action"""
-        # Validate action
-        self._validate_action(action)
-        prefix = f"work/{{library_name}}/log/{action}.{{library_name}}"
-        return {"log": prefix + ".log"}
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        if action == "plot":
-            return self.resource_usage_dict.get("plot")
-        elif action == "coverage":
-            return self.resource_usage_dict.get("coverage")
-        else:
-            return self.resource_usage_dict.get("default")
+        return {"log": f"work/{{library_name}}/log/{action}.{{library_name}}.log"}
 
 
 class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
@@ -608,67 +515,52 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     intermediate_outputs = {"transform": ("cns", "cnr")}
 
-    #: Class resource usage dictionary. Key: action type (string); Value: resource (ResourceUsage).
-    resource_usage_dict = {
-        "plot": ResourceUsage(
-            threads=1,
-            runtime="40h",  # 1 day and 16 hours
-            mem=f"{2 * 30 * 1024}MB",
-        ),
-        "transform": ResourceUsage(
-            threads=1,
-            runtime="40h",  # 1 day and 16 hours
-            mem=f"{2 * 8 * 1024}MB",
-        ),
-        "run": ResourceUsage(
-            threads=8,
-            runtime="40h",  # 1 day and 16 hours
-            mem=f"{int(2 * 3.75 * 1024 * 8)}MB",
-        ),
+    entity_wildcard = "tumor_library"
+
+    published_keys = {
+        "run": ("ratio", "ratio_md5"),
+        "transform": ("log2", "call", "segments", "log2_md5", "call_md5", "segments_md5"),
+        "plot": ("heatmap", "scatter", "diagram", "heatmap_md5", "scatter_md5", "diagram_md5"),
     }
 
-    def get_output_files(self, action):
-        # Initialise variable
-        result = {}
+    resource_usage = {
+        "plot": ResourceUsage(threads=1, runtime="40h", mem=f"{2 * 30 * 1024}MB"),
+        "transform": ResourceUsage(threads=1, runtime="40h", mem=f"{2 * 8 * 1024}MB"),
+        "run": ResourceUsage(threads=8, runtime="40h", mem=f"{int(2 * 3.75 * 1024 * 8)}MB"),
+    }
 
-        # Validate action
-        self._validate_action(action)
+    def _get_log_file(self, action):
+        return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
 
-        if action == "run":
-            result["ratio"] = self.base_path_out.format(ext=".ratio.txt")
-            result["ratio_md5"] = self.base_path_out.format(ext=".ratio.txt.md5")
-        elif action == "transform":
-            transform_ext_names = ("log2", "call", "segments", "cns", "cnr")
-            transform_ext_values = (
-                ".gene_log2.txt",
-                ".gene_call.txt",
-                ".segments.txt",
-                ".cns",
-                ".cnr",
-            )
-            result = dict(
-                zip(
-                    transform_ext_names,
-                    expand(self.base_path_out, ext=transform_ext_values),
-                )
-            )
-            for name in ("log2", "call", "segments"):  # published
-                result[name + "_md5"] = result[name] + ".md5"
-        elif action == "plot":
-            plot_ext_names = ("heatmap", "scatter", "diagram")
-            plot_ext_values = (".heatmap.png", ".scatter.png", ".diagram.pdf")
-            result = dict(
-                zip(
-                    plot_ext_names,
-                    expand(self.base_path_out, ext=plot_ext_values),
-                )
-            )
-            result.update({name + "_md5": path + ".md5" for name, path in result.items()})
+    def _get_output_files_run(self):
+        base = "work/{tumor_library}/out/{tumor_library}"
+        return {"ratio": base + ".ratio.txt", "ratio_md5": base + ".ratio.txt.md5"}
 
+    def _get_output_files_transform(self):
+        base = "work/{tumor_library}/out/{tumor_library}"
+        result = {
+            "log2": base + ".gene_log2.txt",
+            "call": base + ".gene_call.txt",
+            "segments": base + ".segments.txt",
+            "cns": base + ".cns",
+            "cnr": base + ".cnr",
+        }
+        for name in ("log2", "call", "segments"):  # published
+            result[name + "_md5"] = result[name] + ".md5"
+        return result
+
+    def _get_output_files_plot(self):
+        base = "work/{tumor_library}/out/{tumor_library}"
+        result = {
+            "heatmap": base + ".heatmap.png",
+            "scatter": base + ".scatter.png",
+            "diagram": base + ".diagram.pdf",
+        }
+        result.update({name + "_md5": path + ".md5" for name, path in result.items()})
         return result
 
     def _get_input_files_transform(self, wildcards):
-        return {"ratio": self.base_path_out.format(ext=".ratio.txt")}
+        return {"ratio": "work/{tumor_library}/out/{tumor_library}.ratio.txt"}
 
     def _get_input_files_plot(self, wildcards):
         transform = self.get_output_files("transform").items()
@@ -699,18 +591,6 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     def _get_params_plot(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.control_freec.diagram.model_dump(by_alias=True)
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-        """
-        # Validate action
-        self._validate_action(action)
-        return self.resource_usage_dict.get(action)
 
 
 class SomaticWgsCnvCallingWorkflow(BaseStep):
@@ -756,87 +636,3 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((selected_sub_step,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the NGS mapping workflow"""
-        tool = self.config.tool
-        for entity in self.output_entities:
-            if tool == "cnvetti":
-                yield from expand(
-                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                    tumor_library=[entity],
-                    ext=BCF_EXT_VALUES,
-                )
-            elif tool == "control_freec":
-                yield from expand(
-                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                    tumor_library=[entity],
-                    ext=[
-                        ".ratio.txt",
-                        ".ratio.txt.md5",
-                        ".gene_log2.txt",
-                        ".gene_log2.txt.md5",
-                        ".gene_call.txt",
-                        ".gene_call.txt.md5",
-                        ".segments.txt",
-                        ".segments.txt.md5",
-                        ".scatter.png",
-                        ".scatter.png.md5",
-                        ".heatmap.png",
-                        ".heatmap.png.md5",
-                        ".diagram.pdf",
-                        ".diagram.pdf.md5",
-                    ],
-                )
-            elif tool == "cnvkit":
-                exts = (".cnr", ".cns", ".bed", ".dnacopy.seg", ".vcf.gz", ".vcf.gz.tbi")
-                yield from expand(
-                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                    tumor_library=[entity],
-                    ext=exts,
-                )
-                yield from expand(
-                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                    tumor_library=[entity],
-                    ext=[ext + ".md5" for ext in exts],
-                )
-                reports = ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
-                for report in reports:
-                    yield from expand(
-                        os.path.join(
-                            "output", "{tumor_library}", "report", "{tumor_library}.{ext}"
-                        ),
-                        tumor_library=[entity],
-                        ext=[f"{report}.txt", f"{report}.txt.md5"],
-                    )
-                for plot, ext, chrom in (
-                    ("diagram", "pdf", False),
-                    ("heatmap", "pdf", True),
-                    ("scatter", "png", True),
-                ):
-                    yield from expand(
-                        os.path.join(
-                            "output", "{tumor_library}", "report", "{tumor_library}.{ext}"
-                        ),
-                        tumor_library=[entity],
-                        ext=[f"{plot}.{ext}", f"{plot}.{ext}.md5"],
-                    )
-                    if chrom:
-                        for c in map(str, chain(range(1, 23), ("X", "Y"))):
-                            yield from expand(
-                                os.path.join(
-                                    "output", "{tumor_library}", "report", "{tumor_library}.{ext}"
-                                ),
-                                tumor_library=[entity],
-                                ext=[
-                                    f"{plot}.chr{c}.{ext}",
-                                    f"{plot}.chr{c}.{ext}.md5",
-                                ],
-                            )
-            else:
-                yield from expand(
-                    os.path.join("output", "{tumor_library}", "out", "{tumor_library}{ext}"),
-                    tumor_library=[entity],
-                    ext=EXT_VALUES,
-                )

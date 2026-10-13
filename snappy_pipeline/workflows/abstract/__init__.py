@@ -27,7 +27,7 @@ from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import ShortcutSampleSheet
 from snakemake.api import Workflow
-from snakemake.io import report, temp
+from snakemake.io import expand, report, temp
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
@@ -140,6 +140,13 @@ class BaseStepPart:
     #: Outputs that the Snakemake report shows, by action and output key
     report_outputs: dict[str, dict[str, ReportOutput]] = {}
 
+    #: Output keys whose files are published, for all actions or by action; ``get_result_files``
+    #: derives the result files from them
+    published_keys: tuple[str, ...] | dict[str, tuple[str, ...]] = ()
+
+    #: Wildcard of the output entity (library, tumor library, ...) in the output paths
+    entity_wildcard: str = "library_name"
+
     #: Output keys by action of scatter fragments (per-region or per-chunk pieces that a gather
     #: rule joins): always ``temp()`` (plans.md W3)
     temp_outputs: dict[str, tuple[str, ...]] = {}
@@ -171,9 +178,10 @@ class BaseStepPart:
             raise UnsupportedActionException(error_message)
 
     def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Return the resource usage for the given action."""
-        if action not in self.actions:
-            raise ValueError(f"Invalid {action} not in {self.actions}")
+        """Return the resource usage for the given action: ``resource_usage[action]`` or
+        ``default_resource_usage``. A step part whose usage depends on its config defines either
+        as a property."""
+        self._validate_action(action)
         return self.resource_usage.get(action, self.default_resource_usage)
 
     @staticmethod
@@ -253,20 +261,41 @@ class BaseStepPart:
         return getattr(self, f"_get_input_files_{action}")
 
     def get_output_files(self, action: str) -> Outputs:
-        """Return output files for the given action of the sub step and"""
-        raise NotImplementedError("Called abstract method. Override me!")  # pragma: no cover
+        """Return the output files of an action: ``self._get_output_files_<action>()``."""
+        self._validate_action(action)
+        return getattr(self, f"_get_output_files_{action}")()
 
     def get_log_file(self, action: str) -> Outputs:
-        """Return path to log file
+        """Return the log files of an action: ``self._get_log_file_<action>()``, or
+        ``self._get_log_file(action)`` for a step part whose actions share one pattern."""
+        self._validate_action(action)
+        if method := getattr(self, f"_get_log_file_{action}", None):
+            return method()
+        return self._get_log_file(action)
 
-        The default implementation returns ``self._get_log_file(action)``.
-        """
-        if hasattr(self, "_get_log_file"):
-            return self._get_log_file(action)
-        else:
-            raise NotImplementedError(
-                "Log file name generation not implemented!"
-            )  # pragma: no cover
+    def get_result_files(self) -> list[str]:
+        """Return the published files below ``output/``: the outputs of ``published_keys`` for
+        each output entity, at their mirror path."""
+        result = []
+        for action in self.actions:
+            keys = self.published_keys
+            if isinstance(keys, dict):
+                keys = keys.get(action, ())
+            if not keys:
+                continue
+            for key, paths in self.get_output_files(action).items():
+                if key not in keys:
+                    continue
+                for path in paths if isinstance(paths, list) else [paths]:
+                    unconstrained = re.sub(r"\{(\w+),[^}]*\}", r"{\1}", str(path))
+                    template = "output/" + unconstrained.removeprefix("work/")
+                    for entity in self.parent.output_entities:
+                        result += expand(template, **self._result_wildcards(entity))
+        return result
+
+    def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
+        """Return the wildcard values of the result files of one output entity."""
+        return {self.entity_wildcard: [entity]}
 
     def get_shell_cmd(self, action: str, wildcards: Wildcards) -> str:  # NOSONAR
         """Return shell command for the given action of the sub step and the given wildcards"""
@@ -1277,9 +1306,9 @@ class BaseStep:
         """
         return self._get_sub_step(sub_step).run(action, wildcards)
 
-    def get_result_files(self) -> OutputFiles:
-        """Return actual list of file names to build"""
-        raise NotImplementedError("Implement me!")  # pragma: no cover
+    def get_result_files(self) -> list[str]:
+        """Return the published files below ``output/``: those of all step parts."""
+        return [path for part in self.sub_steps.values() for path in part.get_result_files()]
 
     def substep_getattr(self, step: str, name: str) -> Any:
         """Return attribute from substep"""

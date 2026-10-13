@@ -9,11 +9,8 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart
-from snappy_pipeline.workflows.abstract.common import (
-    ForwardResourceUsageMixin,
-    ForwardSnakemakeFilesMixin,
-)
 from snappy_pipeline.workflows.common.sv_calling import (
+    VCF_OUTPUTS,
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
 )
@@ -23,8 +20,6 @@ from snappy_wrappers.resource_usage import ResourceUsage
 class Delly2StepPart(
     SvCallingGetResultFilesMixin,
     SvCallingGetLogFileMixin,
-    ForwardSnakemakeFilesMixin,
-    ForwardResourceUsageMixin,
     BaseStepPart,
 ):
     """Perform SV calling on exomes using Delly2"""
@@ -38,13 +33,9 @@ class Delly2StepPart(
         "genotype": ("bcf", "bcf_csi"),
     }
 
-    _cheap_resource_usage = ResourceUsage(
-        threads=1,
-        runtime="1d",
-        mem="4GB",
-    )
+    _cheap_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="4GB")
     _normal_resource_usage = ResourceUsage(threads=1, runtime="2d", mem="16GB")
-    resource_usage_dict = {
+    resource_usage = {
         "call": _normal_resource_usage,
         "merge_calls": _cheap_resource_usage,
         "genotype": _normal_resource_usage,
@@ -134,13 +125,5 @@ class Delly2StepPart(
         yield "bcf", bcfs
         yield "bcf_csi", [f"{bcf}.csi" for bcf in bcfs]
 
-    @dictify
     def _get_output_files_merge_genotypes(self):
-        prefix = "work/{library_name}/out/{library_name}"
-        work_files = {
-            "vcf": f"{prefix}.vcf.gz",
-            "vcf_md5": f"{prefix}.vcf.gz.md5",
-            "vcf_tbi": f"{prefix}.vcf.gz.tbi",
-            "vcf_tbi_md5": f"{prefix}.vcf.gz.tbi.md5",
-        }
-        yield from work_files.items()
+        return dict(VCF_OUTPUTS)

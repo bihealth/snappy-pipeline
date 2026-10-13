@@ -63,6 +63,17 @@ provides:
 ``BaseStep`` raises a ``TypeError`` at parse time if ``get_input_files`` or ``get_params`` returns
 anything but a function.
 
+A step part implements these through per-action methods that ``BaseStepPart`` dispatches to
+after validating the action: ``_get_input_files_<action>(wildcards)``,
+``_get_params_<action>(wildcards)``, ``_get_output_files_<action>()`` and
+``_get_log_file_<action>()`` (or one ``_get_log_file(action)`` for all actions). Resource usage
+is declared, not computed: ``default_resource_usage`` for all actions and ``resource_usage`` per
+action, each a property when it depends on the config. ``published_keys`` names the output keys
+whose files are published (for all actions, or by action); ``BaseStepPart.get_result_files``
+derives their ``output/`` paths for each output entity (``entity_wildcard``, other wildcards via
+``_result_wildcards``), and ``BaseStep.get_result_files`` collects them from all step parts.
+Override these only where the derivation does not fit.
+
 Wrappers read the params dict as ``snakemake.params.args``. Snakemake does not allow
 ``unpack()`` in ``params:``, so every rule passes it as the single key ``args``.
 

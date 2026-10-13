@@ -60,19 +60,15 @@ Available Somatic Targeted CNV Caller
 """
 
 import os
-import os.path
-import re
 from itertools import chain
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -113,8 +109,7 @@ BCF_KEY_EXTS = (
 class SomaticTargetedSeqCnvCallingStepPart(BaseStepPart):
     """Shared code for all caller classes in somatic_targeted_seq_cnv_calling"""
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    entity_wildcard = "tumor_library"
 
     def _resolve_library_name(self, library_name: str) -> str:
         df = self.parent.build_library_dataframe()
@@ -134,10 +129,6 @@ class SomaticTargetedSeqCnvCallingStepPart(BaseStepPart):
         if tumor_df.empty:
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
-
-    @staticmethod
-    def _get_log_file_from_prefix(prefix):
-        return {"log": prefix + ".log"}
 
 
 def expand_id(*args):
@@ -191,8 +182,10 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         ),
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    published_keys = {
+        "coverage": ("seqz", "seqz_md5"),
+        "run": ("seg", "seg_md5", "done"),
+    }
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
@@ -227,34 +220,26 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "reference", reference
         yield "reference_fai", reference + ".fai"
 
-    def get_output_files(self, action):
-        if action == "install":
-            return {"done": "work/R_packages/out/packages.done"}
-        elif action == "gcreference":
-            return {
-                "gc": "work/static_data/out/gc.{length}.wig.gz".format(
-                    length=self.config.sequenza.length,
-                )
-            }
-        elif action == "coverage":
-            name_pattern = "{tumor_library}"
-            return {
-                "seqz": f"work/{name_pattern}/out/{name_pattern}.seqz.gz",
-                "seqz_md5": f"work/{name_pattern}/out/{name_pattern}.seqz.gz.md5",
-            }
-        elif action == "run":
-            name_pattern = "{tumor_library}"
-            return {
-                "seg": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg",
-                "seg_md5": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg.md5",
-                "done": f"work/{name_pattern}/report/.done",
-            }
-        else:
-            raise UnsupportedActionException(
-                "Action '{action}' is not supported. Valid options: {valid}".format(
-                    action=action, valid=", ".join(self.actions)
-                )
-            )
+    def _get_output_files_install(self):
+        return {"done": "work/R_packages/out/packages.done"}
+
+    def _get_output_files_gcreference(self):
+        return {"gc": f"work/static_data/out/gc.{self.config.sequenza.length}.wig.gz"}
+
+    def _get_output_files_coverage(self):
+        name_pattern = "{tumor_library}"
+        return {
+            "seqz": f"work/{name_pattern}/out/{name_pattern}.seqz.gz",
+            "seqz_md5": f"work/{name_pattern}/out/{name_pattern}.seqz.gz.md5",
+        }
+
+    def _get_output_files_run(self):
+        name_pattern = "{tumor_library}"
+        return {
+            "seg": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg",
+            "seg_md5": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg.md5",
+            "done": f"work/{name_pattern}/report/.done",
+        }
 
     @staticmethod
     def _coerce_model(model_cls, value):
@@ -290,20 +275,14 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "library_name": wildcards.tumor_library,
         }
 
-    def get_log_file(self, action):
-        """Return dict of log files."""
-        # Validate action
-        self._validate_action(action)
-        if action == "install":
-            prefix = "work/R_packages/log/packages"
-        elif action == "gcreference":
-            prefix = "work/static_data/log/gc.{length}".format(
-                length=self.config.sequenza.length,
-            )
-        else:
-            name_pattern = "{tumor_library}"
-            prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
-        return self._get_log_file_from_prefix(prefix)
+    def _get_log_file_install(self):
+        return {"log": "work/R_packages/log/packages.log"}
+
+    def _get_log_file_gcreference(self):
+        return {"log": f"work/static_data/log/gc.{self.config.sequenza.length}.log"}
+
+    def _get_log_file(self, action):
+        return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
 
 
 class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
@@ -329,6 +308,10 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             mem="96GB",
         ),
     }
+
+    @property
+    def published_keys(self):
+        return {"run": tuple(self._get_output_files_run())}
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -362,30 +345,27 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "intervals", self.parent.get_upstream_paths("panel_of_normals").intervals
         yield "container", self.config.purecn.path_container
 
-    def get_output_files(self, action):
-        """Return output paths, dependent on rule"""
-        # Validate action
-        self._validate_action(action)
-        name_pattern = "{tumor_library}"
-        prefix = os.path.join("work", name_pattern, "out", name_pattern)
-        action_mapping = {
-            "coverage": {"coverage": prefix + ".coverage_loess.txt.gz"},
-            "run": {
-                "segments": prefix + ".dnacopy.seg",
-                "ploidy": prefix + ".csv",
-                "pvalues": prefix + ".amplification_pvalues.csv",
-                "vcf": prefix + ".vcf.gz",
-                "vcf_tbi": prefix + ".vcf.gz.tbi",
-                "loh": prefix + ".loh.csv",
-                "segments_md5": prefix + ".dnacopy.seg.md5",
-                "ploidy_md5": prefix + ".csv.md5",
-                "pvalues_md5": prefix + ".amplification_pvalues.csv.md5",
-                "vcf_md5": prefix + ".vcf.gz.md5",
-                "vcf_tbi_md5": prefix + ".vcf.gz.tbi.md5",
-                "loh_md5": prefix + ".loh.csv.md5",
-            },
+    _prefix = "work/{tumor_library}/out/{tumor_library}"
+
+    def _get_output_files_coverage(self):
+        return {"coverage": self._prefix + ".coverage_loess.txt.gz"}
+
+    def _get_output_files_run(self):
+        prefix = self._prefix
+        return {
+            "segments": prefix + ".dnacopy.seg",
+            "ploidy": prefix + ".csv",
+            "pvalues": prefix + ".amplification_pvalues.csv",
+            "vcf": prefix + ".vcf.gz",
+            "vcf_tbi": prefix + ".vcf.gz.tbi",
+            "loh": prefix + ".loh.csv",
+            "segments_md5": prefix + ".dnacopy.seg.md5",
+            "ploidy_md5": prefix + ".csv.md5",
+            "pvalues_md5": prefix + ".amplification_pvalues.csv.md5",
+            "vcf_md5": prefix + ".vcf.gz.md5",
+            "vcf_tbi_md5": prefix + ".vcf.gz.tbi.md5",
+            "loh_md5": prefix + ".loh.csv.md5",
         }
-        return action_mapping[action]
 
     def get_params(self, action):
         self._validate_action(action)
@@ -403,14 +383,8 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "library_name": wildcards.tumor_library,
         }
 
-    def get_log_file(self, action):
-        """Return dict of log files."""
-        # Validate action
-        self._validate_action(action)
-
-        name_pattern = "{tumor_library}"
-        prefix = os.path.join("work", name_pattern, "log", name_pattern + "." + action)
-        return self._get_log_file_from_prefix(prefix)
+    def _get_log_file(self, action):
+        return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
 
 
 class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
@@ -459,6 +433,11 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             mem=f"{16 * 1024}MB",
         ),
     }
+
+    @property
+    def published_keys(self):
+        actions = ("fix", "postprocess", "export", "plot", "report")
+        return {action: tuple(self.get_output_files(action)) for action in actions}
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -549,27 +528,6 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             args["male_reference"] = self.cfg.male_reference
         return args
 
-    def get_output_files(self, action):
-        """Return output files for the given action"""
-        if action == "coverage":
-            return self._get_output_files_coverage()
-        elif action == "fix":
-            return self._get_output_files_fix()
-        elif action == "segment":
-            return self._get_output_files_segment()
-        elif action == "call":
-            return self._get_output_files_call()
-        elif action == "postprocess":
-            return self._get_output_files_postprocess()
-        elif action == "export":
-            return self._get_output_files_export()
-        elif action == "plot":
-            return self._get_output_files_plot()
-        elif action == "report":
-            return self._get_output_files_report()
-        else:
-            self._validate_action(action)
-
     @staticmethod
     def _get_output_files_coverage():
         name_pattern = "{tumor_library}"
@@ -658,12 +616,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
             output_files[report + "_md5"] = tpl + ".md5"
         return output_files
 
-    def get_log_file(self, action):
-        """Return path to log file for the given action"""
-        # Validate action
-        self._validate_action(action)
-        prefix = f"work/{{tumor_library}}/log/{action}.{{tumor_library}}"
-        return self._get_log_file_from_prefix(prefix)
+    def _get_log_file(self, action):
+        return {"log": f"work/{{tumor_library}}/log/{action}.{{tumor_library}}.log"}
 
 
 class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
@@ -712,23 +666,3 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((selected_sub_step,))
-
-    @listify
-    def get_result_files(self):
-        """Return list of result files for the somatic targeted sequencing CNV calling step"""
-        tool = self.config.tool
-        sub_step = self.sub_steps[tool]
-        tool_actions = {
-            Tool.cnvkit: ("fix", "postprocess", "report", "plot", "export"),
-            Tool.sequenza: ("coverage", "run"),
-            Tool.purecn: ("run",),
-        }
-        for action in tool_actions[tool]:
-            output_files = sub_step.get_output_files(action)
-            paths = (
-                list(output_files.values()) if isinstance(output_files, dict) else [output_files]
-            )
-            for p in paths:
-                if isinstance(p, str) and p.startswith("work/"):
-                    out_p = re.sub(r"^work/", "output/", p)
-                    yield from expand(out_p, tumor_library=self.output_entities)

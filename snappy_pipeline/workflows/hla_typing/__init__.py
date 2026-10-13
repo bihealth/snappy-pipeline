@@ -60,7 +60,6 @@ from collections import OrderedDict
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
-from snappy_pipeline.base import UnsupportedActionException
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -72,11 +71,10 @@ from snappy_pipeline.workflows.common.reads import reads_input_files, reads_para
 
 from .model import HlaTyping as HlaTypingConfigModel
 
-#: Extensions of files to create as main payload
-EXT_VALUES = (".txt", ".txt.md5", ".json", ".json.md5")
+#: Output keys and extensions of the main payload
+_OUTPUTS = {"txt": ".txt", "txt_md5": ".txt.md5", "json": ".json", "json_md5": ".json.md5"}
 
-#: Names of the files to create for the extension
-EXT_NAMES = ("txt", "txt_md5", "json", "json_md5")
+_OUT_PATTERN = "work/{library_name}/out/{library_name}"
 
 #: HLA typing tools
 HLA_TYPERS = ("optitype", "arcashla")
@@ -95,40 +93,21 @@ class OptiTypeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
-        self.extensions = EXT_VALUES
-
-    @staticmethod
-    def get_output_prefix():
-        return ""
-
     def _get_input_files_run(self, wildcards):
         """Return input files"""
         return reads_input_files(self.parent, wildcards.library_name)
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        assert action == "run"
+    def _get_output_files_run(self):
         if self.name != str(self.config.tool):
             return {}
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, self.base_path_out.format(ext=ext)
-        # add additional optitype output files
-        for name, ext in {"tsv": ".result.tsv", "cov_pdf": ".coverage_plot.pdf"}.items():
-            yield name, self.base_path_out.format(ext=ext)
+        # additional optitype output files
+        outputs = _OUTPUTS | {"tsv": ".result.tsv", "cov_pdf": ".coverage_plot.pdf"}
+        return {key: _OUT_PATTERN + ext for key, ext in outputs.items()}
 
-    @dictify
-    def get_log_file(self, action):
-        """Return dict of log files."""
-        self._validate_action(action)
-
+    def _get_log_file_run(self):
         if self.name != str(self.config.tool):
             return {}
-        prefix = "work/{library_name}/log/{library_name}"
-        yield "log", prefix + ".log"
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards):
         """Return dict for the wrapper"""
@@ -147,25 +126,7 @@ class OptiTypeStepPart(BaseStepPart):
         library = self.parent.ngs_library_name_to_ngs_library[wildcards.library_name]
         return library.test_sample.extra_infos.get("extractionType", "DNA").lower()
 
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=6,
-            runtime="40h",  # 40 hours
-            mem="45000MB",
-        )
+    default_resource_usage = ResourceUsage(threads=6, runtime="40h", mem="45000MB")
 
 
 class ArcasHlaStepPart(BaseStepPart):
@@ -186,8 +147,6 @@ class ArcasHlaStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.mapper = self.config.arcashla.mapper
-        self.base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
-        self.extensions = EXT_VALUES
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -198,44 +157,15 @@ class ArcasHlaStepPart(BaseStepPart):
         )
         yield "bam", alignments.bam
 
-    @dictify
-    def get_output_files(self, action):
-        """Return output files"""
-        assert action == "run"
+    def _get_output_files_run(self):
         if self.name != str(self.config.tool):
             return {}
-        for name, ext in zip(EXT_NAMES, EXT_VALUES):
-            yield name, self.base_path_out.format(ext=ext, mapper=self.config.arcashla.mapper)
+        return {key: _OUT_PATTERN + ext for key, ext in _OUTPUTS.items()}
 
-    def get_output_prefix(self):
-        return ""
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
-    @dictify
-    def get_log_file(self, action):
-        """Return dict of log files."""
-        self._validate_action(action)
-        prefix = "work/{library_name}/log/{library_name}"
-        yield "log", prefix + ".log"
-
-    def get_resource_usage(self, action: str, **kwargs) -> ResourceUsage:
-        """Get Resource Usage
-
-        :param action: Action (i.e., step) in the workflow, example: 'run'.
-        :type action: str
-
-        :return: Returns ResourceUsage for step.
-
-        :raises UnsupportedActionException: if action not in class defined list of valid actions.
-        """
-        if action not in self.actions:
-            actions_str = ", ".join(self.actions)
-            error_message = f"Action '{action}' is not supported. Valid options: {actions_str}"
-            raise UnsupportedActionException(error_message)
-        return ResourceUsage(
-            threads=4,
-            runtime="60h",  # 60 hours
-            mem="15000MB",
-        )
+    default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="15000MB")
 
 
 class HlaTypingWorkflow(BaseStep):
@@ -280,11 +210,8 @@ class HlaTypingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        from os.path import join
-
-        name_pattern = "{library_name}"
         yield from self._yield_result_files(
-            join("output", name_pattern, "out", name_pattern + "{ext}"), ext=EXT_VALUES
+            "output/{library_name}/out/{library_name}{ext}", ext=_OUTPUTS.values()
         )
 
     def _yield_result_files(self, tpl, **kwargs):
