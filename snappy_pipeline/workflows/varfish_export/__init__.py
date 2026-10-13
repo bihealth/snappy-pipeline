@@ -31,7 +31,8 @@ import typing
 import warnings
 from pathlib import Path
 
-from biomedsheets.shortcuts import GermlineCaseSheet, Pedigree, is_not_background
+import pandas as pd
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -59,6 +60,9 @@ EXTS = (".tsv.gz", ".tsv.gz.md5")
 
 #: Default configuration for the somatic_variant_calling step
 
+#: ``cohort_name`` of libraries in a pedigree whose index has no DNA library
+_NO_INDEX = "unknown"
+
 
 class MehariStepPart(BaseStepPart):
     """This step part is responsible for annotating the variants with Mehari"""
@@ -66,13 +70,6 @@ class MehariStepPart(BaseStepPart):
     name = "mehari"
     actions = ("annotate_seqvars", "annotate_strucvars", "bam_qc")
     default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="14GB")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     def _get_log_file(self, action: str) -> SnakemakeDict:
         return {
@@ -114,31 +111,23 @@ class MehariStepPart(BaseStepPart):
         """Return ``dict`` that maps the index DNA library name to a list of all pedigree
         member's DNA library names.
         """
-        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
-            for pedigree in sheet.cohort.pedigrees:
-                if self._is_pedigree_good(pedigree):
-                    index = pedigree.index.dna_ngs_library.name
-                    donors = [
-                        donor.dna_ngs_library.name
-                        for donor in pedigree.donors
-                        if donor.dna_ngs_library
-                    ]
-                    yield index, donors
+        self._warn_pedigrees_without_index()
+        for index in self.parent.pedigrees():
+            yield (
+                index,
+                self.parent.pedigree_members(index, include_background=True)[
+                    "library_name"
+                ].tolist(),
+            )
 
-    def _is_pedigree_good(self, pedigree: Pedigree) -> bool:
-        """Check pedigrees for inconsistencies and issue warning for any.
-
-        :return: ``True`` if there was no inconsistency reported
-        """
-        msg = None
-        donor_names = list(sorted(d.name for d in pedigree.donors))
-        if not pedigree.index:  # pragma: no cover
-            msg = f"INFO: pedigree without index (name: {donor_names})"
-        elif not pedigree.index.dna_ngs_library:  # pragma: no cover
-            msg = f"INFO: pedigree index without DNA NGS library (names: {donor_names})"
-        if msg:
+    def _warn_pedigrees_without_index(self):
+        """Issue a warning for the members of pedigrees whose index has no DNA library."""
+        df = self.parent.build_library_dataframe(include_background=False)
+        unindexed = (df["kind"] == "germline") & (df["cohort_name"] == _NO_INDEX)
+        names = sorted(df.loc[unindexed, "donor_name"])
+        if names:
+            msg = f"INFO: pedigree index without DNA NGS library (names: {names})"
             warnings.warn(InconsistentPedigreeWarning(msg))
-        return not msg
 
     @dictify
     def _get_input_files_annotate_seqvars(self, wildcards):
@@ -200,10 +189,9 @@ class MehariStepPart(BaseStepPart):
             sv_caller: getattr(sv_config, sv_caller).skip_libraries for sv_caller in sv_callers
         }
 
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        library_names = [
-            donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-        ]
+        library_names = self.parent.pedigree_members(
+            wildcards.index_ngs_library, include_background=True
+        )["library_name"].tolist()
 
         vcfs = []
         for sv_caller in sv_callers:
@@ -255,14 +243,10 @@ class MehariStepPart(BaseStepPart):
     def _get_input_files_bam_qc(self, wildcards):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
-        for donor in pedigree.donors:
-            if not donor.dna_ngs_library:
-                continue
-            qc = self.parent.get_upstream_paths(
-                "alignments", library_name=donor.dna_ngs_library.name
-            )
+        for library_name in members["library_name"]:
+            qc = self.parent.get_upstream_paths("alignments", library_name=library_name)
             for key in result:
                 result[key].append(getattr(qc, key))
         return result
@@ -295,14 +279,8 @@ class MehariStepPart(BaseStepPart):
         :return: Dictionary linking library name to identifier that should be used in output file.
         Key: library name; Value: identifier to be used in file.
         """
-        library_name_to_file_identifier = {}
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                library_name_to_file_identifier[donor.dna_ngs_library.name] = (
-                    donor.dna_ngs_library.name
-                )
-        return library_name_to_file_identifier
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        return {library_name: library_name for library_name in members["library_name"]}
 
 
 class VarfishExportWorkflow(BaseStep):
@@ -343,15 +321,10 @@ class VarfishExportWorkflow(BaseStep):
             for item in cov_config.path_target_interval_list_mapping
             if item.name != "__default__"
         }
-        result = {}
-        for sheet in self.shortcut_sheets:
-            for donor in sheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    for test_sample in bio_sample.test_samples.values():
-                        for library in test_sample.ngs_libraries.values():
-                            if library.extra_infos.get("libraryKit"):
-                                library_kit = library.extra_infos.get("libraryKit")
-                                for pattern, name in regexes.items():
-                                    if re.match(pattern, library_kit):
-                                        yield library.name, name
-        return result
+        df = self.build_library_dataframe(include_background=True)
+        if "library_kit" in df.columns:
+            for library_name, library_kit in zip(df["library_name"], df["library_kit"]):
+                if pd.notna(library_kit) and library_kit:
+                    for pattern, name in regexes.items():
+                        if re.match(pattern, library_kit):
+                            yield library_name, name

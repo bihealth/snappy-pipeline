@@ -79,6 +79,8 @@ class TestBuildLibraryDataframe:
             "mother_name",
             "disease_state",
             "tissue_type",
+            "is_background",
+            "secondary_id",
         }
         extra_sheet_cols = {
             "folder_name",
@@ -202,6 +204,15 @@ class TestBuildLibraryDataframe:
         info = _make_data_set_info("matched_cancer", is_background=True)
         df = build_library_dataframe([info], [csheet.sheet], [csheet])
         assert df.empty
+
+    def test_background_dataset_included_on_request(self, cancer_sheet_tsv):
+        csheet = _parse_cancer_sheet(cancer_sheet_tsv)
+        background = _make_data_set_info("matched_cancer", is_background=True)
+        df = build_library_dataframe(
+            [background], [csheet.sheet], [csheet], include_background=True
+        )
+        assert not df.empty
+        assert df["is_background"].all()
 
     def test_cancer_rna_libraries_present(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)

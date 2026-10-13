@@ -28,11 +28,10 @@ Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 import os
-from collections import OrderedDict
 from functools import cached_property
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
@@ -64,16 +63,6 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from index library name to donor
-        self.ngs_library_to_donor = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                for donor in pedigree.donors:
-                    if donor.dna_ngs_library:
-                        self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
-
     def _get_input_files_run(self, wildcards):
         return []
 
@@ -84,26 +73,30 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
         """Write out the pedigree information"""
         fname = self.get_output_files("run").format(**wildcards)
         os.makedirs(os.path.dirname(fname), exist_ok=True)
-        donor = self.ngs_library_to_donor[wildcards.index_ngs_library]
-        family = "FAM_" + donor.name
+        libraries = self.parent.build_library_dataframe(include_background=True).set_index(
+            "library_name", drop=False
+        )
+        child = libraries.loc[wildcards.index_ngs_library]
+        family = "FAM_" + child["donor_name"]
         with open(fname, "wt") as ped_file:
-            for person in (donor, donor.father, donor.mother):
-                if not person:
+            for name in (child["library_name"], child["father_name"], child["mother_name"]):
+                if name == "0":
                     continue
-                name = person.dna_ngs_library.name
-                father = "0"
-                if person.father and person.father.dna_ngs_library:
-                    father = person.father.dna_ngs_library.name
-                mother = "0"
-                if person.mother and person.mother.dna_ngs_library:
-                    mother = person.mother.dna_ngs_library.name
-                sex = {"male": "1", "female": "2", "unknown": "0"}[
-                    person.extra_infos.get("sex", "unknown")
-                ]
-                affected = {"affected": "2", "unaffected": "1", "unknown": "0"}[
-                    person.extra_infos.get("isAffected", "unknown")
-                ]
-                print("\t".join((family, name, father, mother, sex, affected)), file=ped_file)
+                person = libraries.loc[name]
+                sex = {"male": "1", "female": "2", "unknown": "0"}[person["sex"]]
+                print(
+                    "\t".join(
+                        (
+                            family,
+                            name,
+                            person["father_name"],
+                            person["mother_name"],
+                            sex,
+                            str(person["disease_state"]),
+                        )
+                    ),
+                    file=ped_file,
+                )
 
 
 class VariantPhasingBaseStep(BaseStepPart):
@@ -111,16 +104,6 @@ class VariantPhasingBaseStep(BaseStepPart):
 
     #: Class available actions
     actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build mapping from ngs_library to pedigree
-        self.ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                for donor in pedigree.donors:
-                    if donor.dna_ngs_library:
-                        self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
     def _yield_vcf(self, wildcards):
         """Yield the VCF to phase and its index
@@ -130,7 +113,7 @@ class VariantPhasingBaseStep(BaseStepPart):
         """
         library_name = wildcards.library_name
         if not self.parent.variants_are_phased:
-            library_name = self.ngs_library_to_pedigree[library_name].index.dna_ngs_library.name
+            library_name = self.parent.pedigree_index(library_name, include_background=True)
         variants = self.parent.get_upstream_paths("variants", library_name=library_name)
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi
@@ -189,12 +172,6 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Build shortcut from library name to donor
-        self.ngs_library_to_donor = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                if donor.dna_ngs_library:
-                    self.ngs_library_to_donor[donor.dna_ngs_library.name] = donor
         self.region_tpl = "work/scatter/{scatteritem}.region.bed"
         self.chunk_tpl = "work/{library_name}/chunks/{scatteritem}"
 
@@ -203,20 +180,11 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
 
     def _yield_bams(self, wildcards):
         """Yield the alignments of the trio"""
-        donor = self.ngs_library_to_donor[wildcards.library_name]
-        if not (
-            donor.dna_ngs_library
-            and donor.father
-            and donor.father.dna_ngs_library
-            and donor.mother
-            and donor.mother.dna_ngs_library
-        ):
+        libraries = self.parent.build_library_dataframe(include_background=True)
+        child = libraries[libraries["library_name"] == wildcards.library_name].iloc[0]
+        if "0" in (child["father_name"], child["mother_name"]):
             return
-        trio_libs = [
-            donor.dna_ngs_library.name,
-            donor.father.dna_ngs_library.name,
-            donor.mother.dna_ngs_library.name,
-        ]
+        trio_libs = [child["library_name"], child["father_name"], child["mother_name"]]
         alignments = [
             self.parent.get_upstream_paths("alignments", library_name=lib) for lib in trio_libs
         ]
@@ -312,16 +280,4 @@ class VariantPhasingWorkflow(BaseStep):
     @cached_property
     def output_entities(self) -> list[str]:
         """The children whose parents are both sequenced: their DNA libraries."""
-        return [
-            donor.dna_ngs_library.name
-            for sheet in filter(is_not_background, self.shortcut_sheets)
-            for pedigree in sheet.cohort.pedigrees
-            for donor in pedigree.donors
-            if (
-                donor.dna_ngs_library
-                and donor.father
-                and donor.father.dna_ngs_library
-                and donor.mother
-                and donor.mother.dna_ngs_library
-            )
-        ]
+        return self.children_with_both_parents()

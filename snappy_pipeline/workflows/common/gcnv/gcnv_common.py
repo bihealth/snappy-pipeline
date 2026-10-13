@@ -1,10 +1,31 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV common methods."""
 
-from collections import OrderedDict
+import re
+
+import pandas as pd
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
+
+
+def build_ngs_library_to_kit(libraries: pd.DataFrame, mapping=None) -> dict[str, str]:
+    """Return the library kit of each library in ``libraries``, the primary DNA library rows.
+
+    Without ``mapping`` (``path_target_interval_list_mapping``) every library gets the kit
+    ``default``.  Otherwise a library gets the ``name`` of the last mapping item whose ``pattern``
+    matches its ``library_kit`` column, and libraries without a matching item are left out.
+    """
+    if not mapping:
+        return {name: "default" for name in libraries["library_name"]}
+    result = {}
+    if "library_kit" in libraries.columns:
+        for name, library_kit in zip(libraries["library_name"], libraries["library_kit"]):
+            if pd.notna(library_kit) and library_kit:
+                for item in mapping:
+                    if re.match(item.pattern, library_kit):
+                        result[name] = item.name
+    return result
 
 
 class GcnvWarning(UserWarning):
@@ -118,18 +139,3 @@ class GcnvCommonStepPart(
     )
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="7680MB")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from index library name to donor
-        self.index_ngs_library_to_donor = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_donor.update(sheet.index_ngs_library_to_donor)
-        # Build shortcut from index library name to pedigree
-        self.donor_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)

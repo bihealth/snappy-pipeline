@@ -30,15 +30,15 @@ They are the calls on the cohort libraries themselves.
 """
 
 import os
-import re
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import glob_wildcards
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import BuildGcnvModelStepPart
+from snappy_pipeline.workflows.common.gcnv.gcnv_common import build_ngs_library_to_kit
 
 from .model import HelperGcnvModelTargeted as HelperGcnvModelTargetedConfigModel
 
@@ -51,29 +51,11 @@ class BuildGcnvTargetSeqModelStepPart(BuildGcnvModelStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         # Take shortcut from library to library kit.
-        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-
-    @dictify
-    def _build_ngs_library_to_kit(self):
         gcnv_config = self.parent.get_task_config("helper_gcnv_model_targeted").gcnv
-        if not gcnv_config.path_target_interval_list_mapping:
-            # No mapping given, we will use the "default" one for all.
-            for donor in self.parent.all_donors():
-                if donor.dna_ngs_library:
-                    yield donor.dna_ngs_library.name, "default"
-
-        # Build mapping
-        regexes = {
-            item.pattern: item.name for item in gcnv_config.path_target_interval_list_mapping
-        }
-        result = {}
-        for donor in self.parent.all_donors():
-            if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
-                library_kit = donor.dna_ngs_library.extra_infos.get("libraryKit")
-                for pattern, name in regexes.items():
-                    if re.match(pattern, library_kit):
-                        yield donor.dna_ngs_library.name, name
-        return result
+        self.ngs_library_to_kit = build_ngs_library_to_kit(
+            self.parent.primary_dna_libraries(include_background=True),
+            gcnv_config.path_target_interval_list_mapping,
+        )
 
     @dictify
     def _get_input_files_post_germline_calls(self, wildcards, checkpoints):
@@ -125,33 +107,3 @@ class HelperBuildTargetSeqGcnvModelWorkflow(BaseStep):
 
         # Build mapping from NGS DNA library to library kit
         self.ngs_library_to_kit = self.sub_steps["gcnv"].ngs_library_to_kit
-
-    @listify
-    def all_donors(self, include_background=True):
-        """Get all donors.
-
-        :param include_background: Boolean flag to defined if background should be included or not.
-        Default: True, i.e., background will be included.
-
-        :return: Returns list of all donors in sample sheet.
-        """
-        sheets = self.shortcut_sheets
-        if not include_background:
-            sheets = list(filter(is_not_background, sheets))
-        for sheet in sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                yield from pedigree.donors
-
-    def pick_kits_and_donors(self):
-        """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a
-        matching donor.
-        """
-        kit_counts = {name: 0 for name in self.ngs_library_to_kit.values()}
-        for name in self.ngs_library_to_kit.values():
-            kit_counts[name] += 1
-        donors = [
-            donor
-            for donor in self.all_donors()
-            if donor.dna_ngs_library and donor.dna_ngs_library.name in self.ngs_library_to_kit
-        ]
-        return list(sorted(set(self.ngs_library_to_kit.values()))), donors, kit_counts

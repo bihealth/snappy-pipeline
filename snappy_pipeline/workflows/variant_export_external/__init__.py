@@ -25,7 +25,7 @@ Here ``library_name`` is the index library of the pedigree.
 Downstream tasks read the keys ``gts`` and ``db_infos``.
 """
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -51,13 +51,6 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
 
     #: Class available actions
     actions = ("bam_qc", "collect", "run")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     def _alignments(self, library_name):
         return self.parent.get_upstream_paths("alignments", library_name=library_name)
@@ -123,12 +116,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def get_result_files(self) -> list[str]:
         """The files of the export, for the index of each pedigree"""
-        indexes = [
-            pedigree.index.dna_ngs_library.name
-            for sheet in filter(is_not_background, self.parent.shortcut_sheets)
-            for pedigree in sheet.cohort.pedigrees
-            if pedigree.index and pedigree.index.dna_ngs_library
-        ]
+        indexes = list(self.parent.pedigrees())
         keys = ["gts", "gts_md5", "db_infos", "db_infos_md5"]
         outputs = self.get_output_files("annotate")
         if self.config.bam_available_flag:
@@ -150,10 +138,6 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
         # External tool prefix - included in merged VCF name
         self.external_tool_prefix = self._get_external_source_prefix()
 
@@ -210,18 +194,12 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     def _get_input_files_bam_qc(self, wildcards):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "cov_qc": []}
-        for donor in pedigree.donors:
-            _mapper = self.external_tool_prefix[:-1]  # strip trailing dot
-            library_name = donor.dna_ngs_library.name
-            if not donor.dna_ngs_library:
-                continue
+        for library_name in members["library_name"]:
             tpl = f"work/{library_name}/report/bam_qc/{library_name}.bam.%s.txt"
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(tpl % key)
-            if donor.dna_ngs_library.name not in self.parent.ngs_library_list:
-                continue
             path = f"work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
             result["cov_qc"].append(path)
 
@@ -318,12 +296,11 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         :return: Dictionary linking library name to identifier that should be used in output file.
         Key: library name; Value: identifier to be used in file.
         """
-        library_name_to_file_identifier = {}
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                library_name_to_file_identifier[donor.dna_ngs_library.name] = donor.secondary_id
-        return library_name_to_file_identifier
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        return {
+            library_name: secondary_id
+            for library_name, secondary_id in zip(members["library_name"], members["secondary_id"])
+        }
 
     def _collect_gvcf(self, wildcards):
         """Yield the path of the index's gVCF"""
@@ -331,15 +308,14 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def _collect_vcfs(self, wildcards):
         """Yield the paths of the VCFs of the pedigree's DNA libraries"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-            yield self._vcf(donor.dna_ngs_library.name)
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        for library_name in members["library_name"]:
+            yield self._vcf(library_name)
 
     def _collect_sample_ids(self, wildcards):
         """Yield sample ids in pedigree"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-            yield donor.name
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        yield from members["donor_name"]
 
 
 class VariantExportExternalWorkflow(BaseStep):
@@ -373,13 +349,3 @@ class VariantExportExternalWorkflow(BaseStep):
                 BamReportsExternalStepPart,
             )
         )
-        self.ngs_library_list = self._build_ngs_library_list()
-
-    @listify
-    def _build_ngs_library_list(self):
-        for sheet in self.shortcut_sheets:
-            for donor in sheet.donors:
-                for bio_sample in donor.bio_samples.values():
-                    for test_sample in bio_sample.test_samples.values():
-                        for library in test_sample.ngs_libraries.values():
-                            yield library.name

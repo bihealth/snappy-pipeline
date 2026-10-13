@@ -3,6 +3,7 @@
 
 from types import SimpleNamespace
 
+import pandas as pd
 import pytest
 
 from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import ContigPloidyMixin
@@ -12,8 +13,10 @@ from snappy_pipeline.workflows.common.gcnv.gcnv_common import PreprocessInterval
 def _part(path_par_intervals):
     part = ContigPloidyMixin()
     part.config = SimpleNamespace(gcnv=SimpleNamespace(path_par_intervals=path_par_intervals))
-    part.index_ngs_library_to_donor = {"P001": None}
-    part.index_ngs_library_to_pedigree = {"P001": None}
+    part.parent = SimpleNamespace(
+        primary_dna_libraries=lambda include_background: pd.DataFrame({"library_name": ["P001"]}),
+        pedigrees=lambda include_background: {"P001": ["P001"]},
+    )
     part.ngs_library_to_kit = {"P001": "kit"}
     return part
 

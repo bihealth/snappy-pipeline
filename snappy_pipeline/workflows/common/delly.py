@@ -42,17 +42,6 @@ class Delly2StepPart(
         "merge_genotypes": _cheap_resource_usage,
     }
 
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
-        self.donor_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.donor_ngs_library_to_pedigree.update(sheet.donor_ngs_library_to_pedigree)
-
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         config = dict(self.config.get(self.name))
         return {
@@ -84,12 +73,12 @@ class Delly2StepPart(
 
     @dictify
     def _get_input_files_merge_calls(self, wildcards):
-        bcfs = []
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                library_name = donor.dna_ngs_library.name
-                bcfs.append(f"work/{library_name}/out/{library_name}.call.bcf")
+        bcfs = [
+            f"work/{library_name}/out/{library_name}.call.bcf"
+            for library_name in self.parent.pedigrees(include_background=True)[
+                wildcards.library_name
+            ]
+        ]
         yield "bcf", bcfs
         yield "bcf_csi", [f"{bcf}.csi" for bcf in bcfs]
 
@@ -102,8 +91,9 @@ class Delly2StepPart(
     @dictify
     def _get_input_files_genotype(self, wildcards):
         yield from self._get_input_files_call(wildcards).items()
-        pedigree = self.donor_ngs_library_to_pedigree[wildcards.library_name]
-        index_library_name = pedigree.index.dna_ngs_library.name
+        index_library_name = self.parent.pedigree_index(
+            wildcards.library_name, include_background=True
+        )
         bcf = f"work/{index_library_name}/out/{index_library_name}.merge_calls.bcf"
         yield "bcf", bcf
         yield "bcf_csi", f"{bcf}.csi"
@@ -116,12 +106,12 @@ class Delly2StepPart(
 
     @dictify
     def _get_input_files_merge_genotypes(self, wildcards):
-        bcfs = []
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                library_name = donor.dna_ngs_library.name
-                bcfs.append(f"work/{library_name}/out/{library_name}.genotype.bcf")
+        bcfs = [
+            f"work/{library_name}/out/{library_name}.genotype.bcf"
+            for library_name in self.parent.pedigrees(include_background=True)[
+                wildcards.library_name
+            ]
+        ]
         yield "bcf", bcfs
         yield "bcf_csi", [f"{bcf}.csi" for bcf in bcfs]
 

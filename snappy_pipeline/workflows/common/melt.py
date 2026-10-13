@@ -1,6 +1,5 @@
 from typing import Any
 
-from biomedsheets.shortcuts import is_not_background
 from snakemake.io import touch
 from snakemake.iocontainers import Wildcards
 
@@ -21,6 +20,10 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     """
 
     name = "melt"
+
+    #: MELT calls only the pedigrees of foreground data sets
+    pedigrees_include_background = False
+
     actions = (
         "preprocess",
         "indiv_analysis",
@@ -39,19 +42,6 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     }
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="16GB")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        #: All individual's primary NGS libraries
-        self.all_dna_ngs_libraries = []
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                if donor.dna_ngs_library:
-                    self.all_dna_ngs_libraries.append(donor.dna_ngs_library.name)
-        #: Linking NGS libraries to pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in filter(is_not_background, self.parent.shortcut_sheets):
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     def _melt_files(self, *keys: str) -> dict[str, str]:
         """Return the MELT jar, support files directory and genes file (``keys`` selects)."""
@@ -116,13 +106,10 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_input_files_group_analysis(self, wildcards):
         yield "reference", self.parent.get_upstream_paths("reference").fasta
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
         indiv_analysis = []
-        for member in pedigree.donors:
-            if member.dna_ngs_library:
-                library_name = member.dna_ngs_library.name
-                infix = f"indiv_analysis.{library_name}.{wildcards.me_type}"
-                indiv_analysis.append(f"work/{infix}/out/.done.{library_name}")
+        for library_name in self.parent.pedigrees()[wildcards.index_library_name]:
+            infix = f"indiv_analysis.{library_name}.{wildcards.me_type}"
+            indiv_analysis.append(f"work/{infix}/out/.done.{library_name}")
         yield "indiv_analysis", indiv_analysis
         yield from self._melt_files("jar", "me_refs", "genes").items()
 
@@ -174,12 +161,11 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     def _get_input_files_make_vcf(self, wildcards):
         infix = f"group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
         yield "group_analysis", f"work/{infix}/out/.done"
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_library_name]
-        paths = []
-        for member in pedigree.donors:
-            if member.dna_ngs_library:
-                infix = f"genotype.{wildcards.index_library_name}.{wildcards.me_type}"
-                paths.append(f"work/{infix}/out/.done.{member.dna_ngs_library.name}")
+        infix = f"genotype.{wildcards.index_library_name}.{wildcards.me_type}"
+        paths = [
+            f"work/{infix}/out/.done.{library_name}"
+            for library_name in self.parent.pedigrees()[wildcards.index_library_name]
+        ]
         yield "genotype", paths
         yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield from self._melt_files("jar", "me_refs").items()

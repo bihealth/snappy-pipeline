@@ -25,7 +25,7 @@ import os
 import re
 from functools import cached_property
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from jinja2 import Environment, FileSystemLoader
 from snakemake import shell
 
@@ -53,24 +53,23 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.previous_step = self.parent.previous_step
-        self.ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                for donor in pedigree.donors:
-                    if donor.dna_ngs_library:
-                        self.ngs_library_to_pedigree[donor.dna_ngs_library.name] = pedigree
 
-    def _get_path_bam(self, donor):
-        return self.parent.get_upstream_paths(
-            "alignments", library_name=donor.dna_ngs_library.name
-        ).bam
+    def _members(self, wildcards):
+        """Return the rows of the pedigree members with a DNA library."""
+        index = self.parent.pedigree_index(wildcards.library_name, include_background=True)
+        return self.parent.pedigree_members(index, include_background=True)
 
-    def _get_path_vcf(self, wildcards, pedigree):
+    def _get_path_bam(self, library_name):
+        return self.parent.get_upstream_paths("alignments", library_name=library_name).bam
+
+    def _get_path_vcf(self, wildcards):
         # Phased variants are stored per child, calls and annotated variants per pedigree index
         if self.previous_step == "phased_variants":
             library_name = wildcards.library_name
         else:
-            library_name = pedigree.index.dna_ngs_library.name
+            library_name = self.parent.pedigree_index(
+                wildcards.library_name, include_background=True
+            )
         return self.parent.get_upstream_paths(self.previous_step, library_name=library_name).vcf
 
     @staticmethod
@@ -81,18 +80,12 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
         """
         return re.sub(r"(^|/)work/", r"\1output/", path, count=1)
 
-    @staticmethod
-    def _donors(pedigree):
-        """Return the donors of the pedigree with a DNA library"""
-        return [donor for donor in pedigree.donors if donor.dna_ngs_library]
-
     @dictify
     def _get_input_files_run(self, wildcards):
-        pedigree = self.ngs_library_to_pedigree[wildcards.library_name]
         # BAM file of each donor
-        yield "bam", [self._get_path_bam(donor) for donor in self._donors(pedigree)]
+        yield "bam", [self._get_path_bam(name) for name in self._members(wildcards)["library_name"]]
         # Input file comes from previous step.
-        yield "vcf", self._get_path_vcf(wildcards, pedigree)
+        yield "vcf", self._get_path_vcf(wildcards)
 
     def _get_output_files_run(self):
         return {
@@ -109,23 +102,23 @@ class WriteIgvSessionFileStepPart(BaseStepPart):
     def run(self, wildcards, output):
         """Write out the IGV session file information"""
         # Get information for writing out the template.
-        pedigree = self.ngs_library_to_pedigree[wildcards.library_name]
+        members = self._members(wildcards)
         session_dir = os.path.dirname(output.xml)
         template_vars = {
             "bams": [
                 {
-                    "label": donor.name,
+                    "label": donor_name,
                     "path": os.path.relpath(
-                        self._published(self._get_path_bam(donor)), session_dir
+                        self._published(self._get_path_bam(library_name)), session_dir
                     ),
                 }
-                for donor in self._donors(pedigree)
+                for library_name, donor_name in zip(members["library_name"], members["donor_name"])
             ],
             "vcfs": [
                 {
                     "label": "Variant Calls",
                     "path": os.path.relpath(
-                        self._published(self._get_path_vcf(wildcards, pedigree)), session_dir
+                        self._published(self._get_path_vcf(wildcards)), session_dir
                     ),
                 }
             ],
@@ -178,16 +171,4 @@ class IgvSessionGenerationWorkflow(BaseStep):
     def output_entities(self) -> list[str]:
         """The children whose parents are both sequenced: their DNA libraries."""
         # TODO: currently only families with children are supported
-        return [
-            donor.dna_ngs_library.name
-            for sheet in filter(is_not_background, self.shortcut_sheets)
-            for pedigree in sheet.cohort.pedigrees
-            for donor in pedigree.donors
-            if (
-                donor.dna_ngs_library
-                and donor.father
-                and donor.father.dna_ngs_library
-                and donor.mother
-                and donor.mother.dna_ngs_library
-            )
-        ]
+        return self.children_with_both_parents()

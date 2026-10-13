@@ -32,22 +32,14 @@ class MantaStepPart(
             mem=f"{int(3.5 * 1024 * num_threads)}MB",
         )
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        #: Shortcuts from index NGS library name to Pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-
     @dictify
     def _get_input_files_run(self, wildcards):
-        bams = []
-        for donor in self.index_ngs_library_to_pedigree[wildcards.library_name].donors:
-            if donor.dna_ngs_library:
-                alignments = self.parent.get_upstream_paths(
-                    "alignments", library_name=donor.dna_ngs_library.name
-                )
-                bams.append(alignments.bam)
+        bams = [
+            self.parent.get_upstream_paths("alignments", library_name=library_name).bam
+            for library_name in self.parent.pedigrees(include_background=True)[
+                wildcards.library_name
+            ]
+        ]
         yield "bam", bams
         yield "reference", self.parent.get_upstream_paths("reference").fasta
 

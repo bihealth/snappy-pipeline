@@ -36,7 +36,9 @@ class FilterIntervalsMixin:
         yield "interval_list", f"work/{kit}/out/{kit}.interval_list"
         yield "tsv", f"work/{kit}/out/{kit}.annotate_gc.tsv"
         covs = []
-        for lib in sorted(self.index_ngs_library_to_donor):
+        for lib in sorted(
+            self.parent.primary_dna_libraries(include_background=True)["library_name"]
+        ):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
                 covs.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "covs", covs
@@ -80,13 +82,15 @@ class ContigPloidyMixin:
         if self.config.gcnv.path_par_intervals:  # PAR regions to exclude
             yield "par_intervals", self.config.gcnv.path_par_intervals
         tsvs = []
-        for lib in sorted(self.index_ngs_library_to_donor):
+        for lib in sorted(
+            self.parent.primary_dna_libraries(include_background=True)["library_name"]
+        ):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
                 tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "tsv", tsvs
         # Yield path to pedigree file
         peds = []
-        for library_name in sorted(self.index_ngs_library_to_pedigree):
+        for library_name in sorted(self.parent.pedigrees(include_background=True)):
             name_pattern = f"write_pedigree.{library_name}"
             peds.append(f"work/{name_pattern}/out/{library_name}.ped")
         yield "ped", peds
@@ -114,7 +118,9 @@ class CallCnvsMixin:
             "/scattered.interval_list",
         )
         tsvs = []
-        for lib in sorted(self.index_ngs_library_to_donor):
+        for lib in sorted(
+            self.parent.primary_dna_libraries(include_background=True)["library_name"]
+        ):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
                 tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "tsv", tsvs
@@ -183,10 +189,7 @@ class BuildGcnvModelStepPart(
         ]
 
         # Generate output files for all mappers and library names.
-        for _, pedigree in self.index_ngs_library_to_pedigree.items():
-            library_names = [
-                donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-            ]
+        for library_names in self.parent.pedigrees(include_background=True).values():
             for path_tpl in result_path_tpls:
                 yield from expand(
                     path_tpl,

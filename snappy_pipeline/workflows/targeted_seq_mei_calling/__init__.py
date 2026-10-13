@@ -15,7 +15,7 @@ The key ``vcf`` is the one downstream tasks read through ``depends_on``.
 
 import os
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration
@@ -154,16 +154,6 @@ class MeiWorkflow(BaseStep):
         return {"vcf": f"work/{lib}/out/{lib}.vcf.gz"}
 
     @listify
-    def _all_donors(self, include_background=True):
-        """Return list of all donors in sample sheet."""
-        sheets = self.shortcut_sheets
-        if not include_background:
-            sheets = list(filter(is_not_background, sheets))
-        for sheet in sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                yield from pedigree.donors
-
-    @listify
     def get_result_files(self):
         """Get list of result files.
 
@@ -171,7 +161,7 @@ class MeiWorkflow(BaseStep):
         detection workflow.
         """
         # Initialise variable
-        name_pattern = "{donor.dna_ngs_library.name}"
+        name_pattern = "{library_name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             ext=EXT_VALUES,
@@ -179,6 +169,5 @@ class MeiWorkflow(BaseStep):
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list."""
-        for donor in self._all_donors(include_background=False):
-            if donor.dna_ngs_library:  # ignores samples without DNA library
-                yield from expand(tpl, donor=[donor], **kwargs)
+        for library_name in self.primary_dna_libraries()["library_name"]:
+            yield from expand(tpl, library_name=[library_name], **kwargs)

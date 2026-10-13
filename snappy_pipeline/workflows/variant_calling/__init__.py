@@ -928,23 +928,6 @@ class VariantCallingWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        self.shortcut_sheets = []
-        for info in self.data_set_infos:
-            if info.sheet:
-                if info.sheet_type == "germline_variants":
-                    from biomedsheets.shortcuts.germline import GermlineCaseSheet
-
-                    self.shortcut_sheets.append(
-                        GermlineCaseSheet(info.sheet, **(info.pedigree_field_kwargs or {}))
-                    )
-                elif info.sheet_type in ("matched_cancer", "cancer_matched"):
-                    from biomedsheets.shortcuts.cancer import CancerCaseSheet
-
-                    self.shortcut_sheets.append(CancerCaseSheet(info.sheet))
-                else:
-                    self.shortcut_sheets.append(
-                        self.sheet_shortcut_class(info.sheet, **(info.pedigree_field_kwargs or {}))
-                    )
 
         match self.config.tool:
             case "bcftools_call":

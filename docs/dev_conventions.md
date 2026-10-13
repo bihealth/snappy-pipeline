@@ -142,6 +142,13 @@ Rules:
 The exception is an input function that needs Snakemake's `checkpoints` object.
 The Snakefile calls it as `wf.get_input_files(...)(wildcards, checkpoints)` from a Snakefile-level function (`helper_gcnv_model_*`).
 
+### Libraries, donors and pedigrees
+
+Step parts read the sample sheets only through the library DataFrame of the workflow object, never through the biomedsheets objects.
+`build_library_dataframe()` has one row per library, with its role, donor, cohort, parents, sex and the extra sample sheet columns; `include_background=True` adds the libraries of background data sets.
+`output_entities` and `cohort_members` give the entities a task writes, with `library_selection` and `group_by` applied.
+`primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_index()` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
+
 (dev_contracts)=
 
 ## Contracts

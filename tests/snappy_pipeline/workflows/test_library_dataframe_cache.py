@@ -37,7 +37,8 @@ def _make_step():
     step.shortcut_sheets = []
     step.config = SimpleNamespace(library_selection=None, group_by="cohort", relationships=None)
     step.task_name = "dummy"
-    step._library_dataframe = None
+    step._library_dataframes = {}
+    step._primary_dna_libraries = {}
     return step
 
 

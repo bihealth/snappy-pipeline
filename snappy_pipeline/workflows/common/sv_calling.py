@@ -19,6 +19,9 @@ VCF_OUTPUTS = {
 class SvCallingGetResultFilesMixin:
     """Mixin that provides ``get_result_files()`` for SV calling steps"""
 
+    #: Whether the pedigrees of background data sets get result files
+    pedigrees_include_background = True
+
     @listify
     def get_result_files(self):
         """Return list of concrete output paths in ``output/``.
@@ -50,7 +53,7 @@ class SvCallingGetResultFilesMixin:
             ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
-                for library_name in self.index_ngs_library_to_pedigree.keys():
+                for library_name in self.parent.pedigrees(self.pedigrees_include_background):
                     if cfg := getattr(self.config, self.name, None):
                         if library_name not in cfg.skip_libraries:
                             yield from expand(path_tpl, library_name=library_name)

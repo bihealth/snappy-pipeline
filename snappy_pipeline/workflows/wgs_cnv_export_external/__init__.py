@@ -24,7 +24,7 @@ Here ``library_name`` is the index library of the pedigree.
 Downstream tasks read the keys ``gts`` and ``db_infos``.
 """
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify
@@ -57,13 +57,6 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
     actions = ("annotate", "merge_vcf")
 
     intermediate_outputs = {"merge_vcf": ("vcf", "vcf_tbi")}
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
@@ -106,12 +99,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def get_result_files(self) -> list[str]:
         """The files of the export, for the index of each pedigree"""
-        indexes = [
-            pedigree.index.dna_ngs_library.name
-            for sheet in filter(is_not_background, self.parent.shortcut_sheets)
-            for pedigree in sheet.cohort.pedigrees
-            if pedigree.index and pedigree.index.dna_ngs_library
-        ]
+        indexes = list(self.parent.pedigrees())
         return [
             path
             for tpl in self.get_output_files("annotate").values()
@@ -155,15 +143,14 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def _collect_vcfs(self, wildcards):
         """Yield the paths of the VCFs of the pedigree's DNA libraries"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-            yield self._vcf(donor.dna_ngs_library.name)
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        for library_name in members["library_name"]:
+            yield self._vcf(library_name)
 
     def _collect_sample_ids(self, wildcards):
         """Yield sample ids in pedigree"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
-        for donor in filter(lambda d: d.dna_ngs_library, pedigree.donors):
-            yield donor.name
+        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        yield from members["donor_name"]
 
 
 class WgsCnvExportExternalWorkflow(BaseStep):

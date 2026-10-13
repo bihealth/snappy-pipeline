@@ -827,7 +827,8 @@ class BaseStep:
         self.work_dir = project.work_dir
 
         self.sub_steps: dict[str, BaseStepPart] = {}
-        self._library_dataframe = None
+        self._library_dataframes = {}
+        self._primary_dna_libraries = {}
         self.data_set_infos = list(self._load_data_set_infos())
         self.sheets = [info.sheet for info in self.data_set_infos]
 
@@ -931,23 +932,25 @@ class BaseStep:
             return [self.namespaced_path(source, f"work/{library_name}/out/.done")]
         return [path for group in self.read_groups(library_name) for path in group.paths.values()]
 
-    def build_library_dataframe(self):
+    def build_library_dataframe(self, include_background: bool = False):
         """Return the unified library dataframe for this workflow.
 
-        The dataframe is built once per instance and shared by all callers, so callers must not
+        ``include_background`` adds the libraries of background data sets (``is_background``).
+        Each dataframe is built once per instance and shared by all callers, so callers must not
         modify it in place.
         """
-        if self._library_dataframe is None:
+        if include_background not in self._library_dataframes:
             default_relationships = getattr(type(self), "default_relationships", {})
             config_relationships = getattr(self.config, "relationships", None) or {}
             relationships = {**default_relationships, **config_relationships}
-            self._library_dataframe = build_library_dataframe(
+            self._library_dataframes[include_background] = build_library_dataframe(
                 self.data_set_infos,
                 self.sheets,
                 self.shortcut_sheets,
                 relationships=relationships or None,
+                include_background=include_background,
             )
-        return self._library_dataframe
+        return self._library_dataframes[include_background]
 
     @property
     def effective_group_by(self) -> str | None:
@@ -1005,6 +1008,58 @@ class BaseStep:
         ``effective_group_by != "cohort"``.
         """
         return self._cohort_members_by_library.get(library_name, [library_name])
+
+    def primary_dna_libraries(self, include_background: bool = False):
+        """Return the library dataframe rows of the primary DNA library of each donor.
+
+        This is the germline view of the sample sheets: a donor's first DNA library that is not
+        from a tumor sample. The column ``pedigree`` names the index library of the donor's
+        pedigree. On a cancer sample sheet, each donor is a pedigree of its own. Pedigrees whose
+        index has no DNA library are left out.
+        """
+        if include_background not in self._primary_dna_libraries:
+            df = self.build_library_dataframe(include_background=include_background)
+            dna = df[(df["extraction_type"] == "dna") & (df["role"] != "tumor")]
+            dna = dna.drop_duplicates(["cohort_name", "donor_name"])
+            pedigree = dna["cohort_name"].where(dna["kind"] == "germline", dna["library_name"])
+            dna = dna.assign(pedigree=pedigree)
+            dna = dna[dna["pedigree"].isin(set(dna["library_name"]))]
+            self._primary_dna_libraries[include_background] = dna
+        return self._primary_dna_libraries[include_background]
+
+    def pedigrees(self, include_background: bool = False) -> dict[str, list[str]]:
+        """Return the primary DNA libraries of each pedigree, keyed by the index library.
+
+        Pedigrees and their members keep the order of the sample sheets.
+        """
+        dna = self.primary_dna_libraries(include_background)
+        return {
+            index: list(members["library_name"])
+            for index, members in dna.groupby("pedigree", sort=False)
+        }
+
+    def pedigree_members(self, index_library: str, include_background: bool = False):
+        """Return the primary DNA library rows of the pedigree of ``index_library``."""
+        dna = self.primary_dna_libraries(include_background)
+        return dna[dna["pedigree"] == index_library]
+
+    def pedigree_index(self, library_name: str, include_background: bool = False) -> str:
+        """Return the index library of the pedigree of the primary DNA library ``library_name``.
+
+        Raises ``KeyError`` for a library that is no primary DNA library.
+        """
+        dna = self.primary_dna_libraries(include_background)
+        pedigree = dna.loc[dna["library_name"] == library_name, "pedigree"]
+        if pedigree.empty:
+            raise KeyError(library_name)
+        return pedigree.iloc[0]
+
+    def children_with_both_parents(self) -> list[str]:
+        """Return the primary DNA libraries whose father and mother both have one."""
+        dna = self.primary_dna_libraries()
+        return dna[(dna["father_name"] != "0") & (dna["mother_name"] != "0")][
+            "library_name"
+        ].tolist()
 
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
@@ -1562,6 +1617,8 @@ _LIBRARY_COLUMNS = [
     "mother_name",
     "disease_state",
     "tissue_type",
+    "is_background",
+    "secondary_id",
 ]
 
 #: Sample sheet keys that already feed standard columns and are not added again.
@@ -1638,6 +1695,7 @@ def build_library_dataframe(
     sheets,
     shortcut_sheets,
     relationships=None,
+    include_background=False,
 ):
     """Build a tidy pandas DataFrame with one row per NGS library.
 
@@ -1671,6 +1729,9 @@ def build_library_dataframe(
         * ``donor_name`` — patient / family identifier
         * ``sample_name`` — bio-sample name
         * ``tissue_type`` — ``"tumor"``, ``"normal"``, or ``"unknown"``
+        * ``is_background`` — whether the library is from a background data set; these are
+          only included with ``include_background``
+        * ``secondary_id`` — the secondary ID of the donor in the sample sheet
 
         Further sample sheet columns (``extra_infos`` of the library and its test sample,
         bio sample and bio entity) are added in snake_case, e.g. ``libraryKit`` becomes
@@ -1682,7 +1743,7 @@ def build_library_dataframe(
     rows: list[dict] = []
 
     for info, _raw_sheet, shortcut_sheet in zip(data_set_infos, sheets, shortcut_sheets):
-        if info.is_background:
+        if info.is_background and not include_background:
             continue
 
         extra_columns = _library_extra_columns(_raw_sheet) if _raw_sheet is not None else {}
@@ -1739,6 +1800,8 @@ def build_library_dataframe(
                                     "mother_name": "0",
                                     "disease_state": 0,
                                     "tissue_type": "tumor" if is_tumor else "normal",
+                                    "is_background": info.is_background,
+                                    "secondary_id": donor.bio_entity.secondary_id,
                                     **extra_columns.get(lib.name, {}),
                                 }
                             )
@@ -1909,6 +1972,8 @@ def build_library_dataframe(
                         "mother_name": lib_mother.get(lib_name, "0"),
                         "disease_state": lib_disease.get(lib_name, 0),
                         "tissue_type": "unknown",
+                        "is_background": info.is_background,
+                        "secondary_id": getattr(bio_entity, "secondary_id", ""),
                         **extra_columns.get(lib_name, {}),
                     }
                 )

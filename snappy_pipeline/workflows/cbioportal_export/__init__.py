@@ -31,10 +31,8 @@ Downstream tasks read the keys ``meta_study`` and ``clinical_patient``.
 import re
 import sys
 from collections import namedtuple
-from typing import Iterator
 
-from biomedsheets.models import BioEntity, BioSample, NGSLibrary, SheetEntry, TestSample
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions, is_not_background
+from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
@@ -100,6 +98,8 @@ CASE_LIST_FILES = {
 #: Resources of the steps that merge or convert copy number and expression tables
 _TABLE_RESOURCE_USAGE = ResourceUsage(threads=2, runtime="2h", mem="8192MB")
 
+#: A library with the name of its bio sample
+Library = namedtuple("Library", ("name", "sample_name"))
 LibraryPair = namedtuple("LibraryPair", ("normal", "tumor"))
 
 
@@ -128,46 +128,28 @@ class cbioportalExportStepPart(BaseStepPart):
     output_file = None
 
     def _yield_libraries(self):
-        test_msg = 'WARNING: multiple test samples for sample "{}", test sample "{}" is ignored'
-        lib_msg = 'WARNING: multiple libraries for sample "{}", library "{}" is ignored'
-        samples = []
-        for sheet in filter(is_not_background, self.parent.sheets):
-            for donor in sheet.bio_entities.values():
-                for biosample in donor.bio_samples.values():
-                    if biosample.extra_infos["isTumor"]:
-                        sample_name = biosample.name
-                        for test_sample in biosample.test_samples.values():
-                            if (
-                                self.extraction_type
-                                and test_sample.extra_infos["extractionType"]
-                                != self.extraction_type
-                            ):
-                                continue
-                            if sample_name in samples:
-                                print(
-                                    test_msg.format(sample_name, test_sample.name), file=sys.stderr
-                                )
-                                continue
-                            samples.append(sample_name)
-                            first = True
-                            for lib in test_sample.ngs_libraries.values():
-                                # pick only one library
-                                if not first:
-                                    print(lib_msg.format(sample_name, lib.name), file=sys.stderr)
-                                    break
-                                yield lib
-                                first = False
+        """Yield the first library of each tumor sample, of ``extraction_type`` if set"""
+        msg = 'WARNING: multiple libraries or test samples for sample "{}", library "{}" is ignored'
+        df = self.parent.build_library_dataframe()
+        tumors = df[df["role"] == "tumor"]
+        if self.extraction_type:
+            tumors = tumors[tumors["extraction_type"] == self.extraction_type.lower()]
+        duplicated = tumors["sample_name"].duplicated()
+        for row in tumors[duplicated].itertuples():
+            print(msg.format(row.sample_name, row.library_name), file=sys.stderr)
+        for row in tumors[~duplicated].itertuples():
+            yield row
 
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return path of input files for merging"""
         assert self.input_tpl is not None
         for lib in self._yield_libraries():
-            yield lib.test_sample.bio_sample.name, self.input_tpl.format(library_name=lib.name)
+            yield lib.sample_name, self.input_tpl.format(library_name=lib.library_name)
 
     def _samples(self):
         """Return the sample names of the merged tables, in input order"""
-        return [lib.test_sample.bio_sample.name for lib in self._yield_libraries()]
+        return [lib.sample_name for lib in self._yield_libraries()]
 
     def _get_output_files_run(self):
         assert self.output_file is not None
@@ -197,44 +179,21 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
-        # Build shortcut from cancer bio sample name to matched cancer sample
-        donors = {}
-        for lib in self.get_valid_libraries():
-            ts: TestSample = lib.test_sample
-            bs: BioSample = ts.bio_sample
-            be: BioEntity = bs.bio_entity
-
-            entry = donors.setdefault(be, {"tumors": [], "normal": None})
-
-            if bs.extra_infos.get("isTumor", True):
-                assert lib not in entry["tumors"], f"Duplicated library {lib.name}"
-                entry["tumors"].append(lib)
-            else:
-                assert entry["normal"] is None, f"Multiple normals for donor {be.name}"
-                entry["normal"] = lib
-
+        # Build shortcut from tumor library name to matched normal and tumor library
+        df = self.parent.build_library_dataframe()
+        dna = df[df["extraction_type"] == "dna"]
         self.tumor_ngs_library_to_sample_pair: dict[str, LibraryPair] = {}
-        for normal_tumors in donors.values():
-            normal = normal_tumors["normal"]
-            for tumor in normal_tumors["tumors"]:
+        for donor_name, rows in dna.groupby("donor_name", sort=False):
+            libraries = {
+                role: [Library(r.library_name, r.sample_name) for r in group.itertuples()]
+                for role, group in rows.groupby("role", sort=False)
+            }
+            assert len(libraries.get("normal", [])) <= 1, f"Multiple normals for donor {donor_name}"
+            normal = next(iter(libraries.get("normal", [])), None)
+            for tumor in libraries.get("tumor", []):
                 self.tumor_ngs_library_to_sample_pair[tumor.name] = LibraryPair(
                     normal=normal, tumor=tumor
                 )
-
-    def get_valid_libraries(self) -> Iterator[NGSLibrary]:
-        for sheet in filter(is_not_background, self.parent.sheets):
-            for be in self._enabled(sheet.bio_entities):
-                for bs in self._enabled(be.bio_samples):
-                    for ts in self._enabled(bs.test_samples):
-                        if ts.extra_infos.get("extractionType", "").upper() == "DNA":
-                            for lib in self._enabled(ts.ngs_libraries):
-                                yield lib
-
-    @staticmethod
-    def _enabled(items) -> Iterator[SheetEntry]:
-        for i in items.values():
-            if not i.disabled:
-                yield i
 
     def _get_pair(self, wildcards: Wildcards) -> LibraryPair:
         return self.tumor_ngs_library_to_sample_pair[wildcards.tumor_library]
@@ -270,11 +229,11 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
 
     def _get_tumor_bio_sample(self, wildcards):
         """Return bio sample to tumor dna ngs library"""
-        return self._get_pair(wildcards).tumor.test_sample.bio_sample.name
+        return self._get_pair(wildcards).tumor.sample_name
 
     def _get_normal_bio_sample(self, wildcards):
         """Return normal bio sample to tumor dna ngs library"""
-        return (n := self._get_pair(wildcards).normal) and n.test_sample.bio_sample.name
+        return (n := self._get_pair(wildcards).normal) and n.sample_name
 
 
 class cbioportalMutationsStepPart(cbioportalExportStepPart):
@@ -349,7 +308,7 @@ class cbioportalCnaFilesStepPart(cbioportalExportStepPart):
     @dictify
     def _get_input_files_log2(self, wildcards):
         libraries = self._yield_libraries()
-        yield "tables", [self.input_tpl.format(library_name=lib.name) for lib in libraries]
+        yield "tables", [self.input_tpl.format(library_name=lib.library_name) for lib in libraries]
         yield "mappings", self.config.path_gene_id_mappings
 
     _get_input_files_gistic = _get_input_files_log2
@@ -397,7 +356,7 @@ class cbioportalSegmentStepPart(cbioportalExportStepPart):
         """Return path of input files for merging"""
         copy_number = self.parent.get_upstream_paths
         tables = [
-            copy_number("copy_number", library_name=lib.name).dnacopy_seg
+            copy_number("copy_number", library_name=lib.library_name).dnacopy_seg
             for lib in self._yield_libraries()
         ]
         return {"tables": tables}
@@ -430,7 +389,7 @@ class cbioportalExpressionStepPart(cbioportalExportStepPart):
         yield (
             "tables",
             [
-                alignments("alignments", library_name=lib.name).gene_counts
+                alignments("alignments", library_name=lib.library_name).gene_counts
                 for lib in self._yield_libraries()
             ],
         )
@@ -488,16 +447,15 @@ class cbioportalClinicalDataStepPart(cbioportalExportStepPart):
                 continue
             self.extraction_type = extraction_type
             for lib in self._yield_libraries():
-                assert lib.test_sample.extra_infos["extractionType"] == extraction_type
-                donor_name = lib.test_sample.bio_sample.bio_entity.name
-                sample_name = lib.test_sample.bio_sample.name
+                donor_name = lib.donor_name
+                sample_name = lib.sample_name
                 if donor_name not in donors:
                     donors[donor_name] = {}
                 if sample_name not in donors[donor_name]:
                     donors[donor_name][sample_name] = {}
                 # Multiple libraries should not be returned by _yield_libraries
                 assert extraction_type not in donors[donor_name][sample_name]
-                donors[donor_name][sample_name][extraction_type] = lib.name
+                donors[donor_name][sample_name][extraction_type] = lib.library_name
         config = self.config.model_dump(by_alias=True, exclude={"path_gene_id_mappings"})
         return {"donors": donors, "config": config}
 
@@ -521,7 +479,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         samples = dict(zip(CASE_LIST_FILES.keys(), [[] for _ in range(len(CASE_LIST_FILES))]))
         self.extraction_type = "DNA"
         for lib in self._yield_libraries():
-            sample_name = lib.test_sample.bio_sample.name
+            sample_name = lib.sample_name
             samples["sequenced"] += [sample_name]
             if self.config.copy_number_alteration.enabled:
                 samples["cna"] += [sample_name]
@@ -529,7 +487,7 @@ class cbioportalCaseListsStepPart(cbioportalExportStepPart):
         if self.config.expression.enabled:
             self.extraction_type = "RNA"
             for lib in self._yield_libraries():
-                sample_name = lib.test_sample.bio_sample.name
+                sample_name = lib.sample_name
                 samples["rna_seq_mrna"] += [sample_name]
         args = {}
         for k, v in samples.items():

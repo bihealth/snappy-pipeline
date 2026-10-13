@@ -29,10 +29,10 @@ Downstream tasks read the key ``vcf``.
 
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -71,9 +71,10 @@ class GcnvWgsStepPart(RunGcnvStepPart):
     @dictify
     def _build_ngs_library_to_kit(self):
         # No mapping given for WGS; we will use the "wgs" one for all.
-        for donor in self.parent.all_donors():
-            if donor.dna_ngs_library:
-                yield donor.dna_ngs_library.name, "wgs"
+        for library_name in self.parent.primary_dna_libraries(include_background=True)[
+            "library_name"
+        ]:
+            yield library_name, "wgs"
 
 
 def escape_dots_dashes(s: str) -> str:
@@ -101,21 +102,6 @@ class PopDelStepPart(
 
     default_resource_usage = ResourceUsage(threads=2, runtime="4d", mem="24GB")
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
-        # Build shortcut from library name to library info
-        self.library_name_to_library = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.library_name_to_library.update(sheet.library_name_to_library)
-
-    def get_library_extra_infos(self, wildcards):
-        """Returns library extra infos for the given library name"""
-        return self.library_name_to_library[wildcards.library_name].ngs_library.extra_infos
-
     @dictify
     def _get_input_files_profile(self, wildcards):
         """Return input files for "call" action"""
@@ -132,18 +118,12 @@ class PopDelStepPart(
 
     @dictify
     def _get_input_files_call(self, wildcards):
-        paths = []
-        for donor in self._donors_with_dna_ngs_library():
-            library_name = donor.dna_ngs_library.name
-            paths.append(f"work/{library_name}/out/{library_name}.profile")
+        dna = self.parent.primary_dna_libraries(include_background=True)
+        paths = [
+            f"work/{library_name}/out/{library_name}.profile"
+            for library_name in dna["library_name"]
+        ]
         yield "profile", paths
-
-    def _donors_with_dna_ngs_library(self):
-        """Yield donors with DNA NGS library"""
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                if donor.dna_ngs_library:
-                    yield donor
 
     @dictify
     def _get_output_files_call(self):
@@ -206,10 +186,9 @@ class PopDelStepPart(
 
     def _get_params_reorder_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
         """Used in Snakefile to rule ``sv_calling_wgs_popdel_reorder_vcf``"""
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         return {
             "ped_members": " ".join(
-                donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
+                self.parent.pedigrees(include_background=True)[wildcards.library_name]
             )
         }
 
@@ -227,10 +206,6 @@ class Sniffles2StepPart(BaseStepPart):
         self.base_path_out = (
             "work/sniffles2.{index_ngs_library}/out/sniffles2.{index_ngs_library}{ext}"
         )
-        # Build shortcut from index library name to pedigree
-        self.index_ngs_library_to_pedigree = {}
-        for sheet in self.parent.shortcut_sheets:
-            self.index_ngs_library_to_pedigree.update(sheet.index_ngs_library_to_pedigree)
 
     @dictify
     def _get_input_files_bam_to_snf(self, wildcards):
@@ -246,12 +221,12 @@ class Sniffles2StepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_snf_to_vcf(self, wildcards):
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.index_ngs_library]
         snfs = []
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                infix = f"sniffles2_bam_to_snf.{donor.dna_ngs_library.name}"
-                snfs.append(f"work/{infix}/out/{infix}.snf")
+        for library_name in self.parent.pedigrees(include_background=True)[
+            wildcards.index_ngs_library
+        ]:
+            infix = f"sniffles2_bam_to_snf.{library_name}"
+            snfs.append(f"work/{infix}/out/{infix}.snf")
         yield "snf", snfs
 
     @dictify
@@ -296,13 +271,3 @@ class SvCallingWgsWorkflow(BaseStep):
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool step class.
         self.register_sub_step_classes((selected_sub_step, WritePedigreeStepPart))
-
-    @listify
-    def all_donors(self, include_background=True):
-        """Return list of all donors in sample sheet."""
-        sheets = self.shortcut_sheets
-        if not include_background:
-            filter(is_not_background, sheets)
-        for sheet in sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                yield from pedigree.donors

@@ -18,9 +18,9 @@ The key ``vcf`` is the one downstream tasks read through ``depends_on``.
 """
 
 import os
-from collections import OrderedDict
+from functools import cached_property
 
-from biomedsheets.shortcuts import KEY_SEX, GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -51,29 +51,11 @@ class ExpansionHunterStepPart(BaseStepPart):
 
     intermediate_outputs = {"run": ("json",)}
 
-    def __init__(self, *args, **kwargs):
-        """Constructor."""
-        super().__init__(*args, **kwargs)
-        #: Build shortcut from library name to sex
-        self.library_name_to_sex = OrderedDict()
-        for sheet in self.parent.shortcut_sheets:
-            self.library_name_to_sex.update(self._library_name_to_sex(sheet))
-
-    @staticmethod
-    def _library_name_to_sex(sheet):
-        """Library name to sex.
-
-        :param sheet: Sample sheet.
-        :type sheet: biomedsheets.shortcuts.GermlineCaseSheet
-
-        :return: Yields (library name, sex).
-        """
-        for donor in sheet.donors:
-            sex = donor.extra_infos.get(KEY_SEX)
-            for bio_sample in donor.bio_samples.values():
-                for test_sample in bio_sample.test_samples.values():
-                    for ngs_library in test_sample.ngs_libraries.values():
-                        yield ngs_library.name, sex
+    @cached_property
+    def library_name_to_sex(self) -> dict[str, str]:
+        """Return the sex of each library's donor, including background data sets."""
+        df = self.parent.build_library_dataframe(include_background=True)
+        return dict(zip(df["library_name"], df["sex"]))
 
     def _get_input_files_run(self, wildcards):
         """Yield BAM files based on subworkflow `ngs_mapping` results.
@@ -129,9 +111,10 @@ class ExpansionHunterStepPart(BaseStepPart):
         :param wildcards: Snakemake wildcards associated with rule (unused).
         :type wildcards: snakemake.io.Wildcards
 
-        :return: Returns donor's sex as found in sample sheet: 'female', 'male' or 'unknown'.
+        :return: Returns donor's sex as found in sample sheet: 'female' or 'male', otherwise None.
         """
-        return {"sex": self.library_name_to_sex[wildcards.library_name]}
+        sex = self.library_name_to_sex[wildcards.library_name]
+        return {"sex": sex if sex in ("female", "male") else None}
 
     def annotate_results(self, _wildcards, sm_input, sm_output):
         """Annotate/Explain ExpansionHunter results.
@@ -180,26 +163,16 @@ class RepeatExpansionWorkflow(BaseStep):
         return {"vcf": f"work/{lib}/out/{lib}.vcf"}
 
     @listify
-    def _all_donors(self, include_background=True):
-        """Return list of all donors in sample sheet."""
-        sheets = self.shortcut_sheets
-        if not include_background:
-            sheets = list(filter(is_not_background, sheets))
-        for sheet in sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                yield from pedigree.donors
-
-    @listify
     def get_result_files(self):
         """Return list of result files for the germline repeat expansion analysis workflow."""
         # Yield the JSON annotated results files
-        name_pattern = "annotated.{donor.dna_ngs_library.name}"
+        name_pattern = "annotated.{library_name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             ext=EXT_JSON,
         )
         # Yield the VCF results files
-        name_pattern = "{donor.dna_ngs_library.name}"
+        name_pattern = "{library_name}"
         yield from self._yield_result_files(
             os.path.join("output", name_pattern, "out", name_pattern + "{ext}"),
             ext=EXT_VCF,
@@ -207,6 +180,5 @@ class RepeatExpansionWorkflow(BaseStep):
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list."""
-        for donor in self._all_donors(include_background=False):
-            if donor.dna_ngs_library:  # ignores samples without DNA library
-                yield from expand(tpl, donor=[donor], **kwargs)
+        for library_name in self.primary_dna_libraries()["library_name"]:
+            yield from expand(tpl, library_name=[library_name], **kwargs)

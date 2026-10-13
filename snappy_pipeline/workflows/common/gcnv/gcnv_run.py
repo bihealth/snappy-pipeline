@@ -209,13 +209,15 @@ class ContigPloidyMixin:
         and 'library_kit' (e.g., 'Agilent_SureSelect_Human_All_Exon_V6').
         """
         tsvs = []
-        for lib in sorted(self.index_ngs_library_to_donor):
+        for lib in sorted(
+            self.parent.primary_dna_libraries(include_background=True)["library_name"]
+        ):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
                 tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "tsv", tsvs
         # Yield path to pedigree file
         peds = []
-        for library_name in sorted(self.index_ngs_library_to_pedigree):
+        for library_name in sorted(self.parent.pedigrees(include_background=True)):
             name_pattern = f"write_pedigree.{library_name}"
             peds.append(f"work/{name_pattern}/out/{library_name}.ped")
         yield "ped", peds
@@ -240,7 +242,9 @@ class CallCnvsMixin:
         """
         # Yield coverage tsv files for all library associated with kit
         coverage_files = []
-        for lib in sorted(self.index_ngs_library_to_donor):
+        for lib in sorted(
+            self.parent.primary_dna_libraries(include_background=True)["library_name"]
+        ):
             if self.ngs_library_to_kit.get(lib) == wildcards.library_kit:
                 coverage_files.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "tsv", coverage_files
@@ -340,12 +344,12 @@ class JointGermlineCnvSegmentationMixin:
     @dictify
     def _get_input_files_joint_germline_cnv_segmentation(self, wildcards):
         # Yield list of paths to input VCF files
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         ped_ngs_library_names = [
-            donor.dna_ngs_library.name
-            for donor in pedigree.donors
-            if donor.dna_ngs_library
-            and self.ngs_library_to_kit[donor.dna_ngs_library.name] == wildcards.kit
+            library_name
+            for library_name in self.parent.pedigrees(include_background=True)[
+                wildcards.library_name
+            ]
+            if self.ngs_library_to_kit[library_name] == wildcards.kit
         ]
         vcfs = []
         for library_name in sorted(ped_ngs_library_names):
@@ -382,13 +386,11 @@ class MergeMultikitFamiliesMixin:
     @dictify
     def _get_input_files_merge_multikit_families(self, wildcards):
         # Obtain all kits that we need to merge for this family.
-        pedigree = self.index_ngs_library_to_pedigree[wildcards.library_name]
         kits = []
-        for donor in pedigree.donors:
-            if donor.dna_ngs_library:
-                kit = self.ngs_library_to_kit[donor.dna_ngs_library.name]
-                if kit not in kits:
-                    kits.append(kit)
+        for library_name in self.parent.pedigrees(include_background=True)[wildcards.library_name]:
+            kit = self.ngs_library_to_kit[library_name]
+            if kit not in kits:
+                kits.append(kit)
         # Yield list of paths to input VCF files
         vcfs = []
         library_name = wildcards.library_name
@@ -452,11 +454,10 @@ class RunGcnvStepPart(
 
         # Iterate over all pedigrees.  Check library kit consistency for each pedigree.  In case of inconsistent
         # library kits within one pedigree, raise a warning about the quality in this pedigree.
-        for index_library_name, pedigree in self.index_ngs_library_to_pedigree.items():
-            # Obtain all library names
-            library_names = [
-                donor.dna_ngs_library.name for donor in pedigree.donors if donor.dna_ngs_library
-            ]
+        for (
+            index_library_name,
+            library_names,
+        ) in self.parent.pedigrees(include_background=True).items():
             library_kits = [self.ngs_library_to_kit[library_name] for library_name in library_names]
             if len(set(library_kits)) != 1:
                 names_kits = list(zip(library_names, library_kits))

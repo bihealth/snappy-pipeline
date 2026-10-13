@@ -27,15 +27,15 @@ Here ``library_name`` is the index library of the pedigree.
 Downstream tasks read the key ``vcf``.
 """
 
-import re
+from collections import Counter
 
-from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background
+from biomedsheets.shortcuts import GermlineCaseSheet
 
-from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import RunGcnvStepPart
+from snappy_pipeline.workflows.common.gcnv.gcnv_common import build_ngs_library_to_kit
 from snappy_pipeline.workflows.common.manta import MantaStepPart
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 
@@ -75,8 +75,11 @@ class SvCallingTargetedWorkflow(BaseStep):
         # gCNV-specific shortcuts must be initialized BEFORE registering sub-step classes
         # so that GcnvTargetedStepPart.__init__ can access them.
         if selected_tool == Tool.gcnv:
-            self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-            _, _, self.library_kit_counts_dict = self.pick_kits_and_donors()
+            self.ngs_library_to_kit = build_ngs_library_to_kit(
+                self.primary_dna_libraries(include_background=True),
+                self.get_task_config("sv_calling_targeted").gcnv.path_target_interval_list_mapping,
+            )
+            self.library_kit_counts_dict = dict(Counter(self.ngs_library_to_kit.values()))
         else:
             self.ngs_library_to_kit = {}
             self.library_kit_counts_dict = {}
@@ -95,25 +98,6 @@ class SvCallingTargetedWorkflow(BaseStep):
         # Register only the selected tool's step part.
         self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
 
-    @dictify
-    def _build_ngs_library_to_kit(self):
-        config = self.get_task_config("sv_calling_targeted").gcnv
-        if not config.path_target_interval_list_mapping:
-            # No mapping given, we will use the "default" one for all.
-            for donor in self.all_donors():
-                if donor.dna_ngs_library:
-                    yield donor.dna_ngs_library.name, "default"
-        # Build mapping
-        regexes = {item.pattern: item.name for item in config.path_target_interval_list_mapping}
-        result = {}
-        for donor in self.all_donors():
-            if donor.dna_ngs_library and donor.dna_ngs_library.extra_infos.get("libraryKit"):
-                library_kit = donor.dna_ngs_library.extra_infos.get("libraryKit")
-                for pattern, name in regexes.items():
-                    if re.match(pattern, library_kit):
-                        yield donor.dna_ngs_library.name, name
-        return result
-
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local targeted SV output paths for downstream consumers."""
@@ -130,33 +114,3 @@ class SvCallingTargetedWorkflow(BaseStep):
         it returns zero.
         """
         return self.library_kit_counts_dict.get(library_kit, 0)
-
-    @listify
-    def all_donors(self, include_background=True):
-        """Get all donors.
-
-        :param include_background: Boolean flag to defined if background should be included or not.
-        Default: True, i.e., background will be included.
-
-        :return: Returns list of all donors in sample sheet.
-        """
-        sheets = self.shortcut_sheets
-        if not include_background:
-            sheets = list(filter(is_not_background, sheets))
-        for sheet in sheets:
-            for pedigree in sheet.cohort.pedigrees:
-                yield from pedigree.donors
-
-    def pick_kits_and_donors(self):
-        """Return ``(library_kits, donors)`` with the donors with a matching kit and the kits with a
-        matching donor.
-        """
-        kit_counts = {name: 0 for name in self.ngs_library_to_kit.values()}
-        for name in self.ngs_library_to_kit.values():
-            kit_counts[name] += 1
-        donors = [
-            donor
-            for donor in self.all_donors()
-            if donor.dna_ngs_library and donor.dna_ngs_library.name in self.ngs_library_to_kit
-        ]
-        return list(sorted(set(self.ngs_library_to_kit.values()))), donors, kit_counts

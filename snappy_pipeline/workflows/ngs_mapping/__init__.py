@@ -151,7 +151,8 @@ import os
 import re
 from typing import Any
 
-from biomedsheets.shortcuts import GenericSampleSheet, is_not_background
+import pandas as pd
+from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -752,16 +753,24 @@ class NgsMappingWorkflow(BaseStep):
         # Create shortcut from library to all extra infos.
         self.ngs_library_to_extra_infos = self._build_ngs_library_to_extra_infos()
         # Validate project
-        self.validate_project(config=self.config, sample_sheets_list=self.shortcut_sheets)
+        self.validate_project(config=self.config)
 
     def _build_ngs_library_to_extra_infos(self):
+        """Return library name -> ``extra_infos`` of the test sample updated by the library's.
+
+        The mapping covers the libraries of background data sets as well and keeps the sample
+        sheet keys (e.g. ``seqPlatform``, ``extractionType``), because the keys and their values
+        are passed on to the wrappers as ``params["extra_infos"]``. The library dataframe has
+        snake_case keys and lower-case extraction types, so it cannot reproduce them exactly.
+        """
         result = {}
-        for donor in self._all_donors():
-            for bio_sample in donor.bio_samples.values():
-                for test_sample in bio_sample.test_samples.values():
-                    for library in test_sample.ngs_libraries.values():
-                        result.setdefault(library.name, {}).update(test_sample.extra_infos)
-                        result.setdefault(library.name, {}).update(library.extra_infos)
+        for sheet in self.sheets:
+            for donor in sheet.bio_entities.values():
+                for bio_sample in donor.bio_samples.values():
+                    for test_sample in bio_sample.test_samples.values():
+                        for library in test_sample.ngs_libraries.values():
+                            result.setdefault(library.name, {}).update(test_sample.extra_infos)
+                            result.setdefault(library.name, {}).update(library.extra_infos)
         return result
 
     def get_index_path(self, tool_name: str) -> str:
@@ -797,28 +806,16 @@ class NgsMappingWorkflow(BaseStep):
                 else:
                     regexes[item.pattern] = item.name
         result = {}
-        for donor in self._all_donors():
-            for bio_sample in donor.bio_samples.values():
-                for test_sample in bio_sample.test_samples.values():
-                    for library in test_sample.ngs_libraries.values():
-                        if library.extra_infos.get("libraryKit"):
-                            library_kit = library.extra_infos.get("libraryKit")
-                            for pattern, name in regexes.items():
-                                if re.match(pattern, library_kit):
-                                    result[library.name] = name
+        df = self.build_library_dataframe(include_background=True)
+        if "library_kit" in df.columns:
+            for name, library_kit in zip(df["library_name"], df["library_kit"]):
+                if pd.notna(library_kit) and library_kit:
+                    for pattern, kit_name in regexes.items():
+                        if re.match(pattern, library_kit):
+                            result[name] = kit_name
         return result, default_kit_configured
 
-    @listify
-    def _all_donors(self, include_background=True):
-        """Return list of all donors in sample sheet."""
-        sheets = self.shortcut_sheets
-        if not include_background:
-            sheets = filter(is_not_background, sheets)
-        for sheet in sheets:
-            for entity in sheet.bio_entities.values():
-                yield entity
-
-    def validate_project(self, config, sample_sheets_list):
+    def validate_project(self, config):
         """Validates project.
 
         Method compares sample information included in the sample sheet and the configuration. If
@@ -827,9 +824,6 @@ class NgsMappingWorkflow(BaseStep):
 
         :param config: SnappyStepModel with configurations as found in the project's yaml file.
         :type config: SnappyStepModel
-
-        :param sample_sheets_list: List with biomedical sample sheets.
-        :type sample_sheets_list: list
         """
         df = self.build_library_dataframe()
         if df.empty:
@@ -858,31 +852,3 @@ class NgsMappingWorkflow(BaseStep):
                     "Sample sheet contains RNA but the configured tool '{}' does not support "
                     "RNA mapping. Use 'star' for RNA mapping.".format(self.config.tool)
                 )
-
-    @staticmethod
-    def extraction_type_check(sample_sheet):
-        """Retrieve extraction type from biomedsheet.
-
-        Method crawls through all bio entities in the biomedsheet and checks if there are DNA
-        and/or RNA extraction types. In both cases, the test will be considered True if at least
-        one test sample contains the extraction type (i.e., DNA or RNA).
-
-        :param sample_sheet: Sample sheet.
-        :type sample_sheet: biomedsheets.models.Sheet
-
-        :return: Returns tuple with boolean for DNA, RNA extraction types: (DNA extraction type
-        present, RNA extraction type present).
-        """
-        contains_rna_extraction = False
-        contains_dna_extraction = False
-
-        for _, entity in sample_sheet.bio_entities.items():
-            for _, bio_sample in entity.bio_samples.items():
-                for _, test_sample in bio_sample.test_samples.items():
-                    extraction_type = test_sample.extra_infos.get("extractionType")
-                    if extraction_type and extraction_type.lower() == "dna":
-                        contains_dna_extraction = True
-                    elif extraction_type and extraction_type.lower() == "rna":
-                        contains_rna_extraction = True
-
-        return contains_dna_extraction, contains_rna_extraction

@@ -27,7 +27,6 @@ Downstream tasks read the keys ``txt`` and ``calls_json`` (the ``.json`` file).
 """
 
 import re
-from collections import OrderedDict
 
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
@@ -102,8 +101,7 @@ class OptiTypeStepPart(BaseStepPart):
 
     def _get_seq_type(self, wildcards):
         """Return sequence type for the library name in wildcards"""
-        library = self.parent.ngs_library_name_to_ngs_library[wildcards.library_name]
-        return library.test_sample.extra_infos.get("extractionType", "DNA").lower()
+        return self.parent.extraction_types[wildcards.library_name]
 
     default_resource_usage = ResourceUsage(threads=6, runtime="40h", mem="45000MB")
 
@@ -176,11 +174,9 @@ class HlaTypingWorkflow(BaseStep):
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes((selected,))
-        #: Mapping from library name to library object
-        self.ngs_library_name_to_ngs_library = OrderedDict()
-        for sheet in self.shortcut_sheets:
-            for ngs_library in sheet.all_ngs_libraries:
-                self.ngs_library_name_to_ngs_library[ngs_library.name] = ngs_library
+        #: Mapping from library name to lower-case extraction type
+        df = self.build_library_dataframe()
+        self.extraction_types = dict(zip(df["library_name"], df["extraction_type"]))
 
     @listify
     def get_result_files(self):

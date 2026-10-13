@@ -111,16 +111,10 @@ class PanelOfNormalsStepPart(BaseStepPart):
                         self.normal_libraries.append(line.strip())
 
     def _get_normal_libraries(self):
-        for sheet in self.parent.shortcut_sheets:
-            for donor in sheet.donors:
-                for _, bio_sample in donor.bio_samples.items():
-                    if bio_sample.is_tumor:
-                        continue
-                    for _, test_sample in bio_sample.test_samples.items():
-                        extraction_type = test_sample.extra_infos.get("extractionType", "DNA")
-                        if extraction_type.lower() == "dna":
-                            for _, ngs_library in test_sample.ngs_libraries.items():
-                                yield ngs_library.name
+        """Yield the names of all normal DNA libraries, including background data sets."""
+        df = self.parent.build_library_dataframe(include_background=True)
+        selected = df[(df["role"] == "normal") & (df["extraction_type"] == "dna")]
+        yield from selected["library_name"]
 
     #: Log file prefix by action
     log_templates: dict[str, str] = {}
