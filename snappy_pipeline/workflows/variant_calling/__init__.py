@@ -1,180 +1,65 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``variant_calling`` step
+"""Small variant calling
 
-The ``variant_calling` step takes the output of the ``ngs_mapping`` step and performs small
-variant calling on the read alignments.  The output are variant calls in VCF (and optionally gVCF)
-files and quality control statistics on these data.
-
-==========
-Properties
-==========
-
-overall stability
-
-    **stable**
-
-applicable to
-
-    germline variant calling
-
-generally applicable to
-
-    short read variant calling
-
-==========
-Step Input
-==========
-
-BAM files from the ``ngs_mapping`` step.
-
-===========
-Step Output
-===========
-
-Creates one output directory for each pedigree from the germline sample sheet.
-
-**Primary Output**
-
-- ``output/{index_library}/out/{index_library}.vcf.gz``
-
-**Additional Output**
-
-The callers implementing a gVCF workflow (currently only ``gatk4_hc_gvcf``) also create one output
-gVCF file for the pedigree.
-
-- ``output/{index_library}/out/{index_library}.g.vcf.gz``
-
-Further, each VCF and gVCF file gets an appropriate TBI index file ``{vcf_file}.tbi`` and each output
-is gets an appropriate MD5 checksum file ``{file}.md5``.
-
-====================
-Global Configuration
-====================
-
-- ``depends_on.reference`` must name the reference genome task
-- GATK HaplotypeCaller and GATK UnifiedGenotyper also need ``depends_on.dbsnp``
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_variant_calling.rst
-
-===============
-Variant Callers
-===============
-
-The following germline variant callers are currently available.
+Calls small variants (SNVs and indels) on the alignments of the ``ngs_mapping`` step.
+The ``tool`` field selects the caller.
 
 ``gatk4_hc_gvcf``
-
-    Variant calling with GATK v4 HaplotypeCaller using the gVCF workflow consisting of
-    variant discovery with ``HaplotypeCaller``, merging of the gVCF files withing each
-    pedigree with ``CombineGVCFs`` and genotyping with ``GenotypeGVCFs``.
-
-    This is the mainly used variant caller and the only one enabled by default.
-
-    The reason is this being the main advertised run mode by the GATK team and this workflow
-    enables physical phasing information in the output VCF files.
+    GATK 4 HaplotypeCaller in the gVCF workflow: variant discovery per library, ``CombineGVCFs`` per cohort, then ``GenotypeGVCFs``.
+    The output VCF carries physical phasing information.
+    The task also publishes the gVCF files.
 
 ``gatk4_hc_joint``
-
-    Variant calling with the GATK v4 HaplotypeCaller using joint calling with direct VCF
-    generation.
-
-    This variant caller is provided as a fallback to explore problems with *de novo* variant
-    calls that may have been introduced by the gVCF workflow.
-
-    Disabled by default.
+    GATK 4 HaplotypeCaller with joint calling and direct VCF generation.
+    Useful to explore problems with *de novo* calls that the gVCF workflow may introduce.
 
 ``gatk3_hc``
-
-    Joint calling with GATK v3 HaplotypeCaller.
-
-    This caller is provided for historical reasons as earlier versions of SNAPPY pipeline
-    were based on this workflow.
-
-    Disabled by default.
+    GATK 3 HaplotypeCaller with joint calling.
 
 ``gatk3_ug``
-
-    Joint calling with GATK v3 UnifiedGenotyper.
-
-    This caller is provided for historical reasons and to provide a vote in creating consensus
-    sets of variant calls.
+    GATK 3 UnifiedGenotyper with joint calling.
 
 ``bcftools_call``
+    ``bcftools mpileup | bcftools call``.
+    Fast, with lower sensitivity and specificity, so suited for baseline calls in benchmarks.
 
-    Variant calling with ``bcftools mpileup | bcftools call``.
+``mutect2``
+    Somatic calling with GATK 4 Mutect2 (tumor-normal pair or tumor only, see ``tumor_normal_mode``), with optional contamination estimation and filtration.
 
-    This caller is provided for establishing baseline variant calls in benchmark situations.
-    BCFtools allows for fast and efficient variant calling at the cost of some sensitivity
-    and specificity.
+The germline callers produce one result per cohort with ``group_by: cohort``, named after the index library, and one per library with ``group_by: library``.
+``mutect2`` produces one result per tumor library.
+The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
+Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
 
-    Disabled by default.
+Outputs
+-------
 
-=======
-Reports
-=======
+Below ``tasks/<task>/output/``, for each ``{library_name}``:
 
-``jannovar_stats``
+- ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
+  For ``mutect2`` this is the filtered (PASS) calls.
+- ``{library_name}/out/{library_name}.g.vcf.gz`` with the same companion files, for ``gatk4_hc_gvcf`` only.
 
-    Create statistics on variants using ``jannovar statsistics`` for each pedigree.
+Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
+The germline callers produce ``variants`` with tags ``germline``, ``snv``, ``indel``.
+``mutect2`` produces ``somatic``, ``snv``, ``indel`` for all calls and additionally ``filtered`` for the PASS calls.
 
-    ::
+Statistics
+----------
 
-        report/jannovar_stats/{index_library}.{donor_library}.txt
+The enabled statistics are published below ``{library_name}/report/``, with ``.md5`` files.
 
 ``bcftools_stats``
+    ``bcftools stats`` per donor of each cohort: ``bcftools_stats/{library_name}.{donor_library_name}.txt``.
 
-    Create statistics on variants using ``bcftools stats`` for each donor in each pedigree
+``jannovar_stats``
+    Jannovar statistics per cohort: ``jannovar_stats/{library_name}.txt``.
 
-    ::
-
-        report/bcftools_stats/{index_library}.{donor_library}.txt
+``bcftools_roh``
+    Runs of homozygosity with ``bcftools roh``: ``roh/{library_name}.txt``.
 
 ``baf_file_generation``
-
-    Create one UCSC BigWig file for each individual in each pedigree with B-allele fraction.
-    These files can be used for to visually confirm structural variants
-    or runs of homozygosity.
-
-    ::
-
-        report/baf/{index_library}.{donor_library}.bw
-
-``roh_calling``
-
-    Perform run-of-homozygosity calling with ``bcftools roh``.
-
-=========
-Log Files
-=========
-
-For each variant caller and report generator, the following log file is created into the
-``log`` directory.
-
-``{file}.log``
-
-    Log output of the execution.
-
-====================
-Implementation Notes
-====================
-
-- All variant callers are parallelized using GNU parallel on genome-wide windows generated by
-  GATK v4 ``PreprocessIntervals``.
-- Each published file has an accompanying MD5 sum.
-
-==============
-Example Output
-==============
-
-Given a pedigree with index ``index`` and two more donors ``mother`` and ``father``, the following
-files would be created into ``output/``
-(each VCF file has a ``.tbi`` file and overall each published file has a ``.md5`` file).
+    B-allele fraction per donor as a BigWig file, to confirm structural variants or runs of homozygosity visually.
 """
 
 from typing import Any

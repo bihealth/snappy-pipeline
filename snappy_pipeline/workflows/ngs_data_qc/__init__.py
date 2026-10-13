@@ -1,14 +1,36 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``ngs_data_qc`` step
+"""Quality control of raw sequencing data
 
-=====================
-Default Configuration
-=====================
+The step runs a QC tool on the reads or the alignments of each library.
+The ``tool`` field selects the tool:
 
-The default configuration is as follows.
+- ``fastqc``: runs FastQC on the FASTQ files of DNA and RNA libraries. It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+- ``picard``: runs the Picard programs listed in ``picard.programs`` on the BAM files of DNA libraries. It reads ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task.
 
-.. include:: DEFAULT_CONFIG_ngs_data_qc.rst
+The result is one set of files per library.
 
+Outputs
+-------
+
+The task publishes the following files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+
+With ``fastqc``:
+
+- ``{library_name}/report/.done``, which marks the finished run. The FastQC HTML reports are in ``work/{library_name}/report/html/`` and are not published.
+
+With ``picard``, for each program in ``picard.programs``, with an ``.md5`` file:
+
+- ``{library_name}/report/{library_name}.<program>.txt``
+- For the programs that ``CollectMultipleMetrics`` runs, ``{library_name}/report/{library_name}.CollectMultipleMetrics.<first metrics file>.txt``, for example ``alignment_summary_metrics`` for ``CollectAlignmentSummaryMetrics``.
+
+Downstream tasks read the key ``done``.
+
+Notes
+-----
+
+The Picard metrics are registered as Snakemake ``report()`` outputs.
+``CollectHsMetrics`` needs ``picard.path_to_baits``.
+The step converts the baits and targets BED files to interval lists in a preparation job.
 """
 
 from typing import Any

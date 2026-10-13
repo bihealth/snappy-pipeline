@@ -1,7 +1,30 @@
-"""SV calling for targeted sequencing
+"""Germline structural variant calling for targeted sequencing data
 
-Based on the output of ``ngs_mapping``, call structural variants from depth of coverage,
-read pair, and split read signal.
+The step calls structural variants in exomes and panels from the aligned reads, using depth of coverage, read pair and split read signals.
+The ``tool`` field selects the caller:
+
+- ``delly2`` calls the variants per library, merges the sites of a pedigree and genotypes them in every member.
+- ``manta`` calls the variants of all members of a pedigree together.
+- ``gcnv`` runs GATK gCNV in case mode, with the models in ``gcnv.precomputed_model_paths``.
+  The models come from the step :ref:`step_helper_gcnv_model_targeted`.
+  ``gcnv.path_target_interval_list_mapping`` maps the library kit to its target intervals.
+- ``melt`` calls mobile element insertions.
+
+The task gives one result per pedigree, named after its index library.
+``skip_libraries`` of a tool skips the whole pedigree of a library.
+The step gives no results if the mapper of the alignments is not a DNA mapper.
+
+Outputs
+-------
+
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+All tools publish the same files.
+
+- ``{library_name}/out/{library_name}.vcf.gz``
+- ``{library_name}/out/{library_name}.vcf.gz.tbi``
+
+Here ``library_name`` is the index library of the pedigree.
+Downstream tasks read the key ``vcf``.
 """
 
 import re

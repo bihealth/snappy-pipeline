@@ -96,20 +96,20 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = ""
+    """Alignments of RNA libraries, from an ``ngs_mapping`` task"""
 
-    #: FASTQ source: an ``external_data`` task, a task whose ``output/`` holds FASTQs (such as
-    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
     reads: Annotated[
         str,
         DataSignature(DataType.RAW),
     ] = ""
+    """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
 
-    # Task of this step with tool: strandedness; required for TOOLS_NEEDING_STRANDEDNESS.
     strandedness: Annotated[
         str,
         DataSignature(DataType.QC, frozenset({"strandedness"})),
         ExpectedPathSchema(ExpectedStrandedness),
     ] = ""
+    """Task of this step with ``tool: strandedness``"""
 
     reference: Reference = ""
 

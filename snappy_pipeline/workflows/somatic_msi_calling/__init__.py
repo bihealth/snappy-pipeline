@@ -1,51 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_msi_calling`` step
+"""Somatic microsatellite instability calling
 
-This step allows for the detection of microsatellite instability for cancer samples from
-whole genomes, exomes or large panels).  MANTIS starts from the aligned reads
-(thus off ``ngs_mapping``) and generates a result file per tumor/normal pair.
+The step detects microsatellite instability in cancer samples (whole genomes, exomes or large panels).
+The ``tool`` field has the value ``mantis_msi2``, which runs `MANTIS2 <https://github.com/nh13/MANTIS2>`_ on the aligned reads of each tumor and its matched normal.
+MANTIS is not maintained anymore, and MANTIS2 is the only supported version.
+The task gives one result per tumor DNA library.
 
-As MANTIS is not maintained anymore, the pipeline now supports only
-`MANTIS2 <https://github.com/nh13/MANTIS2>`_.
-The new version appears to be very silimar to the old one, both in terms of input & output files,
-and in terms of requirements.
+Outputs
+-------
 
-==========
-Step Input
-==========
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
-``somatic_msi_calling`` starts off the aligned reads, i.e. ``ngs_mapping``.
+- ``{tumor_library}/out/{tumor_library}.results.txt``
+- ``{tumor_library}/out/{tumor_library}.results.txt.status``
 
-===========
-Step Output
-===========
-
-Generally, the following links are generated to ``output/``.
-
-.. note:: Tool-Specific Output
-
-    As the only integrated tool is MANTIS2 at the moment, the output is very tailored to the result
-    of this tool.  In the future, this section might contain "common" output and tool-specific
-    output sub sections.
-
-- ``{lib_name}-{lib_pk}/out/``
-    - ``{lib_name}-{lib_pk}.results.txt``
-    - ``{lib_name}-{lib_pk}.results.txt.status``
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_somatic_msi_calling.rst
-
-=====================================
-Available Somatic Targeted CNV Caller
-=====================================
-
-- ``mantis_msi2``
-
+Downstream tasks read the key ``results``.
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions

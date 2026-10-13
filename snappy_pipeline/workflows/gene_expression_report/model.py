@@ -11,6 +11,7 @@ class GeneExpressionReportDependsOn(SnappyModel):
         DataSignature(DataType.EXPRESSION, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedExpression),
     ]
+    """Expression tables, from a ``gene_expression_quantification`` task with ``tool: featurecounts``"""
 
 
 class GeneExpressionReport(SnappyStepModel):

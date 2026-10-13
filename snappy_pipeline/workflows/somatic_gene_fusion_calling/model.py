@@ -98,12 +98,14 @@ class Arriba(SnappyModel):
 
 
 class SomaticGeneFusionCallingDependsOn(SnappyModel):
-    #: FASTQ source: an ``external_data`` task, a task whose ``output/`` holds FASTQs (such as
-    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
     reads: Annotated[
         str,
         DataSignature(DataType.RAW),
     ]
+    """
+    FASTQ source: an ``external_data`` task, an ``adapter_trimming`` task,
+    or ``data_sets`` to search the data sets' search paths.
+    """
 
     reference: Reference = ""
 

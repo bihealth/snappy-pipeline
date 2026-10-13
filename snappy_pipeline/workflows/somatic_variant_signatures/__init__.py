@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_variant_signatures`` step
+"""Somatic mutational signatures
 
-The ``somatic_variant_signatures`` step takes as the input the results of the
-``somatic_variant_calling`` step (bgzip-ed and indexed VCF files) and performs
-deconstruction of signatures of the mutational processes at play.
-The result it a data.frame tsv with the fraction of variants that each
-signature explains as well as a plot.
+The step tabulates the somatic variants of each tumor and deconstructs them into the known mutational signatures with the R package deconstructSigs.
+The step has no ``tool`` field.
+It reads the bgzip-compressed and indexed VCF files of a somatic variant calling task.
+The task gives one result per tumor DNA library.
+
+Outputs
+-------
+
+The task publishes ``{tumor_library}/out/deconstruct_sigs.{tumor_library}.tsv`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+The table gives the fraction of variants that each signature explains.
+The plot ``deconstruct_sigs.{tumor_library}.pdf`` is written to the same directory in ``work/`` and is not published.
+
+Downstream tasks read the key ``tsv``.
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions

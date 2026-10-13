@@ -1,57 +1,25 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``hla_typing`` step
+"""HLA typing from sequencing reads
 
-The hla_typing step allows for the HLA typing from NGS read data (WGS, targeted DNA sequencing,
-or RNA-seq).
+The step determines the HLA type of each library from its reads.
+The ``tool`` field selects the typer:
 
-==========
-Step Input
-==========
+- ``optitype``: types DNA and RNA libraries from the FASTQ files. It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
+- ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``.
 
-Gene fusion calling starts at the raw RNA-seq reads.  Thus, the input is very similar to one of
-:ref:`ngs_mapping step <step_ngs_mapping>`.
+The result is one set of files per library.
 
-See :ref:`ngs_mapping_step_input` for more information.
+Outputs
+-------
 
-===========
-Step Output
-===========
+The task publishes the following files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+Each file has an ``.md5`` file.
 
-HLA typing will be performed for all NGS libraries in all sample sheets. For each
-library, a directory ``{lib_name}-{lib_pk}/out`` will be created.
-Therein, the following files will be created:
+- ``{library_name}/out/{library_name}.txt``
+- ``{library_name}/out/{library_name}.json``
 
-- ``{lib_name}-{lib_pk}.txt``
-- ``{lib_name}-{lib_pk}.txt.md5``
-
-For example, it might look as follows for the example from above:
-
-::
-
-    output/
-    +-- P001-N1-DNA1-WES1-4
-    |   `-- out
-    |       |-- P001-N1-DNA1-WES1-4.txt
-    |       `-- P001-N1-DNA1-WES1-4.txt.md5
-    [...]
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_hla_typing.rst
-
-==========================
-Available HLA Typing Tools
-==========================
-
-The following HLA typing tools are currently available
-
-- ``"optitype"``
-- ``"arcashla"``
-
+Downstream tasks read the keys ``txt`` and ``calls_json`` (the ``.json`` file).
+With ``optitype``, the result table and the coverage plot stay in ``work/{library_name}/out/``.
 """
 
 import re

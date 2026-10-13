@@ -35,6 +35,7 @@ class SomaticCnvCheckingDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedSomaticCnvCalls),
     ] = ""
+    """Somatic CNV calling task whose segments (``dnacopy_seg``) are merged with the B-allele frequencies"""
 
     reference: Reference
 

@@ -1,62 +1,37 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_target_seq_cnv_calling`` step
+"""Somatic CNV calling for targeted sequencing data
 
-This step allows for the detection of CNV events for cancer samples from targeted sequenced (e.g.,
-exomes or large panels).  The wrapped tools start from the aligned reads (thus off ``ngs_mapping``)
-and generate CNV calls for somatic variants.
+The step detects copy number alterations in cancer samples from targeted sequencing (exomes or large panels).
+The ``tool`` field selects the caller, which starts from the aligned reads:
 
-The wrapped tools implement different strategies.  Some work "reference free" and just use the
-somatic BAM files for their input, some work in "matched cancer normal mode" and need the cancer
-and normal BAM files, others again need both normal and cancer BAM files, and additionally a
-set of non-cancer BAM files for their background.
+- ``cnvkit`` compares the tumor coverage with a CNVkit panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: cnvkit``).
+- ``sequenza`` compares the tumor with its matched normal and estimates the purity and ploidy.
+- ``purecn`` needs a PureCN panel of normals (``depends_on.panel_of_normals``) and somatic variants (``depends_on.variants``).
+  The variants must come from Mutect2 and include the germline variants.
+  See :ref:`step_panel_of_normals`.
 
-==========
-Step Input
-==========
+The task gives one result per tumor DNA library.
+All callers write the segments in a table that loosely follows the `DNAcopy format <https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf>`_.
+The copy number call may be missing, and the chromosome number is replaced by its name.
 
-Gene somatic CNV calling for targeted sequencing starts off the aligned reads, i.e.,
-``ngs_mapping``.
+Outputs
+-------
 
-===========
-Step Output
-===========
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+Every caller publishes ``{tumor_library}/out/{tumor_library}.dnacopy.seg``.
+The other files depend on the tool and are generally not in a standard format.
 
-There is no widely used standard to report copy number alterations.
-In absence of a better solution, all CNV tools implemented in somatic pipeline output the segmentation table loosely following the `DNAcopy format <https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf>`_.`
-The copy number call may or may not be present, and the chromosome number is replaced by its name.
-The segmentation output is in file ``output/<lib name>/out/<lib name>.dnacopy.seg``.
+- ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
+  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` (also per chromosome, ``{tumor_library}.scatter.chr1.png`` and so on).
+- ``sequenza``: ``{tumor_library}/out/{tumor_library}.seqz.gz`` and ``{tumor_library}/report/.done``.
+- ``purecn``: ``{tumor_library}/out/{tumor_library}.csv``, ``.amplification_pvalues.csv``, ``.loh.csv`` and ``.vcf.gz`` (with ``.tbi``).
 
-::
+Downstream tasks read the key ``dnacopy_seg``, and for ``sequenza`` also the key ``seqz``.
 
-    output/
-    +-- P001-N1-DNA1-WES1
-    |   |-- out
-    |   |   |-- P001-N1-DNA1-WES1.dnacopy.seg
-            [...]
+Reports
+-------
 
-.. note:: Tool-Specific Output
-
-    Each tool produces its own set of outputs, generally not in standard format.
-    Some of these files are linked from ``work`` to ``output``, but not necessarily all of them.
-    Some tools (for example ``cnvkit``) also produces a report, with tables and figures.
-
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_somatic_targeted_seq_cnv_calling.rst
-
-=====================================
-Available Somatic Targeted CNV Caller
-=====================================
-
-- ``cnvkit``
-- ``sequenza``
-- ``purecn``. Note that ``purecn`` requires a panel of normals and a second set of variants called by ``mutect2``, that includes germline ones.
-
+With ``tool: cnvkit``, the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` are part of the Snakemake report.
 """
 
 import os

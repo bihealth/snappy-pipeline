@@ -183,6 +183,7 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
         ExpectedPathSchema(ExpectedSomaticVariants),
     ] = ""
+    """Required for ``tool: purecn``: Mutect2 calls that include the germline variants"""
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),

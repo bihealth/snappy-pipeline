@@ -1,31 +1,39 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``external_data`` step
+"""Existing data from outside the project
 
-An ``external_data`` task provides existing data from outside the project to other tasks. It
-declares what the data is (``produces``), so contracts check its consumers when the project
-loads, and it has no rules of its own: consumers read the files where they are.
+An ``external_data`` task provides existing files to other tasks.
+It declares what the files are in ``produces`` (a data type and tags), so that the contracts of its consumers are checked when the project loads.
+The task has no rules and no ``output/`` directory.
+Consumers read the files where they are.
 
-Two modes:
+The task has one of two modes.
+With ``files``, it provides project-wide files by output key, such as a reference genome with its sidecar files.
+With ``search_paths`` and ``search_patterns``, it provides per-library files from a folder named like the library, below one of the search paths.
+Each pattern maps output keys to regular expressions for the path below that folder.
+Reads (``type: raw``) need the keys ``left`` (and ``right``) and a ``(?P<readgroup>...)`` group, which pairs the mates.
 
-- ``files``: project-wide files by output key, e.g. a reference with its sidecars.
-- ``search_paths`` and ``search_patterns``: per-library data, in a folder named like the library
-  below one of the search paths. Each pattern maps output keys to regular expressions for the
-  path below that folder. Reads (``type: raw``) need ``left`` (and ``right``) keys and a
-  ``(?P<readgroup>...)`` group, which pairs the mates.
+The output keys must be the keys that the consumer reads through its ``depends_on`` field.
+Their names are checked against that field when the project loads.
 
-Example task config
--------------------
+Examples
+--------
+
+Existing reads, a reference and a bwa index as input of ``ngs_mapping``:
 
 .. code-block:: yaml
 
     tasks:
       - step: external_data
-        name: dragen_calls
+        name: genome
         config:
-          produces: {type: variants, tags: [germline, snv, indel]}
-          search_paths: [/data/dragen]
-          search_patterns:
-            - {vcf: '.+\\.hard-filtered\\.vcf\\.gz', vcf_tbi: '.+\\.hard-filtered\\.vcf\\.gz\\.tbi'}
+          produces: {type: raw, tags: [reference, dna]}
+          files: {fasta: /refs/GRCh38/GRCh38.fa}
+
+      - step: external_data
+        name: bwa_index
+        config:
+          produces: {type: index, tags: [bwa, dna]}
+          files: {index: /refs/GRCh38/bwa/GRCh38}  # the prefix of the .amb, .ann, ... files
 
       - step: external_data
         name: trimmed_reads
@@ -36,12 +44,6 @@ Example task config
             - left: '(?P<readgroup>.+)_R1\\.fastq\\.gz'
               right: '(?P<readgroup>.+)_R2\\.fastq\\.gz'
 
-      - step: external_data
-        name: bwa_index
-        config:
-          produces: {type: index, tags: [bwa, dna]}
-          files: {index: /refs/GRCh38/bwa/GRCh38}  # the prefix of the .amb, .ann, ... files
-
       - step: ngs_mapping
         name: mapping
         config:
@@ -50,6 +52,19 @@ Example task config
             index: bwa_index
             reference: genome
           tool: bwa
+          bwa: {}
+
+Existing per-library variant calls, found as ``<search path>/<library name>/...``:
+
+.. code-block:: yaml
+
+    - step: external_data
+      name: dragen_calls
+      config:
+        produces: {type: variants, tags: [germline, snv, indel]}
+        search_paths: [/data/dragen]
+        search_patterns:
+          - {vcf: '.+\\.hard-filtered\\.vcf\\.gz', vcf_tbi: '.+\\.hard-filtered\\.vcf\\.gz\\.tbi'}
 """
 
 import os

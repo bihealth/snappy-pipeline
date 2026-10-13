@@ -1,3 +1,22 @@
+"""Combine somatic and germline variants
+
+Merges the somatic VCF of a tumor library with the germline VCF of its matched normal library.
+The task needs both ``depends_on.somatic_variants`` and ``depends_on.germline_variants``.
+It produces one VCF per tumor library, which needs a matched normal library.
+The merge runs GATK 3 ``CombineVariants``.
+
+With ``rename_combined`` set to ``tumor`` or ``germline``, the sample in the combined VCF is named after the tumor or the matched normal library.
+
+Outputs
+-------
+
+Below ``tasks/<task>/output/``:
+
+- ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
+
+Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
+"""
+
 from typing import Any
 
 from biomedsheets.shortcuts import CancerCaseSheet

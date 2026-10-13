@@ -1,46 +1,20 @@
-# -*- coding: utf-8 -*-
-"""Implementation of the ``igv_session_generation`` step
+"""IGV session generation
 
-This step takes as the input the output of the following steps and generates an IGV session XML
-file that displays the results as genome tracks:
+The step writes an IGV session XML file per pedigree.
+The session shows the alignments of all pedigree members and the variant calls of the index as genome tracks.
+The task has no ``tool`` field.
 
-- ``ngs_mapping``
-- ``variant_annotation`` or ``variant_calling``
+``depends_on.alignments`` names the ``ngs_mapping`` task.
+The variants come from exactly one of ``depends_on.variants`` (:ref:`step_variant_calling`), ``depends_on.annotated_variants`` (:ref:`step_variant_annotation`) or ``depends_on.phased_variants`` (:ref:`step_variant_phasing`).
+The session refers to the published files in ``output/`` of these tasks by relative path.
+Only pedigrees whose index has both parents with a DNA library get a session.
 
-==========
-Step Input
-==========
+Outputs
+-------
 
-The IGV session generation step takes as the input of the following CUBI pipeline steps:
-
-- ``ngs_mapping``
-- ``variant_annotation`` or ``variant_calling``
-
-===========
-Step Output
-===========
-
-.. note: TODO
-
-====================
-Global Configuration
-====================
-
-.. note: TODO
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_igv_session_generation.rst
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
+The task publishes ``{library_name}/out/{library_name}.igv_session.xml`` and its ``.md5`` file below ``tasks/<task>/output/``.
+The path is the same as below ``work/``, and ``{library_name}`` is the DNA library of the index.
+The key ``xml`` is the one downstream tasks read through ``depends_on``.
 """
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

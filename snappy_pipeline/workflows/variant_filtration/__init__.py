@@ -1,16 +1,39 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the unified ``variant_filtration`` step.
+"""Variant filtration
 
-One task = one filter tool.  Chain multiple tasks via ``depends_on.variants``
-to build a sequential filter pipeline.
+Filters or tags the variants of the task named in ``depends_on.variants``.
+The ``tool`` field selects the filter, and one task applies one filter.
+Chain several tasks for a sequence of filters.
 
-Supported tools
----------------
-bcftools    – expression-based filter tagging
-vembrane    – expression-based tagging or filtering via mode switch
-regions     – region/BED-based filter tagging
-dkfz        – DKFZ bias filter (requires aligned BAMs, cancer sheet)
-ebfilter    – EBFilter (requires aligned BAMs, cancer sheet)
+``bcftools``
+    Expression-based filtering with ``include`` or ``exclude``.
+
+``vembrane``
+    Expression-based filtering with ``vembrane``.
+
+``regions``
+    Filtering by regions in a BED file.
+
+``dkfz``
+    DKFZ bias filter.
+    Needs ``depends_on.alignments`` and ``depends_on.reference``.
+
+``ebfilter``
+    EBFilter.
+    Needs ``depends_on.alignments`` and ``depends_on.reference``.
+
+The ``bcftools``, ``vembrane`` and ``regions`` filters have a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
+The task produces one VCF per tumor library.
+Its output has the input's tags plus ``filtered``.
+
+Outputs
+-------
+
+Below ``tasks/<task>/output/``:
+
+- ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
+
+Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
 import random
@@ -292,7 +315,7 @@ _TOOL_STEP_PART: dict[str, type[VariantFiltrationStepPart]] = {
 
 
 class VariantFiltrationWorkflow(BaseStep):
-    """Unified variant filtration – applies a single configurable filter tool to any VCF input.
+    """Unified variant filtration - applies a single configurable filter tool to any VCF input.
 
     Supports somatic-specific tools (dkfz, ebfilter) as well as generic tools
     (bcftools, vembrane, regions). Use multiple tasks with

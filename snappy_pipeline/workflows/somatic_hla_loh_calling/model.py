@@ -17,6 +17,7 @@ class SomaticHlaLohCallingDependsOn(SnappyModel):
         DataSignature(DataType.TABULAR, frozenset({"hla"})),
         ExpectedPathSchema(ExpectedHlaTyping),
     ]
+    """HLA types of the normal library, from an ``hla_typing`` task"""
 
 
 class SomaticHlaLohCalling(SnappyStepModel):

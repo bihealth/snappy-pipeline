@@ -1,24 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_hla_loh_calling`` step
+"""Somatic HLA loss of heterozygosity calling
 
-This step allows for the detection of loss of heterzygosity for cancer samples
-from whole genomes, exomes or large panels).
-LOHHLA starts from the aligned reads, germline HLA calls and optionally purity
-and plodiy estimates of a sample.
+The step detects loss of heterozygosity at the HLA locus in cancer samples (whole genomes, exomes or large panels) with LOHHLA.
+LOHHLA compares the aligned reads of the tumor and its matched normal, using the HLA types of the normal.
 
-==========
-Step Input
-==========
+The step has no ``tool`` field.
+It gives one result per tumor DNA library, paired with its matched normal.
+The tumor purity and ploidy estimates of LOHHLA are not used.
 
-``somatic_hla_loh_calling`` starts off the aligned reads, i.e. ``ngs_mapping``,
-HLA calls from ``hla_calling`` and results from
-``somatic_purity_ploidy_estimate``
+Outputs
+-------
 
-===========
-Step Output
-===========
-
-A report file.
+The task publishes ``{tumor_library}/out/{tumor_library}.done`` below ``tasks/<task>/output/`` as a symlink to ``work/``.
+This marker file is the key ``done`` for downstream tasks.
+LOHHLA writes its result files into the same directory in ``work/``.
+They are not published.
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions

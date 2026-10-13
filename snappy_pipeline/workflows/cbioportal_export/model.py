@@ -91,22 +91,26 @@ class ExtraInfos(TypedDict):
 
 
 class CbioportalExportDependsOn(SnappyModel):
-    #: RNA mapping task whose gene counts the expression export reads
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedGeneCounts),
     ] = ""
+    """RNA mapping task whose gene counts the expression export reads"""
+
     copy_number: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedCopyNumberCalls),
     ] = ""
+    """Somatic CNV calling task whose segments the copy number export reads"""
+
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
         ExpectedPathSchema(ExpectedSomaticVariants),
     ]
+    """Annotated somatic variants, filtered or not"""
 
     features: Features = ""
 

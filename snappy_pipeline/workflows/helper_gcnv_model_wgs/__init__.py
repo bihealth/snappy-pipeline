@@ -1,83 +1,31 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``helper_gcnv_model_wgs`` step
+"""GATK gCNV model for WGS data
 
-The ``helper_gcnv_model_wgs`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned germline reads) and builds a model that can be used by GATK4 gCNV. Important: the workflow
-assumes that all samples in the cohort use the same library kit and all are WGS.
+The step builds a model for GATK4 gCNV from the aligned germline reads of the whole cohort.
+All libraries must be whole genomes of the same library kit.
+The kit is named ``default``.
 
-==========
-Step Input
-==========
+The model has two parts, the contig ploidy model and the CNV calls model (``cnv_calls-model``).
+Together they let :ref:`step_sv_calling_wgs` run gCNV in case mode.
+The step has no ``tool`` field.
 
-The step uses Snakemake sub workflows for the result of the ``ngs_mapping``
-(aligned reads BAM files).
+Outputs
+-------
 
-===========
-Step Output
-===========
+The model directories stay in ``work/`` and are not published:
 
-All donors will be used to generate the two parts of the required gCNV model, specifically:
-``ploidy-model`` and ``cnv_calls-model``. Both are required to execute gCNV in CASE mode.
+- ``default/out/default.contig_ploidy/`` holds the ploidy model (``ploidy-model``) and the ploidy calls per sample.
+- ``default/out/default.{shard}_of_{n}.call_cnvs/`` holds, for each shard of the genome, the CNV calls model (``cnv_calls-model``), the calls per sample and the tracking data.
 
-For example, the relevant directories might look as follows:
+The keys ``ploidy_done`` and ``calls_done`` for downstream tasks are the ``.done`` files in these directories.
+The ``gcnv.precomputed_model_paths`` of the ``sv_calling_wgs`` task name these model directories.
 
-::
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``.
+They are the calls on the cohort libraries themselves.
 
-    work/
-    `-- default
-        `-- out
-            |-- default.contig_ploidy
-            |   |-- SAMPLE_0
-            |   |   |-- contig_ploidy.tsv
-            |   |   |-- global_read_depth.tsv
-            |   |   |-- mu_psi_s_log__.tsv
-            |   |   |-- sample_name.txt
-            |   |   `-- std_psi_s_log__.tsv
-            |   |-- [...]
-            |   `-- ploidy-model
-            |       |-- contig_ploidy_prior.tsv
-            |       |-- gcnvkernel_version.json
-            |       |-- interval_list.tsv
-            |       |-- mu_mean_bias_j_lowerbound__.tsv
-            |       |-- mu_psi_j_log__.tsv
-            |       |-- ploidy_config.json
-            |       |-- std_mean_bias_j_lowerbound__.tsv
-            |       `-- std_psi_j_log__.tsv
-            `-- default.***_of_***.call_cnvs
-                |-- cnv_calls-calls
-                |   |-- SAMPLE_0
-                |       `-- [...]
-                |   |-- [...]
-                |-- cnv_calls-model
-                |  |-- denoising_config.json
-                |  |-- gcnvkernel_version.json
-                |  |-- interval_list.tsv
-                |  |-- log_q_tau_tk.tsv
-                |  |-- mu_W_tu.tsv
-                |  |-- mu_ard_u_log__.tsv
-                |  |-- mu_log_mean_bias_t.tsv
-                |  |-- mu_psi_t_log__.tsv
-                |  |-- std_W_tu.tsv
-                |  |-- std_ard_u_log__.tsv
-                |  |-- std_log_mean_bias_t.tsv
-                |  `-- std_psi_t_log__.tsv
-                `-- cnv_calls-tracking
-                    `-- [...]
-
-====================
-Global Configuration
-====================
-
-- At the moment, no global configuration is used.
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_helper_gcnv_model_wgs.rst
-
+- ``{library_name}/out/{library_name}.post_germline_calls.vcf.gz``
+- ``{library_name}/out/{library_name}.post_germline_calls.interval.vcf.gz``
+- ``{library_name}/out/{library_name}.post_germline_calls.ratio.tsv``
 """
 
 import dataclasses

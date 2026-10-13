@@ -1,60 +1,27 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``homologous_recombination_deficiency`` step
+"""Homologous recombination deficiency score
 
-This step allows for the computation of the scarHRD score, which is a composite of
-loss-of-heterozygocity, large-scale transitions and telomeric imbalances.
-The score is a proxy for holomogous recombination deficiencies scores produced from SNP arrays.
-The software is described in `Sztupinszki et al.<https://doi.org/10.1038/s41523-018-0066-6>`,
-but it is not part of CRAN, Bioconductor or bioconda (currently).
-The implementation also relies on versions of `sequenza<https://github.com/oicr-gsi/sequenza/tree/master>` &
-`copynumber<https://github.com/aroneklund/copynumber>` which are not part of CRAN or Bioconductor anymore.
-The most recent version of sequanza is downloaded from anaconda (for the R scripts),
-and from bioconda for the python utilities. Note that anaconda lists the r-sequenza package in the
-bioconda directory, while this package is not found when searching `bioconda<https://bioconda.github.io/index.html>`.
-copynumber is obtained from a fork of the official Bioconductor deprecated package.
+The step computes the scarHRD score of tumor samples.
+The score combines loss of heterozygosity, large-scale transitions and telomeric imbalances.
+It is a proxy for the homologous recombination deficiency scores of SNP arrays, as described by `Sztupinszki et al. <https://doi.org/10.1038/s41523-018-0066-6>`_.
+The ``tool`` field has the value ``scarHRD``.
 
-TODO: The implementation needs to uncouple ``scarHRD`` from ``sequenza``.
-It should be possible as ``scarHRD`` could use the output from other CNV callers.
-However, it is poorly documented, and will require significant work.
+The task gives one result per tumor DNA library.
+It reads the ``seqz`` file of a ``somatic_targeted_seq_cnv_calling`` task with ``tool: sequenza`` (``depends_on.copy_number``).
+Other CNV callers are rejected.
+scarHRD repeats some Sequenza steps with its own arguments.
+This is why the Sequenza output is required.
+Decoupling scarHRD from Sequenza would need work, because scarHRD is poorly documented.
 
-==========
-Step Input
-==========
+scarHRD is not part of CRAN, Bioconductor or bioconda.
+It also needs versions of `sequenza <https://github.com/oicr-gsi/sequenza/tree/master>`_ and `copynumber <https://github.com/aroneklund/copynumber>`_ that are no longer on CRAN or Bioconductor.
+The task installs these R packages in a job of its own.
 
-``homologous_recombination_deficiency`` starts off the ``sequenza`` copy number output.
-Some steps performed by ``sequenza`` are repeated by ``scanHRD``, as ``scanHRD`` uses a specific
-set of arguments. This is the reason why ``sequenza`` is required by the step.
+Outputs
+-------
 
-===========
-Step Output
-===========
-
-Generally, the following links are generated to ``output/``.
-
-.. note:: Tool-Specific Output
-
-    As the only integrated tool is scarHRD at the moment, the output is very tailored to the result
-    of this tool.  In the future, this section might contain "common" output and tool-specific
-    output sub sections.
-
-- ``scarHRD.{lib_name}-{lib_pk}/out/``
-    - ``scarHRD.{lib_name}-{lib_pk}.seqz.gz``
-    - ``scarHRD.{lib_name}-{lib_pk}.json``
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_homologous_recombination_deficiency.rst
-
-=====================================
-Available HRD tools
-=====================================
-
-- ``scarHRD``
-
+The task publishes ``scarHRD.{library_name}/out/scarHRD.{library_name}.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+Downstream tasks read the key ``json``.
 """
 
 from typing import Any

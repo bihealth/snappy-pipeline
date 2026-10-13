@@ -886,6 +886,7 @@ class BaseStep:
         """Return the FASTQ read groups of ``library_name``, ordered by the path of the left file.
 
         ``source`` defaults to ``depends_on.reads``:
+
         - ``data_sets``: the folder named in the sample sheet, below the data sets' search paths;
         - an ``external_data`` task: a folder named like the library, below its search paths;
         - a task that writes FASTQs (``adapter_trimming``): its ``output/<library>/out``, where

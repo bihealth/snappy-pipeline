@@ -1,77 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_wgs_cnv_calling`` step
+"""Somatic CNV calling for WGS data
 
-The ``somatic_wgs_cnv_calling`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned NGS reads) and performs somatic CNV calling on them.  The result are called CNVs in VCF
-format.
+The step detects copy number alterations in cancer whole genomes from the aligned reads of each tumor and its matched normal.
+The ``tool`` field selects the caller:
 
-==========
-Step Input
-==========
+- ``cnvetti`` writes the called CNVs as a BCF file.
+- ``cnvkit`` runs the CNVkit workflow for whole genomes and exports the segments in several formats.
+- ``control_freec`` runs Control-FREEC and transforms its ratios into log2 values, calls and segments.
 
-The variant annotation step uses Snakemake sub workflows for using the result of the
-``ngs_mapping`` and ``somatic_variant_calling`` steps.  Somatic (small) variant calling is required
-for b-allele based filtration.  For the somatic variant calling, one somatic (small) variant
-caller must be configured of which to use the results.
+The task gives one result per tumor DNA library.
+The files are unfiltered.
+They contain low-quality calls.
 
-===========
-Step Output
-===========
+Outputs
+-------
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk``
-the pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
-with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The files depend on the tool and are generally not in a standard format.
 
-- ``{lib_name}-{lib_pk}.vcf.gz``
-- ``{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
+- ``cnvetti``: ``{tumor_library}/out/{tumor_library}.bcf`` with ``.csi``.
+- ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.cns``, ``.bed``, ``.dnacopy.seg`` and ``.vcf.gz`` (with ``.tbi``).
+  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf``, ``{tumor_library}.scatter.png`` and ``{tumor_library}.heatmap.pdf`` (also per chromosome, ``{tumor_library}.heatmap.chr1.pdf`` and so on).
+- ``control_freec``: ``{tumor_library}/out/{tumor_library}.ratio.txt``, ``.gene_log2.txt``, ``.gene_call.txt``, ``.segments.txt``, ``.heatmap.png``, ``.scatter.png`` and ``.diagram.pdf``.
 
-For example, it might look as follows for the example from above:
-
-::
-
-    output/
-    +-- P001-T1-DNA1-WGS1-4
-    |   `-- out
-    |       |-- P001-T1-DNA1-WGS1-4.vcf.gz
-    |       |-- P001-T1-DNA1-WGS1-4.vcf.gz.tbi
-    |       |-- P001-T1-DNA1-WGS1-4.vcf.gz.md5
-    |       `-- P001-T1-DNA1-WGS1-4.vcf.gz.tbi.md5
-    [...]
-
-Generally, these files will be unfiltered, i.e., contain low-quality variants and also variants
-flagged as being non-somatic.
-
-====================
-Global Configuration
-====================
-
-None so far
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_somatic_wgs_cnv_calling.rst
-
-=============================
-Available Somatic CNV Callers
-=============================
-
-The following somatic CNV callers are currently available
-
-- ``"cnvetti"``
-- ``"cnvkit"``
-- ``"control_freec"``
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
+Downstream tasks read the key ``dnacopy_seg``, which only ``cnvkit`` writes.
 """
 
 import os

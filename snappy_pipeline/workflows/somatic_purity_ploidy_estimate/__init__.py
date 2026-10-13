@@ -1,14 +1,27 @@
 # -*- coding: utf-8 -*-
-"""Implementation of purity and ploidy checking for somatic NGS samples
+"""Purity and ploidy estimation for somatic samples
 
-=====================
-Default Configuration
-=====================
+The step estimates the tumor cell content (purity) and the ploidy of tumor samples from the B-allele frequencies and the coverage of the tumor and its matched normal.
+The ``tool`` field has the value ``ascat``, which runs ASCAT.
+The B-allele frequencies are taken at the loci of ``ascat.b_af_loci``.
+The task gives one result per tumor DNA library.
 
-The default configuration is as follows.
+Whole exome data is not supported yet.
+The coverage of the exome tumor and normal would have to come from a CNV caller that writes bins, and no such caller exists.
 
-.. include:: DEFAULT_CONFIG_somatic_purity_ploidy_estimate.rst
+Outputs
+-------
 
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+
+- ``{tumor_library}/out/{tumor_library}.ploidy.txt``: the estimated ploidy.
+- ``{tumor_library}/out/{tumor_library}.goodness_of_fit.txt``
+- ``{tumor_library}/out/{tumor_library}.segments.txt`` and ``{tumor_library}/out/{tumor_library}.segments_raw.txt``: the fitted and the raw copy number segments.
+
+Downstream tasks read the key ``done``, the marker file ``{tumor_library}/out/.done`` in ``work/``.
+The B-allele frequency and coverage files per library are intermediate files.
+The purity (``{tumor_library}.aberrantcellfraction.txt``), the ASCAT plots and other ASCAT results are written to the same directory in ``work/``.
+They are not published.
 """
 
 from typing import Any

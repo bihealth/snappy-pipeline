@@ -1,150 +1,66 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``panel_of_normals`` step
+"""Panel of normals creation
 
-The ``panel_of_normals`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned reads in BAM format) and creates background information for somatic variant calling.
-and/or somatic copy number calling. This background information is summarized as a
-panel of normals.
+The step builds the background models that somatic variant and copy number callers use to remove systematic artefacts.
+The ``tool`` field selects the model:
 
-Usually, the ``panel_of_normals`` step is required by somatic variant calling or
-somatic copy number calling tools.
+- ``mutect2`` creates the Mutect2 panel of normals (VCF) and the GenomicsDB it is built from.
+- ``cnvkit`` creates the CNVkit reference from the target, antitarget and coverage files of the normals.
+- ``purecn`` creates the PureCN normal database, the mapping bias and the optimized intervals.
+- ``access`` creates the CNVkit access file (accessible regions) from the reference genome and, optionally, regions to exclude.
 
-==========
-Step Input
-==========
-
-The somatic variant calling step uses Snakemake sub workflows for using the result of the
-``ngs_mapping`` step.
-
-By default, all normal DNA samples in the ``ngs_mapping`` step are using to create the panel of normals.
-However, the user can select of subset of those using the ``path_normals_list`` configuration option
-(which can be different for the different tools).
-In this case, the libraries listed in the file will be used, **even if they are not flagged as corresponding to normal samples**.
-
-===========
-Step Output
-===========
-
-For each panel of normals tool, the step outputs one set of files describing the panel.
-For example, the ``mutect2`` panel of normal generates ``panel_of_normals.vcf.gz``
-and associated files (md5 sums indices).
-
-The normals that have been used, as well as the individual files (for example
-vcf files for each normal) are kept in the ``work`` directory. This enables the
-augmentation of the panel by new files when they become available.
+The task yields one result per cohort.
+All DNA libraries of the normal samples in the sample sheets build the panel.
+For ``mutect2`` and ``purecn``, ``path_normals_list`` selects other libraries by name, one per line.
+The listed libraries are used even if the sample sheet does not flag them as normal.
 
 .. warning::
 
-    Panel of normals are powerful tools to reduce systematic bias in the analysis of sequencing data.
-    However, they should be built using data generated as similarily as possible.
-    In particular, a panel of normals should only contain data collected with the **same** exome enrichment kit.
-    It is also essential to use such a panel on tumor samples collected in the same way.
+    A panel of normals only works on data generated like the normals.
+    A panel for exomes must come from the same exome enrichment kit as the tumor samples it is used on.
 
-================================
-Notes on the ``cnvkit`` workflow
-================================
-
-``cnvkit`` is a set of tools originally designed to call somatic copy number alterations from exome data.
-Its design is modular, which enables its use for whole genome and amplicon data.
-
-Provided that sufficient normal samples are available, the ``cnvkit`` `documentation <https://cnvkit.readthedocs.io/en/stable/>`_
-recommends the creation of a panel of normal (called ``reference``) for exome and whole genome data.
-
-.. note::
-
-    ``cnvkit`` provides a tool to encapsulate common practice workflows (``batch``), depending on the type of data, and on the availability of optional inputs.
-    The actual workflow to generate this reference is slightly different between exome and whole genome data.
-    The current implementation recapitulates the common practice, while still dispaching computations on multiple cluster nodes.
-
------------
-Access file
------------
-
-``cnvkit`` can use a bed file describing the accessible regions for coverage computations.
-The ``cnvkit`` distribution provides it for the ``GRCh37`` human genome release, but incompletely only for ``GRCh38``.
-Therefore, a tentative ``access`` tool has been added, to generate this bed file when the user knows which locii should be excluded from coverage.
-Its output (``output/panel_of_normals/out/panel_of_normals.accessible.bed``) is optional, but its presence impacts of the way the target and antitarget regions are computed in whole genome mode.
-
-.. note::
-
-    In a nutshell, for exome data, the accessibility file is only used to create antitarget regions.
-    For genome data, it is used by the ``autobin`` tool to compute the average target size used during target regions creation.
-    If it is present, the target size is computed in amplicon mode, and when it is absent,
-    an accessibility file is created with default settings, which value is used by ``autobin`` is whole genome mode.
-
-To generate the access file from a bed file containing regions to exclude from further coverage computations,
-the user must proceed in two steps:
-
-First, she needs to run the ``access`` tool to create the desired access file
-
-.. code-block:: yaml
-
-    panel_of_normals:
-        tools: [access]
-        access:
-            exclude: <absolute path to excluded locii bed file>
-
-This will create ``output/panel_of_normals/out/panel_of_normals.accessible.bed`` from the genomic sequence & excluded regions.
-
-------------------------
-Panel of normal creation
-------------------------
-
-If the user wants to create her own access file, then the panel of normal can only be created after the ``access`` tool has been run.
-If she decides that the access file provided in the ``cnvkit`` distribution is suitable (no excluded region),
-then she can skip the ``access`` tool step and directly creates her panel of normals.
-
-In both cases, the configuration might read:
-
-.. code-block:: yaml
-
-    panel_of_normals:
-        tools: [cnvkit]                                               # , access]
-        path_access: <absolute path to access file>                   # Even when created by the ``access`` tool.
-        path_target: <absolute path to baits>                         # Keep empty for WGS data
-        path_normals_list: <absolute path to list of normal samples>  # Keep empty to use all available normals
-
-Note that there is no provision (yet) to automatically create separate panel of normals for males & females.
-If the number of samples collected in the same fashion is large enough, it is nevertheless the way to achieve best results.
-
--------
-Reports
+Outputs
 -------
 
-Report tables can be found in the ``output/panel_of_normals/report`` directory.
-Two tables are produced, grouping results for all normal samples together:
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The individual files per normal stay in ``work/``, so the panel can be extended when more normals are available.
 
-- ``metrics.txt``: coverage metrics over target and antitarget regions.
-- ``sex.txt``: prediction of the donor's gender based on the coverage of chromosome X & Y target and antitarget regions.
+- ``mutect2``: ``panel_of_normals/out/panel_of_normals.vcf.gz`` (with ``.tbi``) and ``panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz``.
+- ``cnvkit``: ``panel_of_normals/out/panel_of_normals.cnn``, ``panel_of_normals.target.bed`` and ``panel_of_normals.antitarget.bed``, and the reports ``panel_of_normals/report/panel_of_normals.metrics.tsv`` and ``panel_of_normals.sex.tsv``.
+- ``purecn``: ``panel_of_normals/out/panel_of_normals.rds``, ``panel_of_normals.mapping_bias.rds``, ``panel_of_normals.intervals.list`` and ``panel_of_normals.intervals.bed.gz`` (with ``.tbi``).
+- ``access``: ``panel_of_normals/out/panel_of_normals.accessible.bed``.
 
-The cnvkit authors recommend to check these reports to ensure that all data is suitable for panel of normal creation.
+Downstream tasks read the keys ``genomicsdb`` (``mutect2``), ``panel_of_normals`` (``cnvkit``, ``purecn``), and ``mapping_bias`` and ``intervals`` (``purecn``) through their ``depends_on.panel_of_normals``.
+The ``access`` task has no keys.
+Its file is passed to a ``cnvkit`` task in ``cnvkit.path_access``.
 
-================
-Notes ``purecn``
-================
+The CNVkit authors recommend checking the metrics and sex reports before a panel is used.
+The sex report predicts the donor sex from the coverage of the chromosomes X and Y.
 
-In the current implementation, the ``purecn`` panel of normals is required when calling somatic copy numbers in the ``somatic_targeted_seq_cnv_calling`` step.
-In turn, the ``purecn`` panel of normals requires the availability of a ``mutect2`` panel of normals.
-This is because ``mutect2`` is used as somatic variant caller, rather than the older ``mutect`` which is the ``PureCN`` default.
+Notes on CNVkit
+---------------
 
-The ``PureCN`` docker container is used, rather than conda environments, because of the complexity of PureCN R packages requirements
-(including github-only changes to older packages).
+CNVkit was designed for exomes, and its modular design also covers whole genomes and amplicons.
+Its documentation recommends a reference built from enough normals, for exomes and for whole genomes.
+The two data types differ in the workflow that creates the reference (CNVkit ``batch``).
+The step follows the common practice and distributes the computations over several jobs.
 
-=====================
-Default Configuration
-=====================
+An empty ``cnvkit.path_target`` selects the whole genome mode.
+For exomes, the access file only restricts the antitarget regions.
+For whole genomes, ``autobin`` uses it to compute the average target size.
+Without a ``path_access``, whole genome mode creates an access file with default settings.
+The CNVkit distribution provides an access file for ``GRCh37``, but it is incomplete for ``GRCh38``.
+Run a task with ``tool: access`` to create one from regions to exclude (``access.exclude``).
 
-The default configuration is as follows.
+There is no provision yet to create separate panels for males and females.
+With enough samples collected alike, separate panels give the best results.
 
-.. include:: DEFAULT_CONFIG_panel_of_normals.rst
+Notes on PureCN
+---------------
 
-=====================================
-Panel of normals generation for tools
-=====================================
-
-- Panel of normal for ``mutect2`` somatic variant caller
-- Panel of normal for ``cvnkit`` somatic Copy Number Alterations caller
-
+A ``purecn`` panel is required by ``somatic_targeted_seq_cnv_calling`` with ``tool: purecn``.
+It needs a ``mutect2`` panel of normals task in ``depends_on.panel_of_normals``, because the step uses Mutect2 as variant caller (not Mutect, the PureCN default).
+PureCN runs in its container, because its R package requirements are too complex for a conda environment.
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions

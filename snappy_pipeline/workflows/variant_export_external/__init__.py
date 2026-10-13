@@ -1,64 +1,28 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``variant_export_external`` step.
+"""VarFish export of externally generated germline variants
 
-The ``variant_export_external`` takes externally generated VCF files and uses
-``varfish-annotator-cli annotate`` command to create files fit for import into VarFish
-Server. If externally generated BAM files are also available, it can optionally generate QC reports.
+The step annotates externally generated (g)VCF files with ``varfish-annotator-cli annotate`` and creates the files that VarFish Server imports.
+The VCFs and, optionally, the BAM files come from ``external_data`` tasks.
+The step has no ``tool`` field.
 
-==========
-Stability
-==========
+The task gives one result per pedigree, named after the primary DNA library of its index.
+With ``merge_vcf_flag``, VCFs of a pedigree that are still separate are merged first.
+With ``gvcf_option``, the inputs are converted from genomic VCFs.
+With ``bam_available_flag``, the step also writes a BAM QC table from the BAM files in ``depends_on.alignments``.
 
-This step is considered experimental, use it at your own discretion.
+This step is experimental.
 
-==========
-Step Input
-==========
+Outputs
+-------
 
-The variant export external step uses VCFs externally generated as input.
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
-===========
-Step Output
-===========
+- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.gts.tsv.gz``
+- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.db-infos.tsv.gz``
+- ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.bam-qc.tsv.gz``, only with ``bam_available_flag``.
 
-For all samples, the workflow will execute ``varfish-annotator-cli``, pedigrees with multiple VCFs
-will be merged based on `id`. The name of the index's primary DNA NGS library will be used as an
-identification token in the output file. The following is an example of the files that
-will be generated if BAM files are also available:
-
-
-::
-    output/
-    +-- varfish_annotated.P001-N1-DNA1-WGS1
-    |   `-- out
-    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.bam-qc.tsv.gz
-    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.bam-qc.tsv.gz.md5
-    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz
-    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.db-infos.tsv.gz.md5
-    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz
-    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.feature-effects.tsv.gz.md5
-    |   |   |-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz
-    |   |   +-- varfish_annotated.P001-N1-DNA1-WGS1.gts.tsv.gz.md5
-    |
-    [...]
-
-====================
-Global Configuration
-====================
-
-Not applicable.
-
-=====================
-Default Configuration
-=====================
-
-.. include:: DEFAULT_CONFIG_variant_export_external.rst
-
-==================
-Parallel Execution
-==================
-
-Parallel execution is not performed currently.
+Here ``library_name`` is the index library of the pedigree.
+Downstream tasks read the keys ``gts`` and ``db_infos``.
 """
 
 from biomedsheets.shortcuts import GermlineCaseSheet, is_not_background

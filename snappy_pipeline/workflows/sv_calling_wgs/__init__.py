@@ -1,4 +1,31 @@
-"""Implementation of the ``sv_calling_wgs`` step"""
+"""Germline structural variant calling for WGS data
+
+The step calls structural variants in whole genome samples from the aligned reads.
+The ``tool`` field selects the caller:
+
+- ``delly2`` calls the variants per library, merges the sites of a pedigree and genotypes them in every member.
+- ``manta`` calls the variants of all members of a pedigree together.
+- ``popdel`` profiles each library and then calls the deletions of all libraries together.
+- ``gcnv`` runs GATK gCNV in case mode, with the models in ``gcnv.precomputed_model_paths``.
+  The models come from the step :ref:`step_helper_gcnv_model_wgs`.
+- ``melt`` calls mobile element insertions.
+
+The task gives one result per pedigree, named after its index library.
+``skip_libraries`` of a tool skips the whole pedigree of a library.
+The step gives no results if the mapper of the alignments is not a DNA mapper.
+
+Outputs
+-------
+
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+All tools publish the same files.
+
+- ``{library_name}/out/{library_name}.vcf.gz``
+- ``{library_name}/out/{library_name}.vcf.gz.tbi``
+
+Here ``library_name`` is the index library of the pedigree.
+Downstream tasks read the key ``vcf``.
+"""
 
 from typing import Any
 

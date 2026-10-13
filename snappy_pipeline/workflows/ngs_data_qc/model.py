@@ -88,12 +88,13 @@ class NgsDataQcDependsOn(SnappyModel):
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = ""
-    #: FASTQ source: an ``external_data`` task, a task whose ``output/`` holds FASTQs (such as
-    #: ``adapter_trimming``), or ``data_sets`` to search the data sets' search paths.
+    """Alignments of DNA libraries, read by ``picard``"""
+
     reads: Annotated[
         str,
         DataSignature(DataType.RAW),
     ] = ""
+    """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
 
     reference: Reference = ""
 

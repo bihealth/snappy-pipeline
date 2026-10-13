@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``adapter_trimming`` step"""
+"""Adapter trimming of FASTQ files
+
+Trims adapters and low-quality bases from the reads of each library.
+The ``tool`` field selects ``bbduk`` (BBDuk of BBTools) or ``fastp``.
+Each library gives one result, which keeps the sub-directory and file names of its input FASTQ files.
+Tasks that read reads name this task in ``depends_on.reads``.
+
+Outputs
+-------
+
+Below ``tasks/<task>/output/``, the files of each library are in ``{library_name}/``:
+
+- ``out/.done`` marks the trimmed FASTQ files, which are in the same directory.
+- ``report/.done`` marks the tool reports (``bbduk``: statistics and histograms per input file, ``fastp``: HTML and JSON reports), which are in the same directory.
+
+Reads that the tool filters out are kept below ``rejected/`` in ``work/`` and are not published.
+Downstream tasks read the trimmed files from ``work/{library_name}/out/`` through the key ``fastq_dir``.
+"""
 
 import os
 

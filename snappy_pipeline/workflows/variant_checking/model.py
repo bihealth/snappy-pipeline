@@ -21,6 +21,4 @@ class VariantCheckingDependsOn(SnappyModel):
 class VariantChecking(SnappyStepModel):
     depends_on: VariantCheckingDependsOn
 
-    """Path to variant calling"""
-
     tool: Annotated[Tool, EnumField(Tool)]

@@ -1,5 +1,6 @@
 import os
 from snappy_pipeline.orchestration import (
+    ON_HOLD_STEPS,
     create_task_instances,
     load_project,
     register_hooks,
@@ -45,9 +46,6 @@ for task in project.model.tasks:
         replace_prefix: prefixes
 
     use rule * from t_name as alias*
-
-# Steps on hold (plans.md) still publish with their own link jobs
-ON_HOLD_STEPS = {"create_proteome", "somatic_neoepitope_prediction"}
 
 # One local job per targeted task links its result files from work/ into output/
 targets = []

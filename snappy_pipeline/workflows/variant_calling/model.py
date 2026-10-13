@@ -153,6 +153,7 @@ class VariantCallingDependsOn(SnappyModel):
     reference: Reference
 
     dbsnp: Dbsnp = ""
+    """Needed by the GATK callers"""
 
 
 TOOL_DEPENDENCIES = {

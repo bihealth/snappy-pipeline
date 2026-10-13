@@ -1,61 +1,28 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the germline ``variant_phasing`` step
+"""Variant phasing with GATK
 
-This step takes the result of the ``variant_annotation`` step and performs phasing of the
-variants using the GATK tools.  Note that there are some issues with the GATK tools implementing
-this step:
+Phases the annotated germline variants of ``depends_on.variants`` with GATK, using the alignments of ``depends_on.alignments``.
+The task produces one result per child in a pedigree whose parents are both sequenced.
 
-- The result of the PhaseByTransmission tool changes the genotype of some variants which is
-  problematic when trying to phase *de novo* variants.
-- The read backed phasing is also not 100% reliable at the moment.
+The ``phasings`` field selects what runs and is published.
+``gatk_phase_by_transmission`` runs PhaseByTransmission, ``gatk_read_backed_phasing`` runs ReadBackedPhasing, and ``gatk_phasing_both`` runs the first, then the second on its result.
+Both tools have limitations:
 
-Thus, the functionality of the tools is made available by this pipeline step but it is not as
-fully integrated as it could because it is unclear how useful this is for clinical studies. Also,
-so far only the GATK variant caller results can be phased.
+- PhaseByTransmission changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
+- Read-backed phasing is not fully reliable.
 
-Also note that this step generates one output file for each child in a pedigree where both
-parents have been sequenced.
+Only results of the GATK variant callers can be phased.
+It is unclear how useful the phasing is for clinical studies.
 
-==========
-Step Input
-==========
+Outputs
+-------
 
-The variant annotation step uses the output of the following CUBI pipeline steps:
+Below ``tasks/<task>/output/``, for each selected phasing:
 
-- ``ngs_mapping``
-- ``variant_annotation``
+- ``{library_name}/out/{phasing}.{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
-===========
-Step Output
-===========
-
-For each input VCF file (i.e., for each mapper and pedigree), a directory
-``output/{index_ngs_library}/out`` will be created with the following
-output files.
-
-The ``{phaser}`` placeholder can take the values gatk_phase_by_transmission,
-gatk_read_backed_phasing, and gatk_phased_both (for the latter, first phasing by transmission
-and then read backed phasing is performed).
-
-====================
-Global Configuration
-====================
-
-- ``depends_on.reference`` must name the reference genome task
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_variant_phasing.rst
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
+``{phasing}`` is ``gatk_pbt`` for phase by transmission, ``gatk_rbp`` for read-backed phasing and ``gatk_pbt.gatk_rbp`` for both.
+Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``, and name the phasing they need.
 """
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

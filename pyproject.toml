@@ -78,9 +78,9 @@ dev = [
     "pre-commit >=4.0.1,<5"
 ]
 docs = [
-    "sphinx >=7.3.7,<8",
-    "sphinx_rtd_theme >=2.0.0,<3",
-    "sphinx-mdinclude >=0.6.0,<1",
+    "sphinx >=8,<9",
+    "sphinx_rtd_theme >=3,<4",
+    "myst-parser >=5,<6",
 ]
 all = [
     "snappy-pipeline[test,docs,dev]"
@@ -197,6 +197,13 @@ line-length = 0
 enabled = true
 style = "aligned"
 
+# The Sphinx docs are MyST Markdown, and their pages start with a label instead of a heading
+[tool.rumdl.per-file-flavor]
+"docs/*.md" = "myst"
+
+[tool.rumdl.per-file-ignores]
+"docs/*.md" = ["MD041"]
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "--cov=snappy_pipeline --cov-report=xml -n auto"
@@ -257,7 +264,7 @@ docs = { features = ["docs"], solve-group = "default" }
 dev = { features = ["test", "docs", "dev"], solve-group = "default" }
 
 [tool.pixi.feature.docs.tasks]
-docs = { cmd = "sphinx-build -b html docs/ docs/_build/html", description = "Build HTML documentation with Sphinx" }
+docs = { cmd = "sphinx-build -W --keep-going -b html docs/ docs/_build/html", description = "Build HTML documentation with Sphinx; warnings fail the build" }
 
 [tool.pixi.pypi-dependencies]
 snappy-pipeline = { path = ".", editable = true }

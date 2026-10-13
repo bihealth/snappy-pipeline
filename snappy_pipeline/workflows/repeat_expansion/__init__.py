@@ -1,81 +1,20 @@
-# -*- coding: utf-8 -*
-"""Implementation of the ``repeat_expansion`` step
+"""Repeat expansion analysis with ExpansionHunter
 
-The ``repeat_expansion`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned reads in BAM format) and performs repeat expansion analysis.  The result are variant files
-(VCF) with the repeat expansions definitions, and associated annotations (JSON).
+The step runs the tool selected by ``tool`` on the alignments from ``depends_on.alignments`` (:ref:`step_ngs_mapping`).
+The only value is ``expansionhunter``, which calls repeat expansions against ``repeat_catalog`` and annotates them with ``repeat_annotation``.
+The step writes one result set per library with a DNA library.
+It is experimental.
 
-==========
-Stability
-==========
+Outputs
+-------
 
-This step is considered experimental, use it at your own discretion.
+The task publishes these files below ``tasks/<task>/output/``, each with a ``.md5`` file.
+The paths are the same as below ``work/``.
 
-==========
-Step Input
-==========
+- ``{library_name}/out/{library_name}.vcf``, the repeat expansion calls
+- ``annotated.{library_name}/out/annotated.{library_name}.json``, the calls with the annotation
 
-The repeat analysis step uses Snakemake sub workflows for using the result of the ``ngs_mapping``
-step.
-
-===========
-Step Output
-===========
-
-For all samples, repeat analysis will be performed on the primary DNA NGS libraries separately for
-each configured repeat analysis tool. The name of the primary DNA NGS library will
-be used as an identification token in the output file.
-
-For each repeat analysis tool, and sample, the following files will be generated:
-
-- ``{lib_name}.vcf``
-- ``{lib_name}.vcf.md5``
-- ``annotated.{lib_name}.json``
-- ``annotated.{lib_name}.json.md5``
-
-For example, it might look as follows for the example from above:
-
-::
-
-    output/
-    +-- P001-N1-DNA1-WES1
-    |   `-- out
-    |       |-- P001-N1-DNA1-WES1.vcf
-    |       |-- P001-N1-DNA1-WES1.vcf.md5
-    +-- annotated.P001-N1-DNA1-WES1
-    |   `-- out
-    |       |-- annotated.P001-N1-DNA1-WES1.json
-    |       |-- annotated.P001-N1-DNA1-WES1.json.md5
-    [...]
-
-====================
-Global Configuration
-====================
-
-Not applicable.
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows:
-
-.. include:: DEFAULT_CONFIG_repeat_expansion.rst
-
-===============================
-Available Repeat Analysis Tools
-===============================
-
-The following germline repeat analysis tool is currently available:
-
-- ``"ExpansionHunter"``
-
-
-==================
-Parallel Execution
-==================
-
-Not available.
+The key ``vcf`` is the one downstream tasks read through ``depends_on``.
 """
 
 import os

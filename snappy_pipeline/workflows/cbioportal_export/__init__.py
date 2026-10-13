@@ -1,10 +1,31 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``cbioportal_export`` step
+"""Export to cBioPortal
 
-This step takes as input a wide range of files previously produced by the
-snappy_pipeline. It does the necessary data transformations to comply with the
-formats expected by cBioPortal and writes out the necessary metadata and data
-files.
+The step converts the results of the somatic tumor pipeline into the study files that cBioPortal imports.
+It converts the somatic variants (``depends_on.variants``) to MAF with vcf2maf.
+Optionally, it adds the copy number alterations (``copy_number_alteration``, from ``depends_on.copy_number``) and the gene expression (``expression``, from the gene counts of ``depends_on.alignments``).
+The data of all samples is merged into single files per cohort.
+
+The step has no ``tool`` field.
+The task gives one result per cohort, a single study in the directory ``upload``.
+Copy number data needs ``depends_on.copy_number``, and copy number and expression need ``depends_on.features``.
+The segment files are written only if the study uses the reference genome ``hg19``, which follows from ``vcf2maf.ncbi_build: GRCh37``.
+
+Outputs
+-------
+
+The task publishes the following files below ``tasks/<task>/output/upload/`` as symlinks to ``work/upload/``.
+
+- ``meta_study.txt``, ``meta_clinical_patient.txt``, ``meta_clinical_sample.txt`` and ``meta_mutation_extended.txt``
+- ``data_clinical_patient.txt``, ``data_clinical_sample.txt`` and ``data_mutation_extended.txt``
+- ``case_lists/all_cases_with_mutation_data.txt``
+- With ``copy_number_alteration``: ``meta_cna_gistic.txt``, ``meta_cna_log2.txt``, ``data_cna_gistic.txt``, ``data_cna_log2.txt`` and ``case_lists/all_cases_with_cna_data.txt``.
+  For ``hg19``, also ``meta_segment.txt`` and ``data_segment.txt``.
+  The case list ``case_lists/all_cases_with_mutation_and_cna_data.txt`` lists the samples with both.
+- With ``expression``: ``meta_expression.txt``, ``data_expression.txt`` and ``case_lists/all_cases_with_mrna_rnaseq_data.txt``.
+  With both options, also ``case_lists/all_cases_with_mutation_and_cna_and_mrna_data.txt``.
+
+Downstream tasks read the keys ``meta_study`` and ``clinical_patient``.
 """
 
 import re

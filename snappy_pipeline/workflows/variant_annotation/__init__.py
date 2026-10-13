@@ -1,8 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the unified ``variant_annotation`` step.
+"""Variant annotation with VEP or Mehari
 
-One task = one annotation tool. Chain via ``depends_on.variants`` to annotate
-somatic or germline VCF inputs with either VEP or Mehari.
+Annotates the VCF files of the task named in ``depends_on.variants``.
+The input can be somatic or germline.
+The ``tool`` field selects the annotator: ``vep`` runs Ensembl VEP, ``mehari`` runs Mehari.
+One task runs one tool, so a second annotation needs a second task.
+
+The task produces one annotated VCF per input library.
+Its output has the input's tags plus ``annotated``.
+
+Outputs
+-------
+
+Below ``tasks/<task>/output/``:
+
+- ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
+
+Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
 from biomedsheets.shortcuts import GenericSampleSheet

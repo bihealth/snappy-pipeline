@@ -1,5 +1,27 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``reference_index`` step."""
+"""Indices of a reference sequence
+
+Builds the indices of a reference FASTA file for one mapper.
+The ``tool`` field selects ``bwa``, ``bwa_mem2``, ``minimap2`` or ``star``.
+STAR needs an RNA reference (``reference_molecule: rna``) and takes a gene annotation from ``depends_on.features`` to add splice junctions.
+The other tools need a DNA reference.
+The task has one result per project, not per library.
+
+Outputs
+-------
+
+Below ``tasks/<task>/output/reference_index/out/``, with the prefix ``reference``:
+
+- ``reference.fa.fai``, ``reference.dict`` and ``reference.fa.genome`` for every tool.
+- ``bwa``: ``.amb``, ``.ann``, ``.bwt``, ``.pac`` and ``.sa``.
+- ``bwa_mem2``: ``.0123``, ``.amb``, ``.ann``, ``.bwt.2bit.64`` and ``.pac``.
+- ``minimap2``: ``.mmi``.
+- ``star``: the directory ``reference.index/`` with the STAR genome files, plus the splice junction files if ``features`` is set.
+
+Downstream tasks read the index through the key ``index``.
+This is the prefix of the files for ``bwa`` and ``bwa_mem2``, the ``.mmi`` file for ``minimap2`` and the directory for ``star``.
+The keys ``reference_fai``, ``reference_dict`` and ``reference_genome`` name the other three files.
+"""
 
 from biomedsheets.shortcuts import GenericSampleSheet
 

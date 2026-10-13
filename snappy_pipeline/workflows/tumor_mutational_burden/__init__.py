@@ -1,3 +1,24 @@
+"""Tumor mutational burden
+
+The step computes the tumor mutational burden (TMB) of each tumor from its somatic variants.
+It counts the variants (SNVs and indels) inside ``target_regions`` and divides them by the total length of the regions, in variants per megabase.
+The ``missense_TMB`` counts only the variants whose annotation matches ``missense_regex``.
+This needs an annotated VCF, which ``has_annotation: true`` states.
+
+The step has no ``tool`` field.
+The task gives one result per tumor DNA library.
+
+Outputs
+-------
+
+The task publishes ``{tumor_library}/out/tmb.{tumor_library}.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+The JSON file holds the TMB, the numbers of variants, SNVs and indels, and the total length of the regions.
+With ``has_annotation: true``, it also holds the missense TMB and the number of missense variants.
+It also records the names and checksums of the VCF and BED files.
+
+Downstream tasks read the key ``json``.
+"""
+
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 
 from snappy_pipeline.utils import dictify

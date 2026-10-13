@@ -1,51 +1,34 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_gene_fusion_calling`` step
+"""Somatic gene fusion calling from RNA-seq data
 
-The somatic_gene_fusion calling step allows for the detection of gene fusions from RNA-seq data
-in cancer.  The wrapped tools start at the raw RNA-seq reads and generate filtered lists of
-predicted gene fusions.
+The step detects gene fusions in cancer RNA-seq data.
+Each tool starts at the raw RNA-seq reads and predicts the fusions itself.
+The reads come from the task named in ``depends_on.reads``.
 
-==========
-Step Input
-==========
+The ``tool`` field selects the caller:
 
-Gene fusion calling starts at the raw RNA-seq reads.  Thus, the input is very similar to one of
-:ref:`ngs_mapping step <step_ngs_mapping>`.
+- ``arriba`` is the recommended caller.
+- ``star_fusion`` returns results similar to ``arriba``, but less accurate.
+- ``fusioncatcher`` is broken.
+  Its resource requirements are so high that re-enabling it is probably not worth it.
+- ``defuse``, ``hera``, ``jaffa`` and ``pizzly`` are not tested and probably broken.
 
-See :ref:`ngs_mapping_step_input` for more information.
+The task gives one result per RNA library.
+The sample sheet must be a cancer sheet.
 
-.. note::
+Outputs
+-------
 
-    The step requires a ``cancer_matched`` configuration & samplesheet files.
-    This is an unnecessary requirement, which might be dropped in the future.
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``.
 
-===========
-Step Output
-===========
+- ``{library_name}/out/.done``: marks a finished library.
+  It is the only file of every tool except ``arriba``.
+- ``{library_name}/out/{library_name}.fusions.tsv`` and ``{library_name}/out/{library_name}.discarded_fusions.tsv.gz`` (``arriba``), each with a ``.md5`` file.
+  The files list the affected genes, the supporting reads and a confidence level.
+  The discarded fusions have insufficient evidence.
 
-There is no standard for reporting gene fusions, and therefore the output is different for all implemented tools.
-
-``arriba`` returns two tab-separated files: ``<library name>.fusions.tsv`` & ``<library name>.discarded_fusions.tsv.gz``.
-Both files list the affected genes, reads supporting the fusion & a confidence level.
-Obviously, the discarded fusion file contains all hints of fusion that have been discarded because of insufficient evidence.
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_somatic_gene_fusion_calling.rst
-
-=============================
-Available Gene Fusion Callers
-=============================
-
-- ``arriba``
-- ``fusioncatcher`` implementation is broken. The tool's computational resources requirements are so enormous that it might not be advisable to try re-enable it.
-- the status of ``defuse``, ``hera``, ``jaffa`` & ``pizzly`` is unknown, they are probably currently broken or not implemented.
-- the status of ``star_fusion`` is also unknown, but it apparently returns results fairly similar to ``arriba``, but not quite as accurate. ``arriba`` should be preferred.
-
+Downstream tasks read the key ``done``.
+There is no standard format for gene fusions, so the other files depend on the tool.
 """
 
 from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions

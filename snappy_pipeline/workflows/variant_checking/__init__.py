@@ -1,51 +1,23 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the germline ``variant_checking`` step
+"""Variant checking with peddy
 
-The ``variant_checking`` step takes as the input the results of the ``variant_annotation``
-step.  It then executes various tools computing statistics on the result files and consistency
-checks with the pedigrees.
+Checks the germline variants of ``depends_on.variants`` against the pedigree.
+The ``tool`` field is ``peddy``, which compares the sex, the relatedness and the heterozygosity of the samples with the pedigree.
+The task produces one set of files per cohort, named after the index library.
 
-==========
-Step Input
-==========
+Outputs
+-------
 
-The variant calling step uses Snakemake sub workflows for using the result of the
-``variant_annotation`` step.
+Below ``tasks/<task>/output/``, each file with a ``.md5`` file:
 
-===========
-Step Output
-===========
+- ``{library_name}/out/{library_name}.ped_check.csv``
+- ``{library_name}/out/{library_name}.sex_check.csv``
+- ``{library_name}/out/{library_name}.het_check.csv``
+- ``{library_name}/out/{library_name}.background_pca.json``
+- ``{library_name}/out/{library_name}.html``
+- ``{library_name}/out/{library_name}.ped``
 
-.. note:: TODO
-
-====================
-Global Configuration
-====================
-
-.. note:: TODO
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_variant_checking.rst
-
-==========================
-Available Variant Checkers
-==========================
-
-The following variant checkers integrated:
-
-- ``"bcftools_stats"`` -- call ``bcftools stats`` for various statistics
-- ``"peddy"`` -- check variants against a PED file
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
+Downstream tasks read ``ped_check`` through ``depends_on``.
 """
 
 from biomedsheets.shortcuts import GermlineCaseSheet

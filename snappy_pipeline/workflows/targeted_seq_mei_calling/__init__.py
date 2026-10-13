@@ -1,81 +1,16 @@
-# -*- coding: utf-8 -*
-"""Implementation of the ``targeted_seq_mei_calling`` step
+"""Mobile element insertion calling for targeted sequencing
 
-The ``targeted_seq_mei_calling`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned reads in BAM format) and performs germline mobile element insertion (MEI) identification.
-The result are VCF files with mobile insertions.
+The step finds mobile element insertions (MEI) in the alignments from ``depends_on.alignments`` (:ref:`step_ngs_mapping`).
+The only value of ``tool`` is ``scramble``, which runs Scramble.
+The step writes one VCF per library with a DNA library.
+It is experimental.
 
-==========
-Stability
-==========
+Outputs
+-------
 
-This step is considered experimental, use it at your own discretion.
-
-==========
-Step Input
-==========
-
-MEI identification step uses Snakemake sub workflows for using the
-result of the ``ngs_mapping`` step.
-
-===========
-Step Output
-===========
-
-For all samples, MEI identification will be performed on primary DNA NGS libraries. The name
-of the primary DNA NGS library is used as the output identification token.
-
-For each sample the following files will be generated:
-
-- ``{lib_name}.vcf.gz``
-- ``{lib_name}.vcf.gz.md5``
-
-For example, it might look as follows for the example from above:
-
-::
-
-    output/
-    +-- P001-N1-DNA1-WES1
-    |   `-- out
-    |       |-- P001-N1-DNA1-WES1.vcf.gz
-    |       |-- P001-N1-DNA1-WES1.vcf.gz.md5
-    [...]
-
-
-====================
-Global Configuration
-====================
-
-Not applicable.
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_targeted_seq_mei_calling.rst
-
-==================================
-Available MEI Identification Tools
-==================================
-
-The following germline MEI identification tool is currently available:
-
-- ``"Scramble"``
-
-=======
-Reports
-=======
-
-Not applicable.
-
-==================
-Parallel Execution
-==================
-
-Not available.
-
+The task publishes ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi`` and ``.md5`` files below ``tasks/<task>/output/``.
+The paths are the same as below ``work/``.
+The key ``vcf`` is the one downstream tasks read through ``depends_on``.
 """
 
 import os

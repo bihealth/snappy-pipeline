@@ -140,8 +140,10 @@ class VariantFiltrationDependsOn(SnappyModel):
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = ""
+    """Needed by ``dkfz`` and ``ebfilter`` only"""
 
     reference: Reference = ""
+    """Needed by ``dkfz`` and ``ebfilter`` only"""
 
 
 class VariantFiltration(SnappyStepModel):

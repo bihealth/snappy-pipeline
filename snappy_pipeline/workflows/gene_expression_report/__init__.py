@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``gene_expression_report`` step"""
+"""Gene expression report for tumor RNA libraries
+
+The step places the expression of each tumor RNA library in the context of the cohort.
+It collects the expression tables of all tumor ``mRNA_seq`` libraries of the sample sheets, ranks the genes of each library, computes expression signatures, and plots the expression of selected genes against the cohort.
+The task has no ``tool`` field.
+It reads the expression tables from ``depends_on.expression``, a :ref:`step_gene_expression_quantification` task with ``tool: featurecounts``.
+
+Outputs
+-------
+
+The task publishes the following files below ``tasks/<task>/output/``, for each RNA library with name ``{library_name}``:
+
+- ``{library_name}/out/{library_name}.tsv``: the ranked expression
+- ``{library_name}/out/{library_name}.pdf``: the expression signatures
+- ``{library_name}/out/{library_name}.genes.pdf``: the expression distribution of genes in the cohort
+
+Downstream tasks read the key ``tsv``.
+"""
 
 import os
 

@@ -1,59 +1,25 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``somatic_cnv_checking`` step
+"""Somatic CNV checking with B-allele frequencies
 
-The ``somatic_cnv_checking`` step takes as the input the results of the ``ngs_mapping`` step
-(aligned reads in BAM format) and performs pileups at germline locii to identify heterozygous
-variants, and their B-allele frequency in the paired tumor sample. If one somatic CNV calling step
-(either ``somatic_wgs_cnv_calling`` or ``somatic_targetd_seq_cnv_calling``) is present, the
-log2 convarage ratio and copy number call are added to the output vcf.
+The step finds heterozygous germline variants in the matched normal and measures their B-allele frequency in the tumor.
+It then merges these frequencies with the segments of a somatic CNV caller.
+This shows whether the copy number calls agree with the allelic imbalance in the tumor.
 
-==========
-Step Input
-==========
+The step has no ``tool`` field.
+It gives one result per tumor DNA library, paired with its matched normal.
+It publishes files only when ``depends_on.copy_number`` names a CNV calling task.
+Without it, the pileups stay in ``work/`` as intermediate files.
 
-The somatic CNV checking step uses Snakemake sub workflows for using the result of the
-``ngs_mapping`` step. Optionally, it can also use one Snakemake sub workflows for somatic CNV
-calling, either``somatic_wgs_cnv_calling`` or ``somatic_targetd_seq_cnv_calling``.
+Outputs
+-------
 
-===========
-Step Output
-===========
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
-For each tumor DNA NGS library with name ``lib_name``/key ``lib_pk``
-the pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
-with symlinks of the following names to the resulting VCF, TBI, and MD5 files.
+- ``{tumor_library}/out/{tumor_library}.vcf.gz`` with ``.tbi``: the heterozygous variants with their B-allele frequency, and the log2 ratio and copy number call of the segment.
+- ``{tumor_library}/out/{tumor_library}.tsv``
+- ``{tumor_library}/report/{tumor_library}.cnv.pdf``, ``{tumor_library}.locus.pdf`` and ``{tumor_library}.segment.pdf``: plots of the B-allele frequency against the copy number.
 
-- ``{lib_name}-{lib_pk}.vcf.gz``
-- ``{lib_name}-{lib_pk}.vcf.gz.tbi``
-- ``{lib_name}-{lib_pk}.vcf.gz.md5``
-- ``{lib_name}-{lib_pk}.vcf.gz.tbi.md5``
-
-For example, it might look as follows for the example from above:
-
-::
-
-    output/
-    +-- bwa.cnvkit.P001-T1-DNA1-WES1-4
-    |   `-- out
-    |       |-- bwa.cnvkit.P001-T1-DNA1-WES1-4.vcf.gz
-    |       |-- bwa.cnvkit.P001-T1-DNA1-WES1-4.vcf.gz.tbi
-    |       |-- bwa.cnvkit.P001-T1-DNA1-WES1-4.vcf.gz.md5
-    |       `-- bwa.cnvkit.P001-T1-DNA1-WES1-4.vcf.gz.tbi.md5
-    [...]
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_somatic_cnv_checking.rst
-
-=======
-Reports
-=======
-
-Currently, no reports are generated.
+Downstream tasks read the key ``vcf``.
 """
 
 import os

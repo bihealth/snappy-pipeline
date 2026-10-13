@@ -60,6 +60,7 @@ class ReferenceIndexDependsOn(SnappyModel):
         DataSignature(DataType.RAW, frozenset({"reference", ("dna", "rna")})),
         ExpectedPathSchema(ExpectedReferenceDownloadFiles),
     ]
+    """Reference FASTA: a ``reference_download`` task, or an ``external_data`` task with the key ``fasta``."""
 
     features: Features = ""
     """Gene annotation for the STAR index."""

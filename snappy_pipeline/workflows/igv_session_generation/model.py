@@ -21,16 +21,19 @@ class IgvSessionGenerationDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"})),
         ExpectedPathSchema(ExpectedPhasedVariants),
     ] = ""
+    """Phased variants; set exactly one of the three variant fields"""
     annotated_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
         ExpectedPathSchema(ExpectedAnnotatedVariants),
     ] = ""
+    """Annotated variants; set exactly one of the three variant fields"""
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
         ExpectedPathSchema(ExpectedGermlineVariants),
     ] = ""
+    """Variant calls; set exactly one of the three variant fields"""
 
 
 class IgvSessionGeneration(SnappyStepModel):

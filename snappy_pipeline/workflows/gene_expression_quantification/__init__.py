@@ -1,72 +1,93 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``gene_expression_quantification`` step
+"""Gene expression quantification and RNA QC
 
-This step takes as input alignments from ``ngs_mapping`` and performs gene
-expression quantification. Further, the tool dupradar is run to help with
-estimating library complexity, i.e. the number of PCR duplicates.
-(This needs the bam files to be marked for duplicates, e.g. with samblaster.)
+The step quantifies gene expression of RNA libraries or computes RNA QC metrics.
+Each task runs one tool, selected by the ``tool`` field.
+The step uses RNA libraries only.
 
-The output are tables of gene counts and gene lengths for each library for
-a given annotation.
+Quantification:
 
-==========
-Step Input
-==========
+- ``featurecounts``: counts reads per gene from the BAM files, with the GTF of ``depends_on.features``. It publishes a table of counts and gene lengths.
+- ``salmon``: estimates expression from the FASTQ files, without prior mapping. It needs a prebuilt index (``salmon.path_index``) and a table that maps transcripts to genes (``salmon.path_transcript_to_gene``).
 
-The gene expression quantification step uses Snakemake sub workflows for using the result of the
-``ngs_mapping`` step. It will use RNA-seq experiments only.
+QC and strandedness, all on the BAM files:
 
-Additionally, salmon can be used to estimate expression directly from the FASTQs with no need
-for prior mapping.
+- ``strandedness``: infers the strandedness of each library with RSeQC ``infer_experiment.py``. It needs a 6-column BED file of transcripts and their strand in ``strandedness.path_exon_bed``.
+- ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats``: estimate library complexity and duplication rate, and compute coverage and alignment metrics. ``dupradar`` needs BAM files marked for duplicates. ``rnaseqc`` and ``dupradar`` read a GTF from their own config sections.
 
-The tools ``featurecounts``, ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats`` also need
-the strandedness of each library. It comes from a separate task of this step with
-``tool: strandedness``, named in ``depends_on.strandedness``:
+``featurecounts``, ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats`` need the strandedness of each library.
+It comes from a task of this step with ``tool: strandedness``, named in ``depends_on.strandedness``.
+The field ``strand`` forces the strandedness of featurecounts (0 unstranded, 1 forward, 2 reverse) instead.
+
+The example maps RNA reads with STAR, infers the strandedness, and counts with featurecounts:
 
 .. code-block:: yaml
 
     tasks:
-      - step: gene_expression_quantification
-        name: strandedness
+      - name: genome
+        step: external_data
+        config:
+          produces: {type: raw, tags: [reference, dna]}
+          files: {fasta: resources/genome.fa}
+      - name: annotation
+        step: external_data
+        config:
+          produces: {type: raw, tags: [features]}
+          files: {gtf: resources/genes.gtf}
+      - name: star_index
+        step: external_data
+        config:
+          produces: {type: index, tags: [star, rna]}
+          files: {index: resources/star_index}
+      - name: mapping
+        step: ngs_mapping
+        config:
+          depends_on:
+            reads: data_sets
+            reference: genome
+            features: annotation
+            index: star_index
+          tool: star
+          star: {}
+      - name: strandedness
+        step: gene_expression_quantification
         config:
           depends_on:
             alignments: mapping
           tool: strandedness
           strandedness:
-            path_exon_bed: /path/to/exons.bed
-      - step: gene_expression_quantification
-        name: counts
+            path_exon_bed: resources/exons.bed
+      - name: counts
+        step: gene_expression_quantification
         config:
           depends_on:
             alignments: mapping
             strandedness: strandedness
+            features: annotation
           tool: featurecounts
+          featurecounts: {}
 
-===========
-Step Output
-===========
+Outputs
+-------
 
-For each RNA NGS library with name ``lib_name``/key ``lib_pk``, the
-pipeline step will create a directory ``output/{lib_name}-{lib_pk}/out``
-with symlinks of the following names to the resulting TSV files.
+The task publishes the following files below ``tasks/<task>/output/``, for each RNA library with name ``{library_name}``.
+Each file has an ``.md5`` file.
+The files are in ``{library_name}/out/`` and start with ``{library_name}``:
 
-- ``{lib_name}-{lib_pk}.tsv``
+- ``featurecounts``: ``.tsv`` and ``.tsv.summary``
+- ``salmon``: ``.gene.sf`` and ``.transcript.sf``
+- ``strandedness``: ``.tsv`` and ``.decision``
+- ``dupradar``: ``.tsv``
+- ``duplication``: ``.seq.DupRate.xls`` and ``.pos.DupRate.xls``
+- ``rnaseqc``: ``.metrics.tsv``, and the files ``.meanCoverage_<low|medium|high>.txt``, ``.meanCoverageNorm_<low|medium|high>.txt`` and ``.gapLengthHist_<low|medium|high>.txt``
+- ``stats``: ``.read_alignment_report.tsv``
 
-=====================
-Default Configuration
-=====================
+Downstream tasks read the key ``tsv`` of ``featurecounts`` (data type ``expression``), the keys ``gene_sf`` and ``transcript_sf`` of ``salmon``, and the key ``decision`` of ``strandedness``.
 
-Featurecounts needs a GTF with the gene model that will be used to count reads. By default,
-strandedness is set to 0, i.e. unstranded. If you want stranded output, see the featurecounts
-manual and set it appropriately (1 or 2, depending on the protocoll).
+Notes
+-----
 
-RSeQC's infer_experiment.py can be used to infer the strandedness. (You might want to run it
-separately before featurecounts). This requires a 6-column bed file, which holds the positions
-of transcripts and the strand they are originating from.
-
-Salmon needs an pre-build index at the moment, the path should point to the directory, which
-contains the needed files (e.g. sa.bin, rsd.bin, txpInfo.bin, etc).
-Additionally, one can provide a gtf for the mapping between transcripts and genes.
+``salmon.path_index`` is the directory of the prebuilt index, with files such as ``sa.bin``, ``rsd.bin`` and ``txpInfo.bin``.
 """
 
 from typing import Any

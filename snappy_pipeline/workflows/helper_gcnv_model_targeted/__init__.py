@@ -1,83 +1,32 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``helper_gcnv_model_targeted`` step
+"""GATK gCNV model for targeted sequencing data
 
-The ``helper_gcnv_model_targeted`` step takes as the input the results of the ``ngs_mapping``
-step (aligned germline reads) and builds a model that can be used by GATK4 gCNV for a particular
-library kit.
+The step builds a model for GATK4 gCNV from the aligned germline reads of the whole cohort.
+It builds one model per library kit.
+``gcnv.path_target_interval_list_mapping`` maps the ``libraryKit`` of each library to a kit name and its target intervals.
+Without a mapping, all libraries belong to the kit ``default``.
 
-==========
-Step Input
-==========
+The model has two parts, the contig ploidy model and the CNV calls model (``cnv_calls-model``).
+Together they let :ref:`step_sv_calling_targeted` run gCNV in case mode.
+The step has no ``tool`` field.
 
-The step uses Snakemake sub workflows for the result of the ``ngs_mapping``
-(aligned reads BAM files).
+Outputs
+-------
 
-===========
-Step Output
-===========
+The model directories stay in ``work/`` and are not published:
 
-All donors will be used to generate the two parts of the required gCNV model, specifically:
-``ploidy-model`` and ``cnv_calls-model``. Both are required to execute gCNV in CASE mode.
+- ``{library_kit}/out/{library_kit}.contig_ploidy/`` holds the ploidy model (``ploidy-model``) and the ploidy calls per sample.
+- ``{library_kit}/out/{library_kit}.{shard}_of_{n}.call_cnvs/`` holds, for each shard of the genome, the CNV calls model (``cnv_calls-model``), the calls per sample and the tracking data.
 
-For example, the relevant directories might look as follows:
+The keys ``ploidy_done`` and ``calls_done`` for downstream tasks are the ``.done`` files in these directories.
+The ``gcnv.precomputed_model_paths`` of the ``sv_calling_targeted`` task name these model directories.
 
-::
+The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``.
+They are the calls on the cohort libraries themselves.
 
-    work/
-    `-- <library_kit_name>
-        `-- out
-            |-- <library_kit_name>.contig_ploidy
-            |   |-- SAMPLE_0
-            |   |   |-- contig_ploidy.tsv
-            |   |   |-- global_read_depth.tsv
-            |   |   |-- mu_psi_s_log__.tsv
-            |   |   |-- sample_name.txt
-            |   |   `-- std_psi_s_log__.tsv
-            |   |-- [...]
-            |   `-- ploidy-model
-            |       |-- contig_ploidy_prior.tsv
-            |       |-- gcnvkernel_version.json
-            |       |-- interval_list.tsv
-            |       |-- mu_mean_bias_j_lowerbound__.tsv
-            |       |-- mu_psi_j_log__.tsv
-            |       |-- ploidy_config.json
-            |       |-- std_mean_bias_j_lowerbound__.tsv
-            |       `-- std_psi_j_log__.tsv
-            `-- <library_kit_name>.***_of_***.call_cnvs
-                |-- cnv_calls-calls
-                |   |-- SAMPLE_0
-                |       `-- [...]
-                |   |-- [...]
-                |-- cnv_calls-model
-                |  |-- denoising_config.json
-                |  |-- gcnvkernel_version.json
-                |  |-- interval_list.tsv
-                |  |-- log_q_tau_tk.tsv
-                |  |-- mu_W_tu.tsv
-                |  |-- mu_ard_u_log__.tsv
-                |  |-- mu_log_mean_bias_t.tsv
-                |  |-- mu_psi_t_log__.tsv
-                |  |-- std_W_tu.tsv
-                |  |-- std_ard_u_log__.tsv
-                |  |-- std_log_mean_bias_t.tsv
-                |  `-- std_psi_t_log__.tsv
-                `-- cnv_calls-tracking
-                    `-- [...]
-
-====================
-Global Configuration
-====================
-
-- At the moment, no global configuration is used.
-
-=====================
-Default Configuration
-=====================
-
-The default configuration is as follows.
-
-.. include:: DEFAULT_CONFIG_helper_gcnv_model_targeted.rst
-
+- ``{library_name}/out/{library_name}.post_germline_calls.vcf.gz``
+- ``{library_name}/out/{library_name}.post_germline_calls.interval.vcf.gz``
+- ``{library_name}/out/{library_name}.post_germline_calls.ratio.tsv``
 """
 
 import os

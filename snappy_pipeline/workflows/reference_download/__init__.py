@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Implementation of the ``reference_download`` step."""
+"""Download of a reference sequence
+
+Downloads one FASTA file from Ensembl, RefSeq or UCSC.
+The ``source`` field selects the source.
+The source section (``ensembl``, ``refseq`` or ``ucsc``) selects the species, build and file, or gives a ``url`` that replaces the generated URL.
+``contigs`` and ``contigs_regex`` keep only some contigs of the file.
+The task has one result per project, not per library.
+
+Outputs
+-------
+
+Below ``tasks/<task>/output/``:
+
+- ``reference_download/out/reference.fa`` and ``reference_download/out/reference.fa.md5``
+
+Downstream tasks read the FASTA file through the key ``fasta`` of their ``reference`` field.
+The task produces data of type ``raw`` with the tags ``reference``, the source and the molecule (``dna``, ``rna`` or ``protein``).
+"""
 
 from biomedsheets.shortcuts import GenericSampleSheet
 
