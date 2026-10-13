@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Publish the result files of a task into its ``output/`` directory (plans.md W1).
+"""Publish the result files of a task into its ``output/`` directory.
 
 ``work/`` holds every file a task writes and is what other tasks read. ``output/`` only holds
 relative symlinks to the published files, created by one local job per task. That job declares a

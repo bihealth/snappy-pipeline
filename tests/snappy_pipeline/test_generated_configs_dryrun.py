@@ -79,7 +79,7 @@ GERMLINE_TASKS = {
 
 #: Closures whose DAG cannot be built yet, with the reason. Strict xfail, so a fix shows up.
 KNOWN_BROKEN = {
-    "igv_session_generation": "still builds tool-prefixed upstream paths (plans.md K3, C3)",
+    "igv_session_generation": "still builds tool-prefixed upstream paths",
 }
 
 #: Closures that target no files, with the reason. Every other closure must target at least one

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for outputs flagged for the Snakemake report (plans.md F5)."""
+"""Tests for outputs flagged for the Snakemake report."""
 
 import os
 from types import SimpleNamespace

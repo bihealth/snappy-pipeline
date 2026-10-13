@@ -62,7 +62,7 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
         "somatic_targeted_seq_cnv_calling_sequenza"
     ),
     ("somatic_neoepitope_prediction", "germline_variants"): None,
-    # Annotation of germline calls; revisit with the neoepitope backlog item in plans.md.
+    # Annotation of germline calls; revisit when the neoepitope steps are ported.
     ("somatic_neoepitope_prediction", "somatic_variants"): "variant_annotation_vep",
     ("somatic_targeted_seq_cnv_calling", "variants"): "variant_calling_mutect2",
     ("somatic_variant_signatures", "variants"): "variant_calling_mutect2",

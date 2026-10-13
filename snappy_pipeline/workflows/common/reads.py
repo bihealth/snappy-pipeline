@@ -1,4 +1,4 @@
-"""Reads of a library as rule inputs and params (plans.md F11).
+"""Reads of a library as rule inputs and params.
 
 Wrappers take the FASTQ files from ``snakemake.input.reads_left`` and ``reads_right``. If another
 task wrote the reads (``adapter_trimming``), only its ``out/.done`` file is a job output, so that

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for marking scatter fragments and intermediates ``temp()`` (plans.md W3)."""
+"""Tests for marking scatter fragments and intermediates ``temp()``."""
 
 from types import SimpleNamespace
 

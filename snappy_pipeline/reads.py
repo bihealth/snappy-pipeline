@@ -1,4 +1,4 @@
-"""Central discovery of the FASTQ files of libraries (plans.md R1).
+"""Central discovery of the FASTQ files of libraries.
 
 A library's files are in a folder named after it (the sample sheet's folder name) somewhere below
 a data set's search paths. Search patterns are regular expressions that must match the whole path

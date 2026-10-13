@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Archive the logs of one ``snappy run`` (plans.md F3).
+"""Archive the logs of one ``snappy run``.
 
 The Snakemake log of a run lists every job it started together with the job's log files, and
 the slurm executor logs the slurm log file of every job it submits. The archive holds these

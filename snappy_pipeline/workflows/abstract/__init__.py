@@ -108,7 +108,7 @@ Attempt: typing.TypeAlias = int | None
 
 @dataclass(frozen=True)
 class ReportOutput:
-    """An output that the Snakemake report shows (``snappy report``, plans.md F5)."""
+    """An output that the Snakemake report shows (``snappy report``)."""
 
     #: Subcategory below the task's category
     subcategory: str | None = None
@@ -148,7 +148,7 @@ class BaseStepPart:
     entity_wildcard: str = "library_name"
 
     #: Output keys by action of scatter fragments (per-region or per-chunk pieces that a gather
-    #: rule joins): always ``temp()`` (plans.md W3)
+    #: rule joins): always ``temp()``
     temp_outputs: dict[str, tuple[str, ...]] = {}
 
     #: Output keys by action of per-sample intermediates that only later rules of the same task
@@ -1208,7 +1208,7 @@ class BaseStep:
         """Return the benchmark file of a rule: the path of its log below ``benchmarks/``.
 
         Snakemake writes wall time, memory (``max_rss``), I/O and CPU time of the job into this
-        TSV file; it calibrates the resource requests (plans.md F7).
+        TSV file; it calibrates the resource requests.
         """
         log = self.get_log_file(sub_step, action)
         if not log:  # a rule of an inactive tool, which has no outputs and never runs

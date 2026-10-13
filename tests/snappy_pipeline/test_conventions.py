@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parents[2]
 WORKFLOWS = REPO / "snappy_pipeline" / "workflows"
 SNAPSHOTS = Path(__file__).resolve().parent / "snapshots"
 
-#: Path convention violations that already exist (plans.md C3). The test fails for new ones and
+#: Path convention violations that already exist. The test fails for new ones and
 #: for fixed ones, so the list only shrinks.
 PATH_BASELINE = SNAPSHOTS / "path_convention_violations.json"
 
@@ -134,7 +134,7 @@ def _path_violations() -> dict[str, list[str]]:
 
 
 def test_path_conventions_only_improve():
-    """No tool names in paths and ``{entity}.{suffix}`` naming (plans.md C3)."""
+    """No tool names in paths and ``{entity}.{suffix}`` naming."""
     current = _path_violations()
     if os.environ.get("SNAPPY_UPDATE_SNAPSHOTS"):
         PATH_BASELINE.write_text(json.dumps(current, indent=1) + "\n", encoding="utf-8")
@@ -268,7 +268,7 @@ def test_wrappers_get_the_params_they_read():
     assert not stale, f"remove these entries from WRAPPER_PARAM_EXCEPTIONS: {stale}"
 
 
-#: Params that hold file paths (plans.md F11). The test fails for new ones and for fixed ones, so
+#: Params that hold file paths. The test fails for new ones and for fixed ones, so
 #: the list only shrinks.
 PARAMS_FILES_BASELINE = SNAPSHOTS / "params_file_violations.json"
 
@@ -376,7 +376,7 @@ def _rule_blocks(path: Path) -> Iterator[tuple[str, str]]:
 
 
 def test_wrapper_rules_write_a_benchmark():
-    """Benchmarks record wall time and memory per job to calibrate resources (plans.md F7).
+    """Benchmarks record wall time and memory per job to calibrate resources.
 
     Snakemake does not allow benchmarks for rules that are cached between workflows.
     """
@@ -403,7 +403,7 @@ def test_logs_and_benchmarks_are_unique_per_job():
     assert not found, f"files shared by several jobs: {found}"
 
 
-#: Rules of steps on hold (plans.md); their own wrappers still write conda files and md5 files
+#: Rules of steps on hold; their own wrappers still write conda files and md5 files
 ON_HOLD_RULES = ("somatic_neoepitope_prediction", "create_proteome")
 
 _CONDA_OR_COPY = re.compile(r"\.(conda_info\.txt|conda_list\.txt|wrapper\.py|environment\.yaml)$")
@@ -420,7 +420,7 @@ def _snapshot_dags() -> Iterator[tuple[str, list[dict], set[str]]]:
     """Yield (snapshot, jobs, published files) per DAG snapshot, without the steps on hold.
 
     The published files are the inputs of the ``<task>_publish`` jobs: ``work/`` files that the
-    publish job links into ``output/`` (plans.md W1).
+    publish job links into ``output/``.
     """
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         jobs = [
@@ -435,7 +435,7 @@ def _snapshot_dags() -> Iterator[tuple[str, list[dict], set[str]]]:
 
 
 def test_only_the_publish_job_writes_into_output():
-    """``work/`` is the contract between tasks; ``output/`` is publication only (plans.md W1)."""
+    """``work/`` is the contract between tasks; ``output/`` is publication only."""
     found = {
         f"{name}: {job['rule']}: {path}"
         for name, jobs, _ in _snapshot_dags()
@@ -461,7 +461,7 @@ def test_no_job_reads_from_output():
 
 
 def test_logs_hold_only_logs():
-    """A rule's log is its log (plus a script copy); Snakemake records the rest (plans.md W2)."""
+    """A rule's log is its log (plus a script copy); Snakemake records the rest."""
     found = {
         f"{name}: {path}"
         for name, job in _snapshot_jobs()
@@ -472,7 +472,7 @@ def test_logs_hold_only_logs():
 
 
 def test_logs_are_not_published():
-    """Logs go into the run's log archive, not into output/ (plans.md F3, W2)."""
+    """Logs go into the run's log archive, not into output/."""
     found = {
         f"{name}: {path}"
         for name, _, published in _snapshot_dags()
@@ -555,7 +555,7 @@ def _intermediate_jobs() -> Iterator[tuple[str, dict, list[dict], set[str], dict
 
 
 def test_intermediates_are_temp():
-    """Files that only later rules of the same task read are temp() (plans.md W3)."""
+    """Files that only later rules of the same task read are temp()."""
     found = set()
     for name, job, _, published, readers in _intermediate_jobs():
         if _PROJECT_RESOURCES.search(job["rule"]):
@@ -622,7 +622,7 @@ def test_published_files_come_with_md5_and_index():
     assert not found, f"published files without md5 or index: {sorted(found)[:20]} ({len(found)})"
 
 
-#: Wrapper directories on hold (plans.md), not pinned yet
+#: Wrapper directories on hold, not pinned yet
 UNPINNED_WRAPPERS = {"pvactools"}
 
 #: Environments that conda cannot solve as written (unavailable versions, a defunct channel,
