@@ -149,6 +149,7 @@ They assign a sample to a patient more sensitively than HLA typing, which is mat
 
 import os
 import re
+from functools import cached_property
 from typing import Any
 
 import pandas as pd
@@ -206,13 +207,7 @@ class MappingGetResultFilesMixin:
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
         """Override function such that the mapper is applicable to the library"""
-        extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
-        extraction_type = extra_infos.get("extractionType", "DNA").lower()
-        if extra_infos["seqPlatform"] in ("ONT", "PacBio"):
-            suffix = "_long"
-        else:
-            suffix = ""
-        library_tool_category = f"{extraction_type}{suffix}"
+        library_tool_category = self.parent.library_tool_category(library_name)
         if self.tool_category not in ("__any__", library_tool_category):
             return True
         else:
@@ -242,7 +237,7 @@ class MappingGetResultFilesMixin:
             ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
-                for library_name in self.parent.ngs_library_to_extra_infos.keys():
+                for library_name in self.parent.library_infos:
                     if not self.skip_result_files_for_library(library_name):
                         yield from expand(path_tpl, library_name=library_name)
 
@@ -254,13 +249,7 @@ class ReportGetResultFilesMixin:
         if not getattr(self, "tool_categories", None):
             return False
 
-        extra_infos = self.parent.ngs_library_to_extra_infos[library_name]
-        extraction_type = extra_infos.get("extractionType", "DNA").lower()
-        if extra_infos["seqPlatform"] in ("ONT", "PacBio"):
-            suffix = "_long"
-        else:
-            suffix = ""
-        library_tool_category = f"{extraction_type}{suffix}"
+        library_tool_category = self.parent.library_tool_category(library_name)
         return library_tool_category not in self.tool_categories
 
     @listify
@@ -281,7 +270,7 @@ class ReportGetResultFilesMixin:
                 for path in self.get_output_files(action).values()
             ]
             #: Generate all concrete output paths.
-            for library_name in self.parent.ngs_library_to_extra_infos.keys():
+            for library_name in self.parent.library_infos:
                 for sub_step in self.parent.sub_steps.values():
                     if (
                         isinstance(sub_step, ReadMappingStepPart)
@@ -498,8 +487,8 @@ class StrandednessStepPart(BaseStepPart):
             return
         tpl_out = "output/{library_name}/out/{library_name}.GeneCounts.tab"
         tpl_strandedness = "output/{library_name}/strandedness/{library_name}.decision.json"
-        for library_name, extra_info in self.parent.ngs_library_to_extra_infos.items():
-            if extra_info["extractionType"] == "RNA":
+        for library_name, info in self.parent.library_infos.items():
+            if info["extraction_type"] == "rna":
                 yield tpl_out.format(library_name=library_name)
                 yield tpl_out.format(library_name=library_name) + ".md5"
                 yield tpl_strandedness.format(library_name=library_name)
@@ -540,7 +529,7 @@ class Minimap2StepPart(ReadMappingStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
         params |= self.config.minimap2.model_dump(by_alias=True)
-        params["extra_infos"] = self.parent.ngs_library_to_extra_infos[wildcards.library_name]
+        params["library_kit"] = self.parent.library_infos[wildcards.library_name]["library_kit"]
         params["library_name"] = wildcards.library_name
         return params
 
@@ -750,28 +739,23 @@ class NgsMappingWorkflow(BaseStep):
         )
         # Take shortcut from library to library kit.
         self.ngs_library_to_kit, self.default_kit_configured = self._build_ngs_library_to_kit()
-        # Create shortcut from library to all extra infos.
-        self.ngs_library_to_extra_infos = self._build_ngs_library_to_extra_infos()
         # Validate project
         self.validate_project(config=self.config)
 
-    def _build_ngs_library_to_extra_infos(self):
-        """Return library name -> ``extra_infos`` of the test sample updated by the library's.
+    @cached_property
+    def library_infos(self) -> dict[str, dict[str, Any]]:
+        """Return library name -> row of the library dataframe, background data sets included.
 
-        The mapping covers the libraries of background data sets as well and keeps the sample
-        sheet keys (e.g. ``seqPlatform``, ``extractionType``), because the keys and their values
-        are passed on to the wrappers as ``params["extra_infos"]``. The library dataframe has
-        snake_case keys and lower-case extraction types, so it cannot reproduce them exactly.
+        The task maps the libraries of the background data sets as well.
         """
-        result = {}
-        for sheet in self.sheets:
-            for donor in sheet.bio_entities.values():
-                for bio_sample in donor.bio_samples.values():
-                    for test_sample in bio_sample.test_samples.values():
-                        for library in test_sample.ngs_libraries.values():
-                            result.setdefault(library.name, {}).update(test_sample.extra_infos)
-                            result.setdefault(library.name, {}).update(library.extra_infos)
-        return result
+        df = self.build_library_dataframe(include_background=True)
+        return {row["library_name"]: row for row in df.to_dict("records")}
+
+    def library_tool_category(self, library_name: str) -> str:
+        """Return the tool category of a library: its extraction type, ``_long`` for long reads."""
+        info = self.library_infos[library_name]
+        suffix = "_long" if info["seq_platform"] in ("ONT", "PacBio") else ""
+        return f"{info['extraction_type']}{suffix}"
 
     def get_index_path(self, tool_name: str) -> str:
         """Return the index of ``tool_name`` from the ``depends_on.index`` task, tagged with it."""

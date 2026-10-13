@@ -21,8 +21,7 @@ reads_left = snakemake.input.get("reads_left") or reads_param["reads_left"]
 reads_right = snakemake.input.get("reads_right") or reads_param.get("reads_right", [])
 reads = " ".join([*reads_left, *reads_right])
 path_index = snakemake.input.index[0]
-seq_platform = args["extra_infos"]["seqPlatform"]
-library_kit = args["extra_infos"]["libraryKit"]
+library_kit = args["library_kit"]
 
 ShellWrapper(snakemake).run(
     r"""
