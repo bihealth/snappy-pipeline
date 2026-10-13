@@ -348,15 +348,6 @@ def test_wrappers_use_a_base_class():
     assert not stale, f"remove these entries from WRAPPERS_WITHOUT_BASE_CLASS: {stale}"
 
 
-#: Wrapper rules without a benchmark: their wrappers do not exist (legacy)
-RULES_WITHOUT_BENCHMARK = {
-    "gene_expression_report_aggregate_counts",
-    "gene_expression_report_compute_ranks",
-    "gene_expression_report_compute_signatures",
-    "gene_expression_report_plot_expression_distribution",
-}
-
-
 def _rule_blocks(path: Path) -> Iterator[tuple[str, str]]:
     """Yield (rule name, rule text) for the rules of a Snakefile."""
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -385,10 +376,7 @@ def test_wrapper_rules_write_a_benchmark():
         f"{path.relative_to(WORKFLOWS)}: {name}"
         for path in snakefiles
         for name, text in _rule_blocks(path)
-        if "wrapper:" in text
-        and "benchmark:" not in text
-        and "cache:" not in text
-        and name not in RULES_WITHOUT_BENCHMARK
+        if "wrapper:" in text and "benchmark:" not in text and "cache:" not in text
     ]
     assert not found, f"wrapper rules without benchmark: wf.get_benchmark_file(...): {found}"
 
@@ -525,7 +513,6 @@ _PROJECT_RESOURCES = re.compile(
 #: Intermediates that stay, with the reason
 NOT_TEMP = {
     r"\.scatter_intervals$": "checkpoint output that is globbed while the DAG is built",
-    r"^tasks/gene_expression_report/": "legacy step whose wrappers do not exist",
     r"gatk4_hc_gvcf_combine_gvcfs\.[^/]+/out/[^/]+\.g\.vcf\.gz(\.tbi)?$": (
         "the published {library}.g.vcf.gz of the genotype rule links to it"
     ),
@@ -596,7 +583,6 @@ def test_temp_files_are_intermediates():
 #: Steps that publish without md5 files: a legacy step whose wrappers do not exist, and steps
 #: whose results are not uploaded to SODAR (reference indices, gCNV models, cBioPortal files)
 UNCHECKED_PUBLISHING = (
-    "gene_expression_report",
     "reference_index",
     "helper_gcnv_model",
     "cbioportal_export",

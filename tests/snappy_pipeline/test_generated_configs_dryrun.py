@@ -57,7 +57,6 @@ RNA_TASKS = {
     "gene_expression_quantification_rnaseqc",
     "gene_expression_quantification_salmon",
     "gene_expression_quantification_stats",
-    "gene_expression_report",
     "somatic_neoepitope_prediction_pvacseq",
     "somatic_neoepitope_prediction_pvacfuse",
     "somatic_neoepitope_prediction_pvacsplice",

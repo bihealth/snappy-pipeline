@@ -394,7 +394,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("gene_expression_quantification", "salmon"): {
         "salmon": {"path_index": Fixture("star_index"), "path_transcript_to_gene": PLACEHOLDER}
     },
-    ("gene_expression_report", None): {"library_selection": RNA},
     ("hla_typing", "arcashla"): {"library_selection": RNA},
     ("ngs_data_qc", "picard"): {"picard": {"programs": ["CollectAlignmentSummaryMetrics"]}},
     ("ngs_mapping", None): {

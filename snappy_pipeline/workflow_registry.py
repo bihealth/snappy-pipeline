@@ -5,7 +5,6 @@ from snappy_pipeline.workflows.create_proteome import CreateProteomeWorkflow
 from snappy_pipeline.workflows.gene_expression_quantification import (
     GeneExpressionQuantificationWorkflow,
 )
-from snappy_pipeline.workflows.gene_expression_report import GeneExpressionReportWorkflow
 from snappy_pipeline.workflows.helper_gcnv_model_targeted import (
     HelperBuildTargetSeqGcnvModelWorkflow,
 )
@@ -59,7 +58,6 @@ WORKFLOW_REGISTRY = {
     "combine_variants": CombineVariantsWorkflow,
     "create_proteome": CreateProteomeWorkflow,
     "gene_expression_quantification": GeneExpressionQuantificationWorkflow,
-    "gene_expression_report": GeneExpressionReportWorkflow,
     "helper_gcnv_model_targeted": HelperBuildTargetSeqGcnvModelWorkflow,
     "helper_gcnv_model_wgs": HelperBuildWgsGcnvModelWorkflow,
     "hla_typing": HlaTypingWorkflow,
