@@ -1,0 +1,27 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+description: >-
+  The sample sheet values of one library, as a row of the library DataFrame
+  (build_library_dataframe). Columns without a value are left out before the check.
+type: object
+properties:
+  library_name:
+    type: string
+    minLength: 1
+  extraction_type:
+    description: The sample sheet's extractionType, in lower case.
+    enum: [dna, rna]
+  library_type:
+    enum: [WES, WGS, Panel_seq, mRNA_seq, total_RNA_seq]
+  library_kit:
+    type: string
+required: [library_name, extraction_type, library_type]
+# The libraryKit of a targeted library is an enrichment kit, whose name kits tasks
+# (external_data with kits) use as is. Long-read libraries use libraryKit for their chemistry.
+if:
+  properties:
+    library_type:
+      enum: [WES, Panel_seq]
+then:
+  properties:
+    library_kit:
+      pattern: "^[A-Za-z0-9_.-]*$"

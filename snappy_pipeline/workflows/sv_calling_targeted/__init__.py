@@ -41,9 +41,6 @@ from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Minimum number of samples per kit to apply gCNV calling criteria to be analyzed
-GCNV_MIN_KIT_SAMPLES = 10
-
 #: Default configuration for the sv_calling_targeted step
 
 

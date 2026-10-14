@@ -28,7 +28,7 @@ from snappy_pipeline.workflows.abstract import (
 
 
 def _make_data_set_info(sheet_type="germline_variants", is_background=False):
-    return SimpleNamespace(sheet_type=sheet_type, is_background=is_background)
+    return SimpleNamespace(name="first", sheet_type=sheet_type, is_background=is_background)
 
 
 def _parse_cancer_sheet(tsv_str):
@@ -80,6 +80,7 @@ class TestBuildLibraryDataframe:
             "disease_state",
             "tissue_type",
             "is_background",
+            "data_set",
             "secondary_id",
         }
         extra_sheet_cols = {

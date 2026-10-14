@@ -13,6 +13,7 @@ The field ``intervals`` selects how the genome is binned:
   ``depends_on.kits`` names an ``external_data`` task with ``kits``, and the step builds one model per kit from its ``targets``.
   A targeted library (``WES`` or ``Panel_seq``) belongs to the model of the kit named like its ``libraryKit``.
   Other libraries are left out, and a kit missing from the kits task is an error.
+  ``snappy run`` warns about kits with fewer than 10 libraries.
 - ``wgs`` bins the whole genome.
   All libraries must be whole genomes of the same library kit.
   The kit is named ``wgs``.
@@ -38,6 +39,7 @@ They are the calls on the cohort libraries themselves.
 """
 
 import dataclasses
+from collections import Counter
 import os
 
 from biomedsheets.shortcuts import GermlineCaseSheet
@@ -51,6 +53,10 @@ from snappy_pipeline.workflows.common.gcnv.gcnv_common import build_ngs_library_
 
 from .model import GcnvModel as GcnvModelConfigModel
 from .model import Intervals
+
+
+#: A model from fewer libraries of one kit gets a warning
+GCNV_MIN_KIT_SAMPLES = 10
 
 
 def _filter_intervals_memory(wildcards, input=None, threads=None, attempt=1):
@@ -130,3 +136,12 @@ class GcnvModelWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         self.register_sub_step_classes((WritePedigreeStepPart, GcnvModelStepPart))
+
+    def library_warnings(self) -> list[str]:
+        """Kits with fewer libraries than ``GCNV_MIN_KIT_SAMPLES``."""
+        counts = Counter(self.sub_steps["gcnv"].ngs_library_to_kit.values())
+        return [
+            f"Task {self.task_name!r} builds the gCNV model of kit {kit!r} from only {n} libraries"
+            for kit, n in sorted(counts.items())
+            if n < GCNV_MIN_KIT_SAMPLES
+        ]

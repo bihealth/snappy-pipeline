@@ -1113,6 +1113,11 @@ class BaseStep:
             )
         return kits[0]
 
+    def library_warnings(self) -> list[str]:
+        """Return warnings about the libraries of this task, which the main Snakefile prints once
+        per run."""
+        return []
+
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
 
@@ -1673,6 +1678,7 @@ _LIBRARY_COLUMNS = [
     "disease_state",
     "tissue_type",
     "is_background",
+    "data_set",
     "secondary_id",
 ]
 
@@ -1786,6 +1792,7 @@ def build_library_dataframe(
         * ``tissue_type`` — ``"tumor"``, ``"normal"``, or ``"unknown"``
         * ``is_background`` — whether the library is from a background data set; these are
           only included with ``include_background``
+        * ``data_set`` — the name of the library's data set in the config
         * ``secondary_id`` — the secondary ID of the donor in the sample sheet
 
         Further sample sheet columns (``extra_infos`` of the library and its test sample,
@@ -1856,6 +1863,7 @@ def build_library_dataframe(
                                     "disease_state": 0,
                                     "tissue_type": "tumor" if is_tumor else "normal",
                                     "is_background": info.is_background,
+                                    "data_set": info.name,
                                     "secondary_id": donor.bio_entity.secondary_id,
                                     **extra_columns.get(lib.name, {}),
                                 }
@@ -2028,6 +2036,7 @@ def build_library_dataframe(
                         "disease_state": lib_disease.get(lib_name, 0),
                         "tissue_type": "unknown",
                         "is_background": info.is_background,
+                        "data_set": info.name,
                         "secondary_id": getattr(bio_entity, "secondary_id", ""),
                         **extra_columns.get(lib_name, {}),
                     }

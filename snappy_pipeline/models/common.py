@@ -14,6 +14,7 @@ class LibraryType(enum.StrEnum):
     WGS = "WGS"
     Panel = "Panel_seq"
     mRNA = "mRNA_seq"
+    total_RNA = "total_RNA_seq"
 
     @model_validator(mode="after")
     def ensure_types_match_biomedsheets(self):

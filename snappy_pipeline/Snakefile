@@ -7,6 +7,7 @@ from snappy_pipeline.orchestration import (
     select_target_tasks,
 )
 from snappy_pipeline.publish import MANIFEST, publish, work_paths
+from snappy_pipeline.sheet_summary import print_library_summary
 
 configfile: "config.yaml"
 
@@ -29,6 +30,10 @@ else:
     _mode_desc = "all tasks"
 
 print(f"[snappy] Targeting {_mode_desc}", flush=True)
+
+# Once per run, not again in each cluster job
+if workflow.is_main_process:
+    print_library_summary(task_instances)
 
 for task in project.model.tasks:
     if task.name not in module_task_names:
