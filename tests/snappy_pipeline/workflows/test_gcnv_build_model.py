@@ -28,24 +28,26 @@ def test_contig_ploidy_reads_par_intervals_as_input(path, expected):
     assert inputs["tsv"] == ["work/P001/out/P001.coverage.tsv"]
 
 
-def _preprocess_part(mapping):
+def _preprocess_part(intervals):
     part = PreprocessIntervalsCommonMixin()
-    reference = SimpleNamespace(fasta="/refs/genome.fa")
-    part.parent = SimpleNamespace(get_upstream_paths=lambda field: reference)
-    part.config = SimpleNamespace(gcnv=SimpleNamespace(path_target_interval_list_mapping=mapping))
+    paths = {
+        "reference": SimpleNamespace(fasta="/refs/genome.fa"),
+        "kits": SimpleNamespace(targets="/refs/kit.bed"),
+    }
+    part.parent = SimpleNamespace(get_upstream_paths=lambda field, **kwargs: paths[field])
+    part.config = SimpleNamespace(intervals=intervals)
     return part
 
 
 def test_preprocess_intervals_reads_the_target_bed_of_the_kit():
-    mapping = [SimpleNamespace(name="kit", path="/refs/kit.bed")]
-    inputs = _preprocess_part(mapping)._get_input_files_preprocess_intervals(
+    inputs = _preprocess_part("targeted")._get_input_files_preprocess_intervals(
         SimpleNamespace(library_kit="kit")
     )
     assert inputs == {"reference": "/refs/genome.fa", "target_bed": "/refs/kit.bed"}
 
 
 def test_preprocess_intervals_without_targets_reads_only_the_reference():
-    inputs = _preprocess_part(None)._get_input_files_preprocess_intervals(
-        SimpleNamespace(library_kit="kit")
+    inputs = _preprocess_part("wgs")._get_input_files_preprocess_intervals(
+        SimpleNamespace(library_kit="wgs")
     )
     assert inputs == {"reference": "/refs/genome.fa"}

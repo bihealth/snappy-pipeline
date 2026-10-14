@@ -1,3 +1,5 @@
+import re
+
 from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
@@ -12,8 +14,13 @@ class Produces(SnappyModel):
     tags: list[str] = []
 
 
+#: Kit names become path components (gCNV models are per kit)
+KIT_NAME = re.compile(r"[A-Za-z0-9_.-]+")
+
+
 class ExternalData(SnappyStepModel):
-    """Existing data from outside the project, per library or as project-wide files.
+    """Existing data from outside the project: project-wide files, files per library or files
+    per enrichment kit.
 
     Paths are absolute or relative to the project directory.
     """
@@ -32,13 +39,23 @@ class ExternalData(SnappyStepModel):
     ``{vcf: '.+\\.vcf\\.gz', vcf_tbi: '.+\\.vcf\\.gz\\.tbi'}``. Reads (``type: raw``) need a
     ``left`` key and a ``(?P<readgroup>...)`` group, which pairs the mates."""
 
+    kits: dict[str, dict[str, str]] = {}
+    """Files per enrichment kit, by kit name and output key, e.g.
+    ``{MedExome: {targets: /refs/MedExome.targets.bed}}``. A targeted library uses the files of
+    the kit named exactly like its ``libraryKit`` in the sample sheet. Every kit has the same
+    keys."""
+
     @model_validator(mode="after")
     def check_mode(self):
-        if bool(self.files) == bool(self.search_paths):
+        if sum(map(bool, (self.files, self.search_paths, self.kits))) != 1:
             raise ValueError(
-                "Set either files (project-wide data) or search_paths with search_patterns "
-                "(per-library data)"
+                "Set one of files (project-wide data), search_paths with search_patterns "
+                "(per-library data) or kits (per-kit data)"
             )
+        if bad := sorted(name for name in self.kits if not KIT_NAME.fullmatch(name)):
+            raise ValueError(f"Kit names may only contain A-Z, a-z, 0-9, '_', '.' and '-': {bad}")
+        if len({frozenset(files) for files in self.kits.values()}) > 1:
+            raise ValueError("Every kit must have the same keys")
         if self.search_paths and not self.search_patterns:
             raise ValueError("search_paths need search_patterns")
         for pattern in self.search_patterns:

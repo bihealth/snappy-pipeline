@@ -168,6 +168,7 @@ def test_step_snakefiles_fetch_their_workflow_object():
 #: inputs of one kind.
 DEPENDS_ON_KEYS = {
     "reads",
+    "kits",
     "alignments",
     "variants",
     "somatic_variants",

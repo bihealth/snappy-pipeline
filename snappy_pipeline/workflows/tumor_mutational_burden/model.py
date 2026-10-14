@@ -1,7 +1,12 @@
 from typing import Annotated
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Kits,
+)
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
 
 
@@ -12,12 +17,12 @@ class TumorMutationalBurdenDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedSomaticVariants),
     ]
 
+    kits: Kits
+    """The TMB counts the variants in the ``targets`` of each tumor library's kit"""
+
 
 class TumorMutationalBurden(SnappyStepModel):
     depends_on: TumorMutationalBurdenDependsOn
-
-    target_regions: str
-    """Path to target_regions file (bed format)"""
 
     missense_regex: str = r".*[\\|&]missense_variant[\\|&].*"
     """change if the annotation tool doesn't use 'missense_variant' to indicate missense variant"""

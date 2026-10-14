@@ -15,17 +15,17 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/gcnv_model_targeted/benchmarks/default/default.annotate_gc.tsv",
+  "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.annotate_gc.tsv",
   "input": [
-   "tasks/gcnv_model_targeted/work/default/out/default.interval_list",
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
-   "tasks/gcnv_model_targeted/work/default/log/default.annotate_gc.log"
+   "tasks/gcnv_model_targeted/work/MedExome/log/MedExome.annotate_gc.log"
   ],
   "output": [
-   "tasks/gcnv_model_targeted/work/default/out/default.annotate_gc.tsv"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv"
   ],
   "params": {},
   "resources": {
@@ -37,18 +37,18 @@
   },
   "rule": "gcnv_model_targeted_gcnv_model_annotate_gc",
   "temp": [
-   "tasks/gcnv_model_targeted/work/default/out/default.annotate_gc.tsv"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv"
   ],
   "threads": 1,
   "wildcards": {
-   "library_kit": "default"
+   "library_kit": "MedExome"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/annotate_gc"
  },
  {
   "benchmark": "tasks/gcnv_model_targeted/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.post_germline_calls.tsv",
   "input": [
-   "tasks/gcnv_model_targeted/work/default/out/default.scatter_intervals"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.scatter_intervals"
   ],
   "log": [
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.post_germline_calls.log"
@@ -77,7 +77,7 @@
  {
   "benchmark": "tasks/gcnv_model_targeted/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.coverage.tsv",
   "input": [
-   "tasks/gcnv_model_targeted/work/default/out/default.interval_list",
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
@@ -107,17 +107,17 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/coverage"
  },
  {
-  "benchmark": "tasks/gcnv_model_targeted/benchmarks/default/default.filter_intervals.tsv",
+  "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.filter_intervals.tsv",
   "input": [
-   "tasks/gcnv_model_targeted/work/default/out/default.interval_list",
-   "tasks/gcnv_model_targeted/work/default/out/default.annotate_gc.tsv",
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list",
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv",
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
   "log": [
-   "tasks/gcnv_model_targeted/work/default/log/default.filter_intervals.log"
+   "tasks/gcnv_model_targeted/work/MedExome/log/MedExome.filter_intervals.log"
   ],
   "output": [
-   "tasks/gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
   "params": {},
   "resources": {
@@ -129,25 +129,25 @@
   },
   "rule": "gcnv_model_targeted_gcnv_model_filter_intervals",
   "temp": [
-   "tasks/gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
   "threads": 1,
   "wildcards": {
-   "library_kit": "default"
+   "library_kit": "MedExome"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/filter_intervals"
  },
  {
-  "benchmark": "tasks/gcnv_model_targeted/benchmarks/default/default.preprocess_intervals.tsv",
+  "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.preprocess_intervals.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
   ],
   "log": [
-   "tasks/gcnv_model_targeted/work/default/log/default.preprocess_intervals.log"
+   "tasks/gcnv_model_targeted/work/MedExome/log/MedExome.preprocess_intervals.log"
   ],
   "output": [
-   "tasks/gcnv_model_targeted/work/default/out/default.interval_list"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list"
   ],
   "params": {},
   "resources": {
@@ -161,20 +161,20 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_kit": "default"
+   "library_kit": "MedExome"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/preprocess_intervals"
  },
  {
-  "benchmark": "tasks/gcnv_model_targeted/benchmarks/default/default.scatter_intervals.tsv",
+  "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.scatter_intervals.tsv",
   "input": [
-   "tasks/gcnv_model_targeted/work/default/out/default.filter_intervals.interval_list"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
   "log": [
-   "tasks/gcnv_model_targeted/work/default/log/default.scatter_intervals.log"
+   "tasks/gcnv_model_targeted/work/MedExome/log/MedExome.scatter_intervals.log"
   ],
   "output": [
-   "tasks/gcnv_model_targeted/work/default/out/default.scatter_intervals"
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.scatter_intervals"
   ],
   "params": {},
   "resources": {
@@ -188,7 +188,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "library_kit": "default"
+   "library_kit": "MedExome"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gcnv/scatter_intervals"
  },

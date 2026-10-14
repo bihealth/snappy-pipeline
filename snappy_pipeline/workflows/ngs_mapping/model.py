@@ -17,6 +17,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     ExpectedPathSchema,
     Features,
+    Kits,
     Reference,
 )
 from snappy_pipeline.workflows.reference_index.model import ExpectedIndex
@@ -74,6 +75,8 @@ class NgsMappingDependsOn(SnappyModel):
 
     features: Features = ""
 
+    kits: Kits = ""
+
 
 class DnaMapper(StrEnum):
     BWA = "bwa"
@@ -121,28 +124,8 @@ class Tool(StrEnum):
         return tags
 
 
-class TargetCoverageReportEntry(SnappyModel):
-    """
-    Mapping from enrichment kit to target region BED file, for either computing per--target
-    region coverage or selecting targeted exons.
-
-    The following will match both the stock IDT library kit and the ones
-    with spike-ins seen fromr Yale genomics.  The path above would be
-    mapped to the name "default".
-      - name: IDT_xGen_V1_0
-        pattern: "xGen Exome Research Panel V1\\.0*"
-        path: "path/to/targets.bed"
-    """
-
-    name: Annotated[str, Field(examples=["IDT_xGen_V1_0"])]
-
-    pattern: Annotated[str, Field(examples=["xGen Exome Research Panel V1\\.0*"])]
-
-    path: ResolvablePath = Field(examples=["path/to/targets.bed"])
-
-
 class TargetCoverageReport(ToggleModel):
-    path_target_interval_list_mapping: list[TargetCoverageReportEntry] = []
+    """The report takes the ``targets`` of each library's kit from ``depends_on.kits``."""
 
 
 class BamCollectDoc(ToggleModel):
@@ -218,7 +201,6 @@ class AgentMarkDuplicatesConsensusMode(enum.StrEnum):
 
 class AgentMarkDuplicates(SnappyModel):
     path: str
-    path_baits: str
     consensus_mode: AgentMarkDuplicatesConsensusMode = None
     """One of "SINGLE", "HYBRID", "DUPLEX" """
 
@@ -352,10 +334,19 @@ class NgsMapping(SnappyStepModel):
             if self.mbcs.use_barcodes:
                 if not self.agent:
                     raise ValueError("Agent configuration required for MBCS")
+                if not self.depends_on.kits:
+                    raise ValueError("mbcs with use_barcodes needs depends_on.kits")
 
             if self.mbcs.recalibrate:
                 if not self.bqsr:
                     raise ValueError("BQSR configuration required for MBCS")
+        return self
+
+    @model_validator(mode="after")
+    def check_target_coverage_report_kits(self):
+        if self.target_coverage_report and self.target_coverage_report.enabled:
+            if not self.depends_on.kits:
+                raise ValueError("target_coverage_report needs depends_on.kits")
         return self
 
     @model_validator(mode="after")

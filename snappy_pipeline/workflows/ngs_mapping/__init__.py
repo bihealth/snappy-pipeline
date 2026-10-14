@@ -25,7 +25,7 @@ Each file has an ``.md5`` file.
 
 - ``{library_name}/out/{library_name}.bam`` and ``{library_name}/out/{library_name}.bam.bai``
 - ``{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt``, ``.bam.flagstats.txt`` and ``.bam.idxstats.txt``
-- ``{library_name}/report/alfred_qc/{library_name}.alfred.json.gz``, if ``target_coverage_report`` is enabled
+- ``{library_name}/report/alfred_qc/{library_name}.alfred.json.gz``, if ``target_coverage_report`` is enabled and the library has a kit
 - ``{library_name}/report/cov/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
 - ``{library_name}/report/fingerprint/{library_name}.npz``, if ``ngs_chew_fingerprint`` is enabled
 - with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab`` and ``{library_name}/strandedness/{library_name}.decision.json``
@@ -47,8 +47,9 @@ Then a library is either single-end or paired-end, and different libraries may d
 Exome enrichment kits
 ~~~~~~~~~~~~~~~~~~~~~
 
-The target coverage report can use a different target region file for each enrichment kit.
-The sample sheet gets the optional library column ``libraryKit`` with a name chosen by the user:
+The target coverage report and the AGeNT barcode processing of ``mbcs`` read the region files of the library's enrichment kit.
+The files come from an ``external_data`` task in ``kits`` mode, named in ``depends_on.kits``.
+The sample sheet gets the optional library column ``libraryKit`` with the name of the kit in that task:
 
 ::
 
@@ -63,27 +64,33 @@ The sample sheet gets the optional library column ``libraryKit`` with a name cho
     case003 N1      N       DNA     WES     case003-N1-DNA1-WES1
     [...]
 
-Each entry of ``target_coverage_report.path_target_interval_list_mapping`` has a ``name``, a regular expression ``pattern`` and the BED file ``path``.
-A library gets the entry whose ``pattern`` matches the start of its ``libraryKit``.
-Libraries without a match, or without ``libraryKit``, get the entry named ``__default__``, which needs no ``pattern``.
+A library uses the kit named exactly like its ``libraryKit``.
+The target coverage report reads the ``targets`` file of the kit and needs ``depends_on.kits``.
+Only targeted libraries (library type ``WES`` or ``Panel_seq``) have a kit.
+The report skips all others.
+A ``libraryKit`` that the kits task lacks is an error.
+``mbcs`` with ``use_barcodes`` reads the ``baits`` file, and every DNA library needs a kit, so it fails for libraries that are not targeted.
 
 .. code-block:: yaml
 
+    - step: external_data
+      name: kits
+      config:
+        produces: {type: raw, tags: [kits]}
+        kits:
+          V5_noUTR:
+            targets: resources/v5.bed
+            baits: resources/v5_baits.bed
+          V5_UTR:
+            targets: resources/v5_utr.bed
+            baits: resources/v5_utr_baits.bed
     - step: ngs_mapping
       name: mapping
       config:
+        depends_on:
+          kits: kits
         target_coverage_report:
-          path_target_interval_list_mapping:
-            - name: Agilent SureSelect V5
-              pattern: V5_noUTR
-              path: resources/v5.bed
-            - name: Agilent SureSelect V5 + UTRs
-              pattern: V5_UTR
-              path: resources/v5_utr.bed
-            - name: __default__
-              path: resources/other_panel.bed
-
-The kit "V5" cannot be named ``V5`` in the sample sheet, because that pattern would also match ``V5_UTR``.
+          enabled: true
 
 Notes
 -----
@@ -111,7 +118,7 @@ Use ``extra_args: ["-C"]`` there when barcodes are present and processed by AGeN
 
 Only the proprietary `AGeNT <https://www.agilent.com/en/product/next-generation-sequencing/hybridization-based-next-generation-sequencing-ngs/ngs-software/agent-232879>`_ is implemented for barcodes.
 It is not open source and not in ``bioconda``, so it must be installed separately.
-The step supports one exome kit per cohort with ``mbcs``.
+The AGeNT baits file is the ``baits`` file of the library's kit in ``depends_on.kits``.
 
 .. code-block:: yaml
 
@@ -131,7 +138,6 @@ The step supports one exome kit per cohort with ``mbcs``.
             path: <path to the AGeNT trimmer>
           mark_duplicates:
             path: <path to the AGeNT creak>
-            path_baits: <path to the baits>
         bqsr:
           common_variants: <path to common germline variants VCF>
 
@@ -152,7 +158,6 @@ import re
 from functools import cached_property
 from typing import Any
 
-import pandas as pd
 from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
@@ -382,7 +387,9 @@ class MBCsStepPart(ReadMappingStepPart):
             agent = getattr(self.config, self.config.mbcs.barcode_tool)
             inputs["agent_prepare"] = agent.prepare.path
             inputs["agent_mark_duplicates"] = agent.mark_duplicates.path
-            inputs["agent_baits"] = agent.mark_duplicates.path_baits
+            inputs["agent_baits"] = self.parent.library_kit_paths(
+                "kits", wildcards.library_name
+            ).baits
         if self.config.mbcs.recalibrate:
             inputs["common_variants"] = self.config.bqsr.common_variants
         return inputs
@@ -397,7 +404,7 @@ class MBCsStepPart(ReadMappingStepPart):
         if self.config.mbcs.use_barcodes:
             args["barcode_config"] = getattr(self.config, self.config.mbcs.barcode_tool).model_dump(
                 by_alias=True,
-                exclude={"prepare": {"path"}, "mark_duplicates": {"path", "path_baits"}},
+                exclude={"prepare": {"path"}, "mark_duplicates": {"path"}},
             )
         return args
 
@@ -553,6 +560,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         return (
             not self.config.target_coverage_report
             or not self.config.target_coverage_report.enabled
+            or library_name not in self.parent.library_kits
             or super().skip_result_files_for_library(library_name)
         )
 
@@ -564,18 +572,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         reference = self.parent.get_upstream_paths("reference").fasta
         yield "reference", reference
         yield "reference_fai", reference + ".fai"
-        yield "targets_bed", self._path_targets_bed(library_name)
-
-    def _path_targets_bed(self, library_name: str) -> str:
-        """Return the BED file of the library's kit"""
-        kit_name = self.parent.ngs_library_to_kit.get(library_name, "__default__")
-        for item in self.config.target_coverage_report.path_target_interval_list_mapping:
-            if item.name == kit_name:
-                return item.path
-        raise InvalidConfiguration(
-            f"No target interval list found for library '{library_name}' with kit '{kit_name}'. "
-            "Please check the configuration."
-        )
+        yield "targets_bed", self.parent.library_kit_paths("kits", library_name).targets
 
     def _get_output_files_run(self):
         prefix = "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
@@ -737,8 +734,7 @@ class NgsMappingWorkflow(BaseStep):
                 NgsChewStepPart,
             )
         )
-        # Take shortcut from library to library kit.
-        self.ngs_library_to_kit, self.default_kit_configured = self._build_ngs_library_to_kit()
+        self._check_kits()
         # Validate project
         self.validate_project(config=self.config)
 
@@ -779,25 +775,21 @@ class NgsMappingWorkflow(BaseStep):
                 return [os.path.join(path, name) for name in STAR_INDEX_FILES]
         return [path]
 
-    def _build_ngs_library_to_kit(self):
-        cov_config = self.get_task_config(self.task_name).target_coverage_report
-        default_kit_configured = False
-        regexes = {}
-        if cov_config:
-            for item in cov_config.path_target_interval_list_mapping:
-                if item.name == "__default__":
-                    default_kit_configured = True
-                else:
-                    regexes[item.pattern] = item.name
-        result = {}
-        df = self.build_library_dataframe(include_background=True)
-        if "library_kit" in df.columns:
-            for name, library_kit in zip(df["library_name"], df["library_kit"]):
-                if pd.notna(library_kit) and library_kit:
-                    for pattern, kit_name in regexes.items():
-                        if re.match(pattern, library_kit):
-                            result[name] = kit_name
-        return result, default_kit_configured
+    def _check_kits(self):
+        """Check that ``depends_on.kits`` has the kit of each library that needs one."""
+        if not self.config.depends_on.kits:
+            return
+        by_category = {name: self.library_tool_category(name) for name in self.library_infos}
+        if self.config.target_coverage_report and self.config.target_coverage_report.enabled:
+            self.check_library_kits(
+                "kits",
+                [name for name, cat in by_category.items() if cat in ("dna", "dna_long")],
+                require=False,
+            )
+        if self.config.tool == "mbcs" and self.config.mbcs.use_barcodes:
+            self.check_library_kits(
+                "kits", [name for name, cat in by_category.items() if cat == "dna"]
+            )
 
     def validate_project(self, config):
         """Validates project.

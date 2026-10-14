@@ -7,7 +7,7 @@ The ``tool`` field selects the caller:
 - ``manta`` calls the variants of all members of a pedigree together.
 - ``gcnv`` runs GATK gCNV in case mode, with the model of the task in ``depends_on.gcnv_model``.
   That task is a :ref:`step_gcnv_model` task with ``intervals: targeted``.
-  It also maps the library kits to their target intervals, and its intervals are the ones of the calls.
+  Its model per library kit and its intervals are the ones of the calls.
 - ``melt`` calls mobile element insertions.
 
 The task gives one result per pedigree, named after its index library.

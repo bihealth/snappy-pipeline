@@ -98,6 +98,13 @@ class ExpectedDbsnp(BaseModel):
     vcf: str
 
 
+class ExpectedKits(BaseModel):
+    """The regions of one enrichment kit as BED files: its targets and its baits (probes)."""
+
+    targets: str
+    baits: str
+
+
 #: ``depends_on`` field types for the reference data that many steps read
 Reference = Annotated[
     str,
@@ -109,4 +116,9 @@ Features = Annotated[
 ]
 Dbsnp = Annotated[
     str, DataSignature(DataType.VARIANTS, frozenset({"dbsnp"})), ExpectedPathSchema(ExpectedDbsnp)
+]
+#: ``depends_on`` field type for the files per enrichment kit: an ``external_data`` task with
+#: ``kits``, read with ``BaseStep.library_kit_paths()``
+Kits = Annotated[
+    str, DataSignature(DataType.RAW, frozenset({"kits"})), ExpectedPathSchema(ExpectedKits)
 ]

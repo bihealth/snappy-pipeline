@@ -7,6 +7,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    Kits,
     Reference,
 )
 
@@ -41,14 +42,8 @@ class VariantExportExternalDependsOn(SnappyModel):
 
     reference: Reference
 
-
-class TargetCoverageReport(SnappyModel):
-    path_targets_bed: str | None = None
-    """
-    Mapping from enrichment kit to target region BED file, for either computing per target
-    region coverage or selecting targeted exons. Only used if 'bam_available_flag' is True.
-    It will not generate detailed reporting.
-    """
+    kits: Kits = ""
+    """Task with the ``targets`` of each kit; needed for bam_available_flag."""
 
 
 class VariantExportExternal(SnappyStepModel):
@@ -84,10 +79,14 @@ class VariantExportExternal(SnappyStepModel):
     path_db: FilePath
     """path to annotator DB file to use."""
 
-    target_coverage_report: TargetCoverageReport = TargetCoverageReport()
-
     @model_validator(mode="after")
     def bam_qc_needs_alignments(self):
         if self.bam_available_flag and not self.depends_on.alignments:
             raise ValueError("bam_available_flag needs depends_on.alignments")
+        return self
+
+    @model_validator(mode="after")
+    def bam_qc_needs_kits(self):
+        if self.bam_available_flag and not self.depends_on.kits:
+            raise ValueError("bam_available_flag needs depends_on.kits")
         return self

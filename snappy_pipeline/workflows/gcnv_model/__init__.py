@@ -10,8 +10,9 @@ The step has no ``tool`` field.
 The field ``intervals`` selects how the genome is binned:
 
 - ``targeted`` bins the target regions of each library kit, for exomes and panels.
-  ``gcnv.path_target_interval_list_mapping`` maps the ``libraryKit`` of each library to a kit name and its target intervals, and the step builds one model per kit.
-  Libraries without a matching kit are left out.
+  ``depends_on.kits`` names an ``external_data`` task with ``kits``, and the step builds one model per kit from its ``targets``.
+  A targeted library (``WES`` or ``Panel_seq``) belongs to the model of the kit named like its ``libraryKit``.
+  Other libraries are left out, and a kit missing from the kits task is an error.
 - ``wgs`` bins the whole genome.
   All libraries must be whole genomes of the same library kit.
   The kit is named ``wgs``.
@@ -62,8 +63,11 @@ class GcnvModelStepPart(BuildGcnvModelStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+        libraries = self.parent.primary_dna_libraries(include_background=True)
+        if self.config.intervals == Intervals.targeted:
+            self.parent.check_library_kits("kits", libraries["library_name"], require=False)
         self.ngs_library_to_kit = build_ngs_library_to_kit(
-            self.parent.primary_dna_libraries(include_background=True), self.config
+            libraries, self.config.intervals, self.parent.library_kits
         )
 
     @property

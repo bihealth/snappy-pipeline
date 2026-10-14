@@ -9,6 +9,7 @@ The task gives one result per pedigree, named after the primary DNA library of i
 With ``merge_vcf_flag``, VCFs of a pedigree that are still separate are merged first.
 With ``gvcf_option``, the inputs are converted from genomic VCFs.
 With ``bam_available_flag``, the step also writes a BAM QC table from the BAM files in ``depends_on.alignments``.
+The target regions of each library's kit come from ``depends_on.kits``, so every library must be a targeted library (``WES``, ``Panel_seq``) whose kit that task has.
 
 This step is experimental.
 
@@ -66,8 +67,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         alignments = self._alignments(wildcards.library_name)
         yield "bam", alignments.bam
         yield "bai", alignments.bai
-        if self.config.target_coverage_report.path_targets_bed:
-            yield "targets_bed", self.config.target_coverage_report.path_targets_bed
+        yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
 
     @listify
     def _get_input_files_collect(self, wildcards):
@@ -349,3 +349,7 @@ class VariantExportExternalWorkflow(BaseStep):
                 BamReportsExternalStepPart,
             )
         )
+        if self.config.bam_available_flag:
+            self.check_library_kits(
+                "kits", self.primary_dna_libraries(include_background=True)["library_name"]
+            )

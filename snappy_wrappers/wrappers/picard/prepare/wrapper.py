@@ -17,7 +17,7 @@ reference = re.sub(r"\.fa(sta)?(\.b?gz)?$", ".dict", reference)
 assert os.path.exists(reference), "Missing dict of reference fasta"
 
 baits = snakemake.input.baits
-targets = snakemake.input.get("targets", "")
+targets = snakemake.input.targets
 
 ShellWrapper(snakemake).run(
     r"""
@@ -53,12 +53,6 @@ bed_to_interval_list() {{
 }}
 
 bed_to_interval_list {baits} > {snakemake.output.baits}
-
-if [[ -n "{targets}" ]]
-then
-    bed_to_interval_list {targets} > {snakemake.output.targets}
-else
-    ln -rs {snakemake.output.baits} {snakemake.output.targets}
-fi
+bed_to_interval_list {targets} > {snakemake.output.targets}
 """
 )

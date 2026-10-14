@@ -201,9 +201,6 @@ class Cnvkit(SnappyModel):
 
 
 class PanelOfNormals(SnappyModel):
-    path_target: Annotated[str, Field(examples=["/path/to/exome_baits.bed"])]
-    """Path to target regions, empty for whole genome data"""
-
     path_annotation: Annotated[
         str | None,
         Field(examples=["/path/to/gencode.v33.annotation.gtf"]),

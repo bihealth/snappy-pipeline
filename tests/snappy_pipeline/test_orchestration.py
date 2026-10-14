@@ -36,6 +36,16 @@ DBSNP[2]["files"] = {"vcf": "/refs/dbsnp.vcf.gz"}
 BWA_INDEX = ("external_data", "bwa_index", {"produces": {"type": "index", "tags": ["bwa", "dna"]}})
 BWA_INDEX[2]["files"] = {"index": "/refs/genome"}
 
+#: The enrichment kits that ``_tmb`` tasks read
+KITS = (
+    "external_data",
+    "kits",
+    {
+        "produces": {"type": "raw", "tags": ["kits"]},
+        "kits": {"MedExome": {"targets": "/refs/t.bed", "baits": "/refs/b.bed"}},
+    },
+)
+
 
 def _config(*tasks):
     return {
@@ -77,8 +87,7 @@ def _filtration(name="filtration", variants="annotation", **depends_on):
 
 
 def _tmb(name="tmb", variants="filtration"):
-    config = {"depends_on": {"variants": variants}}
-    return ("tumor_mutational_burden", name, config | {"target_regions": "/refs/regions.bed"})
+    return ("tumor_mutational_burden", name, {"depends_on": {"variants": variants, "kits": "kits"}})
 
 
 # load_project ------------------------------------------------------------------------------------
@@ -143,7 +152,7 @@ def test_load_project_validates_step_configs():
 
 
 def test_load_project_passes_variant_tags_through_annotation_and_filtration():
-    tasks = (_mapping(), _calling(), _annotation(), _filtration(), _tmb())
+    tasks = (KITS, _mapping(), _calling(), _annotation(), _filtration(), _tmb())
     project = load_project(_config(*tasks), WORK_DIR)
 
     somatic = frozenset({"somatic", "snv", "indel"})
@@ -157,7 +166,7 @@ def test_load_project_passes_variant_tags_through_annotation_and_filtration():
 
 def test_load_project_rejects_germline_variants_for_tmb():
     calling = _calling(tool="gatk4_hc_gvcf", dbsnp="dbsnp")
-    tasks = (DBSNP, _mapping(), calling, _annotation(), _filtration(), _tmb())
+    tasks = (KITS, DBSNP, _mapping(), calling, _annotation(), _filtration(), _tmb())
     with pytest.raises(
         ValueError,
         match=r"Task 'tmb': depends_on.variants requires variants \[somatic\], "
@@ -247,7 +256,7 @@ def test_external_alignments_feed_variant_calling():
 def test_external_data_is_checked_against_requirements_and_schemas():
     vcfs = _external("vcfs", "variants", ["germline"], files={"vcf": "/data/x.vcf.gz"})
     with pytest.raises(ValueError, match=r"depends_on.variants requires variants \[somatic\]"):
-        load_project(_config(vcfs, _tmb(variants="vcfs")), WORK_DIR)
+        load_project(_config(KITS, vcfs, _tmb(variants="vcfs")), WORK_DIR)
 
     bams = _external(
         "bams", "alignments", ["dna"], search_paths=["/data"], search_patterns=[{"bam": r".+\.bam"}]
@@ -261,10 +270,13 @@ def test_external_data_is_checked_against_requirements_and_schemas():
 @pytest.mark.parametrize(
     "config, error",
     [
-        ({}, "Set either files"),
-        ({"files": {"x": "/a"}, "search_paths": ["/b"]}, "Set either files"),
+        ({}, "Set one of files"),
+        ({"files": {"x": "/a"}, "search_paths": ["/b"]}, "Set one of files"),
+        ({"files": {"x": "/a"}, "kits": {"k": {"x": "/a"}}}, "Set one of files"),
         ({"search_paths": ["/b"]}, "search_paths need search_patterns"),
         ({"search_paths": ["/b"], "search_patterns": [{"left": r".+\.fastq\.gz"}]}, "readgroup"),
+        ({"kits": {"Kit V1": {"targets": "/a"}}}, "Kit names may only contain"),
+        ({"kits": {"a": {"targets": "/a"}, "b": {"baits": "/b"}}}, "same keys"),
     ],
 )
 def test_external_data_config_errors(config, error):

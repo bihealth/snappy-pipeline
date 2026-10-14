@@ -82,6 +82,13 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: kits
+    step: external_data
+    config:
+      produces: {type: raw, tags: [kits]}
+      kits:
+        MedExome: {targets: /path/to/exome_targets.bed, baits: /path/to/exome_baits.bed}
+
   - name: bwa_index
     step: external_data
     config:
@@ -115,9 +122,9 @@ tasks:
         alignments: mapping
         reference: genome
         panel_of_normals: pon_mutect2
+        kits: kits
       tool: purecn
       purecn:
-        path_bait_regions: /path/to/exome_baits.bed
         genome_name: hg19
         enrichment_kit_name: exome
 

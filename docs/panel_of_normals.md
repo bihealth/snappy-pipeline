@@ -79,8 +79,9 @@ The panels for `cnvkit` and `purecn` need extra files, and their calling tasks r
 
 ### cnvkit
 
-`cnvkit` needs the target regions of the exome kit (`cnvkit.path_target`).
-An empty `path_target` selects the whole genome mode.
+Without `depends_on.kits`, `cnvkit` runs in whole genome mode.
+For exomes, `depends_on.kits` names an `external_data` task with `kits`, and the baits of the kit of the normals are the targets.
+All normals must be targeted libraries of the same kit.
 
 An access file lists the regions that are suitable for coverage analysis, without repeats, hard-to-map regions or extreme GC content.
 CNVkit provides one for `GRCh37` but not for `GRCh38`.
@@ -109,9 +110,9 @@ Without it, exome mode does not restrict the antitarget regions, and whole genom
       alignments: mapping
       reference: genome
       access: pon_access
+      kits: kits   # omit for whole genome data
     tool: cnvkit
-    cnvkit:
-      path_target: /path/to/exome_baits.bed
+    cnvkit: {}
 ```
 
 The panel task writes `metrics.tsv` and `sex.tsv` reports in `panel_of_normals/report/`.
@@ -121,6 +122,7 @@ The pipeline cannot yet create separate panels for male and female samples.
 ### PureCN
 
 `purecn` needs the `mutect2` panel, because it uses the GenomicsDB of the `mutect2` panel.
+It also needs `depends_on.kits`: the baits of the kit of the normals are its bait regions.
 Create the `mutect2` task first, and name it in `depends_on.panel_of_normals`:
 
 ```yaml
@@ -131,9 +133,9 @@ Create the `mutect2` task first, and name it in `depends_on.panel_of_normals`:
       alignments: mapping
       reference: genome
       panel_of_normals: pon_mutect2
+      kits: kits
     tool: purecn
     purecn:
-      path_bait_regions: /path/to/exome_baits.bed
       genome_name: hg19             # hg19 or hg38
       enrichment_kit_name: exome    # used to name output files
 ```

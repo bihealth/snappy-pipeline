@@ -26,12 +26,10 @@ Here ``{library_name}`` is the DNA library of the pedigree index.
 The keys ``gts`` and ``db_infos`` (small variants) are the ones downstream tasks read through ``depends_on``.
 """
 
-import re
 import typing
 import warnings
 from pathlib import Path
 
-import pandas as pd
 from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
@@ -202,8 +200,7 @@ class MehariStepPart(BaseStepPart):
 
             if sv_caller == "gcnv":
                 library_kits = [
-                    self.parent.ngs_library_to_kit.get(library_name, "__default__")
-                    for library_name in library_names
+                    self.parent.library_kits.get(library_name, "") for library_name in library_names
                 ]
                 if len(set(library_kits)) != 1:
                     names_kits = list(zip(library_names, library_kits))
@@ -247,8 +244,11 @@ class MehariStepPart(BaseStepPart):
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
         for library_name in members["library_name"]:
             qc = self.parent.get_upstream_paths("alignments", library_name=library_name)
-            for key in result:
+            for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(getattr(qc, key))
+            # The coverage report covers only libraries with a kit
+            if library_name in self.parent.library_kits:
+                result["alfred_qc"].append(qc.alfred_qc)
         return result
 
     @dictify
@@ -306,25 +306,3 @@ class VarfishExportWorkflow(BaseStep):
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((WritePedigreeStepPart, MehariStepPart))
-
-        # Copy over "tools" setting from variant_calling/ngs_mapping if not set here
-
-        # Build additional information
-        self.ngs_library_to_kit = self._build_ngs_library_to_kit()
-
-    @dictify
-    def _build_ngs_library_to_kit(self):
-        """Build mapping of NGS library to kit based on the ``ngs_mapping`` configuration"""
-        cov_config = self.get_task_config("alignments").target_coverage_report
-        regexes = {
-            item.pattern: item.name
-            for item in cov_config.path_target_interval_list_mapping
-            if item.name != "__default__"
-        }
-        df = self.build_library_dataframe(include_background=True)
-        if "library_kit" in df.columns:
-            for library_name, library_kit in zip(df["library_name"], df["library_kit"]):
-                if pd.notna(library_kit) and library_kit:
-                    for pattern, name in regexes.items():
-                        if re.match(pattern, library_kit):
-                            yield library_name, name

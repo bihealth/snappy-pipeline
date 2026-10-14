@@ -29,8 +29,9 @@ Notes
 -----
 
 The Picard metrics are registered as Snakemake ``report()`` outputs.
-``CollectHsMetrics`` needs ``picard.path_to_baits``.
-The step converts the baits and targets BED files to interval lists in a preparation job.
+``CollectHsMetrics`` needs ``depends_on.kits``, an ``external_data`` task with ``kits``, and a kit for each DNA library, so it runs on targeted libraries only.
+The step converts the baits and targets BED files of each kit to interval lists in one preparation job per kit, ``work/{library_kit}/out/{library_kit}.{baits,targets}.interval_list``.
+The kit name labels the ``BAIT_SET`` column of the metrics.
 """
 
 from typing import Any
@@ -120,6 +121,7 @@ class PicardStepPart(BaseStepPart):
 
     name = "picard"
     actions = ("prepare", "metrics")
+    intermediate_outputs = {"prepare": ("baits", "targets")}
 
     @property
     def report_outputs(self):
@@ -132,10 +134,9 @@ class PicardStepPart(BaseStepPart):
     @dictify
     def _get_input_files_prepare(self, wildcards):
         yield "reference", self.parent.get_upstream_paths("reference").fasta
-        if self.config.picard.path_to_baits:
-            yield "baits", self.config.picard.path_to_baits
-        if self.config.picard.path_to_targets:  # same as the baits when missing
-            yield "targets", self.config.picard.path_to_targets
+        kit = self.parent.get_upstream_paths("kits", library_kit=wildcards.library_kit)
+        yield "baits", kit.baits
+        yield "targets", kit.targets
 
     @dictify
     def _get_input_files_metrics(self, wildcards):
@@ -143,8 +144,9 @@ class PicardStepPart(BaseStepPart):
         if self.config.depends_on.dbsnp:
             yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
         if "CollectHsMetrics" in self.config.picard.programs:
-            yield "baits", "work/intervals/out/baits.interval_list"
-            yield "targets", "work/intervals/out/targets.interval_list"
+            kit = self.parent.library_kits[wildcards.library_name]
+            yield "baits", f"work/{kit}/out/{kit}.baits.interval_list"
+            yield "targets", f"work/{kit}/out/{kit}.targets.interval_list"
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
         )
@@ -154,8 +156,8 @@ class PicardStepPart(BaseStepPart):
     def _get_output_files_prepare(self):
         if self.name != self.config.tool:
             return
-        yield "baits", "work/intervals/out/baits.interval_list"
-        yield "targets", "work/intervals/out/targets.interval_list"
+        yield "baits", "work/{library_kit}/out/{library_kit}.baits.interval_list"
+        yield "targets", "work/{library_kit}/out/{library_kit}.targets.interval_list"
 
     @dictify
     def _get_output_files_metrics(self):
@@ -172,7 +174,7 @@ class PicardStepPart(BaseStepPart):
                 yield pgm + "_md5", base_out + pgm + ".txt.md5"
 
     def _get_log_file_prepare(self):
-        return {"log": "work/intervals/log/prepare.log"}
+        return {"log": "work/{library_kit}/log/{library_kit}.prepare.log"}
 
     def _get_log_file_metrics(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}
@@ -182,8 +184,8 @@ class PicardStepPart(BaseStepPart):
             "prefix": f"{wildcards.library_name}.",
             "programs": self.config.picard.programs,
         }
-        if self.config.picard.bait_name:
-            params["bait_name"] = self.config.picard.bait_name
+        if "CollectHsMetrics" in self.config.picard.programs:
+            params["bait_name"] = self.parent.library_kits[wildcards.library_name]
         return params
 
     resource_usage = {"metrics": ResourceUsage(threads=1, runtime="24h", mem="64GB")}
@@ -206,6 +208,14 @@ class NgsDataQcWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         self.register_sub_step_classes((FastQcReportStepPart, PicardStepPart))
+        if self.config.tool == "picard" and "CollectHsMetrics" in self.config.picard.programs:
+            self.check_library_kits("kits", self._picard_libraries())
+
+    def _picard_libraries(self) -> list[str]:
+        """Return the DNA libraries that ``picard`` runs on."""
+        df = self.build_library_dataframe()
+        dna = df[df["extraction_type"] == "dna"]["library_name"]
+        return [name for name in self.output_entities if name in set(dna)]
 
     @listify
     def get_result_files(self):

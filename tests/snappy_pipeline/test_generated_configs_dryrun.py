@@ -87,6 +87,7 @@ EXPECTED_EMPTY = {
     "genome": "provides existing files; has no rules",
     "features": "provides existing files; has no rules",
     "dbsnp": "provides existing files; has no rules",
+    "kits": "provides existing files; has no rules",
     "external_vcf": "provides existing files; has no rules",
     "external_cnv": "provides existing files; has no rules",
     "external_sv": "provides existing files; has no rules",

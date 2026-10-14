@@ -9,6 +9,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     Dbsnp,
     ExpectedPathSchema,
+    Kits,
     Reference,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -58,24 +59,7 @@ class PicardProgram(enum.StrEnum):
 
 
 class Picard(SnappyModel):
-    path_to_baits: str = ""
-    """Required when CollectHsMetrics is among the programs"""
-
-    path_to_targets: str = ""
-    """When missing, same as baits"""
-
-    bait_name: str = ""
-    """Exon enrichment kit name (optional)"""
-
     programs: Annotated[list[PicardProgram], Field(min_length=1)]
-
-    @model_validator(mode="after")
-    def ensure_baits_when_required(self):
-        if PicardProgram.CollectHsMetrics in self.programs and not self.path_to_baits:
-            raise ValueError(
-                "Path to baits is required when CollectHsMetrics is among the programs"
-            )
-        return self
 
 
 class Fastqc(SnappyModel):
@@ -100,6 +84,9 @@ class NgsDataQcDependsOn(SnappyModel):
 
     dbsnp: Dbsnp = ""
 
+    kits: Kits = ""
+    """Baits and targets of the library kits, read by ``picard`` for ``CollectHsMetrics``"""
+
 
 #: The ``depends_on`` fields each tool reads.
 TOOL_DEPENDENCIES = {Tool.fastqc: ("reads",), Tool.picard: ("alignments", "reference")}
@@ -119,4 +106,14 @@ class NgsDataQc(SnappyStepModel):
     @model_validator(mode="after")
     def validate_tool_dependencies(self):
         validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
+        return self
+
+    @model_validator(mode="after")
+    def ensure_kits_for_hs_metrics(self):
+        if (
+            self.picard
+            and PicardProgram.CollectHsMetrics in self.picard.programs
+            and not self.depends_on.kits
+        ):
+            raise ValueError("CollectHsMetrics needs depends_on.kits")
         return self

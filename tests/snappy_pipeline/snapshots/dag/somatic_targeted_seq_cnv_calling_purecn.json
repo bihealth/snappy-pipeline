@@ -1418,7 +1418,7 @@
   "input": [
    "tasks/panel_of_normals_purecn/work/containers/out/container.simg",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
   ],
   "log": [
    "tasks/panel_of_normals_purecn/work/panel_of_normals/log/panel_of_normals.prepare.log"

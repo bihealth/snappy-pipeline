@@ -1437,7 +1437,7 @@
   "input": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "<repo>/tests/scripts/generate_task_configs.py"
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
   ],
   "log": [
    "tasks/tumor_mutational_burden/work/case001subregion-T1-DNA1-WES1/log/tmb.case001subregion-T1-DNA1-WES1.log"

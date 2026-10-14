@@ -5,6 +5,15 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: ../../resources/refs/subregion.fa}
 
+  - name: kits
+    step: external_data
+    config:
+      produces: {type: raw, tags: [kits]}
+      kits:
+        MedExome:
+          targets: resources/Exome-MedExome.chr12.bed
+          baits: resources/Exome-MedExome.chr12.bed
+
   - name: bwa_index
     step: external_data
     config:
@@ -24,6 +33,7 @@ tasks:
         reads: data_sets
         reference: genome
         index: bwa_index
+        kits: kits
       tool: bwa
       bwa:
         mask_duplicates: false
@@ -34,10 +44,7 @@ tasks:
       ngs_chew_fingerprint:
         enabled: false
       target_coverage_report:
-        path_target_interval_list_mapping:
-          - name: MedExome_hg19_empirical_targets
-            pattern: MedExome
-            path: resources/Exome-MedExome.chr12.bed
+        enabled: true
 
   - name: variant_calling
     step: variant_calling

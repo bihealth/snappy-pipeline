@@ -276,7 +276,8 @@ class RunGcnvStepPart(
         super().__init__(parent)
         self.ngs_library_to_kit = build_ngs_library_to_kit(
             self.parent.primary_dna_libraries(include_background=True),
-            self.parent.get_task_config("gcnv_model"),
+            self.parent.get_task_config("gcnv_model").intervals,
+            self.parent.library_kits,
         )
 
     def _interval_list_path(self, library_kit: str) -> str:

@@ -19,6 +19,8 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.baits.interval_list",
+   "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.targets.interval_list",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam"
   ],
   "log": [
@@ -26,13 +28,17 @@
   ],
   "output": [
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5"
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5"
   ],
   "params": {
    "args": {
+    "bait_name": "MedExome",
     "prefix": "case001subregion-T1-DNA1-WES1.",
     "programs": [
-     "CollectAlignmentSummaryMetrics"
+     "CollectAlignmentSummaryMetrics",
+     "CollectHsMetrics"
     ]
    }
   },
@@ -52,10 +58,45 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/picard/metrics"
  },
  {
+  "benchmark": "tasks/ngs_data_qc_picard/benchmarks/MedExome/MedExome.prepare.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed",
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
+  ],
+  "log": [
+   "tasks/ngs_data_qc_picard/work/MedExome/log/MedExome.prepare.log"
+  ],
+  "output": [
+   "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.baits.interval_list",
+   "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.targets.interval_list"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 60
+  },
+  "rule": "ngs_data_qc_picard_ngs_data_qc_picard_prepare",
+  "temp": [
+   "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.baits.interval_list",
+   "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.targets.interval_list"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_kit": "MedExome"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/picard/prepare"
+ },
+ {
   "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5"
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5"
   ],
   "log": [],
   "output": [

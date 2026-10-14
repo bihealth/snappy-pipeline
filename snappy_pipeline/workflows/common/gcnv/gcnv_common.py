@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Implementation of the gCNV common methods."""
 
-import re
-
 import pandas as pd
 
 from snappy_pipeline.utils import dictify
@@ -13,24 +11,19 @@ from snappy_pipeline.workflows.abstract import BaseStepPart, ResourceUsage
 WGS_KIT = "wgs"
 
 
-def build_ngs_library_to_kit(libraries: pd.DataFrame, model_config) -> dict[str, str]:
-    """Return the library kit of each library in ``libraries``, the primary DNA library rows.
+def build_ngs_library_to_kit(
+    libraries: pd.DataFrame, intervals: str, library_kits: dict[str, str]
+) -> dict[str, str]:
+    """Return the gCNV kit of each library in ``libraries``, the primary DNA library rows.
 
-    ``model_config`` is the config of a ``gcnv_model`` task.  With ``intervals: wgs`` every
-    library gets the kit ``wgs``.  Otherwise a library gets the ``name`` of the last item of
-    ``gcnv.path_target_interval_list_mapping`` whose ``pattern`` matches its ``library_kit``
-    column, and libraries without a matching item are left out.
+    ``intervals`` is the ``intervals`` field of the ``gcnv_model`` task.  With ``wgs`` every
+    library gets the kit ``wgs``.  With ``targeted`` a library gets its sample sheet kit from
+    ``library_kits`` (library name to kit), and libraries without a kit (not targeted libraries)
+    are left out.
     """
-    if model_config.intervals == "wgs":
+    if intervals == "wgs":
         return {name: WGS_KIT for name in libraries["library_name"]}
-    result = {}
-    if "library_kit" in libraries.columns:
-        for name, library_kit in zip(libraries["library_name"], libraries["library_kit"]):
-            if pd.notna(library_kit) and library_kit:
-                for item in model_config.gcnv.path_target_interval_list_mapping:
-                    if re.match(item.pattern, library_kit):
-                        result[name] = item.name
-    return result
+    return {name: library_kits[name] for name in libraries["library_name"] if name in library_kits}
 
 
 class GcnvWarning(UserWarning):
@@ -56,10 +49,10 @@ class PreprocessIntervalsCommonMixin:
     def _get_input_files_preprocess_intervals(self, wildcards):
         inputs = {"reference": self.parent.get_upstream_paths("reference").fasta}
         # Targeted sequencing: the target regions of the library kit
-        for item in getattr(self.config.gcnv, "path_target_interval_list_mapping", None) or []:
-            if item.name == wildcards.library_kit:
-                inputs["target_bed"] = item.path
-                break
+        if self.config.intervals == "targeted":
+            inputs["target_bed"] = self.parent.get_upstream_paths(
+                "kits", library_kit=wildcards.library_kit
+            ).targets
         return inputs
 
     @dictify

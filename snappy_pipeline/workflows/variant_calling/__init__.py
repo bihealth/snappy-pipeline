@@ -58,6 +58,8 @@ The enabled statistics are published below ``{library_name}/report/``, with ``.m
 
 ``bcftools_roh``
     Runs of homozygosity with ``bcftools roh``: ``roh/{library_name}.txt``.
+    With ``depends_on.kits``, the regions are the ``targets`` of the kit of the targeted libraries in the VCF, which must share one kit.
+    Without it, ROH are called on the whole genome.
 
 ``baf_file_generation``
     B-allele fraction per donor as a BigWig file, to confirm structural variants or runs of homozygosity visually.
@@ -488,8 +490,15 @@ class BcftoolsRohStepPart(ReportStepPart):
             "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
         )
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
-        if self.config.get(self.name).get("path_targets"):
-            yield "path_targets", self.config.get(self.name).get("path_targets")
+        if self.parent.config.depends_on.kits:
+            kit = self.parent.common_kit("kits", self.vcf_libraries(wildcards.index_library_name))
+            yield "path_targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
+
+    def vcf_libraries(self, index_library_name: str) -> list[str]:
+        """Return the libraries in the VCF of the index library."""
+        if self.parent.effective_group_by == "library":
+            return [index_library_name]
+        return self.parent.get_cohort_libraries(index_library_name)
 
     def _get_params_run(self, wildcards):
         return {
@@ -954,6 +963,15 @@ class VariantCallingWorkflow(BaseStep):
                 BafFileGenerationStepPart,
             )
         )
+        if (
+            self.config.depends_on.kits
+            and self.config.bcftools_roh
+            and self.config.bcftools_roh.enabled
+        ):
+            for index_library_name in self.output_entities:
+                self.common_kit(
+                    "kits", self.sub_steps["bcftools_roh"].vcf_libraries(index_library_name)
+                )
 
     def get_result_files(self) -> list[str]:
         """The files of the caller and of the enabled reports"""

@@ -11,6 +11,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    Kits,
     Reference,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -86,12 +87,6 @@ class PureCn(SnappyModel):
     path_normals_list: str = ""
     """Optional file listing libraries to include in panel"""
 
-    path_bait_regions: str
-    """
-    Bed files of enrichment kit sequences (MergedProbes for Agilent SureSelect),
-    recommended by PureCN author
-    """
-
     genome_name: Annotated[
         GenomeName | Literal["unknown"],
         EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),
@@ -143,13 +138,22 @@ class PanelOfNormalsDependsOn(SnappyModel):
 
     reference: Reference = ""
 
+    kits: Kits = ""
+    """
+    Required for ``tool: purecn``: the baits of the kit of the normals are the bait regions
+    (MergedProbes for Agilent SureSelect, recommended by the PureCN author).
+    Optional for ``tool: cnvkit``: the baits are the targets of the exome panel;
+    without it, the panel is built for whole genome data.
+    All normals must be targeted libraries (WES or Panel_seq) of one kit.
+    """
+
 
 #: The ``depends_on`` fields each tool reads; see also ``validate_purecn_dependencies``.
 TOOL_DEPENDENCIES = {
     Tool.access: ("reference",),
     Tool.mutect2: ("alignments", "reference"),
     Tool.cnvkit: ("alignments", "reference"),
-    Tool.purecn: ("alignments", "reference"),
+    Tool.purecn: ("alignments", "reference", "kits"),
 }
 
 

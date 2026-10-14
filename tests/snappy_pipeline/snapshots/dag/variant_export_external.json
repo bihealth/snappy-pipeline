@@ -102,6 +102,7 @@
      "delete_intermediates": true,
      "depends_on": {
       "alignments": "ngs_mapping_bwa",
+      "kits": "kits",
       "reference": "genome",
       "variants": "external_vcf"
      },
@@ -112,10 +113,7 @@
      "merge_option": null,
      "merge_vcf_flag": false,
      "relationships": null,
-     "release": "GRCh37",
-     "target_coverage_report": {
-      "path_targets_bed": null
-     }
+     "release": "GRCh37"
     }
    }
   },

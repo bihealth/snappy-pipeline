@@ -1,9 +1,12 @@
 """Tumor mutational burden
 
 The step computes the tumor mutational burden (TMB) of each tumor from its somatic variants.
-It counts the variants (SNVs and indels) inside ``target_regions`` and divides them by the total length of the regions, in variants per megabase.
+It counts the variants (SNVs and indels) inside the ``targets`` of the tumor library's kit and divides them by the total length of the regions, in variants per megabase.
 The ``missense_TMB`` counts only the variants whose annotation matches ``missense_regex``.
 This needs an annotated VCF, which ``has_annotation: true`` states.
+
+The kits come from ``depends_on.kits``, an ``external_data`` task with ``kits``.
+Each tumor library must be a targeted library with a kit that this task has.
 
 The step has no ``tool`` field.
 The task gives one result per tumor DNA library.
@@ -53,7 +56,10 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
         )
         yield "vcf", variants.vcf
         yield "vcf_tbi", variants.vcf_tbi
-        yield "target_regions", self.config.target_regions
+        yield (
+            "target_regions",
+            self.parent.library_kit_paths("kits", wildcards.tumor_library).targets,
+        )
 
     def _get_output_files_run(self):
         tpl = "work/{tumor_library}/out/tmb.{tumor_library}.json"
@@ -91,3 +97,4 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
 
         # Register sub step classes so the sub steps are available
         self.register_sub_step_classes((TumorMutationalBurdenCalculationStepPart,))
+        self.check_library_kits("kits", self.output_entities)

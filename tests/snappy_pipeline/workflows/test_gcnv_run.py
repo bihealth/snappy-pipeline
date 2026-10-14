@@ -73,42 +73,36 @@ def test_call_cnvs_reads_the_model_of_its_shard():
     assert inputs["tsv"] == ["work/P001/out/P001.coverage.tsv"]
 
 
-def _model_config(intervals, mapping):
+def _model_config(intervals, kits=""):
     return GcnvModel.model_validate(
         {
-            "depends_on": {"alignments": "mapping", "reference": "genome"},
+            "depends_on": {"alignments": "mapping", "reference": "genome", "kits": kits},
             "intervals": intervals,
-            "gcnv": {
-                "path_uniquely_mapable_bed": "map.bed",
-                "path_target_interval_list_mapping": mapping,
-            },
+            "gcnv": {"path_uniquely_mapable_bed": "map.bed"},
         }
     )
 
 
-LIBRARIES = pd.DataFrame(
-    {"library_name": ["A", "B", "C"], "library_kit": ["Kit v1", "Kit v2", None]}
-)
+LIBRARIES = pd.DataFrame({"library_name": ["A", "B", "C"]})
+LIBRARY_KITS = {"A": "Kit_v1", "B": "Kit_v2"}
 
 
-def test_kit_mapping_of_targeted_models_matches_the_library_kit():
-    mapping = [{"name": "v1", "pattern": "Kit v1", "path": "v1.bed"}]
-    config = _model_config("targeted", mapping)
-    assert build_ngs_library_to_kit(LIBRARIES, config) == {"A": "v1"}
+def test_kit_mapping_of_targeted_models_is_the_library_kit():
+    assert build_ngs_library_to_kit(LIBRARIES, "targeted", LIBRARY_KITS) == {
+        "A": "Kit_v1",
+        "B": "Kit_v2",
+    }
 
 
 def test_kit_of_wgs_models_is_wgs():
-    config = _model_config("wgs", [])
-    assert build_ngs_library_to_kit(LIBRARIES, config) == {"A": "wgs", "B": "wgs", "C": "wgs"}
+    assert build_ngs_library_to_kit(LIBRARIES, "wgs", LIBRARY_KITS) == {
+        "A": "wgs",
+        "B": "wgs",
+        "C": "wgs",
+    }
 
 
-@pytest.mark.parametrize(
-    "intervals, mapping",
-    [
-        ("targeted", []),
-        ("wgs", [{"name": "v1", "pattern": "Kit v1", "path": "v1.bed"}]),
-    ],
-)
-def test_model_config_needs_the_kit_mapping_only_for_targeted_intervals(intervals, mapping):
-    with pytest.raises(ValueError, match="path_target_interval_list_mapping"):
-        _model_config(intervals, mapping)
+@pytest.mark.parametrize("intervals, kits", [("targeted", ""), ("wgs", "kits")])
+def test_model_config_needs_kits_only_for_targeted_intervals(intervals, kits):
+    with pytest.raises(ValueError, match="depends_on.kits"):
+        _model_config(intervals, kits)

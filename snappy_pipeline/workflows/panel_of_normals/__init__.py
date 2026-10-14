@@ -50,7 +50,8 @@ Its documentation recommends a reference built from enough normals, for exomes a
 The two data types differ in the workflow that creates the reference (CNVkit ``batch``).
 The step follows the common practice and distributes the computations over several jobs.
 
-An empty ``cnvkit.path_target`` selects the whole genome mode.
+Without ``depends_on.kits``, ``cnvkit`` runs in whole genome mode.
+With it, the baits of the common kit of the normals are the targets.
 For exomes, the access file only restricts the antitarget regions.
 For whole genomes, ``autobin`` uses it to compute the average target size.
 Without ``depends_on.access``, whole genome mode creates an access file with default settings.
@@ -110,6 +111,10 @@ class PanelOfNormalsStepPart(BaseStepPart):
                     for line in f:
                         self.normal_libraries.append(line.strip())
 
+    def _common_kit(self) -> str:
+        """The one kit of the normals; the panel is built with its baits."""
+        return self.parent.common_kit("kits", self.normal_libraries)
+
     def _get_normal_libraries(self):
         """Yield the names of all normal DNA libraries, including background data sets."""
         df = self.parent.build_library_dataframe(include_background=True)
@@ -134,6 +139,10 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     #: Per-library coverage is only read by ``create_panel``
     intermediate_outputs = {"coverage": ("coverage",)}
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.kit = self._common_kit()
 
     log_templates = {
         "install": "work/containers/log/container",
@@ -170,7 +179,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     def _get_input_files_prepare(self, wildcards):
         yield "container", "work/containers/out/container.simg"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
-        yield "bait_regions", self.config.purecn.path_bait_regions
+        yield "bait_regions", self.parent.get_upstream_paths("kits", library_kit=self.kit).baits
         for key, path in (
             ("mappability", self.config.purecn.mappability),
             ("reptiming", self.config.purecn.reptiming),
@@ -227,7 +236,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         }
 
     #: Config paths reach the wrappers as inputs, so they are left out of the params
-    _config_files = {"path_normals_list", "path_bait_regions", "mappability", "reptiming"}
+    _config_files = {"path_normals_list", "mappability", "reptiming"}
 
     def _get_params_install(self, wildcards):
         return {
@@ -430,7 +439,8 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.is_wgs = self.config.cnvkit.path_target == ""
+        self.is_wgs = not self.config.depends_on.kits
+        self.kit = None if self.is_wgs else self._common_kit()
 
     def _get_params_target(self, wildcards):
         return self._cnvkit_params("target")
@@ -459,7 +469,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             if cfg.male_reference:
                 args["male_reference"] = True
             args["flat"] = len(self.normal_libraries) == 0
-            if not cfg.path_target:
+            if self.is_wgs:
                 args["edge_correction"] = False
         if action == "target":
             args["bp_per_bin"] = cfg.bp_per_bin
@@ -468,7 +478,9 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
     def _get_input_files_target(self, wildcards):
         """Helper wrapper function to estimate target average size in wgs mode"""
         if not self.is_wgs:
-            input_files = {"target": self.config.cnvkit.path_target}
+            input_files = {
+                "target": self.parent.get_upstream_paths("kits", library_kit=self.kit).baits
+            }
             if self.config.cnvkit.path_annotation:
                 input_files["annotate"] = self.config.cnvkit.path_annotation
             return input_files

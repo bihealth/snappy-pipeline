@@ -89,6 +89,7 @@ The `agent` paths are inputs of the job, and `bqsr.common_variants` must exist.
       reads: data_sets
       reference: genome
       index: bwa_mem2_index
+      kits: kits    # external_data task with the targets and baits of each kit
     tool: mbcs
     mbcs:
       mapping_tool: bwa_mem2
@@ -108,7 +109,6 @@ The `agent` paths are inputs of the job, and `bqsr.common_variants` must exist.
           - "-minFractionRead 50"
       mark_duplicates:
         path: /path/to/agent/creak
-        path_baits: /path/to/baits.bed
         consensus_mode: HYBRID    # SINGLE, DUPLEX or HYBRID
         input_filter_args: ["-mm 13", "-mr 13", "-mq 30"]
         consensus_filter_args: []
@@ -118,7 +118,8 @@ The `agent` paths are inputs of the job, and `bqsr.common_variants` must exist.
 ```
 
 The AGeNT documentation comes with its download.
-Use the same exome kit for all libraries of a cohort.
+The AGeNT baits file is the `baits` file of the library's kit in the `kits` task.
+Each library names its kit in the sample sheet column `libraryKit`.
 
 ## Base quality score recalibration
 

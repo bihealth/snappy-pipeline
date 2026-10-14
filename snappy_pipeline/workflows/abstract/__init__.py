@@ -1061,6 +1061,58 @@ class BaseStep:
             "library_name"
         ].tolist()
 
+    @cached_property
+    def library_kits(self) -> dict[str, str]:
+        """Return library name -> enrichment kit (``library_kit``) of the targeted libraries
+        (``WES``, ``Panel_seq``) that have one. Other libraries use ``libraryKit`` for other
+        things, such as the long-read chemistry that minimap2 reads."""
+        df = self.build_library_dataframe(include_background=True)
+        if not {"library_kit", "library_type"} <= set(df.columns):
+            return {}
+        targeted = df[df["library_type"].isin(TARGETED_LIBRARY_TYPES)]
+        return {
+            name: kit
+            for name, kit in zip(targeted["library_name"], targeted["library_kit"])
+            if isinstance(kit, str) and kit
+        }
+
+    def library_kit_paths(self, field: str, library_name: str):
+        """Return the files of the library's kit from the ``external_data`` task with ``kits``
+        in ``depends_on.<field>``, like :meth:`get_upstream_paths`."""
+        return self.get_upstream_paths(field, library_kit=self.library_kits[library_name])
+
+    def check_library_kits(
+        self, field: str, library_names: typing.Iterable[str], require: bool = True
+    ) -> None:
+        """Raise ``ValueError`` unless the kits task in ``depends_on.<field>`` has the kit of
+        every library; the message names all such libraries at once. With ``require=False``,
+        libraries without a kit pass."""
+        task_name = self.resolve_dependency(field).task_name
+        kits = self.project.task_configs[task_name].kits
+        missing = [
+            f"{name} ({self.library_kits.get(name, 'no kit')})"
+            for name in library_names
+            if self.library_kits.get(name) not in kits and (require or name in self.library_kits)
+        ]
+        if missing:
+            raise ValueError(
+                f"Task {self.task_name!r}: depends_on.{field} task {task_name!r} has no kit for "
+                f"these libraries: {', '.join(missing)}; its kits: {', '.join(sorted(kits))}"
+            )
+
+    def common_kit(self, field: str, library_names: typing.Iterable[str]) -> str:
+        """Return the one kit of the libraries, checked with :meth:`check_library_kits`; raise
+        ``ValueError`` when they have several."""
+        library_names = list(library_names)
+        self.check_library_kits(field, library_names)
+        kits = sorted({self.library_kits[name] for name in library_names})
+        if len(kits) != 1:
+            raise ValueError(
+                f"Task {self.task_name!r} needs libraries of one kit, but they have the kits "
+                f"{', '.join(kits) or '(none)'}; use one task per kit"
+            )
+        return kits[0]
+
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
 
@@ -1601,6 +1653,9 @@ def _derive_pedigree_from_raw_sheet(sheet):
         "lib_mother": lib_mother,
     }
 
+
+#: Library types whose ``libraryKit`` is an enrichment kit
+TARGETED_LIBRARY_TYPES = ("WES", "Panel_seq")
 
 #: Standard columns of the library dataframe built by :func:`build_library_dataframe`.
 _LIBRARY_COLUMNS = [

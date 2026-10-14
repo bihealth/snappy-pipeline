@@ -4,11 +4,11 @@ from typing import Annotated
 from pydantic import BaseModel, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.models.gcnv import TargetIntervalEntry
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    Kits,
     Reference,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -38,16 +38,6 @@ class Gcnv(SnappyModel):
     path_uniquely_mapable_bed: str
     """path to BED file with uniquely mappable regions."""
 
-    path_target_interval_list_mapping: list[TargetIntervalEntry] = []
-    """
-    Required for ``intervals: targeted``, not allowed for ``intervals: wgs``.
-    Defines one or more set of target intervals, one library kit each.
-    Example:
-     - name: "Agilent SureSelect Human All Exon V6"
-       pattern: "Agilent SureSelect Human All Exon V6.*"
-       path: "path/to/targets.bed"
-    """
-
 
 class GcnvModelDependsOn(SnappyModel):
     alignments: Annotated[
@@ -57,6 +47,9 @@ class GcnvModelDependsOn(SnappyModel):
     ]
 
     reference: Reference
+
+    kits: Kits = ""
+    """Target regions of the library kits, required for ``intervals: targeted``."""
 
 
 class GcnvModel(SnappyStepModel):
@@ -71,10 +64,9 @@ class GcnvModel(SnappyStepModel):
     gcnv: Gcnv
 
     @model_validator(mode="after")
-    def check_target_interval_list_mapping(self):
-        mapping = self.gcnv.path_target_interval_list_mapping
-        if self.intervals == Intervals.targeted and not mapping:
-            raise ValueError("intervals=targeted needs gcnv.path_target_interval_list_mapping")
-        if self.intervals == Intervals.wgs and mapping:
-            raise ValueError("intervals=wgs has no gcnv.path_target_interval_list_mapping")
+    def check_kits(self):
+        if self.intervals == Intervals.targeted and not self.depends_on.kits:
+            raise ValueError("intervals=targeted needs depends_on.kits")
+        if self.intervals == Intervals.wgs and self.depends_on.kits:
+            raise ValueError("intervals=wgs has no depends_on.kits")
         return self

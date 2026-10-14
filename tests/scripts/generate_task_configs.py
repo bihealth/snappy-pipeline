@@ -41,6 +41,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "germline_variants": "variant_filtration_bcftools",
     "hla_types": "hla_typing_optitype",
     "index": "reference_index_bwa",
+    "kits": "kits",
     "phased_variants": "variant_phasing_gatk_read_backed_phasing",
     "reads": "data_sets",
     "reference": "genome",
@@ -388,18 +389,13 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "salmon": {"path_index": Fixture("star_index"), "path_transcript_to_gene": PLACEHOLDER}
     },
     ("hla_typing", "arcashla"): {"library_selection": RNA},
-    ("ngs_data_qc", "picard"): {"picard": {"programs": ["CollectAlignmentSummaryMetrics"]}},
-    ("ngs_mapping", None): {
-        "target_coverage_report": {"enabled": False, "path_target_interval_list_mapping": []}
+    ("ngs_data_qc", "picard"): {
+        "picard": {"programs": ["CollectAlignmentSummaryMetrics", "CollectHsMetrics"]}
     },
+    ("ngs_mapping", None): {"target_coverage_report": {"enabled": False}},
     ("ngs_mapping", "bwa"): {
         "library_selection": DNA,
-        "target_coverage_report": {
-            "enabled": Overwrite(True),
-            "path_target_interval_list_mapping": Overwrite(
-                [{"name": "__default__", "pattern": ".*", "path": Fixture("cnvkit_targets")}]
-            ),
-        },
+        "target_coverage_report": {"enabled": Overwrite(True)},
     },
     ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA},
     ("ngs_mapping", "minimap2"): {"library_selection": DNA},
@@ -413,11 +409,8 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "library_selection": RNA,
         "strandedness": {"path_exon_bed": PLACEHOLDER, "strand": -1, "threshold": 0.85},
     },
-    ("panel_of_normals", "cnvkit"): {"cnvkit": {"path_target": Overwrite("")}},
     ("panel_of_normals", "mutect2"): {"mutect2": {"germline_resource": REFERENCE}},
-    ("panel_of_normals", "purecn"): {
-        "purecn": {"path_bait_regions": REFERENCE, "path_normals_list": Overwrite("")}
-    },
+    ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
     ("reference_index", "star"): {"reference_molecule": Overwrite("rna")},
     ("repeat_expansion", None): {"repeat_catalog": REFERENCE, "repeat_annotation": REFERENCE},
     ("somatic_gene_fusion_calling", None): {"library_selection": RNA},
@@ -461,15 +454,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("somatic_wgs_cnv_calling", "control_freec"): {
         "control_freec": {"path_chrlenfile": PLACEHOLDER, "path_mappability": PLACEHOLDER}
     },
-    ("tumor_mutational_burden", None): {"target_regions": PLACEHOLDER},
     ("gcnv_model", None): {"gcnv": {"path_uniquely_mapable_bed": PLACEHOLDER}},
-    ("gcnv_model", "targeted"): {
-        "gcnv": {
-            "path_target_interval_list_mapping": Overwrite(
-                [{"name": "default", "pattern": ".*", "path": Fixture("cnvkit_targets")}]
-            )
-        }
-    },
     ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
     ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
     ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},
@@ -483,7 +468,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "bcftools_roh": {
             "enabled": False,
             "path_af_file": "AUTO",
-            "path_targets": None,
             "ignore_homref": False,
             "skip_indels": False,
             "rec_rate": 1e-8,
@@ -510,6 +494,12 @@ def _external_file(name: str, data_type: str, tags: list[str], key: str) -> dict
     return {"step": "external_data", "name": name, "config": config}
 
 
+def _external_kits(name: str) -> dict[str, Any]:
+    regions = {"targets": Fixture("cnvkit_targets"), "baits": Fixture("cnvkit_targets")}
+    config = {"produces": {"type": "raw", "tags": ["kits"]}, "kits": {"MedExome": regions}}
+    return {"step": "external_data", "name": name, "config": config}
+
+
 def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
     pattern = {"vcf": r".+\.vcf\.gz", "vcf_tbi": r".+\.vcf\.gz\.tbi"}
     config = {"produces": {"type": "variants", "tags": tags}, "search_patterns": [pattern]}
@@ -517,12 +507,14 @@ def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
     return {"step": "external_data", "name": name, "config": config}
 
 
-#: external_data tasks besides the step's own one: the reference data, and the inputs of the
-#: external export steps. features and dbsnp name the reference FASTA, as no test reads them.
+#: external_data tasks besides the step's own one: the reference data, the regions of the kit of
+#: the test libraries (MedExome), and the inputs of the external export steps. features and dbsnp
+#: name the reference FASTA, as no test reads them.
 EXTRA_TASKS: list[dict[str, Any]] = [
     _external_file("genome", "raw", ["reference", "dna"], "fasta"),
     _external_file("features", "raw", ["features"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf"),
+    _external_kits("kits"),
     _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
     _external_vcfs("external_cnv", ["germline", "cnv"]),
     _external_vcfs("external_sv", ["germline", "sv"]),
@@ -602,6 +594,9 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
         depends_on["index"] = f"reference_index_{'bwa' if tool == 'mbcs' else tool}"
 
     # The purecn panel of normals builds on the mutect2 one, the cnvkit one uses the access regions.
+    # Only purecn reads kits; the cnvkit panel stays whole genome.
+    if step_name == "panel_of_normals" and tool != "purecn":
+        depends_on.pop("kits", None)
     if step_name == "panel_of_normals" and tool == "purecn":
         depends_on["panel_of_normals"] = f"{step_name}_mutect2"
     if step_name == "panel_of_normals" and tool == "cnvkit":
@@ -620,6 +615,9 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
         depends_on["gcnv_model"] = "gcnv_model_targeted"
     if step_name == "sv_calling_wgs" and tool == "gcnv":
         depends_on["gcnv_model"] = "gcnv_model_wgs"
+    # Whole genome models bin the genome and have no kits.
+    if step_name == "gcnv_model" and tool == "wgs":
+        depends_on.pop("kits", None)
 
     # cnvkit and purecn read the panel of normals built with the same tool.
     if step_name == "somatic_targeted_seq_cnv_calling" and tool in ("cnvkit", "purecn"):

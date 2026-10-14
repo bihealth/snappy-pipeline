@@ -12,6 +12,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     Dbsnp,
     ExpectedPathSchema,
+    Kits,
     Reference,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -54,8 +55,6 @@ class JannovarStats(ToggleModel):
 
 
 class BcftoolsRoh(ToggleModel):
-    path_targets: str | None = None  # FIXME this says "REQUIRED; optional" in the original code
-
     path_af_file: str
 
     ignore_homref: bool = False
@@ -165,6 +164,9 @@ class VariantCallingDependsOn(SnappyModel):
     Optional for ``tool: mutect2``: a ``panel_of_normals`` task with ``tool: mutect2``,
     whose panel VCF Mutect2 uses to filter recurrent artefacts.
     """
+
+    kits: Kits = ""
+    """Optional: restricts ``bcftools_roh`` to the targets of the (targeted) libraries' kit"""
 
 
 TOOL_DEPENDENCIES = {
