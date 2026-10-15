@@ -58,7 +58,10 @@ with open(snakemake.input.alleles, "rt") as f:
         alleles.append(row["HLA Allele"])
 alleles = ",".join(sorted(list(set(alleles))))
 
-algorithms = " ".join(args["algorithms"])
+if "all_class_i" in args["algorithms"] and "all_class_ii" in args["algorithms"]:
+    algorithms = "all"
+else:
+    algorithms = " ".join(args["algorithms"])
 class_i_epitope_length = ",".join(map(str, args["lengths"]["class_i"]))
 class_ii_epitope_length = ",".join(map(str, args["lengths"]["class_ii"]))
 
@@ -117,6 +120,7 @@ scripts=$(dirname $out)/scripts
 mkdir -p $scripts
 
 cat << __EOF > $scripts/run_pVACfuse.sh
+set -x
 export TMPDIR=/short_tmp
 pvacfuse run --n-threads {snakemake.threads} \\
     --iedb-install-directory /opt/iedb \\
@@ -126,6 +130,13 @@ pvacfuse run --n-threads {snakemake.threads} \\
     {input_fns[fusions]} \\
     {args[tumor_sample]} {alleles} {algorithms} \\
     $(dirname {output_fns[done]})
+if [[ $? -eq 0 ]]
+then
+    echo "pvacfuse finished without errors, cleaning up tmp"
+    rm -rf /short_tmp/*
+else
+    echo "ERROR during pvacfuse"
+fi
 __EOF
 chmod +x $scripts/run_pVACfuse.sh
 
@@ -133,6 +144,29 @@ chmod +x $scripts/run_pVACfuse.sh
 apptainer exec \
     --no-home --bind $tmp:/short_tmp:rw --bind $scripts:/scripts:ro \
     {input_bindings} {output_bindings} {snakemake.input[container]} bash /scripts/run_pVACfuse.sh
+
+# Remove lots of tmp file left over by pvacfuse
+remove_tmp() {{
+    path=$1
+    lengths=$2
+
+    lengths=$(echo "$lengths" | tr ',' '\n')
+
+    for l in $lengths
+    do
+        if [[ -d $path/$l/tmp ]]
+        then
+            echo "Clean up $path/$l/tmp"
+            rm -rf $path/$l/tmp
+        else
+            echo "$path/$l/tmp not found"
+        fi
+    done
+
+    echo "Cleanup complete"
+}}
+remove_tmp $(dirname {snakemake.output[all.MHC_I]}) "{class_i_epitope_length}"
+remove_tmp $(dirname {snakemake.output[all.MHC_II]}) "{class_ii_epitope_length}"
 
 link_missing() {{
     combined=$1
