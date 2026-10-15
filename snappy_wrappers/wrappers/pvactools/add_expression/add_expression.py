@@ -507,13 +507,11 @@ def run(
             nTPM += len(csqs)
 
         if rna_fn and len(ref) == len(alt):
-            # if len(ref) > 1:
-            #     print(f"DEBUG- Mutation record: POS = {record.POS}, REF = {record.REF}, ALT = {record.ALT}, affected start = {record.affected_start}, affected_end = {record.affected_end}")
             sum_eds = [0, 0, 0]
             n_pos = 0
             for pos in range(record.affected_start, record.affected_end):
-                # if len(ref) > 1:
-                #     print(f"    pos = {pos}")
+                if ref[pos + 1 - record.POS] == alt[pos + 1 - record.POS]:
+                    continue
                 try:
                     expr = list(
                         filter(
@@ -521,9 +519,6 @@ def run(
                             rna.fetch(record.CHROM, pos + 1, pos + 1),
                         )
                     )
-                    # if len(ref) > 1:
-                    #     for r in expr:
-                    #         print(f"        Pileup record: POS = {r.POS}, REF = {r.REF}, ALT = {r.ALT}")
                     eds = aggregate_counts(
                         expr,
                         sample_id,
