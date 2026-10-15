@@ -80,7 +80,7 @@ def install_R_package(
             f"install.packages('{url}', repos=NULL, lib='{dest}', update=FALSE, ask=FALSE)"
         )
     else:
-        raise ValueError("Unknown repository '{repository}'")
+        raise ValueError(f"Unknown repository '{repository}'")
     R_script = [
         ".libPaths(c('{conda_prefix}', '{dest}'))".format(
             conda_prefix=os.path.join(os.getenv("CONDA_PREFIX"), "lib", "R", "library"), dest=dest
