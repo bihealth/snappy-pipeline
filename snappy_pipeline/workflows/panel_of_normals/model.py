@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
@@ -46,7 +47,7 @@ class GenomicsDb(GATK):
 
 
 class Mutect2(Parallel, GATK):
-    path_normals_list: str = ""
+    path_normals_list: ConfigPath = ""
     """Optional file listing libraries to include in panel"""
 
     padding: int = 5000
@@ -82,7 +83,7 @@ class GenomeName(enum.StrEnum):
 
 
 class PureCn(SnappyModel):
-    path_normals_list: str = ""
+    path_normals_list: ConfigPath = ""
     """Optional file listing libraries to include in panel"""
 
     genome_name: Annotated[

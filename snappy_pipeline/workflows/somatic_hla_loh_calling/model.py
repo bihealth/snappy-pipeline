@@ -1,5 +1,6 @@
 from typing import Annotated
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
@@ -23,11 +24,11 @@ class SomaticHlaLohCallingDependsOn(SnappyModel):
 class SomaticHlaLohCalling(SnappyStepModel):
     depends_on: SomaticHlaLohCallingDependsOn
 
-    path_hla_dat: str
+    path_hla_dat: ConfigPath
     """HLA exon locations, ``hla.dat`` of the OptiType data"""
 
-    path_hla_fasta: str
+    path_hla_fasta: ConfigPath
     """HLA reference sequences, ``hla_reference_dna.fasta`` of the OptiType data"""
 
-    path_picard_dir: str
+    path_picard_dir: ConfigPath
     """Directory with the picard-tools 1.x jar files that LOHHLA calls (``--gatkDir``)"""

@@ -19,9 +19,11 @@ from rich.console import Console
 from rich.table import Table
 from ruamel.yaml.comments import CommentedMap
 from snakemake.cli import main as snakemake_main
+from snakemake.common.configfile import load_configfile
 
 from .. import __version__
 from ..log_archive import build_archive, latest_snakemake_log
+from ..orchestration import load_project, missing_files
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     assume_path_existing,
@@ -723,12 +725,42 @@ def logs(directory, snakemake_log):
     log("Logs archived in {path}", {"path": str(archive)}, level=LVL_IMPORTANT)
 
 
+@main.command(name="check-files")
+@click.option(
+    "--directory",
+    type=click.Path(),
+    default=_get_cwd,
+    help="Project directory, defaults to current working directory",
+)
+def check_files(directory):
+    """List the files that config.yaml names but that do not exist.
+
+    These are the files in tool sections, the external_data paths, the sample sheets and search
+    paths, and the .fai and .dict of a genome. Snakemake checks the inputs of the jobs it runs
+    anyway; this command checks all of them, for example after moving a project to another
+    machine. It exits with 1 if a file is missing.
+    """
+    directory_path = directory() if callable(directory) else directory
+    config_path = os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME))
+    project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+    missing = missing_files(project)
+    for name, paths in missing.items():
+        for path in paths:
+            click.echo(f"{name}\t{path}")
+    if missing:
+        sys.exit(1)
+    log("All files of {path} exist", {"path": config_path}, level=LVL_SUCCESS)
+
+
 def _snakemake_argv(directory_path: str, slurm: bool = False, config: tuple = ()) -> list[str]:
     """Return the Snakemake arguments that snappy run and snappy report share."""
     apps = os.path.dirname(os.path.abspath(__file__))
     argv = [
         "--directory",
         directory_path,
+        # The project directory of relative paths is that of the config file, see the Snakefile
+        "--configfile",
+        os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME)),
         # The orchestrator Snakefile, which loads the tasks of config.yaml
         "--snakefile",
         os.path.join(os.path.dirname(apps), "Snakefile"),

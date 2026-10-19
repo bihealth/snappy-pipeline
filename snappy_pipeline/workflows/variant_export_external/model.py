@@ -1,7 +1,8 @@
 from typing import Annotated
 
-from pydantic import BaseModel, FilePath, model_validator
+from pydantic import BaseModel, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -71,13 +72,13 @@ class VariantExportExternal(SnappyStepModel):
     release: str = "GRCh37"
     """genome release; default 'GRCh37'."""
 
-    path_refseq_ser: FilePath
+    path_refseq_ser: ConfigPath
     """path to RefSeq .ser file."""
 
-    path_ensembl_ser: FilePath
+    path_ensembl_ser: ConfigPath
     """path to ENSEMBL .ser file."""
 
-    path_db: FilePath
+    path_db: ConfigPath
     """path to annotator DB file to use."""
 
     @model_validator(mode="after")

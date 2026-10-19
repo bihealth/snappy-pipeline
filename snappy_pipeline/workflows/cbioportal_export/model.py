@@ -5,6 +5,7 @@ from typing import Annotated, Any, TypedDict
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -124,7 +125,7 @@ class CbioportalExport(SnappyStepModel):
 
     """Annotation is mandatory, but filtration is optional, can happen before or after annotation"""
 
-    path_gene_id_mappings: str
+    path_gene_id_mappings: ConfigPath
     """Mapping from pipeline gene ids to cBioPortal ids (HGNC symbols from GeneNexus)"""
 
     exclude_variant_with_flag: str = ""

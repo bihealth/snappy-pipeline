@@ -11,7 +11,9 @@ from snappy_pipeline.sheet_summary import print_library_summary
 
 configfile: "config.yaml"
 
-project = load_project(config, os.getcwd())
+# Relative paths in the configuration are relative to the directory of the config file, even
+# when Snakemake runs in another directory (`snappy run` passes the file as --configfile)
+project = load_project(config, os.path.dirname(os.path.abspath(workflow.configfiles[0])))
 
 # Targeting mode:
 #   default          - every task builds and publishes its result files

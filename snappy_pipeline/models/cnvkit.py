@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import SnappyModel
+from snappy_pipeline.models import ConfigPath, SnappyModel
 
 
 class SegmentationMethod(enum.StrEnum):
@@ -202,7 +202,7 @@ class Cnvkit(SnappyModel):
 
 class PanelOfNormals(SnappyModel):
     path_annotation: Annotated[
-        str | None,
+        ConfigPath | None,
         Field(examples=["/path/to/gencode.v33.annotation.gtf"]),
     ] = None
     """Path to accessible regions"""

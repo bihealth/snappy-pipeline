@@ -2,6 +2,15 @@
 #
 # created: %(created_at)s
 
+# Paths ==============================================================================
+#
+# Relative paths are relative to this directory. pathvars names roots for paths, used as
+# <name> in any path, with the defaults of Snakemake (such as <resources>).
+# `snappy check-files` lists the files of this configuration that do not exist.
+#
+# pathvars:
+#   refs: /path/to/refs/GRCh38
+
 # Task Configuration ================================================================
 #
 # Define pipeline tasks.  Each task references a step type, a unique name,

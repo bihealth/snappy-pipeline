@@ -3,6 +3,7 @@ from enum import IntEnum, StrEnum
 from pydantic import BaseModel, Field, PositiveInt
 from typing_extensions import Annotated
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -277,13 +278,13 @@ class Fastp(SnappyModel):
     Default is 30, which means 30% complexity is required. (int [=30])
     """
 
-    filter_by_index1: str = ""
+    filter_by_index1: ConfigPath = ""
     """
     specify a file contains a list of barcodes of index1 to be filtered out, one barcode per line
     (string [=])
     """
 
-    filter_by_index2: str = ""
+    filter_by_index2: ConfigPath = ""
     """
     specify a file contains a list of barcodes of index2 to be filtered out, one barcode per line
     (string [=])

@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -62,9 +63,9 @@ class Melt(SnappyModel):
 
     me_types: list[str] = ["ALU", "LINE1", "SVA"]
 
-    jar_file: str = Field(examples=["MELT.jar"])
+    jar_file: ConfigPath = Field(examples=["MELT.jar"])
 
-    me_refs_path: str = Field(examples=["me_refs"])
+    me_refs_path: ConfigPath = Field(examples=["me_refs"])
 
     skip_libraries: list[str] = []
     """

@@ -4,6 +4,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import (
     SizeString,
     SnappyModel,
@@ -188,7 +189,7 @@ class AgentLibPrepType(StrEnum):
 
 
 class AgentPrepare(SnappyModel):
-    path: str
+    path: ConfigPath
 
     lib_prep_type: AgentLibPrepType = None
     """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
@@ -204,7 +205,7 @@ class AgentMarkDuplicatesConsensusMode(enum.StrEnum):
 
 
 class AgentMarkDuplicates(SnappyModel):
-    path: str
+    path: ConfigPath
     consensus_mode: AgentMarkDuplicatesConsensusMode = None
     """One of "SINGLE", "HYBRID", "DUPLEX" """
 

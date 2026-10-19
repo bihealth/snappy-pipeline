@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -62,10 +63,10 @@ class Manta(SnappyModel):
 class Melt(SnappyModel):
     me_refs_infix: str = "1KGP_Hg19"
     me_types: list[str] = ["ALU", "LINE1", "SVA"]
-    me_refs_path: str = Field(examples=["/path/to/melt/support/files"])
-    jar_file: str = Field(examples=["/path/to/MELTv2.2.2/MELT.jar"])
+    me_refs_path: ConfigPath = Field(examples=["/path/to/melt/support/files"])
+    jar_file: ConfigPath = Field(examples=["/path/to/MELTv2.2.2/MELT.jar"])
 
-    me_refs_path: str = Field(examples=["me_refs"])
+    me_refs_path: ConfigPath = Field(examples=["me_refs"])
 
     skip_libraries: list[str] = []
     """

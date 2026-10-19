@@ -4,6 +4,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel, validators
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
@@ -53,7 +54,7 @@ class BcftoolsStats(ToggleModel):
 
 
 class BcftoolsRoh(ToggleModel):
-    path_af_file: str
+    path_af_file: ConfigPath
 
     ignore_homref: bool = False
 

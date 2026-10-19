@@ -12,73 +12,40 @@ from typing import Annotated
 import ruamel
 import typing_extensions
 from annotated_types import Predicate
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    model_validator,
+)
 from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML
+from snakemake.exceptions import UndefinedPathvarException
 
 
-class _PathMarker:
-    """Marker for path fields that should be resolved. Used with Annotated."""
+def _resolve_path(value: str, info: ValidationInfo) -> str:
+    """Expand the ``pathvars`` in ``value`` and make it absolute against the project directory.
 
-    def __init__(self, check_exists: bool = True):
-        self.check_exists = check_exists
-
-    def __repr__(self):
-        return f"_PathMarker(check_exists={self.check_exists})"
-
-
-# Public path annotation types for use in models
-ResolvablePath = Annotated[str, _PathMarker(check_exists=True)]
-"""Annotated type for file paths that must exist after resolution."""
-
-ResolvablePathPrefix = Annotated[str, _PathMarker(check_exists=False)]
-"""Annotated type for index prefixes or paths where sidecar files are checked separately."""
-
-ResolvablePathList = Annotated[list[str], _PathMarker(check_exists=True)]
-"""Annotated type for lists of file paths that must exist after resolution."""
-
-
-def resolve_relative_path(path_value: str, info: ValidationInfo, check_exists: bool = True) -> str:
+    ``load_project()`` gives both in the validation context, which also collects the paths for
+    ``snappy check-files``; without that context the value is unchanged. Existence is not checked:
+    Snakemake checks the inputs of the jobs it runs, and dry-runs work without the files.
     """
-    Resolve relative paths using config_lookup_paths from validation context.
+    context = info.context or {}
+    if not value or "project_dir" not in context:
+        return value
+    try:
+        expanded = context["pathvars"].apply(value)
+    except UndefinedPathvarException as e:
+        raise ValueError(str(e)) from e
+    path = os.path.normpath(os.path.join(context["project_dir"], expanded))
+    context["paths"].append(path)
+    return path
 
-    Args:
-        path_value: The path to resolve (string)
-        info: ValidationInfo from Pydantic
-        check_exists: If True, raises error if relative path cannot be found in any lookup base.
-                     If False, returns the path resolved against the first lookup base
-                     (useful for index prefixes that don't exist as files themselves).
 
-    Returns:
-        Absolute path. The original value is returned if:
-          - it's already absolute
-          - it's empty
-          - context doesn't provide config_lookup_paths
-
-    Raises:
-        ValueError if check_exists=True and relative path cannot be found in any lookup base.
-    """
-    if not path_value or os.path.isabs(path_value):
-        return path_value
-
-    config_lookup_paths = info.context.get("config_lookup_paths") if info.context else None
-    if not config_lookup_paths:
-        return path_value
-
-    # Try to find the path in any lookup base
-    for base_path in config_lookup_paths:
-        candidate = os.path.abspath(os.path.join(base_path, path_value))
-        if os.path.exists(candidate):
-            return candidate
-
-    # If check_exists is False, return the path resolved against the first lookup base
-    if not check_exists:
-        return os.path.abspath(os.path.join(config_lookup_paths[0], path_value))
-
-    # Relative path not found and check_exists=True
-    raise ValueError(
-        f"relative path '{path_value}' not found in lookup bases: {config_lookup_paths}"
-    )
+ConfigPath = Annotated[str, AfterValidator(_resolve_path)]
+"""A file or directory in the configuration: a task-local file or an ``external_data`` path."""
 
 
 def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:
@@ -117,8 +84,8 @@ class SnappyModel(BaseModel):
     enum member values instead of names are used, and default values are validated (because
     validation can potentially modify the values of fields with default values)
 
-    Path fields can be marked with ResolvablePath or ResolvablePathPrefix annotations
-    to automatically resolve relative paths during validation
+    Path fields are ``ConfigPath``: ``load_project()`` expands their ``pathvars`` and resolves
+    them against the project directory
     """
 
     model_config = ConfigDict(
@@ -551,6 +518,7 @@ class ToggleModel(SnappyModel):
 
 
 __all__ = [
+    "ConfigPath",
     "RelationshipDefinition",
     "SnappyModel",
     "SnappyStepModel",

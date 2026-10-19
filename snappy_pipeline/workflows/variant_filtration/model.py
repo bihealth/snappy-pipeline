@@ -4,6 +4,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -63,16 +64,16 @@ class Vembrane(SnappyModel):
     expression: str = ""
     """Single expression used in ``filter`` mode."""
 
-    aux: dict[str, str] = {}
+    aux: dict[str, ConfigPath] = {}
     """Mapping for ``--aux NAME=PATH`` files."""
 
     context: list[str] = []
     """Python statements for ``--context``."""
 
-    context_files: list[str] = []
+    context_files: list[ConfigPath] = []
     """Paths for ``--context-file`` scripts."""
 
-    ontology: str = ""
+    ontology: ConfigPath = ""
     """Optional ontology file passed via ``--ontology``."""
 
     extra_args: str = ""
@@ -104,7 +105,7 @@ class Ebfilter(SnappyModel):
     panel_of_normals_size: int = 25
     min_mapq: int = 20
     min_baseq: int = 15
-    path_panel_of_normals_sample_list: str = ""
+    path_panel_of_normals_sample_list: ConfigPath = ""
     mode: Literal["tag", "filter"] = "tag"
 
 

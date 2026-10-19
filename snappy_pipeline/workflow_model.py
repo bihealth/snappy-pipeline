@@ -4,6 +4,7 @@ from typing import Any, TypedDict
 from pydantic import ConfigDict, Field, field_validator
 
 from snappy_pipeline.models import (
+    ConfigPath,
     SnappyModel,
     SnappyStepModel,
 )
@@ -32,13 +33,17 @@ class NamingScheme(enum.StrEnum):
 
 
 class DataSet(SnappyModel):
-    file: str = ""
+    file: ConfigPath = ""
+    """The sample sheet"""
+
     search_patterns: list[SearchPattern] = [
         SearchPattern(
             left=r"(?P<readgroup>.+)\.R1\.fastq\.gz", right=r"(?P<readgroup>.+)\.R2\.fastq\.gz"
         )
     ]
-    search_paths: list[str] = ["../raw"]
+    search_paths: list[ConfigPath] = ["../raw"]
+    """Directories with a folder per library, which holds its FASTQ files"""
+
     type: DataSetType = DataSetType.MATCHED_CANCER
     naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
     is_background: bool = False
@@ -82,4 +87,7 @@ class ConfigModel(SnappyStepModel):
 
     tasks: list[TaskModel]
     data_sets: dict[str, DataSet]
+    pathvars: dict[str, str] = {}
+    """Named roots for paths, used as ``<name>`` in any path of the configuration, with the
+    defaults and semantics of Snakemake's ``pathvars``"""
     resources: Resources = Resources()

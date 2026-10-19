@@ -122,7 +122,7 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
     assert project.dependencies["filtration"] == {"variants": "annotation"}
     assert project.dependencies["mapping"] == {"reference": "genome", "index": "bwa_index"}
     assert project.task_configs["calling"].tool == "mutect2"
-    assert project.lookup_paths == (WORK_DIR, "/projects")
+    assert project.project_dir == WORK_DIR
     assert project.config_paths == (f"{WORK_DIR}/config.yaml",)
 
 
@@ -355,8 +355,7 @@ def _project(**dependencies):
     return Project(
         config={},
         model=model,
-        work_dir=WORK_DIR,
-        lookup_paths=(WORK_DIR,),
+        project_dir=WORK_DIR,
         config_paths=(),
         tasks=tuple(model.tasks),
         task_configs={},
@@ -442,3 +441,50 @@ def test_reference_sidecars_follow_the_samtools_and_gatk_names(fasta, sequence_d
     reference = ExpectedReference(fasta=fasta)
     assert reference.fai == fasta + ".fai"
     assert reference.sequence_dict == sequence_dict
+
+
+def test_config_paths_are_resolved_against_the_project_directory_with_pathvars():
+    relative = _external("relative", "regions", [], files={"bed": "beds/a.bed"})
+    named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
+    default = _external("default", "regions", [], files={"bed": "<resources>/c.bed"})
+    config = _config(relative, named, default) | {"pathvars": {"refs": "/data/refs"}}
+    config["data_sets"] = {"first": {"file": "sheets/sheet.tsv", "search_paths": ["raw"]}}
+    project = load_project(config, WORK_DIR)
+
+    assert project.task_configs["relative"].files == {"bed": f"{WORK_DIR}/beds/a.bed"}
+    assert project.task_configs["named"].files == {"bed": "/data/refs/b.bed"}
+    # Snakemake's default pathvars apply, too
+    assert project.task_configs["default"].files == {"bed": f"{WORK_DIR}/resources/c.bed"}
+    data_set = project.model.data_sets["first"]
+    assert data_set.file == f"{WORK_DIR}/sheets/sheet.tsv"
+    assert data_set.search_paths == [f"{WORK_DIR}/raw"]
+    assert project.file_paths["relative"] == (f"{WORK_DIR}/beds/a.bed",)
+
+
+def test_undefined_pathvar_fails_when_the_project_loads():
+    named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
+    with pytest.raises(pydantic.ValidationError, match="Undefined pathvar 'refs'"):
+        load_project(_config(named), WORK_DIR)
+
+
+def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
+    (tmp_path / "genome.fa").touch()
+    (tmp_path / "genome.fa.fai").touch()
+    (tmp_path / "index.amb").touch()
+    genome = (
+        "external_data",
+        "genome",
+        {"produces": {"type": "raw", "tags": ["reference", "dna"]}},
+    )
+    genome[2]["files"] = {"fasta": "genome.fa"}
+    bwa_index = (
+        "external_data",
+        "bwa_index",
+        {"produces": {"type": "index", "tags": ["bwa", "dna"]}},
+    )
+    bwa_index[2]["files"] = {"index": "index"}  # a prefix: index.amb, ...
+    tasks = (genome, bwa_index, _mapping())
+    config = {"tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks], "data_sets": {}}
+    project = load_project(config, str(tmp_path))
+
+    assert orchestration.missing_files(project) == {"genome": [str(tmp_path / "genome.dict")]}

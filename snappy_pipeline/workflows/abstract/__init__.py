@@ -546,7 +546,6 @@ class DataSetInfo:
         self,
         name,
         sheet_path,
-        base_paths,
         search_paths,
         search_patterns,
         sheet_type,
@@ -564,9 +563,6 @@ class DataSetInfo:
 
         :param sheet_path: Path to sheet file that should be loaded.
         :type sheet_path: str
-
-        :param base_paths:  All base paths of all configuration, to look for ``sheet_path``.
-        :type base_paths: list
 
         :param search_paths: Search paths for the files in the sample sheet.
         :type search_paths: list
@@ -603,8 +599,6 @@ class DataSetInfo:
         self.name = name
         #: Path to the sheet file, for loading
         self.sheet_path = sheet_path
-        #: All base paths of all configuration, to look for ``sheet_path``
-        self.base_paths = base_paths
         #: Search paths for the files in the sample sheet
         self.search_paths = list(search_paths)
         #: Search patterns
@@ -632,52 +626,46 @@ class DataSetInfo:
             self.pedigree_field_kwargs = {"join_by_field": pedigree_field}
 
     def _load_sheet(self):
-        for base in self.base_paths:
-            fname = os.path.join(base, self.sheet_path)
-            if not os.path.exists(fname):
-                continue
-            if self.sheet_path.endswith(".tsv"):
-                if self.sheet_type == "matched_cancer":
-                    return self._set_is_background(
-                        _cached_read_cancer_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
-                        self.is_background,
-                    )
-                elif self.sheet_type == "germline_variants":
-                    return self._set_is_background(
-                        _cached_read_germline_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
-                        self.is_background,
-                    )
-                elif self.sheet_type == "generic":
-                    return self._set_is_background(
-                        _cached_read_generic_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
-                        self.is_background,
-                    )
-                else:
-                    raise ValueError("Invalid sheet type {}".format(self.sheet_type))
-            elif self.sheet_path.endswith(".json"):
-                with open(fname, "rt") as f:
-                    sheet_json = json_loads_ordered(f.read())
-                resolver = RefResolver(
-                    lookup_paths=os.path.dirname(os.path.abspath(self.sheet_path)),
-                    dict_class=OrderedDict,
-                )
-                resolved_json = resolver.resolve("file://" + self.sheet_path, sheet_json)
+        # ``load_project()`` resolved the path against the project directory
+        fname = self.sheet_path
+        if not os.path.exists(fname):
+            raise ValueError(f"Could not find sample sheet file {fname}")
+        if self.sheet_path.endswith(".tsv"):
+            if self.sheet_type == "matched_cancer":
                 return self._set_is_background(
-                    SheetBuilder(resolved_json).run(
-                        name_generator=name_generator_for_scheme(self.naming_scheme)
-                    ),
+                    _cached_read_cancer_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
+                    self.is_background,
+                )
+            elif self.sheet_type == "germline_variants":
+                return self._set_is_background(
+                    _cached_read_germline_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
+                    self.is_background,
+                )
+            elif self.sheet_type == "generic":
+                return self._set_is_background(
+                    _cached_read_generic_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
                     self.is_background,
                 )
             else:
-                raise ValueError(  # pragma: no cover
-                    "Invalid sheet file type of {}".format(self.sheet_path)
-                )
-        # Raise problem if we could not find the sample sheet
-        raise ValueError(  # pragma: no cover
-            "Could not find sample sheet file {} in the lookup paths {}".format(
-                self.sheet_path, self.base_paths
+                raise ValueError("Invalid sheet type {}".format(self.sheet_type))
+        elif self.sheet_path.endswith(".json"):
+            with open(fname, "rt") as f:
+                sheet_json = json_loads_ordered(f.read())
+            resolver = RefResolver(
+                lookup_paths=os.path.dirname(os.path.abspath(self.sheet_path)),
+                dict_class=OrderedDict,
             )
-        )
+            resolved_json = resolver.resolve("file://" + self.sheet_path, sheet_json)
+            return self._set_is_background(
+                SheetBuilder(resolved_json).run(
+                    name_generator=name_generator_for_scheme(self.naming_scheme)
+                ),
+                self.is_background,
+            )
+        else:
+            raise ValueError(  # pragma: no cover
+                "Invalid sheet file type of {}".format(self.sheet_path)
+            )
 
     @classmethod
     def _set_is_background(cls, sheet, flag):
@@ -822,9 +810,8 @@ class BaseStep:
         self.w_config = project.model
         self.config = project.task_configs[task_name]
         self.depends_on = getattr(self.config, "depends_on", None)
-        self.config_lookup_paths = list(project.lookup_paths)
         self.config_paths = project.config_paths
-        self.work_dir = project.work_dir
+        self.project_dir = project.project_dir
 
         self.sub_steps: dict[str, BaseStepPart] = {}
         self._library_dataframes = {}
@@ -1445,7 +1432,6 @@ class BaseStep:
             yield DataSetInfo(
                 name,
                 data_set.file,
-                self.config_lookup_paths,
                 data_set.search_paths,
                 data_set.search_patterns,
                 data_set.type,
@@ -2281,12 +2267,8 @@ def _cohort_members_from_dataframe(df, selection: str | None) -> dict[str, list[
 
 
 def _search_roots(info: DataSetInfo):
-    """Yield the absolute search paths of a data set, relative to its sample sheet's directory."""
-    for base_path in info.base_paths:
-        sheet_path = os.path.join(base_path, info.sheet_path)
-        if os.path.exists(sheet_path):
-            for search_path in info.search_paths:
-                yield os.path.abspath(os.path.join(os.path.dirname(sheet_path), search_path))
+    """Yield the search paths of a data set, resolved against the project directory."""
+    yield from info.search_paths
 
 
 def get_ngs_library_folder_name(sheets, library_name):

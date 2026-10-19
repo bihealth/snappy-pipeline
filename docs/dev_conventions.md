@@ -167,6 +167,8 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
   Examples are regions, variants, a genome, a gene annotation and a mapper index (type `index`, tagged with the tool and the molecule).
   Such a field has a `DataSignature` and an `ExpectedPathSchema`, and the step reads it with `get_upstream_paths()`.
   A file that belongs to the setup of one tool and does not depend on the reference, such as a jar or a script, is a path in the tool's section, which the step passes to the rule as an input.
+- A field that names a file or directory has the type `ConfigPath` (also in `list[...]` or `dict[str, ...]`).
+  `load_project()` expands its `pathvars` and resolves it against the project directory, and `snappy check-files` checks that it exists.
 - A rule that reads the genome adds `self.parent.reference_inputs()` to its inputs: the FASTA (`reference`) with its `.fai` (`reference_fai`) and `.dict` (`reference_dict`), named by the convention in `ExpectedReference`.
 - `reference` (genome FASTA), `features` (gene annotation GTF), `dbsnp`, `germline_resource` (tag `population`) and `common_variants` (tag `common`) use the shared field types `Reference`, `Features`, `Dbsnp`, `GermlineResource` and `CommonVariants` from `snappy_pipeline.workflows.abstract.protocol`.
   Tags compose: one task with `tags: [population, common]` can serve both.

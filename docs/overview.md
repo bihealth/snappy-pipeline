@@ -236,11 +236,32 @@ tasks:
         context_files: [filters/lab_rules.py]  # a task-local file
 ```
 
-### Relative paths
+### Paths
 
-Relative paths in the configuration are relative to the project directory, which `snappy run` makes the working directory of Snakemake.
-Sample sheets are also looked up in the parent directory of the project.
+Relative paths in the configuration are relative to the project directory, the directory of `config.yaml`.
+This holds for every path: sample sheets, search paths, `external_data` files and files in tool sections, also when Snakemake runs in another directory.
 Absolute paths are not changed.
+
+The top-level `pathvars` section names roots for paths, used as `<name>` in any path:
+
+```yaml
+pathvars:
+  refs: /path/to/refs/GRCh38
+tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: <refs>/genome.fa}
+data_sets: {}
+```
+
+It has the defaults and semantics of Snakemake's `pathvars`, so `<resources>` stands for `resources` unless the section sets it.
+An undefined name fails when the project loads.
+
+snappy does not check whether the files exist when the project loads, so a dry-run works on a machine without them.
+Snakemake checks the inputs of the jobs it runs.
+`snappy check-files` lists every file of the configuration that does not exist, including the `.fai` and `.dict` of a genome.
 
 ## How FASTQ files are found
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import glob
 import logging
 import os
 import sys
@@ -11,6 +12,8 @@ from dataclasses import field as dataclass_field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from snakemake.pathvars import Pathvars
+
 from snappy_pipeline.log_archive import archive_after_run
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import ReadDiscovery
@@ -19,6 +22,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DATA_SETS,
     DataSignature,
     ExpectedPathSchema,
+    ExpectedReference,
     select_signature,
 )
 
@@ -47,10 +51,9 @@ class Project:
     config: Mapping[str, Any]
     #: The validated global configuration.
     model: ConfigModel
-    #: The project directory.
-    work_dir: str
-    #: Directories that relative paths in the configuration are resolved against.
-    lookup_paths: tuple[str, ...]
+    #: The project directory: the directory of ``config.yaml``, which relative paths in the
+    #: configuration are resolved against.
+    project_dir: str
     #: Configuration files the project was loaded from.
     config_paths: tuple[str, ...]
     #: The tasks, each after the tasks it depends on.
@@ -61,6 +64,8 @@ class Project:
     dependencies: Mapping[str, Mapping[str, str]]
     #: Task name -> the DataSignatures the task produces.
     signatures: Mapping[str, tuple[DataSignature, ...]]
+    #: Task name (``data_sets`` for the data sets) -> the paths in its configuration, resolved.
+    file_paths: Mapping[str, tuple[str, ...]] = dataclass_field(default_factory=dict)
     #: FASTQ discovery shared by all tasks, so each search path is walked once per run
     read_discovery: ReadDiscovery = dataclass_field(default_factory=ReadDiscovery, compare=False)
 
@@ -69,7 +74,7 @@ class Project:
         return next(task for task in self.tasks if task.name == name)
 
 
-def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
+def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     """Validate ``config`` and resolve its task graph.
 
     Raises ``ValueError`` (or a pydantic ``ValidationError``) for unknown steps, duplicate task
@@ -79,9 +84,18 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     config = _without_nulls(config)
-    model = ConfigModel(**config)
-    work_dir = os.path.abspath(work_dir)
-    lookup_paths = (work_dir, os.path.dirname(work_dir))
+    project_dir = os.path.abspath(project_dir)
+    # Snakemake's defaults and semantics, so that a path means the same in snappy and in rules
+    pathvars = Pathvars.with_defaults()
+    pathvars.update(Pathvars.from_config(config))
+    file_paths: dict[str, tuple[str, ...]] = {}
+
+    def context(name: str) -> dict[str, Any]:
+        paths: list[str] = []
+        file_paths[name] = paths  # filled while validating
+        return {"project_dir": project_dir, "pathvars": pathvars, "paths": paths}
+
+    model = ConfigModel.model_validate(config, context=context(DATA_SETS))
 
     names = [task.name for task in model.tasks]
     duplicates = sorted({name for name in names if names.count(name) > 1})
@@ -100,7 +114,7 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
                 f"known steps: {', '.join(sorted(WORKFLOW_REGISTRY))}"
             )
         task_config = workflow_cls.config_model_class.model_validate(
-            task.config, context={"config_lookup_paths": lookup_paths}
+            task.config, context=context(task.name)
         )
         task_configs[task.name] = task_config
         dependencies[task.name] = _resolve_dependencies(task.name, task_config, names)
@@ -109,14 +123,37 @@ def load_project(config: Mapping[str, Any], work_dir: str) -> Project:
     return Project(
         config=config,
         model=model,
-        work_dir=work_dir,
-        lookup_paths=lookup_paths,
-        config_paths=(os.path.join(work_dir, CONFIG_FILE),),
+        project_dir=project_dir,
+        config_paths=(os.path.join(project_dir, CONFIG_FILE),),
         tasks=tasks,
         task_configs=task_configs,
         dependencies=dependencies,
         signatures=_task_signatures(tasks, task_configs, dependencies),
+        file_paths={name: tuple(paths) for name, paths in file_paths.items()},
     )
+
+
+def _exists(path: str) -> bool:
+    """Whether ``path`` exists, or is the prefix of files such as a bwa index (``path.amb``, ...)."""
+    return os.path.exists(path) or bool(glob.glob(glob.escape(path) + ".*"))
+
+
+def missing_files(project: Project) -> dict[str, list[str]]:
+    """Return task name (``data_sets`` for the data sets) -> the files of its configuration that do
+    not exist: its ``ConfigPath`` values and, for an ``external_data`` genome, the ``.fai`` and
+    ``.dict`` that the jobs reading it declare as inputs."""
+    paths = {name: list(found) for name, found in project.file_paths.items()}
+    for dependencies in project.dependencies.values():
+        genome = dependencies.get("reference")
+        files = getattr(project.task_configs.get(genome), "files", None) or {}
+        if isinstance(files.get("fasta"), str):
+            reference = ExpectedReference(fasta=files["fasta"])
+            paths[genome] += [reference.fai, reference.sequence_dict]
+    missing = {
+        name: [path for path in dict.fromkeys(found) if not _exists(path)]
+        for name, found in paths.items()
+    }
+    return {name: found for name, found in missing.items() if found}
 
 
 def create_task_instances(

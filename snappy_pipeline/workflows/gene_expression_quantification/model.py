@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
+from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -30,11 +31,11 @@ class Strandedness(SnappyModel):
 
 
 class RnaSeqC(SnappyModel):
-    rnaseqc_path_annotation_gtf: str
+    rnaseqc_path_annotation_gtf: ConfigPath
 
 
 class DupRadar(SnappyModel):
-    dupradar_path_annotation_gtf: str
+    dupradar_path_annotation_gtf: ConfigPath
     num_threads: int = 8
 
 
