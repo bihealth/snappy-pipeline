@@ -18,7 +18,7 @@ vep_config = args["config"]
 pick_order = ",".join(vep_config["pick_order"])
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
 
-dir_cache = f"--dir_cache {snakemake.input.cache}" if "cache" in snakemake.input.keys() else ""
+dir_cache = f"--dir_cache {snakemake.input.cache}"
 num_threads = getattr(snakemake, "threads", vep_config.get("num_threads", 1))
 full = snakemake.output.full if "full" in snakemake.output.keys() else ""
 
