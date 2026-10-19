@@ -9,9 +9,12 @@
 #
 # Use `snappy task add` to add tasks incrementally.
 #
-# Reference data comes from external_data tasks, which other tasks name in
-# depends_on.reference (and depends_on.features, depends_on.dbsnp). Mappers read their
+# Files that must match the reference come from tasks, usually external_data, which other
+# tasks name in depends_on: the genome (depends_on.reference; its .fai and .dict must be next
+# to the FASTA), the gene annotation, dbSNP, BED files of regions (type regions) and a tool's
+# database (depends_on.database: type database, tagged with the tool). Mappers read their
 # index from depends_on.index: a reference_index task, or external_data for an existing one.
+# Files that belong to one tool's setup and do not depend on the reference stay in its section.
 #
 # Example
 # -------
@@ -32,6 +35,11 @@
 #     config:
 #       produces: {type: index, tags: [bwa, dna]}
 #       files: {index: /path/to/bwa/genome}  # prefix of the .amb, .ann, ... files
+#   - name: vep_cache
+#     step: external_data
+#     config:
+#       produces: {type: database, tags: [vep]}
+#       files: {cache: /path/to/vep/cache}
 #
 tasks: []
 
