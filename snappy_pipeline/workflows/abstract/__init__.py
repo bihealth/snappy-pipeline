@@ -1179,11 +1179,12 @@ class BaseStep:
 
         required_sig: DataSignature | None = None
         expected_schema: type[pydantic.BaseModel] | None = None
+        tool = self.config.tool_tag()
         for meta in field_info.metadata:
             if isinstance(meta, DataSignature):
-                required_sig = meta
+                required_sig = meta.for_tool(tool)
             elif isinstance(meta, ExpectedPathSchema):
-                expected_schema = meta.schema
+                expected_schema = meta.for_tool(tool)
             elif isinstance(meta, type) and issubclass(meta, pydantic.BaseModel):
                 expected_schema = meta
 
@@ -1259,8 +1260,11 @@ class BaseStep:
         )
 
         # Task-local paths get the upstream task's prefix; absolute ones (existing files) do not.
+        def global_path(path: str) -> str:
+            return path if os.path.isabs(path) else self.namespaced_path(dependency.task_name, path)
+
         global_paths = {
-            k: v if os.path.isabs(v) else self.namespaced_path(dependency.task_name, v)
+            k: global_path(v) if isinstance(v, str) else [global_path(p) for p in v]
             for k, v in local_paths.items()
         }
 

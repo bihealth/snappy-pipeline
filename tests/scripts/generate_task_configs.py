@@ -71,6 +71,8 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
     ("cbioportal_export", "variants"): "variant_calling_mutect2",
     ("create_proteome", "variants"): "variant_annotation_vep",
     ("gene_expression_quantification", "alignments"): "ngs_mapping_star",
+    ("gene_expression_quantification", "index"): "salmon_index",
+    ("somatic_gene_fusion_calling", "index"): "star_index",
     ("reference_index", "reference"): "reference_download",
     ("homologous_recombination_deficiency", "copy_number"): (
         "somatic_targeted_seq_cnv_calling_sequenza"
@@ -326,9 +328,10 @@ PLACEHOLDER_FILE = str(Path(__file__).resolve())
 
 @dataclass(frozen=True)
 class Fixture:
-    """A path that ``fixture_paths()`` resolves for the base config."""
+    """A path that ``fixture_paths()`` resolves for the base config, optionally a path below it."""
 
     name: str
+    subpath: str = ""
 
 
 @dataclass(frozen=True)
@@ -495,6 +498,20 @@ def _external_file(
     return {"step": "external_data", "name": name, "config": config}
 
 
+def _external_files(name: str, data_type: str, tags: list[str], files: dict) -> dict[str, Any]:
+    config = {"produces": {"type": data_type, "tags": tags}, "files": files}
+    return {"step": "external_data", "name": name, "config": config}
+
+
+#: The files of the mehari database fixture, as varfish_export read them below its directory
+MEHARI_DB = {
+    "hgnc_tsv": Fixture("mehari_db", "hgnc.tsv"),
+    "transcript_db": Fixture("mehari_db", "grch37/seqvars/txs.bin.zst"),
+    "clinvar_db": Fixture("mehari_db", "grch37/seqvars/clinvar/rocksdb"),
+    "frequency_db": Fixture("mehari_db", "grch37/seqvars/frequencies/rocksdb"),
+}
+
+
 def _external_kits(name: str) -> dict[str, Any]:
     regions = {"targets": Fixture("cnvkit_targets"), "baits": Fixture("cnvkit_targets")}
     config = {"produces": {"type": "regions", "tags": ["kits"]}, "kits": {"MedExome": regions}}
@@ -523,6 +540,32 @@ EXTRA_TASKS: list[dict[str, Any]] = [
         "tagged_regions", "regions", ["mappable", "par", "snp_loci", "genes"], "bed", PLACEHOLDER
     ),
     _external_file("population_variants", "variants", ["population", "common"], "vcf"),
+    _external_files(
+        "salmon_index",
+        "index",
+        ["salmon", "rna"],
+        {"index": Fixture("star_index"), "transcript_to_gene": PLACEHOLDER},
+    ),
+    _external_files("star_index", "index", ["star", "rna"], {"index": Fixture("star_index")}),
+    _external_files("vep_cache", "database", ["vep"], {"cache": PLACEHOLDER}),
+    _external_files("mehari_transcripts", "database", ["mehari"], {"transcript_db": [PLACEHOLDER]}),
+    _external_files("mehari_db", "database", ["mehari"], MEHARI_DB),
+    _external_files("arriba_database", "database", ["arriba"], {"blacklist": PLACEHOLDER}),
+    _external_files(
+        "star_fusion_database",
+        "database",
+        ["star_fusion"],
+        {"ctat_resource_lib": Fixture("star_index")},
+    ),
+    _external_files(
+        "control_freec_database", "database", ["control_freec"], {"chr_len": PLACEHOLDER}
+    ),
+    _external_files(
+        "expansionhunter_database",
+        "database",
+        ["expansionhunter"],
+        {"catalog": REFERENCE, "annotation": REFERENCE},
+    ),
     _external_kits("kits"),
     _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
     _external_vcfs("external_cnv", ["germline", "cnv"]),
@@ -536,7 +579,8 @@ def _unset(value: Any) -> bool:
 
 def _resolve(value: Any, fixtures: dict[str, Any]) -> Any:
     if isinstance(value, Fixture):
-        return copy.deepcopy(fixtures[value.name])
+        path = copy.deepcopy(fixtures[value.name])
+        return str(Path(path) / value.subpath) if value.subpath else path
     if isinstance(value, list):
         return [_resolve(item, fixtures) for item in value]
     if isinstance(value, dict):
@@ -580,6 +624,19 @@ def get_possible_tools(workflow_cls: type) -> list[str]:
     return []
 
 
+#: The database task of each (step, tool); variant_annotation reads a list of transcript
+#: databases, varfish_export the whole mehari database.
+DATABASE_TASKS: dict[tuple[str, str | None], str] = {
+    ("repeat_expansion", "expansionhunter"): "expansionhunter_database",
+    ("somatic_gene_fusion_calling", "arriba"): "arriba_database",
+    ("somatic_gene_fusion_calling", "star_fusion"): "star_fusion_database",
+    ("somatic_wgs_cnv_calling", "control_freec"): "control_freec_database",
+    ("varfish_export", None): "mehari_db",
+    ("variant_annotation", "mehari"): "mehari_transcripts",
+    ("variant_annotation", "vep"): "vep_cache",
+}
+
+
 def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
     """Return the ``depends_on`` mapping of a generated task."""
     depends_on: dict[str, str] = {}
@@ -614,6 +671,11 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
     # Only the regions filter reads regions.
     if step_name == "variant_filtration" and tool == "regions":
         depends_on["regions"] = "regions"
+
+    # A tool reads its own database.
+    database = DATABASE_TASKS.get((step_name, tool))
+    if database and "database" in dependency_fields(WORKFLOW_REGISTRY[step_name]):
+        depends_on["database"] = database
 
     # Read-backed phasing refines the result of phasing by transmission.
     if step_name == "variant_phasing" and tool == "gatk_read_backed_phasing":

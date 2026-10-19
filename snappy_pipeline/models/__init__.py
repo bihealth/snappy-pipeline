@@ -237,6 +237,11 @@ class SnappyStepModel(SnappyModel, object):
     Each key is the column name; the value is a
     :class:`RelationshipDefinition`."""
 
+    def tool_tag(self) -> str | None:
+        """The tag that the ``TOOL`` placeholder of a ``depends_on`` requirement stands for: the
+        task's tool."""
+        return getattr(self, "tool", None)
+
     @model_validator(mode="after")
     def validate_selected_tool_config(self):
         model_fields = type(self).model_fields

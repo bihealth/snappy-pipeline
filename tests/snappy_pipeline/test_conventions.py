@@ -178,6 +178,7 @@ DEPENDS_ON_KEYS = {
     "gene_regions",
     "common_variants",
     "germline_resource",
+    "database",
     "alignments",
     "variants",
     "somatic_variants",

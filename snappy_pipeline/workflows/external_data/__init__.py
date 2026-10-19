@@ -7,7 +7,8 @@ The task has no rules and no ``output/`` directory.
 Consumers read the files where they are.
 
 The task has one of three modes.
-With ``files``, it provides project-wide files by output key, such as a reference genome with its sidecar files.
+With ``files``, it provides project-wide files by output key, such as a reference genome.
+A key may name a list of files, such as several transcript databases of mehari.
 With ``search_paths`` and ``search_patterns``, it provides per-library files from a folder named like the library, below one of the search paths.
 Each pattern maps output keys to regular expressions for the path below that folder.
 Reads (``type: raw``) need the keys ``left`` (and ``right``) and a ``(?P<readgroup>...)`` group, which pairs the mates.
@@ -126,6 +127,10 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from .model import ExternalData
 
 
+def _abspath(path: str | list[str]) -> str | list[str]:
+    return os.path.abspath(path) if isinstance(path, str) else [os.path.abspath(p) for p in path]
+
+
 class ExternalDataWorkflow(BaseStep):
     """Provides existing files to other tasks; has no rules of its own."""
 
@@ -158,7 +163,7 @@ class ExternalDataWorkflow(BaseStep):
         """Return the absolute paths of the files: project-wide, of ``library_name`` or of
         ``library_kit``."""
         if config.files:
-            return {key: os.path.abspath(path) for key, path in config.files.items()}
+            return {key: _abspath(path) for key, path in config.files.items()}
         if config.kits:
             if library_kit not in config.kits:
                 raise ValueError(f"No kit {library_kit!r}; known kits: {sorted(config.kits)}")

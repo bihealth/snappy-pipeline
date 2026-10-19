@@ -232,6 +232,8 @@ def _task_signatures(
             required = next(
                 (m for m in fields[field].metadata if isinstance(m, DataSignature)), None
             )
+            if required is not None:
+                required = required.for_tool(config.tool_tag())
             produced = signatures[upstream]
             selected = select_signature(produced, required)
             if selected is None:
@@ -256,8 +258,10 @@ def _check_output_keys(
     for the signature the field selected."""
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
+    tool = task_configs[task_name].tool_tag()
     schema = next(
-        (m.schema for m in field_info.metadata if isinstance(m, ExpectedPathSchema)), None
+        (m.for_tool(tool) for m in field_info.metadata if isinstance(m, ExpectedPathSchema)),
+        None,
     )
     if schema is None:
         return

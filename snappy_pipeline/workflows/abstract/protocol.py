@@ -22,6 +22,11 @@ class DataType(StrEnum):
     QC = "qc"
 
 
+#: Placeholder tag of a requirement for the task's tool (``SnappyStepModel.tool_tag()``), such as
+#: the tool of a ``database``
+TOOL = "<tool>"
+
+
 @dataclass(frozen=True)
 class DataSignature:
     type: DataType
@@ -50,6 +55,14 @@ class DataSignature:
                 return False
         return True
 
+    def for_tool(self, tool: str | None) -> "DataSignature":
+        """Return this requirement with the ``TOOL`` placeholder replaced by ``tool``."""
+        if TOOL not in self.tags:
+            return self
+        if not tool:
+            raise ValueError(f"The requirement {self} names the tool, but the task has none")
+        return DataSignature(self.type, (self.tags - {TOOL}) | {tool})
+
     def with_tags(self, *tags: str) -> "DataSignature":
         """Return this signature with ``tags`` added."""
         return DataSignature(self.type, self.tags | frozenset(tags))
@@ -77,9 +90,19 @@ def select_signature(
 
 @dataclass(frozen=True)
 class ExpectedPathSchema:
-    """Annotated metadata wrapper for expected upstream output-path schema."""
+    """Annotated metadata wrapper for expected upstream output-path schema, or one schema per tool
+    (``by_tool``)."""
 
-    schema: type[BaseModel]
+    schema: type[BaseModel] | None = None
+    per_tool: tuple[tuple[str, type[BaseModel]], ...] = ()
+
+    @classmethod
+    def by_tool(cls, **schemas: type[BaseModel]) -> "ExpectedPathSchema":
+        return cls(per_tool=tuple(schemas.items()))
+
+    def for_tool(self, tool: str | None) -> type[BaseModel] | None:
+        """Return the schema, or the one of ``tool``; ``None`` for a tool without one."""
+        return self.schema if self.schema is not None else dict(self.per_tool).get(tool)
 
 
 class ExpectedReference(BaseModel):

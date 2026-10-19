@@ -20,6 +20,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Features,
     Kits,
     Reference,
+    TOOL,
 )
 from snappy_pipeline.workflows.reference_index.model import ExpectedIndex
 
@@ -66,7 +67,7 @@ class NgsMappingDependsOn(SnappyModel):
         str,
         DataSignature(
             DataType.INDEX,
-            frozenset({("bwa", "bwa_mem2", "minimap2", "star"), ("dna", "rna")}),
+            frozenset({TOOL, ("dna", "rna")}),
         ),
         ExpectedPathSchema(ExpectedIndex),
     ]
@@ -321,6 +322,12 @@ class NgsMapping(SnappyStepModel):
     Configuration for somatic ngs_calling
     (separate read groups, molecular barcodes & base quality recalibration)
     """
+
+    def tool_tag(self) -> str | None:
+        """mbcs maps with ``mbcs.mapping_tool``, whose index it reads."""
+        if self.tool == Tool.mbcs and self.mbcs:
+            return self.mbcs.mapping_tool
+        return self.tool
 
     @model_validator(mode="after")
     def check_mbcs_prerequisites(self):

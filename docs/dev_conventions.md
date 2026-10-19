@@ -160,7 +160,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A step lists what its tasks produce in `produces`.
   If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
   For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
-- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index` and `gcnv_model`.
+- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
   A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`.
   `test_depends_on_keys_use_the_vocabulary` checks this.
 - A file that a step reads is a `depends_on` key if it must match the reference or other data of the project, even if only one tool reads it.
@@ -170,6 +170,10 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - `reference` (genome FASTA), `features` (gene annotation GTF), `dbsnp`, `germline_resource` (tag `population`) and `common_variants` (tag `common`) use the shared field types `Reference`, `Features`, `Dbsnp`, `GermlineResource` and `CommonVariants` from `snappy_pipeline.workflows.abstract.protocol`.
   Tags compose: one task with `tags: [population, common]` can serve both.
   They usually name `external_data` tasks.
+- A tool's own database comes from `depends_on.database`: type `database`, tagged with the tool.
+  The field requires the tag `TOOL`, a placeholder that the loader replaces with the task's tool (`SnappyStepModel.tool_tag()`), and `ExpectedPathSchema.by_tool(...)` names the contract keys per tool.
+  `ngs_mapping` requires its index the same way.
+  Mapper and other indexes come from `depends_on.index` (type `index`, tags tool and molecule).
 - BED files of regions have the data type `regions` and the key `bed`.
   The shared field type `Regions` accepts any of them, and `Exons` requires the tag `exons`.
   A step-specific kind of regions is an `Annotated` field type in the step's model, with its own tag.

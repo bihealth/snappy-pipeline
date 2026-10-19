@@ -28,8 +28,9 @@ class ExternalData(SnappyStepModel):
     produces: Produces
     """What the data is, e.g. ``{type: variants, tags: [germline, snv, indel]}``."""
 
-    files: dict[str, str] = {}
-    """Project-wide files by output key, e.g. ``{fasta: /refs/GRCh38.fa, fai: ...}``."""
+    files: dict[str, str | list[str]] = {}
+    """Project-wide files by output key, e.g. ``{fasta: /refs/GRCh38.fa}``; a key may name a list
+    of files."""
 
     search_paths: list[str] = []
     """Per-library data: directories that contain a folder named like each library."""

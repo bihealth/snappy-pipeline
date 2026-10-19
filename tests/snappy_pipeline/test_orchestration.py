@@ -10,7 +10,7 @@ from snappy_pipeline import orchestration
 from snappy_pipeline.orchestration import Project, load_project, select_target_tasks
 from snappy_pipeline.workflow_model import ConfigModel
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import TOOL, DataSignature, DataType
 
 WORK_DIR = "/projects/p1"
 
@@ -385,3 +385,31 @@ def test_load_project_rejects_upstream_without_the_output_keys_a_consumer_needs(
         r"does not provide; it provides bcf, bcf_csi",
     ):
         load_project(_config(_mapping(), cnv, check), WORK_DIR)
+
+
+def test_external_data_files_may_name_lists():
+    dbs = _external("dbs", "database", ["mehari"], files={"transcript_db": ["/a.bin", "/b.bin"]})
+    project = load_project(_config(dbs), WORK_DIR)
+    config = project.task_configs["dbs"]
+    paths = WORKFLOW_REGISTRY["external_data"].get_output_paths(config)
+    assert paths == {"transcript_db": ["/a.bin", "/b.bin"]}
+
+
+def test_requirement_with_tool_placeholder_names_the_task_tool():
+    # ngs_mapping requires the index of its tool (mbcs: of its mapping_tool)
+    bwa_mem2 = _mapping(tool="bwa_mem2", bwa_mem2={})
+    with pytest.raises(
+        ValueError,
+        match=r"depends_on.index requires index \[bwa_mem2, dna\|rna\], but task 'bwa_index'",
+    ):
+        load_project(_config(bwa_mem2), WORK_DIR)
+
+    mbcs = _mapping(tool="mbcs", mbcs={"mapping_tool": "bwa", "recalibrate": False})
+    load_project(_config(mbcs), WORK_DIR)
+
+
+def test_tool_placeholder_needs_a_tool():
+    required = DataSignature(DataType.DATABASE, frozenset({TOOL}))
+    assert required.for_tool("vep") == DataSignature(DataType.DATABASE, frozenset({"vep"}))
+    with pytest.raises(ValueError, match="names the tool, but the task has none"):
+        required.for_tool(None)
