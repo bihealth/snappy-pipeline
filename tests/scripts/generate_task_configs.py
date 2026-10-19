@@ -394,9 +394,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("gene_expression_quantification", "rnaseqc"): {
         "rnaseqc": {"rnaseqc_path_annotation_gtf": PLACEHOLDER}
     },
-    ("gene_expression_quantification", "salmon"): {
-        "salmon": {"path_index": Fixture("star_index"), "path_transcript_to_gene": PLACEHOLDER}
-    },
+    ("gene_expression_quantification", "salmon"): {"salmon": {}},
     ("hla_typing", "arcashla"): {"library_selection": RNA},
     ("ngs_data_qc", "picard"): {
         "picard": {"programs": ["CollectAlignmentSummaryMetrics", "CollectHsMetrics"]}
@@ -419,9 +417,8 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     },
     ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
     ("reference_index", "star"): {"reference_molecule": Overwrite("rna")},
-    ("repeat_expansion", None): {"repeat_catalog": REFERENCE, "repeat_annotation": REFERENCE},
     ("somatic_gene_fusion_calling", None): {"library_selection": RNA},
-    ("somatic_gene_fusion_calling", "arriba"): {"arriba": {"path_index": Fixture("star_index")}},
+    ("somatic_gene_fusion_calling", "arriba"): {"arriba": {}},
     ("somatic_gene_fusion_calling", "defuse"): {
         "defuse": {"path_dataset_directory": Fixture("star_index")}
     },
@@ -443,9 +440,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "annotations_gtf": PLACEHOLDER,
         }
     },
-    ("somatic_gene_fusion_calling", "star_fusion"): {
-        "star_fusion": {"path_ctat_resource_lib": Fixture("star_index")}
-    },
+    ("somatic_gene_fusion_calling", "star_fusion"): {"star_fusion": {}},
     ("cbioportal_export", None): {
         "copy_number_alteration": {"enabled": True},
         "path_gene_id_mappings": PLACEHOLDER,
@@ -456,9 +451,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "rna": {"class_i": None, "class_ii": None},
         }
     },
-    ("somatic_wgs_cnv_calling", "control_freec"): {
-        "control_freec": {"path_chrlenfile": PLACEHOLDER, "path_mappability": PLACEHOLDER}
-    },
+    ("somatic_wgs_cnv_calling", "control_freec"): {"control_freec": {}},
     ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
     ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
     ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},

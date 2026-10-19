@@ -39,8 +39,6 @@ class DupRadar(SnappyModel):
 
 
 class Salmon(SnappyModel):
-    path_index: str
-    path_transcript_to_gene: str
     salmon_params: str = " --gcBias --validateMappings"
     num_threads: int = 16
 
@@ -57,6 +55,15 @@ class ExpectedExpression(SnappyModel):
     """Consumer-driven contract: expected output keys from gene_expression_quantification."""
 
     tsv: str
+
+
+class ExpectedSalmonIndex(SnappyModel):
+    """Consumer-driven contract: the salmon index and its transcript to gene table."""
+
+    index: str
+    """Directory of the prebuilt index"""
+
+    transcript_to_gene: str
 
 
 class Tool(enum.StrEnum):
@@ -78,7 +85,7 @@ TOOL_DEPENDENCIES = {
     Tool.duplication: ("alignments", "strandedness"),
     Tool.rnaseqc: ("alignments", "strandedness", "reference"),
     Tool.stats: ("alignments", "strandedness"),
-    Tool.salmon: ("reads", "features"),
+    Tool.salmon: ("reads", "features", "index"),
 }
 
 
@@ -116,6 +123,14 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
     exons: Exons = ""
     """Task with a BED file of transcripts with their strand in column 6; needed for
     ``tool: strandedness``"""
+
+    index: Annotated[
+        str,
+        DataSignature(DataType.INDEX, frozenset({"salmon", "rna"})),
+        ExpectedPathSchema(ExpectedSalmonIndex),
+    ] = ""
+    """Needed for ``tool: salmon``: an ``external_data`` task with the prebuilt index and the
+    table that maps transcripts to genes"""
 
 
 class GeneExpressionQuantification(SnappyStepModel):

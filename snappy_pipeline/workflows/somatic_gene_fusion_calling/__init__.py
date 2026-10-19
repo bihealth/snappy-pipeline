@@ -8,7 +8,10 @@ The reads come from the task named in ``depends_on.reads``.
 The ``tool`` field selects the caller:
 
 - ``arriba`` is the recommended caller.
+  It needs the STAR index of ``depends_on.index`` (``{type: index, tags: [star, rna]}``, preferably STAR 2.7.10 or later).
+  The optional ``depends_on.database`` (``{type: database, tags: [arriba]}``) may give the keys ``blacklist``, ``known_fusions``, ``tags``, ``structural_variants`` and ``protein_domains`` of the arriba release.
 - ``star_fusion`` returns results similar to ``arriba``, but less accurate.
+  It needs ``depends_on.database`` (``{type: database, tags: [star_fusion]}``) with the key ``ctat_resource_lib``.
 - ``fusioncatcher`` is broken.
   Its resource requirements are so high that re-enabling it is probably not worth it.
 - ``defuse``, ``hera``, ``jaffa`` and ``pizzly`` are not tested and probably broken.
@@ -155,7 +158,7 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        yield "ctat_resource_lib", self.config.star_fusion.path_ctat_resource_lib
+        yield "ctat_resource_lib", self.parent.get_upstream_paths("database").ctat_resource_lib
 
     default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
 
@@ -200,10 +203,12 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "reference", self.parent.get_upstream_paths("reference").fasta
         yield "features", self.parent.get_upstream_paths("features").gtf
-        yield "index", self.config.arriba.path_index
-        for key in ("blacklist", "known_fusions", "tags", "structural_variants", "protein_domains"):
-            if path := getattr(self.config.arriba, key):
-                yield key, path
+        yield "index", self.parent.get_upstream_paths("index").index
+        if self.config.depends_on.database:
+            database = self.parent.get_upstream_paths("database")
+            for key in type(database).model_fields:
+                if path := getattr(database, key):
+                    yield key, path
 
     def get_params(self, action):
         """Return function that maps wildcards to dict for input files"""

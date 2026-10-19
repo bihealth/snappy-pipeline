@@ -1,7 +1,8 @@
 """Repeat expansion analysis with ExpansionHunter
 
 The step runs the tool selected by ``tool`` on the alignments from ``depends_on.alignments`` (:ref:`step_ngs_mapping`).
-The only value is ``expansionhunter``, which calls repeat expansions against ``repeat_catalog`` and annotates them with ``repeat_annotation``.
+The only value is ``expansionhunter``, which calls repeat expansions against the key ``catalog`` of ``depends_on.database`` and annotates them with its key ``annotation``.
+The database is an ``external_data`` task with ``{type: database, tags: [expansionhunter]}``.
 The step writes one result set per library with a DNA library.
 It is experimental.
 
@@ -70,7 +71,7 @@ class ExpansionHunterStepPart(BaseStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "repeat_catalog": self.config.repeat_catalog,
+            "repeat_catalog": self.parent.get_upstream_paths("database").catalog,
         }
 
     @dictify
@@ -87,7 +88,7 @@ class ExpansionHunterStepPart(BaseStepPart):
                 name_pattern=name_pattern, ext="json"
             ),
         )
-        yield "annotation", self.config.repeat_annotation
+        yield "annotation", self.parent.get_upstream_paths("database").annotation
 
     @dictify
     def _get_output_files_run(self):

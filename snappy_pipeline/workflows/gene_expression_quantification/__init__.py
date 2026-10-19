@@ -8,7 +8,7 @@ The step uses RNA libraries only.
 Quantification:
 
 - ``featurecounts``: counts reads per gene from the BAM files, with the GTF of ``depends_on.features``. It publishes a table of counts and gene lengths.
-- ``salmon``: estimates expression from the FASTQ files, without prior mapping. It needs a prebuilt index (``salmon.path_index``) and a table that maps transcripts to genes (``salmon.path_transcript_to_gene``).
+- ``salmon``: estimates expression from the FASTQ files, without prior mapping. It needs a prebuilt index and a table that maps transcripts to genes from ``depends_on.index``.
 
 QC and strandedness, all on the BAM files:
 
@@ -93,7 +93,8 @@ Downstream tasks read the key ``tsv`` of ``featurecounts`` (data type ``expressi
 Notes
 -----
 
-``salmon.path_index`` is the directory of the prebuilt index, with files such as ``sa.bin``, ``rsd.bin`` and ``txpInfo.bin``.
+``depends_on.index`` names an ``external_data`` task with ``{type: index, tags: [salmon, rna]}`` and the keys ``index`` and ``transcript_to_gene``.
+The key ``index`` is the directory of the prebuilt index, with files such as ``sa.bin``, ``rsd.bin`` and ``txpInfo.bin``.
 """
 
 from typing import Any
@@ -114,7 +115,6 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import ExpectedStrandedness, Tool
 from .model import GeneExpressionQuantification as GeneExpressionQuantificationConfigModel
-from .model import Salmon as SalmonConfigModel
 
 #: Signature of the strandedness decision of a ``tool: strandedness`` task
 STRANDEDNESS_SIGNATURE = DataSignature(DataType.QC, frozenset({"strandedness"}))
@@ -227,10 +227,6 @@ class SalmonStepPart(GeneExpressionQuantificationStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.cfg: SalmonConfigModel = self.config.salmon
-
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files"""
@@ -238,17 +234,14 @@ class SalmonStepPart(GeneExpressionQuantificationStepPart):
             return
         yield from reads_input_files(self.parent, wildcards.library_name).items()
         yield "features", self.parent.get_upstream_paths("features").gtf
-        if self.cfg and self.cfg.path_index:
-            yield "index", self.cfg.path_index
-        if self.cfg and self.cfg.path_transcript_to_gene:
-            yield "transcript_to_gene", self.cfg.path_transcript_to_gene
+        index = self.parent.get_upstream_paths("index")
+        yield "index", index.index
+        yield "transcript_to_gene", index.transcript_to_gene
 
     def _get_params_run(self, wildcards):
         """Return dict for the wrapper"""
         result = reads_params(self.parent, wildcards.library_name)
-        result |= self.config.salmon.model_dump(
-            by_alias=True, exclude={"path_index", "path_transcript_to_gene"}
-        )
+        result |= self.config.salmon.model_dump(by_alias=True)
         result["strand"] = self.config.strand
         return result
 

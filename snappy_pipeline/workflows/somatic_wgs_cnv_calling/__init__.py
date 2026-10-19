@@ -7,6 +7,7 @@ The ``tool`` field selects the caller:
 - ``cnvetti`` writes the called CNVs as a BCF file.
 - ``cnvkit`` runs the CNVkit workflow for whole genomes and exports the segments in several formats.
 - ``control_freec`` runs Control-FREEC and transforms its ratios into log2 values, calls and segments.
+  It needs ``depends_on.database``: an ``external_data`` task with ``{type: database, tags: [control_freec]}``, the key ``chr_len`` (the chromosome lengths) and, optionally, the key ``mappability``.
 
 The task gives one result per tumor DNA library.
 The files are unfiltered.
@@ -522,14 +523,17 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        yield "chrlenfile", self.config.control_freec.path_chrlenfile
-        if self.config.control_freec.path_mappability_enabled:
-            yield "mappability", self.config.control_freec.path_mappability
+        database = self.parent.get_upstream_paths("database")
+        yield "chrlenfile", database.chr_len
+        if database.mappability:
+            yield "mappability", database.mappability
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.control_freec
         return {
-            "path_mappability_enabled": cfg.path_mappability_enabled,
+            "path_mappability_enabled": bool(
+                self.parent.get_upstream_paths("database").mappability
+            ),
             "window_size": cfg.window_size,
         }
 

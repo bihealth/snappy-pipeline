@@ -1,11 +1,18 @@
 import enum
-import os
 from typing import Annotated
 
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, Features, Reference
+from snappy_pipeline.workflows.abstract.protocol import (
+    TOOL,
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+    Features,
+    Reference,
+)
+from snappy_pipeline.workflows.reference_index.model import ExpectedIndex
 
 
 class Tool(enum.StrEnum):
@@ -37,7 +44,7 @@ class Hera(SnappyModel):
 
 
 class StarFusion(SnappyModel):
-    path_ctat_resource_lib: str
+    pass
 
 
 class Defuse(SnappyModel):
@@ -50,21 +57,6 @@ class Jaffa(SnappyModel):
 
 
 class Arriba(SnappyModel):
-    path_index: str
-    """STAR path index (preferably 2.7.10 or later)"""
-
-    blacklist: str = ""
-    """provided in the arriba distribution (``database/`` of the release)"""
-
-    known_fusions: str = ""
-
-    tags: str = ""
-    """can be set to the same path as known_fusions"""
-
-    structural_variants: str = ""
-
-    protein_domains: str = ""
-
     num_threads: int = 8
 
     trim_adapters: bool = False
@@ -86,15 +78,28 @@ class Arriba(SnappyModel):
         " --chimMultimapNmax 50",
     ]
 
-    @model_validator(mode="after")
-    def ensure_star_index_files_exist(self):
-        full_path = self.path_index
-        # a lot of files should be in this dir, justtest these
-        for indfile in ("Genome", "SA", "SAindex"):
-            expected_path = os.path.join(full_path, indfile)
-            if not os.path.exists(expected_path):  # pragma: no cover
-                raise ValueError(f"Expected STAR index file {expected_path} does not exist!")
-        return self
+
+class ExpectedArribaDatabase(SnappyModel):
+    """Consumer-driven contract: the optional files of the arriba release."""
+
+    blacklist: str = ""
+    """Provided in the arriba distribution (``database/`` of the release)"""
+
+    known_fusions: str = ""
+
+    tags: str = ""
+    """Can be set to the same path as ``known_fusions``"""
+
+    structural_variants: str = ""
+
+    protein_domains: str = ""
+
+
+class ExpectedStarFusionDatabase(SnappyModel):
+    """Consumer-driven contract: the STAR-Fusion database."""
+
+    ctat_resource_lib: str
+    """The CTAT genome resource library"""
 
 
 class SomaticGeneFusionCallingDependsOn(SnappyModel):
@@ -111,8 +116,28 @@ class SomaticGeneFusionCallingDependsOn(SnappyModel):
 
     features: Features = ""
 
+    index: Annotated[
+        str,
+        DataSignature(DataType.INDEX, frozenset({"star", "rna"})),
+        ExpectedPathSchema(ExpectedIndex),
+    ] = ""
+    """Needed for ``tool: arriba``: the STAR index (preferably 2.7.10 or later)"""
 
-TOOL_DEPENDENCIES = {Tool.arriba: ("reference", "features")}
+    database: Annotated[
+        str,
+        DataSignature(DataType.DATABASE, frozenset({TOOL})),
+        ExpectedPathSchema.by_tool(
+            arriba=ExpectedArribaDatabase, star_fusion=ExpectedStarFusionDatabase
+        ),
+    ] = ""
+    """The database of the task's tool: optional for ``tool: arriba``, needed for
+    ``tool: star_fusion``"""
+
+
+TOOL_DEPENDENCIES = {
+    Tool.arriba: ("reference", "features", "index"),
+    Tool.star_fusion: ("database",),
+}
 
 
 class SomaticGeneFusionCalling(SnappyStepModel):

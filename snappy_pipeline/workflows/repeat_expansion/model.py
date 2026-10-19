@@ -3,12 +3,23 @@ from typing import Annotated
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
+    TOOL,
     DataSignature,
     DataType,
     ExpectedPathSchema,
     Reference,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
+
+
+class ExpectedExpansionHunterDatabase(SnappyModel):
+    """Consumer-driven contract: the files of ExpansionHunter."""
+
+    catalog: str
+    """Repeat expansions definitions - used in ExpansionHunter call"""
+
+    annotation: str
+    """Repeat expansions annotations, e.g., normality range - custom file"""
 
 
 class RepeatExpansionDependsOn(SnappyModel):
@@ -20,6 +31,13 @@ class RepeatExpansionDependsOn(SnappyModel):
 
     reference: Reference
 
+    database: Annotated[
+        str,
+        DataSignature(DataType.DATABASE, frozenset({TOOL})),
+        ExpectedPathSchema(ExpectedExpansionHunterDatabase),
+    ]
+    """The repeat catalog and the annotation of the repeats"""
+
 
 class Tool(enum.StrEnum):
     expansionhunter = "expansionhunter"
@@ -30,9 +48,3 @@ class RepeatExpansion(SnappyStepModel):
 
     tool: Tool
     """Tool to use for repeat expansion"""
-
-    repeat_catalog: str
-    """Repeat expansions definitions - used in ExpansionHunter call"""
-
-    repeat_annotation: str
-    """Repeat expansions annotations, e.g., normality range - custom file"""

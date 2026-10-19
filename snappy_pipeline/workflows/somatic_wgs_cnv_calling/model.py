@@ -6,6 +6,7 @@ from pydantic import model_validator
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit, Diagram
 from snappy_pipeline.workflows.abstract.protocol import (
+    TOOL,
     DataSignature,
     DataType,
     ExpectedPathSchema,
@@ -53,15 +54,17 @@ class ControlFreecConvert(SnappyModel):
     bs_obj: str = "BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5"
 
 
+class ExpectedControlFreecDatabase(SnappyModel):
+    """Consumer-driven contract: the files of Control-FREEC."""
+
+    chr_len: str
+    """ChrLenFile"""
+
+    mappability: str = ""
+    """Mappability file, used when set"""
+
+
 class ControlFreec(SnappyModel):
-    path_chrlenfile: str
-    """Path to ControlFreec ChrLenFile"""
-
-    path_mappability: str
-    """Path to ControlFreec mappability file"""
-
-    path_mappability_enabled: bool = False
-
     window_size: int = -1
     """set to a value >=0 you want a specific fixed window size"""
 
@@ -85,8 +88,16 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
 
     reference: Reference = ""
 
+    database: Annotated[
+        str,
+        DataSignature(DataType.DATABASE, frozenset({TOOL})),
+        ExpectedPathSchema(ExpectedControlFreecDatabase),
+    ] = ""
+    """Needed for ``tool: control_freec``: the chromosome lengths and, optionally, the
+    mappability"""
 
-TOOL_DEPENDENCIES = {Tool.cnvetti: ("reference",)}
+
+TOOL_DEPENDENCIES = {Tool.cnvetti: ("reference",), Tool.control_freec: ("database",)}
 
 
 class SomaticWgsCnvCalling(SnappyStepModel):
