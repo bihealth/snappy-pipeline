@@ -160,10 +160,10 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A step lists what its tasks produce in `produces`.
   If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
   For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
-- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp`, `kits`, `index` and `gcnv_model`.
+- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp`, `exons`, `kits`, `index` and `gcnv_model`.
   A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`.
   `test_depends_on_keys_use_the_vocabulary` checks this.
-- `reference` (genome FASTA), `features` (gene annotation GTF) and `dbsnp` use the shared field types `Reference`, `Features` and `Dbsnp` from `snappy_pipeline.workflows.abstract.protocol`.
+- `reference` (genome FASTA), `features` (gene annotation GTF), `dbsnp` and `exons` (BED file) use the shared field types `Reference`, `Features`, `Dbsnp` and `Exons` from `snappy_pipeline.workflows.abstract.protocol`.
   They usually name `external_data` tasks.
 - `kits` uses the shared field type `Kits`: an `external_data` task with `kits`, which gives the `targets` and `baits` BED files of each enrichment kit.
   A targeted library (`WES`, `Panel_seq`) uses the kit named exactly like its `library_kit`; other libraries have no kit (`BaseStep.library_kits`), since long-read libraries use `libraryKit` for their chemistry.

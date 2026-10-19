@@ -6,6 +6,7 @@ from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    Exons,
     ExpectedPathSchema,
     Kits,
     Reference,
@@ -45,6 +46,9 @@ class VariantExportExternalDependsOn(SnappyModel):
     kits: Kits = ""
     """Task with the ``targets`` of each kit; needed for bam_available_flag."""
 
+    exons: Exons = ""
+    """Optional task with a BED file of exons; the export keeps only the small variants near them"""
+
 
 class VariantExportExternal(SnappyStepModel):
     depends_on: VariantExportExternalDependsOn
@@ -66,9 +70,6 @@ class VariantExportExternal(SnappyStepModel):
 
     release: str = "GRCh37"
     """genome release; default 'GRCh37'."""
-
-    path_exon_bed: str = ""
-    """Path to BED file with exons; used for reducing data to near-exon small variants."""
 
     path_refseq_ser: FilePath
     """path to RefSeq .ser file."""

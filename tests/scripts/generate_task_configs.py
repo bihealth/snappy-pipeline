@@ -35,6 +35,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "combined_variants": "combine_variants",
     "copy_number": "somatic_wgs_cnv_calling_cnvkit",
     "dbsnp": "dbsnp",
+    "exons": "exons",
     "expression": "gene_expression_quantification_featurecounts",
     "features": "features",
     "fusions": "somatic_gene_fusion_calling_fusioncatcher",
@@ -382,9 +383,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("gene_expression_quantification", "rnaseqc"): {
         "rnaseqc": {"rnaseqc_path_annotation_gtf": PLACEHOLDER}
     },
-    ("gene_expression_quantification", "strandedness"): {
-        "strandedness": {"path_exon_bed": PLACEHOLDER}
-    },
     ("gene_expression_quantification", "salmon"): {
         "salmon": {"path_index": Fixture("star_index"), "path_transcript_to_gene": PLACEHOLDER}
     },
@@ -407,7 +405,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     },
     ("ngs_mapping", "star"): {
         "library_selection": RNA,
-        "strandedness": {"path_exon_bed": PLACEHOLDER, "strand": -1, "threshold": 0.85},
+        "strandedness": {"strand": -1, "threshold": 0.85},
     },
     ("panel_of_normals", "mutect2"): {"mutect2": {"germline_resource": REFERENCE}},
     ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
@@ -475,7 +473,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     },
     ("varfish_export", None): {
         "path_mehari_db": Fixture("mehari_db"),
-        "path_exon_bed": PLACEHOLDER,
     },
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("variant_phasing", "gatk_read_backed_phasing"): {
@@ -489,8 +486,10 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
 }
 
 
-def _external_file(name: str, data_type: str, tags: list[str], key: str) -> dict[str, Any]:
-    config = {"produces": {"type": data_type, "tags": tags}, "files": {key: REFERENCE}}
+def _external_file(
+    name: str, data_type: str, tags: list[str], key: str, path: Fixture = REFERENCE
+) -> dict[str, Any]:
+    config = {"produces": {"type": data_type, "tags": tags}, "files": {key: path}}
     return {"step": "external_data", "name": name, "config": config}
 
 
@@ -507,13 +506,14 @@ def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
     return {"step": "external_data", "name": name, "config": config}
 
 
-#: external_data tasks besides the step's own one: the reference data, the regions of the kit of
-#: the test libraries (MedExome), and the inputs of the external export steps. features and dbsnp
-#: name the reference FASTA, as no test reads them.
+#: external_data tasks besides the step's own one: the reference data, the exons, the regions of
+#: the kit of the test libraries (MedExome), and the inputs of the external export steps. features
+#: and dbsnp name the reference FASTA, as no test reads them.
 EXTRA_TASKS: list[dict[str, Any]] = [
     _external_file("genome", "raw", ["reference", "dna"], "fasta"),
     _external_file("features", "raw", ["features"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf"),
+    _external_file("exons", "raw", ["exons"], "bed", PLACEHOLDER),
     _external_kits("kits"),
     _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
     _external_vcfs("external_cnv", ["germline", "cnv"]),

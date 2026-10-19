@@ -12,7 +12,7 @@ Quantification:
 
 QC and strandedness, all on the BAM files:
 
-- ``strandedness``: infers the strandedness of each library with RSeQC ``infer_experiment.py``. It needs a 6-column BED file of transcripts and their strand in ``strandedness.path_exon_bed``.
+- ``strandedness``: infers the strandedness of each library with RSeQC ``infer_experiment.py``. It needs a 6-column BED file of transcripts and their strand from ``depends_on.exons``.
 - ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats``: estimate library complexity and duplication rate, and compute coverage and alignment metrics. ``dupradar`` needs BAM files marked for duplicates. ``rnaseqc`` and ``dupradar`` read a GTF from their own config sections.
 
 ``featurecounts``, ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats`` need the strandedness of each library.
@@ -34,6 +34,11 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
         config:
           produces: {type: raw, tags: [features]}
           files: {gtf: resources/genes.gtf}
+      - name: exons
+        step: external_data
+        config:
+          produces: {type: raw, tags: [exons]}
+          files: {bed: resources/exons.bed}
       - name: star_index
         step: external_data
         config:
@@ -47,6 +52,7 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
             reference: genome
             features: annotation
             index: star_index
+            exons: exons
           tool: star
           star: {}
       - name: strandedness
@@ -54,9 +60,9 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
         config:
           depends_on:
             alignments: mapping
+            exons: exons
           tool: strandedness
-          strandedness:
-            path_exon_bed: resources/exons.bed
+          strandedness: {}
       - name: counts
         step: gene_expression_quantification
         config:
@@ -282,16 +288,14 @@ class StrandednessStepPart(GeneExpressionQuantificationStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         if self.config.tool != self.name:
             return
-        yield "exon_bed", self.config.strandedness.path_exon_bed
+        yield "exon_bed", self.parent.get_upstream_paths("exons").bed
 
     default_resource_usage = ResourceUsage(threads=2, runtime="12h", mem="6700MB")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if self.config.tool != self.name:
             return super()._get_params_run(wildcards)
-        config = self.config.strandedness.model_dump(by_alias=True, exclude={"path_exon_bed"}) | {
-            "strand": self.config.strand
-        }
+        config = self.config.strandedness.model_dump(by_alias=True) | {"strand": self.config.strand}
         return {"config": config, "library_name": wildcards.library_name}
 
 

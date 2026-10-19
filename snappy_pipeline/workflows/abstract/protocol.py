@@ -105,6 +105,12 @@ class ExpectedKits(BaseModel):
     baits: str
 
 
+class ExpectedExons(BaseModel):
+    """A BED file of exons."""
+
+    bed: str
+
+
 #: ``depends_on`` field types for the reference data that many steps read
 Reference = Annotated[
     str,
@@ -121,4 +127,9 @@ Dbsnp = Annotated[
 #: ``kits``, read with ``BaseStep.library_kit_paths()``
 Kits = Annotated[
     str, DataSignature(DataType.RAW, frozenset({"kits"})), ExpectedPathSchema(ExpectedKits)
+]
+#: ``depends_on`` field type for a BED file of exons: an ``external_data`` task with
+#: ``files: {bed: ...}``
+Exons = Annotated[
+    str, DataSignature(DataType.RAW, frozenset({"exons"})), ExpectedPathSchema(ExpectedExons)
 ]

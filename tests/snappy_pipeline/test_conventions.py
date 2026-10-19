@@ -187,6 +187,7 @@ DEPENDS_ON_KEYS = {
     "reference",
     "features",
     "dbsnp",
+    "exons",
     "index",
     "gcnv_model",
 }

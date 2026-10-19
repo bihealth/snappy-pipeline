@@ -181,8 +181,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         yield "db", self.config.path_db
         yield "refseq_ser", self.config.path_refseq_ser
         yield "ensembl_ser", self.config.path_ensembl_ser
-        if self.config.path_exon_bed:
-            yield "exon_bed", self.config.path_exon_bed
+        if self.config.depends_on.exons:
+            yield "exon_bed", self.parent.get_upstream_paths("exons").bed
         # VCF
         tpl = (
             f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
@@ -273,7 +273,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         return {
             "config": self.config.model_dump(
                 by_alias=True,
-                exclude={"path_db", "path_refseq_ser", "path_ensembl_ser", "path_exon_bed"},
+                exclude={"path_db", "path_refseq_ser", "path_ensembl_ser"},
             )
         }
 

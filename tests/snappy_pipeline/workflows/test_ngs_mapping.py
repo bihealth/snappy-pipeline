@@ -1,0 +1,25 @@
+# -*- coding: utf-8 -*-
+"""Tests for the config model of the ``ngs_mapping`` step."""
+
+import pydantic
+import pytest
+
+from snappy_pipeline.workflows.ngs_mapping.model import NgsMapping
+
+STAR_DEPENDS_ON = {
+    "reads": "data_sets",
+    "reference": "genome",
+    "index": "star",
+    "features": "genes",
+}
+
+
+def test_star_requires_exons():
+    with pytest.raises(pydantic.ValidationError, match="tool=star needs depends_on.exons"):
+        NgsMapping(tool="star", star={}, depends_on=STAR_DEPENDS_ON)
+
+
+def test_star_infers_the_strand_without_a_strandedness_section():
+    # The strandedness rule runs for every RNA library and its wrapper reads both values.
+    config = NgsMapping(tool="star", star={}, depends_on=STAR_DEPENDS_ON | {"exons": "exons"})
+    assert config.strandedness.model_dump() == {"strand": -1, "threshold": 0.85}

@@ -7,6 +7,7 @@ from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    Exons,
     ExpectedPathSchema,
     Features,
     Reference,
@@ -25,9 +26,6 @@ class Featurecounts(SnappyModel):
 
 
 class Strandedness(SnappyModel):
-    path_exon_bed: str
-    """needs column 6 with strand info, e.g. CCDS/15/GRCh37/CCDS.bed"""
-
     threshold: float = 0.85
 
 
@@ -74,7 +72,7 @@ class Tool(enum.StrEnum):
 #: The ``depends_on`` fields each tool reads. ``strandedness`` is the decision of a
 #: ``tool: strandedness`` task.
 TOOL_DEPENDENCIES = {
-    Tool.strandedness: ("alignments",),
+    Tool.strandedness: ("alignments", "exons"),
     Tool.featurecounts: ("alignments", "strandedness", "features"),
     Tool.dupradar: ("alignments", "strandedness"),
     Tool.duplication: ("alignments", "strandedness"),
@@ -114,6 +112,10 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
     reference: Reference = ""
 
     features: Features = ""
+
+    exons: Exons = ""
+    """Task with a BED file of transcripts with their strand in column 6; needed for
+    ``tool: strandedness``"""
 
 
 class GeneExpressionQuantification(SnappyStepModel):

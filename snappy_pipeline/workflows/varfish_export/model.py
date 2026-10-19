@@ -4,6 +4,7 @@ from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    Exons,
     ExpectedPathSchema,
     Reference,
 )
@@ -34,6 +35,9 @@ class VarfishExportDependsOn(SnappyModel):
 
     reference: Reference
 
+    exons: Exons = ""
+    """Optional task with a BED file of exons; the export keeps only the small variants near them"""
+
 
 class VarfishExport(SnappyStepModel):
     """Configuration of the input path enables export from the corresponding pipeline step."""
@@ -46,9 +50,6 @@ class VarfishExport(SnappyStepModel):
     # The following configuration is used for parameterizing the output itself.
     release: str = "GRCh37"
     """The release of the genome reference that data has been aligned to."""
-
-    path_exon_bed: str
-    """Path to BED file with exons; used for reducing data to near-exon small variants."""
 
     path_mehari_db: str
     """Path to mehari database."""

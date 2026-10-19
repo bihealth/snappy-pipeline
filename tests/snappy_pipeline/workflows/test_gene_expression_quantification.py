@@ -84,3 +84,9 @@ def test_quantifiers_require_a_strandedness_task(tool):
 def test_salmon_requires_reads():
     with pytest.raises(pydantic.ValidationError, match="tool=salmon needs depends_on.reads"):
         GeneExpressionQuantification(tool="salmon", salmon=_tool_section("salmon"))
+
+
+def test_strandedness_requires_exons():
+    depends_on = {"alignments": "mapping"}
+    with pytest.raises(pydantic.ValidationError, match="tool=strandedness needs depends_on.exons"):
+        GeneExpressionQuantification(tool="strandedness", depends_on=depends_on, strandedness={})

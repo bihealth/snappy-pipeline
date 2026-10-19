@@ -103,7 +103,7 @@ STAR writes counts for unstranded, forward and reverse protocols.
 The step keeps the column of the library's strand and publishes it as ``GeneCounts.tab``.
 The strand is the configured protocol (0 unstranded, 1 forward, 2 reverse).
 Without it, the step infers the strand with ``infer_experiment`` from RSeQC.
-That needs a BED file of non-overlapping, sorted intervals of ubiquitously expressed genes with well-defined strand (12 columns, 6 also work).
+``infer_experiment`` runs in both cases and reads the BED file of ``depends_on.exons``: non-overlapping, sorted intervals of ubiquitously expressed genes with well-defined strand (12 columns, 6 also work).
 
 With ``transcriptome: true``, STAR also writes the reads mapped to the transcriptome to a BAM file.
 It is not indexed, because it has no positional order.
@@ -463,8 +463,7 @@ class StrandednessStepPart(BaseStepPart):
     def _get_input_files_infer(self, wildcards):
         # Must reference the mapper-specific work directory
         inputs = {"bam": "work/{library_name}/out/{library_name}.bam".format(**wildcards)}
-        if (strandedness := self.config.strandedness) and strandedness.path_exon_bed:
-            inputs["exon_bed"] = strandedness.path_exon_bed
+        inputs["exon_bed"] = self.parent.get_upstream_paths("exons").bed
         return inputs
 
     def _get_input_files_counts(self, wildcards):
@@ -505,10 +504,8 @@ class StrandednessStepPart(BaseStepPart):
         return {"log": "work/{library_name}/log/{library_name}.strandedness.log"}
 
     def _get_params_infer(self, wildcards: Wildcards) -> dict[str, Any]:
-        cfg = getattr(self.config, "strandedness", None)
-        config_dump = cfg.model_dump(by_alias=True, exclude={"path_exon_bed"}) if cfg else {}
         return {
-            "config": config_dump,
+            "config": self.config.strandedness.model_dump(by_alias=True),
             "library_name": wildcards.library_name,
         }
 

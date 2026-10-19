@@ -181,30 +181,31 @@ STAR_INDEX = (
     {"produces": {"type": "index", "tags": ["star", "rna"]}},
 )
 STAR_INDEX[2]["files"] = {"index": "/refs/star"}
+EXONS = ("external_data", "exons", {"produces": {"type": "raw", "tags": ["exons"]}})
+EXONS[2]["files"] = {"bed": "/refs/exons.bed"}
 
 
 def test_load_project_rejects_rna_alignments_for_variant_calling():
-    star = _mapping(
-        "star", depends_on={"features": "genes", "index": "star_index"}, tool="star", star={}
-    )
+    depends_on = {"features": "genes", "index": "star_index", "exons": "exons"}
+    star = _mapping("star", depends_on=depends_on, tool="star", star={})
     with pytest.raises(
         ValueError,
         match=r"Task 'calling': depends_on.alignments requires alignments \[dna\], "
         r"but task 'star' produces alignments \[rna\]",
     ):
-        load_project(_config(GENES, STAR_INDEX, star, _calling(mapping="star")), WORK_DIR)
+        load_project(_config(GENES, STAR_INDEX, EXONS, star, _calling(mapping="star")), WORK_DIR)
 
 
 def test_load_project_rejects_dna_alignments_for_expression_quantification():
-    strandedness = {"tool": "strandedness", "strandedness": {"path_exon_bed": "/refs/exons.bed"}}
+    strandedness = {"tool": "strandedness", "strandedness": {}}
     expression = ("gene_expression_quantification", "expression", strandedness)
-    expression[2]["depends_on"] = {"alignments": "mapping"}
+    expression[2]["depends_on"] = {"alignments": "mapping", "exons": "exons"}
     with pytest.raises(
         ValueError,
         match=r"Task 'expression': depends_on.alignments requires alignments \[rna\], "
         r"but task 'mapping' produces alignments \[dna\]",
     ):
-        load_project(_config(_mapping(), expression), WORK_DIR)
+        load_project(_config(EXONS, _mapping(), expression), WORK_DIR)
 
 
 def test_load_project_requires_depends_on_keys():

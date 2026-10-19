@@ -149,8 +149,8 @@ class MehariStepPart(BaseStepPart):
         yield "transcript_db", str(prefix / "seqvars" / "txs.bin.zst")
         yield "clinvar_db", str(prefix / "seqvars" / "clinvar" / "rocksdb")
         yield "frequency_db", str(prefix / "seqvars" / "frequencies" / "rocksdb")
-        if self.config.path_exon_bed:
-            yield "exon_bed", self.config.path_exon_bed
+        if self.config.depends_on.exons:
+            yield "exon_bed", self.parent.get_upstream_paths("exons").bed
 
     @dictify
     def _get_output_files_annotate_seqvars(self):

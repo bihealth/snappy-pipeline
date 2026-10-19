@@ -15,6 +15,7 @@ from snappy_pipeline.models import (
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    Exons,
     ExpectedPathSchema,
     Features,
     Kits,
@@ -76,6 +77,10 @@ class NgsMappingDependsOn(SnappyModel):
     features: Features = ""
 
     kits: Kits = ""
+
+    exons: Exons = ""
+    """Task with a BED file of ubiquitously expressed genes with a well-defined strand; needed
+    for star, which infers the strandedness from it."""
 
 
 class DnaMapper(StrEnum):
@@ -258,9 +263,6 @@ class Strand(enum.IntEnum):
 
 
 class Strandedness(SnappyModel):
-    path_exon_bed: str
-    """Location of usually highly expressed genes. Known protein coding genes is a good choice"""
-
     strand: Strand = Strand.UNKNOWN
     """-1: unknown value, use infer_, 0: unstranded, 1: forward, 2: reverse (from featurecounts)"""
 
@@ -283,7 +285,7 @@ class Mbcs(SnappyModel):
     recalibrate: bool = True
 
 
-TOOL_DEPENDENCIES = {Tool.star: ("features",)}
+TOOL_DEPENDENCIES = {Tool.star: ("features", "exons")}
 
 
 class NgsMapping(SnappyStepModel):
@@ -314,7 +316,7 @@ class NgsMapping(SnappyStepModel):
     star: Star | None = None
     """Configuration for STAR"""
 
-    strandedness: Strandedness | None = None
+    strandedness: Strandedness = Strandedness()
 
     minimap2: Minimap2 | None = None
 
