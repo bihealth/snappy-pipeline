@@ -52,10 +52,6 @@ class BcftoolsStats(ToggleModel):
     pass
 
 
-class JannovarStats(ToggleModel):
-    path_ser: str
-
-
 class BcftoolsRoh(ToggleModel):
     path_af_file: str
 
@@ -182,8 +178,6 @@ class VariantCalling(SnappyStepModel):
     baf_file_generation: BafFileGeneration = BafFileGeneration()
 
     bcftools_stats: BcftoolsStats | None = None
-
-    jannovar_stats: JannovarStats | None = None
 
     bcftools_roh: BcftoolsRoh | None = None
 

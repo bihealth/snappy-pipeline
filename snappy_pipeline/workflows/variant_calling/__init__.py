@@ -55,9 +55,6 @@ The enabled statistics are published below ``{library_name}/report/``, with ``.m
 ``bcftools_stats``
     ``bcftools stats`` per donor of each cohort: ``bcftools_stats/{library_name}.{donor_library_name}.txt``.
 
-``jannovar_stats``
-    Jannovar statistics per cohort: ``jannovar_stats/{library_name}.txt``.
-
 ``bcftools_roh``
     Runs of homozygosity with ``bcftools roh``: ``roh/{library_name}.txt``.
     With ``depends_on.kits``, the regions are the ``targets`` of the kit of the targeted libraries in the VCF, which must share one kit.
@@ -520,45 +517,6 @@ class BcftoolsRohStepPart(ReportStepPart):
             yield key, f"{base_path}{ext}"
 
 
-class JannovarStatisticsStepPart(ReportStepPart):
-    """Base class for VCF statistics computation with "jannovar statistics"
-
-    Statistics are computed overall and per-sample
-    """
-
-    name = "jannovar_stats"
-    report_per_donor = False
-    published_keys = ("report", "report_md5")
-    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem=f"{int(3.75 * 1024 * 2)}MB")
-
-    @dictify
-    def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
-        """Return path to input files"""
-        yield (
-            "vcf",
-            "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
-        )
-        yield "path_ser", self.config.jannovar_stats.path_ser
-
-    def get_output_files(self, action) -> SnakemakeDict:
-        """Return step part output files"""
-        self._validate_action(action)
-        return getattr(self, f"_get_output_files_{action}")()
-
-    @dictify
-    def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        """Return output files that all germline variant calling sub steps must return (VCF +
-        TBI file)
-        """
-        base_path = "work/{index_library_name}/report/jannovar_stats/{index_library_name}"
-        ext_names = {"report": ".txt", "report_md5": ".txt.md5"}
-        for key, ext in ext_names.items():
-            yield key, f"{base_path}{ext}"
-
-    def _get_params_run(self, wildcards):
-        return {"path_ser": self.config.get(self.name).get("path_ser")}
-
-
 class BafFileGenerationStepPart(ReportStepPart):
     """Class for computing B allele fraction files.
 
@@ -963,7 +921,6 @@ class VariantCallingWorkflow(BaseStep):
                 selected_caller,
                 BcftoolsStatsStepPart,
                 BcftoolsRohStepPart,
-                JannovarStatisticsStepPart,
                 BafFileGenerationStepPart,
             )
         )
@@ -980,7 +937,7 @@ class VariantCallingWorkflow(BaseStep):
     def get_result_files(self) -> list[str]:
         """The files of the caller and of the enabled reports"""
         names = [self.config.tool]
-        for name in ("baf_file_generation", "bcftools_stats", "jannovar_stats", "bcftools_roh"):
+        for name in ("baf_file_generation", "bcftools_stats", "bcftools_roh"):
             name_config = self.config.get(name)
             if name_config and name_config.enabled:
                 names.append(name)

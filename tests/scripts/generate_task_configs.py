@@ -465,7 +465,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("variant_calling", None): {
         "baf_file_generation": {"enabled": False, "min_dp": 10},
         "bcftools_stats": {"enabled": False},
-        "jannovar_stats": {"enabled": False, "path_ser": "AUTO"},
         "bcftools_roh": {
             "enabled": False,
             "path_af_file": "AUTO",
