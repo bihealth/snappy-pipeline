@@ -10,6 +10,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     ExpectedPathSchema,
     Reference,
+    Regions,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -33,22 +34,12 @@ class Bcftools(SnappyModel):
         return self
 
 
-class Regions(SnappyModel):
-    include: str = ""
-    exclude: str = ""
-    path_bed: Annotated[str, Field(deprecated="Use 'exclude' instead")] = ""
-    mode: Literal["tag", "filter"] = "tag"
+class RegionsFilter(SnappyModel):
+    action: Literal["include", "exclude"]
+    """``exclude`` applies the filter to the variants inside the regions of ``depends_on.regions``,
+    ``include`` to the variants outside them."""
 
-    @model_validator(mode="after")
-    def ensure_exactly_one(self) -> Self:
-        n = sum(bool(v) for v in (self.include, self.exclude, self.path_bed))
-        if n == 0:
-            raise ValueError("One of 'include', 'exclude', or 'path_bed' must be set for regions")
-        if n > 1:
-            raise ValueError(
-                "Only one of 'include', 'exclude', or 'path_bed' may be set for regions"
-            )
-        return self
+    mode: Literal["tag", "filter"] = "tag"
 
 
 class Vembrane(SnappyModel):
@@ -145,6 +136,9 @@ class VariantFiltrationDependsOn(SnappyModel):
     reference: Reference = ""
     """Needed by ``dkfz`` and ``ebfilter`` only"""
 
+    regions: Regions = ""
+    """Task with the BED file of the ``regions`` filter"""
+
 
 class VariantFiltration(SnappyStepModel):
     depends_on: VariantFiltrationDependsOn
@@ -154,7 +148,7 @@ class VariantFiltration(SnappyStepModel):
 
     bcftools: Bcftools | None = None
     vembrane: Vembrane | None = None
-    regions: Regions | None = None
+    regions: RegionsFilter | None = None
     dkfz: Dkfz = Field(default_factory=Dkfz)
     ebfilter: Ebfilter | None = None
 
@@ -174,5 +168,7 @@ class VariantFiltration(SnappyStepModel):
             raise ValueError(f"depends_on.alignments is required when tool is '{self.tool}'")
         if self.tool in _BAM_TOOLS and not self.depends_on.reference:
             raise ValueError(f"depends_on.reference is required when tool is '{self.tool}'")
+        if self.tool == "regions" and not self.depends_on.regions:
+            raise ValueError("depends_on.regions is required when tool is 'regions'")
 
         return self

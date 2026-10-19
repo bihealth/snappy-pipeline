@@ -479,7 +479,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "gatk_read_backed_phasing": {"num_jobs": Overwrite(2)}
     },
     ("variant_filtration", "bcftools"): {"bcftools": {"exclude": "FILTER ~ 'low_depth'"}},
-    ("variant_filtration", "regions"): {"regions": {"exclude": REFERENCE}},
+    ("variant_filtration", "regions"): {"regions": {"action": "exclude"}},
     ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},
     ("wgs_cnv_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("wgs_sv_export_external", None): VARIANT_EXPORT_EXTERNAL,
@@ -495,7 +495,7 @@ def _external_file(
 
 def _external_kits(name: str) -> dict[str, Any]:
     regions = {"targets": Fixture("cnvkit_targets"), "baits": Fixture("cnvkit_targets")}
-    config = {"produces": {"type": "raw", "tags": ["kits"]}, "kits": {"MedExome": regions}}
+    config = {"produces": {"type": "regions", "tags": ["kits"]}, "kits": {"MedExome": regions}}
     return {"step": "external_data", "name": name, "config": config}
 
 
@@ -506,14 +506,16 @@ def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
     return {"step": "external_data", "name": name, "config": config}
 
 
-#: external_data tasks besides the step's own one: the reference data, the exons, the regions of
-#: the kit of the test libraries (MedExome), and the inputs of the external export steps. features
-#: and dbsnp name the reference FASTA, as no test reads them.
+#: external_data tasks besides the step's own one: the reference data, the exons, regions for the
+#: regions filter, the regions of the kit of the test libraries (MedExome), and the inputs of the
+#: external export steps. features, dbsnp and regions name the reference FASTA, as no test reads
+#: them.
 EXTRA_TASKS: list[dict[str, Any]] = [
     _external_file("genome", "raw", ["reference", "dna"], "fasta"),
     _external_file("features", "raw", ["features"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf"),
-    _external_file("exons", "raw", ["exons"], "bed", PLACEHOLDER),
+    _external_file("exons", "regions", ["exons"], "bed", PLACEHOLDER),
+    _external_file("regions", "regions", [], "bed"),
     _external_kits("kits"),
     _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
     _external_vcfs("external_cnv", ["germline", "cnv"]),
@@ -601,6 +603,10 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
         depends_on["panel_of_normals"] = f"{step_name}_mutect2"
     if step_name == "panel_of_normals" and tool == "cnvkit":
         depends_on["access"] = f"{step_name}_access"
+
+    # Only the regions filter reads regions.
+    if step_name == "variant_filtration" and tool == "regions":
+        depends_on["regions"] = "regions"
 
     # Read-backed phasing refines the result of phasing by transmission.
     if step_name == "variant_phasing" and tool == "gatk_read_backed_phasing":

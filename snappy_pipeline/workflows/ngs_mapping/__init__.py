@@ -76,7 +76,7 @@ A ``libraryKit`` that the kits task lacks is an error.
     - step: external_data
       name: kits
       config:
-        produces: {type: raw, tags: [kits]}
+        produces: {type: regions, tags: [kits]}
         kits:
           V5_noUTR:
             targets: resources/v5.bed

@@ -37,7 +37,7 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
       - name: exons
         step: external_data
         config:
-          produces: {type: raw, tags: [exons]}
+          produces: {type: regions, tags: [exons]}
           files: {bed: resources/exons.bed}
       - name: star_index
         step: external_data

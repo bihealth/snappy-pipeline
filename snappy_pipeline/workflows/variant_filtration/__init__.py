@@ -12,7 +12,8 @@ Chain several tasks for a sequence of filters.
     Expression-based filtering with ``vembrane``.
 
 ``regions``
-    Filtering by regions in a BED file.
+    Filtering by the regions of a BED file, from the task in ``depends_on.regions``.
+    ``action: exclude`` applies the filter to the variants inside the regions, ``include`` to those outside.
 
 ``dkfz``
     DKFZ bias filter.
@@ -25,6 +26,34 @@ Chain several tasks for a sequence of filters.
 The ``bcftools``, ``vembrane`` and ``regions`` filters have a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
 The task produces one VCF per tumor library.
 Its output has the input's tags plus ``filtered``.
+
+The example tags the variants in regions of low mappability, from a BED file of an ``external_data`` task:
+
+.. code-block:: yaml
+
+    tasks:
+      - step: external_data
+        name: calls
+        config:
+          produces: {type: variants, tags: [somatic, snv, indel]}
+          search_paths: [/data/calls]
+          search_patterns:
+            - {vcf: '.+\\.vcf\\.gz', vcf_tbi: '.+\\.vcf\\.gz\\.tbi'}
+
+      - step: external_data
+        name: low_mappability
+        config:
+          produces: {type: regions, tags: [mappability]}
+          files: {bed: /refs/GRCh38/low_mappability.bed}
+
+      - step: variant_filtration
+        name: mappability_filter
+        config:
+          depends_on:
+            variants: calls
+            regions: low_mappability
+          tool: regions
+          regions: {action: exclude, mode: tag}
 
 Outputs
 -------
@@ -218,11 +247,8 @@ class RegionsStepPart(VariantFiltrationStepPart):
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        cfg = self.config.regions
-        if cfg.include:
-            yield "include", cfg.include
-        else:
-            yield "exclude", cfg.exclude or cfg.path_bed
+        # The wrapper reads the BED file as input "include" or "exclude"
+        yield self.config.regions.action, self.parent.get_upstream_paths("regions").bed
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"filter_name": self.filter_name, "mode": self.config.regions.mode}

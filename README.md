@@ -4,6 +4,9 @@
 
 A Snakemake-based pipeline for processing NGS data: read mapping, variant calling, annotation, filtration and more.
 A project is a list of tasks in one `config.yaml`, and each task names the tasks it reads from.
+Existing files, such as the genome, mapper indexes or BED files of regions, also come from tasks (`external_data`).
+Only files that belong to the setup of one tool and do not depend on the reference, such as a script, are paths in that tool's section.
+The [overview](docs/overview.md) explains the difference.
 
 ## Quick Install
 

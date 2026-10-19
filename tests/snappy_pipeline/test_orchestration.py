@@ -41,7 +41,7 @@ KITS = (
     "external_data",
     "kits",
     {
-        "produces": {"type": "raw", "tags": ["kits"]},
+        "produces": {"type": "regions", "tags": ["kits"]},
         "kits": {"MedExome": {"targets": "/refs/t.bed", "baits": "/refs/b.bed"}},
     },
 )
@@ -181,7 +181,7 @@ STAR_INDEX = (
     {"produces": {"type": "index", "tags": ["star", "rna"]}},
 )
 STAR_INDEX[2]["files"] = {"index": "/refs/star"}
-EXONS = ("external_data", "exons", {"produces": {"type": "raw", "tags": ["exons"]}})
+EXONS = ("external_data", "exons", {"produces": {"type": "regions", "tags": ["exons"]}})
 EXONS[2]["files"] = {"bed": "/refs/exons.bed"}
 
 
@@ -266,6 +266,33 @@ def test_external_data_is_checked_against_requirements_and_schemas():
         ValueError, match="depends_on.alignments needs bai, which task 'bams' does not provide"
     ):
         load_project(_config(bams, _calling(mapping="bams")), WORK_DIR)
+
+
+def test_regions_filter_reads_any_bed_file_of_regions():
+    vcfs = _external(
+        "vcfs", "variants", ["germline"], files={"vcf": "/x.vcf.gz", "vcf_tbi": "/x.tbi"}
+    )
+    config = {
+        "depends_on": {"variants": "vcfs"},
+        "tool": "regions",
+        "regions": {"action": "exclude"},
+    }
+    filtration = ("variant_filtration", "filtration", config)
+    with pytest.raises(pydantic.ValidationError, match="depends_on.regions is required"):
+        load_project(_config(vcfs, EXONS, KITS, filtration), WORK_DIR)
+
+    config["depends_on"]["regions"] = "exons"
+    load_project(_config(vcfs, EXONS, KITS, filtration), WORK_DIR)
+
+    config["depends_on"]["regions"] = "genome"
+    with pytest.raises(ValueError, match=r"depends_on.regions requires regions, but task 'genome'"):
+        load_project(_config(vcfs, EXONS, KITS, filtration), WORK_DIR)
+
+    config["depends_on"]["regions"] = "kits"
+    with pytest.raises(
+        ValueError, match="depends_on.regions needs bed, which task 'kits' does not"
+    ):
+        load_project(_config(vcfs, EXONS, KITS, filtration), WORK_DIR)
 
 
 @pytest.mark.parametrize(

@@ -50,7 +50,7 @@ def step(monkeypatch, mocker, tmp_path):
             {
                 "step": "external_data",
                 "name": "kits",
-                "config": {"produces": {"type": "raw", "tags": ["kits"]}, "kits": kits},
+                "config": {"produces": {"type": "regions", "tags": ["kits"]}, "kits": kits},
             },
             {
                 "step": "kit_consumer",

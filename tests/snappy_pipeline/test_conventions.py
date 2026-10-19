@@ -169,6 +169,7 @@ def test_step_snakefiles_fetch_their_workflow_object():
 DEPENDS_ON_KEYS = {
     "reads",
     "kits",
+    "regions",
     "alignments",
     "variants",
     "somatic_variants",

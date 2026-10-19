@@ -10,6 +10,7 @@ DATA_SETS = "data_sets"
 
 class DataType(StrEnum):
     RAW = "raw"
+    REGIONS = "regions"
     INDEX = "index"
     ALIGNMENTS = "alignments"
     VARIANTS = "variants"
@@ -105,8 +106,8 @@ class ExpectedKits(BaseModel):
     baits: str
 
 
-class ExpectedExons(BaseModel):
-    """A BED file of exons."""
+class ExpectedRegions(BaseModel):
+    """A BED file of regions."""
 
     bed: str
 
@@ -123,13 +124,14 @@ Features = Annotated[
 Dbsnp = Annotated[
     str, DataSignature(DataType.VARIANTS, frozenset({"dbsnp"})), ExpectedPathSchema(ExpectedDbsnp)
 ]
-#: ``depends_on`` field type for the files per enrichment kit: an ``external_data`` task with
-#: ``kits``, read with ``BaseStep.library_kit_paths()``
-Kits = Annotated[
-    str, DataSignature(DataType.RAW, frozenset({"kits"})), ExpectedPathSchema(ExpectedKits)
-]
-#: ``depends_on`` field type for a BED file of exons: an ``external_data`` task with
-#: ``files: {bed: ...}``
+#: ``depends_on`` field types for regions (``type: regions``), usually ``external_data`` tasks.
+#: ``Regions`` accepts any BED file of regions, the others add a tag for what the regions are.
+Regions = Annotated[str, DataSignature(DataType.REGIONS), ExpectedPathSchema(ExpectedRegions)]
 Exons = Annotated[
-    str, DataSignature(DataType.RAW, frozenset({"exons"})), ExpectedPathSchema(ExpectedExons)
+    str, DataSignature(DataType.REGIONS, frozenset({"exons"})), ExpectedPathSchema(ExpectedRegions)
+]
+#: The files per enrichment kit: an ``external_data`` task with ``kits``, read with
+#: ``BaseStep.library_kit_paths()``
+Kits = Annotated[
+    str, DataSignature(DataType.REGIONS, frozenset({"kits"})), ExpectedPathSchema(ExpectedKits)
 ]

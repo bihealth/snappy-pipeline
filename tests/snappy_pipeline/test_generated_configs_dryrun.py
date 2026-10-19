@@ -89,6 +89,7 @@ EXPECTED_EMPTY = {
     "dbsnp": "provides existing files; has no rules",
     "exons": "provides existing files; has no rules",
     "kits": "provides existing files; has no rules",
+    "regions": "provides existing files; has no rules",
     "external_vcf": "provides existing files; has no rules",
     "external_cnv": "provides existing files; has no rules",
     "external_sv": "provides existing files; has no rules",

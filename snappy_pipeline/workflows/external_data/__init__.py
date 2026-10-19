@@ -16,6 +16,9 @@ A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its 
 Kit names may contain letters, digits, ``_``, ``.`` and ``-``, and every kit has the same keys.
 Steps read the kit regions through ``depends_on.kits``, which needs the keys ``targets`` and ``baits`` (BED files; give one file twice if the kit has only one).
 
+BED files of regions have ``type: regions``.
+A single BED file has the key ``bed``, as in ``files: {bed: /refs/GRCh38/blacklist.bed}``, and tags say what the regions are, such as ``exons``.
+
 The output keys must be the keys that the consumer reads through its ``depends_on`` field.
 Their names are checked against that field when the project loads.
 
@@ -78,7 +81,7 @@ The regions of two exome kits, read by the coverage report of ``ngs_mapping``:
       - step: external_data
         name: kits
         config:
-          produces: {type: raw, tags: [kits]}
+          produces: {type: regions, tags: [kits]}
           kits:
             Agilent_SureSelect_V6:
               targets: /refs/GRCh38/kits/SureSelect_V6.covered.bed

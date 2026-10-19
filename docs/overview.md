@@ -164,9 +164,80 @@ tasks:
         - { vcf: '.+\.hard-filtered\.vcf\.gz', vcf_tbi: '.+\.hard-filtered\.vcf\.gz\.tbi' }
 ```
 
+### Dependencies and task-local files
+
+A task gets its input files in one of two ways.
+A dependency comes from another task, named in `depends_on`.
+A task-local file is a path in the task's tool section.
+
+A dependency is data that the pipeline knows.
+It has a type and tags, and the consumer checks both, and the keys it reads, when the project loads.
+Reference data is a dependency too: the genome, the gene annotation, enrichment kits, exons and other regions, and the indexes of the mappers.
+`external_data` tasks provide existing files, and `reference_index` tasks build indexes.
+Several tasks can read one such task.
+So each reference file is named once, and a switch to another genome build only changes these tasks.
+
+A file that only one tool reads can still be a dependency.
+A mapper index has a format that only its mapper reads, but it must match the genome that the other tasks use.
+Its type is `index`, and its tags name the tool and the molecule, as for `bwa_index` in the example above.
+
+A task-local file belongs to the setup of one tool and does not depend on the reference or other data of the project.
+Examples are a jar or a Python file with helper functions for vembrane.
+Snappy passes the file to the rule as an input.
+Snakemake checks that it exists when a job needs it and reruns jobs when it changes, but nothing checks what the file is.
+
+To decide, ask whether the file must match the reference or other data of the project.
+If so, it is a dependency, even if only one tool reads it.
+Otherwise it is a task-local file.
+
+BED files of regions have the type `regions` and the key `bed`.
+The regions filter of `variant_filtration` accepts any of them in `depends_on.regions`.
+Steps that need a certain kind of regions require a tag, for example `exons` for the strandedness of STAR.
+
+This project tags the variants in blacklisted regions.
+It then keeps the variants for which a function from a local Python file returns true:
+
+```yaml
+tasks:
+  - name: calls
+    step: external_data
+    config:
+      produces: {type: variants, tags: [germline, snv, indel]}
+      search_paths: [/path/to/calls]
+      search_patterns:
+        - { vcf: '.+\.vcf\.gz', vcf_tbi: '.+\.vcf\.gz\.tbi' }
+
+  - name: blacklist
+    step: external_data
+    config:
+      produces: {type: regions, tags: [blacklist]}
+      files: {bed: /path/to/blacklist.bed}
+
+  - name: blacklist_filter
+    step: variant_filtration
+    config:
+      depends_on:
+        variants: calls
+        regions: blacklist  # a dependency
+      tool: regions
+      regions: {action: exclude, mode: tag}
+
+  - name: lab_filter
+    step: variant_filtration
+    config:
+      depends_on:
+        variants: blacklist_filter
+      tool: vembrane
+      vembrane:
+        mode: filter
+        expression: 'is_reportable(QUAL, INFO["DP"])'
+        context_files: [filters/lab_rules.py]  # a task-local file
+```
+
 ### Relative paths
 
-Relative paths in the configuration are looked up in the project directory, then in its parent directory.
+Relative paths in the configuration are relative to the project directory, which `snappy run` makes the working directory of Snakemake.
+Sample sheets are also looked up in the parent directory of the project.
 Absolute paths are not changed.
 
 ## How FASTQ files are found

@@ -8,7 +8,7 @@ tasks:
   - name: kits
     step: external_data
     config:
-      produces: {type: raw, tags: [kits]}
+      produces: {type: regions, tags: [kits]}
       kits:
         MedExome:
           targets: resources/Exome-MedExome.chr12.bed

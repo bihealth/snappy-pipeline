@@ -85,7 +85,7 @@ tasks:
   - name: kits
     step: external_data
     config:
-      produces: {type: raw, tags: [kits]}
+      produces: {type: regions, tags: [kits]}
       kits:
         MedExome: {targets: /path/to/exome_targets.bed, baits: /path/to/exome_baits.bed}
 
