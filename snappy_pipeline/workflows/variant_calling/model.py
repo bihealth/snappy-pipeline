@@ -10,8 +10,10 @@ from snappy_pipeline.models.parallel import Parallel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    CommonVariants,
     Dbsnp,
     ExpectedPathSchema,
+    GermlineResource,
     Kits,
     Reference,
 )
@@ -113,23 +115,11 @@ class TumorNormalMode(enum.StrEnum):
 
 
 class Contamination(ToggleModel, GATK):
-    common_variants: str = ""
-    """Common germline variants for contamination estimation"""
-
     pileup: GATK = GATK()
     """Parameters for GetPileupSummaries used on the tumor bam (& normalk if present)"""
 
-    @model_validator(mode="after")
-    def ensure_common_variant_when_enabled(self):
-        if self.enabled and not self.common_variants:
-            raise ValueError("Common variants must be present when contamination is enabled")
-        return self
-
 
 class Mutect2(Parallel, GATK):
-    germline_resource: str | None = ""
-    """Germline variants resource (same as panel of normals)"""
-
     contamination: Contamination
     """Estimation of contamination using GetPileupSummaries & CalculateContamination"""
 
@@ -164,6 +154,12 @@ class VariantCallingDependsOn(SnappyModel):
     Optional for ``tool: mutect2``: a ``panel_of_normals`` task with ``tool: mutect2``,
     whose panel VCF Mutect2 uses to filter recurrent artefacts.
     """
+
+    germline_resource: GermlineResource = ""
+    """Optional for ``tool: mutect2``: population allele frequencies (af-only gnomAD VCF)"""
+
+    common_variants: CommonVariants = ""
+    """Required for ``tool: mutect2`` with ``contamination.enabled``: common germline variants"""
 
     kits: Kits = ""
     """Optional: restricts ``bcftools_roh`` to the targets of the (targeted) libraries' kit"""
@@ -207,4 +203,13 @@ class VariantCalling(SnappyStepModel):
     @model_validator(mode="after")
     def validate_tool_dependencies(self):
         validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
+        return self
+
+    @model_validator(mode="after")
+    def ensure_common_variant_when_enabled(self):
+        if self.mutect2 and self.mutect2.contamination.enabled:
+            if not self.depends_on.common_variants:
+                raise ValueError(
+                    "depends_on.common_variants is required when contamination is enabled"
+                )
         return self

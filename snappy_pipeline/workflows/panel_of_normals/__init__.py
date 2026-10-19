@@ -5,6 +5,7 @@ The step builds the background models that somatic variant and copy number calle
 The ``tool`` field selects the model:
 
 - ``mutect2`` creates the Mutect2 panel of normals (VCF) and the GenomicsDB it is built from.
+  It needs ``depends_on.germline_resource``: an ``external_data`` task with ``{type: variants, tags: [population]}`` and the key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle.
 - ``cnvkit`` creates the CNVkit reference from the target, antitarget and coverage files of the normals.
 - ``purecn`` creates the PureCN normal database, the mapping bias and the optimized intervals.
 - ``access`` creates the CNVkit access file (accessible regions) from the reference genome and, optionally, regions to exclude.
@@ -336,7 +337,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "normals": paths,
             "normals_tbi": [path + ".tbi" for path in paths],
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "germline_resource": self.config.mutect2.germline_resource,
+            "germline_resource": self.parent.get_upstream_paths("germline_resource").vcf,
         }
 
     def _get_output_files_scatter(self):

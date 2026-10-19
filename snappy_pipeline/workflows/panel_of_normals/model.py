@@ -11,6 +11,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    GermlineResource,
     Kits,
     Reference,
 )
@@ -47,9 +48,6 @@ class GenomicsDb(GATK):
 class Mutect2(Parallel, GATK):
     path_normals_list: str = ""
     """Optional file listing libraries to include in panel"""
-
-    germline_resource: str
-    """Germline variants resource (same as panel of normals)"""
 
     padding: int = 5000
     """Padding around intervals for scatter/gather"""
@@ -138,6 +136,9 @@ class PanelOfNormalsDependsOn(SnappyModel):
 
     reference: Reference = ""
 
+    germline_resource: GermlineResource = ""
+    """Required for ``tool: mutect2``: population allele frequencies (af-only gnomAD VCF)"""
+
     kits: Kits = ""
     """
     Required for ``tool: purecn``: the baits of the kit of the normals are the bait regions
@@ -151,7 +152,7 @@ class PanelOfNormalsDependsOn(SnappyModel):
 #: The ``depends_on`` fields each tool reads; see also ``validate_purecn_dependencies``.
 TOOL_DEPENDENCIES = {
     Tool.access: ("reference",),
-    Tool.mutect2: ("alignments", "reference"),
+    Tool.mutect2: ("alignments", "reference", "germline_resource"),
     Tool.cnvkit: ("alignments", "reference"),
     Tool.purecn: ("alignments", "reference", "kits"),
 }

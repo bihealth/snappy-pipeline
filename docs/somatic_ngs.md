@@ -79,7 +79,7 @@ Open-source alternatives such as [UMI-tools](https://umi-tools.readthedocs.io/en
 ```
 
 An `mbcs` task with AGeNT looks like this.
-The `agent` paths are inputs of the job, and `bqsr.common_variants` must exist.
+The `agent` paths are inputs of the job.
 
 ```yaml
 - step: ngs_mapping
@@ -90,6 +90,7 @@ The `agent` paths are inputs of the job, and `bqsr.common_variants` must exist.
       reference: genome
       index: bwa_mem2_index
       kits: kits    # external_data task with the targets and baits of each kit
+      common_variants: common_variants    # external_data task with the VCF of common germline variants, for BQSR
     tool: mbcs
     mbcs:
       mapping_tool: bwa_mem2
@@ -113,8 +114,6 @@ The `agent` paths are inputs of the job, and `bqsr.common_variants` must exist.
         input_filter_args: ["-mm 13", "-mr 13", "-mq 30"]
         consensus_filter_args: []
         extra_args: []
-    bqsr:
-      common_variants: /path/to/small_exac_common_3.vcf
 ```
 
 The AGeNT documentation comes with its download.
@@ -124,6 +123,6 @@ Each library names its kit in the sample sheet column `libraryKit`.
 ## Base quality score recalibration
 
 [BQSR should generally be applied](https://gatk.broadinstitute.org/hc/en-us/articles/360035890531-Base-Quality-Score-Recalibration-BQSR).
-It is implemented only in the `mbcs` tool, with `recalibrate: true` (the default) and a `bqsr` section.
+It is implemented only in the `mbcs` tool, with `recalibrate: true` (the default).
 Without barcodes, set `use_barcodes: false` (the default).
-`bqsr.common_variants` is a VCF of common germline variants, for example `small_exac_common_3.vcf` of the GATK resource bundle.
+`depends_on.common_variants` names an `external_data` task with a VCF of common germline variants, for example `small_exac_common_3.vcf` of the GATK resource bundle.

@@ -41,6 +41,12 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: gnomad
+    step: external_data
+    config:
+      produces: {type: variants, tags: [population]}
+      files: {vcf: /path/to/af-only-gnomad.raw.sites.vcf.gz}
+
   - name: bwa_index
     step: external_data
     config:
@@ -63,10 +69,10 @@ tasks:
       depends_on:
         alignments: mapping
         reference: genome
+        germline_resource: gnomad
       tool: mutect2
       ignore_chroms: ['^NC_007605$', '^hs37d5$', '^chrEBV$', '_decoy$', '^HLA-', '^GL000220']  # for hs37d5
       mutect2:
-        germline_resource: /path/to/af-only-gnomad.raw.sites.vcf.gz
         path_normals_list: ""   # empty: all normal libraries
 ```
 

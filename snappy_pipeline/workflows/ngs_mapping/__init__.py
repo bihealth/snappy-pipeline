@@ -119,6 +119,7 @@ Use ``extra_args: ["-C"]`` there when barcodes are present and processed by AGeN
 Only the proprietary `AGeNT <https://www.agilent.com/en/product/next-generation-sequencing/hybridization-based-next-generation-sequencing-ngs/ngs-software/agent-232879>`_ is implemented for barcodes.
 It is not open source and not in ``bioconda``, so it must be installed separately.
 The AGeNT baits file is the ``baits`` file of the library's kit in ``depends_on.kits``.
+BQSR (``recalibrate``, the default) needs ``depends_on.common_variants``: a VCF of common germline variants, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
 
 .. code-block:: yaml
 
@@ -138,8 +139,6 @@ The AGeNT baits file is the ``baits`` file of the library's kit in ``depends_on.
             path: <path to the AGeNT trimmer>
           mark_duplicates:
             path: <path to the AGeNT creak>
-        bqsr:
-          common_variants: <path to common germline variants VCF>
 
 A Snakefile runs the sub-steps (barcode trimming, mapping, consensus merging, BQSR) inside one job.
 The other tools use shell script wrappers.
@@ -391,7 +390,7 @@ class MBCsStepPart(ReadMappingStepPart):
                 "kits", wildcards.library_name
             ).baits
         if self.config.mbcs.recalibrate:
-            inputs["common_variants"] = self.config.bqsr.common_variants
+            inputs["common_variants"] = self.parent.get_upstream_paths("common_variants").vcf
         return inputs
 
     def _get_params_run(self, wildcards: Wildcards):

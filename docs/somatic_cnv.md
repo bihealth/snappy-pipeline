@@ -82,6 +82,18 @@ tasks:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: /path/to/genome.fa}
 
+  - name: gnomad
+    step: external_data
+    config:
+      produces: {type: variants, tags: [population]}
+      files: {vcf: /path/to/af-only-gnomad.raw.sites.vcf.gz}
+
+  - name: common_variants
+    step: external_data
+    config:
+      produces: {type: variants, tags: [common]}
+      files: {vcf: /path/to/small_exac_common_3.vcf.gz}
+
   - name: kits
     step: external_data
     config:
@@ -111,9 +123,9 @@ tasks:
       depends_on:
         alignments: mapping
         reference: genome
+        germline_resource: gnomad
       tool: mutect2
-      mutect2:
-        germline_resource: /path/to/af-only-gnomad.raw.sites.vcf.gz
+      mutect2: {}
 
   - name: pon_purecn
     step: panel_of_normals
@@ -135,15 +147,15 @@ tasks:
         alignments: mapping
         reference: genome
         panel_of_normals: pon_mutect2
+        germline_resource: gnomad
+        common_variants: common_variants
       tool: mutect2
       mutect2:
         extra_arguments:
           - "--genotype-germline-sites true"
           - "--genotype-pon-sites true"
-        germline_resource: /path/to/af-only-gnomad.raw.sites.vcf.gz
         contamination:
           enabled: true
-          common_variants: /path/to/small_exac_common_3.vcf.gz
 
   - name: cnv_purecn
     step: somatic_targeted_seq_cnv_calling

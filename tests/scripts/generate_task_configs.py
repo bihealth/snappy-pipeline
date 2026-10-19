@@ -409,13 +409,11 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "library_selection": DNA,
         "mbcs": {"mapping_tool": "bwa"},
         "bwa": {},
-        "bqsr": {"common_variants": REFERENCE},
     },
     ("ngs_mapping", "star"): {
         "library_selection": RNA,
         "strandedness": {"strand": -1, "threshold": 0.85},
     },
-    ("panel_of_normals", "mutect2"): {"mutect2": {"germline_resource": REFERENCE}},
     ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
     ("reference_index", "star"): {"reference_molecule": Overwrite("rna")},
     ("repeat_expansion", None): {"repeat_catalog": REFERENCE, "repeat_annotation": REFERENCE},

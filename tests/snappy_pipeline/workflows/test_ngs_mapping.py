@@ -23,3 +23,25 @@ def test_star_infers_the_strand_without_a_strandedness_section():
     # The strandedness rule runs for every RNA library and its wrapper reads both values.
     config = NgsMapping(tool="star", star={}, depends_on=STAR_DEPENDS_ON | {"exons": "exons"})
     assert config.strandedness.model_dump() == {"strand": -1, "threshold": 0.85}
+
+
+MBCS_DEPENDS_ON = {"reads": "data_sets", "reference": "genome", "index": "bwa"}
+
+
+def test_mbcs_recalibration_requires_common_variants():
+    with pytest.raises(pydantic.ValidationError, match="needs depends_on.common_variants"):
+        NgsMapping(
+            tool="mbcs",
+            mbcs={"mapping_tool": "bwa"},
+            bwa={},
+            depends_on=MBCS_DEPENDS_ON,
+        )
+
+
+def test_mbcs_without_recalibration_needs_no_common_variants():
+    NgsMapping(
+        tool="mbcs",
+        mbcs={"mapping_tool": "bwa", "recalibrate": False},
+        bwa={},
+        depends_on=MBCS_DEPENDS_ON,
+    )

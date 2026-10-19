@@ -30,6 +30,8 @@ The germline callers produce one result per cohort with ``group_by: cohort``, na
 ``mutect2`` produces one result per tumor library.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
 With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_normals`` task with ``tool: mutect2``, whose panel VCF Mutect2 uses to filter recurrent artefacts.
+``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
+With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
 Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
 
 Outputs
@@ -736,8 +738,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
         input_files["reference"] = self.parent.get_upstream_paths("reference").fasta
 
-        if self.config.mutect2.germline_resource:
-            input_files["germline_resource"] = self.config.mutect2.germline_resource
+        if self.config.depends_on.germline_resource:
+            input_files["germline_resource"] = self.parent.get_upstream_paths(
+                "germline_resource"
+            ).vcf
         if self.config.depends_on.panel_of_normals:
             pon = self.parent.get_upstream_paths("panel_of_normals")
             input_files["panel_of_normals"] = pon.vcf
@@ -784,7 +788,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "common_variants": self.config.mutect2.contamination.common_variants,
+            "common_variants": self.parent.get_upstream_paths("common_variants").vcf,
         }
 
     def _get_input_files_pileup_tumor(self, wildcards):
@@ -795,7 +799,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "common_variants": self.config.mutect2.contamination.common_variants,
+            "common_variants": self.parent.get_upstream_paths("common_variants").vcf,
         }
 
     def _get_input_files_contamination(self, wildcards: Wildcards):

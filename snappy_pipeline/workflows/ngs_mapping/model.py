@@ -5,7 +5,6 @@ from typing import Annotated
 from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import (
-    ResolvablePath,
     SizeString,
     SnappyModel,
     SnappyStepModel,
@@ -13,6 +12,7 @@ from snappy_pipeline.models import (
     validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
+    CommonVariants,
     DataSignature,
     DataType,
     Exons,
@@ -81,6 +81,9 @@ class NgsMappingDependsOn(SnappyModel):
     exons: Exons = ""
     """Task with a BED file of ubiquitously expressed genes with a well-defined strand; needed
     for star, which infers the strandedness from it."""
+
+    common_variants: CommonVariants = ""
+    """Needed by ``tool: mbcs`` with ``recalibrate`` (BQSR)"""
 
 
 class DnaMapper(StrEnum):
@@ -173,11 +176,6 @@ class BwaMem2(BwaMapper):
 
 class BarcodeTool(StrEnum):
     AGENT = "agent"
-
-
-class Bqsr(SnappyModel):
-    common_variants: ResolvablePath
-    """Common germline variants, e.g. ``small_exac_common_3.vcf`` of the GATK resource bundle"""
 
 
 class AgentLibPrepType(StrEnum):
@@ -309,8 +307,6 @@ class NgsMapping(SnappyStepModel):
     bwa_mem2: BwaMem2 | None = None
     """Configuration for BWA-MEM2"""
 
-    bqsr: Bqsr | None = None
-
     agent: Agent | None = None
 
     star: Star | None = None
@@ -340,8 +336,8 @@ class NgsMapping(SnappyStepModel):
                     raise ValueError("mbcs with use_barcodes needs depends_on.kits")
 
             if self.mbcs.recalibrate:
-                if not self.bqsr:
-                    raise ValueError("BQSR configuration required for MBCS")
+                if not self.depends_on.common_variants:
+                    raise ValueError("mbcs with recalibrate needs depends_on.common_variants")
         return self
 
     @model_validator(mode="after")
