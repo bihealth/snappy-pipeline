@@ -474,11 +474,19 @@ def _comment_key_paths_naive(
         same_block = False
         key_line_indent = 0
         key = key_path[0]
+        depth = 0
         for i, line in enumerate(yaml_str.splitlines()):
             line_indent = len(line) - len(line.lstrip())
-            key_match = line.lstrip().startswith(key + ":")
+            # Match keys at their depth only, so that a section such as ``strandedness`` is not
+            # mistaken for ``depends_on.strandedness``
+            key_match = (
+                bool(key_path)
+                and line_indent == depth * INDENTATION
+                and line.lstrip().startswith(key + ":")
+            )
             if key_match:
                 key_path.pop(0)
+                depth += 1
                 if key_path:
                     key = key_path[0]
                     continue

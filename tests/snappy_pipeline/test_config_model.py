@@ -8,6 +8,9 @@ import pytest
 
 from snappy_pipeline.models import validators
 from snappy_pipeline.workflow_model import ConfigModel
+from snappy_pipeline.workflows.gene_expression_quantification.model import (
+    GeneExpressionQuantification,
+)
 
 
 def _minimal_config(**overrides):
@@ -57,3 +60,11 @@ def test_require_tool_dependencies_names_missing_fields():
     validators.require_tool_dependencies(model, required)
     # Tools without an entry need nothing.
     validators.require_tool_dependencies(SimpleNamespace(tool="fastqc"), required)
+
+
+def test_default_config_comments_sections_named_like_depends_on_keys():
+    # gene_expression_quantification has depends_on.strandedness and the optional section of the
+    # strandedness tool
+    lines = GeneExpressionQuantification.default_config_yaml_string().splitlines()
+    assert "#strandedness:" in lines
+    assert "strandedness:" not in lines
