@@ -367,7 +367,7 @@ VARIANT_EXPORT_EXTERNAL = {
     "path_db": PLACEHOLDER,
 }
 
-MELT_FILES = {"jar_file": PLACEHOLDER, "me_refs_path": PLACEHOLDER, "genes_file": PLACEHOLDER}
+MELT_FILES = {"jar_file": PLACEHOLDER, "me_refs_path": PLACEHOLDER}
 
 #: Config of the generated tasks, by (step, tool); (step, None) applies to every tool of a step.
 #: Values fill keys that the default config leaves unset (missing, None, "", "AUTO", [] or
@@ -449,8 +449,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "copy_number_alteration": {"enabled": True},
         "path_gene_id_mappings": PLACEHOLDER,
     },
-    ("somatic_msi_calling", None): {"loci_bed": REFERENCE},
-    ("somatic_purity_ploidy_estimate", "ascat"): {"ascat": {"b_af_loci": PLACEHOLDER}},
     ("somatic_neoepitope_prediction", None): {
         "tool_hla_typing": {
             "dna": {"class_i": "optitype", "class_ii": None},
@@ -460,7 +458,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("somatic_wgs_cnv_calling", "control_freec"): {
         "control_freec": {"path_chrlenfile": PLACEHOLDER, "path_mappability": PLACEHOLDER}
     },
-    ("gcnv_model", None): {"gcnv": {"path_uniquely_mapable_bed": PLACEHOLDER}},
     ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
     ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
     ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},

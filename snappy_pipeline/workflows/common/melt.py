@@ -48,7 +48,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         files = {
             "jar": self.config.melt.jar_file,
             "me_refs": self.config.melt.me_refs_path,
-            "genes": self.config.melt.genes_file,
+            "genes": self.parent.get_upstream_paths("gene_regions").bed,
         }
         return {key: files[key] for key in keys}
 

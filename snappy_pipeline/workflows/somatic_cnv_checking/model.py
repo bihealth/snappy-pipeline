@@ -9,6 +9,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     ExpectedPathSchema,
     Reference,
+    Regions,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -39,6 +40,9 @@ class SomaticCnvCheckingDependsOn(SnappyModel):
 
     reference: Reference
 
+    excluded_regions: Regions = ""
+    """Task with a BED file of regions to be excluded"""
+
 
 class SomaticCnvChecking(SnappyStepModel):
     depends_on: SomaticCnvCheckingDependsOn
@@ -49,9 +53,6 @@ class SomaticCnvChecking(SnappyStepModel):
     WES for somatic_targeted_seq_snv_calling step,
     WGS for somatic_wgs_cnv_calling step
     """
-
-    excluded_regions: str = ""
-    """Bed file of regions to be excluded"""
 
     max_depth: int = 10000
     """Max depth for pileups"""

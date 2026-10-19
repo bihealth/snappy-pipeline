@@ -8,6 +8,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedPathSchema,
+    ExpectedRegions,
     Kits,
     Reference,
 )
@@ -31,14 +32,6 @@ class ExpectedGcnvModel(BaseModel):
     shards: str
 
 
-class Gcnv(SnappyModel):
-    path_par_intervals: str = ""
-    """Path to interval block list with PAR region for contig calling."""
-
-    path_uniquely_mapable_bed: str
-    """path to BED file with uniquely mappable regions."""
-
-
 class GcnvModelDependsOn(SnappyModel):
     alignments: Annotated[
         str,
@@ -51,6 +44,20 @@ class GcnvModelDependsOn(SnappyModel):
     kits: Kits = ""
     """Target regions of the library kits, required for ``intervals: targeted``."""
 
+    mappable_regions: Annotated[
+        str,
+        DataSignature(DataType.REGIONS, frozenset({"mappable"})),
+        ExpectedPathSchema(ExpectedRegions),
+    ]
+    """Task with the BED file of uniquely mappable regions"""
+
+    par_regions: Annotated[
+        str,
+        DataSignature(DataType.REGIONS, frozenset({"par"})),
+        ExpectedPathSchema(ExpectedRegions),
+    ] = ""
+    """Task with the BED file of the pseudo-autosomal regions, excluded from the contig ploidy"""
+
 
 class GcnvModel(SnappyStepModel):
     depends_on: GcnvModelDependsOn
@@ -60,8 +67,6 @@ class GcnvModel(SnappyStepModel):
     ``targeted`` bins the target regions of each library kit, ``wgs`` bins the whole genome
     (one kit, named ``wgs``).
     """
-
-    gcnv: Gcnv
 
     @model_validator(mode="after")
     def check_kits(self):

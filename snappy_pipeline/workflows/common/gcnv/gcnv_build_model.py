@@ -17,7 +17,7 @@ class AnnotateGcMixin:
         kit = wildcards.library_kit
         yield "interval_list", f"work/{kit}/out/{kit}.interval_list"
         yield "reference", self.parent.get_upstream_paths("reference").fasta
-        yield "mappability", self.config.gcnv.path_uniquely_mapable_bed
+        yield "mappability", self.parent.get_upstream_paths("mappable_regions").bed
 
     @dictify
     def _get_output_files_annotate_gc(self):
@@ -79,8 +79,8 @@ class ContigPloidyMixin:
         """
         kit = wildcards.library_kit
         yield "interval_list", f"work/{kit}/out/{kit}.filter_intervals.interval_list"
-        if self.config.gcnv.path_par_intervals:  # PAR regions to exclude
-            yield "par_intervals", self.config.gcnv.path_par_intervals
+        if self.config.depends_on.par_regions:  # PAR regions to exclude
+            yield "par_intervals", self.parent.get_upstream_paths("par_regions").bed
         tsvs = []
         for lib in sorted(
             self.parent.primary_dna_libraries(include_background=True)["library_name"]

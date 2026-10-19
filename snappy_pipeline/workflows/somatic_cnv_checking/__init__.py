@@ -4,6 +4,7 @@
 The step finds heterozygous germline variants in the matched normal and measures their B-allele frequency in the tumor.
 It then merges these frequencies with the segments of a somatic CNV caller.
 This shows whether the copy number calls agree with the allelic imbalance in the tumor.
+The variants in the regions of ``depends_on.excluded_regions`` are left out, if it is set.
 
 The step has no ``tool`` field.
 It gives one result per tumor DNA library, paired with its matched normal.
@@ -131,8 +132,8 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
         filenames["cnv"] = self.parent.get_upstream_paths(
             "copy_number", library_name=wildcards.tumor_library
         ).dnacopy_seg
-        if self.config.excluded_regions:
-            filenames["excluded_regions"] = self.config.excluded_regions
+        if self.config.depends_on.excluded_regions:
+            filenames["excluded_regions"] = self.parent.get_upstream_paths("excluded_regions").bed
         return filenames
 
     @dictify

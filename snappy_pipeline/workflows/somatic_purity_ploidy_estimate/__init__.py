@@ -3,7 +3,7 @@
 
 The step estimates the tumor cell content (purity) and the ploidy of tumor samples from the B-allele frequencies and the coverage of the tumor and its matched normal.
 The ``tool`` field has the value ``ascat``, which runs ASCAT.
-The B-allele frequencies are taken at the loci of ``ascat.b_af_loci``.
+The B-allele frequencies are taken at the loci of the task in ``depends_on.snp_loci``.
 The task gives one result per tumor DNA library.
 
 Whole exome data is not supported yet.
@@ -107,7 +107,7 @@ class AscatStepPart(BaseStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "b_af_loci": self.config.ascat.b_af_loci,
+            "b_af_loci": self.parent.get_upstream_paths("snp_loci").bed,
         }
 
     def _get_input_files_baf_normal(self, wildcards):
@@ -119,7 +119,7 @@ class AscatStepPart(BaseStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "b_af_loci": self.config.ascat.b_af_loci,
+            "b_af_loci": self.parent.get_upstream_paths("snp_loci").bed,
         }
 
     def _get_input_files_cnv_tumor(self, wildcards):

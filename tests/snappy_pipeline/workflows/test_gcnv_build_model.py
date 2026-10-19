@@ -10,10 +10,11 @@ from snappy_pipeline.workflows.common.gcnv.gcnv_build_model import ContigPloidyM
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import PreprocessIntervalsCommonMixin
 
 
-def _part(path_par_intervals):
+def _part(par_regions):
     part = ContigPloidyMixin()
-    part.config = SimpleNamespace(gcnv=SimpleNamespace(path_par_intervals=path_par_intervals))
+    part.config = SimpleNamespace(depends_on=SimpleNamespace(par_regions=par_regions))
     part.parent = SimpleNamespace(
+        get_upstream_paths=lambda field: SimpleNamespace(bed=f"/refs/{field}.bed"),
         primary_dna_libraries=lambda include_background: pd.DataFrame({"library_name": ["P001"]}),
         pedigrees=lambda include_background: {"P001": ["P001"]},
     )
@@ -21,7 +22,7 @@ def _part(path_par_intervals):
     return part
 
 
-@pytest.mark.parametrize("path, expected", [("/refs/par.bed", "/refs/par.bed"), ("", None)])
+@pytest.mark.parametrize("path, expected", [("par", "/refs/par_regions.bed"), ("", None)])
 def test_contig_ploidy_reads_par_intervals_as_input(path, expected):
     inputs = _part(path)._get_input_files_contig_ploidy(SimpleNamespace(library_kit="kit"))
     assert inputs.get("par_intervals") == expected

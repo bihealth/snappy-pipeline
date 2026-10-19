@@ -307,7 +307,8 @@
    "tasks/somatic_cnv_checking/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.normal.vcf.gz.tbi",
    "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor.vcf.gz",
    "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumor.vcf.gz.tbi",
-   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg"
+   "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
    "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"

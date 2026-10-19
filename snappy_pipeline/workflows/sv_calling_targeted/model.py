@@ -9,7 +9,9 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     ExpectedPathSchema,
     Reference,
+    Regions,
 )
+from snappy_pipeline.workflows.common.sv_calling_model import GeneRegions
 from snappy_pipeline.workflows.gcnv_model.model import ExpectedGcnvModel
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -30,8 +32,6 @@ class Gcnv(SnappyModel):
 
 
 class Delly2(SnappyModel):
-    path_exclude_tsv: str | None = None
-
     map_qual: int = 1
 
     geno_qual: int = 5
@@ -64,9 +64,6 @@ class Melt(SnappyModel):
 
     jar_file: str = Field(examples=["MELT.jar"])
 
-    genes_file: str = Field(examples=["add_bed_files/1KGP_Hg19/hg19.genes.bed"])
-    """adjust, e.g., Hg38/Hg38.genes.bed"""
-
     me_refs_path: str = Field(examples=["me_refs"])
 
     skip_libraries: list[str] = []
@@ -92,8 +89,14 @@ class SvCallingTargetedDependsOn(SnappyModel):
     ] = ""
     """Required for ``tool: gcnv``: a ``gcnv_model`` task with ``intervals: targeted``."""
 
+    excluded_regions: Regions = ""
+    """Task with a BED file of regions that ``delly2`` excludes"""
 
-TOOL_DEPENDENCIES = {Tool.gcnv: ("gcnv_model",)}
+    gene_regions: GeneRegions = ""
+    """Required for ``tool: melt``: task with the BED file of genes, such as ``add_bed_files/1KGP_Hg19/hg19.genes.bed`` of MELT"""
+
+
+TOOL_DEPENDENCIES = {Tool.gcnv: ("gcnv_model",), Tool.melt: ("gene_regions",)}
 
 
 class SvCallingTargeted(SnappyStepModel):

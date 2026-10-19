@@ -76,9 +76,13 @@ def test_call_cnvs_reads_the_model_of_its_shard():
 def _model_config(intervals, kits=""):
     return GcnvModel.model_validate(
         {
-            "depends_on": {"alignments": "mapping", "reference": "genome", "kits": kits},
+            "depends_on": {
+                "alignments": "mapping",
+                "reference": "genome",
+                "kits": kits,
+                "mappable_regions": "mappable",
+            },
             "intervals": intervals,
-            "gcnv": {"path_uniquely_mapable_bed": "map.bed"},
         }
     )
 

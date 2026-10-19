@@ -4,6 +4,7 @@
 The step detects microsatellite instability in cancer samples (whole genomes, exomes or large panels).
 The ``tool`` field has the value ``mantis_msi2``, which runs `MANTIS2 <https://github.com/nh13/MANTIS2>`_ on the aligned reads of each tumor and its matched normal.
 MANTIS is not maintained anymore, and MANTIS2 is the only supported version.
+The microsatellite loci come from the task in ``depends_on.microsatellites``.
 The task gives one result per tumor DNA library.
 
 Outputs
@@ -72,7 +73,7 @@ class Mantis2StepPart(BaseStepPart):
             "tumor_bam": tumor.bam,
             "tumor_bai": tumor.bai,
             "reference": self.parent.get_upstream_paths("reference").fasta,
-            "loci_bed": self.config.loci_bed,
+            "loci_bed": self.parent.get_upstream_paths("microsatellites").bed,
         }
 
     def get_normal_lib_name(self, wildcards):

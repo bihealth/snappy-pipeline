@@ -62,8 +62,8 @@ class Delly2StepPart(
         yield "bam", alignments.bam
         yield "bai", alignments.bai
         yield "reference", self.parent.get_upstream_paths("reference").fasta
-        if path_exclude_tsv := dict(self.config.get(self.name))["path_exclude_tsv"]:
-            yield "exclude", path_exclude_tsv
+        if self.config.depends_on.excluded_regions:
+            yield "exclude", self.parent.get_upstream_paths("excluded_regions").bed
 
     @dictify
     def _get_output_files_call(self):

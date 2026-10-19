@@ -6,6 +6,8 @@ The model has two parts, the contig ploidy model (``ploidy-model``) and the CNV 
 The ``gcnv`` tool of :ref:`step_sv_calling_targeted` and :ref:`step_sv_calling_wgs` runs gCNV in case mode with this model.
 These tasks name the model task in ``depends_on.gcnv_model``.
 The step has no ``tool`` field.
+``depends_on.mappable_regions`` gives the uniquely mappable regions, which annotate the intervals.
+The optional ``depends_on.par_regions`` gives the pseudo-autosomal regions, which the contig ploidy model excludes.
 
 The field ``intervals`` selects how the genome is binned:
 
