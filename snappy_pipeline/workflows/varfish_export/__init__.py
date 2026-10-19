@@ -3,6 +3,8 @@
 The step annotates the variants of each pedigree with Mehari and writes files that ``varfish-cli`` imports into VarFish.
 The task has no ``tool`` field.
 It reads the quality control data of ``ngs_mapping`` (``depends_on.alignments``) and the calls of ``variant_calling`` (``depends_on.variants``).
+The Mehari databases come from ``depends_on.database``, an ``external_data`` task of type ``database`` tagged ``mehari``.
+Its ``files`` give the single paths ``hgnc_tsv``, ``transcript_db``, ``clinvar_db`` and ``frequency_db``.
 With ``depends_on.structural_variants``, set to an :ref:`step_sv_calling_targeted` or :ref:`step_sv_calling_wgs` task, it also exports structural variants.
 
 The step writes one result set per pedigree, named after the DNA library of the index.
@@ -28,7 +30,6 @@ The keys ``gts`` and ``db_infos`` (small variants) are the ones downstream tasks
 
 import typing
 import warnings
-from pathlib import Path
 
 from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
@@ -143,12 +144,11 @@ class MehariStepPart(BaseStepPart):
         )
         yield "vcf", [calling.vcf]
 
-        path_mehari_db = Path(self.config.path_mehari_db)
-        prefix = path_mehari_db / self.config.release.lower()
-        yield "hgnc_tsv", str(path_mehari_db / "hgnc.tsv")
-        yield "transcript_db", str(prefix / "seqvars" / "txs.bin.zst")
-        yield "clinvar_db", str(prefix / "seqvars" / "clinvar" / "rocksdb")
-        yield "frequency_db", str(prefix / "seqvars" / "frequencies" / "rocksdb")
+        database = self.parent.get_upstream_paths("database")
+        yield "hgnc_tsv", database.hgnc_tsv
+        yield "transcript_db", database.transcript_db
+        yield "clinvar_db", database.clinvar_db
+        yield "frequency_db", database.frequency_db
         if self.config.depends_on.exons:
             yield "exon_bed", self.parent.get_upstream_paths("exons").bed
 

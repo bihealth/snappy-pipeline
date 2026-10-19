@@ -12,6 +12,13 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignmentQc
 from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 
+class ExpectedMehariDatabase(SnappyModel):
+    hgnc_tsv: str
+    transcript_db: str
+    clinvar_db: str
+    frequency_db: str
+
+
 class VarfishExportDependsOn(SnappyModel):
     alignments: Annotated[
         str,
@@ -35,6 +42,13 @@ class VarfishExportDependsOn(SnappyModel):
 
     reference: Reference
 
+    database: Annotated[
+        str,
+        DataSignature(DataType.DATABASE, frozenset({"mehari"})),
+        ExpectedPathSchema(ExpectedMehariDatabase),
+    ]
+    """``external_data`` task of type ``database`` tagged ``mehari``: the HGNC table and the Mehari databases"""
+
     exons: Exons = ""
     """Optional task with a BED file of exons; the export keeps only the small variants near them"""
 
@@ -50,6 +64,3 @@ class VarfishExport(SnappyStepModel):
     # The following configuration is used for parameterizing the output itself.
     release: str = "GRCh37"
     """The release of the genome reference that data has been aligned to."""
-
-    path_mehari_db: str
-    """Path to mehari database."""

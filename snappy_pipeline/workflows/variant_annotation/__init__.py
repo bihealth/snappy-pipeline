@@ -6,6 +6,12 @@ The input can be somatic or germline.
 The ``tool`` field selects the annotator: ``vep`` runs Ensembl VEP, ``mehari`` runs Mehari.
 One task runs one tool, so a second annotation needs a second task.
 
+The tool's database comes from ``depends_on.database``, an ``external_data`` task of type ``database`` tagged with the tool.
+Its ``files`` give the keys below.
+
+- ``vep``: ``cache`` (the VEP cache directory).
+- ``mehari``: ``transcript_db`` (one path or a list), and optionally ``frequency_db`` and ``clinvar_db``.
+
 The task produces one annotated VCF per input library.
 Its output has the input's tags plus ``annotated``.
 
@@ -78,11 +84,10 @@ class VepStepPart(VariantAnnotationStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        if self.config.vep.cache_dir:
-            yield "cache", self.config.vep.cache_dir
+        yield "cache", self.parent.get_upstream_paths("database").cache
 
     def _get_params_run(self, wildcards):
-        return {"config": self.config.vep.model_dump(by_alias=True, exclude={"cache_dir"})}
+        return {"config": self.config.vep.model_dump(by_alias=True)}
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
@@ -95,18 +100,17 @@ class MehariStepPart(VariantAnnotationStepPart):
 
     def _get_params_run(self, wildcards):
         """Pass the options; the files (reference, databases) are inputs."""
-        excluded = {"reference", "transcripts", "frequencies", "clinvar"}
-        return {"config": self.config.mehari.model_dump(by_alias=True, exclude=excluded)}
+        return {"config": self.config.mehari.model_dump(by_alias=True)}
 
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        if self.config.mehari and self.config.mehari.transcripts:
-            yield "transcripts", self.config.mehari.transcripts
-        if self.config.mehari and self.config.mehari.frequencies:
-            yield "frequencies", self.config.mehari.frequencies
-        if self.config.mehari and self.config.mehari.clinvar:
-            yield "clinvar", self.config.mehari.clinvar
+        database = self.parent.get_upstream_paths("database")
+        yield "transcripts", database.transcript_db
+        if database.frequency_db:
+            yield "frequencies", database.frequency_db
+        if database.clinvar_db:
+            yield "clinvar", database.clinvar_db
 
     @property
     def default_resource_usage(self) -> ResourceUsage:

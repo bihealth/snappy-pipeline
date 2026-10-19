@@ -20,6 +20,14 @@ tasks:
       produces: {type: index, tags: [bwa, dna]}
       files: {index: ../../resources/refs/subregion}
 
+  - name: mehari_db
+    step: external_data
+    config:
+      produces: {type: database, tags: [mehari]}
+      files:
+        transcript_db:
+          - ../../resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst
+
   - name: mapping
     step: ngs_mapping
     config:
@@ -58,12 +66,10 @@ tasks:
       depends_on:
         variants: variant_calling
         reference: genome
+        database: mehari_db
       tool: "mehari"
       mehari:
-        transcripts:
-          - ../../resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst
         assembly: GRCh37
-        reference: ../../resources/refs/subregion.fa
 
   - name: filtration_dkfz
     step: variant_filtration

@@ -237,7 +237,8 @@
   "input": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
    "tasks/variant_annotation_vep/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"

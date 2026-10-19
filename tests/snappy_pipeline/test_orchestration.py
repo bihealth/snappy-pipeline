@@ -36,6 +36,10 @@ DBSNP[2]["files"] = {"vcf": "/refs/dbsnp.vcf.gz"}
 BWA_INDEX = ("external_data", "bwa_index", {"produces": {"type": "index", "tags": ["bwa", "dna"]}})
 BWA_INDEX[2]["files"] = {"index": "/refs/genome"}
 
+#: The VEP cache that ``_annotation`` tasks read
+VEP_CACHE = ("external_data", "vep_cache", {"produces": {"type": "database", "tags": ["vep"]}})
+VEP_CACHE[2]["files"] = {"cache": "/refs/vep"}
+
 #: The enrichment kits that ``_tmb`` tasks read
 KITS = (
     "external_data",
@@ -51,7 +55,7 @@ def _config(*tasks):
     return {
         "tasks": [
             {"step": step, "name": name, "config": config}
-            for step, name, config in (GENOME, BWA_INDEX, *tasks)
+            for step, name, config in (GENOME, BWA_INDEX, *tasks, VEP_CACHE)
         ],
         "data_sets": {},
     }
@@ -76,7 +80,11 @@ def _annotation(name="annotation", variants="calling"):
     return (
         "variant_annotation",
         name,
-        {"depends_on": {"variants": variants, "reference": "genome"}, "tool": "vep", "vep": {}},
+        {
+            "depends_on": {"variants": variants, "reference": "genome", "database": "vep_cache"},
+            "tool": "vep",
+            "vep": {},
+        },
     )
 
 
@@ -102,6 +110,7 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
         "bwa_index",
         "mapping",
         "calling",
+        "vep_cache",
         "annotation",
         "filtration",
     ]

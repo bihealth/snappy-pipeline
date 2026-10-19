@@ -10,6 +10,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataType,
     ExpectedPathSchema,
     Reference,
+    TOOL,
 )
 
 
@@ -32,6 +33,20 @@ class ExpectedAnnotatedVariants(SnappyModel):
     vcf_tbi: str
 
 
+class ExpectedVepDatabase(SnappyModel):
+    cache: str
+    """The VEP cache directory"""
+
+
+class ExpectedMehariDatabase(SnappyModel):
+    transcript_db: str | list[str]
+    """One or more transcript databases"""
+
+    frequency_db: str | None = None
+
+    clinvar_db: str | None = None
+
+
 class VariantAnnotationDependsOn(SnappyModel):
     variants: Annotated[
         str,
@@ -41,6 +56,13 @@ class VariantAnnotationDependsOn(SnappyModel):
 
     reference: Reference
 
+    database: Annotated[
+        str,
+        DataSignature(DataType.DATABASE, frozenset({TOOL})),
+        ExpectedPathSchema.by_tool(vep=ExpectedVepDatabase, mehari=ExpectedMehariDatabase),
+    ]
+    """``external_data`` task of type ``database`` tagged with the tool: the VEP cache, or the Mehari databases"""
+
 
 class VariantAnnotation(SnappyStepModel):
     depends_on: VariantAnnotationDependsOn
@@ -49,4 +71,4 @@ class VariantAnnotation(SnappyStepModel):
 
     vep: Vep = Field(default_factory=Vep)
 
-    mehari: Mehari | None = None
+    mehari: Mehari = Field(default_factory=Mehari)

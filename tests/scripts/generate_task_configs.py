@@ -462,9 +462,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
     ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
     ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},
-    ("variant_annotation", "mehari"): {
-        "mehari": {"reference": REFERENCE, "transcripts": [PLACEHOLDER]}
-    },
     ("variant_calling", None): {
         "baf_file_generation": {"enabled": False, "min_dp": 10},
         "bcftools_stats": {"enabled": False},
@@ -475,9 +472,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "skip_indels": False,
             "rec_rate": 1e-8,
         },
-    },
-    ("varfish_export", None): {
-        "path_mehari_db": Fixture("mehari_db"),
     },
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("variant_phasing", "gatk_read_backed_phasing"): {

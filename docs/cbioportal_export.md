@@ -57,6 +57,12 @@ tasks:
       produces: {type: index, tags: [bwa, dna]}
       files: {index: /path/to/bwa/genome}
 
+  - name: vep_cache
+    step: external_data
+    config:
+      produces: {type: database, tags: [vep]}
+      files: {cache: /path/to/vep}
+
   - name: mapping
     step: ngs_mapping
     config:
@@ -83,6 +89,7 @@ tasks:
       depends_on:
         variants: calling
         reference: genome
+        database: vep_cache
       tool: vep
       vep:
         assembly: GRCh38
