@@ -93,7 +93,7 @@ class PopDelStepPart(
             "alignments", library_name=wildcards.library_name
         )
         yield "bam", alignments.bam
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     @dictify
     def _get_output_files_profile(self):
@@ -139,7 +139,7 @@ class PopDelStepPart(
         yield "vcf_tbi", [f"{vcf}.tbi" for vcf in vcfs]
 
     def _get_fai_path(self):
-        return self.parent.get_upstream_paths("reference").fasta + ".fai"
+        return self.parent.get_upstream_paths("reference").fai
 
     def _get_ignore_chroms(self):
         return self.config.ignore_chroms

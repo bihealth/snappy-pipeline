@@ -129,7 +129,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         # Yield input BAM and BAI file
         yield "bam", alignments.bam
         yield "bai", alignments.bai
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     @dictify
     def _get_input_files_tumor_normal_ratio(self, wildcards):

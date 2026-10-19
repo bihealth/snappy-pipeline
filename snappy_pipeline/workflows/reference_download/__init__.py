@@ -12,9 +12,9 @@ Outputs
 
 Below ``tasks/<task>/output/``:
 
-- ``reference_download/out/reference.fa`` and ``reference_download/out/reference.fa.md5``
+- ``reference_download/out/reference.fa`` with its index ``reference.fa.fai`` and sequence dictionary ``reference.dict``, each with an ``.md5`` file
 
-Downstream tasks read the FASTA file through the key ``fasta`` of their ``reference`` field.
+Downstream tasks read the FASTA file through the key ``fasta`` of their ``reference`` field, and find the ``.fai`` and ``.dict`` next to it.
 The task produces data of type ``raw`` with the tags ``reference``, the source and the molecule (``dna``, ``rna`` or ``protein``).
 """
 
@@ -103,6 +103,30 @@ class UcscReferenceDownloadStepPart(_ReferenceDownloadStepPart):
         yield "file_name", cfg.file_name
 
 
+class SidecarsStepPart(BaseStepPart):
+    """The ``.fai`` and ``.dict`` next to the downloaded FASTA, which consumers declare as inputs."""
+
+    name = "sidecars"
+    actions = ("run",)
+
+    default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="2GB")
+
+    def _get_input_files_run(self, wildcards):
+        return {"fasta": "work/reference_download/out/reference.fa"}
+
+    def _get_output_files_run(self):
+        prefix = "work/reference_download/out/reference"
+        return {
+            "fai": prefix + ".fa.fai",
+            "fai_md5": prefix + ".fa.fai.md5",
+            "dict": prefix + ".dict",
+            "dict_md5": prefix + ".dict.md5",
+        }
+
+    def _get_log_file_run(self):
+        return {"log": "work/reference_download/log/reference_download.sidecars.log"}
+
+
 class ReferenceDownloadWorkflow(BaseStep):
     name = "reference_download"
     produces = [
@@ -132,9 +156,12 @@ class ReferenceDownloadWorkflow(BaseStep):
             Source.refseq: RefseqReferenceDownloadStepPart,
             Source.ucsc: UcscReferenceDownloadStepPart,
         }
-        self.register_sub_step_classes((source_to_class[self.config.source],))
+        self.register_sub_step_classes((source_to_class[self.config.source], SidecarsStepPart))
 
     @listify
     def get_result_files(self):
         yield "output/reference_download/out/reference.fa"
         yield "output/reference_download/out/reference.fa.md5"
+        for name in ("reference.fa.fai", "reference.dict"):
+            yield f"output/reference_download/out/{name}"
+            yield f"output/reference_download/out/{name}.md5"

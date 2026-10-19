@@ -193,8 +193,8 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
         parent = super()._get_input_files_run(wildcards)
         for k, v in parent.items():
             yield k, v
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
-        yield "reference_index", self.parent.get_upstream_paths("reference").fasta + ".fai"
+        yield from self.parent.reference_inputs().items()
+        yield "reference_index", self.parent.get_upstream_paths("reference").fai
 
     def _get_params_run(self, wildcards):
         reference_path = self.parent.get_upstream_paths("reference").fasta
@@ -227,7 +227,7 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
         when was failing when dbsnp is not present anyway.
         """
         yield from super()._get_input_files_run(wildcards).items()
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
 
     @property
@@ -308,7 +308,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_discover(self, wildcards):
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
         infix = wildcards.library_name
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
@@ -318,7 +318,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_combine_gvcfs(self, wildcards: Wildcards) -> SnakemakeDictItemsGenerator:
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
         df = self.parent.build_library_dataframe()
         if df.empty:
@@ -365,7 +365,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     @dictify
     def _get_input_files_genotype(self, wildcards) -> SnakemakeDictItemsGenerator:
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
         infix = f"gatk4_hc_gvcf_combine_gvcfs.{wildcards.library_name}"
         yield "gvcf", f"work/{infix}/out/{infix}.g.vcf.gz"
@@ -539,7 +539,7 @@ class BafFileGenerationStepPart(ReportStepPart):
             "vcf",
             "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
         )
-        yield "reference_index", self.parent.get_upstream_paths("reference").fasta + ".fai"
+        yield "reference_index", self.parent.get_upstream_paths("reference").fai
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
@@ -661,7 +661,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return self.config.mutect2.filtration.model_dump(by_alias=True)
 
     def _get_input_files_scatter(self, wildcards):
-        return {"fai": self.parent.get_upstream_paths("reference").fasta + ".fai"}
+        return {"fai": self.parent.get_upstream_paths("reference").fai}
 
     def _get_input_files_run(self, wildcards):
         scatteritem_base_path = (
@@ -694,7 +694,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                         f"Normal sample for tumor {wildcards.library_name} required but not found."
                     )
 
-        input_files["reference"] = self.parent.get_upstream_paths("reference").fasta
+        input_files.update(self.parent.reference_inputs())
 
         if self.config.depends_on.germline_resource:
             input_files["germline_resource"] = self.parent.get_upstream_paths(
@@ -730,7 +730,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "raw_tbi": base_path + ".raw.vcf.gz.tbi",
             "stats": base_path + ".raw.vcf.stats",
             "orientation": base_path + ".raw.read_orientation_model.tar.gz",
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
         if self.get_normal_lib_name(wildcards):
             if self.config.mutect2.contamination.enabled:
@@ -745,7 +745,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "common_variants": self.parent.get_upstream_paths("common_variants").vcf,
         }
 
@@ -756,7 +756,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "common_variants": self.parent.get_upstream_paths("common_variants").vcf,
         }
 
@@ -765,7 +765,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {
             "normal": base_path + ".normal.pileup",
             "tumor": base_path + ".tumor.pileup",
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
 
     def _get_output_files_scatter(self):

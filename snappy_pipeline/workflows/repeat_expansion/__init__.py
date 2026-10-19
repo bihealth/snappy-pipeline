@@ -70,7 +70,7 @@ class ExpansionHunterStepPart(BaseStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "repeat_catalog": self.parent.get_upstream_paths("database").catalog,
         }
 

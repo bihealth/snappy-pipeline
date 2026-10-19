@@ -10,7 +10,12 @@ from snappy_pipeline import orchestration
 from snappy_pipeline.orchestration import Project, load_project, select_target_tasks
 from snappy_pipeline.workflow_model import ConfigModel
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-from snappy_pipeline.workflows.abstract.protocol import TOOL, DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import (
+    TOOL,
+    DataSignature,
+    DataType,
+    ExpectedReference,
+)
 
 WORK_DIR = "/projects/p1"
 
@@ -422,3 +427,18 @@ def test_tool_placeholder_needs_a_tool():
     assert required.for_tool("vep") == DataSignature(DataType.DATABASE, frozenset({"vep"}))
     with pytest.raises(ValueError, match="names the tool, but the task has none"):
         required.for_tool(None)
+
+
+@pytest.mark.parametrize(
+    "fasta, sequence_dict",
+    [
+        ("/refs/genome.fa", "/refs/genome.dict"),
+        ("/refs/genome.fasta", "/refs/genome.dict"),
+        ("/refs/genome.fna.gz", "/refs/genome.dict"),
+        ("/refs/hs37d5.fa.gz", "/refs/hs37d5.dict"),
+    ],
+)
+def test_reference_sidecars_follow_the_samtools_and_gatk_names(fasta, sequence_dict):
+    reference = ExpectedReference(fasta=fasta)
+    assert reference.fai == fasta + ".fai"
+    assert reference.sequence_dict == sequence_dict

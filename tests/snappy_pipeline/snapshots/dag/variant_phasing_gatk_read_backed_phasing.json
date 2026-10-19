@@ -294,6 +294,8 @@
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
@@ -350,6 +352,8 @@
   "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.gatk4_hc_gvcf_combine_gvcfs.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/variant_calling_gatk4_hc_gvcf/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregion-N1-DNA1-WES1.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_discover.case001subregionFather-N1-DNA1-WES1/out/gatk4_hc_gvcf_discover.case001subregionFather-N1-DNA1-WES1.g.vcf.gz",
@@ -400,6 +404,8 @@
   "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.gatk4_hc_gvcf_discover.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam"
   ],
@@ -448,6 +454,8 @@
   "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregionFather-N1-DNA1-WES1/case001subregionFather-N1-DNA1-WES1.gatk4_hc_gvcf_discover.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam"
   ],
@@ -496,6 +504,8 @@
   "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregionMother-N1-DNA1-WES1/case001subregionMother-N1-DNA1-WES1.gatk4_hc_gvcf_discover.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam"
   ],
@@ -544,6 +554,8 @@
   "benchmark": "tasks/variant_calling_gatk4_hc_gvcf/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.gatk4_hc_gvcf_genotype.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-N1-DNA1-WES1.g.vcf.gz",
    "tasks/variant_calling_gatk4_hc_gvcf/work/gatk4_hc_gvcf_combine_gvcfs.case001subregion-N1-DNA1-WES1/out/gatk4_hc_gvcf_combine_gvcfs.case001subregion-N1-DNA1-WES1.g.vcf.gz.tbi"
   ],
@@ -618,7 +630,9 @@
    "tasks/variant_phasing_gatk_phase_by_transmission/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
    "tasks/variant_annotation_vep/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/variant_annotation_vep/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
@@ -733,6 +747,8 @@
    "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/1-of-2.region.bed"
   ],
   "log": [
@@ -778,6 +794,8 @@
    "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
    "tasks/variant_phasing_gatk_phase_by_transmission/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/2-of-2.region.bed"
   ],
   "log": [

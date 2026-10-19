@@ -18,6 +18,8 @@
   "benchmark": "tasks/ngs_data_qc_picard/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.baits.interval_list",
    "tasks/ngs_data_qc_picard/work/MedExome/out/MedExome.targets.interval_list",
@@ -61,6 +63,8 @@
   "benchmark": "tasks/ngs_data_qc_picard/benchmarks/MedExome/MedExome.prepare.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed",
    "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
   ],

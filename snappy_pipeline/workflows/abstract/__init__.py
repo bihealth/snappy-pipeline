@@ -1076,6 +1076,16 @@ class BaseStep:
             if isinstance(kit, str) and kit
         }
 
+    def reference_inputs(self) -> dict[str, str]:
+        """The genome FASTA of ``depends_on.reference`` and its ``.fai`` and ``.dict``, as rule
+        inputs, so that a missing sidecar fails when the DAG is built."""
+        reference = self.get_upstream_paths("reference")
+        return {
+            "reference": reference.fasta,
+            "reference_fai": reference.fai,
+            "reference_dict": reference.sequence_dict,
+        }
+
     def library_kit_paths(self, field: str, library_name: str):
         """Return the files of the library's kit from the ``external_data`` task with ``kits``
         in ``depends_on.<field>``, like :meth:`get_upstream_paths`."""

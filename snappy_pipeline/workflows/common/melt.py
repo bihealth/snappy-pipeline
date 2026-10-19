@@ -64,7 +64,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         )
         yield "bam", alignments.bam
         yield "bai", alignments.bai
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield from self._melt_files("jar").items()
 
     @dictify
@@ -90,7 +90,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         yield "orig_bai", f"{prefix}.bam.bai"
         yield "disc_bam", f"{prefix}.bam.disc"
         yield "disc_bai", f"{prefix}.bam.disc.bai"
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield from self._melt_files("jar", "me_refs").items()
 
     @dictify
@@ -105,7 +105,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_input_files_group_analysis(self, wildcards):
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         indiv_analysis = []
         for library_name in self.parent.pedigrees()[wildcards.index_library_name]:
             infix = f"indiv_analysis.{library_name}.{wildcards.me_type}"
@@ -142,7 +142,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         yield "bai", f"{prefix}.bam.bai"
         yield "disc_bam", f"{prefix}.bam.disc"
         yield "disc_bai", f"{prefix}.bam.disc.bai"
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield from self._melt_files("jar", "me_refs").items()
 
     @dictify
@@ -167,7 +167,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
             for library_name in self.parent.pedigrees()[wildcards.index_library_name]
         ]
         yield "genotype", paths
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield from self._melt_files("jar", "me_refs").items()
 
     @dictify

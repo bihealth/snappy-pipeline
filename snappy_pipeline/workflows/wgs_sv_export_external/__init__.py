@@ -75,7 +75,7 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
         yield "ped", tpl.format(**wildcards)
         # Reference
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "db", self.config.path_db
         yield "refseq_ser", self.config.path_refseq_ser
         yield "ensembl_ser", self.config.path_ensembl_ser

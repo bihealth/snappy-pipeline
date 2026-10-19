@@ -202,7 +202,9 @@
   "benchmark": "tasks/sv_calling_wgs_manta/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.run.tsv",
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/sv_calling_wgs_manta/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.run.log"

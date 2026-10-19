@@ -2,7 +2,7 @@
 """Tests for the input functions of ``gene_expression_quantification`` step parts."""
 
 import typing
-from types import SimpleNamespace
+from types import MethodType, SimpleNamespace
 
 import pydantic
 import pytest
@@ -15,6 +15,7 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import (
     ExpectedStrandedness,
     GeneExpressionQuantification,
 )
+from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import ExpectedReference
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -35,6 +36,7 @@ def _part(cls, **tool_config):
     # The input functions only read upstream paths and config, so skip the full step setup.
     part = object.__new__(cls)
     part.parent = SimpleNamespace(get_upstream_paths=lambda field, **kwargs: UPSTREAM[field])
+    part.parent.reference_inputs = MethodType(BaseStep.reference_inputs, part.parent)
     part.config = SimpleNamespace(tool=cls.name, **{cls.name: SimpleNamespace(**tool_config)})
     return part
 
@@ -52,6 +54,8 @@ def test_rnaseqc_inputs_are_named():
 
     assert part._get_input_files_run(WILDCARDS) == ALIGNMENTS | DECISION | {
         "reference": "/refs/genome.fa",
+        "reference_fai": "/refs/genome.fa.fai",
+        "reference_dict": "/refs/genome.dict",
         "rnaseqc_path_annotation_gtf": "genes.gtf",
     }
 

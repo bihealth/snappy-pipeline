@@ -61,7 +61,7 @@ class Delly2StepPart(
         )
         yield "bam", alignments.bam
         yield "bai", alignments.bai
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         if self.config.depends_on.excluded_regions:
             yield "exclude", self.parent.get_upstream_paths("excluded_regions").bed
 

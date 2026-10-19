@@ -18,7 +18,11 @@
   "benchmark": null,
   "input": [
    "tasks/reference_download/work/reference_download/out/reference.fa",
-   "tasks/reference_download/work/reference_download/out/reference.fa.md5"
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai.md5",
+   "tasks/reference_download/work/reference_download/out/reference.dict",
+   "tasks/reference_download/work/reference_download/out/reference.dict.md5"
   ],
   "log": [],
   "output": [
@@ -74,5 +78,33 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/ensembl"
+ },
+ {
+  "benchmark": "tasks/reference_download/benchmarks/reference_download/reference_download.sidecars.tsv",
+  "input": [
+   "tasks/reference_download/work/reference_download/out/reference.fa"
+  ],
+  "log": [
+   "tasks/reference_download/work/reference_download/log/reference_download.sidecars.log"
+  ],
+  "output": [
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai.md5",
+   "tasks/reference_download/work/reference_download/out/reference.dict",
+   "tasks/reference_download/work/reference_download/out/reference.dict.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 60
+  },
+  "rule": "reference_download_reference_download_sidecars_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/sidecars"
  }
 ]

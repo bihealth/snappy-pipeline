@@ -166,7 +166,7 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
 
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
         lib = wildcards.tumor_library
         tumor_aln: ExpectedAlignments = self.parent.get_upstream_paths(

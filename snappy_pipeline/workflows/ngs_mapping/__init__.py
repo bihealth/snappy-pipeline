@@ -379,7 +379,7 @@ class MBCsStepPart(ReadMappingStepPart):
 
     def _get_input_files_run(self, wildcards):
         inputs = super()._get_input_files_run(wildcards) | {
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "index": self.parent.get_index_files(str(self.config.mbcs.mapping_tool)),
         }
         if self.config.mbcs.use_barcodes:
@@ -565,9 +565,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         library_name = wildcards.library_name
         yield "bam", f"work/{library_name}/out/{library_name}.bam"
         yield "bai", f"work/{library_name}/out/{library_name}.bam.bai"
-        reference = self.parent.get_upstream_paths("reference").fasta
-        yield "reference", reference
-        yield "reference_fai", reference + ".fai"
+        yield from self.parent.reference_inputs().items()
         yield "targets_bed", self.parent.library_kit_paths("kits", library_name).targets
 
     def _get_output_files_run(self):
@@ -604,7 +602,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def _get_input_files_run(self, wildcards):
         yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
         yield "bai", "work/{library_name}/out/{library_name}.bam.bai".format(**wildcards)
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
@@ -647,7 +645,7 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_input_files_fingerprint(self, wildcards):
         yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     def _get_output_files_fingerprint(self):
         prefix = "work/{library_name}/report/fingerprint/{library_name}.npz"

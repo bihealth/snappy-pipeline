@@ -157,7 +157,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def _get_input_files_gvcf_to_vcf(self, wildcards):
         yield "vcf", sorted(self._collect_gvcf(wildcards))
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):
@@ -165,7 +165,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             yield "vcf", sorted(self._collect_vcfs(wildcards))
         else:
             yield "vcf", [self._vcf(wildcards.index_ngs_library)]
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
@@ -177,7 +177,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             ),
         )
         # Reference
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "db", self.config.path_db
         yield "refseq_ser", self.config.path_refseq_ser
         yield "ensembl_ser", self.config.path_ensembl_ser

@@ -179,7 +179,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     @dictify
     def _get_input_files_prepare(self, wildcards):
         yield "container", "work/containers/out/container.simg"
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "bait_regions", self.parent.get_upstream_paths("kits", library_kit=self.kit).baits
         for key, path in (
             ("mappability", self.config.purecn.mappability),
@@ -306,7 +306,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     }
 
     def _get_input_files_scatter(self, wildcards):
-        return {"fai": self.parent.get_upstream_paths("reference").fasta + ".fai"}
+        return {"fai": self.parent.get_upstream_paths("reference").fai}
 
     def _get_input_files_prepare_panel(self, wildcards):
         """Helper wrapper function for single sample panel preparation"""
@@ -318,7 +318,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "normal_bam": alignments.bam,
             "normal_bai": alignments.bai,
             "region": scatteritem_base_path.format(**wildcards),
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
 
     def _get_input_files_gather(self, wildcards):
@@ -336,7 +336,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
         return {
             "normals": paths,
             "normals_tbi": [path + ".tbi" for path in paths],
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "germline_resource": self.parent.get_upstream_paths("germline_resource").vcf,
         }
 
@@ -492,7 +492,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         input_files = {
             "bams": [x.bam for x in alignments],
             "bais": [x.bai for x in alignments],
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
         if self.config.depends_on.access:
             input_files["access"] = self.parent.get_upstream_paths("access").access
@@ -523,7 +523,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
             ),
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
 
     def _get_input_files_create_panel(self, wildcards):
@@ -543,7 +543,7 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
                 if antitargets
                 else "work/panel_of_normals/out/panel_of_normals.antitarget.bed".format(**wildcards)
             ),
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
 
     def _get_input_files_report(self, wildcards):
@@ -602,7 +602,7 @@ class AccessStepPart(PanelOfNormalsStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         if self.config.access.exclude:
             yield "exclude", self.config.access.exclude
 

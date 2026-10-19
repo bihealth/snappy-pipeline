@@ -66,7 +66,7 @@ class ScarHRDStepPart(BaseStepPart):
             "copy_number", library_name=wildcards.library_name
         )
         yield "seqz", copy_number.seqz
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     def _get_output_files_install(self):
         return {"done": "work/R_packages/out/scarHRD.done"}

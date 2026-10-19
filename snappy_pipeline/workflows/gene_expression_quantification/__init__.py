@@ -344,7 +344,7 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         if self.config.tool != self.name:
             return
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "rnaseqc_path_annotation_gtf", self.config.rnaseqc.rnaseqc_path_annotation_gtf
 
     default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="16GB")

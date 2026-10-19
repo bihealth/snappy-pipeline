@@ -43,6 +43,8 @@
   "input": [
    "tasks/wgs_sv_export_external/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",

@@ -183,7 +183,7 @@ class JointGermlineCnvSegmentationMixin:
         # Yield path to pedigree file
         name_pattern = f"write_pedigree.{wildcards.library_name}"
         yield "ped", f"work/{name_pattern}/out/{wildcards.library_name}.ped"
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
 
 class MergeMultikitFamiliesMixin:

@@ -47,7 +47,7 @@ class PreprocessIntervalsCommonMixin:
     """Mixin used for the ``preprocess_intervals`` step."""
 
     def _get_input_files_preprocess_intervals(self, wildcards):
-        inputs = {"reference": self.parent.get_upstream_paths("reference").fasta}
+        inputs = self.parent.reference_inputs()
         # Targeted sequencing: the target regions of the library kit
         if self.config.intervals == "targeted":
             inputs["target_bed"] = self.parent.get_upstream_paths(
@@ -83,7 +83,7 @@ class CoverageCommonMixin:
         )
         yield "bam", alignments.bam
         yield "bai", alignments.bai
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     @dictify
     def _get_output_files_coverage(self):

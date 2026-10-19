@@ -72,7 +72,7 @@ class Mantis2StepPart(BaseStepPart):
             "normal_bai": normal.bai,
             "tumor_bam": tumor.bam,
             "tumor_bai": tumor.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "loci_bed": self.parent.get_upstream_paths("microsatellites").bed,
         }
 

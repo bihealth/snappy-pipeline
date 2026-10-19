@@ -136,7 +136,7 @@ class MehariStepPart(BaseStepPart):
                 **wildcards
             ),
         )
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
         calling = self.parent.get_upstream_paths(
             "variants",
@@ -177,7 +177,7 @@ class MehariStepPart(BaseStepPart):
                 **wildcards
             ),
         )
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
         if not self.parent.config.depends_on.structural_variants:
             raise RuntimeError("depends_on.structural_variants is not set")

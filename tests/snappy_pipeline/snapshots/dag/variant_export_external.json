@@ -40,7 +40,9 @@
   "benchmark": "tasks/variant_export_external/benchmarks/dragen.case001subregion-N1-DNA1-WES1/dragen.case001subregion-N1-DNA1-WES1.gvcf_to_vcf.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/variant_export_external/work/dragen.case001subregion-N1-DNA1-WES1/log/dragen.case001subregion-N1-DNA1-WES1.gvcf_to_vcf.log"
@@ -79,6 +81,8 @@
   "input": [
    "tasks/variant_export_external/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",

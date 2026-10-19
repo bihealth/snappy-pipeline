@@ -19,6 +19,8 @@
   "input": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
@@ -51,7 +53,9 @@
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
@@ -112,6 +116,8 @@
   "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.preprocess_intervals.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
   ],
   "log": [
@@ -353,7 +359,9 @@
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz",
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list",
    "tasks/sv_calling_targeted_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/sv_calling_targeted_gcnv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.MedExome.joint_segmentation.log"

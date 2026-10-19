@@ -179,21 +179,17 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "normal_bai", normal.bai
         yield "tumor_bam", tumor.bam
         yield "tumor_bai", tumor.bai
-        reference = self.parent.get_upstream_paths("reference").fasta
-        yield "reference", reference
-        yield "reference_fai", reference + ".fai"
+        yield from self.parent.reference_inputs().items()
 
     def _get_input_files_gcreference(self, wildcards):
-        return {"reference": self.parent.get_upstream_paths("reference").fasta}
+        return self.parent.reference_inputs()
 
     @dictify
     def _get_input_files_run(self, wildcards):
         yield "packages", "work/R_packages/out/packages.done"
         name_pattern = "{tumor_library}"
         yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
-        reference = self.parent.get_upstream_paths("reference").fasta
-        yield "reference", reference
-        yield "reference_fai", reference + ".fai"
+        yield from self.parent.reference_inputs().items()
 
     def _get_output_files_install(self):
         return {"done": "work/R_packages/out/packages.done"}
@@ -428,7 +424,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "target": pon.target,
             "antitarget": pon.antitarget,
         }

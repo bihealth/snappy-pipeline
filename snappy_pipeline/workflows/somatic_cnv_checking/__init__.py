@@ -63,7 +63,7 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
 
     def _get_input_files_tumor(self, wildcards):
@@ -80,7 +80,7 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
             ),
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
 
     @staticmethod
@@ -170,7 +170,7 @@ class SomaticCnvCheckingReportStepPart(BaseStepPart):
         return {
             "vcf": base_path_out + ".vcf.gz",
             "tsv": base_path_out + ".tsv",
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
         }
 
     def _get_output_files_run(self):

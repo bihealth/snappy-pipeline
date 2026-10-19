@@ -207,6 +207,8 @@
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -252,6 +254,8 @@
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -297,6 +301,8 @@
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -337,6 +343,8 @@
   "benchmark": "tasks/sv_calling_targeted_melt/benchmarks/group_analysis.case001subregion-N1-DNA1-WES1.ALU/case001subregion-N1-DNA1-WES1.ALU.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/sv_calling_targeted_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
@@ -383,6 +391,8 @@
   "benchmark": "tasks/sv_calling_targeted_melt/benchmarks/group_analysis.case001subregion-N1-DNA1-WES1.LINE1/case001subregion-N1-DNA1-WES1.LINE1.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/sv_calling_targeted_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
@@ -429,6 +439,8 @@
   "benchmark": "tasks/sv_calling_targeted_melt/benchmarks/group_analysis.case001subregion-N1-DNA1-WES1.SVA/case001subregion-N1-DNA1-WES1.SVA.tsv",
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/sv_calling_targeted_melt/work/indiv_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py",
@@ -479,6 +491,8 @@
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -521,6 +535,8 @@
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -563,6 +579,8 @@
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc",
    "tasks/sv_calling_targeted_melt/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.disc.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -603,6 +621,8 @@
    "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/.done",
    "tasks/sv_calling_targeted_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -647,6 +667,8 @@
    "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/.done",
    "tasks/sv_calling_targeted_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -691,6 +713,8 @@
    "tasks/sv_calling_targeted_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/.done",
    "tasks/sv_calling_targeted_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
@@ -770,6 +794,8 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [

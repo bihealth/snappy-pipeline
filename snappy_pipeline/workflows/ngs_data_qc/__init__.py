@@ -133,14 +133,14 @@ class PicardStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_prepare(self, wildcards):
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         kit = self.parent.get_upstream_paths("kits", library_kit=wildcards.library_kit)
         yield "baits", kit.baits
         yield "targets", kit.targets
 
     @dictify
     def _get_input_files_metrics(self, wildcards):
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         if self.config.depends_on.dbsnp:
             yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
         if "CollectHsMetrics" in self.config.picard.programs:

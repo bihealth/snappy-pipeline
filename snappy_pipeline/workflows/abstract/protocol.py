@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Annotated
@@ -106,9 +107,19 @@ class ExpectedPathSchema:
 
 
 class ExpectedReference(BaseModel):
-    """The genome FASTA; tools find its ``.fai`` and ``.dict`` next to it."""
+    """The genome FASTA; its ``.fai`` and ``.dict`` are next to it, named by the fixed convention of
+    samtools and GATK."""
 
     fasta: str
+
+    @property
+    def fai(self) -> str:
+        return self.fasta + ".fai"
+
+    @property
+    def sequence_dict(self) -> str:
+        """``genome.dict`` for ``genome.fa``, ``genome.fasta``, ``genome.fna`` and their ``.gz``."""
+        return re.sub(r"(\.(fa|fasta|fna))?(\.gz)?$", "", self.fasta) + ".dict"
 
 
 class ExpectedFeatures(BaseModel):

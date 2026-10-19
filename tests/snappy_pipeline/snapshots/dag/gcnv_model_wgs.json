@@ -19,6 +19,8 @@
   "input": [
    "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "<repo>/tests/scripts/generate_task_configs.py"
   ],
   "log": [
@@ -80,7 +82,9 @@
    "tasks/gcnv_model_wgs/work/wgs/out/wgs.interval_list",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
@@ -140,7 +144,9 @@
  {
   "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.preprocess_intervals.tsv",
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/gcnv_model_wgs/work/wgs/log/wgs.preprocess_intervals.log"

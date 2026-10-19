@@ -73,7 +73,9 @@
  {
   "benchmark": "tasks/panel_of_normals_access/benchmarks/panel_of_normals/panel_of_normals.accessible.tsv",
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/panel_of_normals_access/work/panel_of_normals/log/panel_of_normals.accessible.log"
@@ -136,7 +138,9 @@
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.coverage.log"
@@ -174,7 +178,9 @@
   "input": [
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.targetcoverage.cnn",
    "tasks/panel_of_normals_cnvkit/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.antitargetcoverage.cnn",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
   ],
   "log": [
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/log/panel_of_normals.log"
@@ -242,6 +248,8 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
    "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed"
   ],
   "log": [

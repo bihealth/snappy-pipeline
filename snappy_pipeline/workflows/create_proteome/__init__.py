@@ -31,7 +31,7 @@ class CreateProteomeStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "features", self.parent.get_upstream_paths("features").gtf
 
         if self.config.path_proteome:

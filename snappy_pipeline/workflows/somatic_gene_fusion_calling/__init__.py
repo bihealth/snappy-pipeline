@@ -201,7 +201,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "features", self.parent.get_upstream_paths("features").gtf
         yield "index", self.parent.get_upstream_paths("index").index
         if self.config.depends_on.database:

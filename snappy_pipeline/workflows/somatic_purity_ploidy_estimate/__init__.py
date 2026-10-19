@@ -106,7 +106,7 @@ class AscatStepPart(BaseStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "b_af_loci": self.parent.get_upstream_paths("snp_loci").bed,
         }
 
@@ -118,7 +118,7 @@ class AscatStepPart(BaseStepPart):
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
-            "reference": self.parent.get_upstream_paths("reference").fasta,
+            **self.parent.reference_inputs(),
             "b_af_loci": self.parent.get_upstream_paths("snp_loci").bed,
         }
 

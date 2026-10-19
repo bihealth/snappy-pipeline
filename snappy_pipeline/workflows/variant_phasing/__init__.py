@@ -138,7 +138,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
             f"work/write_pedigree.{wildcards.library_name}/out/{wildcards.library_name}.ped",
         )
         yield from self._yield_vcf(wildcards)
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
     @dictify
     def _get_output_files_run(self):
@@ -192,13 +192,13 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
         yield "bai", [aln.bai for aln in alignments]
 
     def _get_input_files_scatter(self, wildcards):
-        return {"fai": self.parent.get_upstream_paths("reference").fasta + ".fai"}
+        return {"fai": self.parent.get_upstream_paths("reference").fai}
 
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from self._yield_bams(wildcards)
         yield from self._yield_vcf(wildcards)
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "region", self.region_tpl.format(**wildcards)
 
     def _get_input_files_gather(self, wildcards):

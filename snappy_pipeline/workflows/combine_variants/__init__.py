@@ -58,7 +58,7 @@ class CombineVariantsStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
 
         somatic = self.parent.get_upstream_paths(
             "somatic_variants", library_name=wildcards.tumor_library

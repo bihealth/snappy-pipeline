@@ -16,7 +16,7 @@ class AnnotateGcMixin:
     def _get_input_files_annotate_gc(self, wildcards):
         kit = wildcards.library_kit
         yield "interval_list", f"work/{kit}/out/{kit}.interval_list"
-        yield "reference", self.parent.get_upstream_paths("reference").fasta
+        yield from self.parent.reference_inputs().items()
         yield "mappability", self.parent.get_upstream_paths("mappable_regions").bed
 
     @dictify
