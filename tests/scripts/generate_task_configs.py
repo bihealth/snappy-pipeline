@@ -34,7 +34,11 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "annotated_variants": "variant_annotation_vep",
     "combined_variants": "combine_variants",
     "copy_number": "somatic_wgs_cnv_calling_cnvkit",
+    "common_variants": "population_variants",
     "dbsnp": "dbsnp",
+    "excluded_regions": "regions",
+    "gene_regions": "tagged_regions",
+    "germline_resource": "population_variants",
     "exons": "exons",
     "expression": "gene_expression_quantification_featurecounts",
     "features": "features",
@@ -43,9 +47,13 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "hla_types": "hla_typing_optitype",
     "index": "reference_index_bwa",
     "kits": "kits",
+    "mappable_regions": "tagged_regions",
+    "microsatellites": "regions",
+    "par_regions": "tagged_regions",
     "phased_variants": "variant_phasing_gatk_read_backed_phasing",
     "reads": "data_sets",
     "reference": "genome",
+    "snp_loci": "tagged_regions",
     "somatic_variants": "variant_calling_mutect2",
     "structural_variants": "sv_calling_targeted_delly2",
     "variants": "variant_calling_gatk4_hc_gvcf",
@@ -506,16 +514,21 @@ def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
     return {"step": "external_data", "name": name, "config": config}
 
 
-#: external_data tasks besides the step's own one: the reference data, the exons, regions for the
-#: regions filter, the regions of the kit of the test libraries (MedExome), and the inputs of the
-#: external export steps. features, dbsnp and regions name the reference FASTA, as no test reads
-#: them.
+#: external_data tasks besides the step's own one: the reference data, regions, population variants,
+#: the regions of the kit of the test libraries (MedExome), and the inputs of the external export
+#: steps. One task with several tags serves several kinds of regions; each task names the fixture
+#: that the replaced config fields had, so that job inputs stay the same. features, dbsnp, regions
+#: and population_variants name the reference FASTA, as no test reads them.
 EXTRA_TASKS: list[dict[str, Any]] = [
     _external_file("genome", "raw", ["reference", "dna"], "fasta"),
     _external_file("features", "raw", ["features"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf"),
     _external_file("exons", "regions", ["exons"], "bed", PLACEHOLDER),
-    _external_file("regions", "regions", [], "bed"),
+    _external_file("regions", "regions", ["microsatellites"], "bed"),
+    _external_file(
+        "tagged_regions", "regions", ["mappable", "par", "snp_loci", "genes"], "bed", PLACEHOLDER
+    ),
+    _external_file("population_variants", "variants", ["population", "common"], "vcf"),
     _external_kits("kits"),
     _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
     _external_vcfs("external_cnv", ["germline", "cnv"]),

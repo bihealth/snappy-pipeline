@@ -90,6 +90,8 @@ EXPECTED_EMPTY = {
     "exons": "provides existing files; has no rules",
     "kits": "provides existing files; has no rules",
     "regions": "provides existing files; has no rules",
+    "tagged_regions": "provides existing files; has no rules",
+    "population_variants": "provides existing files; has no rules",
     "external_vcf": "provides existing files; has no rules",
     "external_cnv": "provides existing files; has no rules",
     "external_sv": "provides existing files; has no rules",

@@ -11,6 +11,7 @@ DATA_SETS = "data_sets"
 class DataType(StrEnum):
     RAW = "raw"
     REGIONS = "regions"
+    DATABASE = "database"
     INDEX = "index"
     ALIGNMENTS = "alignments"
     VARIANTS = "variants"
@@ -93,8 +94,8 @@ class ExpectedFeatures(BaseModel):
     gtf: str
 
 
-class ExpectedDbsnp(BaseModel):
-    """The dbSNP VCF."""
+class ExpectedVcf(BaseModel):
+    """A VCF file; tools find its ``.tbi`` next to it."""
 
     vcf: str
 
@@ -122,7 +123,17 @@ Features = Annotated[
     str, DataSignature(DataType.RAW, frozenset({"features"})), ExpectedPathSchema(ExpectedFeatures)
 ]
 Dbsnp = Annotated[
-    str, DataSignature(DataType.VARIANTS, frozenset({"dbsnp"})), ExpectedPathSchema(ExpectedDbsnp)
+    str, DataSignature(DataType.VARIANTS, frozenset({"dbsnp"})), ExpectedPathSchema(ExpectedVcf)
+]
+#: Population allele frequencies, such as the af-only gnomAD VCF of the GATK resource bundle
+GermlineResource = Annotated[
+    str,
+    DataSignature(DataType.VARIANTS, frozenset({"population"})),
+    ExpectedPathSchema(ExpectedVcf),
+]
+#: Common germline variants, such as ``small_exac_common_3.vcf`` of the GATK resource bundle
+CommonVariants = Annotated[
+    str, DataSignature(DataType.VARIANTS, frozenset({"common"})), ExpectedPathSchema(ExpectedVcf)
 ]
 #: ``depends_on`` field types for regions (``type: regions``), usually ``external_data`` tasks.
 #: ``Regions`` accepts any BED file of regions, the others add a tag for what the regions are.
