@@ -38,6 +38,10 @@ Unknown keys are an error.
 : Selects the task's libraries with a pandas `DataFrame.query()` expression, among those that the step can process.
     Without it, the task takes the step's default, see the step's page and {ref}`overview`.
 
+`background_selection`
+: For the steps that use the libraries of background data sets (mapping, panels of normals, the SV and gCNV callers): narrows them with a pandas `DataFrame.query()` expression, such as `data_set == 'cohort_1000g'`.
+    Without it, the task takes all background libraries; other steps reject it.
+
 `group_by`
 : `library` writes one output per library, `cohort` one per cohort (pedigree), where the step supports it.
     Without it, the task takes its step's default (`cohort` for germline variant calling), else the granularity of its upstream tasks, else `library`.

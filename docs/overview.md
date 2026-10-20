@@ -328,6 +328,9 @@ Without it, a task takes its step's default, else the granularity of its upstrea
 Germline variant calling defaults to `cohort` and calls each pedigree jointly, so the tasks after it also write per cohort.
 Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task writes per cohort.
 
+A data set with `is_background: true` holds libraries that are no task's results, such as a reference cohort.
+Mapping and panels of normals process them, and the SV and gCNV callers add them as cohort members or model samples; `background_selection` narrows them per task, for example to `data_set == 'cohort_1000g'`.
+
 Several data sets may have libraries of the same name.
 A task names its files by library, so it can only take one library of a name, and a task and its upstream tasks must take it from the same data set.
 If a task would take both, it fails and names the libraries; select one data set with `library_selection`, for example `data_set == 'batch1'`, or use one task per data set.

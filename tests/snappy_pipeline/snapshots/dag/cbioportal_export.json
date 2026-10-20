@@ -309,6 +309,7 @@
   "params": {
    "args": {
     "config": {
+     "background_selection": null,
      "copy_number_alteration": {
       "copy_number_tool": "cnvkit",
       "enabled": true

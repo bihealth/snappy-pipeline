@@ -570,3 +570,11 @@ def test_pedigree_consumers_need_one_vcf_per_pedigree():
         "but task 'calling' writes one per library",
     ):
         load_project(_config(_mapping(), germline, _peddy()), WORK_DIR)
+
+
+def test_background_selection_only_for_steps_that_use_background():
+    load_project(_config(_mapping(background_selection="data_set == 'cohort'")), WORK_DIR)
+    calling = _calling(tool="bcftools_call")
+    calling[2]["background_selection"] = "data_set == 'cohort'"
+    with pytest.raises(ValueError, match="step 'variant_calling' uses no background libraries"):
+        load_project(_config(_mapping(), calling), WORK_DIR)

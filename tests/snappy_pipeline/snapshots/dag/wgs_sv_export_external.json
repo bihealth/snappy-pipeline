@@ -65,6 +65,7 @@
   "params": {
    "args": {
     "config": {
+     "background_selection": null,
      "delete_intermediates": true,
      "depends_on": {
       "reference": "genome",

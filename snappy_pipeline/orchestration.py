@@ -121,6 +121,13 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         task_config = workflow_cls.config_model_class.model_validate(
             task.config, context=context(task.name)
         )
+        if getattr(task_config, "background_selection", None) and not (
+            workflow_cls.uses_background or workflow_cls.background_results
+        ):
+            raise ValueError(
+                f"Task {task.name!r}: step {task.step!r} uses no background libraries, so "
+                "background_selection has no effect; remove it"
+            )
         task_configs[task.name] = task_config
         dependencies[task.name] = _resolve_dependencies(task.name, task_config, names)
 

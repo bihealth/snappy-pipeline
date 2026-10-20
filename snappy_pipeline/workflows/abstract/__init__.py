@@ -644,6 +644,11 @@ class BaseStep:
     #: Whether the step produces results for the libraries of background data sets, too
     background_results: bool = False
 
+    #: Whether the step uses the libraries of background data sets otherwise, such as cohort
+    #: members of joint calling or the samples of a model; only such steps and those with
+    #: ``background_results`` accept ``background_selection``
+    uses_background: bool = False
+
     @classmethod
     def task_library_requirement(cls, config: SnappyStepModel) -> str | None:
         """Return the ``library_requirement`` of a task of this step; override it when the
@@ -851,10 +856,20 @@ class BaseStep:
         task adds its relationships once. Callers must not modify the result in place.
         """
         if include_background not in self._library_dataframes:
-            self._library_dataframes[include_background] = self._with_relationships(
+            df = self._with_relationships(
                 type(self), self.config, self._library_table(include_background)
             )
+            self._library_dataframes[include_background] = self._narrow_background(self.config, df)
         return self._library_dataframes[include_background]
+
+    @staticmethod
+    def _narrow_background(config: SnappyStepModel, df):
+        """Return ``df`` with only the background libraries that ``background_selection`` takes."""
+        selection = getattr(config, "background_selection", None)
+        if not selection or not df["is_background"].any():
+            return df
+        kept = set(_query_libraries(df[df["is_background"]], selection).index)
+        return df[~df["is_background"] | df.index.isin(kept)]
 
     def _library_table(self, include_background: bool):
         """Return the library table without relationships, built once per run."""
@@ -884,6 +899,7 @@ class BaseStep:
         cls = WORKFLOW_REGISTRY[self.project.task(task_name).step]
         config = self.project.task_configs[task_name]
         df = self._with_relationships(cls, config, self._library_table(cls.background_results))
+        df = self._narrow_background(config, df)
         return select_libraries(
             df,
             getattr(config, "library_selection", None),

@@ -109,6 +109,9 @@ class GcnvModelWorkflow(BaseStep):
 
     #: Workflow name
     name = "gcnv_model"
+    #: The background libraries train the model, too
+    uses_background = True
+
     config_model_class = GcnvModelConfigModel
     produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
 

@@ -103,6 +103,7 @@
   "params": {
    "args": {
     "config": {
+     "background_selection": null,
      "bam_available_flag": false,
      "delete_intermediates": true,
      "depends_on": {

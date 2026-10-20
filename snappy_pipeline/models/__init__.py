@@ -189,6 +189,11 @@ class SnappyStepModel(SnappyModel, object):
     See the ``_LIBRARY_SELECTION_DEFAULTS`` dict and column reference in
     ``build_library_dataframe`` for supported columns."""
 
+    background_selection: str | None = None
+    """For steps that use the libraries of background data sets (mapping, panels of normals, the
+    SV and gCNV callers): a pandas ``DataFrame.query()`` expression that narrows them, such as
+    ``data_set == 'cohort_1000g'``. Unset: all background libraries."""
+
     delete_intermediates: bool = False
     """Delete per-sample intermediate files (raw calls, coverage, panel inputs, gVCFs, ...) once
     the task's later rules have read them. Scatter fragments are always deleted."""

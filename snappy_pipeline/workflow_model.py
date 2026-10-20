@@ -41,6 +41,8 @@ class DataSet(LibraryFolders):
     type: DataSetType = DataSetType.MATCHED_CANCER
     naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
     is_background: bool = False
+    """Libraries that are no task's results, such as a reference cohort; mapping, panels of
+    normals and the SV and gCNV callers use them, narrowed by a task's ``background_selection``"""
     sodar_uuid: str | None = None
     sodar_title: str | None = None
     pedigree_field: str | None = None

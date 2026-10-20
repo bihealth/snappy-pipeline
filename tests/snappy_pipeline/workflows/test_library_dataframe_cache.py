@@ -131,3 +131,20 @@ def test_group_by_comes_from_the_task_then_its_step_then_upstream():
     assert effective("calling") == "cohort"  # the step's default: joint calling
     assert effective("annotation") == "cohort"  # inherited from the calling task
     assert effective("single") == "library"  # the task's own choice wins
+
+
+def test_background_selection_narrows_only_the_background_libraries():
+    table = pd.DataFrame(
+        {
+            "library_name": ["case-DNA1", "bg1-DNA1", "bg2-DNA1"],
+            "data_set": ["cases", "cohort_a", "cohort_b"],
+            "is_background": [False, True, True],
+        }
+    )
+    step = _make_step()
+    step.project.library_tables[True] = table
+    step.config.background_selection = "data_set == 'cohort_b'"
+    assert step.build_library_dataframe(include_background=True)["library_name"].tolist() == [
+        "case-DNA1",
+        "bg2-DNA1",
+    ]

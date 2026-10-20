@@ -48,6 +48,9 @@ class SvCallingTargetedWorkflow(BaseStep):
 
     #: Workflow name
     name = "sv_calling_targeted"
+    #: The pedigrees of background data sets are called, too
+    uses_background = True
+
     config_model_class = SvCallingTargetedConfigModel
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
 
