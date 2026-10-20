@@ -11,7 +11,7 @@ The ``tool`` field selects the model:
 - ``access`` creates the CNVkit access file (accessible regions) from the reference genome and, optionally, regions to exclude.
 
 The task yields one result per cohort.
-All DNA libraries of the normal samples in the sample sheets build the panel.
+All DNA libraries of the normal samples in the sample sheets build the panel, those of background data sets included, unless ``library_selection`` narrows them.
 For ``mutect2`` and ``purecn``, ``path_normals_list`` selects other libraries by name, one per line.
 The listed libraries are used even if the sample sheet does not flag them as normal.
 
@@ -117,10 +117,8 @@ class PanelOfNormalsStepPart(BaseStepPart):
         return self.parent.common_kit("kits", self.normal_libraries)
 
     def _get_normal_libraries(self):
-        """Yield the names of all normal DNA libraries, including background data sets."""
-        df = self.parent.build_library_dataframe(include_background=True)
-        selected = df[(df["role"] == "normal") & (df["extraction_type"] == "dna")]
-        yield from selected["library_name"]
+        """Yield the names of the task's normal DNA libraries, including background data sets."""
+        yield from self.parent.libraries["library_name"]
 
     #: Log file prefix by action
     log_templates: dict[str, str] = {}
@@ -619,6 +617,12 @@ class PanelOfNormalsWorkflow(BaseStep):
 
     # Workflow name
     name = "panel_of_normals"
+
+    #: The panel is built from normal DNA libraries, of the background data sets too; all of
+    #: them unless ``library_selection`` narrows them
+    library_requirement = "role == 'normal' and extraction_type == 'dna'"
+    library_default = ""
+    background_results = True
     produces = [DataSignature(DataType.MODELS, frozenset({"pon"}))]
 
     @classmethod
