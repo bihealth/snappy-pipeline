@@ -2,7 +2,7 @@
 
 Merges the somatic VCF of a tumor library with the germline VCF of its matched normal library.
 The task needs both ``depends_on.somatic_variants`` and ``depends_on.germline_variants``.
-It produces one VCF per tumor library, which needs a matched normal library.
+It produces one VCF per tumor DNA library, which needs a matched normal library; ``library_selection`` can only narrow these.
 The merge runs GATK 3 ``CombineVariants``.
 
 With ``rename_combined`` set to ``tumor`` or ``germline``, the sample in the combined VCF is named after the tumor or the matched normal library.
@@ -97,9 +97,8 @@ class CombineVariantsStepPart(BaseStepPart):
             return {"tumor_library": wildcards.tumor_library}
 
     def get_result_files(self) -> list[str]:
-        df = self.parent.build_library_dataframe()
         result = []
-        for tumor_library in df[df["role"] == "tumor"]["library_name"].unique():
+        for tumor_library in self.parent.libraries["library_name"].unique():
             self.get_normal_lib_name(tumor_library)
             for path in self.get_output_files("run").values():
                 result += expand(path.replace("work/", "output/", 1), tumor_library=[tumor_library])
@@ -112,6 +111,9 @@ class CombineVariantsStepPart(BaseStepPart):
 class CombineVariantsWorkflow(BaseStep):
     name = "combine_variants"
     sheet_shortcut_class = CancerCaseSheet
+
+    #: The tumor DNA libraries, whose somatic and germline calls are combined
+    library_requirement = "role == 'tumor' and extraction_type == 'dna'"
 
     produces = [DataSignature(DataType.VARIANTS, frozenset({"combined"}))]
 

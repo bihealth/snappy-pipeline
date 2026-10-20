@@ -1065,3 +1065,23 @@ class TestScenarioMixedCancerAndGermline:
         )
         # Should have entities from both cancer and germline
         assert len(entities) > 0
+
+
+class TestLibraryRequirement:
+    def _cancer_df(self, cancer_sheet_tsv):
+        csheet = _parse_cancer_sheet(cancer_sheet_tsv)
+        info = _make_data_set_info("matched_cancer")
+        return build_library_dataframe([info], [csheet.sheet], [csheet])
+
+    def test_requirement_applies_to_an_explicit_selection(self, cancer_sheet_tsv):
+        df = self._cancer_df(cancer_sheet_tsv)
+        # A user selection of all tumors still keeps only the tumor DNA that mutect2 requires
+        result = select_libraries(df, "role == 'tumor'", None, "extraction_type == 'dna'")
+        assert len(result) > 0
+        assert (result["role"] == "tumor").all()
+        assert (result["extraction_type"] == "dna").all()
+
+    def test_empty_default_takes_everything_the_requirement_allows(self, cancer_sheet_tsv):
+        df = self._cancer_df(cancer_sheet_tsv)
+        result = select_libraries(df, None, "", "extraction_type == 'rna'")
+        assert len(result) == (df["extraction_type"] == "rna").sum() > 0

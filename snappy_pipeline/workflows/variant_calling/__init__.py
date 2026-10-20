@@ -27,7 +27,7 @@ The ``tool`` field selects the caller.
     Somatic calling with GATK 4 Mutect2 (tumor-normal pair or tumor only, see ``tumor_normal_mode``), with optional contamination estimation and filtration.
 
 The germline callers produce one result per cohort with ``group_by: cohort``, named after the index library, and one per library with ``group_by: library``.
-``mutect2`` produces one result per tumor library.
+``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
 With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_normals`` task with ``tool: mutect2``, whose panel VCF Mutect2 uses to filter recurrent artefacts.
 ``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
@@ -77,7 +77,6 @@ from snappy_pipeline.workflows.abstract import (
     ReportOutput,
     ResourceUsage,
     WritePedigreeStepPart,
-    select_libraries,
 )
 from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDict,
@@ -818,17 +817,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
     @listify
     def get_result_files(self):
-        df = self.parent.build_library_dataframe()
-        if df.empty:
-            return
-
-        selection = getattr(self.config, "library_selection", None)
-        df = select_libraries(df, selection, "role == 'tumor'")
-
         tpl = "output/{library_name}/out/{library_name}.vcf.gz"
-        for _, row in df.iterrows():
+        for library_name in self.parent.libraries["library_name"]:
             for ext in ("", ".md5", ".tbi", ".tbi.md5"):
-                yield tpl.format(library_name=row["library_name"]) + ext
+                yield tpl.format(library_name=library_name) + ext
 
 
 class VariantCallingWorkflow(BaseStep):
@@ -896,6 +888,8 @@ class VariantCallingWorkflow(BaseStep):
                 selected_caller = Gatk4HaplotypeCallerGvcfStepPart
             case "mutect2":
                 selected_caller = Mutect2StepPart
+                # Somatic calls of tumor DNA libraries, which need a matched normal or none
+                self.library_requirement = "role == 'tumor' and extraction_type == 'dna'"
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(

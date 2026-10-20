@@ -130,8 +130,7 @@ class cbioportalExportStepPart(BaseStepPart):
     def _yield_libraries(self):
         """Yield the first library of each tumor sample, of ``extraction_type`` if set"""
         msg = 'WARNING: multiple libraries or test samples for sample "{}", library "{}" is ignored'
-        df = self.parent.build_library_dataframe()
-        tumors = df[df["role"] == "tumor"]
+        tumors = self.parent.libraries
         if self.extraction_type:
             tumors = tumors[tumors["extraction_type"] == self.extraction_type.lower()]
         duplicated = tumors["sample_name"].duplicated()
@@ -530,6 +529,10 @@ class cbioportalExportWorkflow(BaseStep):
 
     #: Workflow name
     name = "cbioportal_export"
+
+    #: All tumor libraries; the sub steps take those of their extraction type
+    library_requirement = "role == 'tumor'"
+    library_default = ""
 
     config_model_class = CbioportalExportConfigModel
 
