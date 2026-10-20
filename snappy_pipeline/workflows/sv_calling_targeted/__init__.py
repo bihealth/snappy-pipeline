@@ -28,8 +28,6 @@ Here ``library_name`` is the index library of the pedigree.
 Downstream tasks read the key ``vcf``.
 """
 
-from biomedsheets.shortcuts import GermlineCaseSheet
-
 from snappy_pipeline.workflows.abstract import BaseStep, WritePedigreeStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.delly import Delly2StepPart
@@ -52,8 +50,6 @@ class SvCallingTargetedWorkflow(BaseStep):
     name = "sv_calling_targeted"
     config_model_class = SvCallingTargetedConfigModel
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
-
-    sheet_shortcut_class = GermlineCaseSheet
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

@@ -28,7 +28,6 @@ Downstream tasks read the keys ``txt`` and ``calls_json`` (the ``.json`` file).
 
 import re
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
@@ -151,9 +150,6 @@ class HlaTypingWorkflow(BaseStep):
     #: Step name
     name = "hla_typing"
     produces = [DataSignature(DataType.TABULAR, frozenset({"hla"}))]
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = GenericSampleSheet
 
     #: config_model_class
     config_model_class = HlaTypingConfigModel

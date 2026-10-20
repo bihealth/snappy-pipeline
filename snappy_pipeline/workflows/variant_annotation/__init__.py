@@ -25,8 +25,6 @@ Below ``tasks/<task>/output/``:
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
-from biomedsheets.shortcuts import GenericSampleSheet
-
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -138,7 +136,6 @@ class VariantAnnotationWorkflow(BaseStep):
         return (upstream["variants"].with_tags("annotated"),)
 
     config_model_class = VariantAnnotationConfigModel
-    sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

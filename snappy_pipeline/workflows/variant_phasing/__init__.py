@@ -31,8 +31,6 @@ import os
 from functools import cached_property
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet
-
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -250,7 +248,6 @@ class VariantPhasingWorkflow(BaseStep):
     name = "variant_phasing"
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))]
     config_model_class = VariantPhasingConfigModel
-    sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
     def task_produces(cls, config, upstream):

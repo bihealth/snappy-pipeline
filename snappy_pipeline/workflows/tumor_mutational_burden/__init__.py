@@ -22,8 +22,6 @@ It also records the names and checksums of the VCF and BED files.
 Downstream tasks read the key ``json``.
 """
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -81,10 +79,7 @@ class TumorMutationalBurdenCalculationWorkflow(BaseStep):
     name = "tumor_mutational_burden"
     produces = [DataSignature(DataType.TABULAR, frozenset({"tmb"}))]
     config_model_class = TumorMutationalBurdenConfigModel
-    sheet_shortcut_class = CancerCaseSheet
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
+    library_requirement = "kind == 'cancer'"
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

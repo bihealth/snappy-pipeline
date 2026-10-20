@@ -26,7 +26,6 @@ Downstream tasks read the key ``json``.
 
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration
@@ -96,8 +95,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     config_model_class = HomologousRecombinationDeficiencyConfigModel
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
+    library_requirement = "kind == 'cancer'"
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

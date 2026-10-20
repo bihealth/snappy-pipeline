@@ -25,7 +25,6 @@ import os
 import re
 from functools import cached_property
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from jinja2 import Environment, FileSystemLoader
 from snakemake import shell
 
@@ -146,9 +145,6 @@ class IgvSessionGenerationWorkflow(BaseStep):
     produces = [DataSignature(DataType.EXPORTS, frozenset({"igv"}))]
 
     config_model_class = IgvSessionGenerationConfigModel
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

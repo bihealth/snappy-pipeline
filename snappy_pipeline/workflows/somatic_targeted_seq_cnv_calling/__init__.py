@@ -38,7 +38,6 @@ import os
 from itertools import chain
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -614,12 +613,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
             )
         return tuple(cls.produces)
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
-
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
+    library_requirement = "kind == 'cancer'"
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

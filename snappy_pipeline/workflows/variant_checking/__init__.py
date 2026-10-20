@@ -20,8 +20,6 @@ Below ``tasks/<task>/output/``, each file with a ``.md5`` file:
 Downstream tasks read ``ped_check`` through ``depends_on``.
 """
 
-from biomedsheets.shortcuts import GermlineCaseSheet
-
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -95,9 +93,6 @@ class VariantCheckingWorkflow(BaseStep):
     name = "variant_checking"
     produces = [DataSignature(DataType.QC, frozenset({"pedigree_check"}))]
     config_model_class = VariantCheckingConfigModel
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

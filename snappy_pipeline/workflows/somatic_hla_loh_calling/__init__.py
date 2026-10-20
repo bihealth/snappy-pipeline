@@ -17,8 +17,6 @@ LOHHLA writes its result files into the same directory in ``work/``.
 They are not published.
 """
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -93,12 +91,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
     config_model_class = SomaticHlaLohCallingConfigModel
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
-
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
+    library_requirement = "kind == 'cancer'"
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

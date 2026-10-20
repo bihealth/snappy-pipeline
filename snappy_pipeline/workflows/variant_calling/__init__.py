@@ -67,7 +67,6 @@ The enabled statistics are published below ``{library_name}/report/``, with ``.m
 
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -847,8 +846,6 @@ class VariantCallingWorkflow(BaseStep):
     def default_group_by(cls, config):
         """The germline callers call each cohort (pedigree) jointly, mutect2 each tumor."""
         return None if config.tool == Tool.mutect2 else "cohort"
-
-    sheet_shortcut_class = GermlineCaseSheet
 
     #: Default relationship for somatic (mutect2) callers: resolve matched normal.
     default_relationships = {

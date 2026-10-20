@@ -120,8 +120,6 @@ Existing per-library variant calls, found as ``<search path>/<library name>/...`
 
 import os
 
-from biomedsheets.shortcuts import GenericSampleSheet
-
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -137,7 +135,6 @@ class ExternalDataWorkflow(BaseStep):
 
     name = "external_data"
     produces = [DataSignature(DataType.RAW)]
-    sheet_shortcut_class = GenericSampleSheet
     config_model_class = ExternalData
 
     #: Per-library files are found with the project's read discovery

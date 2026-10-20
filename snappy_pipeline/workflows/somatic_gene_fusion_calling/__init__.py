@@ -34,7 +34,6 @@ Downstream tasks read the key ``done``.
 There is no standard format for gene fusions, so the other files depend on the tool.
 """
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.io import touch
 
 from snappy_pipeline.utils import dictify, listify
@@ -266,15 +265,8 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     config_model_class = SomaticGeneFusionCallingConfigModel
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
-
-    library_requirement = "extraction_type == 'rna'"
+    library_requirement = "kind == 'cancer' and extraction_type == 'rna'"
     library_default = ""
-
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

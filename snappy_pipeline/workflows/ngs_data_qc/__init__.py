@@ -36,7 +36,6 @@ The kit name labels the ``BAIT_SET`` column of the metrics.
 
 from typing import Any
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import directory, expand, touch
 from snakemake.iocontainers import Wildcards
 
@@ -197,7 +196,6 @@ class NgsDataQcWorkflow(BaseStep):
     name = "ngs_data_qc"
     config_model_class = NgsDataQcConfigModel
     produces = [DataSignature(DataType.QC)]
-    sheet_shortcut_class = GenericSampleSheet
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

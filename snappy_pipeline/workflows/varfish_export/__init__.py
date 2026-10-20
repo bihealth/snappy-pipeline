@@ -31,7 +31,6 @@ The keys ``gts`` and ``db_infos`` (small variants) are the ones downstream tasks
 import typing
 import warnings
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -289,7 +288,6 @@ class VarfishExportWorkflow(BaseStep):
     name = "varfish_export"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
     config_model_class = VarfishExportConfigModel
-    sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

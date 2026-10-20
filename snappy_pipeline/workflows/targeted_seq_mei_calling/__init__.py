@@ -15,7 +15,6 @@ The key ``vcf`` is the one downstream tasks read through ``depends_on``.
 
 import os
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.base import InvalidConfiguration
@@ -138,9 +137,6 @@ class MeiWorkflow(BaseStep):
     name = "targeted_seq_mei_calling"
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "mei"}))]
     config_model_class = TargetedSeqMeiCallingConfigModel
-
-    #: Sample sheet shortcut class
-    sheet_shortcut_class = GermlineCaseSheet
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

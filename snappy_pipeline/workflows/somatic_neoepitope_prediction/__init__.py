@@ -77,7 +77,6 @@ import os
 from typing import Any
 
 import pandas as pd
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.iocontainers import InputFiles, Wildcards
 
 from snappy_pipeline.base import MissingConfiguration
@@ -948,10 +947,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         )
     }
 
-    sheet_shortcut_class = CancerCaseSheet
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
+    library_requirement = "kind == 'cancer'"
 
     def somatic_vcf(self, library_name: str, full: bool) -> str:
         """Return the somatic VCF of ``library_name``; ``full`` for the unfiltered mutect2 calls."""

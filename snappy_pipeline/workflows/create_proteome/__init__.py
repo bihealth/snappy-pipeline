@@ -1,7 +1,6 @@
 import os
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -67,7 +66,6 @@ class CreateProteomeStepPart(BaseStepPart):
 
 class CreateProteomeWorkflow(BaseStep):
     name = "create_proteome"
-    sheet_shortcut_class = GermlineCaseSheet
 
     produces = [DataSignature(DataType.TABULAR, frozenset({"proteome"}))]
 

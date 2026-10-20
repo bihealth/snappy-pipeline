@@ -24,14 +24,12 @@ from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
-from biomedsheets.shortcuts import ShortcutSampleSheet
 from snakemake.api import Workflow
 from snakemake.io import expand, report, temp
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
     UnsupportedActionException,
-    merge_kwargs,
 )
 from snappy_pipeline.models import LibraryFolders, RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
@@ -701,16 +699,6 @@ class BaseStep:
                 f"'{cls.__name__}' must declare a 'produces' list for contract compliance."
             )
 
-    #: Override with the sheet shortcut class to use
-    sheet_shortcut_class: type[ShortcutSampleSheet]
-
-    #: Override with arguments to pass into sheet shortcut class constructor
-    sheet_shortcut_args = None
-
-    #: Override with keyword arguments to pass into sheet shortcut class
-    #: constructor
-    sheet_shortcut_kwargs = None
-
     #: The libraries that the step can process at all, as a pandas query, such as RNA libraries
     #: for expression quantification; it applies in addition to ``library_selection``.
     library_requirement: str | None = None
@@ -812,23 +800,6 @@ class BaseStep:
         self.data_set_infos = list(self._load_data_set_infos())
         self.sheets = [info.sheet for info in self.data_set_infos]
 
-        sheet_kwargs_list = [
-            merge_kwargs(
-                first_kwargs=self.sheet_shortcut_kwargs,
-                second_kwargs=info.pedigree_field_kwargs,
-            )
-            for info in self.data_set_infos
-        ]
-
-        self.shortcut_sheets = []
-        klass = self.__class__.sheet_shortcut_class
-        for sheet, kwargs in zip(self.sheets, sheet_kwargs_list):
-            kwargs = kwargs or {}
-            kwargs = {k: v for k, v in kwargs.items() if k in klass.supported_kwargs}
-            self.shortcut_sheets.append(
-                klass(sheet, *(self.__class__.sheet_shortcut_args or []), **kwargs)
-            )
-
         self.check_config()
 
     @staticmethod
@@ -916,22 +887,24 @@ class BaseStep:
         return [path for group in self.read_groups(library_name) for path in group.paths.values()]
 
     def build_library_dataframe(self, include_background: bool = False):
-        """Return the unified library dataframe for this workflow.
+        """Return the unified library dataframe for this workflow, with its relationships.
 
         ``include_background`` adds the libraries of background data sets (``is_background``).
-        Each dataframe is built once per instance and shared by all callers, so callers must not
-        modify it in place.
+        The table without relationships is built once per run and shared by all tasks; each
+        task adds its relationships once. Callers must not modify the result in place.
         """
         if include_background not in self._library_dataframes:
+            tables = self.project.library_tables
+            if include_background not in tables:
+                tables[include_background] = build_library_dataframe(
+                    self.data_set_infos, self.sheets, include_background=include_background
+                )
             default_relationships = getattr(type(self), "default_relationships", {})
             config_relationships = getattr(self.config, "relationships", None) or {}
             relationships = {**default_relationships, **config_relationships}
-            self._library_dataframes[include_background] = build_library_dataframe(
-                self.data_set_infos,
-                self.sheets,
-                self.shortcut_sheets,
-                relationships=relationships or None,
-                include_background=include_background,
+            table = tables[include_background]
+            self._library_dataframes[include_background] = (
+                resolve_relationships(table, relationships) if relationships else table
             )
         return self._library_dataframes[include_background]
 
@@ -1549,160 +1522,6 @@ _LIBRARY_SELECTION_DEFAULTS: dict[str, str] = {
     "germline": "extraction_type == 'dna'",
 }
 
-
-def _derive_pedigree_from_raw_sheet(sheet):
-    """Derive pedigree grouping from raw bio entity relationships.
-
-    Used as fallback when the shortcut sheet lacks pedigree structure
-    (e.g., ``GenericSampleSheet``).  Walks ``sheet.bio_entities`` and
-    uses ``fatherPk``/``motherPk`` (or ``fatherName``/``motherName``)
-    to reconstruct family groupings, identify the index/proband, and
-    assign sex and disease status.
-
-    Returns ``None`` when the sheet contains no usable NGS libraries.
-    Otherwise returns a dict with the same keys that the pedigree
-    branch of :func:`build_library_dataframe` populates.
-    """
-    import collections
-
-    pk_to_lib: dict[int, str] = {}
-    lib_to_be: dict[str, object] = {}
-    name_to_lib: dict[str, str] = {}
-
-    for be in sheet.bio_entities.values():
-        for bs in be.bio_samples.values():
-            for ts in bs.test_samples.values():
-                for lib in ts.ngs_libraries.values():
-                    if not lib.disabled:
-                        pk_to_lib[be.pk] = lib.name
-                        lib_to_be[lib.name] = be
-                        name_to_lib[be.name] = lib.name
-
-    if not pk_to_lib:
-        return None
-
-    # Build parent references for each library.
-    lib_father: dict[str, str] = {}
-    lib_mother: dict[str, str] = {}
-    for lib_name, be in lib_to_be.items():
-        father_ref = be.extra_infos.get("fatherPk")
-        if father_ref is not None:
-            lib_father[lib_name] = pk_to_lib.get(int(father_ref), "0")
-        else:
-            fname = be.extra_infos.get("fatherName", "0")
-            lib_father[lib_name] = name_to_lib.get(fname, "0") if fname and fname != "0" else "0"
-
-        mother_ref = be.extra_infos.get("motherPk")
-        if mother_ref is not None:
-            lib_mother[lib_name] = pk_to_lib.get(int(mother_ref), "0")
-        else:
-            mname = be.extra_infos.get("motherName", "0")
-            lib_mother[lib_name] = name_to_lib.get(mname, "0") if mname and mname != "0" else "0"
-
-    # Union-find to discover families.
-    _uf_parent: dict[str, str] = {}
-
-    def _uf_find(x: str) -> str:
-        while _uf_parent[x] != x:
-            _uf_parent[x] = _uf_parent[_uf_parent[x]]
-            x = _uf_parent[x]
-        return x
-
-    def _uf_union(x: str, y: str) -> None:
-        rx, ry = _uf_find(x), _uf_find(y)
-        if rx != ry:
-            _uf_parent[rx] = ry
-
-    for ln in lib_to_be:
-        _uf_parent[ln] = ln
-
-    for ln in lib_to_be:
-        f = lib_father.get(ln, "0")
-        m = lib_mother.get(ln, "0")
-        if f != "0" and f in _uf_parent:
-            _uf_union(ln, f)
-        if m != "0" and m in _uf_parent:
-            _uf_union(ln, m)
-
-    families: dict[str, list[str]] = collections.defaultdict(list)
-    for ln in lib_to_be:
-        families[_uf_find(ln)].append(ln)
-
-    # Collect PKs of entities that are parents (referenced as father/mother).
-    parent_pks: set[int] = set()
-    for ln, be in lib_to_be.items():
-        fp = be.extra_infos.get("fatherPk")
-        mp = be.extra_infos.get("motherPk")
-        if fp is not None:
-            parent_pks.add(int(fp))
-        if mp is not None:
-            parent_pks.add(int(mp))
-
-    # Per-family: pick index, assign cohort / sex / disease / role.
-    index_lib_names: set[str] = set()
-    father_lib_names: set[str] = set()
-    mother_lib_names: set[str] = set()
-    lib_cohort: dict[str, str] = {}
-    lib_sex: dict[str, str] = {}
-    lib_disease: dict[str, int] = {}
-
-    for members in families.values():
-        # Index is the entity NOT referenced as a parent by anyone.
-        # Prefer the affected one.
-        index: str | None = None
-        for ln in members:
-            be = lib_to_be[ln]
-            if be.pk not in parent_pks:
-                is_affected = be.extra_infos.get("isAffected")
-                if is_affected is True or str(is_affected).lower() == "affected":
-                    index = ln
-                    break
-                if index is None:
-                    index = ln
-        if index is None:
-            index = members[0]
-
-        index_lib_names.add(index)
-
-        for ln in members:
-            be = lib_to_be[ln]
-            lib_cohort[ln] = index
-
-            sex_raw = be.extra_infos.get("sex", "unknown")
-            lib_sex[ln] = sex_raw if sex_raw in ("male", "female") else "unknown"
-
-            is_affected = be.extra_infos.get("isAffected")
-            if is_affected is True or str(is_affected).lower() == "affected":
-                lib_disease[ln] = 2
-            elif is_affected is False or str(is_affected).lower() == "unaffected":
-                lib_disease[ln] = 1
-            else:
-                lib_disease[ln] = 0
-
-            # Identify father / mother roles.
-            lib_pk = be.pk
-            for other_ln, other_be in lib_to_be.items():
-                if other_ln == ln:
-                    continue
-                ofp = other_be.extra_infos.get("fatherPk")
-                omp = other_be.extra_infos.get("motherPk")
-                if ofp is not None and int(ofp) == lib_pk:
-                    father_lib_names.add(ln)
-                if omp is not None and int(omp) == lib_pk:
-                    mother_lib_names.add(ln)
-
-    return {
-        "index_lib_names": index_lib_names,
-        "father_lib_names": father_lib_names,
-        "mother_lib_names": mother_lib_names,
-        "lib_cohort": lib_cohort,
-        "lib_sex": lib_sex,
-        "lib_disease": lib_disease,
-        "lib_father": lib_father,
-        "lib_mother": lib_mother,
-    }
-
-
 #: Library types whose ``libraryKit`` is an enrichment kit
 TARGETED_LIBRARY_TYPES = ("WES", "Panel_seq")
 
@@ -1798,16 +1617,15 @@ def _library_extra_columns(raw_sheet) -> dict[str, dict[str, Any]]:
 def build_library_dataframe(
     data_set_infos,
     sheets,
-    shortcut_sheets,
     relationships=None,
     include_background=False,
 ):
     """Build a tidy pandas DataFrame with one row per NGS library.
 
-    The shortcut sheet objects (CancerCaseSheet, GermlineCaseSheet, …) are
-    used directly as the data source so that information already computed by
-    biomedsheets (primary pairs, pedigree roles, affected status, sex, …) is
-    re-used rather than re-derived.
+    The biomedsheets views (CancerCaseSheet for cancer sheets; GenericSampleSheet for the
+    libraries and GermlineCaseSheet for the pedigrees of the other sheets) are used directly,
+    so that information already computed by biomedsheets (primary pairs, pedigree roles,
+    affected status, sex, …) is re-used rather than re-derived.
 
     Parameters
     ----------
@@ -1815,8 +1633,6 @@ def build_library_dataframe(
         Iterable of :class:`DataSetInfo` objects (``self.data_set_infos``).
     sheets:
         Corresponding raw biomedsheets ``sheet`` objects (``self.sheets``).
-    shortcut_sheets:
-        Corresponding shortcut sheet objects (``self.shortcut_sheets``).
 
     Returns
     -------
@@ -1844,11 +1660,12 @@ def build_library_dataframe(
         ``library_kit``; see :func:`_library_extra_columns`.
     """
     import pandas as pd
+    from biomedsheets.shortcuts import GenericSampleSheet, GermlineCaseSheet
     from biomedsheets.shortcuts.cancer import CancerCaseSheet, CancerCaseSheetOptions
 
     rows: list[dict] = []
 
-    for info, _raw_sheet, shortcut_sheet in zip(data_set_infos, sheets, shortcut_sheets):
+    for info, _raw_sheet in zip(data_set_infos, sheets):
         if info.is_background and not include_background:
             continue
 
@@ -1915,9 +1732,8 @@ def build_library_dataframe(
 
         # ── germline_variants (and generic) ──────────────────────────────────
         else:
-            # Derive role and pedigree-level attributes from the shortcut sheet
-            # if it exposes them (GermlineCaseSheet); fall back gracefully for
-            # plain GenericSampleSheet.
+            # All libraries, with the pedigrees of the germline view (joined by the data set's
+            # ``pedigree_field``, if set)
             index_lib_names: set[str] = set()
             father_lib_names: set[str] = set()
             mother_lib_names: set[str] = set()
@@ -1927,13 +1743,9 @@ def build_library_dataframe(
             lib_mother: dict[str, str] = {}
             lib_disease: dict[str, int] = {}
 
-            # Determine the pedigrees list: GermlineCaseSheet stores them
-            # in ``cohort.pedigrees``; GenericSampleSheet doesn't have them.
-            pedigrees = (
-                getattr(shortcut_sheet, "pedigrees", None)
-                or getattr(getattr(shortcut_sheet, "cohort", None), "pedigrees", None)
-                or []
-            )
+            all_ngs_libs = GenericSampleSheet(_raw_sheet).all_ngs_libraries
+            germline_sheet = GermlineCaseSheet(_raw_sheet, **(info.pedigree_field_kwargs or {}))
+            pedigrees = germline_sheet.cohort.pedigrees
 
             if pedigrees:
                 # First pass: map donor PKs to their DNA library names
@@ -2000,29 +1812,7 @@ def build_library_dataframe(
                             lib_disease[lib.name] = 1
                         else:
                             lib_disease[lib.name] = 0
-            else:
-                # Shortcut sheet lacks pedigree structure (e.g. GenericSampleSheet).
-                # Derive family grouping from the raw bio entity relationships.
-                derived = _derive_pedigree_from_raw_sheet(_raw_sheet)
-                if derived:
-                    index_lib_names = derived["index_lib_names"]
-                    father_lib_names = derived["father_lib_names"]
-                    mother_lib_names = derived["mother_lib_names"]
-                    lib_cohort = derived["lib_cohort"]
-                    lib_sex = derived["lib_sex"]
-                    lib_disease = derived["lib_disease"]
-                    lib_father = derived["lib_father"]
-                    lib_mother = derived["lib_mother"]
 
-            all_ngs_libs = getattr(shortcut_sheet, "all_ngs_libraries", None) or []
-            if not all_ngs_libs and pedigrees:
-                # Collect NGS libraries from pedigree donors as fallback.
-                all_ngs_libs = []
-                for ped in pedigrees:
-                    for d in ped.donors:
-                        lib = getattr(d, "dna_ngs_library", None)
-                        if lib is not None:
-                            all_ngs_libs.append(lib)
             for lib in all_ngs_libs:
                 ts = lib.test_sample
                 bs = getattr(ts, "bio_sample", None)
@@ -2246,23 +2036,17 @@ def cohort_libraries(df) -> dict[str, list[str]]:
 
 
 def output_entity_names(
-    data_set_infos, sheets, shortcut_sheets, selection, group_by=None, relationships=None
+    data_set_infos, sheets, selection, group_by=None, relationships=None
 ) -> list[str]:
     """Return the output entities of the libraries that ``selection`` takes, see
     :func:`select_libraries` and :func:`library_entities`."""
-    df = build_library_dataframe(
-        data_set_infos, sheets, shortcut_sheets, relationships=relationships
-    )
+    df = build_library_dataframe(data_set_infos, sheets, relationships=relationships)
     return library_entities(select_libraries(df, selection), group_by)
 
 
-def cohort_members(
-    data_set_infos, sheets, shortcut_sheets, selection, relationships=None
-) -> dict[str, list[str]]:
+def cohort_members(data_set_infos, sheets, selection, relationships=None) -> dict[str, list[str]]:
     """Return cohort name -> its libraries, restricted only by an explicit ``selection``."""
-    df = build_library_dataframe(
-        data_set_infos, sheets, shortcut_sheets, relationships=relationships
-    )
+    df = build_library_dataframe(data_set_infos, sheets, relationships=relationships)
     return cohort_libraries(df if selection is None else _query_libraries(df, selection))
 
 

@@ -156,7 +156,6 @@ import re
 from functools import cached_property
 from typing import Any
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -705,9 +704,6 @@ class NgsMappingWorkflow(BaseStep):
             paths["gene_counts"] = f"work/{lib}/out/{lib}.GeneCounts.tab"
             paths["strandedness"] = f"work/{lib}/strandedness/{lib}.decision.json"
         return paths
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = GenericSampleSheet
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

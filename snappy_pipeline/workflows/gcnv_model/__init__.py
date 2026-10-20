@@ -44,7 +44,6 @@ import dataclasses
 from collections import Counter
 import os
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import glob_wildcards
 
 from snappy_pipeline.utils import dictify
@@ -55,7 +54,6 @@ from snappy_pipeline.workflows.common.gcnv.gcnv_common import build_ngs_library_
 
 from .model import GcnvModel as GcnvModelConfigModel
 from .model import Intervals
-
 
 #: A model from fewer libraries of one kit gets a warning
 GCNV_MIN_KIT_SAMPLES = 10
@@ -113,9 +111,6 @@ class GcnvModelWorkflow(BaseStep):
     name = "gcnv_model"
     config_model_class = GcnvModelConfigModel
     produces = [DataSignature(DataType.MODELS, frozenset({"gcnv"}))]
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
     def task_produces(cls, config, upstream):

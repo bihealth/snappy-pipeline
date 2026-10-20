@@ -26,7 +26,6 @@ Downstream tasks read the key ``vcf``.
 import os
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -202,12 +201,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
 
     config_model_class = SomaticCnvCheckingConfigModel
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
-
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
+    library_requirement = "kind == 'cancer'"
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

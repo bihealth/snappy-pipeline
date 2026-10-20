@@ -30,7 +30,6 @@ Downstream tasks read the key ``vcf``.
 
 from typing import Any
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
@@ -227,7 +226,6 @@ class SvCallingWgsWorkflow(BaseStep):
     name = "sv_calling_wgs"
     produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))]
     config_model_class = SvCallingWgsConfigModel
-    sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

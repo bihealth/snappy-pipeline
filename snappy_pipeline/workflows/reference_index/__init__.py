@@ -23,8 +23,6 @@ This is the prefix of the files for ``bwa`` and ``bwa_mem2``, the ``.mmi`` file 
 The keys ``reference_fai``, ``reference_dict`` and ``reference_genome`` name the other three files.
 """
 
-from biomedsheets.shortcuts import GenericSampleSheet
-
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -168,7 +166,6 @@ class ReferenceIndexWorkflow(BaseStep):
         DataSignature(DataType.INDEX, frozenset({"star", "rna"})),
     ]
 
-    sheet_shortcut_class = GenericSampleSheet
     config_model_class = ReferenceIndexConfigModel
 
     @classmethod

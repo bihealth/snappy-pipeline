@@ -18,8 +18,6 @@ Downstream tasks read the FASTA file through the key ``fasta`` of their ``refere
 The task produces data of type ``raw`` with the tags ``reference``, the source and the molecule (``dna``, ``rna`` or ``protein``).
 """
 
-from biomedsheets.shortcuts import GenericSampleSheet
-
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -141,7 +139,6 @@ class ReferenceDownloadWorkflow(BaseStep):
         DataSignature(DataType.RAW, frozenset({"ucsc", "reference", "protein"})),
     ]
 
-    sheet_shortcut_class = GenericSampleSheet
     config_model_class = ReferenceDownloadConfigModel
 
     @classmethod

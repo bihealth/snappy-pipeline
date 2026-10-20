@@ -68,6 +68,9 @@ class Project:
     file_paths: Mapping[str, tuple[str, ...]] = dataclass_field(default_factory=dict)
     #: FASTQ discovery shared by all tasks, so each search path is walked once per run
     read_discovery: ReadDiscovery = dataclass_field(default_factory=ReadDiscovery, compare=False)
+    #: ``include_background`` -> the library table without relationships, built once per run
+    #: and shared by all tasks (``BaseStep.build_library_dataframe``)
+    library_tables: dict[bool, Any] = dataclass_field(default_factory=dict, compare=False)
 
     def task(self, name: str) -> TaskModel:
         """Return the task called ``name``."""

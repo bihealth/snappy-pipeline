@@ -99,7 +99,6 @@ The key ``index`` is the directory of the prebuilt index, with files such as ``s
 
 from typing import Any
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -371,9 +370,6 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     config_model_class = GeneExpressionQuantificationConfigModel
 
     produces = [EXPRESSION_SIGNATURE, STRANDEDNESS_SIGNATURE, RNA_QC_SIGNATURE]
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = GenericSampleSheet
 
     library_requirement = "extraction_type == 'rna'"
     library_default = ""

@@ -68,7 +68,6 @@ Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 import random
 from typing import Any
 
-from biomedsheets.shortcuts import GenericSampleSheet
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -357,7 +356,6 @@ class VariantFiltrationWorkflow(BaseStep):
         return (upstream["variants"].with_tags("filtered"),)
 
     config_model_class = VariantFiltrationConfigModel
-    sheet_shortcut_class = GenericSampleSheet
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

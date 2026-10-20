@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Tests that ``BaseStep`` builds the library dataframe only once per instance."""
+"""Tests that ``BaseStep`` builds the library table once per run and its dataframe once per
+instance."""
 
 from types import SimpleNamespace
 
@@ -34,7 +35,7 @@ def _make_step():
     step = object.__new__(_DummyStep)
     step.data_set_infos = []
     step.sheets = []
-    step.shortcut_sheets = []
+    step.project = SimpleNamespace(library_tables={})
     step.config = SimpleNamespace(library_selection=None, group_by="cohort", relationships=None)
     step.task_name = "dummy"
     step._library_dataframes = {}
@@ -58,6 +59,27 @@ def test_library_dataframe_is_built_once(mocker):
         assert step.get_cohort_libraries("father-DNA1") == ["index-DNA1", "father-DNA1"]
         assert step.get_cohort_libraries("unknown-DNA1") == ["unknown-DNA1"]
 
+    assert build.call_count == 1
+
+
+def test_tasks_share_the_library_table_of_the_run(mocker):
+    build = mocker.patch.object(
+        abstract, "build_library_dataframe", return_value=_library_dataframe()
+    )
+    first, second = _make_step(), _make_step()
+    second.project = first.project
+    second.config = SimpleNamespace(
+        library_selection=None,
+        group_by=None,
+        relationships={"index_lib": {"via": "cohort_name", "target": "role == 'index'"}},
+    )
+
+    assert "index_lib" not in first.build_library_dataframe().columns
+    assert second.build_library_dataframe()["index_lib"].tolist() == [
+        "index-DNA1",
+        "index-DNA1",
+        "single-DNA1",
+    ]
     assert build.call_count == 1
 
 

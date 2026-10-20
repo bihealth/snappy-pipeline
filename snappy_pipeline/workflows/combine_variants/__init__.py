@@ -19,7 +19,6 @@ Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 
 from typing import Any
 
-from biomedsheets.shortcuts import CancerCaseSheet
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
@@ -110,7 +109,6 @@ class CombineVariantsStepPart(BaseStepPart):
 
 class CombineVariantsWorkflow(BaseStep):
     name = "combine_variants"
-    sheet_shortcut_class = CancerCaseSheet
 
     #: The tumor DNA libraries, whose somatic and germline calls are combined
     library_requirement = "role == 'tumor' and extraction_type == 'dna'"

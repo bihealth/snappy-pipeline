@@ -5,7 +5,6 @@ import os
 import sys
 from collections import OrderedDict
 from collections.abc import MutableMapping
-from copy import deepcopy
 from typing import TYPE_CHECKING, Any, AnyStr, Dict
 
 import ruamel.yaml as ruamel_yaml
@@ -61,35 +60,6 @@ def print_sample_sheets(step: "BaseStep", file=sys.stderr):
         print("-------------" + "-" * len(info.sheet_path) + "\n", file=file)
         yaml = ruamel_yaml.YAML()
         return yaml.dump(info.sheet.json_data, stream=file)
-
-
-def merge_kwargs(
-    first_kwargs: dict[str, Any] | None, second_kwargs: dict[str, Any] | None
-) -> dict[str, Any] | None:
-    """Merge two keyword arguments.
-
-    :param first_kwargs: First keyword arguments dictionary.
-    :type first_kwargs: dict
-
-    :param second_kwargs: Second keyword arguments dictionary.
-    :type second_kwargs: dict
-
-    :return: Returns merged dictionary with inputted keyword arguments.
-    """
-    # Global if no individual dict
-    if first_kwargs and (not second_kwargs):
-        return first_kwargs
-    # Individual if no global dict
-    elif (not first_kwargs) and second_kwargs:
-        return second_kwargs
-    # Merge dicts if both defined
-    elif first_kwargs and second_kwargs:
-        global_copy_kwargs = deepcopy(first_kwargs)
-        global_copy_kwargs.update(second_kwargs)
-        return global_copy_kwargs
-    # None if both None
-    else:
-        return None
 
 
 type DictLike = Dict | MutableMapping | SnappyModel

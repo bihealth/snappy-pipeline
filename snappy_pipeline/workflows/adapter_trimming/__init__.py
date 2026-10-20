@@ -20,8 +20,6 @@ Downstream tasks read the trimmed files from ``work/{library_name}/out/`` throug
 
 import os
 
-from biomedsheets.shortcuts import GenericSampleSheet
-
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -125,7 +123,6 @@ class AdapterTrimmingWorkflow(BaseStep):
     name = "adapter_trimming"
     produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
 
-    sheet_shortcut_class = GenericSampleSheet
     config_model_class = AdapterTrimmingConfigModel
 
     @classmethod

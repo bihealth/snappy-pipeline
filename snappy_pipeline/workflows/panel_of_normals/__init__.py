@@ -70,8 +70,6 @@ It needs a ``mutect2`` panel of normals task in ``depends_on.panel_of_normals``,
 PureCN runs in its container, because its R package requirements are too complex for a conda environment.
 """
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-
 from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
 from snappy_pipeline.utils import dictify, listify
@@ -633,13 +631,6 @@ class PanelOfNormalsWorkflow(BaseStep):
         return (DataSignature(DataType.MODELS, frozenset({"pon", str(config.tool)})),)
 
     config_model_class = PanelOfNormalsConfigModel
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
-
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

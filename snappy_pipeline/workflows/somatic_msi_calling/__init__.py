@@ -18,8 +18,6 @@ The task publishes the following files below ``tasks/<task>/output/`` as symlink
 Downstream tasks read the key ``results``.
 """
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -103,12 +101,7 @@ class SomaticMsiCallingWorkflow(BaseStep):
 
     config_model_class = SomaticMsiCallingConfigModel
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
-
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
+    library_requirement = "kind == 'cancer'"
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

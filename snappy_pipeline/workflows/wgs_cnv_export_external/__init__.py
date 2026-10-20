@@ -24,7 +24,6 @@ Here ``library_name`` is the index library of the pedigree.
 Downstream tasks read the keys ``gts`` and ``db_infos``.
 """
 
-from biomedsheets.shortcuts import GermlineCaseSheet
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify
@@ -160,9 +159,6 @@ class WgsCnvExportExternalWorkflow(BaseStep):
     name = "wgs_cnv_export_external"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"external"}))]
     config_model_class = WgsCnvExportExternalConfigModel
-
-    #: Default biomed sheet class
-    sheet_shortcut_class = GermlineCaseSheet
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

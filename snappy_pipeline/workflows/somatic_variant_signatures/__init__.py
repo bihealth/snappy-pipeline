@@ -16,8 +16,6 @@ The plot ``deconstruct_sigs.{tumor_library}.pdf`` is written to the same directo
 Downstream tasks read the key ``tsv``.
 """
 
-from biomedsheets.shortcuts import CancerCaseSheet, CancerCaseSheetOptions
-
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
@@ -114,12 +112,7 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     name = "somatic_variant_signatures"
     produces = [DataSignature(DataType.TABULAR, frozenset({"signatures"}))]
 
-    #: Default biomed sheet class
-    sheet_shortcut_class = CancerCaseSheet
-
-    sheet_shortcut_kwargs = {
-        "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
-    }
+    library_requirement = "kind == 'cancer'"
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

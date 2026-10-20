@@ -67,7 +67,7 @@ def step(monkeypatch, mocker, tmp_path):
     step.w_config = project.model
     step.config = project.task_configs["consumer"]
     step.depends_on = step.config.depends_on
-    step.data_set_infos = step.sheets = step.shortcut_sheets = []
+    step.data_set_infos = step.sheets = []
     step._library_dataframes = {}
     return step
 
