@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.3](https://github.com/bihealth/snappy-pipeline/compare/v0.6.2...v0.6.3) (2026-10-20)
+
+
+### Bug Fixes
+
+* neoepitope adjustments ([#670](https://github.com/bihealth/snappy-pipeline/issues/670)) ([1fb007a](https://github.com/bihealth/snappy-pipeline/commit/1fb007ac62994f0b05598a1538fea1851218d33f))
+
 ## [0.6.2](https://github.com/bihealth/snappy-pipeline/compare/v0.6.1...v0.6.2) (2026-08-19)
 
 
