@@ -141,7 +141,7 @@ class ArcasHlaStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
-    default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="15000MB")
+    default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="64000MB")
 
 
 class HlaTypingWorkflow(BaseStep):

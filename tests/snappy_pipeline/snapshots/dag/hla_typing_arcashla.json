@@ -50,9 +50,9 @@
   ],
   "params": {},
   "resources": {
-   "mem": "15 GB",
-   "mem_mb": 15000,
-   "mem_mib": 14306,
+   "mem": "64 GB",
+   "mem_mb": 64000,
+   "mem_mib": 61036,
    "partition": "medium",
    "runtime": 3600
   },

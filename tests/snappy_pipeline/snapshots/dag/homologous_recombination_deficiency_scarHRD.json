@@ -23,22 +23,7 @@
   "output": [
    "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/out/scarHRD.done"
   ],
-  "params": {
-   "packages": [
-    {
-     "name": "aroneklund/copynumber",
-     "repo": "github"
-    },
-    {
-     "name": "sequenzatools/sequenza@3.0.0",
-     "repo": "bitbucket"
-    },
-    {
-     "name": "sztup/scarHRD",
-     "repo": "github"
-    }
-   ]
-  },
+  "params": {},
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
