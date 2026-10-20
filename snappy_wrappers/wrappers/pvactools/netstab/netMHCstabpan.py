@@ -8,10 +8,10 @@ import re
 import shutil
 import subprocess
 import sys
-import time
+import tempfile
 
-from multiprocessing import ProcessError, Queue, Manager, current_process
-from multiprocessing.pool import Pool
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import ProcessError, current_process
 from pathlib import Path
 from typing import Any, NamedTuple, Tuple, TextIO
 
@@ -233,54 +233,29 @@ def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 4
     return _parse_netMHCstabpan_output(out.split("\n"))
 
 
-def _worker(
-    task_queue: Queue,
-    output_queue: Queue,
-    error_queue: Queue,
-    cmd: list[str],
+def _run_task(
+    hla_type: str,
+    length: int,
+    cmd_part1: list[str],
+    cmd_part2: list[str],
+    workers_dir: str,
     timeout: int = 43200,
-    log_level: int = logging.WARNING,
 ):
-    """Multi-processing intermediate for netchop"""
-    logger = logging.getLogger(current_process().name)
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        level=log_level,
-    )
-
-    logger.debug(f"Process {current_process().name} starts")
-    while not task_queue.empty():
-        args = task_queue.get()
-        if args is None:
-            logger.debug(f"Process {current_process().name} received stop signal")
-            break
-        hla_type, length = (args[0], args[1])
-        sequences = os.path.join(
-            "/main_path", "seqs", _clean_filename(_epitope_length(hla_type, length) + ".fasta")
+    """Runs netMHCstabpan for one HLA type & length, in its own temp directory"""
+    name = _clean_filename(_epitope_length(hla_type, length))
+    with tempfile.TemporaryDirectory(dir=workers_dir) as task_temp:
+        cmd = (
+            cmd_part1
+            + ["--bind", f"{task_temp}:/base_temp:rw"]
+            + cmd_part2
+            + [
+                hla_type.replace("*", ""),
+                str(length),
+                f"/main_path/seqs/{name}.fasta",
+                f"/main_path/out/{name}.xls",
+            ]
         )
-        out = os.path.join(
-            "/main_path", "out", _clean_filename(_epitope_length(hla_type, length) + ".xls")
-        )
-        logger.debug(
-            f"Processing queued job with arguments {hla_type}, {length}, {sequences}, {out}"
-        )
-        try:
-            output_queue.put(
-                (
-                    hla_type,
-                    length,
-                    _run_netMHCstabpan_command(
-                        cmd + [hla_type.replace("*", ""), str(length), sequences, out],
-                        "/base_temp",
-                        timeout,
-                    ),
-                )
-            )
-        except Exception as e:
-            error_queue.put((hla_type, length, e))
-
-    logging.debug(f"Process {current_process().name} complete")
+        return _run_netMHCstabpan_command(cmd, "/base_temp", timeout)
 
 
 def run_netMHCstabpan(
@@ -337,8 +312,8 @@ def run_netMHCstabpan(
             )
         )
 
-    for i_worker in range(n_workers):
-        os.makedirs(os.path.join(base_path, "workers", str(i_worker)), mode=0o700, exist_ok=False)
+    workers_dir = os.path.join(base_path, "workers")
+    os.makedirs(workers_dir, mode=0o700, exist_ok=False)
 
     # Prepare fasta files with peptide sequences for netMHCstabpan input
     file_list = _create_sequence_files(
@@ -376,82 +351,62 @@ def run_netMHCstabpan(
         for k in ("Predicted Stability", "Half Life", "Stability Rank", "NetMHCstab allele"):
             epitopes[i][k] = "NA"
 
-    with Manager() as manager:
-        # Prepare multiprocessing
-        task_queue = manager.Queue()
-        output_queue = manager.Queue()
-        error_queue = manager.Queue()
-
-        # Start the workers (now setup workers' arguments)
-        workers_args = []
-        for i_worker in range(n_workers):
-            worker_temp = os.path.join(base_path, "workers", str(i_worker))
-            cmd = (
-                cmd_part1
-                + [
-                    "--bind",
-                    worker_temp + ":/base_temp:rw",
-                ]
-                + cmd_part2
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        futures = {
+            fn: executor.submit(
+                _run_task,
+                file_list[fn]["hla_type"],
+                file_list[fn]["length"],
+                cmd_part1,
+                cmd_part2,
+                workers_dir,
             )
-            workers_args.append(
-                [task_queue, output_queue, error_queue, cmd, timeout, logger.root.level]
-            )
+            for fn in random.sample(list(file_list.keys()), k=len(file_list))
+        }
+    # Leaving the with block waits for all futures
 
-        for descr in random.sample(list(file_list.values()), k=len(file_list)):
-            task_queue.put((descr["hla_type"], descr["length"]))
-
-        time.sleep(2.0)
-
-        for i_worker in range(n_workers):
-            task_queue.put(None)
-
-        with Pool(processes=n_workers) as pool:
-            pool.starmap(_worker, workers_args)
-
-        # Fill the epitope tables with the output queue & the contents of output files
-        while not output_queue.empty():
-            hla_type, length, replacement = output_queue.get()
-
-            if replacement[0]:
-                replacement = f"{replacement[0]} (distance: {float(replacement[1])})"
-            else:
-                replacement = f"{hla_type} (distance: {float(replacement[1])})"
-
-            results = _parse_output_file(
-                os.path.join(
-                    main_path,
-                    "out",
-                    _clean_filename(_epitope_length(hla_type, length) + ".xls"),
-                )
-            )
-
-            fn = _epitope_length(hla_type, length)
-            content = file_list[fn]
-            logger.debug(f"Inserting {len(results)} results from file {fn}")
-
-            for row in results:
-                iSeq = row["ID"]
-                assert iSeq in content["sequences"], f"Can't find sequence {iSeq} in {fn}"
-                for iEpitope in content["sequences"][iSeq].indices:
-                    for src, dest in (
-                        ("Pred", "Predicted Stability"),
-                        ("Thalf(h)", "Half Life"),
-                        ("Rank", "Stability Rank"),
-                    ):
-                        epitopes[iEpitope][dest] = row[src]
-                    epitopes[iEpitope]["NetMHCstab allele"] = replacement
-
-        # Check for errors
-        error = False
-        while not error_queue.empty():
+    error = False
+    for fn, future in futures.items():
+        content = file_list[fn]
+        hla_type, length = content["hla_type"], content["length"]
+        try:
+            replacement = future.result()
+        except Exception:
             error = True
-            hla_type, length, e = error_queue.get()
-            logger.error(
-                f"An error occurred during netMHCstabpan for {hla_type} epitopes of length {length} - message {e}"
+            logger.error(f"netMHCstabpan failed for {hla_type} epitopes of length {length}")
+            continue
+
+        if replacement[0]:
+            replacement = f"{replacement[0]} (distance: {float(replacement[1])})"
+        else:
+            replacement = f"{hla_type} (distance: {float(replacement[1])})"
+
+        results = _parse_output_file(
+            os.path.join(
+                main_path,
+                "out",
+                _clean_filename(_epitope_length(hla_type, length) + ".xls"),
             )
-        if error:
-            raise ProcessError("Error running one of netMHCstabpan sub-processes")
+        )
+
+        fn = _epitope_length(hla_type, length)
+        content = file_list[fn]
+        logger.debug(f"Inserting {len(results)} results from file {fn}")
+
+        for row in results:
+            iSeq = row["ID"]
+            assert iSeq in content["sequences"], f"Can't find sequence {iSeq} in {fn}"
+            for iEpitope in content["sequences"][iSeq].indices:
+                for src, dest in (
+                    ("Pred", "Predicted Stability"),
+                    ("Thalf(h)", "Half Life"),
+                    ("Rank", "Stability Rank"),
+                ):
+                    epitopes[iEpitope][dest] = row[src]
+                epitopes[iEpitope]["NetMHCstab allele"] = replacement
+
+    if error:
+        raise ProcessError("Error running one of netMHCstabpan sub-processes")
 
     shutil.rmtree(base_path)
 
