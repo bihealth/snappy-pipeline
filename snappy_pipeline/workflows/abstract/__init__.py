@@ -711,6 +711,14 @@ class BaseStep:
     #: constructor
     sheet_shortcut_kwargs = None
 
+    #: The libraries that a task takes without ``library_selection``, as a pandas query.
+    #: ``None`` takes the default of each library's sheet kind (cancer: tumor DNA, germline:
+    #: DNA), ``""`` takes all libraries.
+    library_default: str | None = None
+
+    #: Whether the step produces results for the libraries of background data sets, too
+    background_results: bool = False
+
     @classmethod
     def default_config_yaml(cls) -> str:
         """Return the annotated default configuration of a task of this step: a ``tasks:``
@@ -946,22 +954,30 @@ class BaseStep:
         )
 
     @cached_property
-    def output_entities(self) -> list[str]:
-        """Output entity names for this workflow, driven by config.
-
-        Returns cohort-level entity names when ``group_by == "cohort"``,
-        or individual library names otherwise.
-        """
+    def libraries(self):
+        """Return the rows of the libraries that the task takes: the library table, with the
+        background data sets if the step produces results for them (``background_results``),
+        selected by ``library_selection`` or else by the step's ``library_default``
+        (:func:`select_libraries`)."""
+        df = self.build_library_dataframe(include_background=self.background_results)
         selection = getattr(self.config, "library_selection", None)
-        return _output_entity_names_from_dataframe(
-            self.build_library_dataframe(), selection, self.effective_group_by
-        )
+        return select_libraries(df, selection, self.library_default)
+
+    @cached_property
+    def output_entities(self) -> list[str]:
+        """Output entity names for this workflow: one library per cohort with
+        ``group_by == "cohort"``, otherwise each of the task's libraries."""
+        return library_entities(self.libraries, self.effective_group_by)
 
     @cached_property
     def cohort_members(self) -> dict[str, list[str]]:
-        """Cohort name -> member library names mapping."""
-        selection = getattr(self.config, "library_selection", None)
-        return _cohort_members_from_dataframe(self.build_library_dataframe(), selection)
+        """Cohort name -> the names of its libraries. Members are inputs of the task's entities,
+        not entities themselves, so only an explicit ``library_selection`` restricts them, not
+        the default."""
+        df = self.build_library_dataframe(include_background=self.background_results)
+        if selection := getattr(self.config, "library_selection", None):
+            df = _query_libraries(df, selection)
+        return cohort_libraries(df)
 
     @cached_property
     def _cohort_members_by_library(self) -> dict[str, list[str]]:
@@ -2161,40 +2177,39 @@ def resolve_relationships(df, relationships: dict):
     return result
 
 
-def apply_library_selection(
-    df,
-    selection: str | None,
-    kind: str,
-):
-    """Filter *df* using *selection* or the per-*kind* default.
+def select_libraries(df, selection: str | None, default: str | None = None):
+    """Return the libraries of ``df`` that a task takes.
 
-    Parameters
-    ----------
-    df:
-        Library DataFrame produced by :func:`build_library_dataframe`.
-    selection:
-        A pandas ``DataFrame.query()`` expression, or ``None`` to use the
-        default for *kind*.
-    kind:
-        Sheet kind (``"cancer"`` or ``"germline"``); used only when
-        *selection* is ``None``.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Filtered subset of *df*.
+    These are the rows of ``selection`` (the task's ``library_selection``), else those of the
+    step's ``default``, else those of the default of each row's sheet kind
+    (``_LIBRARY_SELECTION_DEFAULTS``); an empty expression takes all rows. Raises ``ValueError``
+    for an invalid expression and for libraries of the same name in several data sets.
     """
+    import pandas as pd
+
     if df.empty:
         return df
-    expr = selection if selection is not None else _LIBRARY_SELECTION_DEFAULTS.get(kind, "")
-    if expr:
-        try:
-            df = df.query(expr)
-        except Exception as exc:
-            raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
+    expr = selection if selection is not None else default
+    if expr is None:
+        df = pd.concat(
+            [
+                subset if subset.empty else _query_libraries(subset, kind_default)
+                for kind, kind_default in _LIBRARY_SELECTION_DEFAULTS.items()
+                for subset in [df[df["kind"] == kind]]
+            ]
+        )
+    elif expr:
+        df = _query_libraries(df, expr)
     if colliding := _colliding_libraries(df):
         raise ValueError(colliding_libraries_message(colliding))
     return df
+
+
+def _query_libraries(df, expr: str):
+    try:
+        return df.query(expr)
+    except Exception as exc:
+        raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
 
 
 def _colliding_libraries(df) -> dict[str, list[str]]:
@@ -2216,113 +2231,44 @@ def colliding_libraries_message(colliding: dict[str, list[str]], task_name: str 
     )
 
 
-def output_entity_names(
-    data_set_infos,
-    sheets,
-    shortcut_sheets,
-    selection: str | None,
-    group_by: str | None = None,
-    relationships=None,
-) -> list[str]:
-    """Return output entity names driven by *group_by* and *selection*.
-
-    When ``group_by == "cohort"``, returns one primary library name per
-    cohort (pedigree).  Otherwise returns individual library names.
-
-    Parameters
-    ----------
-    data_set_infos, sheets, shortcut_sheets:
-        As returned by ``BaseStep`` initialisation.
-    selection:
-        ``library_selection`` value from the step config (may be ``None``).
-    group_by:
-        ``"cohort"`` for cohort-level granularity, ``None`` or ``"library"``
-        for per-library granularity.
-    relationships:
-        Optional relationship definitions passed to
-        :func:`build_library_dataframe`.
-    """
-    df = build_library_dataframe(
-        data_set_infos, sheets, shortcut_sheets, relationships=relationships
-    )
-    return _output_entity_names_from_dataframe(df, selection, group_by)
-
-
-def _output_entity_names_from_dataframe(df, selection: str | None, group_by: str | None):
-    """Implementation of :func:`output_entity_names` on an existing library dataframe."""
-    import pandas as pd
-
+def library_entities(df, group_by: str | None) -> list[str]:
+    """Return the output entities of the libraries ``df``: with ``group_by == "cohort"`` the
+    primary library of each cohort (else its first one), otherwise every library."""
     if df.empty:
         return []
-
-    # Apply per-kind defaults when no explicit selection is given.
-    if selection is not None:
-        df = apply_library_selection(df, selection, "germline")
-    else:
-        rows = []
-        for kind in ("cancer", "germline"):
-            subset = df[df["kind"] == kind]
-            default = _LIBRARY_SELECTION_DEFAULTS.get(kind, "")
-            if default:
-                subset = subset.query(default)
-            rows.append(subset)
-        df = pd.concat(rows) if rows else df.iloc[0:0]
-
-    if df.empty:
-        return []
-
     if group_by == "cohort":
-        # Return primary library name per cohort.
         entities = []
         for _, group in df.groupby("cohort_name"):
             primary = group[group["is_primary"]]
-            if not primary.empty:
-                entities.append(primary.iloc[0]["library_name"])
-            else:
-                entities.append(group.iloc[0]["library_name"])
+            entities.append((primary if not primary.empty else group).iloc[0]["library_name"])
         return entities
-    else:
-        # Per-library: return distinct library names.
-        return df["library_name"].unique().tolist()
+    return df["library_name"].unique().tolist()
 
 
-def cohort_members(
-    data_set_infos,
-    sheets,
-    shortcut_sheets,
-    selection: str | None,
-    relationships=None,
-) -> dict[str, list[str]]:
-    """Return mapping from cohort name to member library names.
+def cohort_libraries(df) -> dict[str, list[str]]:
+    """Return cohort name -> the names of its libraries in ``df``."""
+    return {name: group["library_name"].tolist() for name, group in df.groupby("cohort_name")}
 
-    Parameters
-    ----------
-    data_set_infos, sheets, shortcut_sheets:
-        As returned by ``BaseStep`` initialisation.
-    selection:
-        ``library_selection`` value from the step config (may be ``None``).
-    relationships:
-        Optional relationship definitions passed to
-        :func:`build_library_dataframe`.
-    """
+
+def output_entity_names(
+    data_set_infos, sheets, shortcut_sheets, selection, group_by=None, relationships=None
+) -> list[str]:
+    """Return the output entities of the libraries that ``selection`` takes, see
+    :func:`select_libraries` and :func:`library_entities`."""
     df = build_library_dataframe(
         data_set_infos, sheets, shortcut_sheets, relationships=relationships
     )
-    return _cohort_members_from_dataframe(df, selection)
+    return library_entities(select_libraries(df, selection), group_by)
 
 
-def _cohort_members_from_dataframe(df, selection: str | None) -> dict[str, list[str]]:
-    """Implementation of :func:`cohort_members` on an existing library dataframe."""
-    if df.empty:
-        return {}
-
-    if selection is not None:
-        df = apply_library_selection(df, selection, "germline")
-
-    result: dict[str, list[str]] = {}
-    for cohort_name, group in df.groupby("cohort_name"):
-        result[cohort_name] = group["library_name"].tolist()
-    return result
+def cohort_members(
+    data_set_infos, sheets, shortcut_sheets, selection, relationships=None
+) -> dict[str, list[str]]:
+    """Return cohort name -> its libraries, restricted only by an explicit ``selection``."""
+    df = build_library_dataframe(
+        data_set_infos, sheets, shortcut_sheets, relationships=relationships
+    )
+    return cohort_libraries(df if selection is None else _query_libraries(df, selection))
 
 
 class InputFilesStepPartMixin:

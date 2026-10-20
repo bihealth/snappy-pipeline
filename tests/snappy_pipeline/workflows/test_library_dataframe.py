@@ -14,7 +14,7 @@ from biomedsheets.io_tsv import read_cancer_tsv_sheet
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.workflows.abstract import (
-    apply_library_selection,
+    select_libraries,
     build_library_dataframe,
     cohort_members,
     output_entity_names,
@@ -246,7 +246,7 @@ class TestBuildLibraryDataframe:
         info = _make_data_set_info("matched_cancer")
         df = build_library_dataframe([info], [csheet.sheet], [csheet])
 
-        selected = apply_library_selection(df, "library_type == 'mRNA_seq'", "cancer")
+        selected = select_libraries(df, "library_type == 'mRNA_seq'")
         assert len(selected) > 0
         assert (selected["extraction_type"] == "rna").all()
 
@@ -293,11 +293,11 @@ def _build_germline_singleton_dataframe(custom_fields, values):
 
 
 # ---------------------------------------------------------------------------
-# B. apply_library_selection
+# B. select_libraries
 # ---------------------------------------------------------------------------
 
 
-class TestApplyLibrarySelection:
+class TestSelectLibraries:
     def _cancer_df(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
@@ -305,7 +305,7 @@ class TestApplyLibrarySelection:
 
     def test_cancer_default(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
-        result = apply_library_selection(df, None, "cancer")
+        result = select_libraries(df, None)
         assert (result["role"] == "tumor").all()
         assert (result["extraction_type"] == "dna").all()
 
@@ -313,23 +313,23 @@ class TestApplyLibrarySelection:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
         df = build_library_dataframe([info], [gsheet.sheet], [gsheet])
-        result = apply_library_selection(df, None, "germline")
+        result = select_libraries(df, None)
         assert (result["extraction_type"] == "dna").all()
 
     def test_custom_expression_normals_only(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
-        result = apply_library_selection(df, "role == 'normal'", "cancer")
+        result = select_libraries(df, "role == 'normal'")
         assert (result["role"] == "normal").all()
 
     def test_custom_expression_rna(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
-        result = apply_library_selection(df, "extraction_type == 'rna'", "cancer")
+        result = select_libraries(df, "extraction_type == 'rna'")
         assert (result["extraction_type"] == "rna").all()
 
     def test_invalid_expression_raises(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
         with pytest.raises(ValueError, match="invalid"):
-            apply_library_selection(df, "this is not valid sql !!!", "cancer")
+            select_libraries(df, "this is not valid sql !!!")
 
     def test_empty_dataframe(self):
         empty = pd.DataFrame(
@@ -349,12 +349,12 @@ class TestApplyLibrarySelection:
                 "tissue_type",
             ]
         )
-        result = apply_library_selection(empty, "role == 'tumor'", "cancer")
+        result = select_libraries(empty, "role == 'tumor'")
         assert result.empty
 
     def test_tissue_type_in_query(self, cancer_sheet_tsv):
         df = self._cancer_df(cancer_sheet_tsv)
-        result = apply_library_selection(df, "tissue_type == 'tumor'", "cancer")
+        result = select_libraries(df, "tissue_type == 'tumor'")
         assert (result["tissue_type"] == "tumor").all()
 
 
@@ -801,9 +801,7 @@ class TestIntegrationRoundtrip:
         df = build_library_dataframe([info], [csheet.sheet], [csheet], relationships=rels)
         assert "matched_normal_lib" in df.columns
 
-        selected = apply_library_selection(
-            df, "role == 'tumor' and extraction_type == 'dna'", "cancer"
-        )
+        selected = select_libraries(df, "role == 'tumor' and extraction_type == 'dna'")
         assert (selected["role"] == "tumor").all()
         assert (selected["extraction_type"] == "dna").all()
         assert (selected["matched_normal_lib"] != "").all()
@@ -891,9 +889,7 @@ class TestScenarioSomaticTumorNormalPaired:
                 ("N1", "normal", "dna", "D1"),
             ]
         )
-        result = apply_library_selection(
-            df, "role == 'tumor' and extraction_type == 'dna'", "cancer"
-        )
+        result = select_libraries(df, "role == 'tumor' and extraction_type == 'dna'")
         assert len(result) == 1
         assert result.iloc[0]["library_name"] == "T1"
 
@@ -906,9 +902,7 @@ class TestScenarioSomaticTumorNormalPaired:
                 ("N2", "normal", "dna", "D2"),
             ]
         )
-        result = apply_library_selection(
-            df, "role == 'tumor' and extraction_type == 'dna'", "cancer"
-        )
+        result = select_libraries(df, "role == 'tumor' and extraction_type == 'dna'")
         assert len(result) == 2
 
 
@@ -931,9 +925,7 @@ class TestScenarioSomaticTumorOnly:
                 ("T1", "tumor", "dna", "D1"),
             ]
         )
-        result = apply_library_selection(
-            df, "role == 'tumor' and extraction_type == 'dna'", "cancer"
-        )
+        result = select_libraries(df, "role == 'tumor' and extraction_type == 'dna'")
         assert len(result) == 1
 
 
@@ -948,9 +940,7 @@ class TestScenarioSomaticNormalOnly:
                 ("T1", "tumor", "dna", "D1"),
             ]
         )
-        result = apply_library_selection(
-            df, "role == 'normal' and extraction_type == 'dna'", "cancer"
-        )
+        result = select_libraries(df, "role == 'normal' and extraction_type == 'dna'")
         assert len(result) == 2
         assert (result["role"] == "normal").all()
 

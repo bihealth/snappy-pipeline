@@ -5,14 +5,20 @@ import pandas as pd
 import pytest
 
 from snappy_pipeline import orchestration
-from snappy_pipeline.workflows.abstract import BaseStep, apply_library_selection
+from snappy_pipeline.workflows.abstract import BaseStep, select_libraries
 
 FIX = "library_selection: \"data_set == 'batch1'\""
 
 
 def _rows(*data_sets, name="P001-N1-DNA1-WES1"):
     return [
-        {"library_name": name, "data_set": data_set, "folder_name": name, "extraction_type": "dna"}
+        {
+            "library_name": name,
+            "data_set": data_set,
+            "folder_name": name,
+            "extraction_type": "dna",
+            "kind": "germline",
+        }
         for data_set in data_sets
     ]
 
@@ -33,9 +39,9 @@ def test_a_selection_with_colliding_names_fails_with_the_fix():
     with pytest.raises(
         ValueError, match="several data sets: P001-N1-DNA1-WES1 \\(batch1, batch2\\)"
     ) as error:
-        apply_library_selection(df, None, "germline")
+        select_libraries(df, None)
     assert FIX in str(error.value)
-    assert len(apply_library_selection(df, "data_set == 'batch2'", "germline")) == 1
+    assert len(select_libraries(df, "data_set == 'batch2'")) == 1
 
 
 def test_library_selection_decides_between_libraries_of_one_name():

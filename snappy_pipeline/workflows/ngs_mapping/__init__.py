@@ -167,7 +167,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     DataSignature,
     ResourceUsage,
-    apply_library_selection,
+    select_libraries,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataType
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
@@ -798,10 +798,8 @@ class NgsMappingWorkflow(BaseStep):
         if df.empty:
             return
 
-        # Apply library_selection filter (uses per-kind defaults when selection is None)
-        selection = getattr(self.config, "library_selection", None)
-        kind = df["kind"].iloc[0] if "kind" in df.columns and not df.empty else "germline"
-        df = apply_library_selection(df, selection, kind)
+        # library_selection, or the default of each library's sheet kind
+        df = select_libraries(df, getattr(self.config, "library_selection", None))
 
         if df.empty:
             return

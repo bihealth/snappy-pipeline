@@ -77,6 +77,7 @@ from snappy_pipeline.workflows.abstract import (
     ReportOutput,
     ResourceUsage,
     WritePedigreeStepPart,
+    select_libraries,
 )
 from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDict,
@@ -137,13 +138,6 @@ class VariantCallingStepPart(BaseStepPart):
             df_target = df[df["library_name"] == wildcards.library_name]
         else:
             raise ValueError(f"Unknown group_by: {group_by}")
-
-        selection = getattr(self.config, "library_selection", None)
-        if selection:
-            from snappy_pipeline.workflows.abstract import apply_library_selection
-
-            # Note: "kind" logic isn't strictly necessary if selection encompasses it, but we can assume default 'germline' if needed
-            df_target = apply_library_selection(df_target, selection, "germline")
 
         if df_target["kind"].eq("cancer").all():
             yield "ped", []
@@ -337,12 +331,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             df_target = df[df["library_name"] == wildcards.library_name]
         else:
             raise ValueError(f"Unknown group_by: {group_by}")
-
-        selection = getattr(self.config, "library_selection", None)
-        if selection:
-            from snappy_pipeline.workflows.abstract import apply_library_selection
-
-            df_target = apply_library_selection(df_target, selection, "germline")
 
         if df_target["kind"].eq("cancer").all():
             yield "ped", []
@@ -835,12 +823,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             return
 
         selection = getattr(self.config, "library_selection", None)
-        if selection:
-            from snappy_pipeline.workflows.abstract import apply_library_selection
-
-            df = apply_library_selection(df, selection, "cancer")
-        else:
-            df = df[df["role"] == "tumor"]
+        df = select_libraries(df, selection, "role == 'tumor'")
 
         tpl = "output/{library_name}/out/{library_name}.vcf.gz"
         for _, row in df.iterrows():
