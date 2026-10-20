@@ -58,7 +58,10 @@ with open(snakemake.input.alleles, "rt") as f:
         alleles.append(row["HLA Allele"])
 alleles = ",".join(sorted(list(set(alleles))))
 
-algorithms = " ".join(args["algorithms"])
+if "all_class_i" in args["algorithms"] and "all_class_ii" in args["algorithms"]:
+    algorithms = "all"
+else:
+    algorithms = " ".join(args["algorithms"])
 class_i_epitope_length = ",".join(map(str, args["lengths"]["class_i"]))
 class_ii_epitope_length = ",".join(map(str, args["lengths"]["class_ii"]))
 
@@ -117,6 +120,7 @@ scripts=$(dirname $out)/scripts
 mkdir -p $scripts
 
 cat << __EOF > $scripts/run_pVACsplice.sh
+set -x
 export TMPDIR=/short_tmp
 pvacsplice run --n-threads {snakemake.threads} \\
     --normal-sample-name {args[normal_sample]} \\
@@ -128,6 +132,13 @@ pvacsplice run --n-threads {snakemake.threads} \\
     {args[tumor_sample]} {alleles} {algorithms} \\
     $(dirname {output_fns[done]}) \\
     {input_fns[annotated]} {input_fns[reference]} {input_fns[features]}
+if [[ $? -eq 0 ]]
+then
+    echo "pvacsplice finished without errors, cleaning up tmp"
+    rm -rf /short_tmp/*
+else
+    echo "ERROR during pvacsplice"
+fi
 __EOF
 chmod +x $scripts/run_pVACsplice.sh
 

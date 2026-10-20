@@ -67,7 +67,10 @@ with open(snakemake.input.alleles, "rt") as f:
         alleles.append(row["HLA Allele"])
 alleles = ",".join(sorted(list(set(alleles))))
 
-algorithms = " ".join(args["algorithms"])
+if "all_class_i" in args["algorithms"] and "all_class_ii" in args["algorithms"]:
+    algorithms = "all"
+else:
+    algorithms = " ".join(args["algorithms"])
 class_i_epitope_length = ",".join(map(str, args["lengths"]["class_i"]))
 class_ii_epitope_length = ",".join(map(str, args["lengths"]["class_ii"]))
 
@@ -128,6 +131,7 @@ scripts=$(dirname $out)/scripts
 mkdir -p $scripts
 
 cat << __EOF > $scripts/run_pVACseq.sh
+set -x
 export TMPDIR=/short_tmp
 pvacseq run --n-threads {snakemake.threads} \\
     {normal} \\
@@ -138,6 +142,13 @@ pvacseq run --n-threads {snakemake.threads} \\
     {input_fns[vcf]} \\
     {args[tumor_sample]} {alleles} {algorithms} \\
     $(dirname {output_fns[done]})
+if [[ $? -eq 0 ]]
+then
+    echo "pvacseq finished without errors, cleaning up tmp"
+    rm -rf /short_tmp/*
+else
+    echo "ERROR during pvacseq"
+fi
 __EOF
 chmod +x $scripts/run_pVACseq.sh
 

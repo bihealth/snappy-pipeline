@@ -46,11 +46,17 @@ else
     germline={snakemake.input.germline_vcf}
 fi
 
-somatic=$tmp/somatic.vcf.gz
+temp_somatic=$tmp/temp_somatic.vcf.gz
 bcftools view \
     --samples-file <(echo "{args[tumor_library]}") \
-    --output-type z --output $somatic --write-index=tbi \
+    --output-type z --output $temp_somatic --write-index=tbi \
     {snakemake.input.somatic_vcf}
+somatic=$tmp/somatic.vcf.gz
+bcftools annotate \
+    --annotations $temp_somatic \
+    --mark-sites +SOMATIC \
+    --output-type z --output $somatic --write-index=tbi \
+    $temp_somatic
 
 java -Xmx{mem_mb}m -jar $gatk -T CombineVariants \
     --assumeIdenticalSamples \
