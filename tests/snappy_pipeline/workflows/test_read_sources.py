@@ -8,7 +8,6 @@ import pytest
 
 from snappy_pipeline.reads import ReadDiscovery
 from snappy_pipeline.workflow_model import DataSet
-from snappy_pipeline.workflows import abstract
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.external_data.model import ExternalData
 
@@ -36,16 +35,17 @@ def _step(source, data_sets=None, tasks=None):
     return step
 
 
-def test_data_set_reads_are_found_only_below_the_library_data_set(tmp_path, monkeypatch):
+def test_data_set_reads_are_found_only_below_the_library_data_set(tmp_path):
     _touch(tmp_path / "batch1", "lib/a_R1.fq.gz", "lib/a_R2.fq.gz")
     _touch(tmp_path / "batch2", "lib/b_R1.fq.gz", "lib/b_R2.fq.gz")
     data_sets = {
         name: DataSet(search_paths=[str(tmp_path / name)], search_patterns=[PATTERN])
         for name in ("batch1", "batch2")
     }
+    step = _step("data_sets", data_sets=data_sets)
     # The library is in the sheet of batch2, in the folder "lib"
-    monkeypatch.setattr(abstract, "library_folder", lambda infos, library: (infos[1], "lib"))
-    groups = _step("data_sets", data_sets=data_sets).read_groups("L1")
+    step.__dict__["_library_rows"] = {"L1": [{"data_set": "batch2", "folder_name": "lib"}]}
+    groups = step.read_groups("L1")
     assert [group.left for group in groups] == [str(tmp_path / "batch2/lib/b_R1.fq.gz")]
 
 

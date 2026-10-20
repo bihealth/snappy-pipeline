@@ -22,7 +22,6 @@ from typing import Any, Callable
 import pydantic
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
-from biomedsheets.models import SecondaryIDNotFoundException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from biomedsheets.shortcuts import ShortcutSampleSheet
@@ -883,8 +882,14 @@ class BaseStep:
         library's data set and the sheet's ``folderName``, or an ``external_data`` task and the
         library name."""
         if source in ("", DATA_SETS):
-            info, folder_name = library_folder(self.data_set_infos, library_name)
-            return self.w_config.data_sets[info.name], folder_name
+            row = self.library_row(library_name)
+            folder_name = row.get("folder_name")
+            if not isinstance(folder_name, str) or not folder_name:
+                raise ValueError(
+                    f"Library {library_name!r} of data set {row['data_set']!r} has no folderName in "
+                    "the sample sheet"
+                )
+            return self.w_config.data_sets[row["data_set"]], folder_name
         return self.project.task_configs[source], library_name
 
     def reads_input(self, library_name: str) -> list[str]:
@@ -1032,15 +1037,13 @@ class BaseStep:
         """Return library name -> enrichment kit (``library_kit``) of the targeted libraries
         (``WES``, ``Panel_seq``) that have one. Other libraries use ``libraryKit`` for other
         things, such as the long-read chemistry that minimap2 reads."""
-        df = self.build_library_dataframe(include_background=True)
-        if not {"library_kit", "library_type"} <= set(df.columns):
-            return {}
-        targeted = df[df["library_type"].isin(TARGETED_LIBRARY_TYPES)]
-        return {
-            name: kit
-            for name, kit in zip(targeted["library_name"], targeted["library_kit"])
-            if isinstance(kit, str) and kit
-        }
+        kits = {}
+        for name in self._library_rows:
+            row = self.library_row(name)
+            kit = row.get("library_kit")
+            if row.get("library_type") in TARGETED_LIBRARY_TYPES and isinstance(kit, str) and kit:
+                kits[name] = kit
+        return kits
 
     def reference_inputs(self) -> dict[str, str]:
         """The genome FASTA of ``depends_on.reference`` and its ``.fai`` and ``.dict``, as rule
@@ -1088,6 +1091,40 @@ class BaseStep:
                 f"{', '.join(kits) or '(none)'}; use one task per kit"
             )
         return kits[0]
+
+    @cached_property
+    def _library_rows(self) -> dict[str, list[dict[str, typing.Any]]]:
+        """Return library name -> its rows in all data sets, background included."""
+        rows: dict[str, list[dict[str, typing.Any]]] = {}
+        for row in self.build_library_dataframe(include_background=True).to_dict("records"):
+            rows.setdefault(row["library_name"], []).append(row)
+        return rows
+
+    @cached_property
+    def _selected_libraries(self) -> set[tuple[str, str]]:
+        """Return (data set, library name) of the libraries that ``library_selection`` keeps."""
+        df = self.build_library_dataframe(include_background=True)
+        if selection := getattr(self.config, "library_selection", None):
+            df = df.query(selection)  # apply_library_selection would reject colliding names
+        return set(zip(df["data_set"], df["library_name"]))
+
+    def library_row(self, library_name: str) -> dict[str, typing.Any]:
+        """Return the row of ``library_name``: its data set, folder, kit and the other sample
+        sheet columns. If several data sets have a library of that name, the task's
+        ``library_selection`` must keep exactly one of them; otherwise this raises
+        ``ValueError`` with the fix."""
+        rows = self._library_rows.get(library_name)
+        if not rows:
+            raise ValueError(f"Task {self.task_name!r} has no library {library_name!r}")
+        if len(rows) > 1:
+            kept = [
+                row for row in rows if (row["data_set"], library_name) in self._selected_libraries
+            ]
+            if len(kept) != 1:
+                colliding = {library_name: [row["data_set"] for row in kept or rows]}
+                raise ValueError(colliding_libraries_message(colliding, self.task_name))
+            rows = kept
+        return rows[0]
 
     def library_warnings(self) -> list[str]:
         """Return warnings about the libraries of this task, which the main Snakefile prints once
@@ -1173,6 +1210,29 @@ class BaseStep:
             expected_schema=expected_schema,
         )
 
+    def _check_upstream_library(self, upstream: str, library_name: str) -> None:
+        """Raise ``ValueError`` if the upstream task has the library ``library_name`` from another
+        data set than this task: files are found by library name, so the upstream file would be
+        of the other library."""
+        from snappy_pipeline.orchestration import _TASK_INSTANCES
+
+        # Only between tasks of the running project; with --frozen, upstream tasks are not loaded
+        instance = _TASK_INSTANCES.get(upstream)
+        if _TASK_INSTANCES.get(self.task_name) is not self or instance is None:
+            return
+        if library_name not in self._library_rows or library_name not in instance._library_rows:
+            return  # not a library name, e.g. a cohort
+        own, theirs = (
+            self.library_row(library_name)["data_set"],
+            instance.library_row(library_name)["data_set"],
+        )
+        if own != theirs:
+            raise ValueError(
+                f"Task {self.task_name!r} takes library {library_name!r} from data set {own!r}, but "
+                f"its upstream task {upstream!r} takes the library of that name from {theirs!r}. "
+                "Select the libraries of the same data set in both tasks with library_selection."
+            )
+
     def get_upstream_paths(
         self, req_field_name: str, signature: DataSignature | None = None, **kwargs
     ) -> "pydantic.BaseModel | dict[str, str]":
@@ -1219,6 +1279,8 @@ class BaseStep:
             ValueError: If the upstream task or its workflow class cannot be resolved.
         """
         dependency = self.resolve_dependency(req_field_name)
+        if "library_name" in kwargs:
+            self._check_upstream_library(dependency.task_name, kwargs["library_name"])
 
         # The provider gets the signature this consumer reads, so it can choose the file.
         required = signature or dependency.signature
@@ -2125,12 +2187,33 @@ def apply_library_selection(
     if df.empty:
         return df
     expr = selection if selection is not None else _LIBRARY_SELECTION_DEFAULTS.get(kind, "")
-    if not expr:
-        return df
-    try:
-        return df.query(expr)
-    except Exception as exc:
-        raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
+    if expr:
+        try:
+            df = df.query(expr)
+        except Exception as exc:
+            raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
+    if colliding := _colliding_libraries(df):
+        raise ValueError(colliding_libraries_message(colliding))
+    return df
+
+
+def _colliding_libraries(df) -> dict[str, list[str]]:
+    """Return library name -> data sets, for the names of several libraries in ``df``."""
+    duplicated = df[df["library_name"].duplicated(keep=False)]
+    return {name: list(group["data_set"]) for name, group in duplicated.groupby("library_name")}
+
+
+def colliding_libraries_message(colliding: dict[str, list[str]], task_name: str = "") -> str:
+    """Return the error for libraries of the same name from several data sets, with the fix."""
+    names = ", ".join(f"{name} ({', '.join(data_sets)})" for name, data_sets in colliding.items())
+    first_data_set = next(iter(colliding.values()))[0]
+    prefix = f"Task {task_name!r} has" if task_name else "The selected libraries have"
+    return (
+        f"{prefix} libraries of the same name in several data sets: {names}. A task names its "
+        "files by library, so it can only take one library of a name. Select the libraries of "
+        f'one data set with library_selection, for example library_selection: "data_set == '
+        f"'{first_data_set}'\", or use one task per data set."
+    )
 
 
 def output_entity_names(
@@ -2240,22 +2323,6 @@ def _cohort_members_from_dataframe(df, selection: str | None) -> dict[str, list[
     for cohort_name, group in df.groupby("cohort_name"):
         result[cohort_name] = group["library_name"].tolist()
     return result
-
-
-def library_folder(data_set_infos, library_name) -> tuple[DataSetInfo, str]:
-    """Return the data set of ``library_name`` and the folder of its reads, the ``folderName`` of
-    the library in the sample sheet; the first data set wins if several have the library."""
-    for info in data_set_infos:
-        try:
-            ngs_library = info.sheet.crawl(info.sheet.name_generator.inverse(library_name))
-        except SecondaryIDNotFoundException:
-            continue  # skip, not in this sheet
-        if ngs_library:
-            try:
-                return info, ngs_library.extra_infos["folderName"]
-            except (AttributeError, KeyError):
-                raise ValueError(f"No folderName extraInfos entry for {ngs_library.name}")
-    raise ValueError(f"Found no folders for NGS library of name {library_name}")
 
 
 class InputFilesStepPartMixin:

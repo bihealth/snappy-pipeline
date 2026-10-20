@@ -735,10 +735,10 @@ class NgsMappingWorkflow(BaseStep):
     def library_infos(self) -> dict[str, dict[str, Any]]:
         """Return library name -> row of the library dataframe, background data sets included.
 
-        The task maps the libraries of the background data sets as well.
+        The task maps the libraries of the background data sets as well. A name that several data
+        sets have must be settled by the task's ``library_selection``.
         """
-        df = self.build_library_dataframe(include_background=True)
-        return {row["library_name"]: row for row in df.to_dict("records")}
+        return {name: self.library_row(name) for name in self._library_rows}
 
     def library_tool_category(self, library_name: str) -> str:
         """Return the tool category of a library: its extraction type, ``_long`` for long reads."""

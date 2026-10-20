@@ -321,6 +321,10 @@ A task processes all libraries of the data sets by default.
 `library_selection` restricts a task to the libraries that match a pandas `DataFrame.query()` expression.
 `group_by: cohort` makes a task write one output per cohort (pedigree) instead of one per library, where the step supports it.
 
+Several data sets may have libraries of the same name.
+A task names its files by library, so it can only take one library of a name, and a task and its upstream tasks must take it from the same data set.
+If a task would take both, it fails and names the libraries; select one data set with `library_selection`, for example `data_set == 'batch1'`, or use one task per data set.
+
 ## Files of a task
 
 Each task has its own directory `tasks/<task_name>/`:
