@@ -1,10 +1,13 @@
 import enum
 from typing import Annotated
 
+from pydantic import model_validator
+
 from snappy_pipeline.models import (
     EnumField,
     SnappyModel,
     SnappyStepModel,
+    validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -19,6 +22,15 @@ from snappy_pipeline.workflows.variant_annotation.model import ExpectedAnnotated
 class Tool(enum.StrEnum):
     gatk_phase_by_transmission = "gatk_phase_by_transmission"
     gatk_read_backed_phasing = "gatk_read_backed_phasing"
+    gatk_read_backed_phasing_tumor = "gatk_read_backed_phasing_tumor"
+
+
+#: The ``depends_on`` fields each tool reads
+TOOL_DEPENDENCIES = {
+    Tool.gatk_phase_by_transmission: ("variants",),
+    Tool.gatk_read_backed_phasing: ("variants",),
+    Tool.gatk_read_backed_phasing_tumor: ("combined_variants",),
+}
 
 
 class GatkReadBackedPhasing(SnappyModel):
@@ -41,6 +53,13 @@ class ExpectedPhasedVariants(SnappyModel):
     vcf_tbi: str
 
 
+class ExpectedCombinedVariants(SnappyModel):
+    """Consumer-driven contract: the combined somatic and germline variants of a tumor library."""
+
+    vcf: str
+    vcf_tbi: str
+
+
 class VariantPhasingDependsOn(SnappyModel):
     alignments: Annotated[
         str,
@@ -51,8 +70,17 @@ class VariantPhasingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", ("annotated", "phased")})),
         ExpectedPathSchema(ExpectedAnnotatedVariants),
-    ]
-    """Annotated germline variants, or the phased variants of a ``gatk_phase_by_transmission`` task"""
+    ] = ""
+    """Annotated germline variants, or the phased variants of a ``gatk_phase_by_transmission`` task
+    (pedigree tools)"""
+
+    combined_variants: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS, frozenset({"combined"})),
+        ExpectedPathSchema(ExpectedCombinedVariants),
+    ] = ""
+    """The combined somatic and germline variants of the tumor libraries
+    (``gatk_read_backed_phasing_tumor``)"""
 
     reference: Reference
 
@@ -68,3 +96,8 @@ class VariantPhasing(SnappyStepModel):
     gatk_read_backed_phasing: GatkReadBackedPhasing = GatkReadBackedPhasing()
 
     gatk_phase_by_transmission: GatkPhaseByTransmission = GatkPhaseByTransmission()
+
+    @model_validator(mode="after")
+    def ensure_tool_dependencies(self):
+        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
+        return self

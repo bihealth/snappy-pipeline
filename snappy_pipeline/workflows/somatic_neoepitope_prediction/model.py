@@ -13,7 +13,8 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Reference,
 )
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments, ExpectedRnaAlignments
+from snappy_pipeline.workflows.ngs_mapping.model import ExpectedRnaAlignments
+from snappy_pipeline.workflows.variant_phasing.model import ExpectedPhasedVariants
 
 
 class Tool(enum.StrEnum):
@@ -139,14 +140,13 @@ class PVACseq(PvacTool):
 
     ml_predictions: MLPredictions = MLPredictions()
     pileup: Pileup = Pileup()
-    """Needs ``depends_on.alignments_rna``"""
+    """Needs ``depends_on.alignments``"""
 
     expression: Expression = Expression()
     """Needs ``depends_on.expression``"""
 
     phasing: ToggleModel = ToggleModel()
-    """Phase proximal germline variants (GATK 3 ReadBackedPhasing); needs
-    ``depends_on.combined_variants`` and ``depends_on.alignments_dna``"""
+    """Use the phased proximal germline variants of ``depends_on.phased_variants``"""
 
     def __init__(self, enabled: bool = True, **kwargs):
         super().__init__(enabled=enabled, **kwargs)
@@ -216,28 +216,20 @@ class SomaticNeoepitopePredictionDependsOn(SnappyModel):
     features: Features = ""
     """Gene annotation (pvacsplice)"""
 
-    # Two inputs of one kind, so qualified by molecule; a step that needs only one uses plain
-    # ``alignments``, narrowed by the tags of its signature
-    alignments_rna: Annotated[
+    alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedRnaAlignments),
     ] = ""
     """STAR alignments of the tumor RNA, with their strandedness (pvacseq pileup, pvacsplice)"""
 
-    alignments_dna: Annotated[
+    phased_variants: Annotated[
         str,
-        DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
-        ExpectedPathSchema(ExpectedAlignments),
+        DataSignature(DataType.VARIANTS, frozenset({"combined", "phased", "annotated", "vep"})),
+        ExpectedPathSchema(ExpectedPhasedVariants),
     ] = ""
-    """Alignments of the tumor DNA (pvacseq phasing)"""
-
-    combined_variants: Annotated[
-        str,
-        DataSignature(DataType.VARIANTS, frozenset({"combined", "annotated", "vep"})),
-        ExpectedPathSchema(ExpectedVcf),
-    ] = ""
-    """Somatic and germline variants combined and annotated by VEP (pvacseq phasing)"""
+    """Somatic and germline variants, combined, annotated by VEP and phased with the tumor DNA,
+    from ``variant_phasing`` with ``tool: gatk_read_backed_phasing_tumor`` (pvacseq phasing)"""
 
     expression: Annotated[
         str,
@@ -276,15 +268,15 @@ class SomaticNeoepitopePrediction(SnappyStepModel):
         if tools.pvacseq.enabled:
             needed["pvacseq"] = ["variants"]
             if tools.pvacseq.pileup.enabled:
-                needed["pvacseq.pileup"] = ["alignments_rna"]
+                needed["pvacseq.pileup"] = ["alignments"]
             if tools.pvacseq.expression.enabled:
                 needed["pvacseq.expression"] = ["expression"]
             if tools.pvacseq.phasing.enabled:
-                needed["pvacseq.phasing"] = ["combined_variants", "alignments_dna"]
+                needed["pvacseq.phasing"] = ["phased_variants"]
         if tools.pvacfuse.enabled:
             needed["pvacfuse"] = ["fusions"]
         if tools.pvacsplice.enabled:
-            needed["pvacsplice"] = ["variants", "alignments_rna", "features"]
+            needed["pvacsplice"] = ["variants", "alignments", "features"]
         missing = [
             f"{name} needs depends_on.{field}"
             for name, fields in needed.items()

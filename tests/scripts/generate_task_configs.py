@@ -81,9 +81,8 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | list[str] | None] = {
     # and RNA, and the RNA alignments with their strandedness
     ("somatic_neoepitope_prediction", "variants"): "variant_annotation_pvactools",
     ("somatic_neoepitope_prediction", "hla_types"): ["hla_typing_optitype", "hla_typing_arcashla"],
-    ("somatic_neoepitope_prediction", "alignments_rna"): "ngs_mapping_star",
-    ("somatic_neoepitope_prediction", "alignments_dna"): "ngs_mapping_bwa",
-    ("somatic_neoepitope_prediction", "combined_variants"): "combine_variants_annotated",
+    ("somatic_neoepitope_prediction", "alignments"): "ngs_mapping_star",
+    ("somatic_neoepitope_prediction", "phased_variants"): "variant_phasing_pvactools",
     ("somatic_neoepitope_prediction", "expression"): "gene_expression_quantification_salmon",
     ("somatic_neoepitope_prediction", "fusions"): "somatic_gene_fusion_calling_arriba",
     ("somatic_neoepitope_prediction", "proteome"): "proteome",
@@ -588,6 +587,18 @@ EXTRA_TASKS: list[dict[str, Any]] = [
         },
     },
     {
+        "step": "variant_phasing",
+        "name": "variant_phasing_pvactools",
+        "config": {
+            "depends_on": {
+                "combined_variants": "combine_variants_annotated",
+                "alignments": "ngs_mapping_bwa",
+                "reference": "genome",
+            },
+            "tool": "gatk_read_backed_phasing_tumor",
+        },
+    },
+    {
         "step": "combine_variants",
         "name": "combine_variants_annotated",
         "config": {
@@ -709,9 +720,14 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
     if database and "database" in dependency_fields(WORKFLOW_REGISTRY[step_name]):
         depends_on["database"] = database
 
-    # Read-backed phasing refines the result of phasing by transmission.
+    # Read-backed phasing refines the result of phasing by transmission. The pedigree tools read
+    # germline variants, the tumor tool the combined variants of the tumor libraries.
     if step_name == "variant_phasing" and tool == "gatk_read_backed_phasing":
         depends_on["variants"] = "variant_phasing_gatk_phase_by_transmission"
+    if step_name == "variant_phasing":
+        depends_on.pop(
+            "variants" if tool == "gatk_read_backed_phasing_tumor" else "combined_variants"
+        )
 
     # Mutect2 calling filters with the mutect2 panel of normals.
     if step_name == "variant_calling" and tool == "mutect2":

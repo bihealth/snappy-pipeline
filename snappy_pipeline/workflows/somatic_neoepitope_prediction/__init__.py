@@ -13,15 +13,15 @@ Inputs
 - ``depends_on.variants`` (pVACseq, pVACsplice): somatic variants annotated by VEP (``variant_annotation`` with ``tool: vep``), with the ``Frameshift`` and ``Wildtype`` plugins of pVACtools in ``vep.plugins``.
   For all transcripts instead of one consequence per variant, it is an annotation task with ``vep.pick: false``.
 - ``depends_on.fusions`` (pVACfuse): arriba fusions of the matched RNA library.
-- ``depends_on.alignments_rna`` and ``depends_on.features`` (pVACsplice): STAR alignments of the matched RNA library, whose strandedness decision must be stranded, and the gene annotation.
+- ``depends_on.alignments`` and ``depends_on.features`` (pVACsplice): STAR alignments of the matched RNA library, whose strandedness decision must be stranded, and the gene annotation.
 - ``depends_on.reference``: the genome.
 - ``depends_on.proteome`` (optional): a reference proteome FASTA from an ``external_data`` task (``{type: raw, tags: [proteome]}``, key ``fasta``) for the proteome similarity check of the epitopes.
 
 pVACseq options and their inputs:
 
-- ``pileup``: read counts of the matched RNA library at the variants (``depends_on.alignments_rna``).
+- ``pileup``: read counts of the matched RNA library at the variants (``depends_on.alignments``).
 - ``expression``: salmon TPMs of the matched RNA library (``depends_on.expression``).
-- ``phasing``: germline variants near the somatic ones, phased with the tumor DNA (``depends_on.combined_variants``, the VEP-annotated output of ``combine_variants``, and ``depends_on.alignments_dna``, the alignments of the tumor DNA).
+- ``phasing``: germline variants near the somatic ones, phased with the tumor DNA (``depends_on.phased_variants``: a ``variant_phasing`` task with ``tool: gatk_read_backed_phasing_tumor`` on the VEP-annotated output of ``combine_variants``).
 
 The matched normal library is the ``matched_normal_lib`` relationship (normal DNA of the donor); the matched RNA library is ``matched_rna_lib`` (tumor RNA of the same sample); both can be redefined in ``relationships``.
 pVACfuse and pVACsplice skip tumor libraries without a matched RNA library.
@@ -271,12 +271,11 @@ class PvacSeqStepPart(PredictionStepPart):
     """pVACseq on somatic small variants, with RNA evidence and phased germline variants"""
 
     name = "pvacseq"
-    actions = ("pileup", "add_expression", "phasing", "run")
+    actions = ("pileup", "add_expression", "run")
 
     resource_usage = {
         "pileup": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
         "add_expression": ResourceUsage(threads=1, runtime="4h", mem="6GB"),
-        "phasing": ResourceUsage(threads=1, runtime="24h", mem="32GB"),
     }
 
     @property
@@ -285,7 +284,6 @@ class PvacSeqStepPart(PredictionStepPart):
             **super().intermediate_outputs,
             "pileup": ("vcf", "vcf_tbi"),
             "add_expression": ("vcf", "vcf_tbi"),
-            "phasing": ("vcf",),
         }
 
     def with_expression(self, tumor_library: str) -> bool:
@@ -295,7 +293,7 @@ class PvacSeqStepPart(PredictionStepPart):
 
     def _get_input_files_pileup(self, wildcards):
         rna = self.parent.matched(wildcards.tumor_library, "matched_rna_lib")
-        alignments = self.parent.get_upstream_paths("alignments_rna", library_name=rna)
+        alignments = self.parent.get_upstream_paths("alignments", library_name=rna)
         return {
             "bam": alignments.bam,
             "bai": alignments.bai,
@@ -343,22 +341,6 @@ class PvacSeqStepPart(PredictionStepPart):
     def _get_log_file_add_expression(self):
         return {"log": f"{_LOG}.add_expression.log"}
 
-    def _get_input_files_phasing(self, wildcards):
-        tumor = wildcards.tumor_library
-        alignments = self.parent.get_upstream_paths("alignments_dna", library_name=tumor)
-        return {
-            "vcf": self.parent.get_upstream_paths("combined_variants", library_name=tumor).vcf,
-            "bam": alignments.bam,
-            "bai": alignments.bai,
-            **self.parent.reference_inputs(),
-        }
-
-    def _get_output_files_phasing(self):
-        return {"vcf": f"{_OUT}.phased.vcf.gz"}
-
-    def _get_log_file_phasing(self):
-        return {"log": f"{_LOG}.phasing.log"}
-
     @dictify
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
@@ -368,7 +350,11 @@ class PvacSeqStepPart(PredictionStepPart):
         yield "vcf", f"{_OUT}.{prepared}.vcf.gz".format(**wildcards)
         yield "vcf_tbi", f"{_OUT}.{prepared}.vcf.gz.tbi".format(**wildcards)
         if self.cfg.phasing.enabled:
-            yield "phased", f"{_OUT}.phased.vcf.gz".format(**wildcards)
+            phased = self.parent.get_upstream_paths(
+                "phased_variants", library_name=wildcards.tumor_library
+            )
+            yield "phased", phased.vcf
+            yield "phased_tbi", phased.vcf_tbi
 
     def _get_params_run(self, wildcards):
         params = super()._get_params_run(wildcards)
@@ -430,7 +416,7 @@ class PvacSpliceStepPart(PredictionStepPart):
 
     def _get_input_files_junction(self, wildcards):
         rna = self.parent.matched(wildcards.tumor_library, "matched_rna_lib")
-        alignments = self.parent.get_upstream_paths("alignments_rna", library_name=rna)
+        alignments = self.parent.get_upstream_paths("alignments", library_name=rna)
         return {
             "annotated": self.variants(wildcards.tumor_library),
             "bam": alignments.bam,

@@ -180,8 +180,6 @@ DEPENDS_ON_KEYS = {
     "germline_resource",
     "database",
     "alignments",
-    "alignments_dna",
-    "alignments_rna",
     "variants",
     "somatic_variants",
     "germline_variants",

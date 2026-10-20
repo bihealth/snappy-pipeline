@@ -1,12 +1,14 @@
 """Variant phasing with GATK
 
-Phases the germline variants of ``depends_on.variants`` with GATK.
-The task produces one result per child in a pedigree whose parents are both sequenced.
+Phases germline variants of pedigrees, or the combined somatic and germline variants of tumor libraries, with GATK 3.
 
 The ``tool`` field selects the phasing:
 
-- ``gatk_phase_by_transmission`` runs PhaseByTransmission on the annotated variants. It changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
-- ``gatk_read_backed_phasing`` runs ReadBackedPhasing with the alignments of the trio (``depends_on.alignments``), scattered over ``gatk_read_backed_phasing.num_jobs`` chunks of the genome. It is not fully reliable.
+- ``gatk_phase_by_transmission`` runs PhaseByTransmission on the annotated variants of ``depends_on.variants``. It changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
+- ``gatk_read_backed_phasing`` runs ReadBackedPhasing on ``depends_on.variants`` with the alignments of the trio (``depends_on.alignments``), scattered over ``gatk_read_backed_phasing.num_jobs`` chunks of the genome. It is not fully reliable.
+- ``gatk_read_backed_phasing_tumor`` runs ReadBackedPhasing on the combined somatic and germline variants of each tumor DNA library (``depends_on.combined_variants``, from ``combine_variants``) with its alignments, as pVACtools describes it for the proximal variants of neoepitope prediction.
+
+The pedigree tools produce one result per child in a pedigree whose parents are both sequenced, the tumor tool one per tumor DNA library.
 
 One task runs one tool.
 To use both, add a ``gatk_read_backed_phasing`` task whose ``depends_on.variants`` names the ``gatk_phase_by_transmission`` task.
@@ -20,7 +22,7 @@ Below ``tasks/<task>/output/``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
-Here ``library_name`` is the library of the child.
+Here ``library_name`` is the library of the child, or the tumor library.
 The output has the tags of the input plus ``phased``.
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
@@ -236,23 +238,66 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
         return super()._get_log_file_run()
 
 
+class TumorReadBackedPhasingStepPart(VariantPhasingBaseStep):
+    """Read-backed phasing of a tumor library's combined somatic and germline variants."""
+
+    #: Name of the step in the pipeline.
+    name = "gatk_read_backed_phasing_tumor"
+
+    published_keys = tuple(_OUTPUTS)
+
+    default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="32GB")
+
+    def _get_input_files_run(self, wildcards):
+        library_name = wildcards.library_name
+        variants = self.parent.get_upstream_paths("combined_variants", library_name=library_name)
+        alignments = self.parent.get_upstream_paths("alignments", library_name=library_name)
+        return {
+            "vcf": variants.vcf,
+            "vcf_tbi": variants.vcf_tbi,
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            **self.parent.reference_inputs(),
+        }
+
+    @dictify
+    def _get_output_files_run(self):
+        for key, ext in _OUTPUTS.items():
+            yield key, _BASE_PATH_OUT + ext
+
+
 _TOOL_STEP_PART = {
     "gatk_phase_by_transmission": PhaseByTransmissionStepPart,
     "gatk_read_backed_phasing": ReadBackedPhasingStepPart,
+    "gatk_read_backed_phasing_tumor": TumorReadBackedPhasingStepPart,
 }
+
+#: The tool that phases tumor libraries instead of pedigrees
+_TUMOR_TOOL = "gatk_read_backed_phasing_tumor"
 
 
 class VariantPhasingWorkflow(BaseStep):
     """Perform (small) variant phasing"""
 
     name = "variant_phasing"
-    produces = [DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"}))]
+    produces = [
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "phased"})),
+        DataSignature(DataType.VARIANTS, frozenset({"combined", "phased"})),
+    ]
     config_model_class = VariantPhasingConfigModel
 
     @classmethod
     def task_produces(cls, config, upstream):
         """The variants this task reads, tagged ``phased``."""
-        return (upstream["variants"].with_tags("phased"),)
+        field = "combined_variants" if config.tool == _TUMOR_TOOL else "variants"
+        return (upstream[field].with_tags("phased"),)
+
+    @classmethod
+    def task_library_requirement(cls, config):
+        """The tumor tool phases tumor DNA libraries."""
+        return (
+            "role == 'tumor' and extraction_type == 'dna'" if config.tool == _TUMOR_TOOL else None
+        )
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
@@ -276,5 +321,8 @@ class VariantPhasingWorkflow(BaseStep):
 
     @cached_property
     def output_entities(self) -> list[str]:
-        """The children whose parents are both sequenced: their DNA libraries."""
+        """The children whose parents are both sequenced (their DNA libraries), or the tumor
+        libraries."""
+        if self.config.tool == _TUMOR_TOOL:
+            return super().output_entities
         return self.children_with_both_parents()

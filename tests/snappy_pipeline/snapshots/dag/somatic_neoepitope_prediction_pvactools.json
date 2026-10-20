@@ -2231,40 +2231,6 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/add_expression"
  },
  {
-  "benchmark": "tasks/somatic_neoepitope_prediction_pvactools/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.phasing.tsv",
-  "input": [
-   "tasks/combine_variants_annotated/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
-  ],
-  "log": [
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.phasing.log"
-  ],
-  "output": [
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.phased.vcf.gz"
-  ],
-  "params": {},
-  "resources": {
-   "mem": "32 GB",
-   "mem_mb": 32000,
-   "mem_mib": 30518,
-   "partition": "medium",
-   "runtime": 1440
-  },
-  "rule": "somatic_neoepitope_prediction_pvactools_somatic_neoepitope_prediction_pvacseq_phasing",
-  "temp": [
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.phased.vcf.gz"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "tumor_library": "case001subregion-T1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/pvactools/phasing"
- },
- {
   "benchmark": "tasks/somatic_neoepitope_prediction_pvactools/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.pileup.tsv",
   "input": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
@@ -2313,7 +2279,8 @@
    "<repo>/tests/scripts/generate_task_configs.py",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.with_expression.vcf.gz",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.with_expression.vcf.gz.tbi",
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.phased.vcf.gz"
+   "tasks/variant_phasing_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_phasing_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi"
   ],
   "log": [
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.pvacseq.log"
@@ -4589,5 +4556,41 @@
    "tumor_library": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/filter"
+ },
+ {
+  "benchmark": "tasks/variant_phasing_pvactools/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "input": [
+   "tasks/combine_variants_annotated/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/combine_variants_annotated/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
+  ],
+  "log": [
+   "tasks/variant_phasing_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/variant_phasing_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_phasing_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_phasing_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_phasing_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "32 GB",
+   "mem_mb": 32000,
+   "mem_mib": 30518,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_phasing_pvactools_variant_phasing_gatk_read_backed_phasing_tumor_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk_read_backed_phasing_tumor"
  }
 ]
