@@ -292,17 +292,9 @@
   "benchmark": null,
   "input": [
    "tasks/variant_calling_gatk4_hc_joint/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz",
    "tasks/variant_calling_gatk4_hc_joint/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz.md5",
    "tasks/variant_calling_gatk4_hc_joint/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz.tbi.md5",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_calling_gatk4_hc_joint/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
   "log": [],
   "output": [
@@ -369,106 +361,6 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/joint"
  },
  {
-  "benchmark": "tasks/variant_calling_gatk4_hc_joint/benchmarks/case001subregionFather-N1-DNA1-WES1/case001subregionFather-N1-DNA1-WES1.gatk4_hc_joint_run.tsv",
-  "input": [
-   "tasks/variant_calling_gatk4_hc_joint/work/write_pedigree.case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.ped",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-  ],
-  "log": [
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/log/case001subregionFather-N1-DNA1-WES1.gatk4_hc_joint_run.log"
-  ],
-  "output": [
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.vcf.gz.tbi.md5"
-  ],
-  "params": {
-   "args": {
-    "allow_seq_dict_incompatibility": false,
-    "ignore_chroms": [
-     "^NC_007605$",
-     "^hs37d5$",
-     "^chrEBV$",
-     "_decoy$",
-     "^HLA-"
-    ],
-    "num_threads": 16,
-    "window_length": 10000000
-   }
-  },
-  "resources": {
-   "mem": "88 GB",
-   "mem_mb": 88000,
-   "mem_mib": 83924,
-   "partition": "medium",
-   "runtime": 2880
-  },
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_gatk4_hc_joint_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregionFather-N1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/joint"
- },
- {
-  "benchmark": "tasks/variant_calling_gatk4_hc_joint/benchmarks/case001subregionMother-N1-DNA1-WES1/case001subregionMother-N1-DNA1-WES1.gatk4_hc_joint_run.tsv",
-  "input": [
-   "tasks/variant_calling_gatk4_hc_joint/work/write_pedigree.case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.ped",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
-  ],
-  "log": [
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/log/case001subregionMother-N1-DNA1-WES1.gatk4_hc_joint_run.log"
-  ],
-  "output": [
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_gatk4_hc_joint/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.vcf.gz.tbi.md5"
-  ],
-  "params": {
-   "args": {
-    "allow_seq_dict_incompatibility": false,
-    "ignore_chroms": [
-     "^NC_007605$",
-     "^hs37d5$",
-     "^chrEBV$",
-     "_decoy$",
-     "^HLA-"
-    ],
-    "num_threads": 16,
-    "window_length": 10000000
-   }
-  },
-  "resources": {
-   "mem": "88 GB",
-   "mem_mb": 88000,
-   "mem_mib": 83924,
-   "partition": "medium",
-   "runtime": 2880
-  },
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_gatk4_hc_joint_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregionMother-N1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/gatk4_hc/joint"
- },
- {
   "benchmark": null,
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -486,40 +378,6 @@
   "threads": 1,
   "wildcards": {
    "index_ngs_library": "case001subregion-N1-DNA1-WES1"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/variant_calling_gatk4_hc_joint/work/write_pedigree.case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.ped"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_write_pedigree_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "index_ngs_library": "case001subregionFather-N1-DNA1-WES1"
-  },
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [],
-  "log": [],
-  "output": [
-   "tasks/variant_calling_gatk4_hc_joint/work/write_pedigree.case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.ped"
-  ],
-  "params": {},
-  "resources": {},
-  "rule": "variant_calling_gatk4_hc_joint_variant_calling_write_pedigree_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "index_ngs_library": "case001subregionMother-N1-DNA1-WES1"
   },
   "wrapper": null
  }

@@ -26,7 +26,8 @@ The ``tool`` field selects the caller.
 ``mutect2``
     Somatic calling with GATK 4 Mutect2 (tumor-normal pair or tumor only, see ``tumor_normal_mode``), with optional contamination estimation and filtration.
 
-The germline callers produce one result per cohort with ``group_by: cohort``, named after the index library, and one per library with ``group_by: library``.
+The germline callers call each cohort (pedigree) jointly and produce one result per cohort, named after the index library.
+With ``group_by: library``, they call each library on its own and produce one result per library.
 ``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
 With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_normals`` task with ``tool: mutect2``, whose panel VCF Mutect2 uses to filter recurrent artefacts.
@@ -124,7 +125,7 @@ class VariantCallingStepPart(BaseStepPart):
         if df.empty:
             return
 
-        group_by = self.parent.effective_group_by or "cohort"
+        group_by = self.parent.effective_group_by
 
         # Determine the target libraries based on the wildcard
         if group_by == "cohort":
@@ -317,7 +318,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         if df.empty:
             return
 
-        group_by = self.parent.effective_group_by or "cohort"
+        group_by = self.parent.effective_group_by
 
         # Determine the target libraries based on the wildcard
         if group_by == "cohort":
@@ -841,6 +842,11 @@ class VariantCallingWorkflow(BaseStep):
             return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
         calls = DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))
         return (calls, calls.with_tags("filtered"))
+
+    @classmethod
+    def default_group_by(cls, config):
+        """The germline callers call each cohort (pedigree) jointly, mutect2 each tumor."""
+        return None if config.tool == Tool.mutect2 else "cohort"
 
     sheet_shortcut_class = GermlineCaseSheet
 

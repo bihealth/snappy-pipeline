@@ -79,3 +79,33 @@ def test_library_selection_narrows_the_pedigrees(mocker):
     step = _make_step()
     step.config.library_selection = "role != 'father'"
     assert step.pedigrees() == {"index-DNA1": ["index-DNA1"]}
+
+
+def test_group_by_comes_from_the_task_then_its_step_then_upstream():
+    configs = {
+        "mapping": SimpleNamespace(group_by=None, tool="bwa"),
+        "calling": SimpleNamespace(group_by=None, tool="gatk4_hc_joint"),
+        "annotation": SimpleNamespace(group_by=None, tool="vep"),
+        "single": SimpleNamespace(group_by="library", tool="gatk4_hc_joint"),
+    }
+    steps = {"mapping": "ngs_mapping", "calling": "variant_calling"}
+    steps |= {"annotation": "variant_annotation", "single": "variant_calling"}
+    project = SimpleNamespace(
+        task_configs=configs,
+        dependencies={
+            "calling": {"alignments": "mapping"},
+            "annotation": {"variants": "calling"},
+            "single": {"alignments": "mapping"},
+        },
+        task=lambda name: SimpleNamespace(step=steps[name]),
+    )
+
+    def effective(name):
+        step = object.__new__(_DummyStep)
+        step.config, step.project, step.task_name = configs[name], project, name
+        return step.effective_group_by
+
+    assert effective("mapping") == "library"  # nothing declared
+    assert effective("calling") == "cohort"  # the step's default: joint calling
+    assert effective("annotation") == "cohort"  # inherited from the calling task
+    assert effective("single") == "library"  # the task's own choice wins

@@ -7,7 +7,7 @@ import typing
 from enum import Enum
 from inspect import isclass
 from io import StringIO
-from typing import Annotated
+from typing import Annotated, Literal
 
 import ruamel
 import typing_extensions
@@ -193,11 +193,10 @@ class SnappyStepModel(SnappyModel, object):
     """Delete per-sample intermediate files (raw calls, coverage, panel inputs, gVCFs, ...) once
     the task's later rules have read them. Scatter fragments are always deleted."""
 
-    group_by: str | None = None
-    """Controls output granularity.
-
-    * ``"cohort"`` -- one output per cohort / pedigree / donor.
-    * ``None`` (default) -- one output per library."""
+    group_by: Literal["library", "cohort"] | None = None
+    """``library``: one output per library; ``cohort``: one output per cohort (pedigree, donor).
+    Unset: the step's default (cohort for joint germline calling), else the granularity that
+    upstream tasks declare, else ``library``."""
 
     relationships: dict[str, RelationshipDefinition] | None = None
     """Named relationships that add derived columns to the library DataFrame

@@ -935,27 +935,21 @@ class BaseStep:
             )
         return self._library_dataframes[include_background]
 
-    @property
-    def effective_group_by(self) -> str | None:
-        """Return the effective ``group_by`` for this workflow.
+    @classmethod
+    def default_group_by(cls, config: SnappyStepModel) -> str | None:
+        """Return the granularity of a task of this step that sets no ``group_by``, such as
+        ``"cohort"`` for joint calling; ``None`` takes the one that upstream tasks declare."""
+        return None
 
-        Resolution order:
-        1. Explicit ``group_by`` on this task's config.
-        2. Inherited transitively from upstream dependencies.
-        3. ``None`` (per-library default).
-
-        The walk recurses through the dependency chain so that a
-        filtration step depending on annotation depending on variant_calling
-        with ``group_by: cohort`` correctly inherits ``"cohort"``.
-        """
+    @cached_property
+    def effective_group_by(self) -> str:
+        """Return ``"library"`` or ``"cohort"``: the task's ``group_by``, else its step's
+        :meth:`default_group_by`, else the one its upstream tasks declare (so a filtration
+        after cohort-wise calling writes per cohort), else ``"library"``."""
         own = getattr(self.config, "group_by", None)
         if own is not None:
             return own
-        return _resolve_upstream_group_by(
-            self.config,
-            lambda task_name: self.project.task_configs[task_name],
-            _visited=frozenset({self.task_name}),
-        )
+        return _declared_group_by(self.project, self.task_name, frozenset()) or "library"
 
     @cached_property
     def libraries(self):
@@ -998,6 +992,8 @@ class BaseStep:
         Returns ``[library_name]`` when the cohort cannot be found or when
         ``effective_group_by != "cohort"``.
         """
+        if self.effective_group_by != "cohort":
+            return [library_name]
         return self._cohort_members_by_library.get(library_name, [library_name])
 
     def primary_dna_libraries(self, include_background: bool = False):
@@ -1525,34 +1521,21 @@ class BaseStep:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_upstream_group_by(config, get_task_config, *, _visited: frozenset[str]):
-    """Walk upstream dependencies looking for a non-None ``group_by``.
+def _declared_group_by(project, task_name: str, visited: frozenset[str]) -> str | None:
+    """Return the ``group_by`` that a task declares: its own, else its step's default, else the
+    one that its upstream tasks declare, depth first in ``depends_on`` order. A task without any
+    declares ``None``, so the final default ``"library"`` does not spread downstream."""
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
-    This is a standalone function (rather than a method) so that it can
-    recurse through *config* objects without requiring workflow instances.
-
-    ``get_task_config(task_name)`` must return the config model of the task
-    called ``task_name``.
-    """
-    depends_on = getattr(config, "depends_on", None)
-    if depends_on is None:
-        return None
-    for field_name in type(depends_on).model_fields:
-        dep_val = getattr(depends_on, field_name, "")
-        if not dep_val or dep_val in _visited:
-            continue
-        try:
-            upstream_cfg = get_task_config(dep_val)
-        except Exception:
-            continue
-        upstream_gb = getattr(upstream_cfg, "group_by", None)
-        if upstream_gb is not None:
-            return upstream_gb
-        result = _resolve_upstream_group_by(
-            upstream_cfg, get_task_config, _visited=_visited | {dep_val}
-        )
-        if result is not None:
-            return result
+    config = project.task_configs[task_name]
+    if (own := getattr(config, "group_by", None)) is not None:
+        return own
+    if default := WORKFLOW_REGISTRY[project.task(task_name).step].default_group_by(config):
+        return default
+    for upstream in project.dependencies.get(task_name, {}).values():
+        if upstream not in visited and upstream != task_name:
+            if declared := _declared_group_by(project, upstream, visited | {task_name}):
+                return declared
     return None
 
 

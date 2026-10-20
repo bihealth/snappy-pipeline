@@ -39,7 +39,8 @@ Unknown keys are an error.
     Without it, the task takes the step's default, see the step's page and {ref}`overview`.
 
 `group_by`
-: With `cohort`, the task writes one output per cohort (pedigree) instead of one per library, where the step supports it.
+: `library` writes one output per library, `cohort` one per cohort (pedigree), where the step supports it.
+    Without it, the task takes its step's default (`cohort` for germline variant calling), else the granularity of its upstream tasks, else `library`.
 
 `delete_intermediates`
 : Deletes per-sample intermediate files once the later rules of the task have read them, see {ref}`usage`.
