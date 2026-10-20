@@ -553,3 +553,20 @@ def test_each_task_of_a_list_field_is_checked(hla_list_step, hla_types, error):
     )
     with pytest.raises(ValueError, match=error):
         load_project(_config(*tasks), WORK_DIR)
+
+
+def _peddy(variants="calling"):
+    return ("variant_checking", "checking", {"depends_on": {"variants": variants}, "tool": "peddy"})
+
+
+def test_pedigree_consumers_need_one_vcf_per_pedigree():
+    germline = _calling(tool="bcftools_call")
+    load_project(_config(_mapping(), germline, _peddy()), WORK_DIR)
+
+    germline[2]["group_by"] = "library"
+    with pytest.raises(
+        ValueError,
+        match="depends_on.variants needs one result per cohort \\(group_by: cohort\\), "
+        "but task 'calling' writes one per library",
+    ):
+        load_project(_config(_mapping(), germline, _peddy()), WORK_DIR)

@@ -326,6 +326,7 @@ For example, mapping takes all libraries, the RNA steps all RNA libraries, and a
 `group_by` sets the granularity: `library` writes one output per library, `cohort` one per cohort (pedigree), where the step supports it.
 Without it, a task takes its step's default, else the granularity of its upstream tasks, else `library`.
 Germline variant calling defaults to `cohort` and calls each pedigree jointly, so the tasks after it also write per cohort.
+Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task writes per cohort.
 
 Several data sets may have libraries of the same name.
 A task names its files by library, so it can only take one library of a name, and a task and its upstream tasks must take it from the same data set.

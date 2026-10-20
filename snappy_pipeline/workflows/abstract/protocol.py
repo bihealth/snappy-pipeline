@@ -90,6 +90,19 @@ def select_signature(
 
 
 @dataclass(frozen=True)
+class Granularity:
+    """``depends_on`` field metadata: the upstream task must write one result per ``level``
+    (its resolved ``group_by``), such as one VCF per pedigree for consumers that look up the
+    pedigree's VCF under the index library."""
+
+    level: str
+
+
+#: One result per cohort (pedigree), see :class:`Granularity`
+COHORT_LEVEL = Granularity("cohort")
+
+
+@dataclass(frozen=True)
 class ExpectedPathSchema:
     """Annotated metadata wrapper for expected upstream output-path schema, or one schema per tool
     (``by_tool``)."""

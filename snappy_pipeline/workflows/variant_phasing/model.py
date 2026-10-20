@@ -10,6 +10,7 @@ from snappy_pipeline.models import (
     validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
+    COHORT_LEVEL,
     DataSignature,
     DataType,
     ExpectedPathSchema,
@@ -71,6 +72,7 @@ class VariantPhasingDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", ("annotated", "phased")})),
+        COHORT_LEVEL,
         ExpectedPathSchema(ExpectedAnnotatedVariants),
     ] = ""
     """Annotated germline variants, or the phased variants of a ``gatk_phase_by_transmission`` task

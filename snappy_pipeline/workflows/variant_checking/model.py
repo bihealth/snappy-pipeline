@@ -2,7 +2,12 @@ import enum
 from typing import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
+from snappy_pipeline.workflows.abstract.protocol import (
+    COHORT_LEVEL,
+    DataSignature,
+    DataType,
+    ExpectedPathSchema,
+)
 from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 
@@ -14,6 +19,7 @@ class VariantCheckingDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
+        COHORT_LEVEL,
         ExpectedPathSchema(ExpectedGermlineVariants),
     ]
 

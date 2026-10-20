@@ -23,6 +23,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     ExpectedPathSchema,
     ExpectedReference,
+    Granularity,
     select_signature,
 )
 
@@ -124,7 +125,7 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         dependencies[task.name] = _resolve_dependencies(task.name, task_config, names)
 
     tasks = tuple(_topological_order(model.tasks, dependencies))
-    return Project(
+    project = Project(
         config=config,
         model=model,
         project_dir=project_dir,
@@ -135,6 +136,29 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         signatures=_task_signatures(tasks, task_configs, dependencies),
         file_paths={name: tuple(paths) for name, paths in file_paths.items()},
     )
+    _check_granularity(project)
+    return project
+
+
+def _check_granularity(project: Project) -> None:
+    """Raise if a ``depends_on`` field that needs a :class:`Granularity` (such as one VCF per
+    pedigree) names a task that writes its results at another one."""
+    from snappy_pipeline.workflows.abstract import _declared_group_by
+
+    for name, config in project.task_configs.items():
+        depends_on = getattr(config, "depends_on", None)
+        for field, value in project.dependencies[name].items():
+            metadata = type(depends_on).model_fields[field].metadata
+            required = next((m for m in metadata if isinstance(m, Granularity)), None)
+            if required is None:
+                continue
+            for upstream in value if isinstance(value, tuple) else (value,):
+                level = _declared_group_by(project, upstream, frozenset()) or "library"
+                if level != required.level:
+                    raise ValueError(
+                        f"Task {name!r}: depends_on.{field} needs one result per {required.level} "
+                        f"(group_by: {required.level}), but task {upstream!r} writes one per {level}"
+                    )
 
 
 def _exists(path: str) -> bool:
