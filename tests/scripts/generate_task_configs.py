@@ -639,6 +639,10 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
     ):
         depends_on["strandedness"] = "gene_expression_quantification_strandedness"
 
+    # arcasHLA types RNA, which only the STAR mapping provides.
+    if step_name == "hla_typing" and tool == "arcashla":
+        depends_on["alignments"] = "ngs_mapping_star"
+
     # A mapper reads the index of its own tool (mbcs maps with bwa).
     if step_name == "ngs_mapping" and tool is not None:
         depends_on["index"] = f"reference_index_{'bwa' if tool == 'mbcs' else tool}"

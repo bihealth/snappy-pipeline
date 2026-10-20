@@ -11,7 +11,7 @@ The ``tool`` field selects the aligner:
 - ``star``: short-read RNA. It also publishes gene counts and the strandedness decision.
 - ``mbcs``: short-read DNA with molecular barcodes and optional base quality score recalibration (BQSR). See the notes below.
 
-The task maps all libraries of its sample sheets, including those of background data sets.
+The task maps all libraries of its sample sheets, including those of background data sets, unless ``library_selection`` narrows them.
 A task with a DNA tool maps the DNA libraries, a task with ``star`` the RNA libraries.
 
 Reads come from ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
@@ -240,7 +240,7 @@ class MappingGetResultFilesMixin:
             ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
-                for library_name in self.parent.library_infos:
+                for library_name in self.parent.libraries["library_name"]:
                     if not self.skip_result_files_for_library(library_name):
                         yield from expand(path_tpl, library_name=library_name)
 
@@ -273,7 +273,7 @@ class ReportGetResultFilesMixin:
                 for path in self.get_output_files(action).values()
             ]
             #: Generate all concrete output paths.
-            for library_name in self.parent.library_infos:
+            for library_name in self.parent.libraries["library_name"]:
                 for sub_step in self.parent.sub_steps.values():
                     if (
                         isinstance(sub_step, ReadMappingStepPart)
@@ -491,7 +491,8 @@ class StrandednessStepPart(BaseStepPart):
             return
         tpl_out = "output/{library_name}/out/{library_name}.GeneCounts.tab"
         tpl_strandedness = "output/{library_name}/strandedness/{library_name}.decision.json"
-        for library_name, info in self.parent.library_infos.items():
+        for library_name in self.parent.libraries["library_name"]:
+            info = self.parent.library_infos[library_name]
             if info["extraction_type"] == "rna":
                 yield tpl_out.format(library_name=library_name)
                 yield tpl_out.format(library_name=library_name) + ".md5"
@@ -662,6 +663,11 @@ class NgsMappingWorkflow(BaseStep):
     #: Step name
     name = "ngs_mapping"
 
+    #: All libraries, background included; the tool maps those of its category (DNA, long-read
+    #: DNA or RNA) and ``library_selection`` narrows them
+    library_default = ""
+    background_results = True
+
     produces = [
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
@@ -772,7 +778,9 @@ class NgsMappingWorkflow(BaseStep):
         """Check that ``depends_on.kits`` has the kit of each library that needs one."""
         if not self.config.depends_on.kits:
             return
-        by_category = {name: self.library_tool_category(name) for name in self.library_infos}
+        by_category = {
+            name: self.library_tool_category(name) for name in self.libraries["library_name"]
+        }
         if self.config.target_coverage_report and self.config.target_coverage_report.enabled:
             self.check_library_kits(
                 "kits",
