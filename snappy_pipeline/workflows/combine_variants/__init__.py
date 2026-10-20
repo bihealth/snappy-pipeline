@@ -3,7 +3,8 @@
 Merges the somatic VCF of a tumor library with the germline VCF of its matched normal library.
 The task needs both ``depends_on.somatic_variants`` and ``depends_on.germline_variants``.
 It produces one VCF per tumor DNA library, which needs a matched normal library; ``library_selection`` can only narrow these.
-The merge runs GATK 3 ``CombineVariants``.
+The merge runs GATK 3 ``CombineVariants``; the somatic sites carry the ``SOMATIC`` flag.
+The output has the tags that both inputs have, so annotated inputs (for example by VEP, as neoepitope prediction needs) give annotated combined calls.
 
 With ``rename_combined`` set to ``tumor`` or ``germline``, the sample in the combined VCF is named after the tumor or the matched normal library.
 
@@ -114,6 +115,13 @@ class CombineVariantsWorkflow(BaseStep):
     library_requirement = "role == 'tumor' and extraction_type == 'dna'"
 
     produces = [DataSignature(DataType.VARIANTS, frozenset({"combined"}))]
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """Combined calls, with the tags that both inputs have, such as ``annotated`` and the
+        annotator."""
+        common = upstream["somatic_variants"].tags & upstream["germline_variants"].tags
+        return (cls.produces[0].with_tags(*common),)
 
     config_model_class = CombineVariantsConfigModel
 
