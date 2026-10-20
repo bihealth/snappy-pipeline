@@ -711,6 +711,10 @@ class BaseStep:
     #: constructor
     sheet_shortcut_kwargs = None
 
+    #: The libraries that the step can process at all, as a pandas query, such as RNA libraries
+    #: for expression quantification; it applies in addition to ``library_selection``.
+    library_requirement: str | None = None
+
     #: The libraries that a task takes without ``library_selection``, as a pandas query.
     #: ``None`` takes the default of each library's sheet kind (cancer: tumor DNA, germline:
     #: DNA), ``""`` takes all libraries.
@@ -957,11 +961,11 @@ class BaseStep:
     def libraries(self):
         """Return the rows of the libraries that the task takes: the library table, with the
         background data sets if the step produces results for them (``background_results``),
-        selected by ``library_selection`` or else by the step's ``library_default``
-        (:func:`select_libraries`)."""
+        restricted to the step's ``library_requirement`` and selected by ``library_selection`` or
+        else by the step's ``library_default`` (:func:`select_libraries`)."""
         df = self.build_library_dataframe(include_background=self.background_results)
         selection = getattr(self.config, "library_selection", None)
-        return select_libraries(df, selection, self.library_default)
+        return select_libraries(df, selection, self.library_default, self.library_requirement)
 
     @cached_property
     def output_entities(self) -> list[str]:
@@ -2177,10 +2181,13 @@ def resolve_relationships(df, relationships: dict):
     return result
 
 
-def select_libraries(df, selection: str | None, default: str | None = None):
+def select_libraries(
+    df, selection: str | None, default: str | None = None, requirement: str | None = None
+):
     """Return the libraries of ``df`` that a task takes.
 
-    These are the rows of ``selection`` (the task's ``library_selection``), else those of the
+    These are the rows of the step's ``requirement`` (what it can process at all) that are
+    also rows of ``selection`` (the task's ``library_selection``), else those of the
     step's ``default``, else those of the default of each row's sheet kind
     (``_LIBRARY_SELECTION_DEFAULTS``); an empty expression takes all rows. Raises ``ValueError``
     for an invalid expression and for libraries of the same name in several data sets.
@@ -2189,6 +2196,8 @@ def select_libraries(df, selection: str | None, default: str | None = None):
 
     if df.empty:
         return df
+    if requirement:
+        df = _query_libraries(df, requirement)
     expr = selection if selection is not None else default
     if expr is None:
         df = pd.concat(

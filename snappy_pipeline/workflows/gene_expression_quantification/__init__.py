@@ -375,8 +375,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
 
-    #: RNA libraries, unless the task sets ``library_selection``
-    library_default = "extraction_type == 'rna'"
+    library_requirement = "extraction_type == 'rna'"
+    library_default = ""
 
     @classmethod
     def task_produces(cls, config, upstream):
@@ -428,21 +428,8 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
         """
         exts = EXTENSIONS[self.config.tool].values()
 
-        df = self.build_library_dataframe()
-        if df.empty:
-            return []
-
-        all_fns = []
-        for library_name in self.output_entities:
-            row = df[df["library_name"] == library_name]
-            if row.empty:
-                continue
-            extraction_type = row.iloc[0].get("extraction_type", "")
-            if extraction_type.lower() == "rna":
-                all_fns += expand(
-                    "output/{library_name}/out/{library_name}{ext}",
-                    library_name=[library_name],
-                    ext=exts,
-                )
-
-        return all_fns
+        return expand(
+            "output/{library_name}/out/{library_name}{ext}",
+            library_name=self.output_entities,
+            ext=exts,
+        )

@@ -171,11 +171,12 @@ class HlaTypingWorkflow(BaseStep):
                 selected = OptiTypeStepPart
             case "arcashla":
                 selected = ArcasHlaStepPart
-                #: arcasHLA types RNA libraries, unless the task sets ``library_selection``
-                self.library_default = "extraction_type == 'rna'"
+                # all RNA libraries, which are all it supports
+                self.library_default = ""
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes((selected,))
+        self.library_requirement = f"extraction_type in {list(selected.supported_extraction_types)}"
         #: Mapping from library name to lower-case extraction type
         df = self.build_library_dataframe()
         self.extraction_types = dict(zip(df["library_name"], df["extraction_type"]))
@@ -194,19 +195,5 @@ class HlaTypingWorkflow(BaseStep):
 
     def _yield_result_files(self, tpl, **kwargs):
         """Build output paths from path template and extension list"""
-        tool = str(self.config.tool)
-        supported = self.sub_steps[tool].supported_extraction_types
-        df = self.build_library_dataframe()
-        if df.empty:
-            return
         for library_name in self.output_entities:
-            row = df[df["library_name"] == library_name]
-            if row.empty:
-                continue
-            extraction_type = row.iloc[0].get("extraction_type", "").lower()
-            if extraction_type in supported:
-                yield from expand(
-                    tpl,
-                    library_name=[library_name],
-                    **kwargs,
-                )
+            yield from expand(tpl, library_name=[library_name], **kwargs)

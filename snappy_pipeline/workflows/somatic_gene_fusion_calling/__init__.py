@@ -269,8 +269,8 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
 
-    #: RNA libraries, unless the task sets ``library_selection``
-    library_default = "extraction_type == 'rna'"
+    library_requirement = "extraction_type == 'rna'"
+    library_default = ""
 
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)
@@ -311,17 +311,7 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         We will process all NGS libraries of all test samples in all sample
         sheets.
         """
-        df = self.build_library_dataframe()
-        if df.empty:
-            return []
-
         for library_name in self.output_entities:
-            row = df[df["library_name"] == library_name]
-            if row.empty:
-                continue
-            extraction_type = row.iloc[0].get("extraction_type", "")
-            if extraction_type.lower() != "rna":
-                continue
             yield f"output/{library_name}/out/.done"
             if self.config.tool == Tool.arriba:
                 for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):

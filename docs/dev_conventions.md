@@ -149,7 +149,9 @@ It declares a local checkpoint instead, whose input is the upstream checkpoint o
 Step parts read the sample sheets only through the library DataFrame of the workflow object, never through the biomedsheets objects.
 `build_library_dataframe()` has one row per library, with its role, donor, cohort, parents, sex and the extra sample sheet columns; `include_background=True` adds the libraries of background data sets.
 `library_row(name)` returns the row of one library, which `library_selection` picks if several data sets have a library of that name; read per-library facts (data set, folder, kit) through it, not by indexing the dataframe by name.
-`libraries` is the one selection of the libraries a task takes: the library table (with background data sets if the step sets `background_results`), filtered by `library_selection` or else by the step's `library_default` (`None`: the default of each library's sheet kind, cancer tumor DNA and germline DNA; `""`: all libraries).
+`libraries` is the one selection of the libraries a task takes: the library table (with background data sets if the step sets `background_results`), restricted to the step's `library_requirement`, and filtered by `library_selection` or else by the step's `library_default` (`None`: the default of each library's sheet kind, cancer tumor DNA and germline DNA; `""`: all libraries).
+`library_requirement` is what a step can process at all (RNA for expression quantification); it always applies.
+`library_selection` is the user's choice within it, such as a batch or dropped samples, and `library_default` replaces it when the task sets none.
 `output_entities` gives the entities a task writes, from `libraries` and `group_by`; `cohort_members` gives the members of each cohort, which only an explicit `library_selection` restricts.
 `primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_index()` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
 
