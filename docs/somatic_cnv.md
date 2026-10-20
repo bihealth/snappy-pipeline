@@ -169,7 +169,6 @@ tasks:
       purecn:
         genome_name: hg19
         enrichment_kit_name: exome
-        somatic_variant_caller: mutect2
 ```
 
 The `cnv_purecn` task reads the normal database, the mapping bias, the intervals and the container from `pon_purecn`.

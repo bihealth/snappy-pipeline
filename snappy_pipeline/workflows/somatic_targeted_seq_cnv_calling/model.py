@@ -179,12 +179,6 @@ class PureCn(SnappyModel):
     }
     """Recommended extra arguments for PureCN, extra_commands: {} to clear them all"""
 
-    somatic_variant_caller: str = "mutect2"
-    """
-    IMPORTANT NOTE:
-    Mutect2 must be called with "--genotype-germline-sites true --genotype-pon-sites true
-    """
-
 
 class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     variants: Annotated[
@@ -192,7 +186,8 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
         ExpectedPathSchema(ExpectedSomaticVariants),
     ] = ""
-    """Required for ``tool: purecn``: Mutect2 calls that include the germline variants"""
+    """Required for ``tool: purecn``: Mutect2 calls that include the germline variants
+    (``--genotype-germline-sites true --genotype-pon-sites true``)"""
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),

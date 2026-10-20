@@ -1665,8 +1665,7 @@
       "post-optimize": ""
      },
      "genome_name": "unknown",
-     "seed": 1234567,
-     "somatic_variant_caller": "mutect2"
+     "seed": 1234567
     },
     "library_name": "case001subregion-T1-DNA1-WES1",
     "mapper": "bwa"
@@ -1726,8 +1725,7 @@
       "post-optimize": ""
      },
      "genome_name": "unknown",
-     "seed": 1234567,
-     "somatic_variant_caller": "mutect2"
+     "seed": 1234567
     },
     "library_name": "case001subregion-T1-DNA1-WES1",
     "mapper": "bwa"
