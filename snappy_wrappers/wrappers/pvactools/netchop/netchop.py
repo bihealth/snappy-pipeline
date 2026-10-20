@@ -183,9 +183,10 @@ def _run_netchop_command(
     p = subprocess.Popen(cmd + [fn], stdout=subprocess.PIPE)
     try:
         out, err = p.communicate(timeout=timeout)
-    except TimeoutError:
+    except subprocess.TimeoutExpired as e:
         p.kill()
-        raise (f"The command {' '.join(cmd)} has timed out")
+        p.communicate()
+        raise TimeoutError(f"The command {' '.join(cmd)} has timed out") from e
     if p.returncode != 0:
         raise ChildProcessError(
             f"Command {' '.join(cmd + [fn])} failed with return code {p.returncode}"
