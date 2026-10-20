@@ -581,6 +581,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             )
         )
         self.check_vep_plugins()
+        self.check_rna()
 
     def check_vep_plugins(self):
         """pVACseq and pVACsplice need the VEP plugins Frameshift and Wildtype."""
@@ -592,6 +593,27 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             raise ValueError(
                 f"Task {self.task_name!r}: depends_on.variants must come from VEP with the "
                 f"plugins {', '.join(missing)} in vep.plugins"
+            )
+
+    def check_rna(self):
+        """Predictions and options that read RNA need a tumor library with a matched RNA
+        library."""
+        tools = self.config.pvactools
+        rna_based = [
+            name
+            for name, enabled in (
+                ("pvacseq.pileup", tools.pvacseq.enabled and tools.pvacseq.pileup.enabled),
+                ("pvacseq.expression", tools.pvacseq.enabled and tools.pvacseq.expression.enabled),
+                ("pvacfuse", tools.pvacfuse.enabled),
+                ("pvacsplice", tools.pvacsplice.enabled),
+            )
+            if enabled
+        ]
+        has_rna = any(self.matched(tumor, "matched_rna_lib") for tumor in self.output_entities)
+        if rna_based and not has_rna:
+            raise ValueError(
+                f"Task {self.task_name!r}: {', '.join(rna_based)} need a tumor library with a "
+                "matched RNA library (matched_rna_lib), but no tumor library has one"
             )
 
     @property
