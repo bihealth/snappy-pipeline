@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Somatic gene fusion calling from RNA-seq data
 
-The step detects gene fusions in cancer RNA-seq data.
+The step detects gene fusions in cancer RNA-seq data; a task takes all RNA libraries unless it sets ``library_selection``.
 Each tool starts at the raw RNA-seq reads and predicts the fusions itself.
 The reads come from the task named in ``depends_on.reads``.
 
@@ -268,6 +268,9 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = CancerCaseSheet
+
+    #: RNA libraries, unless the task sets ``library_selection``
+    library_default = "extraction_type == 'rna'"
 
     sheet_shortcut_kwargs = {
         "options": CancerCaseSheetOptions(allow_missing_normal=True, allow_missing_tumor=True)

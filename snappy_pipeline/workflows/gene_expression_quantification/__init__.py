@@ -3,7 +3,7 @@
 
 The step quantifies gene expression of RNA libraries or computes RNA QC metrics.
 Each task runs one tool, selected by the ``tool`` field.
-The step uses RNA libraries only.
+The step uses RNA libraries only; a task takes all RNA libraries unless it sets ``library_selection``.
 
 Quantification:
 
@@ -374,6 +374,9 @@ class GeneExpressionQuantificationWorkflow(BaseStep):
 
     #: Default biomed sheet class
     sheet_shortcut_class = GenericSampleSheet
+
+    #: RNA libraries, unless the task sets ``library_selection``
+    library_default = "extraction_type == 'rna'"
 
     @classmethod
     def task_produces(cls, config, upstream):

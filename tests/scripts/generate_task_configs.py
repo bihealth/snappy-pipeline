@@ -387,7 +387,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             }
         ],
     },
-    ("gene_expression_quantification", None): {"library_selection": RNA},
     ("gene_expression_quantification", "dupradar"): {
         "dupradar": {"dupradar_path_annotation_gtf": PLACEHOLDER}
     },
@@ -395,7 +394,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "rnaseqc": {"rnaseqc_path_annotation_gtf": PLACEHOLDER}
     },
     ("gene_expression_quantification", "salmon"): {"salmon": {}},
-    ("hla_typing", "arcashla"): {"library_selection": RNA},
     ("ngs_data_qc", "picard"): {
         "picard": {"programs": ["CollectAlignmentSummaryMetrics", "CollectHsMetrics"]}
     },
@@ -417,7 +415,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     },
     ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
     ("reference_index", "star"): {"reference_molecule": Overwrite("rna")},
-    ("somatic_gene_fusion_calling", None): {"library_selection": RNA},
     ("somatic_gene_fusion_calling", "arriba"): {"arriba": {}},
     ("somatic_gene_fusion_calling", "defuse"): {
         "defuse": {"path_dataset_directory": Fixture("star_index")}

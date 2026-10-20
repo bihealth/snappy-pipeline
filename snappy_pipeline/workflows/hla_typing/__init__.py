@@ -5,7 +5,7 @@ The step determines the HLA type of each library from its reads.
 The ``tool`` field selects the typer:
 
 - ``optitype``: types DNA and RNA libraries from the FASTQ files. It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
-- ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``.
+- ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``. A task takes all RNA libraries unless it sets ``library_selection``.
 
 The result is one set of files per library.
 
@@ -171,6 +171,8 @@ class HlaTypingWorkflow(BaseStep):
                 selected = OptiTypeStepPart
             case "arcashla":
                 selected = ArcasHlaStepPart
+                #: arcasHLA types RNA libraries, unless the task sets ``library_selection``
+                self.library_default = "extraction_type == 'rna'"
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes((selected,))
