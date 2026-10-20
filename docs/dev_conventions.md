@@ -154,6 +154,8 @@ Germline and generic sheets list all their libraries, with the pedigree columns 
 `libraries` is the one selection of the libraries a task takes: the library table (with background data sets if the step sets `background_results`), restricted to the step's `library_requirement`, and filtered by `library_selection` or else by the step's `library_default` (`None`: the default of each library's sheet kind, cancer tumor DNA and germline DNA; `""`: all libraries).
 `library_requirement` is what a step can process at all (RNA for expression quantification, `kind == 'cancer'` for the somatic steps); it always applies.
 `library_selection` is the user's choice within it, such as a batch or dropped samples, and `library_default` replaces it when the task sets none.
+A step whose requirement or default depends on the task's config (its tool) overrides `task_library_requirement(config)` or `task_library_default(config)`.
+`task_libraries(task_name)` gives the libraries of another task from its config, so a step can match the files of an upstream task also under `--frozen`.
 `output_entities` gives the entities a task writes, from `libraries` and `effective_group_by` (the task's `group_by`, else the step's `default_group_by(config)`, else what upstream tasks declare, else `library`); `cohort_members` gives the members of each cohort, which only an explicit `library_selection` restricts.
 `primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_index()` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
 

@@ -712,6 +712,18 @@ class BaseStep:
     background_results: bool = False
 
     @classmethod
+    def task_library_requirement(cls, config: SnappyStepModel) -> str | None:
+        """Return the ``library_requirement`` of a task of this step; override it when the
+        requirement depends on the task's config, such as its tool."""
+        return cls.library_requirement
+
+    @classmethod
+    def task_library_default(cls, config: SnappyStepModel) -> str | None:
+        """Return the ``library_default`` of a task of this step; override it when the default
+        depends on the task's config, such as its tool."""
+        return cls.library_default
+
+    @classmethod
     def default_config_yaml(cls) -> str:
         """Return the annotated default configuration of a task of this step: a ``tasks:``
         list with one entry, generated from ``config_model_class``."""
@@ -906,19 +918,45 @@ class BaseStep:
         task adds its relationships once. Callers must not modify the result in place.
         """
         if include_background not in self._library_dataframes:
-            tables = self.project.library_tables
-            if include_background not in tables:
-                tables[include_background] = build_library_dataframe(
-                    self.data_set_infos, self.sheets, include_background=include_background
-                )
-            default_relationships = getattr(type(self), "default_relationships", {})
-            config_relationships = getattr(self.config, "relationships", None) or {}
-            relationships = {**default_relationships, **config_relationships}
-            table = tables[include_background]
-            self._library_dataframes[include_background] = (
-                resolve_relationships(table, relationships) if relationships else table
+            self._library_dataframes[include_background] = self._with_relationships(
+                type(self), self.config, self._library_table(include_background)
             )
         return self._library_dataframes[include_background]
+
+    def _library_table(self, include_background: bool):
+        """Return the library table without relationships, built once per run."""
+        tables = self.project.library_tables
+        if include_background not in tables:
+            tables[include_background] = build_library_dataframe(
+                self.data_set_infos, self.sheets, include_background=include_background
+            )
+        return tables[include_background]
+
+    @staticmethod
+    def _with_relationships(cls: type["BaseStep"], config: SnappyStepModel, table):
+        """Return ``table`` with the relationship columns of a task of step ``cls``."""
+        default_relationships = getattr(cls, "default_relationships", {})
+        config_relationships = getattr(config, "relationships", None) or {}
+        relationships = {**default_relationships, **config_relationships}
+        return resolve_relationships(table, relationships) if relationships else table
+
+    def task_libraries(self, task_name: str):
+        """Return the rows of the libraries that the task ``task_name`` takes, like
+        :attr:`libraries` of its workflow object, but computed from its config, so that it works
+        for upstream tasks without a workflow object, too (``--frozen``)."""
+        from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+        if task_name == self.task_name:
+            return self.libraries
+        cls = WORKFLOW_REGISTRY[self.project.task(task_name).step]
+        config = self.project.task_configs[task_name]
+        df = self._with_relationships(cls, config, self._library_table(cls.background_results))
+        return select_libraries(
+            df,
+            getattr(config, "library_selection", None),
+            cls.task_library_default(config),
+            cls.task_library_requirement(config),
+        )
 
     @classmethod
     def default_group_by(cls, config: SnappyStepModel) -> str | None:
@@ -944,7 +982,12 @@ class BaseStep:
         else by the step's ``library_default`` (:func:`select_libraries`)."""
         df = self.build_library_dataframe(include_background=self.background_results)
         selection = getattr(self.config, "library_selection", None)
-        return select_libraries(df, selection, self.library_default, self.library_requirement)
+        return select_libraries(
+            df,
+            selection,
+            self.task_library_default(self.config),
+            self.task_library_requirement(self.config),
+        )
 
     @cached_property
     def output_entities(self) -> list[str]:

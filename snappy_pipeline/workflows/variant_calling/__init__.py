@@ -875,6 +875,13 @@ class VariantCallingWorkflow(BaseStep):
         prefix = f"work/{lib}/out/{lib}.full" if unfiltered else f"work/{lib}/out/{lib}"
         return {"vcf": f"{prefix}.vcf.gz", "vcf_tbi": f"{prefix}.vcf.gz.tbi"}
 
+    @classmethod
+    def task_library_requirement(cls, config):
+        """mutect2 calls tumor DNA libraries, which need a matched normal or none."""
+        if config.tool == "mutect2":
+            return "role == 'tumor' and extraction_type == 'dna'"
+        return None
+
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
 
@@ -891,8 +898,6 @@ class VariantCallingWorkflow(BaseStep):
                 selected_caller = Gatk4HaplotypeCallerGvcfStepPart
             case "mutect2":
                 selected_caller = Mutect2StepPart
-                # Somatic calls of tumor DNA libraries, which need a matched normal or none
-                self.library_requirement = "role == 'tumor' and extraction_type == 'dna'"
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(

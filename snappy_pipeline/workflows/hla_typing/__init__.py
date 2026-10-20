@@ -144,6 +144,10 @@ class ArcasHlaStepPart(BaseStepPart):
     default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="64000MB")
 
 
+#: The step part of each tool
+_TOOL_STEP_PART = {"optitype": OptiTypeStepPart, "arcashla": ArcasHlaStepPart}
+
+
 class HlaTypingWorkflow(BaseStep):
     """Perform HLA Typing"""
 
@@ -160,19 +164,21 @@ class HlaTypingWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         return {"txt": f"work/{lib}/out/{lib}.txt", "calls_json": f"work/{lib}/out/{lib}.json"}
 
+    @classmethod
+    def task_library_requirement(cls, config):
+        """The libraries whose extraction type the tool supports."""
+        return f"extraction_type in {list(_TOOL_STEP_PART[config.tool].supported_extraction_types)}"
+
+    @classmethod
+    def task_library_default(cls, config):
+        """arcashla takes all RNA libraries, which are all it supports."""
+        return "" if config.tool == "arcashla" else None
+
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        match self.config.tool:
-            case "optitype":
-                selected = OptiTypeStepPart
-            case "arcashla":
-                selected = ArcasHlaStepPart
-                # all RNA libraries, which are all it supports
-                self.library_default = ""
-            case _:
-                raise NotImplementedError(f"Unknown tool: {self.config.tool}")
-        self.register_sub_step_classes((selected,))
-        self.library_requirement = f"extraction_type in {list(selected.supported_extraction_types)}"
+        if self.config.tool not in _TOOL_STEP_PART:
+            raise NotImplementedError(f"Unknown tool: {self.config.tool}")
+        self.register_sub_step_classes((_TOOL_STEP_PART[self.config.tool],))
         #: Mapping from library name to lower-case extraction type
         df = self.build_library_dataframe()
         self.extraction_types = dict(zip(df["library_name"], df["extraction_type"]))
