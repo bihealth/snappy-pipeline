@@ -149,10 +149,10 @@ class RelationshipDefinition(SnappyModel):
           many: true
     """
 
-    via: str
-    """Column name in the library DataFrame to use as the join key.
-    The related row must have the *same* value in this column as the
-    source row."""
+    via: str | list[str]
+    """Column name in the library DataFrame to use as the join key, or several names.
+    The related row must have the *same* value in each of these columns as the
+    source row, e.g. ``[donor_name, sample_name]`` for the libraries of one sample."""
 
     target: str
     """Pandas ``DataFrame.query()`` expression applied to the related

@@ -362,6 +362,28 @@ class TestSelectLibraries:
 
 
 class TestResolveRelationships:
+    def test_via_several_columns_joins_on_all_of_them(self):
+        df = pd.DataFrame(
+            {
+                "library_name": ["P1-T1-DNA1", "P1-T1-RNA1", "P1-T2-DNA1", "P1-T2-RNA1"],
+                "donor_name": ["P1"] * 4,
+                "sample_name": ["T1", "T1", "T2", "T2"],
+                "extraction_type": ["dna", "rna", "dna", "rna"],
+            }
+        )
+        rels = {
+            "matched_rna_lib": RelationshipDefinition(
+                via=["donor_name", "sample_name"], target="extraction_type == 'rna'"
+            )
+        }
+        result = resolve_relationships(df, rels)
+        assert result["matched_rna_lib"].tolist() == [
+            "P1-T1-RNA1",
+            "P1-T1-RNA1",
+            "P1-T2-RNA1",
+            "P1-T2-RNA1",
+        ]
+
     def _cancer_df(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")

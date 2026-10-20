@@ -1998,17 +1998,21 @@ def resolve_relationships(df, relationships: dict):
         ) or rel_name
         many = rel_def.many if hasattr(rel_def, "many") else rel_def.get("many", False)
 
-        if via not in result.columns:
-            raise ValueError(
-                f"Relationship {rel_name!r}: join column {via!r} not found in DataFrame. "
-                f"Available columns: {list(result.columns)}"
-            )
+        via_columns = [via] if isinstance(via, str) else list(via)
+        for via_column in via_columns:
+            if via_column not in result.columns:
+                raise ValueError(
+                    f"Relationship {rel_name!r}: join column {via_column!r} not found in "
+                    f"DataFrame. Available columns: {list(result.columns)}"
+                )
+        # One join key per row; several ``via`` columns join on all of them
+        via_keys = result[via_columns].astype(str).agg("/".join, axis=1)
 
         # Build a lookup: for each unique ``via`` value, find matching rows.
         # We query the full DataFrame for each group so that the target
         # expression can reference any column.
         matched: dict[str, list[str]] = {}
-        for via_val, group in result.groupby(via):
+        for via_val, group in result.groupby(via_keys):
             try:
                 hits = group.query(target)
             except Exception as exc:
@@ -2018,7 +2022,7 @@ def resolve_relationships(df, relationships: dict):
             matched[str(via_val)] = hits["library_name"].tolist()
 
         if many:
-            result[column] = result[via].map(lambda v: matched.get(str(v), []))
+            result[column] = via_keys.map(lambda v: matched.get(str(v), []))
         else:
 
             def _single_match(via_value):
@@ -2031,7 +2035,7 @@ def resolve_relationships(df, relationships: dict):
                     )
                 return matches[0] if matches else ""
 
-            result[column] = result[via].map(_single_match)
+            result[column] = via_keys.map(_single_match)
 
     return result
 
