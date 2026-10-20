@@ -725,9 +725,7 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
     if step_name == "variant_phasing" and tool == "gatk_read_backed_phasing":
         depends_on["variants"] = "variant_phasing_gatk_phase_by_transmission"
     if step_name == "variant_phasing":
-        depends_on.pop(
-            "variants" if tool == "gatk_read_backed_phasing_tumor" else "combined_variants"
-        )
+        depends_on.pop("variants" if tool.endswith("_tumor") else "combined_variants")
 
     # Mutect2 calling filters with the mutect2 panel of normals.
     if step_name == "variant_calling" and tool == "mutect2":

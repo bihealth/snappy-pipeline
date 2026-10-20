@@ -229,7 +229,7 @@ class SomaticNeoepitopePredictionDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedPhasedVariants),
     ] = ""
     """Somatic and germline variants, combined, annotated by VEP and phased with the tumor DNA,
-    from ``variant_phasing`` with ``tool: gatk_read_backed_phasing_tumor`` (pvacseq phasing)"""
+    from ``variant_phasing`` with a tumor tool (pvacseq phasing)"""
 
     expression: Annotated[
         str,

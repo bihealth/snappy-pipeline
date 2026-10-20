@@ -23,6 +23,7 @@ class Tool(enum.StrEnum):
     gatk_phase_by_transmission = "gatk_phase_by_transmission"
     gatk_read_backed_phasing = "gatk_read_backed_phasing"
     gatk_read_backed_phasing_tumor = "gatk_read_backed_phasing_tumor"
+    whatshap_tumor = "whatshap_tumor"
 
 
 #: The ``depends_on`` fields each tool reads
@@ -30,6 +31,7 @@ TOOL_DEPENDENCIES = {
     Tool.gatk_phase_by_transmission: ("variants",),
     Tool.gatk_read_backed_phasing: ("variants",),
     Tool.gatk_read_backed_phasing_tumor: ("combined_variants",),
+    Tool.whatshap_tumor: ("combined_variants",),
 }
 
 
@@ -80,7 +82,7 @@ class VariantPhasingDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedCombinedVariants),
     ] = ""
     """The combined somatic and germline variants of the tumor libraries
-    (``gatk_read_backed_phasing_tumor``)"""
+    (``gatk_read_backed_phasing_tumor``, ``whatshap_tumor``)"""
 
     reference: Reference
 

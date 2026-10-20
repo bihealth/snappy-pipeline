@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - whatshap ==2.8
+  - bcftools ==1.23.1
+  - htslib ==1.23.1

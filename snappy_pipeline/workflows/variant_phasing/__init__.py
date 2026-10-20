@@ -1,12 +1,14 @@
-"""Variant phasing with GATK
+"""Variant phasing with GATK or WhatsHap
 
-Phases germline variants of pedigrees, or the combined somatic and germline variants of tumor libraries, with GATK 3.
+Phases germline variants of pedigrees, or the combined somatic and germline variants of tumor libraries.
 
 The ``tool`` field selects the phasing:
 
 - ``gatk_phase_by_transmission`` runs PhaseByTransmission on the annotated variants of ``depends_on.variants``. It changes the genotypes of some variants, which is a problem when phasing *de novo* variants.
 - ``gatk_read_backed_phasing`` runs ReadBackedPhasing on ``depends_on.variants`` with the alignments of the trio (``depends_on.alignments``), scattered over ``gatk_read_backed_phasing.num_jobs`` chunks of the genome. It is not fully reliable.
 - ``gatk_read_backed_phasing_tumor`` runs ReadBackedPhasing on the combined somatic and germline variants of each tumor DNA library (``depends_on.combined_variants``, from ``combine_variants``) with its alignments, as pVACtools describes it for the proximal variants of neoepitope prediction.
+- ``whatshap_tumor`` phases the same input with WhatsHap, a maintained read-based phasing tool, and writes the phase into the ``HP`` tag of ReadBackedPhasing (``--tag=HP``), which pVACseq reads; the genotypes stay unphased.
+  WhatsHap assumes diploid data, so loss of heterozygosity, rearrangements and subclonal variants of a tumor limit it, as they limit ReadBackedPhasing.
 
 The pedigree tools produce one result per child in a pedigree whose parents are both sequenced, the tumor tool one per tumor DNA library.
 
@@ -238,11 +240,8 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
         return super()._get_log_file_run()
 
 
-class TumorReadBackedPhasingStepPart(VariantPhasingBaseStep):
-    """Read-backed phasing of a tumor library's combined somatic and germline variants."""
-
-    #: Name of the step in the pipeline.
-    name = "gatk_read_backed_phasing_tumor"
+class TumorPhasingStepPart(VariantPhasingBaseStep):
+    """Phasing of a tumor library's combined somatic and germline variants with its alignments."""
 
     published_keys = tuple(_OUTPUTS)
 
@@ -266,14 +265,27 @@ class TumorReadBackedPhasingStepPart(VariantPhasingBaseStep):
             yield key, _BASE_PATH_OUT + ext
 
 
+class TumorReadBackedPhasingStepPart(TumorPhasingStepPart):
+    """GATK 3 ReadBackedPhasing of a tumor library"""
+
+    name = "gatk_read_backed_phasing_tumor"
+
+
+class TumorWhatshapStepPart(TumorPhasingStepPart):
+    """WhatsHap phasing of a tumor library"""
+
+    name = "whatshap_tumor"
+
+
 _TOOL_STEP_PART = {
     "gatk_phase_by_transmission": PhaseByTransmissionStepPart,
     "gatk_read_backed_phasing": ReadBackedPhasingStepPart,
     "gatk_read_backed_phasing_tumor": TumorReadBackedPhasingStepPart,
+    "whatshap_tumor": TumorWhatshapStepPart,
 }
 
-#: The tool that phases tumor libraries instead of pedigrees
-_TUMOR_TOOL = "gatk_read_backed_phasing_tumor"
+#: The tools that phase tumor libraries instead of pedigrees
+_TUMOR_TOOLS = ("gatk_read_backed_phasing_tumor", "whatshap_tumor")
 
 
 class VariantPhasingWorkflow(BaseStep):
@@ -289,14 +301,14 @@ class VariantPhasingWorkflow(BaseStep):
     @classmethod
     def task_produces(cls, config, upstream):
         """The variants this task reads, tagged ``phased``."""
-        field = "combined_variants" if config.tool == _TUMOR_TOOL else "variants"
+        field = "combined_variants" if config.tool in _TUMOR_TOOLS else "variants"
         return (upstream[field].with_tags("phased"),)
 
     @classmethod
     def task_library_requirement(cls, config):
         """The tumor tool phases tumor DNA libraries."""
         return (
-            "role == 'tumor' and extraction_type == 'dna'" if config.tool == _TUMOR_TOOL else None
+            "role == 'tumor' and extraction_type == 'dna'" if config.tool in _TUMOR_TOOLS else None
         )
 
     @classmethod
@@ -323,6 +335,6 @@ class VariantPhasingWorkflow(BaseStep):
     def output_entities(self) -> list[str]:
         """The children whose parents are both sequenced (their DNA libraries), or the tumor
         libraries."""
-        if self.config.tool == _TUMOR_TOOL:
+        if self.config.tool in _TUMOR_TOOLS:
             return super().output_entities
         return self.children_with_both_parents()

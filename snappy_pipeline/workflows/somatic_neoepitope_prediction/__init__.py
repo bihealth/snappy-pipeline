@@ -21,7 +21,7 @@ pVACseq options and their inputs:
 
 - ``pileup``: read counts of the matched RNA library at the variants (``depends_on.alignments``).
 - ``expression``: salmon TPMs of the matched RNA library (``depends_on.expression``).
-- ``phasing``: germline variants near the somatic ones, phased with the tumor DNA (``depends_on.phased_variants``: a ``variant_phasing`` task with ``tool: gatk_read_backed_phasing_tumor`` on the VEP-annotated output of ``combine_variants``).
+- ``phasing``: germline variants near the somatic ones, phased with the tumor DNA (``depends_on.phased_variants``: a ``variant_phasing`` task with ``tool: gatk_read_backed_phasing_tumor`` or ``whatshap_tumor`` on the VEP-annotated output of ``combine_variants``, preferably annotated for all transcripts, as pVACseq matches the nearby variants by the transcript of the somatic variant).
 
 The matched normal library is the ``matched_normal_lib`` relationship (normal DNA of the donor); the matched RNA library is ``matched_rna_lib`` (tumor RNA of the same sample); both can be redefined in ``relationships``.
 pVACfuse and pVACsplice skip tumor libraries without a matched RNA library.
