@@ -322,40 +322,30 @@ class WritePedigreeStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    def __init__[P: BaseStep](
-        self, parent: P, require_dna_ngs_library: bool = False, only_trios: bool = False
-    ):
-        super().__init__(parent)
-        #: Whether to prevent writing out of samples with out NGS library.
-        self.require_dna_ngs_library = require_dna_ngs_library
-        self.only_trios = only_trios
+    #: The column that names the individuals and their parents: their DNA libraries, the
+    #: sample names of the VCFs
+    individual_column = "library_name"
+
+    def _pedigrees(self, index_ngs_library: str) -> list:
+        """Return the primary DNA library rows of each pedigree to write: the pedigree of
+        ``index_ngs_library``, or of all germline pedigrees for ``whole_cohort``. Projects with
+        cancer sample sheets only get none."""
+        df = self.parent.build_library_dataframe()
+        if df.empty or df["kind"].eq("cancer").all():
+            return []
+        if index_ngs_library != "whole_cohort":
+            return [self.parent.pedigree_members(index_ngs_library)]
+        dna = self.parent.primary_dna_libraries()
+        return [
+            members for _, members in dna[dna["kind"] == "germline"].groupby("pedigree", sort=False)
+        ]
 
     @listify
     def _get_input_files_run(self, wildcards):
-        """Return the input BAM files of the cohort.
-
-        The list is empty if the parent step does not set ``depends_on.alignments``.
-        """
-        df = self.parent.build_library_dataframe()
-        if df.empty:
-            return
-
-        # Cancer cases: do not generate pedigree logic for now
-        if df["kind"].eq("cancer").all():
-            return
-
-        if wildcards.index_ngs_library == "whole_cohort":
-            df_cohort = df[df["kind"] == "germline"]
-        else:
-            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
-
-        if self.require_dna_ngs_library:
-            df_cohort = df_cohort[df_cohort["extraction_type"] == "dna"]
-
-        # TODO only_trios not fully implemented via pandas yet, fall back to writing all
-
-        for _, row in df_cohort.iterrows():
-            yield self.parent.get_upstream_paths("alignments", library_name=row["library_name"]).bam
+        """Return the BAM files of the pedigree members."""
+        for members in self._pedigrees(wildcards.index_ngs_library):
+            for library_name in members["library_name"]:
+                yield self.parent.get_upstream_paths("alignments", library_name=library_name).bam
 
     def get_output_files(self, action):
         self._validate_action(action=action)
@@ -364,105 +354,48 @@ class WritePedigreeStepPart(BaseStepPart):
     def get_result_files(self):
         return []
 
+    def _individual(self, library_name: str) -> str:
+        """The PED name of the individual of a DNA library, ``0`` for none"""
+        if library_name == "0" or self.individual_column == "library_name":
+            return library_name
+        return self.parent.library_row(library_name)[self.individual_column]
+
     def run(self, wildcards: Wildcards, output: OutputFiles):
-        """Write out the pedigree information"""
-        df = self.parent.build_library_dataframe()
-        if df.empty:
-            with open(str(output), "w") as f:
-                f.write("")
-            return
-
-        # Skip for cancer completely
-        if df["kind"].eq("cancer").all():
-            with open(str(output), "w") as f:
-                f.write("")
-            return
-
-        if wildcards.index_ngs_library == "whole_cohort":
-            df_cohort = df[df["kind"] == "germline"]
-        else:
-            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
-
+        """Write the pedigree as biomedsheets did: family ``FAM_`` and the index donor, then the
+        individual, its father and mother, sex (1 male, 2 female, 0 unknown) and affected status
+        (2 affected, 1 unaffected, 0 unknown)."""
+        sexes = {"male": "1", "female": "2"}
         with open(str(output), "w") as f:
-            for _, row in df_cohort.iterrows():
-                # Sex encoding: 'male' -> 1, 'female' -> 2, else 0
-                sex_str = str(row["sex"]).lower()
-                sex = "1" if sex_str == "male" else ("2" if sex_str == "female" else "0")
-
-                print(
-                    "\t".join(
-                        [
-                            row["cohort_name"],
-                            row["donor_name"],
-                            row["father_name"],
-                            row["mother_name"],
-                            sex,
-                            str(row["disease_state"]),
-                        ]
-                    ),
-                    file=f,
-                )
+            for members in self._pedigrees(wildcards.index_ngs_library):
+                index = self.parent.library_row(members["pedigree"].iloc[0])
+                family = "FAM_" + index["donor_name"]
+                for _, row in members.iterrows():
+                    fields = (
+                        family,
+                        self._individual(row["library_name"]),
+                        self._individual(row["father_name"]),
+                        self._individual(row["mother_name"]),
+                        sexes.get(str(row["sex"]).lower(), "0"),
+                        str(row["disease_state"]),
+                    )
+                    print("\t".join(fields), file=f)
 
 
 class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
-    """
-    Class contains method to write pedigree file for primary DNA sample given the index
-    NGS library name.It will create pedigree information based sole on sample name,
-    example 'P001' instead of 'P001-N1-DNA1-WGS1'.
+    """Write the pedigree with the donor names (``P001`` instead of ``P001-N1-DNA1-WGS1``)
 
     Used by export-external workflows that operate on externally-provided data, so they
-    have no upstream ``ngs_mapping`` dependency.  Overrides ``get_input_files`` to return
-    an empty list — the pedigree is derived solely from the sample sheet and needs no
-    BAM-file ordering constraint.
+    have no upstream ``ngs_mapping`` dependency and no BAM files to order by.
     """
 
     #: Step name
     name = "write_pedigree_with_sample_name"
 
-    def __init__(self, *args, **kwargs):
-        WritePedigreeStepPart.__init__(self, *args, **kwargs)
+    individual_column = "donor_name"
 
     def _get_input_files_run(self, wildcards):
         """Return no input files: pedigree writing only needs sample-sheet data."""
         return []
-
-    def run(self, wildcards, output):
-        """Write out the pedigree information"""
-        df = self.parent.build_library_dataframe()
-        if df.empty:
-            with open(str(output), "a") as f:
-                f.write("")
-            return
-
-        if df["kind"].eq("cancer").all():
-            with open(str(output), "a") as f:
-                f.write("")
-            return
-
-        if wildcards.index_ngs_library == "whole_cohort":
-            df_cohort = df[df["kind"] == "germline"]
-        else:
-            df_cohort = df[df["cohort_name"] == wildcards.index_ngs_library]
-
-        with open(str(output), "a") as f:
-            for _, row in df_cohort.iterrows():
-                sex_str = str(row["sex"]).lower()
-                sex = "1" if sex_str == "male" else ("2" if sex_str == "female" else "0")
-                print(
-                    "\t".join(
-                        [
-                            row["cohort_name"],
-                            row["sample_name"],
-                            row[
-                                "father_name"
-                            ],  # Should technically be mapped to sample_name for consistency if needed, but keeping as is for now
-                            row["mother_name"],
-                            sex,
-                            str(row["disease_state"]),
-                        ]
-                    ),
-                    file=f,
-                )
 
 
 class LinkOutStepPart(BaseStepPart):
