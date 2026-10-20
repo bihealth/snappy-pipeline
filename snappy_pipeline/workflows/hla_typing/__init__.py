@@ -65,6 +65,8 @@ class OptiTypeStepPart(BaseStepPart):
 
     #: Step name
     name = "optitype"
+    #: The MHC classes that the tool types
+    mhc_classes = ("class_i",)
 
     supported_extraction_types = ("dna", "rna")
 
@@ -110,6 +112,8 @@ class ArcasHlaStepPart(BaseStepPart):
 
     #: Step name
     name = "arcashla"
+    #: The MHC classes that the tool types
+    mhc_classes = ("class_i", "class_ii")
 
     supported_extraction_types = ("rna",)
 
@@ -163,6 +167,11 @@ class HlaTypingWorkflow(BaseStep):
         """Return local HLA typing output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
         return {"txt": f"work/{lib}/out/{lib}.txt", "calls_json": f"work/{lib}/out/{lib}.json"}
+
+    @classmethod
+    def mhc_classes(cls, config) -> tuple[str, ...]:
+        """The MHC classes that a task of this step types."""
+        return _TOOL_STEP_PART[config.tool].mhc_classes
 
     @classmethod
     def task_library_requirement(cls, config):

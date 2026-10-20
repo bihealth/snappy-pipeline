@@ -180,6 +180,8 @@ DEPENDS_ON_KEYS = {
     "germline_resource",
     "database",
     "alignments",
+    "alignments_dna",
+    "alignments_rna",
     "variants",
     "somatic_variants",
     "germline_variants",
@@ -189,6 +191,7 @@ DEPENDS_ON_KEYS = {
     "copy_number",
     "structural_variants",
     "fusions",
+    "proteome",
     "expression",
     "hla_types",
     "strandedness",
@@ -381,21 +384,7 @@ def test_files_are_inputs_not_params():
 
 
 #: Wrappers that do not run through a base class yet, with the reason
-WRAPPERS_WITHOUT_BASE_CLASS = {
-    name: "on hold with somatic_neoepitope_prediction"
-    for name in (
-        "pvactools/combine",
-        "pvactools/create_proteome",
-        "pvactools/junction",
-        "pvactools/netchop",
-        "pvactools/normalize",
-        "pvactools/phasing",
-        "pvactools/pileup",
-        "pvactools/pvacfuse",
-        "pvactools/pvacseq",
-        "pvactools/pvacsplice",
-    )
-}
+WRAPPERS_WITHOUT_BASE_CLASS = {"pvactools/create_proteome": "on hold with create_proteome"}
 
 
 def test_wrappers_use_a_base_class():
@@ -455,7 +444,7 @@ def test_logs_and_benchmarks_are_unique_per_job():
 
 
 #: Rules of steps on hold; their own wrappers still write conda files and md5 files
-ON_HOLD_RULES = ("somatic_neoepitope_prediction", "create_proteome")
+ON_HOLD_RULES = ("create_proteome",)
 
 _CONDA_OR_COPY = re.compile(r"\.(conda_info\.txt|conda_list\.txt|wrapper\.py|environment\.yaml)$")
 
@@ -673,8 +662,8 @@ def test_published_files_come_with_md5_and_index():
     assert not found, f"published files without md5 or index: {sorted(found)[:20]} ({len(found)})"
 
 
-#: Wrapper directories on hold, not pinned yet
-UNPINNED_WRAPPERS = {"pvactools"}
+#: Wrappers on hold, not pinned yet
+UNPINNED_WRAPPERS = {"pvactools/create_proteome"}
 
 #: Environments that conda cannot solve as written (unavailable versions, a defunct channel,
 #: no dependencies); each needs new versions before it can be pinned
@@ -704,7 +693,7 @@ def test_wrapper_envs_are_pinned():
     found = []
     for env in sorted(wrappers.rglob("environment.yaml")):
         name = str(env.parent.relative_to(wrappers))
-        if env.relative_to(wrappers).parts[0] in UNPINNED_WRAPPERS or name in UNSOLVABLE_ENVS:
+        if name in UNPINNED_WRAPPERS or name in UNSOLVABLE_ENVS:
             continue
         pin = env.with_name("environment.linux-64.pin.txt")
         if not pin.exists() or pin.resolve() != env.resolve().with_name(pin.name):

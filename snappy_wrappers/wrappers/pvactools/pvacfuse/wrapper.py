@@ -1,41 +1,14 @@
+import csv
 import os
 
-from snakemake import shell
-from snakemake.io import Namedlist
+from snappy_wrappers.pvactools import bindings_for_container
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-
-# TODO: Extend to lists, check for directories in directories [outputs/rw precedence on inputs/ro] & put in a function (decide where...)
-def bindings_for_container(
-    files_to_bind: Namedlist,
-    base_container_path: str,
-    access: str = "ro",
-    exclude_bind: list[str] = []
-) -> tuple[str, dict[str, str]]:
-    fns = {}
-    for key, path in files_to_bind.items():
-        if key in exclude_bind:
-            continue
-        assert not isinstance(path, list), f"Input files cannot be lists (offender is '{key}')"
-        assert key not in fns, f"Duplicate input '{key}'"
-        fns[key] = os.path.realpath(path)
-
-    ds = {}
-    for key, path in fns.items():
-        ds[key] = os.path.dirname(path)
-
-    bindings = {e[1]: e[0] for e in enumerate(list(set(ds.values())))}
-
-    container_fns = {}
-    for key, path in fns.items():
-        container_fns[key] = f"{base_container_path}/d{bindings[ds[key]]}/{os.path.basename(path)}"
-
-    binding_cmd = " ".join([f"--bind {d}:{base_container_path}/d{i}:{access}" for d, i in bindings.items()])
-
-    return (binding_cmd, container_fns)
+extra_args = " ".join(args.get("extra_args", []))
 
 (input_bindings, input_fns) = bindings_for_container(
     snakemake.input, base_container_path="/inputs", exclude_bind=args["exclude_bind"]
@@ -44,85 +17,134 @@ def bindings_for_container(
     snakemake.output, base_container_path="/outputs", access="rw", exclude_bind=args["exclude_bind"]
 )
 
-alleles = ",".join(args["class_i"] + args["class_ii"])
-
 if peptides := getattr(snakemake.input, "peptides", ""):
     peptides = f"--run-reference-proteome-similarity --peptide-fasta {input_fns['peptides']}"
 if genes := getattr(snakemake.input, "genes", ""):
     genes = f"--genes-of-interest-file {input_fns['genes']}"
 
-shell.executable("/bin/bash")
+alleles = []
+with open(snakemake.input.alleles, "rt") as f:
+    reader = csv.DictReader(f, delimiter="\t")
+    for row in reader:
+        alleles.append(row["HLA Allele"])
+alleles = ",".join(sorted(list(set(alleles))))
 
-shell(
+if "all_class_i" in args["algorithms"] and "all_class_ii" in args["algorithms"]:
+    algorithms = "all"
+else:
+    algorithms = " ".join(args["algorithms"])
+class_i_epitope_length = ",".join(map(str, args["lengths"]["class_i"]))
+class_ii_epitope_length = ",".join(map(str, args["lengths"]["class_ii"]))
+
+# The epitope sequences that NetChop reads; empty when the tool writes none
+fasta = " ".join(str(path) for key, path in snakemake.output.items() if key.startswith("fasta"))
+
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Setup auto-cleaned tmpdir
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Compute md5 checksum
-md5() {{
-    fn=$1
-    d=$(dirname $fn)
-    f=$(basename $fn)
-    pushd $d 1> /dev/null 2>&1
-    checksum=$(md5sum $f)
-    popd 1> /dev/null 2>&1
-    echo "$checksum"
-}}
-
-set -x
-# -----------------------------------------------------------------------------
-
-export TMPDIR=$(realpath $TMPDIR)
 export LC_ALL=C.UTF-8
 
-# Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
-# Create home on TMPDIR? But then the calling script is gone...
+# snakemake.output.done is needed because pVACtools modules create MHC_class_iI? folders
+# so the path to bind is work/mapper.caller.annotator(.filtered)?.tumor_dna/out
+# rather than the dirname of snakemake.output.all (which is the MHC_class_II? subdir of the
+# bound directory)
 out=$(dirname {snakemake.output.done})
-out=$(realpath $out)
 rm -rf $out
 mkdir -p $out
+out=$(realpath $out)
 
-home=$(dirname $out)/home
-home=$(realpath $home)
-rm -rf $home
-mkdir -p $home
+tmp=$(dirname $out)/tmp/pvacfuse
+rm -rf $tmp
+mkdir -p $tmp
 
-cat << __EOF > $home/run_pVACfuse.sh
+scripts=$(dirname $out)/scripts
+mkdir -p $scripts
+
+cat << __EOF > $scripts/run_pVACfuse.sh
+set -x
+export TMPDIR=/short_tmp
 pvacfuse run --n-threads {snakemake.threads} \\
     --iedb-install-directory /opt/iedb \\
-    {args[extra_args]} \\
+    --class-i-epitope-length {class_i_epitope_length} --class-ii-epitope-length {class_ii_epitope_length} \\
+    {extra_args} \\
     {peptides} {genes} \\
     {input_fns[fusions]} \\
-    {args[tumor_sample]} {alleles} {args[algorithms]} \\
+    {args[tumor_sample]} {alleles} {algorithms} \\
     $(dirname {output_fns[done]})
+if [[ $? -eq 0 ]]
+then
+    echo "pvacfuse finished without errors, cleaning up tmp"
+    rm -rf /short_tmp/*
+else
+    echo "ERROR during pvacfuse"
+fi
 __EOF
-chmod +x $home/run_pVACfuse.sh
+chmod +x $scripts/run_pVACfuse.sh
 
+# Short path tmp to avoid AF_UNIX path too long error
 apptainer exec \
-    --home $home --bind $TMPDIR:$TMPDIR:rw \
-    {input_bindings} {output_bindings} {snakemake.input[container]} bash $home/run_pVACfuse.sh
+    --no-home --bind $tmp:/short_tmp:rw --bind $scripts:/scripts:ro \
+    {input_bindings} {output_bindings} {snakemake.input[container]} bash /scripts/run_pVACfuse.sh
 
+# Remove lots of tmp file left over by pvacfuse
+remove_tmp() {{
+    path=$1
+    lengths=$2
+
+    lengths=$(echo "$lengths" | tr ',' '\n')
+
+    for l in $lengths
+    do
+        if [[ -d $path/$l/tmp ]]
+        then
+            echo "Clean up $path/$l/tmp"
+            rm -rf $path/$l/tmp
+        else
+            echo "$path/$l/tmp not found"
+        fi
+    done
+
+    echo "Cleanup complete"
+}}
+remove_tmp $(dirname {snakemake.output[all.MHC_I]}) "{class_i_epitope_length}"
+remove_tmp $(dirname {snakemake.output[all.MHC_II]}) "{class_ii_epitope_length}"
+
+link_missing() {{
+    combined=$1
+    cls_i=$2
+    cls_ii=$3
+
+    if [[ ! -e $combined ]]
+    then
+        mkdir -p $(dirname $combined)
+        if [[ ! -e $cls_i ]]
+        then
+            mkdir -p $(dirname $cls_i)
+            if [[ ! -e $cls_ii ]]
+            then
+                mkdir -p $(dirname $cls_ii)
+                echo "Missing $cls_i and $cls_ii, aborting"
+                exit 1
+            fi
+            touch $cls_i
+            ln -sr $cls_ii $combined
+        else
+            mkdir -p $(dirname $cls_ii)
+            touch $cls_ii
+            ln -sr $cls_i $combined
+        fi
+    fi
+}}
+
+
+link_missing {snakemake.output[all.Combined]} {snakemake.output[all.MHC_I]} {snakemake.output[all.MHC_II]}
+link_missing {snakemake.output[aggregated.Combined]} {snakemake.output[aggregated.MHC_I]} {snakemake.output[aggregated.MHC_II]}
+link_missing {snakemake.output[filtered.Combined]} {snakemake.output[filtered.MHC_I]} {snakemake.output[filtered.MHC_II]}
+
+for path in {fasta}; do
+    [[ -e $path ]] || {{ mkdir -p $(dirname $path); touch $path; }}
+done
+
+ls -altrR $(dirname {snakemake.output.done})
 touch {snakemake.output.done}
-mkdir -p $(dirname {snakemake.output.filtered})
-touch {snakemake.output.filtered}
 """
 )

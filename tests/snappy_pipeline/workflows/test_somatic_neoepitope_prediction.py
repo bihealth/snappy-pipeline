@@ -6,14 +6,14 @@ from types import SimpleNamespace
 from snappy_pipeline.workflows.somatic_neoepitope_prediction import NetChopStepPart
 
 
-def test_netchop_params_use_the_task_tool():
-    # Rule wildcards hold no tool; the tool is the task's configured one.
+def test_netchop_reads_the_options_of_its_prediction():
+    # Several predictions run in one task; the rule's wildcard names the one to post-process
     part = object.__new__(NetChopStepPart)
-    net_chop = SimpleNamespace(method="cterm", threshold=0.5)
-    part.config = SimpleNamespace(
-        tool="pvacseq", get=lambda name: SimpleNamespace(net_chop=net_chop)
+    net_chop = SimpleNamespace(method="20s", threshold=0.7)
+    part.parent = SimpleNamespace(
+        sub_steps={"pvacfuse": SimpleNamespace(cfg=SimpleNamespace(net_chop=net_chop))}
     )
 
-    params = part._get_params_pvacseq(SimpleNamespace(tumor_dna="T1"))
+    params = part._get_params_run(SimpleNamespace(prediction="pvacfuse", tumor_library="T1"))
 
-    assert params == {"tool": "pvacseq", "method": "cterm", "threshold": 0.5}
+    assert params == {"tool": "pvacfuse", "method": "20s", "threshold": 0.7}

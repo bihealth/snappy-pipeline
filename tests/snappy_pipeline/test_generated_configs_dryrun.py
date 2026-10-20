@@ -57,9 +57,7 @@ RNA_TASKS = {
     "gene_expression_quantification_rnaseqc",
     "gene_expression_quantification_salmon",
     "gene_expression_quantification_stats",
-    "somatic_neoepitope_prediction_pvacseq",
-    "somatic_neoepitope_prediction_pvacfuse",
-    "somatic_neoepitope_prediction_pvacsplice",
+    "somatic_neoepitope_prediction_pvactools",
     "create_proteome",
     "hla_typing_arcashla",
 }
@@ -94,6 +92,7 @@ EXPECTED_EMPTY = {
     "population_variants": "provides existing files; has no rules",
     "salmon_index": "provides existing files; has no rules",
     "star_index": "provides existing files; has no rules",
+    "proteome": "provides existing files; has no rules",
     "vep_cache": "provides existing files; has no rules",
     "mehari_transcripts": "provides existing files; has no rules",
     "mehari_db": "provides existing files; has no rules",
@@ -220,9 +219,10 @@ def dependency_closure(task_name: str, tasks_by_name: dict[str, dict[str, Any]])
         depends_on = task_config.get("depends_on", {}) if isinstance(task_config, dict) else {}
         if not isinstance(depends_on, dict):
             continue
-        for dep_task_name in depends_on.values():
-            if isinstance(dep_task_name, str) and dep_task_name and dep_task_name not in seen:
-                stack.append(dep_task_name)
+        for value in depends_on.values():
+            for dep_task_name in value if isinstance(value, list) else [value]:
+                if isinstance(dep_task_name, str) and dep_task_name and dep_task_name not in seen:
+                    stack.append(dep_task_name)
     return seen
 
 

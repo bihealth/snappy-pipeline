@@ -65,7 +65,7 @@ VARIANT_FIELDS: dict[str, str] = {"gcnv_model": "intervals"}
 
 #: Exceptions to ``DEPENDENCY_TASKS``: (step, field) -> upstream task, or ``None`` to leave the
 #: field unset. ``strandedness`` and ``panel_of_normals`` are wired per tool in build_all_tasks.
-STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
+STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | list[str] | None] = {
     # Expression export is off in the generated config, so it needs no RNA mapping task.
     ("cbioportal_export", "alignments"): None,
     ("cbioportal_export", "variants"): "variant_calling_mutect2",
@@ -77,11 +77,16 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | None] = {
     ("homologous_recombination_deficiency", "copy_number"): (
         "somatic_targeted_seq_cnv_calling_sequenza"
     ),
-    # The neoepitope steps read RNA alignments with their strandedness.
-    ("somatic_neoepitope_prediction", "alignments"): "ngs_mapping_star",
-    ("somatic_neoepitope_prediction", "germline_variants"): None,
-    # Annotation of germline calls; revisit when the neoepitope steps are ported.
-    ("somatic_neoepitope_prediction", "somatic_variants"): "variant_annotation_vep",
+    # Neoepitope prediction with every input: VEP with the pVACtools plugins, HLA types of DNA
+    # and RNA, and the RNA alignments with their strandedness
+    ("somatic_neoepitope_prediction", "variants"): "variant_annotation_pvactools",
+    ("somatic_neoepitope_prediction", "hla_types"): ["hla_typing_optitype", "hla_typing_arcashla"],
+    ("somatic_neoepitope_prediction", "alignments_rna"): "ngs_mapping_star",
+    ("somatic_neoepitope_prediction", "alignments_dna"): "ngs_mapping_bwa",
+    ("somatic_neoepitope_prediction", "combined_variants"): "combine_variants_annotated",
+    ("somatic_neoepitope_prediction", "expression"): "gene_expression_quantification_salmon",
+    ("somatic_neoepitope_prediction", "fusions"): "somatic_gene_fusion_calling_arriba",
+    ("somatic_neoepitope_prediction", "proteome"): "proteome",
     ("somatic_targeted_seq_cnv_calling", "variants"): "variant_calling_mutect2",
     ("somatic_variant_signatures", "variants"): "variant_calling_mutect2",
     ("tumor_mutational_burden", "variants"): "variant_calling_mutect2",
@@ -443,9 +448,16 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "path_gene_id_mappings": PLACEHOLDER,
     },
     ("somatic_neoepitope_prediction", None): {
-        "tool_hla_typing": {
-            "dna": {"class_i": "optitype", "class_ii": None},
-            "rna": {"class_i": None, "class_ii": None},
+        "pvactools": {
+            "pvacseq": {
+                "pileup": {"enabled": Overwrite(True)},
+                "expression": {"enabled": Overwrite(True)},
+                "phasing": {"enabled": Overwrite(True)},
+                "net_chop": {"enabled": Overwrite(True), "path": PLACEHOLDER},
+                "netmhc_stab": {"enabled": Overwrite(True)},
+            },
+            "pvacfuse": {"enabled": Overwrite(True)},
+            "pvacsplice": {"enabled": Overwrite(True)},
         }
     },
     ("somatic_wgs_cnv_calling", "control_freec"): {"control_freec": {}},
@@ -554,6 +566,38 @@ EXTRA_TASKS: list[dict[str, Any]] = [
     _external_vcfs("external_vcf", ["germline", "snv", "indel"]),
     _external_vcfs("external_cnv", ["germline", "cnv"]),
     _external_vcfs("external_sv", ["germline", "sv"]),
+    # The inputs of neoepitope prediction that other closures do not need
+    _external_file("proteome", "raw", ["proteome"], "fasta", PLACEHOLDER),
+    {
+        "step": "variant_annotation",
+        "name": "variant_annotation_pvactools",
+        "config": {
+            "depends_on": {
+                "variants": "variant_calling_mutect2",
+                "reference": "genome",
+                "database": "vep_cache",
+            },
+            "tool": "vep",
+            "vep": {
+                "pick": False,
+                "plugins": [
+                    {"name": "Frameshift", "path": PLACEHOLDER},
+                    {"name": "Wildtype", "path": REFERENCE},
+                ],
+            },
+        },
+    },
+    {
+        "step": "combine_variants",
+        "name": "combine_variants_annotated",
+        "config": {
+            "depends_on": {
+                "somatic_variants": "variant_annotation_pvactools",
+                "germline_variants": "variant_filtration_bcftools",
+                "reference": "genome",
+            }
+        },
+    },
 ]
 
 
@@ -621,9 +665,9 @@ DATABASE_TASKS: dict[tuple[str, str | None], str] = {
 }
 
 
-def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str]:
+def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[str]]:
     """Return the ``depends_on`` mapping of a generated task."""
-    depends_on: dict[str, str] = {}
+    depends_on: dict[str, str | list[str]] = {}
     for field in dependency_fields(WORKFLOW_REGISTRY[step_name]):
         upstream = STEP_DEPENDENCY_TASKS.get((step_name, field), DEPENDENCY_TASKS.get(field))
         if upstream:

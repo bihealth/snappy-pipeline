@@ -168,8 +168,9 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A step lists what its tasks produce in `produces`.
   If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
   For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
-- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
-  A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`.
+- `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `proteome`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
+  A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`, or by molecule, such as `alignments_dna` and `alignments_rna` (neoepitope prediction).
+  A step that needs only one input of a kind uses the plain key, such as `alignments`, and narrows it by the tags of its `DataSignature` (`alignments [rna]`) instead.
   `test_depends_on_keys_use_the_vocabulary` checks this.
 - A file that a step reads is a `depends_on` key if it must match the reference or other data of the project, even if only one tool reads it.
   Examples are regions, variants, a genome, a gene annotation and a mapper index (type `index`, tagged with the tool and the molecule).

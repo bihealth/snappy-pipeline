@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 #: Steps on hold, not fully ported yet: they publish with their own link jobs and have no docs page
-ON_HOLD_STEPS = frozenset({"create_proteome", "somatic_neoepitope_prediction"})
+ON_HOLD_STEPS = frozenset({"create_proteome"})
 
 #: Task name -> workflow object, filled by the orchestrator before it loads the step modules.
 _TASK_INSTANCES: dict[str, BaseStep] = {}

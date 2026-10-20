@@ -1,73 +1,34 @@
-import os
+import json
 
-from snakemake import shell
-from snakemake.io import Namedlist
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
-args = getattr(snakemake.params, "args", {})
+# The strandedness decision of the RNA library: 1 forward, 2 reverse
+with open(snakemake.input.strandedness, "rt") as f:
+    decision = str(json.load(f).get("decision"))
+strandedness = {"1": "FR", "2": "RF"}.get(decision)
+if strandedness is None:
+    raise ValueError(f"regtools needs a stranded library, but the decision is {decision!r}")
 
-shell.executable("/bin/bash")
-
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-# Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
-
-# Setup auto-cleaned tmpdir
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Compute md5 checksum
-md5() {{
-    fn=$1
-    d=$(dirname $fn)
-    f=$(basename $fn)
-    pushd $d 1> /dev/null 2>&1
-    checksum=$(md5sum $f)
-    popd 1> /dev/null 2>&1
-    echo "$checksum"
-}}
-
-set -x
-# -----------------------------------------------------------------------------
-
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 export TMPDIR=$(realpath $TMPDIR)
+trap "rm -rf $TMPDIR" EXIT
 vcf=$TMPDIR/normalized.vcf.gz
 
-if [[ "{snakemake.input.features}" == "*.gz" ]]
-then
-    zcat {snakemake.input.features} > $TMPDIR/features.gtf
-else
-    ln -sr {snakemake.input.features} $TMPDIR/features.gtf
-fi
+case "{snakemake.input.features}" in
+    *.gz) zcat {snakemake.input.features} > $TMPDIR/features.gtf ;;
+    *) ln -sr {snakemake.input.features} $TMPDIR/features.gtf ;;
+esac
 
 bcftools norm \
     --multiallelics -both \
     --output $vcf --output-type z --write-index=tbi \
     {snakemake.input.annotated}
 
-regtools cis-splice-effects identify -s {args[strandedness]} \
+regtools cis-splice-effects identify -s {strandedness} \
     -o {snakemake.output.junctions} \
     $vcf \
     {snakemake.input.bam} \

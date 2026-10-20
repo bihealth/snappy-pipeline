@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Wrapper to combine a somatic variant vcf with RNA expression values & pileup of RNA data at variant loci.
-"""
+"""Wrapper to select the tumor (and normal) libraries of a vcf, rename them to samples & split multiallelics"""
 
-from snakemake.shell import shell
+from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
@@ -18,32 +16,8 @@ if "normal_sample" in args and "normal_library" in args:
     samples = args["normal_sample"] + "\t" + samples
     libraries = args["normal_library"] + "\t" + libraries
 
-shell(
+ShellWrapper(snakemake).run(
     r"""
-# -----------------------------------------------------------------------------
-# Redirect stderr to log file by default and enable printing executed commands
-# Also pipe stderr to log file
-if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        exec 2> >(tee -a "{snakemake.log.log}" >&2)
-    else
-        rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
-    fi
-fi
-# -----------------------------------------------------------------------------
-# Create auto-cleaned temporary directory
-export TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-set -x
-# -----------------------------------------------------------------------------
-
-# Write out information about conda installation
-conda list > {snakemake.log.conda_list}
-conda info > {snakemake.log.conda_info}
-
 bcftools view \
     --no-update \
     --samples-file <(echo "{libraries}" | tr '\t' '\n') \
@@ -52,10 +26,6 @@ bcftools view \
     --samples <(echo "{samples}" | tr '\t' '\n') \
 | bcftools norm \
     --multiallelics -any \
-    --output-type z --output {snakemake.output.vcf} --write-index=tbi \
-
-pushd $(dirname {snakemake.output.vcf})
-md5sum $(basename {snakemake.output.vcf}) >$(basename {snakemake.output.vcf}).md5
-md5sum $(basename {snakemake.output.vcf}).tbi >$(basename {snakemake.output.vcf}).tbi.md5
+    --output-type z --output {snakemake.output.vcf} --write-index=tbi
 """
 )

@@ -180,7 +180,7 @@ class TPM:
         assert self.filename, "Can't extract TPM value before reading data"
         if feature:
             try:
-                tpm = "{feature}|{value}".format(feature=feature, value=str(self.tpms.get(feature)))
+                tpm = "{feature}|{value}".format(feature=feature, value=str(self.tpms[feature]))
             except KeyError:
                 logging.warning(f"Unknown feature id {feature} in record {rec_pos}")
                 tpm = "."
@@ -193,6 +193,7 @@ class TPM:
 def aggregate_counts(
     records: list[vcfpy.Record],
     sample: str,
+    offset: int,
     ref: str,
     alt: str,
     allele_depth: str = DEFAULT_VCF_IDS["rna_allele_depth"],
@@ -209,7 +210,7 @@ def aggregate_counts(
     ed = [0, 0, 0]
     first = True
     for record in records:
-        assert record.REF == ref, (
+        assert record.REF == ref[offset], (
             f"Mismatch in reference ({ref} != {record.REF}) at {record.CHROM}:{record.POS}"
         )
         ad = record.call_for_sample.get(sample, None)
@@ -223,7 +224,7 @@ def aggregate_counts(
                 first = False
             if len(record.ALT) > 0:
                 for i in range(len(record.ALT)):
-                    if record.ALT[i].serialize() == alt:
+                    if record.ALT[i].serialize() == alt[offset]:
                         assert ed[1] == 0, (
                             f"Alt allele {alt} appears multiple times in {record.CHROM}:{record.POS}"
                         )
@@ -295,11 +296,11 @@ def add_header_lines(
     out_allele_depth_id: str = DEFAULT_VCF_IDS["out_allele_depth_id"],
 ):
     """Add required lines to vcf header (program, and if available FORMAT for pileup & expression)"""
-    dna.header.add_line(vcfpy.HeaderLine("combineVersion", VERSION))
+    dna.header.add_line(vcfpy.HeaderLine("add_expressionVersion", VERSION))
 
     dna.header.add_line(
         vcfpy.HeaderLine(
-            "combineCommand",
+            "add_expressionCommand",
             "{gene_tpms} {tx_tpms} {pileups} {dna_fn}; Date={today}".format(
                 gene_tpms=f"--gene-tpms {gene_tpms.filename}" if gene_tpms else "",
                 tx_tpms=f"--transcript-tpms {tx_tpms.filename}" if tx_tpms else "",
@@ -505,28 +506,46 @@ def run(
                 ]
             nTPM += len(csqs)
 
-        if rna_fn and record.is_snv():
-            try:
-                expr = list(
-                    filter(
-                        lambda r: r.is_snv(),
-                        rna.fetch(record.CHROM, record.POS - 1, record.POS),
+        if rna_fn and len(ref) == len(alt):
+            sum_eds = [0, 0, 0]
+            n_pos = 0
+            for pos in range(record.affected_start, record.affected_end):
+                if ref[pos + 1 - record.POS] == alt[pos + 1 - record.POS]:
+                    continue
+                try:
+                    expr = list(
+                        filter(
+                            lambda r: r.is_snv(),
+                            rna.fetch(record.CHROM, pos + 1, pos + 1),
+                        )
                     )
-                )
-                eds = aggregate_counts(
-                    expr, sample_id, ref, alt, allele_depth=vcf_ids["rna_allele_depth"]
-                )
+                    eds = aggregate_counts(
+                        expr,
+                        sample_id,
+                        pos + 1 - record.POS,
+                        ref,
+                        alt,
+                        allele_depth=vcf_ids["rna_allele_depth"],
+                    )
+                    sum_eds[0] += eds[0]
+                    sum_eds[1] += eds[1]
+                    sum_eds[2] += eds[2]
+                    n_pos += 1
+                except ValueError:
+                    # No expression at this position -> rna.fetch raises a ValueError
+                    pass
+
+            if n_pos > 0:
+                sum_eds[0] = sum_eds[0] // n_pos
+                sum_eds[1] = sum_eds[1] // n_pos
+                sum_eds[2] = sum_eds[2] // n_pos
                 record.add_format(vcf_ids["out_depth_id"])
                 record.add_format(vcf_ids["out_allele_depth_id"], [])
-                data[vcf_ids["out_depth_id"]] = sum(eds)
+                data[vcf_ids["out_depth_id"]] = sum(sum_eds)
                 if not add_symbolic:
-                    eds.pop()
-                data[vcf_ids["out_allele_depth_id"]] = eds
+                    sum_eds.pop()
+                data[vcf_ids["out_allele_depth_id"]] = sum_eds
                 nPileup += 1
-
-            except ValueError:
-                # No expression at this position -> rna.fetch raises a ValueError
-                pass
 
         writer.write_record(record)
 
@@ -645,7 +664,7 @@ def main() -> int:
       multiple annotations are allowed. The TPM values are output as "<feature id>|<TPM value>".
     """
     parser = argparse.ArgumentParser(
-        prog="combine",
+        prog="add_expression",
         description="combine a vcf containing (somatic) variants with pileups of mRNA expression at the same loci, and TPM value from salmon",
     )
 
