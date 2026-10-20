@@ -21,6 +21,10 @@ class Vep(SnappyModel):
     tx_flag: VepTxFlag = VepTxFlag.gencode_basic
     """The flag selecting the transcripts.  One of "gencode_basic", "refseq", and "merged"."""
 
+    pick: bool = True
+    """Annotate one consequence per variant, chosen by ``pick_order`` (VEP's ``--pick``);
+    ``false`` annotates all transcripts, for example for neoepitope prediction"""
+
     pick_order: list[str] = [
         "biotype",
         "mane_select",

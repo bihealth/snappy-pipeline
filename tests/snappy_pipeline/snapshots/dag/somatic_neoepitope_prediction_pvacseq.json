@@ -811,6 +811,7 @@
      "output_options": [
       "everything"
      ],
+     "pick": true,
      "pick_order": [
       "biotype",
       "mane_select",
@@ -871,6 +872,7 @@
      "output_options": [
       "everything"
      ],
+     "pick": true,
      "pick_order": [
       "biotype",
       "mane_select",

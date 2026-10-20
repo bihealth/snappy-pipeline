@@ -15,12 +15,11 @@ args = getattr(snakemake.params, "args", {})
 vep_config = args["config"]
 
 # Get shortcuts to step configuration
-pick_order = ",".join(vep_config["pick_order"])
+pick = "--pick --pick_order " + ",".join(vep_config["pick_order"]) if vep_config["pick"] else ""
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
 
 dir_cache = f"--dir_cache {snakemake.input.cache}"
 num_threads = getattr(snakemake, "threads", vep_config.get("num_threads", 1))
-full = snakemake.output.full if "full" in snakemake.output.keys() else ""
 
 ShellWrapper(snakemake).run(
     r"""
@@ -43,11 +42,6 @@ run_vep() {
     tabix "$outfile"
 }
 
-# full annotation if requested
-if [[ -n "{full}" ]]; then
-    run_vep "{full}"
-fi
-
-run_vep "{snakemake.output.vcf}" --pick --pick_order {pick_order}
+run_vep "{snakemake.output.vcf}" {pick}
 """
 )

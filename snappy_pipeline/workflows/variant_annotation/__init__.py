@@ -12,6 +12,9 @@ Its ``files`` give the keys below.
 - ``vep``: ``cache`` (the VEP cache directory).
 - ``mehari``: ``transcript_db`` (one path or a list), and optionally ``frequency_db`` and ``clinvar_db``.
 
+VEP annotates one consequence per variant (``--pick`` with ``vep.pick_order``); with ``vep.pick: false`` it annotates all transcripts.
+A task that needs all transcripts, such as neoepitope prediction, reads such an annotation task.
+
 The task produces one annotated VCF per input library.
 Its output has the input's tags plus ``annotated``.
 
