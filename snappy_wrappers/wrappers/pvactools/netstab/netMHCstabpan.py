@@ -3,6 +3,7 @@ import csv
 import io
 import logging
 import os
+import random
 import re
 import shutil
 import subprocess
@@ -223,6 +224,7 @@ def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 4
         out, err = p.communicate(timeout=timeout)
     except (TimeoutError, subprocess.TimeoutExpired):
         p.kill()
+        p.communicate()
         raise subprocess.TimeoutExpired(f"The command {' '.join(cmd)} has timed out")
     if p.returncode != 0:
         raise ChildProcessError(f"Command {' '.join(cmd)} failed with return code {p.returncode}")
@@ -396,7 +398,7 @@ def run_netMHCstabpan(
                 [task_queue, output_queue, error_queue, cmd, timeout, logger.root.level]
             )
 
-        for file_name, descr in file_list.items():
+        for descr in random.sample(list(file_list.values()), k=len(file_list)):
             task_queue.put((descr["hla_type"], descr["length"]))
 
         time.sleep(2.0)
