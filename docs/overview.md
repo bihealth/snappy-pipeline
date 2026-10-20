@@ -236,6 +236,8 @@ tasks:
         context_files: [filters/lab_rules.py]  # a task-local file
 ```
 
+(config_paths)=
+
 ### Paths
 
 Relative paths in the configuration are relative to the project directory, the directory of `config.yaml`.

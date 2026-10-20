@@ -105,7 +105,8 @@ data_sets:
         right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 ```
 
-Relative paths are looked up in the project directory, then in its parent.
+Relative paths are relative to the project directory, the directory of `config.yaml`; `pathvars` can name roots for paths, see {ref}`config_paths`.
+The genome FASTA needs its index and sequence dictionary next to it (`genome.fa.fai`, `genome.dict`).
 The index can also come from a `reference_index` task, and the reference from a `reference_download` task.
 
 ## Add the sample sheet and the reads
@@ -124,8 +125,7 @@ P001         N1          N        WES          P001-N1-DNA1-WES1
 P001         T1          Y        WES          P001-T1-DNA1-WES1
 ```
 
-The reads of a library are in a folder named like its `folderName`, at any depth below a `search_paths` entry of the data set.
-Without a `folderName` column, the library name is the folder name.
+The reads of a library are in a folder named like its `folderName`, at any depth below a `search_paths` entry of its data set.
 `search_patterns` are regular expressions for the path below that folder.
 The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, usually a lane.
 
@@ -146,7 +146,8 @@ my_project/
 
 ## Run
 
-Start with a dry-run.
+`snappy check-files` lists the files that `config.yaml` names but that do not exist.
+Then start with a dry-run.
 It validates `config.yaml` and lists the jobs without running them.
 Everything after `--` goes to Snakemake.
 
