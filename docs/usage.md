@@ -47,7 +47,7 @@ By default, `snappy run` builds and publishes every task.
     This adds the SLURM executor profile to the default profile.
 
 `--verbose`
-: Print the resolved task configuration and the Snakemake command line.
+: Log more, including the Snakemake command line.
 
 Everything after `--` goes to Snakemake:
 

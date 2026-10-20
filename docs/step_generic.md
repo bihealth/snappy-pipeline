@@ -51,7 +51,7 @@ Each step page ends with the default configuration, with every option and its do
 Relative paths are relative to the project directory, and `pathvars` can name roots for paths, see {ref}`config_paths`.
 `snappy check-files` lists the files that `config.yaml` names but that do not exist.
 Use absolute paths for data that should not move with the project.
-`snappy run --verbose` prints the task configuration as `snappy` understood it.
+`snappy run --verbose` logs the Snakemake command line.
 `snappy run -- --dry-run` validates the configuration and lists the jobs without running them.
 ```
 
