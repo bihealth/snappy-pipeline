@@ -19,10 +19,19 @@ pick = "--pick --pick_order " + ",".join(vep_config["pick_order"]) if vep_config
 script_output_options = " ".join(["--" + x for x in vep_config["output_options"]])
 
 dir_cache = f"--dir_cache {snakemake.input.cache}"
+# VEP reads all plugins from one directory
+plugin_files = " ".join(snakemake.input.get("plugins", []))
+plugins = " ".join(f"--plugin {name}" for name in vep_config["plugins"])
 num_threads = getattr(snakemake, "threads", vep_config.get("num_threads", 1))
 
 ShellWrapper(snakemake).run(
     r"""
+plugins_dir=$(mktemp -d)
+trap "rm -rf $plugins_dir" EXIT
+for plugin in {plugin_files}; do
+    ln -s $(realpath $plugin) $plugins_dir/
+done
+
 # Helper function to normalize, annotate with VEP, and index output
 run_vep() {
     local outfile="$1"
@@ -34,6 +43,7 @@ run_vep() {
         --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
         {dir_cache} \
         {script_output_options} \
+        {plugins} --dir_plugins $plugins_dir \
         --{vep_config[tx_flag]} \
         --fasta {snakemake.input.reference} \
         --format vcf --vcf --compress_output bgzip \

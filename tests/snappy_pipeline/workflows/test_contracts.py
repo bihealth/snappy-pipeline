@@ -203,7 +203,7 @@ def test_mutect2_calling_provides_pass_calls_by_default_and_all_calls_on_request
     project = load_project(_config(_mapping(), _calling(), _annotation()), WORK_DIR)
     assert project.signatures["calling"] == (CALLS, PASS_CALLS)
     # Annotation reads the PASS calls, so its output carries the tag on.
-    assert project.signatures["annotation"] == (PASS_CALLS.with_tags("annotated"),)
+    assert project.signatures["annotation"] == (PASS_CALLS.with_tags("annotated", "vep"),)
 
     annotation = _step(project, "annotation")
     default = annotation.get_upstream_paths("variants", library_name="T1")

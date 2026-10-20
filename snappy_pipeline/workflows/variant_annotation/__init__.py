@@ -15,8 +15,10 @@ Its ``files`` give the keys below.
 VEP annotates one consequence per variant (``--pick`` with ``vep.pick_order``); with ``vep.pick: false`` it annotates all transcripts.
 A task that needs all transcripts, such as neoepitope prediction, reads such an annotation task.
 
+VEP runs the plugins in ``vep.plugins``, each a name and the path of its ``.pm`` file; neoepitope prediction needs ``Frameshift`` and ``Wildtype`` from pVACtools.
+
 The task produces one annotated VCF per input library.
-Its output has the input's tags plus ``annotated``.
+Its output has the input's tags plus ``annotated`` and the tool (``vep`` or ``mehari``), so a consumer can require an annotator.
 
 Outputs
 -------
@@ -86,9 +88,13 @@ class VepStepPart(VariantAnnotationStepPart):
     def _get_input_files_run(self, wildcards):
         yield from super()._get_input_files_run(wildcards).items()
         yield "cache", self.parent.get_upstream_paths("database").cache
+        if self.config.vep.plugins:
+            yield "plugins", [plugin.path for plugin in self.config.vep.plugins]
 
     def _get_params_run(self, wildcards):
-        return {"config": self.config.vep.model_dump(by_alias=True)}
+        config = self.config.vep.model_dump(by_alias=True)
+        config["plugins"] = [plugin.name for plugin in self.config.vep.plugins]
+        return {"config": config}
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
@@ -135,8 +141,9 @@ class VariantAnnotationWorkflow(BaseStep):
 
     @classmethod
     def task_produces(cls, config, upstream):
-        """The variants this task reads, tagged ``annotated``."""
-        return (upstream["variants"].with_tags("annotated"),)
+        """The variants this task reads, tagged ``annotated`` and with the annotator, so that a
+        consumer can require one (neoepitope prediction needs VEP)."""
+        return (upstream["variants"].with_tags("annotated", str(config.tool)),)
 
     config_model_class = VariantAnnotationConfigModel
 

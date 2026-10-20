@@ -1,13 +1,21 @@
 import enum
 from typing import Literal
 
-from snappy_pipeline.models import SnappyModel
+from snappy_pipeline.models import ConfigPath, SnappyModel
 
 
 class VepTxFlag(enum.StrEnum):
     gencode_basic = "gencode_basic"
     refseq = "refseq"
     merged = "merged"
+
+
+class VepPlugin(SnappyModel):
+    name: str
+    """The plugin's name, as for VEP's ``--plugin``"""
+
+    path: ConfigPath
+    """The plugin's ``.pm`` file, e.g. ``Frameshift.pm`` and ``Wildtype.pm`` of pVACtools"""
 
 
 class Vep(SnappyModel):
@@ -39,6 +47,8 @@ class Vep(SnappyModel):
     num_threads: int = 8
     buffer_size: int = 1000
     output_options: list[str] = ["everything"]
+    plugins: list[VepPlugin] = []
+    """VEP plugins to run"""
 
 
 class Mehari(SnappyModel):
