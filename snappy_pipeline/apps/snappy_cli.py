@@ -642,8 +642,6 @@ def run(ctx, directory, slurm, task_name, frozen, verbose):
         config_args.append(f"task={task_name}")
     if frozen:
         config_args.append("frozen=True")
-    if verbose:
-        config_args.append("dump_orchestrator=True")
 
     snakemake_argv = _snakemake_argv(directory_path, slurm, tuple(config_args))
 
