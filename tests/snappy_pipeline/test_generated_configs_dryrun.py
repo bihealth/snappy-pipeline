@@ -471,3 +471,53 @@ def test_generated_config_audit_regression_guard(generated_task_config: dict[str
     # Guard against silent regressions: keep generated-config quality from getting worse.
     assert len(unresolved) <= int(os.environ.get("SNAPPY_MAX_UNRESOLVED_CONFIGS", "35"))
     assert auto_count <= int(os.environ.get("SNAPPY_MAX_AUTO_PLACEHOLDERS", "70"))
+
+
+@pytest.mark.integration
+def test_somatic_trio_calls_the_relapse_against_the_primary_tumor(
+    generated_task_config: dict[str, Any], tmp_path: Path
+):
+    # A sample sheet column (timepoint) selects the tumors; a relationship pairs the relapse with
+    # the primary tumor instead of the normal
+    _write_closure_project("variant_calling_mutect2", generated_task_config, tmp_path)
+    relapse_folder = tmp_path / "raw" / "case001subregion-T2-DNA1-WES1"
+    relapse_folder.mkdir()
+    for mate in ("R1", "R2"):
+        (relapse_folder / f"case001subregion-T2-DNA1-WES1.{mate}.fastq.gz").touch()
+    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+    for data_set in config["data_sets"].values():
+        data_set["file"] = str(_fixture_dir() / "samplesheet_somatic_trio.tsv")
+    calling = next(t for t in config["tasks"] if t["name"] == "variant_calling_mutect2")
+    primary_tumor = "role == 'tumor' and extraction_type == 'dna' and timepoint == 'primary'"
+    tasks = {
+        "calling_primary": {"library_selection": "timepoint == 'primary'"},
+        "calling_relapse": {
+            "library_selection": "timepoint == 'relapse'",
+            "relationships": {"matched_normal_lib": {"via": "donor_name", "target": primary_tumor}},
+        },
+    }
+    for name, settings in tasks.items():
+        config["tasks"].append(
+            {**calling, "name": name, "config": {**calling["config"], **settings}}
+        )
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+    bams = {}
+    for name in tasks:
+        dump_path = tmp_path / f"{name}.json"
+        cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
+        cmd += ["--task", name, "--output", str(dump_path)]
+        dump = _run(cmd, cwd=generated_task_config["root"])
+        assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
+        for job in json.loads(dump_path.read_text(encoding="utf-8")):
+            if job["rule"] == f"{name}_variant_calling_mutect2_run":
+                libraries = [
+                    Path(p).name.removesuffix(".bam") for p in job["input"] if p.endswith(".bam")
+                ]
+                bams.setdefault(name, set()).add(tuple(libraries))
+
+    # The tumor first, then the library it is compared with
+    assert bams == {
+        "calling_primary": {("case001subregion-T1-DNA1-WES1", "case001subregion-N1-DNA1-WES1")},
+        "calling_relapse": {("case001subregion-T2-DNA1-WES1", "case001subregion-T1-DNA1-WES1")},
+    }
