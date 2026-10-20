@@ -30,7 +30,7 @@ The task publishes the following files below ``tasks/<task>/output/`` as symlink
   The files list the affected genes, the supporting reads and a confidence level.
   The discarded fusions have insufficient evidence.
 
-Downstream tasks read the key ``done``.
+Downstream tasks read the key ``done``, and with ``arriba`` also ``fusions``.
 There is no standard format for gene fusions, so the other files depend on the tool.
 """
 
@@ -270,9 +270,13 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local fusion-calling output paths for downstream consumers."""
+        """Return local fusion-calling output paths for downstream consumers; arriba also gives
+        its fusions table."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"work/{lib}/out/.done"}
+        paths = {"done": f"work/{lib}/out/.done"}
+        if config.tool == Tool.arriba:
+            paths["fusions"] = f"work/{lib}/out/{lib}.fusions.tsv"
+        return paths
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
