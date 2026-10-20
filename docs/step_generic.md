@@ -35,7 +35,8 @@ Unknown keys are an error.
     It must be present, even if all its options keep their defaults (`{}`).
 
 `library_selection`
-: Restricts the task to the libraries that match a pandas `DataFrame.query()` expression.
+: Selects the task's libraries with a pandas `DataFrame.query()` expression, among those that the step can process.
+    Without it, the task takes the step's default, see the step's page and {ref}`overview`.
 
 `group_by`
 : With `cohort`, the task writes one output per cohort (pedigree) instead of one per library, where the step supports it.

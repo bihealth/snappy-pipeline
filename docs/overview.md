@@ -318,8 +318,10 @@ P002         N1          N        WES          P002-N1-DNA1-WES1
 P002         T1          Y        WES          P002-T1-DNA1-WES1
 ```
 
-A task processes all libraries of the data sets by default.
-`library_selection` restricts a task to the libraries that match a pandas `DataFrame.query()` expression.
+Each step takes only libraries it can process, such as RNA libraries for expression quantification or tumor DNA libraries for somatic calling.
+Without `library_selection`, a task takes the step's default: the tumor DNA libraries of cancer sample sheets and the DNA libraries of germline sample sheets, unless the step's page names another one.
+For example, mapping takes all libraries, the RNA steps all RNA libraries, and a panel of normals all normal DNA libraries.
+`library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'` or `donor_name != 'P003'`, but a task never takes libraries that its step cannot process.
 `group_by: cohort` makes a task write one output per cohort (pedigree) instead of one per library, where the step supports it.
 
 Several data sets may have libraries of the same name.
