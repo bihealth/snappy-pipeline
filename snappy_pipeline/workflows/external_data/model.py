@@ -2,8 +2,7 @@ import re
 
 from pydantic import model_validator
 
-from snappy_pipeline.models import ConfigPath, SnappyModel, SnappyStepModel
-from snappy_pipeline.reads import compile_search_pattern
+from snappy_pipeline.models import ConfigPath, LibraryFolders, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import DataType
 
 
@@ -18,11 +17,12 @@ class Produces(SnappyModel):
 KIT_NAME = re.compile(r"[A-Za-z0-9_.-]+")
 
 
-class ExternalData(SnappyStepModel):
+class ExternalData(SnappyStepModel, LibraryFolders):
     """Existing data from outside the project: project-wide files, files per library or files
     per enrichment kit.
 
-    Paths are absolute or relative to the project directory.
+    Paths are absolute or relative to the project directory. Per-library data is in a folder
+    named like each library below ``search_paths``, found like the reads of a data set.
     """
 
     produces: Produces
@@ -31,14 +31,6 @@ class ExternalData(SnappyStepModel):
     files: dict[str, ConfigPath | list[ConfigPath]] = {}
     """Project-wide files by output key, e.g. ``{fasta: /refs/GRCh38.fa}``; a key may name a list
     of files."""
-
-    search_paths: list[ConfigPath] = []
-    """Per-library data: directories that contain a folder named like each library."""
-
-    search_patterns: list[dict[str, str]] = []
-    """Regular expressions for the paths below a library folder, by output key, e.g.
-    ``{vcf: '.+\\.vcf\\.gz', vcf_tbi: '.+\\.vcf\\.gz\\.tbi'}``. Reads (``type: raw``) need a
-    ``left`` key and a ``(?P<readgroup>...)`` group, which pairs the mates."""
 
     kits: dict[str, dict[str, ConfigPath]] = {}
     """Files per enrichment kit, by kit name and output key, e.g.
@@ -57,8 +49,7 @@ class ExternalData(SnappyStepModel):
             raise ValueError(f"Kit names may only contain A-Z, a-z, 0-9, '_', '.' and '-': {bad}")
         if len({frozenset(files) for files in self.kits.values()}) > 1:
             raise ValueError("Every kit must have the same keys")
-        if self.search_paths and not self.search_patterns:
-            raise ValueError("search_paths need search_patterns")
-        for pattern in self.search_patterns:
-            compile_search_pattern(pattern, reads=self.produces.type == DataType.RAW)
         return self
+
+    def patterns_find_reads(self) -> bool:
+        return self.produces.type == DataType.RAW

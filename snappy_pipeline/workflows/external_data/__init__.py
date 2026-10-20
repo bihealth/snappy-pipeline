@@ -11,7 +11,8 @@ With ``files``, it provides project-wide files by output key, such as a referenc
 A key may name a list of files, such as several transcript databases of mehari.
 With ``search_paths`` and ``search_patterns``, it provides per-library files from a folder named like the library, below one of the search paths.
 Each pattern maps output keys to regular expressions for the path below that folder.
-Reads (``type: raw``) need the keys ``left`` (and ``right``) and a ``(?P<readgroup>...)`` group, which pairs the mates.
+Reads (``type: raw``) need the keys ``left`` (and ``right``) and a ``(?P<readgroup>...)`` group, which pairs the mates, and ``mixed_se_pe: true`` accepts read groups without a ``right`` file.
+Per-library files are found like the reads of a data set, except that the folder is named like the library, not by the sample sheet.
 With ``kits``, it provides files per enrichment kit, by kit name and output key.
 A targeted library (``WES``, ``Panel_seq``) uses the kit named exactly like its ``libraryKit`` in the sample sheet, and a consumer fails when the project loads if a library's kit is missing.
 Kit names may contain letters, digits, ``_``, ``.`` and ``-``, and every kit has the same keys.

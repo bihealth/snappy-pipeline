@@ -34,7 +34,7 @@ from snappy_pipeline.base import (
     UnsupportedActionException,
     merge_kwargs,
 )
-from snappy_pipeline.models import RelationshipDefinition, SnappyStepModel
+from snappy_pipeline.models import LibraryFolders, RelationshipDefinition, SnappyStepModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -546,12 +546,9 @@ class DataSetInfo:
         self,
         name,
         sheet_path,
-        search_paths,
-        search_patterns,
         sheet_type,
         is_background,
         naming_scheme,
-        mixed_se_pe,
         sodar_uuid,
         sodar_title,
         pedigree_field=None,
@@ -564,13 +561,6 @@ class DataSetInfo:
         :param sheet_path: Path to sheet file that should be loaded.
         :type sheet_path: str
 
-        :param search_paths: Search paths for the files in the sample sheet.
-        :type search_paths: list
-
-        :param search_patterns: Search patterns. Example: "{left: '**/*_R1_*.fastq.gz',
-        right: '**/*_R2_*.fastq.gz'}".
-        :type search_patterns: List[Dict[str, str]]
-
         :param sheet_type: Explicit sheet type (e.g. "matched_cancer"), if any.  Otherwise, will
         attempt to load from sheet.
         :type sheet_type: str
@@ -581,8 +571,6 @@ class DataSetInfo:
         :param naming_scheme: Selected naming schema: either 'secondary_id_pk' or
         'only_secondary_id'.
         :type naming_scheme: str
-
-        :param mixed_se_pe: Whether mixing SE and PE data sets is allowed.
 
         :param sodar_uuid: The UUID of the corresponding SODAR project.
         :type sodar_uuid: str
@@ -599,10 +587,6 @@ class DataSetInfo:
         self.name = name
         #: Path to the sheet file, for loading
         self.sheet_path = sheet_path
-        #: Search paths for the files in the sample sheet
-        self.search_paths = list(search_paths)
-        #: Search patterns
-        self.search_patterns = search_patterns
         #: Explicit sheet type (e.g. "matched_cancer"), if any.  Otherwise, will attempt to load
         # from sheet.
         self.sheet_type = sheet_type
@@ -612,8 +596,6 @@ class DataSetInfo:
         if naming_scheme not in NAMING_SCHEMES:
             raise ValueError("Invalid naming scheme: {}".format(naming_scheme))  # pragma: no cover
         self.naming_scheme = naming_scheme
-        #: Whether mixing SE and PE data sets is allowed.
-        self.mixed_se_pe = mixed_se_pe
         #: The BioMed SampleSheet
         self.sheet = self._load_sheet()
         #: The UUID of the corresponding SODAR project.
@@ -876,37 +858,34 @@ class BaseStep:
 
         ``source`` defaults to ``depends_on.reads``:
 
-        - ``data_sets``: the folder named in the sample sheet, below the data sets' search paths;
+        - ``data_sets``: the folder named in the sample sheet, below the search paths of the
+          library's data set;
         - an ``external_data`` task: a folder named like the library, below its search paths;
         - a task that writes FASTQs (``adapter_trimming``): its ``output/<library>/out``, where
           the files keep the names and sub-directories of the task's own input.
         """
         source = self.depends_on.reads if source is None else source
-        discovery = self.project.read_discovery
-        if source not in ("", DATA_SETS) and self.project.task(source).step == "external_data":
-            config = self.project.task_configs[source]
-            roots = [os.path.abspath(path) for path in config.search_paths]
-            groups = discovery.find(roots, library_name, config.search_patterns)
-            if not groups:
-                raise ValueError(discovery.missing(roots, library_name))
-            return groups
-        if source not in ("", DATA_SETS):
+        if source not in ("", DATA_SETS) and self.project.task(source).step != "external_data":
             out_dir = self.namespaced_path(source, f"work/{library_name}/out")
             upstream = self.project.task_configs[source].depends_on.reads
             return [group.rebased(out_dir) for group in self.read_groups(library_name, upstream)]
-        folder_name = get_ngs_library_folder_name(self.sheets, library_name)
-        infos = self.data_set_infos
-        groups: list[ReadGroup] = []
-        searched: list[str] = []
-        for info in infos:
-            # Like the former link-in, a search path is searched with the first data set's patterns.
-            roots = list(_search_roots(info))
-            roots = [root for root in roots if root not in searched]
-            searched += roots
-            groups += discovery.find(roots, folder_name, info.search_patterns, info.mixed_se_pe)
+        folders, folder_name = self._library_folders(library_name, source)
+        discovery = self.project.read_discovery
+        groups = discovery.find(
+            folders.search_paths, folder_name, folders.search_patterns, folders.mixed_se_pe
+        )
         if not groups:
-            raise ValueError(discovery.missing(searched, folder_name))
-        return sorted(groups, key=lambda group: group.relpaths["left"])
+            raise ValueError(discovery.missing(folders.search_paths, folder_name))
+        return groups
+
+    def _library_folders(self, library_name: str, source: str) -> tuple[LibraryFolders, str]:
+        """Return where the reads of ``library_name`` are, and the name of its folder: the
+        library's data set and the sheet's ``folderName``, or an ``external_data`` task and the
+        library name."""
+        if source in ("", DATA_SETS):
+            info, folder_name = library_folder(self.data_set_infos, library_name)
+            return self.w_config.data_sets[info.name], folder_name
+        return self.project.task_configs[source], library_name
 
     def reads_input(self, library_name: str) -> list[str]:
         """Return the Snakemake inputs that provide the reads of ``library_name``.
@@ -1432,12 +1411,9 @@ class BaseStep:
             yield DataSetInfo(
                 name,
                 data_set.file,
-                data_set.search_paths,
-                data_set.search_patterns,
                 data_set.type,
                 data_set.is_background,
                 data_set.naming_scheme,
-                data_set.mixed_se_pe,
                 data_set.sodar_uuid,
                 data_set.sodar_title,
                 data_set.pedigree_field,
@@ -2266,28 +2242,20 @@ def _cohort_members_from_dataframe(df, selection: str | None) -> dict[str, list[
     return result
 
 
-def _search_roots(info: DataSetInfo):
-    """Yield the search paths of a data set, resolved against the project directory."""
-    yield from info.search_paths
-
-
-def get_ngs_library_folder_name(sheets, library_name):
-    """Return library's folder name
-
-    The library is searched for based on the ``library_name``.  In the case of
-    multiple NGS library matches, the first one is returned.
-    """
-    for sheet in sheets:
+def library_folder(data_set_infos, library_name) -> tuple[DataSetInfo, str]:
+    """Return the data set of ``library_name`` and the folder of its reads, the ``folderName`` of
+    the library in the sample sheet; the first data set wins if several have the library."""
+    for info in data_set_infos:
         try:
-            ngs_library = sheet.crawl(sheet.name_generator.inverse(library_name))
+            ngs_library = info.sheet.crawl(info.sheet.name_generator.inverse(library_name))
         except SecondaryIDNotFoundException:
             continue  # skip, not in this sheet
         if ngs_library:
             try:
-                return ngs_library.extra_infos["folderName"]
-            except AttributeError:
-                raise ValueError("No folderName extraInfos entry for {}".format(ngs_library.name))
-    raise ValueError("Found no folders for NGS library of name {}".format(library_name))
+                return info, ngs_library.extra_infos["folderName"]
+            except (AttributeError, KeyError):
+                raise ValueError(f"No folderName extraInfos entry for {ngs_library.name}")
+    raise ValueError(f"Found no folders for NGS library of name {library_name}")
 
 
 class InputFilesStepPartMixin:

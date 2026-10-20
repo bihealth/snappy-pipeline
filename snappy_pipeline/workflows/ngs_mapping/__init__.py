@@ -35,13 +35,12 @@ Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, ``
 Reads and sample sheet
 ----------------------
 
-``data_sets`` locates the reads below the data set's ``search_paths`` in a folder named after the library's ``folderName``.
+A data set or an ``external_data`` task locates the reads below its ``search_paths``, in a folder per library.
 Each entry of ``search_patterns`` holds regular expressions for the path below that folder.
 The keys ``left`` and ``right`` select the mates, and a ``(?P<readgroup>...)`` group pairs the mates of one read group.
-See ``data_sets`` in the project configuration for the defaults.
 
 By default, every pattern must match as many ``left`` as ``right`` files.
-With ``mixed_se_pe: true`` in the data set, ``right`` may match nothing.
+With ``mixed_se_pe: true`` in the data set or the ``external_data`` task, ``right`` may match nothing.
 Then a library is either single-end or paired-end, and different libraries may differ.
 
 Exome enrichment kits

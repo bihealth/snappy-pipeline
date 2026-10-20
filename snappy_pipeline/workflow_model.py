@@ -1,24 +1,14 @@
 import enum
-from typing import Any, TypedDict
+from typing import Any
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field
 
 from snappy_pipeline.models import (
     ConfigPath,
+    LibraryFolders,
     SnappyModel,
     SnappyStepModel,
 )
-from snappy_pipeline.reads import compile_search_pattern
-
-
-class SearchPattern(TypedDict):
-    """Regular expressions for the paths below a library's folder, by mate.
-
-    Each needs a ``(?P<readgroup>...)`` group, which pairs the mates of one read group (lane).
-    """
-
-    left: str
-    right: str | None
 
 
 class DataSetType(enum.StrEnum):
@@ -32,32 +22,21 @@ class NamingScheme(enum.StrEnum):
     SECONDARY_ID_PK = "secondary_id_pk"
 
 
-class DataSet(SnappyModel):
+class DataSet(LibraryFolders):
+    """A sample sheet, and the folders with the reads of its libraries below ``search_paths``.
+
+    The sheet's ``folderName`` names the folder of each library. A library's reads are searched
+    only below the search paths of its own data set."""
+
     file: ConfigPath = ""
     """The sample sheet"""
-
-    search_patterns: list[SearchPattern] = [
-        SearchPattern(
-            left=r"(?P<readgroup>.+)\.R1\.fastq\.gz", right=r"(?P<readgroup>.+)\.R2\.fastq\.gz"
-        )
-    ]
-    search_paths: list[ConfigPath] = ["../raw"]
-    """Directories with a folder per library, which holds its FASTQ files"""
 
     type: DataSetType = DataSetType.MATCHED_CANCER
     naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
     is_background: bool = False
-    mixed_se_pe: bool = False
     sodar_uuid: str | None = None
     sodar_title: str | None = None
     pedigree_field: str | None = None
-
-    @field_validator("search_patterns")
-    @classmethod
-    def check_search_patterns(cls, patterns: list[SearchPattern]) -> list[SearchPattern]:
-        for pattern in patterns:
-            compile_search_pattern(pattern)
-        return patterns
 
 
 class TaskModel(SnappyModel):

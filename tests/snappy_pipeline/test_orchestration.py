@@ -258,6 +258,8 @@ def _external(name, data_type, tags, **config):
 
 
 BAM_PATTERN = {"bam": r".+\.bam", "bai": r".+\.bam\.bai"}
+#: A reads pattern with only a left file
+LEFT = {"left": r"(?P<readgroup>.+)_1\.fq\.gz"}
 
 
 def test_external_alignments_feed_variant_calling():
@@ -313,7 +315,10 @@ def test_regions_filter_reads_any_bed_file_of_regions():
     "config, error",
     [
         ({}, "Set one of files"),
-        ({"files": {"x": "/a"}, "search_paths": ["/b"]}, "Set one of files"),
+        (
+            {"files": {"x": "/a"}, "search_paths": ["/b"], "search_patterns": [LEFT]},
+            "Set one of files",
+        ),
         ({"files": {"x": "/a"}, "kits": {"k": {"x": "/a"}}}, "Set one of files"),
         ({"search_paths": ["/b"]}, "search_paths need search_patterns"),
         ({"search_paths": ["/b"], "search_patterns": [{"left": r".+\.fastq\.gz"}]}, "readgroup"),
@@ -448,7 +453,8 @@ def test_config_paths_are_resolved_against_the_project_directory_with_pathvars()
     named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
     default = _external("default", "regions", [], files={"bed": "<resources>/c.bed"})
     config = _config(relative, named, default) | {"pathvars": {"refs": "/data/refs"}}
-    config["data_sets"] = {"first": {"file": "sheets/sheet.tsv", "search_paths": ["raw"]}}
+    data_set = {"file": "sheets/sheet.tsv", "search_paths": ["raw"], "search_patterns": [LEFT]}
+    config["data_sets"] = {"first": data_set}
     project = load_project(config, WORK_DIR)
 
     assert project.task_configs["relative"].files == {"bed": f"{WORK_DIR}/beds/a.bed"}

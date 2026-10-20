@@ -267,17 +267,20 @@ Snakemake checks the inputs of the jobs it runs.
 
 Every task that reads FASTQ files names its source in `depends_on.reads`:
 
-- `data_sets`, the folders below the `search_paths` of the data sets.
-- An `external_data` task that produces `raw` data.
+- `data_sets`, for the reads of the libraries in the sample sheets.
+- An `external_data` task that produces `raw` data, for reads from elsewhere.
 - An `adapter_trimming` task, for its trimmed files.
 
+A data set and an `external_data` task find reads the same way, with the same fields: `search_paths`, `search_patterns` and `mixed_se_pe`.
+Each library has a folder, which can be at any depth below a search path.
+For a data set, the `folderName` column of the sample sheet names the folder, and only the search paths of the library's own data set are searched.
+For an `external_data` task, the folder is named like the library.
 The files are found once per `snappy run`.
-For `data_sets`, the library folder is named like the `folderName` of the sample sheet, or like the library if the sheet has no `folderName`.
-It can be at any depth below a `search_paths` entry.
 
 `search_patterns` are regular expressions for the path below the library folder, and each must match the whole path.
 The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, usually a lane.
 Read groups are processed in the order of the path of their left file.
+Every left file needs a right file, unless `mixed_se_pe: true` accepts read groups without one, so that single-end and paired-end data can be mixed.
 Steps read the files directly, so there are no copies or links of FASTQ files in the project.
 
 ```yaml
