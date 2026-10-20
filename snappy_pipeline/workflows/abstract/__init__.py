@@ -1006,10 +1006,13 @@ class BaseStep:
         This is the germline view of the sample sheets: a donor's first DNA library that is not
         from a tumor sample. The column ``pedigree`` names the index library of the donor's
         pedigree. On a cancer sample sheet, each donor is a pedigree of its own. Pedigrees whose
-        index has no DNA library are left out.
+        index has no DNA library are left out. The task's ``library_selection`` applies first, so
+        it narrows the pedigrees and their members.
         """
         if include_background not in self._primary_dna_libraries:
             df = self.build_library_dataframe(include_background=include_background)
+            if selection := getattr(self.config, "library_selection", None):
+                df = _query_libraries(df, selection)
             dna = df[(df["extraction_type"] == "dna") & (df["role"] != "tumor")]
             dna = dna.drop_duplicates(["cohort_name", "donor_name"])
             pedigree = dna["cohort_name"].where(dna["kind"] == "germline", dna["library_name"])

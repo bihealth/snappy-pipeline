@@ -59,3 +59,23 @@ def test_library_dataframe_is_built_once(mocker):
         assert step.get_cohort_libraries("unknown-DNA1") == ["unknown-DNA1"]
 
     assert build.call_count == 1
+
+
+def test_library_selection_narrows_the_pedigrees(mocker):
+    df = pd.DataFrame(
+        {
+            "library_name": ["index-DNA1", "father-DNA1"],
+            "extraction_type": ["dna", "dna"],
+            "kind": ["germline", "germline"],
+            "role": ["index", "father"],
+            "cohort_name": ["index-DNA1", "index-DNA1"],
+            "donor_name": ["index", "father"],
+        }
+    )
+    mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
+    step = _make_step()
+    assert step.pedigrees() == {"index-DNA1": ["index-DNA1", "father-DNA1"]}
+
+    step = _make_step()
+    step.config.library_selection = "role != 'father'"
+    assert step.pedigrees() == {"index-DNA1": ["index-DNA1"]}
