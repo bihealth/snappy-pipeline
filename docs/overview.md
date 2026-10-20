@@ -283,6 +283,7 @@ The files are found once per `snappy run`.
 The `(?P<readgroup>...)` group pairs the `left` and `right` file of a read group, usually a lane.
 Read groups are processed in the order of the path of their left file.
 Every left file needs a right file, unless `mixed_se_pe: true` accepts read groups without one, so that single-end and paired-end data can be mixed.
+A data set without `search_patterns` finds `*.R1.fastq.gz` and `*.R2.fastq.gz` (`(?P<readgroup>.+)\.R1\.fastq\.gz` and `...R2...`); `search_paths` have no default.
 Steps read the files directly, so there are no copies or links of FASTQ files in the project.
 
 ```yaml

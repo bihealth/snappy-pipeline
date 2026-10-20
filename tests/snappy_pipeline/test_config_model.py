@@ -7,7 +7,7 @@ import pydantic
 import pytest
 
 from snappy_pipeline.models import validators
-from snappy_pipeline.workflow_model import ConfigModel
+from snappy_pipeline.workflow_model import ConfigModel, DataSet
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
 )
@@ -68,3 +68,11 @@ def test_default_config_comments_sections_named_like_depends_on_keys():
     lines = GeneExpressionQuantification.default_config_yaml_string().splitlines()
     assert "#strandedness:" in lines
     assert "strandedness:" not in lines
+
+
+def test_data_set_defaults_to_r1_r2_patterns_but_not_to_search_paths():
+    data_set = DataSet()
+    assert data_set.search_paths == []
+    assert data_set.search_patterns == [
+        {"left": r"(?P<readgroup>.+)\.R1\.fastq\.gz", "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz"}
+    ]

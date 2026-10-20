@@ -31,6 +31,13 @@ class DataSet(LibraryFolders):
     file: ConfigPath = ""
     """The sample sheet"""
 
+    search_patterns: list[dict[str, str]] = [
+        {"left": r"(?P<readgroup>.+)\.R1\.fastq\.gz", "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz"}
+    ]
+    """Regular expressions for the paths below a library's folder, by mate, with a
+    ``(?P<readgroup>...)`` group that pairs the mates; the default finds ``*.R1.fastq.gz`` and
+    ``*.R2.fastq.gz``"""
+
     type: DataSetType = DataSetType.MATCHED_CANCER
     naming_scheme: NamingScheme = NamingScheme.SECONDARY_ID_PK
     is_background: bool = False
