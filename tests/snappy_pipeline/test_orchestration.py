@@ -2,14 +2,17 @@
 """Tests for loading a project and selecting targets in ``snappy_pipeline.orchestration``."""
 
 import logging
+from typing import Annotated
 
 import pydantic
 import pytest
 
 from snappy_pipeline import orchestration
 from snappy_pipeline.orchestration import Project, load_project, select_target_tasks
+from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflow_model import ConfigModel
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
@@ -494,3 +497,59 @@ def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
     project = load_project(config, str(tmp_path))
 
     assert orchestration.missing_files(project) == {"genome": [str(tmp_path / "genome.dict")]}
+
+
+class _HlaListDependsOn(SnappyModel):
+    hla_types: Annotated[list[str], DataSignature(DataType.TABULAR, frozenset({"hla"}))]
+
+
+class _HlaListConfig(SnappyStepModel):
+    depends_on: _HlaListDependsOn
+
+
+class _HlaListStep(BaseStep):
+    """A step whose ``depends_on.hla_types`` takes several tasks."""
+
+    name = "hla_list"
+    produces = [DataSignature(DataType.TABULAR, frozenset({"neoepitope"}))]
+    config_model_class = _HlaListConfig
+
+
+def _hla(name, tags=("hla",)):
+    produces = {"type": "tabular", "tags": list(tags)}
+    return ("external_data", name, {"produces": produces, "files": {"txt": f"/refs/{name}.txt"}})
+
+
+@pytest.fixture
+def hla_list_step(monkeypatch):
+    monkeypatch.setitem(WORKFLOW_REGISTRY, "hla_list", _HlaListStep)
+
+
+def test_a_list_field_depends_on_each_of_its_tasks(hla_list_step):
+    tasks = (
+        ("hla_list", "consumer", {"depends_on": {"hla_types": ["hla_rna", "hla_dna"]}}),
+        _hla("hla_rna"),
+        _hla("hla_dna"),
+    )
+    project = load_project(_config(*tasks), WORK_DIR)
+    assert project.dependencies["consumer"] == {"hla_types": ("hla_rna", "hla_dna")}
+    order = [task.name for task in project.tasks]
+    assert order.index("consumer") > max(order.index("hla_rna"), order.index("hla_dna"))
+
+
+@pytest.mark.parametrize(
+    "hla_types, error",
+    [
+        (["hla_dna", "hla_x"], "depends_on.hla_types contains 'hla_x', which is not a task"),
+        (["hla_dna", "hla_dna"], "depends_on.hla_types names a task twice"),
+        (["hla_dna", "other"], "requires tabular \\[hla\\], but task 'other' produces"),
+    ],
+)
+def test_each_task_of_a_list_field_is_checked(hla_list_step, hla_types, error):
+    tasks = (
+        ("hla_list", "consumer", {"depends_on": {"hla_types": hla_types}}),
+        _hla("hla_dna"),
+        _hla("other", tags=("other",)),
+    )
+    with pytest.raises(ValueError, match=error):
+        load_project(_config(*tasks), WORK_DIR)

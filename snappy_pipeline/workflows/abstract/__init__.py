@@ -833,7 +833,19 @@ class BaseStep:
                 f"Task {self.task_name!r}: depends_on.{name} names no task; "
                 f"depends_on fields: {fields}"
             )
+        if isinstance(upstream, tuple):
+            raise ValueError(
+                f"Task {self.task_name!r}: depends_on.{name} names several tasks; "
+                "read their configs through upstream_task_names()"
+            )
         return self.project.task_configs[upstream]
+
+    def upstream_task_names(self, field: str) -> list[str]:
+        """Return the task names of a set ``depends_on`` field: one, or several for a list field."""
+        upstream = self.project.dependencies[self.task_name].get(field)
+        if upstream is None:
+            raise ValueError(f"Task {self.task_name!r}: depends_on.{field} names no task")
+        return list(upstream) if isinstance(upstream, tuple) else [upstream]
 
     def read_groups(self, library_name: str, source: str | None = None) -> list[ReadGroup]:
         """Return the FASTQ read groups of ``library_name``, ordered by the path of the left file.
@@ -1146,8 +1158,12 @@ class BaseStep:
             # obj.check_config()
             self.sub_steps[klass.name] = obj
 
-    def resolve_dependency(self, field_name: str) -> ResolvedDependency:
-        """Resolve one typed ``depends_on`` field into a normalized dependency object."""
+    def resolve_dependency(
+        self, field_name: str, upstream_task: str | None = None
+    ) -> ResolvedDependency:
+        """Resolve one typed ``depends_on`` field into a normalized dependency object.
+
+        For a field that takes a list of tasks, ``upstream_task`` names one of them."""
         if self.depends_on is None:
             raise AttributeError(
                 f"Task '{self.task_name}' has no 'depends_on' configuration; "
@@ -1164,6 +1180,18 @@ class BaseStep:
         target_task_name = getattr(self.depends_on, field_name)
         if not target_task_name:
             raise ValueError(f"Task '{self.task_name}': depends_on.{field_name} is empty or unset.")
+        if isinstance(target_task_name, list):
+            if upstream_task not in target_task_name:
+                raise ValueError(
+                    f"Task '{self.task_name}': depends_on.{field_name} names several tasks; "
+                    f"pass one of {target_task_name} as upstream_task, not {upstream_task!r}"
+                )
+            target_task_name = upstream_task
+        elif upstream_task not in (None, target_task_name):
+            raise ValueError(
+                f"Task '{self.task_name}': depends_on.{field_name} names {target_task_name!r}, "
+                f"not {upstream_task!r}"
+            )
 
         target_task = next((t for t in self.w_config.tasks if t.name == target_task_name), None)
         if target_task is None:
@@ -1226,7 +1254,11 @@ class BaseStep:
             )
 
     def get_upstream_paths(
-        self, req_field_name: str, signature: DataSignature | None = None, **kwargs
+        self,
+        req_field_name: str,
+        signature: DataSignature | None = None,
+        upstream_task: str | None = None,
+        **kwargs,
     ) -> "pydantic.BaseModel | dict[str, str]":
         """Resolve global output paths from an upstream task using the Consumer-Driven Contract.
 
@@ -1259,6 +1291,8 @@ class BaseStep:
                 read unfiltered calls. The provider's ``get_output_paths`` receives the produced
                 signature that :func:`~snappy_pipeline.workflows.abstract.protocol.select_signature`
                 picks for the requirement.
+            upstream_task: For a field that takes a list of tasks, the one to read (see
+                :py:meth:`upstream_task_names`).
             kwargs: Forwarded verbatim to the upstream workflow's
                 :py:meth:`get_output_paths` classmethod (e.g. ``library_name``, ``sample_name``).
 
@@ -1270,7 +1304,7 @@ class BaseStep:
             AttributeError: If ``self.config`` has no ``depends_on`` attribute.
             ValueError: If the upstream task or its workflow class cannot be resolved.
         """
-        dependency = self.resolve_dependency(req_field_name)
+        dependency = self.resolve_dependency(req_field_name, upstream_task)
         if "library_name" in kwargs:
             self._check_upstream_library(dependency.task_name, kwargs["library_name"])
 
@@ -1505,7 +1539,9 @@ def _declared_group_by(project, task_name: str, visited: frozenset[str]) -> str 
         return own
     if default := WORKFLOW_REGISTRY[project.task(task_name).step].default_group_by(config):
         return default
-    for upstream in project.dependencies.get(task_name, {}).values():
+    from snappy_pipeline.orchestration import upstream_tasks
+
+    for upstream in upstream_tasks(project.dependencies.get(task_name, {})):
         if upstream not in visited and upstream != task_name:
             if declared := _declared_group_by(project, upstream, visited | {task_name}):
                 return declared

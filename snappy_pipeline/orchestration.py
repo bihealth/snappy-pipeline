@@ -60,8 +60,9 @@ class Project:
     tasks: tuple[TaskModel, ...]
     #: Task name -> validated step configuration.
     task_configs: Mapping[str, SnappyStepModel]
-    #: Task name -> ``depends_on`` field -> upstream task name, for set fields only.
-    dependencies: Mapping[str, Mapping[str, str]]
+    #: Task name -> ``depends_on`` field -> upstream task name, or a tuple of them for a field
+    #: that takes a list, for set fields only.
+    dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]]
     #: Task name -> the DataSignatures the task produces.
     signatures: Mapping[str, tuple[DataSignature, ...]]
     #: Task name (``data_sets`` for the data sets) -> the paths in its configuration, resolved.
@@ -222,40 +223,55 @@ def _without_nulls(data: Any, path: str = "") -> Any:
     return data
 
 
+def upstream_tasks(dependencies: Mapping[str, str | tuple[str, ...]]) -> list[str]:
+    """Return the upstream task names of one task's ``dependencies``, in field order."""
+    return [
+        name
+        for upstream in dependencies.values()
+        for name in (upstream if isinstance(upstream, tuple) else (upstream,))
+    ]
+
+
 def _resolve_dependencies(
     task_name: str, task_config: SnappyStepModel, names: list[str]
-) -> dict[str, str]:
-    """Return ``depends_on`` field -> upstream task name for the set fields of one task.
+) -> dict[str, str | tuple[str, ...]]:
+    """Return ``depends_on`` field -> upstream task name (a tuple for a list field) for the set
+    fields of one task.
 
     ``reads: data_sets`` names no task, so it is not a dependency.
     """
     depends_on = getattr(task_config, "depends_on", None)
     if depends_on is None:
         return {}
-    result = {}
-    for field, upstream in depends_on.model_dump().items():
-        if not upstream or (field == "reads" and upstream == DATA_SETS):
+    result: dict[str, str | tuple[str, ...]] = {}
+    for field, value in depends_on.model_dump().items():
+        if not value or (field == "reads" and value == DATA_SETS):
             continue
-        if upstream == task_name:
-            raise ValueError(f"Task {task_name!r}: depends_on.{field} names the task itself")
-        if upstream not in names:
-            raise ValueError(
-                f"Task {task_name!r}: depends_on.{field} is {upstream!r}, which is not a task; "
-                f"configured tasks: {', '.join(names)}"
-            )
-        result[field] = upstream
+        upstreams = value if isinstance(value, list) else [value]
+        for upstream in upstreams:
+            if upstream == task_name:
+                raise ValueError(f"Task {task_name!r}: depends_on.{field} names the task itself")
+            if upstream not in names:
+                verb = "contains" if isinstance(value, list) else "is"
+                raise ValueError(
+                    f"Task {task_name!r}: depends_on.{field} {verb} {upstream!r}, which is not a "
+                    f"task; configured tasks: {', '.join(names)}"
+                )
+        if len(set(upstreams)) != len(upstreams):
+            raise ValueError(f"Task {task_name!r}: depends_on.{field} names a task twice")
+        result[field] = tuple(upstreams) if isinstance(value, list) else value
     return result
 
 
 def _task_signatures(
     tasks: tuple[TaskModel, ...],
     task_configs: Mapping[str, SnappyStepModel],
-    dependencies: Mapping[str, Mapping[str, str]],
+    dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]],
 ) -> dict[str, tuple[DataSignature, ...]]:
     """Return task name -> produced signatures, checking every ``depends_on`` requirement.
 
     Each task's ``task_produces`` receives, per field, the upstream signature it reads
-    (``select_signature``).
+    (``select_signature``); for a list field, a tuple of them.
 
     ``tasks`` must be in topological order, so the upstream signatures exist when a task needs
     them.
@@ -268,22 +284,27 @@ def _task_signatures(
         config = task_configs[task.name]
         fields = type(config.depends_on).model_fields if dependencies[task.name] else {}
         upstream_signatures = {}
-        for field, upstream in dependencies[task.name].items():
+        for field, value in dependencies[task.name].items():
             required = next(
                 (m for m in fields[field].metadata if isinstance(m, DataSignature)), None
             )
             if required is not None:
                 required = required.for_tool(config.tool_tag())
-            produced = signatures[upstream]
-            selected = select_signature(produced, required)
-            if selected is None:
-                raise ValueError(
-                    f"Task {task.name!r}: depends_on.{field} requires {required}, but task "
-                    f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
+            selected_all = []
+            for upstream in value if isinstance(value, tuple) else (value,):
+                produced = signatures[upstream]
+                selected = select_signature(produced, required)
+                if selected is None:
+                    raise ValueError(
+                        f"Task {task.name!r}: depends_on.{field} requires {required}, but task "
+                        f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
+                    )
+                selected_all.append(selected)
+                _check_output_keys(
+                    task.name, field, fields[field], upstream, selected, steps, task_configs
                 )
-            upstream_signatures[field] = selected
-            _check_output_keys(
-                task.name, field, fields[field], upstream, selected, steps, task_configs
+            upstream_signatures[field] = (
+                tuple(selected_all) if isinstance(value, tuple) else selected_all[0]
             )
         signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
             config, upstream_signatures
@@ -317,7 +338,7 @@ def _check_output_keys(
 
 
 def _topological_order(
-    tasks: list[TaskModel], dependencies: Mapping[str, Mapping[str, str]]
+    tasks: list[TaskModel], dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]]
 ) -> list[TaskModel]:
     """Return ``tasks`` with every task after its dependencies, keeping config order otherwise."""
     by_name = {task.name: task for task in tasks}
@@ -331,7 +352,7 @@ def _topological_order(
             cycle = chain[chain.index(name) :] + [name]
             raise ValueError(f"Dependency cycle between tasks: {' -> '.join(cycle)}")
         state[name] = "visiting"
-        for upstream in dependencies[name].values():
+        for upstream in upstream_tasks(dependencies[name]):
             visit(upstream, chain + [name])
         state[name] = "done"
         ordered.append(by_name[name])
