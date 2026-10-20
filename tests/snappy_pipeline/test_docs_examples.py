@@ -7,8 +7,11 @@ import ast
 import re
 from pathlib import Path
 
+import click
 import pytest
 from ruamel.yaml import YAML
+
+from snappy_pipeline.apps.snappy_cli import main
 
 from snappy_pipeline.orchestration import ON_HOLD_STEPS, load_project
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
@@ -73,3 +76,19 @@ def test_step_docstring_starts_with_a_title(step):
     doc = ast.get_docstring(ast.parse(path.read_text())) or ""
     title = doc.partition("\n")[0]
     assert title and not title.endswith("."), f"{step}: docstring needs a title line"
+
+
+def _subcommands(group, prefix="snappy"):
+    for name, command in group.commands.items():
+        if isinstance(command, click.Group):
+            yield from _subcommands(command, f"{prefix} {name}")
+        elif not command.hidden:
+            yield f"{prefix} {name}"
+
+
+def test_usage_lists_every_subcommand():
+    """The subcommand table of the usage page lists exactly the commands of ``snappy``."""
+    table = re.findall(
+        r"^\| `(snappy [a-z -]+?)`", (ROOT / "docs/usage.md").read_text(), re.MULTILINE
+    )
+    assert sorted(table) == sorted(_subcommands(main))

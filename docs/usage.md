@@ -12,6 +12,7 @@ The `snappy` command is the interface to the pipeline.
 | `snappy init`        | Create a project directory with `config.yaml`, `pipeline_job.sh` and `README.md`.     |
 | `snappy task add`    | Add tasks to the `config.yaml` of a project.                                          |
 | `snappy task list`   | List the tasks of a project, or the available steps with `--available`.               |
+| `snappy task steps`  | List the available steps.                                                             |
 | `snappy check-files` | List the files that `config.yaml` names but that do not exist.                        |
 | `snappy run`         | Run the pipeline with Snakemake.                                                      |
 | `snappy report`      | Build the Snakemake report of the QC outputs (`report.zip` in the project directory). |
