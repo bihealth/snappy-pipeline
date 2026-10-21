@@ -9,17 +9,8 @@ if TYPE_CHECKING:
 
 paths_cov = " ".join(snakemake.input.covs)
 
-# Extract resource usage in megabytes
-mem = str(snakemake.resources.memory).lower()
-for i, suffix in enumerate("kmg"):
-    if mem.endswith(suffix):
-        mem_i = int(mem[:-1]) * (2 ** (10 * (i + 1)))
-        break
-else:
-    mem_i = int(mem)
-
 # As an estimate, give 75% of total memory as usable to JVM
-mem_jvm = ceil(mem_i / 1024.0 / 1024.0 * 0.75)
+mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
