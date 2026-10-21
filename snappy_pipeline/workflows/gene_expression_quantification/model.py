@@ -3,7 +3,6 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -31,11 +30,10 @@ class Strandedness(SnappyModel):
 
 
 class RnaSeqC(SnappyModel):
-    rnaseqc_path_annotation_gtf: ConfigPath
+    pass
 
 
 class DupRadar(SnappyModel):
-    dupradar_path_annotation_gtf: ConfigPath
     num_threads: int = 8
 
 
@@ -82,9 +80,9 @@ class Tool(enum.StrEnum):
 TOOL_DEPENDENCIES = {
     Tool.strandedness: ("alignments", "exons"),
     Tool.featurecounts: ("alignments", "strandedness", "features"),
-    Tool.dupradar: ("alignments", "strandedness"),
+    Tool.dupradar: ("alignments", "strandedness", "features"),
     Tool.duplication: ("alignments", "strandedness"),
-    Tool.rnaseqc: ("alignments", "strandedness", "reference"),
+    Tool.rnaseqc: ("alignments", "strandedness", "reference", "features"),
     Tool.stats: ("alignments", "strandedness"),
     Tool.salmon: ("reads", "features", "index"),
 }
@@ -120,6 +118,9 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
     reference: Reference = ""
 
     features: Features = ""
+    """The gene annotation; for ``tool: rnaseqc``, a GTF that is also tagged ``rnaseqc``: RNA-SeQC
+    1.1.8 needs a ``transcript_id`` in every record (no ``gene`` records) and finds rRNA by the
+    GENCODE attribute ``transcript_type``"""
 
     exons: Exons = ""
     """Task with a BED file of transcripts with their strand in column 6; needed for

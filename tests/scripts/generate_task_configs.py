@@ -391,12 +391,8 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             }
         ],
     },
-    ("gene_expression_quantification", "dupradar"): {
-        "dupradar": {"dupradar_path_annotation_gtf": PLACEHOLDER}
-    },
-    ("gene_expression_quantification", "rnaseqc"): {
-        "rnaseqc": {"rnaseqc_path_annotation_gtf": PLACEHOLDER}
-    },
+    ("gene_expression_quantification", "dupradar"): {"dupradar": {}},
+    ("gene_expression_quantification", "rnaseqc"): {"rnaseqc": {}},
     ("gene_expression_quantification", "salmon"): {"salmon": {}},
     ("ngs_data_qc", "picard"): {
         "picard": {"programs": ["CollectAlignmentSummaryMetrics", "CollectHsMetrics"]}
@@ -524,10 +520,11 @@ def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
 #: the regions of the kit of the test libraries (MedExome), and the inputs of the external export
 #: steps. One task with several tags serves several kinds of regions; each task names the fixture
 #: that the replaced config fields had, so that job inputs stay the same. features, dbsnp, regions
-#: and population_variants name the reference FASTA, as no test reads them.
+#: and population_variants name the reference FASTA, as no test reads them; features also serves
+#: RNA-SeQC.
 EXTRA_TASKS: list[dict[str, Any]] = [
     _external_file("genome", "raw", ["reference", "dna"], "fasta"),
-    _external_file("features", "raw", ["features"], "gtf"),
+    _external_file("features", "raw", ["features", "rnaseqc"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf"),
     _external_file("exons", "regions", ["exons"], "bed", PLACEHOLDER),
     _external_file("regions", "regions", ["microsatellites"], "bed"),

@@ -13,7 +13,8 @@ Quantification:
 QC and strandedness, all on the BAM files:
 
 - ``strandedness``: infers the strandedness of each library with RSeQC ``infer_experiment.py``. It needs a 6-column BED file of transcripts and their strand from ``depends_on.exons``.
-- ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats``: estimate library complexity and duplication rate, and compute coverage and alignment metrics. ``dupradar`` needs BAM files marked for duplicates. ``rnaseqc`` and ``dupradar`` read a GTF from their own config sections.
+- ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats``: estimate library complexity and duplication rate, and compute coverage and alignment metrics. ``dupradar`` needs BAM files marked for duplicates. ``dupradar`` reads the GTF of ``depends_on.features``.
+- ``rnaseqc`` reads a GTF prepared for RNA-SeQC 1.1.8 from ``depends_on.features``, tagged ``rnaseqc``: every record has a ``transcript_id`` (no ``gene`` records), and rRNA is marked by the GENCODE attribute ``transcript_type``.
 
 ``featurecounts``, ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats`` need the strandedness of each library.
 It comes from a task of this step with ``tool: strandedness``, named in ``depends_on.strandedness``.
@@ -121,6 +122,8 @@ STRANDEDNESS_SIGNATURE = DataSignature(DataType.QC, frozenset({"strandedness"}))
 EXPRESSION_SIGNATURE = DataSignature(DataType.EXPRESSION, frozenset({"rna"}))
 #: Signature of the QC tools (dupradar, duplication, rnaseqc, stats)
 RNA_QC_SIGNATURE = DataSignature(DataType.QC, frozenset({"rna"}))
+#: The GTF that ``rnaseqc`` reads from ``depends_on.features``, prepared for RNA-SeQC
+RNASEQC_FEATURES_SIGNATURE = DataSignature(DataType.RAW, frozenset({"features", "rnaseqc"}))
 
 # Extensions
 EXTENSIONS = {
@@ -317,7 +320,7 @@ class QCStepPartDupradar(GeneExpressionQuantificationStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         if self.config.tool != self.name:
             return
-        yield "dupradar_path_annotation_gtf", self.config.dupradar.dupradar_path_annotation_gtf
+        yield "features", self.parent.get_upstream_paths("features").gtf
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         if self.config.tool != self.name:
@@ -344,7 +347,8 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
         if self.config.tool != self.name:
             return
         yield from self.parent.reference_inputs().items()
-        yield "rnaseqc_path_annotation_gtf", self.config.rnaseqc.rnaseqc_path_annotation_gtf
+        features = self.parent.get_upstream_paths("features", signature=RNASEQC_FEATURES_SIGNATURE)
+        yield "features", features.gtf
 
     default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="16GB")
 
