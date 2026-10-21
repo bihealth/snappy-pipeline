@@ -49,7 +49,6 @@ from snappy_pipeline.workflows.common.sv_calling import (
     SvCallingGetLogFileMixin,
     SvCallingGetResultFilesMixin,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_wrappers.tools.genome_windows import yield_regions
 
 from .model import SvCallingWgs as SvCallingWgsConfigModel
@@ -176,50 +175,6 @@ class PopDelStepPart(
         }
 
 
-class Sniffles2StepPart(BaseStepPart):
-    """WGS SV identification using Sniffles 2"""
-
-    name = "sniffles2"
-    actions = ("bam_to_snf", "snf_to_vcf")
-
-    default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="4GB")
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.base_path_out = (
-            "work/sniffles2.{index_ngs_library}/out/sniffles2.{index_ngs_library}{ext}"
-        )
-
-    @dictify
-    def _get_input_files_bam_to_snf(self, wildcards):
-        alignments: ExpectedAlignments = self.parent.get_upstream_paths(
-            "alignments", library_name=wildcards.library_name
-        )
-        yield "bam", alignments.bam
-
-    @dictify
-    def _get_output_files_bam_to_snf(self):
-        infix = "sniffles2_bam_to_snf.{library_name}"
-        yield "snf", f"work/{infix}/out/{infix}.snf"
-
-    @dictify
-    def _get_input_files_snf_to_vcf(self, wildcards):
-        snfs = []
-        for library_name in self.parent.pedigrees(include_background=True)[
-            wildcards.index_ngs_library
-        ]:
-            infix = f"sniffles2_bam_to_snf.{library_name}"
-            snfs.append(f"work/{infix}/out/{infix}.snf")
-        yield "snf", snfs
-
-    @dictify
-    def _get_output_files_snf_to_vcf(self):
-        infix = "sniffles2.{index_ngs_library}"
-        yield "snf", f"work/{infix}/out/{infix}.snf"
-
-    # FIXME: missing get_result_files
-
-
 class SvCallingWgsWorkflow(BaseStep):
     """Perform (germline) WGS SV calling"""
 
@@ -250,8 +205,6 @@ class SvCallingWgsWorkflow(BaseStep):
                 selected_sub_step = RunGcnvStepPart
             case Tool.melt:
                 selected_sub_step = MeltStepPart
-            # case Tool.sniffles2:
-            #     selected_sub_step = Sniffles2StepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {selected_tool}")
         # Register only the selected tool step class.

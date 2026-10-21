@@ -23,7 +23,6 @@ class Tool(enum.StrEnum):
     popdel = "popdel"
     gcnv = "gcnv"
     melt = "melt"
-    # sniffles2 = "sniffles2"  # exclude for now
 
 
 class Gcnv(SnappyModel):
@@ -86,19 +85,6 @@ class Popdel(SnappyModel):
     """
 
 
-class Sniffles2(SnappyModel):
-    tandem_repeats: Annotated[
-        str,
-        Field(examples=["/path/to/sniffles2/trf/GRCh37/human_hs37d5.trf.bed"]),
-    ]
-
-    skip_libraries: list[str] = []
-    """
-    Skip processing of the following libraries.
-    If the library is in family/pedigree then all of the family/pedigree will be skipped.
-    """
-
-
 class SvCallingWgsDependsOn(SnappyModel):
     alignments: Annotated[
         str,
@@ -139,8 +125,6 @@ class SvCallingWgs(SnappyStepModel):
     gcnv: Gcnv | None = None
 
     melt: Melt | None = None
-
-    sniffles2: Sniffles2 | None = None
 
     ignore_chroms: list[str] = [
         "^NC_007605$",
