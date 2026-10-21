@@ -12,7 +12,6 @@ The ``tool`` field selects the caller:
   The optional ``depends_on.database`` (``{type: database, tags: [arriba]}``) may give the keys ``blacklist``, ``known_fusions``, ``tags``, ``structural_variants`` and ``protein_domains`` of the arriba release.
 - ``star_fusion`` returns results similar to ``arriba``, but less accurate.
   It needs ``depends_on.database`` (``{type: database, tags: [star_fusion]}``) with the key ``ctat_resource_lib``.
-- ``defuse``, ``hera``, ``jaffa`` and ``pizzly`` are not tested and probably broken.
 
 The task gives one result per RNA library.
 The sample sheet must be a cancer sheet.
@@ -23,7 +22,7 @@ Outputs
 The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``.
 
 - ``{library_name}/out/.done``: marks a finished library.
-  It is the only file of every tool except ``arriba``.
+  It is the only file of ``star_fusion``.
 - ``{library_name}/out/{library_name}.fusions.tsv`` and ``{library_name}/out/{library_name}.discarded_fusions.tsv.gz`` (``arriba``), each with a ``.md5`` file.
   The files list the affected genes, the supporting reads and a confidence level.
   The discarded fusions have insufficient evidence.
@@ -46,16 +45,6 @@ from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigMod
 from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
-
-#: HLA typing tools
-GENE_FUSION_CALLERS = (
-    "arriba",
-    "defuse",
-    "hera",
-    "jaffa",
-    "pizzly",
-    "star_fusion",
-)
 
 #: Default configuration for the somatic_gene_fusion_calling step
 
@@ -97,45 +86,6 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
                 yield group.paths[mate]
 
 
-class JaffaStepPart(SomaticGeneFusionCallingStepPart):
-    """Somatic gene fusion calling from RNA-seq reads using JAFFA"""
-
-    #: Step name
-    name = "jaffa"
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield "reference_files", self.config.jaffa.path_reference_files
-
-    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{40 * 1024 * 4}MB")
-
-
-class PizzlyStepPart(SomaticGeneFusionCallingStepPart):
-    """Somatic gene fusion calling from RNA-seq reads using Kallisto+Pizzly"""
-
-    #: Step name
-    name = "pizzly"
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield "kallisto_index", self.config.pizzly.kallisto_index
-        yield "transcripts_fasta", self.config.pizzly.transcripts_fasta
-        yield "annotations_gtf", self.config.pizzly.annotations_gtf
-
-    def get_params(self, action):
-        """Return function that maps wildcards to dict for input files"""
-
-        def args_function(wildcards):
-            return {"kmer_size": self.config.pizzly.kmer_size}
-
-        assert action == "run", "Unsupported actions"
-        return args_function
-
-    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{20 * 1024 * 4}MB")
-
-
 class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
     """Somatic gene fusion calling from RNA-seq reads using STAR-Fusion"""
 
@@ -148,35 +98,6 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         yield "ctat_resource_lib", self.parent.get_upstream_paths("database").ctat_resource_lib
 
     default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
-
-
-class DefuseStepPart(SomaticGeneFusionCallingStepPart):
-    """Somatic gene fusion calling from RNA-seq reads using Defuse"""
-
-    #: Step name
-    name = "defuse"
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield "dataset_directory", self.config.defuse.path_dataset_directory
-
-    default_resource_usage = ResourceUsage(threads=8, runtime="5d", mem=f"{10 * 1024 * 8}MB")
-
-
-class HeraStepPart(SomaticGeneFusionCallingStepPart):
-    """Somatic gene fusion calling from RNA-seq reads using Hera"""
-
-    #: Step name
-    name = "hera"
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        yield from super()._get_input_files_run(wildcards).items()
-        yield "genome", self.config.hera.path_genome
-        yield "index", self.config.hera.path_index
-
-    default_resource_usage = ResourceUsage(threads=8, runtime="5d", mem=f"{20 * 1024 * 8}MB")
 
 
 class ArribaStepPart(SomaticGeneFusionCallingStepPart):
@@ -270,16 +191,8 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         selected_tool = self.config.tool
         match selected_tool:
-            case Tool.jaffa:
-                selected_sub_step = JaffaStepPart
-            case Tool.pizzly:
-                selected_sub_step = PizzlyStepPart
-            case Tool.hera:
-                selected_sub_step = HeraStepPart
             case Tool.star_fusion:
                 selected_sub_step = StarFusionStepPart
-            case Tool.defuse:
-                selected_sub_step = DefuseStepPart
             case Tool.arriba:
                 selected_sub_step = ArribaStepPart
             case _:

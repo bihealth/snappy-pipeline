@@ -420,26 +420,10 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("panel_of_normals", "purecn"): {"purecn": {"path_normals_list": Overwrite("")}},
     ("reference_index", "star"): {"reference_molecule": Overwrite("rna")},
     ("somatic_gene_fusion_calling", "arriba"): {"arriba": {}},
-    ("somatic_gene_fusion_calling", "defuse"): {
-        "defuse": {"path_dataset_directory": Fixture("star_index")}
-    },
-    ("somatic_gene_fusion_calling", "hera"): {
-        "hera": {"path_index": Fixture("star_index"), "path_genome": REFERENCE}
-    },
-    ("somatic_gene_fusion_calling", "jaffa"): {
-        "jaffa": {"path_reference_files": Fixture("star_index")}
-    },
     ("somatic_hla_loh_calling", None): {
         "path_hla_dat": PLACEHOLDER,
         "path_hla_fasta": PLACEHOLDER,
         "path_picard_dir": Fixture("star_index"),
-    },
-    ("somatic_gene_fusion_calling", "pizzly"): {
-        "pizzly": {
-            "kallisto_index": PLACEHOLDER,
-            "transcripts_fasta": REFERENCE,
-            "annotations_gtf": PLACEHOLDER,
-        }
     },
     ("somatic_gene_fusion_calling", "star_fusion"): {"star_fusion": {}},
     ("cbioportal_export", None): {

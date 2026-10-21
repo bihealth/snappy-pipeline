@@ -672,7 +672,6 @@ UNSOLVABLE_ENVS = {
     "cbioportal/meta_files",
     "gatk_phase_by_transmission",
     "gatk_read_backed_phasing",
-    "hera/quant",
     "star_fusion",
 }
 
