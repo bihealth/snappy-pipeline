@@ -61,7 +61,6 @@ class Population(enum.StrEnum):
 
 
 class ArcasHla(SnappyModel):
-    mapper: str = "star"
     population: Population = Population.PRIOR
     min_count: int = 75
     tolerance: float = 1e-7

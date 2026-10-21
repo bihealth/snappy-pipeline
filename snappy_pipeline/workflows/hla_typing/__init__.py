@@ -124,10 +124,6 @@ class ArcasHlaStepPart(BaseStepPart):
         r"^(?P<passPairs>[0-9]+) \+ (?P<failPairs>[0-9]+) paired in sequencing$"
     )
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.mapper = self.config.arcashla.mapper
-
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return input files"""
