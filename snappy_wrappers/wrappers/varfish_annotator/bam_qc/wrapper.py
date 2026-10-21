@@ -80,7 +80,9 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
         # Parameters:
         # $1: file being processed
         # $2: path to temporary file with identifiers hash
-        library_name=$(basename $1 | cut -d . -f 2)
+        # The reports are named {{library_name}}.bam.{{report}}.txt
+        library_name=$(basename $1)
+        library_name=${{library_name%%.bam.*}}
         sample=$(grep $library_name $2 | cut -f2 -d' ')
         if [[ -z "$sample" ]]; then
             echo "Could not find '$1' in $2"
