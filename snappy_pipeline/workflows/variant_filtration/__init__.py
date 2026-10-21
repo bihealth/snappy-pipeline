@@ -25,7 +25,7 @@ Chain several tasks for a sequence of filters.
 
 The ``bcftools``, ``vembrane`` and ``regions`` filters have a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
 ``bcftools``, ``regions`` and ``ebfilter`` use the task name as ``FILTER`` ID, so each task of a chain has its own; ``vembrane`` uses the names of its ``expressions``, ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
-No other task of the project may be named like one of these.
+No other task of the project may be named like one of these or like ``PASS``, and no task may write an ID that a task upstream of it writes (such as an expression named after a filter of mutect2).
 The task produces one VCF per tumor library.
 Its output has the input's tags plus ``filtered``.
 

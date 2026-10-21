@@ -85,8 +85,8 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
 
     Raises ``ValueError`` (or a pydantic ``ValidationError``) for unknown steps, duplicate task
     names, ``depends_on`` values that name no task, dependency cycles, upstream tasks that
-    do not produce what a ``depends_on`` field requires, and task names that equal a ``FILTER``
-    ID of another task.
+    do not produce what a ``depends_on`` field requires, and ``FILTER`` IDs that could mean two
+    things (see :func:`_check_filter_ids`).
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
@@ -151,18 +151,37 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
 
 
 def _check_filter_ids(project: Project) -> None:
-    """Raise if a task is named like a ``FILTER`` ID that another task writes under a name of its
-    own (vembrane expressions, DKFZ bias filter); filters such as bcftools write their task name."""
+    """Raise if a ``FILTER`` value could mean two things: a task named ``PASS`` or like an ID that
+    another task writes under a name of its own (variant callers, vembrane expressions, DKFZ bias
+    filter; filters such as bcftools write their task name), or two tasks of one chain that write
+    the same ID."""
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
-    for owner, config in project.task_configs.items():
-        workflow_cls = WORKFLOW_REGISTRY[project.task(owner).step]
-        others = set(project.task_configs) - {owner}
-        clashes = sorted(workflow_cls.filter_ids(config) & others)
+    if "PASS" in project.task_configs:
+        raise ValueError("Task name 'PASS' is reserved for the FILTER value of passing variants")
+    ids = {
+        name: WORKFLOW_REGISTRY[project.task(name).step].filter_ids(config)
+        for name, config in project.task_configs.items()
+    }
+    for owner, owned in ids.items():
+        clashes = sorted(owned & (set(ids) - {owner}))
         if clashes:
             raise ValueError(
                 f"Task name {clashes[0]!r} is also a FILTER ID of task {owner!r}; rename one of them"
             )
+    # A VCF has the FILTER IDs of all tasks upstream of it: ID -> the task that writes it
+    writers: dict[str, dict[str, str]] = {}
+    for task in project.tasks:
+        inherited: dict[str, str] = {}
+        for upstream in upstream_tasks(project.dependencies[task.name]):
+            inherited |= writers.get(upstream, {})
+        shared = sorted(ids[task.name] & set(inherited))
+        if shared:
+            raise ValueError(
+                f"Tasks {inherited[shared[0]]!r} and {task.name!r} both write the FILTER ID "
+                f"{shared[0]!r} along one chain; rename one of them"
+            )
+        writers[task.name] = inherited | dict.fromkeys(ids[task.name], task.name)
 
 
 def _check_granularity(project: Project) -> None:

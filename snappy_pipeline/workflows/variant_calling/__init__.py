@@ -34,6 +34,7 @@ With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_
 ``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
 With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
 Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
+The ``FILTER`` IDs of the callers (``LowQual`` of the GATK callers; ``germline``, ``contamination`` and the other filters of ``FilterMutectCalls``) are reserved: no other task may be named like one of them.
 
 Outputs
 -------
@@ -98,6 +99,34 @@ VARIANT_CALLERS = (
     "gatk4_hc_gvcf",
     "gatk4_hc_joint",
 )
+
+#: FILTER IDs in the header of FilterMutectCalls (GATK 4.6.2) and of the GATK germline callers
+MUTECT2_FILTER_IDS = frozenset(
+    {
+        "FAIL",
+        "base_qual",
+        "clustered_events",
+        "contamination",
+        "duplicate",
+        "fragment",
+        "germline",
+        "haplotype",
+        "low_allele_frac",
+        "map_qual",
+        "multiallelic",
+        "n_ratio",
+        "normal_artifact",
+        "orientation",
+        "panel_of_normals",
+        "position",
+        "possible_numt",
+        "slippage",
+        "strand_bias",
+        "strict_strand",
+        "weak_evidence",
+    }
+)
+GATK_GERMLINE_FILTER_IDS = frozenset({"LowQual"})
 
 #: Default configuration for the variant_calling step
 
@@ -844,6 +873,15 @@ class VariantCallingWorkflow(BaseStep):
     def default_group_by(cls, config):
         """The germline callers call each cohort (pedigree) jointly, mutect2 each tumor."""
         return None if config.tool == Tool.mutect2 else "cohort"
+
+    @classmethod
+    def filter_ids(cls, config):
+        """The FILTER IDs of mutect2 and of the GATK callers; bcftools call writes none."""
+        if config.tool == Tool.mutect2:
+            return MUTECT2_FILTER_IDS
+        if config.tool == Tool.bcftools_call:
+            return frozenset()
+        return GATK_GERMLINE_FILTER_IDS
 
     #: Default relationship for somatic (mutect2) callers: resolve matched normal.
     default_relationships = {

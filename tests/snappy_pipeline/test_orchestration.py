@@ -169,6 +169,37 @@ def test_load_project_allows_a_vembrane_task_named_like_its_own_expression():
     load_project(_config(_mapping(), _calling(), _annotation(), tag), WORK_DIR)
 
 
+def test_load_project_rejects_a_task_named_like_a_filter_id_of_a_caller():
+    tasks = _mapping(), _calling(), _annotation(), _filtration("germline")
+    with pytest.raises(ValueError, match="'germline' is also a FILTER ID of task 'calling'"):
+        load_project(_config(*tasks), WORK_DIR)
+
+
+def test_load_project_rejects_a_task_named_pass():
+    tasks = _mapping(), _calling(), _annotation(), _filtration("PASS")
+    with pytest.raises(ValueError, match="'PASS' is reserved"):
+        load_project(_config(*tasks), WORK_DIR)
+
+
+def test_load_project_rejects_a_filter_id_that_an_upstream_task_writes():
+    tag = _vembrane_tag("tag", "annotation", germline="QUAL < 10")  # mutect2 writes germline
+    with pytest.raises(ValueError, match="'calling' and 'tag' both write the FILTER ID 'germline'"):
+        load_project(_config(_mapping(), _calling(), _annotation(), tag), WORK_DIR)
+
+
+def test_load_project_rejects_a_vembrane_expression_twice_along_a_chain():
+    first = _vembrane_tag("first", "annotation", low="QUAL < 10")
+    second = _vembrane_tag("second", "first", low="QUAL < 20")
+    with pytest.raises(ValueError, match="'first' and 'second' both write the FILTER ID 'low'"):
+        load_project(_config(_mapping(), _calling(), _annotation(), first, second), WORK_DIR)
+
+
+def test_load_project_allows_a_vembrane_expression_in_parallel_tasks():
+    first = _vembrane_tag("first", "annotation", low="QUAL < 10")
+    second = _vembrane_tag("second", "annotation", low="QUAL < 20")
+    load_project(_config(_mapping(), _calling(), _annotation(), first, second), WORK_DIR)
+
+
 def test_load_project_rejects_dependency_on_missing_task():
     with pytest.raises(
         ValueError, match="depends_on.alignments is 'mapping2', which is not a task"
