@@ -28,7 +28,7 @@ Downstream tasks read the keys ``gts`` and ``db_infos``.
 
 from snakemake.io import expand
 
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -50,7 +50,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
     name = "bam_reports"
 
     #: Class available actions
-    actions = ("bam_qc", "collect", "run")
+    actions = ("bam_qc", "run")
 
     def _alignments(self, library_name):
         return self.parent.get_upstream_paths("alignments", library_name=library_name)
@@ -66,17 +66,12 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         alignments = self._alignments(wildcards.library_name)
         yield "bam", alignments.bam
         yield "bai", alignments.bai
+        yield from self.parent.reference_inputs().items()
         yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
 
-    @listify
-    def _get_input_files_collect(self, wildcards):
-        _ = wildcards
-        mapper_lib = "{library_name}"
-        yield f"work/{mapper_lib}/report/alfred_qc/{mapper_lib}.alfred.json.gz"
-
-    @dictify
-    def _get_output_files_collect(self):
-        yield "report", "work/target_cov_report/out/target_coverage_summary.txt"
+    def _get_output_files_run(self):
+        """The alfred report, without md5: it is not published."""
+        return {"json": super()._get_output_files_run()["json"]}
 
     @dictify
     def _get_output_files_bam_qc(self):
@@ -84,22 +79,12 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
             report_path = f"work/{{library_name}}/report/bam_qc/{{library_name}}.bam.{report}.txt"
             yield report, report_path
 
-    def _get_log_file_run(self):
-        return "work/{library_name}/log/snakemake.target_coverage.log"
-
-    def _get_log_file_collect(self):
-        return "work/target_cov_report/log/snakemake.target_coverage.log"
-
     def _get_log_file_bam_qc(self):
         return {"log": "work/{library_name}/log/{library_name}.bam_qc.log"}
 
     def get_result_files(self):
         """The reports are not published."""
         return []
-
-    def _collect_bam_files(self, wildcards):
-        """Yield the BAM file of the library."""
-        yield self._alignments(wildcards.library_name).bam
 
 
 class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
@@ -194,13 +179,13 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
         members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
-        result = {"bamstats": [], "flagstats": [], "idxstats": [], "cov_qc": []}
+        result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
         for library_name in members["library_name"]:
             tpl = f"work/{library_name}/report/bam_qc/{library_name}.bam.%s.txt"
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(tpl % key)
             path = f"work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
-            result["cov_qc"].append(path)
+            result["alfred_qc"].append(path)
 
         return result
 
