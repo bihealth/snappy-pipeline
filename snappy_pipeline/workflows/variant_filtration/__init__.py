@@ -24,6 +24,7 @@ Chain several tasks for a sequence of filters.
     Needs ``depends_on.alignments`` and ``depends_on.reference``.
 
 The ``bcftools``, ``vembrane`` and ``regions`` filters have a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
+``bcftools``, ``regions`` and ``ebfilter`` use the task name as ``FILTER`` ID, so each task of a chain has its own; ``vembrane`` uses the names of its ``expressions``, ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
 The task produces one VCF per tumor library.
 Its output has the input's tags plus ``filtered``.
 
@@ -142,8 +143,8 @@ class VariantFiltrationStepPart(BaseStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = getattr(self.config, self.config.tool)
         params: dict[str, Any] = {
-            # Keep wrapper naming stable and task-scoped for chaining.
-            "filter_name": getattr(self, "filter_name", self.parent.task_name or self.config.tool),
+            # The task name keeps FILTER IDs unique along a chain of filter tasks.
+            "filter_name": self.parent.task_name,
         }
         if cfg is not None:
             params.update(cfg.model_dump(by_alias=True))
@@ -199,13 +200,9 @@ class _BamAwareStepPart(VariantFiltrationStepPart):
 class BcftoolsStepPart(VariantFiltrationStepPart):
     """bcftools expression filter."""
 
-    filter_name = "bcftools"
-
 
 class VembraneStepPart(VariantFiltrationStepPart):
     """Unified vembrane tag/filter step."""
-
-    filter_name = "vembrane"
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         cfg = self.config.vembrane
@@ -241,8 +238,6 @@ class VembraneStepPart(VariantFiltrationStepPart):
 class RegionsStepPart(VariantFiltrationStepPart):
     """Region/BED-based filter via bcftools."""
 
-    filter_name = "regions"
-
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
@@ -250,13 +245,11 @@ class RegionsStepPart(VariantFiltrationStepPart):
         yield self.config.regions.action, self.parent.get_upstream_paths("regions").bed
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"filter_name": self.filter_name, "mode": self.config.regions.mode}
+        return {"filter_name": self.parent.task_name, "mode": self.config.regions.mode}
 
 
 class DkfzStepPart(_BamAwareStepPart):
     """DKFZ bias filter."""
-
-    filter_name = "dkfz"
 
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="12h", mem=f"{3 * 1024}MB"),
@@ -265,8 +258,6 @@ class DkfzStepPart(_BamAwareStepPart):
 
 class EbfilterStepPart(_BamAwareStepPart):
     """EBFilter."""
-
-    filter_name = "ebfilter"
 
     actions = ("run", "write_panel")
     resource_usage = {

@@ -565,7 +565,7 @@
   "params": {
    "args": {
     "ebfilter_threshold": 2.4,
-    "filter_name": "ebfilter",
+    "filter_name": "variant_filtration_ebfilter",
     "has_annotation": true,
     "min_baseq": 15,
     "min_mapq": 20,

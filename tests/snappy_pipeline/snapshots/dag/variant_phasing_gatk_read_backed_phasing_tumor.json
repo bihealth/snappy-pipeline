@@ -3318,7 +3318,7 @@
   "params": {
    "args": {
     "exclude": "FILTER ~ 'low_depth'",
-    "filter_name": "bcftools",
+    "filter_name": "variant_filtration_bcftools",
     "include": "",
     "mode": "tag"
    }

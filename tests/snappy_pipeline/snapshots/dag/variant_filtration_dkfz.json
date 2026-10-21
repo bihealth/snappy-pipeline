@@ -542,7 +542,7 @@
   ],
   "params": {
    "args": {
-    "filter_name": "dkfz",
+    "filter_name": "variant_filtration_dkfz",
     "mode": "tag"
    }
   },
