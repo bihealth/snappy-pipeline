@@ -74,6 +74,7 @@ Rules cached between workflows (`cache:`) cannot have a benchmark.
 `test_wrapper_rules_write_a_benchmark` and `test_logs_and_benchmarks_are_unique_per_job` check this.
 
 A rule's log holds only its log file (plus a copy of the script, if the wrapper writes one).
+The log file is named `log`, because the wrapper base classes write to `snakemake.log.log` (`RWrapper` also needs `script`); building the DAG in the snapshot tests fails for a wrapper rule without it.
 Snakemake's metadata in `.snakemake/` records the code, params, inputs and conda environment of every output.
 The pinned environments (`environment.linux-64.pin.txt`) fix the package versions.
 Logs are not published, and `snappy run` archives them per run.

@@ -23,7 +23,7 @@ rule repeat_expansion_run_expansionhunter:
     output:
         **wf.get_output_files("expansionhunter", "run"),
     log:
-        wf.get_log_file("expansionhunter", "run"),
+        **wf.get_log_file("expansionhunter", "run"),
     benchmark:
         wf.get_benchmark_file("expansionhunter", "run")
     wildcard_constraints:

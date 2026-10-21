@@ -42,7 +42,7 @@ class SignaturesStepPart(BaseStepPart):
     default_resource_usage = ResourceUsage(threads=2, runtime="1h", mem=f"{7 * 1024 * 2}MB")
 
     def _get_log_file(self, action):
-        return f"work/{{tumor_library}}/log/{self.name}.{{tumor_library}}.log"
+        return {"log": f"work/{{tumor_library}}/log/{self.name}.{{tumor_library}}.log"}
 
 
 class TabulateVariantsStepPart(SignaturesStepPart):
@@ -103,6 +103,11 @@ class DeconstructSigsStepPart(SignaturesStepPart):
     def _get_output_files_run(self):
         base = "work/{tumor_library}/out/deconstruct_sigs.{tumor_library}"
         return {"tsv": base + ".tsv", "tsv_md5": base + ".tsv.md5", "pdf": base + ".pdf"}
+
+    def _get_log_file(self, action):
+        # RWrapper keeps the R script next to the log
+        prefix = "work/{tumor_library}/log/deconstruct_sigs.{tumor_library}"
+        return {"log": prefix + ".log", "script": prefix + ".R"}
 
 
 class SomaticVariantSignaturesWorkflow(BaseStep):

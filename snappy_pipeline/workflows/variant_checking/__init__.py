@@ -83,7 +83,7 @@ class PeddyStepPart(BaseStepPart):
         return result
 
     def _get_log_file_run(self):
-        return "work/{index_ngs_library}/log/snakemake.filter.log"
+        return {"log": "work/{index_ngs_library}/log/snakemake.filter.log"}
 
 
 class VariantCheckingWorkflow(BaseStep):

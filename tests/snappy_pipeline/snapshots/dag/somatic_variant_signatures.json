@@ -1489,7 +1489,8 @@
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/tabulate_vcf.case001subregion-T1-DNA1-WES1.tsv"
   ],
   "log": [
-   "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/log/deconstruct_sigs.case001subregion-T1-DNA1-WES1.log"
+   "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/log/deconstruct_sigs.case001subregion-T1-DNA1-WES1.log",
+   "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/log/deconstruct_sigs.case001subregion-T1-DNA1-WES1.R"
   ],
   "output": [
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv",

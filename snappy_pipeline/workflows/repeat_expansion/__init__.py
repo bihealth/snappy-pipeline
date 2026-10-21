@@ -103,7 +103,7 @@ class ExpansionHunterStepPart(BaseStepPart):
 
     def _get_log_file_run(self):
         """Return the log file pattern for rule `run` - ExpansionHunter call."""
-        return "work/{library_name}/log/{library_name}.log"
+        return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards):
         """Get donor's sex.

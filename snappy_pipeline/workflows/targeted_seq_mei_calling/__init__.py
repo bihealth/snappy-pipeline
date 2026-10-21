@@ -53,7 +53,7 @@ class ScrambleStepPart(BaseStepPart):
         super().__init__(parent)
 
     def _get_log_file(self, action):
-        return f"work/{{library_name}}/log/{{library_name}}.{action}.log"
+        return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
 
     @listify
     def _get_input_files_cluster(self, wildcards):

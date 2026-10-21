@@ -24,7 +24,7 @@ class AnnotateGcMixin:
         yield "tsv", "work/{library_kit}/out/{library_kit}.annotate_gc.tsv"
 
     def _get_log_file_annotate_gc(self):
-        return "work/{library_kit}/log/{library_kit}.annotate_gc.log"
+        return {"log": "work/{library_kit}/log/{library_kit}.annotate_gc.log"}
 
 
 class FilterIntervalsMixin:
@@ -48,7 +48,7 @@ class FilterIntervalsMixin:
         yield "interval_list", "work/{library_kit}/out/{library_kit}.filter_intervals.interval_list"
 
     def _get_log_file_filter_intervals(self):
-        return "work/{library_kit}/log/{library_kit}.filter_intervals.log"
+        return {"log": "work/{library_kit}/log/{library_kit}.filter_intervals.log"}
 
 
 class ScatterIntervalsMixin:
@@ -63,7 +63,7 @@ class ScatterIntervalsMixin:
         return "work/{library_kit}/out/{library_kit}.scatter_intervals"
 
     def _get_log_file_scatter_intervals(self):
-        return "work/{library_kit}/log/{library_kit}.scatter_intervals.log"
+        return {"log": "work/{library_kit}/log/{library_kit}.scatter_intervals.log"}
 
 
 class ContigPloidyMixin:

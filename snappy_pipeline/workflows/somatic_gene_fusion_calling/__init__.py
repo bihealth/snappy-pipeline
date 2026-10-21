@@ -86,7 +86,7 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         return {"done": touch("work/{library_name}/out/.done")}
 
     def _get_log_file_run(self):
-        return "work/{library_name}/log/snakemake.gene_fusion_calling.log"
+        return {"log": "work/{library_name}/log/snakemake.gene_fusion_calling.log"}
 
     def _collect_reads(self, wildcards, library_name, prefix):
         """Yield the path to reads

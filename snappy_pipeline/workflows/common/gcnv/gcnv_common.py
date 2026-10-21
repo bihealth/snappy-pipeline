@@ -60,7 +60,7 @@ class PreprocessIntervalsCommonMixin:
         yield "interval_list", "work/{library_kit}/out/{library_kit}.interval_list"
 
     def _get_log_file_preprocess_intervals(self):
-        return "work/{library_kit}/log/{library_kit}.preprocess_intervals.log"
+        return {"log": "work/{library_kit}/log/{library_kit}.preprocess_intervals.log"}
 
 
 class CoverageCommonMixin:
@@ -90,28 +90,28 @@ class CoverageCommonMixin:
         yield "tsv", "work/{library_name}/out/{library_name}.coverage.tsv"
 
     def _get_log_file_coverage(self):
-        return "work/{library_name}/log/{library_name}.coverage.log"
+        return {"log": "work/{library_name}/log/{library_name}.coverage.log"}
 
 
 class ContigPloidyCommonMixin:
     """Mixin used for ``contig_ploidy`` step"""
 
     def _get_log_file_contig_ploidy(self):
-        return "work/{library_kit}/log/{library_kit}.contig_ploidy.log"
+        return {"log": "work/{library_kit}/log/{library_kit}.contig_ploidy.log"}
 
 
 class CallCnvsCommonMixin:
     """Mixin used for the ``call_cnvs`` step"""
 
     def _get_log_file_call_cnvs(self):
-        return "work/{library_kit}/log/{library_kit}.{shard}.call_cnvs.log"
+        return {"log": "work/{library_kit}/log/{library_kit}.{shard}.call_cnvs.log"}
 
 
 class GcnvPostGermlineCallsCommonMixin:
     """Mixin used for the ``gcnv_post_germline_calls`` step"""
 
     def _get_log_file_post_germline_calls(self):
-        return "work/{library_name}/log/{library_name}.post_germline_calls.log"
+        return {"log": "work/{library_name}/log/{library_name}.post_germline_calls.log"}
 
 
 class GcnvCommonStepPart(

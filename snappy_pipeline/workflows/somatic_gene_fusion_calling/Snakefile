@@ -31,7 +31,7 @@ if str(wf.config.tool) == "fusioncatcher":
         output:
             **wf.get_output_files("fusioncatcher", "run"),
         log:
-            wf.get_log_file("fusioncatcher", "run"),
+            **wf.get_log_file("fusioncatcher", "run"),
         benchmark:
             wf.get_benchmark_file("fusioncatcher", "run")
         threads: wf.get_resource("fusioncatcher", "run", "threads")
@@ -51,7 +51,7 @@ elif str(wf.config.tool) == "jaffa":
         output:
             **wf.get_output_files("jaffa", "run"),
         log:
-            wf.get_log_file("jaffa", "run"),
+            **wf.get_log_file("jaffa", "run"),
         benchmark:
             wf.get_benchmark_file("jaffa", "run")
         threads: wf.get_resource("jaffa", "run", "threads")
@@ -71,7 +71,7 @@ elif str(wf.config.tool) == "pizzly":
         output:
             **wf.get_output_files("pizzly", "run"),
         log:
-            wf.get_log_file("pizzly", "run"),
+            **wf.get_log_file("pizzly", "run"),
         benchmark:
             wf.get_benchmark_file("pizzly", "run")
         threads: wf.get_resource("pizzly", "run", "threads")
@@ -93,7 +93,7 @@ elif str(wf.config.tool) == "hera":
         output:
             **wf.get_output_files("hera", "run"),
         log:
-            wf.get_log_file("hera", "run"),
+            **wf.get_log_file("hera", "run"),
         benchmark:
             wf.get_benchmark_file("hera", "run")
         threads: wf.get_resource("hera", "run", "threads")
@@ -113,7 +113,7 @@ elif str(wf.config.tool) == "star_fusion":
         output:
             **wf.get_output_files("star_fusion", "run"),
         log:
-            wf.get_log_file("star_fusion", "run"),
+            **wf.get_log_file("star_fusion", "run"),
         benchmark:
             wf.get_benchmark_file("star_fusion", "run")
         threads: wf.get_resource("star_fusion", "run", "threads")
@@ -133,7 +133,7 @@ elif str(wf.config.tool) == "defuse":
         output:
             **wf.get_output_files("defuse", "run"),
         log:
-            wf.get_log_file("defuse", "run"),
+            **wf.get_log_file("defuse", "run"),
         benchmark:
             wf.get_benchmark_file("defuse", "run")
         threads: wf.get_resource("defuse", "run", "threads")

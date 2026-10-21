@@ -3,7 +3,8 @@
 
 For every job, the dump records the rule, wildcards, input, output and log files, evaluated
 params, threads, resources and the wrapper. It is the basis of the DAG snapshot tests in
-``tests/snappy_pipeline/test_generated_configs_dryrun.py``.
+``tests/snappy_pipeline/test_generated_configs_dryrun.py``. It fails if a rule with a wrapper
+has no log named ``log``.
 
 Usage: dump_dag.py --directory <project dir with config.yaml> --task <task name> --output <json>
 """
@@ -74,6 +75,16 @@ def dump_dag(directory: Path, task: str, frozen: bool = False) -> list[dict[str,
         workflow._prepare_dag(forceall=True, ignore_incomplete=True, lock_warn_only=True)
         workflow._build_dag()
         records = [_job_record(job) for job in workflow.dag.jobs]
+        # The wrapper base classes fail at run time without snakemake.log.log.
+        unnamed = sorted(
+            {
+                job.rule.name
+                for job in workflow.dag.jobs
+                if job.rule.wrapper and "log" not in job.log.keys()
+            }
+        )
+        if unnamed:
+            raise SystemExit(f"wrapper rules without a log named 'log': {', '.join(unnamed)}")
     return sorted(records, key=lambda r: (r["rule"], json.dumps(r["wildcards"]), r["output"]))
 
 
