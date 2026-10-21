@@ -7,10 +7,13 @@ if TYPE_CHECKING:
 
 ShellWrapper(snakemake).run(
     r"""
-samtools faidx {snakemake.input.reference}
-cp -f {snakemake.input.reference}.fai {snakemake.output.reference_fai}
+# Write the indexes here, not next to the input FASTA, which belongs to the upstream task. The
+# .gzi of a bgzipped FASTA goes to the temporary directory; no output needs it.
+samtools faidx \
+    --fai-idx {snakemake.output.reference_fai} \
+    --gzi-idx $TMPDIR/reference.gzi \
+    {snakemake.input.reference}
 samtools dict -o {snakemake.output.reference_dict} {snakemake.input.reference}
 cut -f1,2 {snakemake.output.reference_fai} > {snakemake.output.reference_genome}
 """
 )
-
