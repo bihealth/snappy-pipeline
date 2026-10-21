@@ -17,19 +17,12 @@ from snappy_pipeline.workflows.reference_index.model import ExpectedIndex
 
 
 class Tool(enum.StrEnum):
-    fusioncatcher = "fusioncatcher"
     jaffa = "jaffa"
     arriba = "arriba"
     defuse = "defuse"
     hera = "hera"
     pizzly = "pizzly"
     star_fusion = "star_fusion"
-
-
-class Fusioncatcher(SnappyModel):
-    data_dir: ConfigPath
-    configuration: str = ""
-    num_threads: int = 16
 
 
 class Pizzly(SnappyModel):
@@ -145,8 +138,6 @@ class SomaticGeneFusionCalling(SnappyStepModel):
     depends_on: SomaticGeneFusionCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]
-
-    fusioncatcher: Fusioncatcher | None = None
 
     jaffa: Jaffa | None = None
 

@@ -12,8 +12,6 @@ The ``tool`` field selects the caller:
   The optional ``depends_on.database`` (``{type: database, tags: [arriba]}``) may give the keys ``blacklist``, ``known_fusions``, ``tags``, ``structural_variants`` and ``protein_domains`` of the arriba release.
 - ``star_fusion`` returns results similar to ``arriba``, but less accurate.
   It needs ``depends_on.database`` (``{type: database, tags: [star_fusion]}``) with the key ``ctat_resource_lib``.
-- ``fusioncatcher`` is broken.
-  Its resource requirements are so high that re-enabling it is probably not worth it.
 - ``defuse``, ``hera``, ``jaffa`` and ``pizzly`` are not tested and probably broken.
 
 The task gives one result per RNA library.
@@ -53,7 +51,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 GENE_FUSION_CALLERS = (
     "arriba",
     "defuse",
-    "fusioncatcher",
     "hera",
     "jaffa",
     "pizzly",
@@ -98,15 +95,6 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         for group in self.parent.read_groups(library_name):
             if mate in group.paths:
                 yield group.paths[mate]
-
-
-class FusioncatcherStepPart(SomaticGeneFusionCallingStepPart):
-    """Somatic gene fusion calling from RNA-seq reads using Fusioncatcher"""
-
-    #: Step name
-    name = "fusioncatcher"
-
-    default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{7500 * 4}MB")
 
 
 class JaffaStepPart(SomaticGeneFusionCallingStepPart):
@@ -282,8 +270,6 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         selected_tool = self.config.tool
         match selected_tool:
-            case Tool.fusioncatcher:
-                selected_sub_step = FusioncatcherStepPart
             case Tool.jaffa:
                 selected_sub_step = JaffaStepPart
             case Tool.pizzly:

@@ -44,7 +44,6 @@ TASK_NAMES = _get_task_names()
 RNA_TASKS = {
     "ngs_mapping_star",
     "somatic_gene_fusion_calling_arriba",
-    "somatic_gene_fusion_calling_fusioncatcher",
     "somatic_gene_fusion_calling_jaffa",
     "somatic_gene_fusion_calling_defuse",
     "somatic_gene_fusion_calling_hera",

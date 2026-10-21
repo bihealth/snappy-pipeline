@@ -42,7 +42,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "exons": "exons",
     "expression": "gene_expression_quantification_featurecounts",
     "features": "features",
-    "fusions": "somatic_gene_fusion_calling_fusioncatcher",
+    "fusions": "somatic_gene_fusion_calling_arriba",
     "germline_variants": "variant_filtration_bcftools",
     "hla_types": "hla_typing_optitype",
     "index": "reference_index_bwa",
