@@ -52,11 +52,6 @@ elif tool == "sequenza":
             mem=wf.get_resource("sequenza", "install", "mem"),
             partition=wf.get_resource("sequenza", "install", "partition"),
             tmpdir=wf.get_resource("sequenza", "install", "tmpdir"),
-        params:
-            packages=[
-                {"name": "aroneklund/copynumber", "repo": "github"},
-                {"name": "sequenzatools/sequenza@3.0.0", "repo": "bitbucket"},
-            ],
         wrapper:
             wf.wrapper_path("sequenza/install")
 

@@ -349,18 +349,7 @@
   "output": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/out/packages.done"
   ],
-  "params": {
-   "packages": [
-    {
-     "name": "aroneklund/copynumber",
-     "repo": "github"
-    },
-    {
-     "name": "sequenzatools/sequenza@3.0.0",
-     "repo": "bitbucket"
-    }
-   ]
-  },
+  "params": {},
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,
