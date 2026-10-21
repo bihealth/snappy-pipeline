@@ -201,6 +201,33 @@ def test_load_project_allows_a_vembrane_expression_in_parallel_tasks():
     load_project(_config(_mapping(), _calling(), _annotation(), first, second), WORK_DIR)
 
 
+def _genome(name, fasta):
+    files = {"fasta": fasta}
+    return (
+        "external_data",
+        name,
+        {"produces": {"type": "raw", "tags": ["reference", "dna"]}, "files": files},
+    )
+
+
+def _reference_index(reference):
+    return ("reference_index", "bwa_built", {"depends_on": {"reference": reference}, "tool": "bwa"})
+
+
+def test_load_project_rejects_an_index_built_from_another_genome():
+    mouse = _genome("mouse", "/refs/mouse.fa")
+    tasks = mouse, _reference_index("mouse"), _mapping(depends_on={"index": "bwa_built"})
+    with pytest.raises(ValueError, match="'bwa_built' is built from the genome of task 'mouse'"):
+        load_project(_config(*tasks), WORK_DIR)
+
+
+def test_load_project_allows_an_index_built_from_the_same_genome_file():
+    # A custom genome (mouse with extra contigs, human with bacteria) is one FASTA file
+    custom = _genome("custom", "/refs/genome.fa")
+    tasks = custom, _reference_index("custom"), _mapping(depends_on={"index": "bwa_built"})
+    load_project(_config(*tasks), WORK_DIR)
+
+
 def test_load_project_rejects_dependency_on_missing_task():
     with pytest.raises(
         ValueError, match="depends_on.alignments is 'mapping2', which is not a task"

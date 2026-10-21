@@ -22,8 +22,8 @@
 # tasks name in depends_on: the genome (depends_on.reference; its .fai and .dict must be next
 # to the FASTA), the gene annotation, dbSNP (its .tbi must be next to the VCF), BED files of
 # regions (type regions) and a tool's database (depends_on.database: type database, tagged with
-# the tool). Mappers read their index from depends_on.index: a reference_index task, or
-# external_data for an existing one.
+# the tool). Mappers read their index from depends_on.index: a reference_index task built from
+# the genome in their depends_on.reference, or external_data for an existing one.
 # Files that belong to one tool's setup and do not depend on the reference stay in its section.
 #
 # Example

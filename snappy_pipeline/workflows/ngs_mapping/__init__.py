@@ -16,6 +16,7 @@ A task with a DNA tool maps the DNA libraries, a task with ``star`` the RNA libr
 
 Reads come from ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
 The mapper index comes from ``depends_on.index``, for example an ``external_data`` task or a ``reference_index`` task (:ref:`step_reference_index`).
+A ``reference_index`` task must build it from the genome in ``depends_on.reference``.
 
 Outputs
 -------

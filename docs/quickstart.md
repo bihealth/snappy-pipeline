@@ -107,7 +107,7 @@ data_sets:
 
 Relative paths are relative to the project directory, the directory of `config.yaml`; `pathvars` can name roots for paths, see {ref}`config_paths`.
 The genome FASTA needs its index and sequence dictionary next to it (`genome.fa.fai`, `genome.dict`).
-The index can also come from a `reference_index` task, and the reference from a `reference_download` task.
+The index can also come from a `reference_index` task, and the reference from a `reference_download` task; a `reference_index` task builds the index from the genome that the mapping task names in `depends_on.reference`.
 
 ## Add the sample sheet and the reads
 

@@ -73,7 +73,7 @@ STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | list[str] | None] = {
     ("gene_expression_quantification", "alignments"): "ngs_mapping_star",
     ("gene_expression_quantification", "index"): "salmon_index",
     ("somatic_gene_fusion_calling", "index"): "star_index",
-    ("reference_index", "reference"): "reference_download",
+    ("reference_index", "reference"): "genome",
     ("homologous_recombination_deficiency", "copy_number"): (
         "somatic_targeted_seq_cnv_calling_sequenza"
     ),

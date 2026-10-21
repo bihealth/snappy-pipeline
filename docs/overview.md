@@ -174,6 +174,8 @@ A dependency is data that the pipeline knows.
 It has a type and tags, and the consumer checks both, and the keys it reads, when the project loads.
 Reference data is a dependency too: the genome, the gene annotation, enrichment kits, exons and other regions, and the indexes of the mappers.
 `external_data` tasks provide existing files, and `reference_index` tasks build indexes.
+A task that reads an index from a `reference_index` task must name the genome that the index is built from in `depends_on.reference`; the project does not load otherwise.
+A custom genome, such as mouse with extra contigs or human with bacterial genomes, is one FASTA file that both tasks name.
 A genome FASTA needs its index and sequence dictionary next to it, named as samtools and GATK name them (`genome.fa.fai`, `genome.dict`).
 Every job that reads the genome has both as inputs, so a missing one fails when Snakemake builds the DAG; `reference_download` builds them for the FASTA it downloads.
 In the same way, a VCF of dbSNP or population variants needs its index next to it: `.tbi` for a `.vcf.gz`, `.idx` for a plain `.vcf`, as in the GATK resource bundle.

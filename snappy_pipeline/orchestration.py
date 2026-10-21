@@ -86,8 +86,9 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
 
     Raises ``ValueError`` (or a pydantic ``ValidationError``) for unknown steps, duplicate task
     names, ``depends_on`` values that name no task, dependency cycles, upstream tasks that
-    do not produce what a ``depends_on`` field requires, and ``FILTER`` IDs that could mean two
-    things (see :func:`_check_filter_ids`).
+    do not produce what a ``depends_on`` field requires, ``FILTER`` IDs that could mean two
+    things (see :func:`_check_filter_ids`), and indexes built from another genome than the
+    reader's ``depends_on.reference``.
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
@@ -148,7 +149,34 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     )
     _check_granularity(project)
     _check_filter_ids(project)
+    _check_index_references(project)
     return project
+
+
+def _check_index_references(project: Project) -> None:
+    """Raise if a task reads its ``depends_on.index`` from a ``reference_index`` task that builds
+    it from another genome than the task's ``depends_on.reference``.
+
+    Genomes are compared by task, and two ``external_data`` tasks that name the same FASTA file
+    are one genome; a custom genome (mouse with extra contigs, human with bacteria) is one FASTA
+    that both tasks name. Indexes from ``external_data`` have no genome to compare.
+    """
+
+    def genome(task_name: str) -> str:
+        files = getattr(project.task_configs[task_name], "files", None) or {}
+        return files.get("fasta") or task_name
+
+    for name, dependencies in project.dependencies.items():
+        index, reference = dependencies.get("index"), dependencies.get("reference")
+        if not reference or not index or project.task(index).step != "reference_index":
+            continue
+        built_from = project.dependencies[index]["reference"]
+        if genome(built_from) != genome(reference):
+            raise ValueError(
+                f"Task {name!r}: the index of task {index!r} is built from the genome of task "
+                f"{built_from!r}, but depends_on.reference names task {reference!r}; "
+                "name the same genome in both"
+            )
 
 
 def _check_filter_ids(project: Project) -> None:
