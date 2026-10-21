@@ -1747,8 +1747,7 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
   ],
   "log": [
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.script"
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log"
   ],
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
@@ -1781,8 +1780,7 @@
    "tasks/reference_download/work/reference_download/out/reference.fa"
   ],
   "log": [
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.script"
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
   "output": [
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
@@ -1809,8 +1807,7 @@
    "tasks/reference_download/work/reference_download/out/reference.fa"
   ],
   "log": [
-   "tasks/reference_index_star/work/reference_index/log/reference_index.common.log",
-   "tasks/reference_index_star/work/reference_index/log/reference_index.common.script"
+   "tasks/reference_index_star/work/reference_index/log/reference_index.common.log"
   ],
   "output": [
    "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
@@ -1841,8 +1838,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
-   "tasks/reference_index_star/work/reference_index/log/reference_index.index.log",
-   "tasks/reference_index_star/work/reference_index/log/reference_index.index.script"
+   "tasks/reference_index_star/work/reference_index/log/reference_index.index.log"
   ],
   "output": [
    "tasks/reference_index_star/work/reference_index/out/reference.index/chrLength.txt",

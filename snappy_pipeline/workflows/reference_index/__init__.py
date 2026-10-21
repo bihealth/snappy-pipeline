@@ -73,7 +73,7 @@ class BuildReferenceCommonStepPart(BaseStepPart):
 
     def _get_log_file_run(self):
         prefix = "work/reference_index/log/reference_index.common"
-        return {"log": prefix + ".log", "script": prefix + ".script"}
+        return {"log": prefix + ".log"}
 
 
 class _IndexToolStepPart(BaseStepPart):
@@ -96,7 +96,7 @@ class _IndexToolStepPart(BaseStepPart):
 
     def _get_log_file_run(self):
         prefix = "work/reference_index/log/reference_index.index"
-        return {"log": prefix + ".log", "script": prefix + ".script"}
+        return {"log": prefix + ".log"}
 
 
 class BwaIndexStepPart(_IndexToolStepPart):
