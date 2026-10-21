@@ -388,7 +388,7 @@ class MBCsStepPart(ReadMappingStepPart):
                 "kits", wildcards.library_name
             ).baits
         if self.config.mbcs.recalibrate:
-            inputs["common_variants"] = self.parent.get_upstream_paths("common_variants").vcf
+            inputs |= self.parent.vcf_inputs("common_variants")
         return inputs
 
     def _get_params_run(self, wildcards: Wildcards):

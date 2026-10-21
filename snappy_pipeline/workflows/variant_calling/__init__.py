@@ -221,7 +221,7 @@ class GatkCallerStepPartBase(VariantCallingStepPart):
         """
         yield from super()._get_input_files_run(wildcards).items()
         yield from self.parent.reference_inputs().items()
-        yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
+        yield from self.parent.vcf_inputs("dbsnp").items()
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
@@ -302,7 +302,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
     @dictify
     def _get_input_files_discover(self, wildcards):
         yield from self.parent.reference_inputs().items()
-        yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
+        yield from self.parent.vcf_inputs("dbsnp").items()
         infix = wildcards.library_name
         alignments: ExpectedAlignments = self.parent.get_upstream_paths(
             "alignments", library_name=infix
@@ -684,9 +684,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         input_files.update(self.parent.reference_inputs())
 
         if self.config.depends_on.germline_resource:
-            input_files["germline_resource"] = self.parent.get_upstream_paths(
-                "germline_resource"
-            ).vcf
+            input_files.update(self.parent.vcf_inputs("germline_resource"))
         if self.config.depends_on.panel_of_normals:
             pon = self.parent.get_upstream_paths("panel_of_normals")
             input_files["panel_of_normals"] = pon.vcf
@@ -733,7 +731,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             **self.parent.reference_inputs(),
-            "common_variants": self.parent.get_upstream_paths("common_variants").vcf,
+            **self.parent.vcf_inputs("common_variants"),
         }
 
     def _get_input_files_pileup_tumor(self, wildcards):
@@ -744,7 +742,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
             "bam": alignments.bam,
             "bai": alignments.bai,
             **self.parent.reference_inputs(),
-            "common_variants": self.parent.get_upstream_paths("common_variants").vcf,
+            **self.parent.vcf_inputs("common_variants"),
         }
 
     def _get_input_files_contamination(self, wildcards: Wildcards):

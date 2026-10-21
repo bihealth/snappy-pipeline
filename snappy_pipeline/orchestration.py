@@ -23,6 +23,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     ExpectedPathSchema,
     ExpectedReference,
+    ExpectedVcf,
     Granularity,
     select_signature,
 )
@@ -175,15 +176,28 @@ def _exists(path: str) -> bool:
 
 def missing_files(project: Project) -> dict[str, list[str]]:
     """Return task name (``data_sets`` for the data sets) -> the files of its configuration that do
-    not exist: its ``ConfigPath`` values and, for an ``external_data`` genome, the ``.fai`` and
-    ``.dict`` that the jobs reading it declare as inputs."""
+    not exist: its ``ConfigPath`` values and the sidecars that the jobs reading an
+    ``external_data`` task declare as inputs (the ``.fai`` and ``.dict`` of a genome, the index of
+    a VCF)."""
     paths = {name: list(found) for name, found in project.file_paths.items()}
-    for dependencies in project.dependencies.values():
-        genome = dependencies.get("reference")
-        files = getattr(project.task_configs.get(genome), "files", None) or {}
-        if isinstance(files.get("fasta"), str):
-            reference = ExpectedReference(fasta=files["fasta"])
-            paths[genome] += [reference.fai, reference.sequence_dict]
+    for consumer, dependencies in project.dependencies.items():
+        config = project.task_configs[consumer]
+        fields = type(config.depends_on).model_fields if dependencies else {}
+        for field, upstream in dependencies.items():
+            files = getattr(project.task_configs.get(upstream), "files", None) or {}
+            schema = next(
+                (
+                    m.for_tool(config.tool_tag())
+                    for m in fields[field].metadata
+                    if isinstance(m, ExpectedPathSchema)
+                ),
+                None,
+            )
+            if schema is ExpectedReference and isinstance(files.get("fasta"), str):
+                reference = ExpectedReference(fasta=files["fasta"])
+                paths[upstream] += [reference.fai, reference.sequence_dict]
+            elif schema is ExpectedVcf and isinstance(files.get("vcf"), str):
+                paths[upstream].append(ExpectedVcf(vcf=files["vcf"]).index)
     missing = {
         name: [path for path in dict.fromkeys(found) if not _exists(path)]
         for name, found in paths.items()

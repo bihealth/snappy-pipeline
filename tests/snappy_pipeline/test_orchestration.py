@@ -18,6 +18,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
     ExpectedReference,
+    ExpectedVcf,
 )
 
 WORK_DIR = "/projects/p1"
@@ -451,6 +452,14 @@ def test_reference_sidecars_follow_the_samtools_and_gatk_names(fasta, sequence_d
     assert reference.sequence_dict == sequence_dict
 
 
+@pytest.mark.parametrize(
+    "vcf, index",
+    [("/refs/dbsnp.vcf.gz", "/refs/dbsnp.vcf.gz.tbi"), ("/refs/dbsnp.vcf", "/refs/dbsnp.vcf.idx")],
+)
+def test_vcf_index_follows_the_tabix_and_gatk_names(vcf, index):
+    assert ExpectedVcf(vcf=vcf).index == index
+
+
 def test_config_paths_are_resolved_against_the_project_directory_with_pathvars():
     relative = _external("relative", "regions", [], files={"bed": "beds/a.bed"})
     named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
@@ -497,6 +506,22 @@ def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
     project = load_project(config, str(tmp_path))
 
     assert orchestration.missing_files(project) == {"genome": [str(tmp_path / "genome.dict")]}
+
+
+def test_missing_files_lists_the_index_of_a_vcf(tmp_path):
+    for name in ("genome.fa", "genome.fa.fai", "genome.dict", "index.amb", "dbsnp.vcf.gz"):
+        (tmp_path / name).touch()
+    tasks = (
+        _external("genome", "raw", ["reference", "dna"], files={"fasta": "genome.fa"}),
+        _external("bwa_index", "index", ["bwa", "dna"], files={"index": "index"}),
+        _external("dbsnp", "variants", ["dbsnp"], files={"vcf": "dbsnp.vcf.gz"}),
+        _mapping(),
+        _calling(tool="gatk4_hc_gvcf", dbsnp="dbsnp"),
+    )
+    config = {"tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks], "data_sets": {}}
+    project = load_project(config, str(tmp_path))
+
+    assert orchestration.missing_files(project) == {"dbsnp": [str(tmp_path / "dbsnp.vcf.gz.tbi")]}
 
 
 class _HlaListDependsOn(SnappyModel):

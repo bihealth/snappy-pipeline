@@ -27,7 +27,8 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
    "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
    "tasks/reference_index_bwa/work/reference_index/out/reference.sa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi"
   ],
   "log": [
    "tasks/ngs_mapping_mbcs/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log"
@@ -95,7 +96,8 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
    "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
    "tasks/reference_index_bwa/work/reference_index/out/reference.sa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi"
   ],
   "log": [
    "tasks/ngs_mapping_mbcs/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.mapping.log"

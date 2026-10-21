@@ -320,7 +320,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi"
   ],
   "log": [
    "tasks/variant_calling_gatk4_hc_joint/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.gatk4_hc_joint_run.log"

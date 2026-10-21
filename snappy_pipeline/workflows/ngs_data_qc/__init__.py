@@ -141,7 +141,7 @@ class PicardStepPart(BaseStepPart):
     def _get_input_files_metrics(self, wildcards):
         yield from self.parent.reference_inputs().items()
         if self.config.depends_on.dbsnp:
-            yield "dbsnp", self.parent.get_upstream_paths("dbsnp").vcf
+            yield from self.parent.vcf_inputs("dbsnp").items()
         if "CollectHsMetrics" in self.config.picard.programs:
             kit = self.parent.library_kits[wildcards.library_name]
             yield "baits", f"work/{kit}/out/{kit}.baits.interval_list"

@@ -176,6 +176,7 @@ Reference data is a dependency too: the genome, the gene annotation, enrichment 
 `external_data` tasks provide existing files, and `reference_index` tasks build indexes.
 A genome FASTA needs its index and sequence dictionary next to it, named as samtools and GATK name them (`genome.fa.fai`, `genome.dict`).
 Every job that reads the genome has both as inputs, so a missing one fails when Snakemake builds the DAG; `reference_download` builds them for the FASTA it downloads.
+In the same way, a VCF of dbSNP or population variants needs its index next to it: `.tbi` for a `.vcf.gz`, `.idx` for a plain `.vcf`, as in the GATK resource bundle.
 Several tasks can read one such task.
 So each reference file is named once, and a switch to another genome build only changes these tasks.
 
@@ -263,7 +264,7 @@ An undefined name fails when the project loads.
 
 snappy does not check whether the files exist when the project loads, so a dry-run works on a machine without them.
 Snakemake checks the inputs of the jobs it runs.
-`snappy check-files` lists every file of the configuration that does not exist, including the `.fai` and `.dict` of a genome.
+`snappy check-files` lists every file of the configuration that does not exist, including the `.fai` and `.dict` of a genome and the index of a VCF.
 
 ## How FASTQ files are found
 

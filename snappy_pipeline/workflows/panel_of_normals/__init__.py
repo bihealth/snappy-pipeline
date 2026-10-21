@@ -333,7 +333,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
             "normals": paths,
             "normals_tbi": [path + ".tbi" for path in paths],
             **self.parent.reference_inputs(),
-            "germline_resource": self.parent.get_upstream_paths("germline_resource").vcf,
+            **self.parent.vcf_inputs("germline_resource"),
         }
 
     def _get_output_files_scatter(self):

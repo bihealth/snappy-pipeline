@@ -134,7 +134,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi"
   ],
   "log": [
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/log/panel_of_normals.log"
@@ -1730,7 +1731,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -1782,7 +1784,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -1834,7 +1837,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -1886,7 +1890,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -1938,7 +1943,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -1990,7 +1996,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2042,7 +2049,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2094,7 +2102,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2146,7 +2155,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2198,7 +2208,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2250,7 +2261,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2302,7 +2314,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2354,7 +2367,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2406,7 +2420,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2458,7 +2473,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2510,7 +2526,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2562,7 +2579,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2614,7 +2632,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2666,7 +2685,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2718,7 +2738,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2770,7 +2791,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2822,7 +2844,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2874,7 +2897,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],
@@ -2926,7 +2950,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz",
+   "<repo>/.tests/test-workflow/resources/refs/dbsnp.vcf.gz.tbi",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi"
   ],

@@ -142,9 +142,15 @@ class ExpectedFeatures(BaseModel):
 
 
 class ExpectedVcf(BaseModel):
-    """A VCF file; tools find its ``.tbi`` next to it."""
+    """A VCF file; its index is next to it, named by the convention of tabix and GATK."""
 
     vcf: str
+
+    @property
+    def index(self) -> str:
+        """``.tbi`` for a bgzipped VCF, ``.idx`` for a plain one (as in the GATK resource
+        bundle)."""
+        return self.vcf + (".tbi" if self.vcf.endswith(".gz") else ".idx")
 
 
 class ExpectedKits(BaseModel):

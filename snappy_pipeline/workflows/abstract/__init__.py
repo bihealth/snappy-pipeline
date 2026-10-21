@@ -1051,6 +1051,12 @@ class BaseStep:
             "reference_dict": reference.sequence_dict,
         }
 
+    def vcf_inputs(self, field: str) -> dict[str, str]:
+        """The VCF of ``depends_on.<field>`` and its index, as rule inputs ``<field>`` and
+        ``<field>_index``, so that a missing index fails when the DAG is built."""
+        vcf = self.get_upstream_paths(field)
+        return {field: vcf.vcf, f"{field}_index": vcf.index}
+
     def library_kit_paths(self, field: str, library_name: str):
         """Return the files of the library's kit from the ``external_data`` task with ``kits``
         in ``depends_on.<field>``, like :meth:`get_upstream_paths`."""

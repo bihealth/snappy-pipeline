@@ -182,6 +182,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A field that names a file or directory has the type `ConfigPath` (also in `list[...]` or `dict[str, ...]`).
   `load_project()` expands its `pathvars` and resolves it against the project directory, and `snappy check-files` checks that it exists.
 - A rule that reads the genome adds `self.parent.reference_inputs()` to its inputs: the FASTA (`reference`) with its `.fai` (`reference_fai`) and `.dict` (`reference_dict`), named by the convention in `ExpectedReference`.
+  A rule that reads a VCF resource (`dbsnp`, `germline_resource`, `common_variants`) adds `self.parent.vcf_inputs(field)`: the VCF (`<field>`) and its index (`<field>_index`), named by the convention in `ExpectedVcf`.
 - `reference` (genome FASTA), `features` (gene annotation GTF), `dbsnp`, `germline_resource` (tag `population`) and `common_variants` (tag `common`) use the shared field types `Reference`, `Features`, `Dbsnp`, `GermlineResource` and `CommonVariants` from `snappy_pipeline.workflows.abstract.protocol`.
   Tags compose: one task with `tags: [population, common]` can serve both.
   They usually name `external_data` tasks.
