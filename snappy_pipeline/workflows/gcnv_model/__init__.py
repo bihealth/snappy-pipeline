@@ -7,6 +7,7 @@ The ``gcnv`` tool of :ref:`step_sv_calling_targeted` and :ref:`step_sv_calling_w
 These tasks name the model task in ``depends_on.gcnv_model``.
 The step has no ``tool`` field.
 ``depends_on.mappable_regions`` gives the uniquely mappable regions, which annotate the intervals.
+GATK queries this BED file by interval, so its index must be next to it: ``.idx`` from ``gatk IndexFeatureFile`` for a plain BED, ``.tbi`` for a bgzipped one.
 The optional ``depends_on.par_regions`` gives the pseudo-autosomal regions, which the contig ploidy model excludes.
 
 The field ``intervals`` selects how the genome is binned:

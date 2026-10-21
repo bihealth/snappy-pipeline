@@ -17,6 +17,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
     DataType,
+    ExpectedIndexedRegions,
     ExpectedReference,
     ExpectedVcf,
 )
@@ -520,6 +521,14 @@ def test_vcf_index_follows_the_tabix_and_gatk_names(vcf, index):
     assert ExpectedVcf(vcf=vcf).index == index
 
 
+@pytest.mark.parametrize(
+    "bed, index",
+    [("/refs/map.bed.gz", "/refs/map.bed.gz.tbi"), ("/refs/map.bed", "/refs/map.bed.idx")],
+)
+def test_indexed_regions_index_follows_the_tabix_and_gatk_names(bed, index):
+    assert ExpectedIndexedRegions(bed=bed).index == index
+
+
 def test_config_paths_are_resolved_against_the_project_directory_with_pathvars():
     relative = _external("relative", "regions", [], files={"bed": "beds/a.bed"})
     named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
@@ -582,6 +591,29 @@ def test_missing_files_lists_the_index_of_a_vcf(tmp_path):
     project = load_project(config, str(tmp_path))
 
     assert orchestration.missing_files(project) == {"dbsnp": [str(tmp_path / "dbsnp.vcf.gz.tbi")]}
+
+
+def test_missing_files_lists_the_index_of_a_mappability_track(tmp_path):
+    for name in ("genome.fa", "genome.fa.fai", "genome.dict", "index.amb", "kit.bed", "map.bed"):
+        (tmp_path / name).touch()
+    kits = {"Kit": {"targets": "kit.bed", "baits": "kit.bed"}}
+    depends_on = {"alignments": "mapping", "reference": "genome", "kits": "kits"}
+    tasks = (
+        _external("genome", "raw", ["reference", "dna"], files={"fasta": "genome.fa"}),
+        _external("bwa_index", "index", ["bwa", "dna"], files={"index": "index"}),
+        _external("kits", "regions", ["kits"], kits=kits),
+        _external("mappable", "regions", ["mappable"], files={"bed": "map.bed"}),
+        _mapping(),
+        (
+            "gcnv_model",
+            "gcnv",
+            {"depends_on": depends_on | {"mappable_regions": "mappable"}, "intervals": "targeted"},
+        ),
+    )
+    config = {"tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks], "data_sets": {}}
+    project = load_project(config, str(tmp_path))
+
+    assert orchestration.missing_files(project) == {"mappable": [str(tmp_path / "map.bed.idx")]}
 
 
 class _HlaListDependsOn(SnappyModel):

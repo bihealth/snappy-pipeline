@@ -734,9 +734,9 @@ def check_files(directory):
     """List the files that config.yaml names but that do not exist.
 
     These are the files in tool sections, the external_data paths, the sample sheets and search
-    paths, the .fai and .dict of a genome and the index of a VCF. Snakemake checks the inputs of
-    the jobs it runs anyway; this command checks all of them, for example after moving a project
-    to another machine. It exits with 1 if a file is missing.
+    paths, the .fai and .dict of a genome and the index of a VCF or of the mappability BED file.
+    Snakemake checks the inputs of the jobs it runs anyway; this command checks all of them, for
+    example after moving a project to another machine. It exits with 1 if a file is missing.
     """
     directory_path = directory() if callable(directory) else directory
     config_path = os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME))

@@ -7,6 +7,7 @@ from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
+    ExpectedIndexedRegions,
     ExpectedPathSchema,
     ExpectedRegions,
     Kits,
@@ -47,9 +48,10 @@ class GcnvModelDependsOn(SnappyModel):
     mappable_regions: Annotated[
         str,
         DataSignature(DataType.REGIONS, frozenset({"mappable"})),
-        ExpectedPathSchema(ExpectedRegions),
+        ExpectedPathSchema(ExpectedIndexedRegions),
     ]
-    """Task with the BED file of uniquely mappable regions"""
+    """Task with the BED file of uniquely mappable regions, with its ``.idx`` (plain BED) or
+    ``.tbi`` (bgzipped BED) next to it"""
 
     par_regions: Annotated[
         str,

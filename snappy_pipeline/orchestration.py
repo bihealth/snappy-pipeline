@@ -21,6 +21,7 @@ from snappy_pipeline.workflow_model import ConfigModel, TaskModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DATA_SETS,
     DataSignature,
+    ExpectedIndexedRegions,
     ExpectedPathSchema,
     ExpectedReference,
     ExpectedVcf,
@@ -214,7 +215,7 @@ def missing_files(project: Project) -> dict[str, list[str]]:
     """Return task name (``data_sets`` for the data sets) -> the files of its configuration that do
     not exist: its ``ConfigPath`` values and the sidecars that the jobs reading an
     ``external_data`` task declare as inputs (the ``.fai`` and ``.dict`` of a genome, the index of
-    a VCF)."""
+    a VCF or of an indexed BED file)."""
     paths = {name: list(found) for name, found in project.file_paths.items()}
     for consumer, dependencies in project.dependencies.items():
         config = project.task_configs[consumer]
@@ -234,6 +235,8 @@ def missing_files(project: Project) -> dict[str, list[str]]:
                 paths[upstream] += [reference.fai, reference.sequence_dict]
             elif schema is ExpectedVcf and isinstance(files.get("vcf"), str):
                 paths[upstream].append(ExpectedVcf(vcf=files["vcf"]).index)
+            elif schema is ExpectedIndexedRegions and isinstance(files.get("bed"), str):
+                paths[upstream].append(ExpectedIndexedRegions(bed=files["bed"]).index)
     missing = {
         name: [path for path in dict.fromkeys(found) if not _exists(path)]
         for name, found in paths.items()

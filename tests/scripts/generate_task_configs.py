@@ -47,7 +47,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "hla_types": "hla_typing_optitype",
     "index": "reference_index_bwa",
     "kits": "kits",
-    "mappable_regions": "tagged_regions",
+    "mappable_regions": "mappable_regions",
     "microsatellites": "regions",
     "par_regions": "tagged_regions",
     "phased_variants": "variant_phasing_gatk_read_backed_phasing",
@@ -358,6 +358,7 @@ def fixture_paths(base_config: dict[str, Any], base_config_path: Path) -> dict[s
         "reference": resolve(reference),
         "star_index": str(FIXTURES / "star_index"),
         "cnvkit_targets": str(FIXTURES / "cnvkit_targets.bed"),
+        "mappable": str(FIXTURES / "mappable.bed"),
         "mehari_db": str(FIXTURES / "mehari_db"),
         "placeholder_file": PLACEHOLDER_FILE,
         "vcf": str(FIXTURES.parents[2] / ".tests/test-workflow/resources/refs/dbsnp.vcf.gz"),
@@ -370,6 +371,7 @@ RNA = "extraction_type == 'rna'"
 REFERENCE = Fixture("reference")
 PLACEHOLDER = Fixture("placeholder_file")
 VCF = Fixture("vcf")
+MAPPABLE = Fixture("mappable")
 VARIANT_EXPORT_EXTERNAL = {
     "path_refseq_ser": PLACEHOLDER,
     "path_ensembl_ser": PLACEHOLDER,
@@ -523,16 +525,16 @@ def _external_vcfs(name: str, tags: list[str]) -> dict[str, Any]:
 #: steps. One task with several tags serves several kinds of regions; each task names the fixture
 #: that the replaced config fields had, so that job inputs stay the same. features and regions
 #: name the reference FASTA, as no test reads them; features also serves RNA-SeQC. dbsnp and
-#: population_variants name a VCF, whose index the jobs read as well.
+#: population_variants name a VCF, and mappable_regions an empty BED, whose indexes the jobs read
+#: as well.
 EXTRA_TASKS: list[dict[str, Any]] = [
     _external_file("genome", "raw", ["reference", "dna"], "fasta"),
     _external_file("features", "raw", ["features", "rnaseqc"], "gtf"),
     _external_file("dbsnp", "variants", ["dbsnp"], "vcf", VCF),
     _external_file("exons", "regions", ["exons"], "bed", PLACEHOLDER),
     _external_file("regions", "regions", ["microsatellites"], "bed"),
-    _external_file(
-        "tagged_regions", "regions", ["mappable", "par", "snp_loci", "genes"], "bed", PLACEHOLDER
-    ),
+    _external_file("tagged_regions", "regions", ["par", "snp_loci", "genes"], "bed", PLACEHOLDER),
+    _external_file("mappable_regions", "regions", ["mappable"], "bed", MAPPABLE),
     _external_file("population_variants", "variants", ["population", "common"], "vcf", VCF),
     _external_files(
         "salmon_index",

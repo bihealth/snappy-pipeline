@@ -21,7 +21,8 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/tests/scripts/generate_task_configs.py"
+   "<repo>/tests/snappy_pipeline/fixtures/mappable.bed",
+   "<repo>/tests/snappy_pipeline/fixtures/mappable.bed.idx"
   ],
   "log": [
    "tasks/gcnv_model_targeted/work/MedExome/log/MedExome.annotate_gc.log"

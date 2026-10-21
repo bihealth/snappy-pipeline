@@ -141,6 +141,12 @@ class ExpectedFeatures(BaseModel):
     gtf: str
 
 
+def feature_index(path: str) -> str:
+    """The index next to a file that tabix or GATK query by interval: ``.tbi`` for a bgzipped
+    file, ``.idx`` for a plain one (as in the GATK resource bundle)."""
+    return path + (".tbi" if path.endswith(".gz") else ".idx")
+
+
 class ExpectedVcf(BaseModel):
     """A VCF file; its index is next to it, named by the convention of tabix and GATK."""
 
@@ -148,9 +154,8 @@ class ExpectedVcf(BaseModel):
 
     @property
     def index(self) -> str:
-        """``.tbi`` for a bgzipped VCF, ``.idx`` for a plain one (as in the GATK resource
-        bundle)."""
-        return self.vcf + (".tbi" if self.vcf.endswith(".gz") else ".idx")
+        """See :func:`feature_index`."""
+        return feature_index(self.vcf)
 
 
 class ExpectedKits(BaseModel):
@@ -164,6 +169,15 @@ class ExpectedRegions(BaseModel):
     """A BED file of regions."""
 
     bed: str
+
+
+class ExpectedIndexedRegions(ExpectedRegions):
+    """A BED file of regions that GATK queries by interval, with its index next to it."""
+
+    @property
+    def index(self) -> str:
+        """See :func:`feature_index`; ``gatk IndexFeatureFile`` writes the ``.idx``."""
+        return feature_index(self.bed)
 
 
 #: ``depends_on`` field types for the reference data that many steps read

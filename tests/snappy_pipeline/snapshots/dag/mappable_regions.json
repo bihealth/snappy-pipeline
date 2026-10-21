@@ -1,0 +1,15 @@
+[
+ {
+  "benchmark": null,
+  "input": [],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ }
+]
