@@ -20,7 +20,8 @@ The task reads these tasks through `depends_on`:
 
 `variants`
 : Required.
-    A task with annotated somatic SNVs and indels, such as `variant_annotation` after `variant_calling`.
+    A task with somatic SNVs and indels annotated by VEP, such as `variant_annotation` with `tool: vep` after `variant_calling`.
+    The conversion to MAF cannot read mehari's annotations yet.
     Filtration can come before or after the annotation.
 
 `copy_number`
@@ -40,8 +41,6 @@ The task reads these tasks through `depends_on`:
 The conversion from VCF to MAF uses a script that needs a mapping from gene symbols to NCBI (Entrez) gene ids.
 The mapping does not depend on the genome release.
 `hgnc_complete_set.txt` from [HGNC](https://www.genenames.org/download/archive/) provides it, and `path_gene_id_mappings` points to it.
-
-`vcf2maf.annotation_tool` names the tool (`vep` or `mehari`) that annotated the VCF files, because their annotation fields differ.
 
 ```yaml
 tasks:
@@ -103,7 +102,6 @@ tasks:
       vcf2maf:
         Center: my_center
         ncbi_build: GRCh38
-        annotation_tool: vep
       study:
         type_of_cancer: mixed
         cancer_study_id: mixed_pi_2026

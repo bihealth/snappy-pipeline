@@ -228,7 +228,7 @@
  {
   "benchmark": "tasks/cbioportal_export/benchmarks/maf/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
-   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
   "log": [
    "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
@@ -319,7 +319,7 @@
       "alignments": "",
       "copy_number": "somatic_wgs_cnv_calling_cnvkit",
       "features": "features",
-      "variants": "variant_calling_mutect2"
+      "variants": "variant_annotation_pvactools"
      },
      "exclude_variant_with_flag": "",
      "expression": {
@@ -340,7 +340,6 @@
      },
      "vcf2maf": {
       "Center": "AUTO",
-      "annotation_tool": "vep",
       "ncbi_build": "GRCh37"
      }
     },
@@ -2024,6 +2023,73 @@
    "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/cnvkit/segment"
+ },
+ {
+  "benchmark": "tasks/variant_annotation_pvactools/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "input": [
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/tests/scripts/generate_task_configs.py",
+   "<repo>/tests/scripts/generate_task_configs.py",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "assembly": "GRCh38",
+     "buffer_size": 1000,
+     "cache_version": "115",
+     "num_threads": 8,
+     "output_options": [
+      "everything"
+     ],
+     "pick": false,
+     "pick_order": [
+      "biotype",
+      "mane_select",
+      "mane_plus_clinical",
+      "appris",
+      "tsl",
+      "ccds",
+      "canonical",
+      "rank",
+      "length"
+     ],
+     "plugins": [
+      "Frameshift",
+      "Wildtype"
+     ],
+     "species": "homo_sapiens",
+     "tx_flag": "gencode_basic"
+    }
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_annotation_pvactools_variant_annotation_vep",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/vep/run"
  },
  {
   "benchmark": "tasks/variant_calling_mutect2/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.filter.tsv",

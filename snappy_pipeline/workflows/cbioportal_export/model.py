@@ -23,11 +23,6 @@ class ExpectedCopyNumberCalls(BaseModel):
     dnacopy_seg: str
 
 
-class VariantAnnotationTool(enum.StrEnum):
-    VEP = "vep"
-    MEHARI = "mehari"
-
-
 class CopyNumberTool(enum.StrEnum):
     CNVKIT = "cnvkit"
     SEQUENZA = "sequenza"
@@ -43,13 +38,6 @@ class NcbiBuild(enum.StrEnum):
 class Vcf2Maf(SnappyModel):
     Center: str
     ncbi_build: NcbiBuild
-
-    annotation_tool: VariantAnnotationTool = VariantAnnotationTool.VEP
-    """Which annotation tool was used on the input VCF.
-
-    The vcf2maf wrapper uses this to select the correct config for parsing
-    VCF annotation fields (e.g. VEP vs Mehari format).
-    """
 
 
 class GenomeName(enum.StrEnum):
@@ -108,10 +96,11 @@ class CbioportalExportDependsOn(SnappyModel):
 
     variants: Annotated[
         str,
-        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel"), "vep"})),
         ExpectedPathSchema(ExpectedSomaticVariants),
     ]
-    """Annotated somatic variants, filtered or not"""
+    """Somatic variants annotated by VEP, filtered or not; the conversion to MAF cannot read
+    mehari's annotations yet"""
 
     features: Features = ""
 

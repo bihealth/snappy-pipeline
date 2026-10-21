@@ -2,7 +2,7 @@
 """Export to cBioPortal
 
 The step converts the results of the somatic tumor pipeline into the study files that cBioPortal imports.
-It converts the somatic variants (``depends_on.variants``) to MAF with vcf2maf.
+It converts the somatic variants (``depends_on.variants``, annotated by VEP) to MAF with vcf2maf.
 Optionally, it adds the copy number alterations (``copy_number_alteration``, from ``depends_on.copy_number``) and the gene expression (``expression``, from the gene counts of ``depends_on.alignments``).
 The data of all samples is merged into single files per cohort.
 
@@ -216,7 +216,8 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
             "normal_sample": self._get_normal_lib_name(wildcards),
             "tumor_id": self._get_tumor_bio_sample(wildcards),
             "normal_id": self._get_normal_bio_sample(wildcards),
-            "somatic_variant_annotation_tool": self.config.vcf2maf.annotation_tool,
+            # depends_on.variants requires VEP annotations
+            "somatic_variant_annotation_tool": "vep",
             "ncbi_build": self.config.vcf2maf.ncbi_build,
             "Center": self.config.vcf2maf.Center,
         }

@@ -68,7 +68,7 @@ VARIANT_FIELDS: dict[str, str] = {"gcnv_model": "intervals"}
 STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | list[str] | None] = {
     # Expression export is off in the generated config, so it needs no RNA mapping task.
     ("cbioportal_export", "alignments"): None,
-    ("cbioportal_export", "variants"): "variant_calling_mutect2",
+    ("cbioportal_export", "variants"): "variant_annotation_pvactools",
     ("create_proteome", "variants"): "variant_annotation_vep",
     ("gene_expression_quantification", "alignments"): "ngs_mapping_star",
     ("gene_expression_quantification", "index"): "salmon_index",
