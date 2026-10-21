@@ -32,6 +32,14 @@ def test_run_makes_snkmt_database_path_absolute(mocker, tmp_path, monkeypatch):
     )
 
 
+def test_run_passes_the_config_file_as_an_absolute_path(mocker, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    argv = _invoke_run(mocker, ["--directory", "project"])
+
+    # load_project resolves relative config paths against the directory of this file
+    assert argv[argv.index("--configfile") + 1] == str(tmp_path / "project" / "config.yaml")
+
+
 def test_run_lets_user_arguments_override_snkmt_database(mocker, tmp_path):
     argv = _invoke_run(
         mocker, ["--directory", str(tmp_path), "--", "--logger-snkmt-db", "/custom.sqlite"]
