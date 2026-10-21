@@ -25,6 +25,7 @@ Chain several tasks for a sequence of filters.
 
 The ``bcftools``, ``vembrane`` and ``regions`` filters have a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
 ``bcftools``, ``regions`` and ``ebfilter`` use the task name as ``FILTER`` ID, so each task of a chain has its own; ``vembrane`` uses the names of its ``expressions``, ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
+No other task of the project may be named like one of these.
 The task produces one VCF per tumor library.
 Its output has the input's tags plus ``filtered``.
 
@@ -345,6 +346,15 @@ class VariantFiltrationWorkflow(BaseStep):
     def task_produces(cls, config, upstream):
         """The variants this task reads, tagged ``filtered``."""
         return (upstream["variants"].with_tags("filtered"),)
+
+    @classmethod
+    def filter_ids(cls, config):
+        """The IDs of the DKFZ bias filter, and the expression names of ``vembrane`` in tag mode."""
+        if config.tool == "dkfz":
+            return frozenset({"bPcr", "bSeq"})
+        if config.tool == "vembrane" and config.vembrane.mode == "tag":
+            return frozenset(config.vembrane.expressions)
+        return frozenset()
 
     config_model_class = VariantFiltrationConfigModel
 

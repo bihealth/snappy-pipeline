@@ -140,6 +140,35 @@ def test_load_project_rejects_duplicate_task_names():
         load_project(_config(_mapping(), _mapping()), WORK_DIR)
 
 
+def _vembrane_tag(name, variants, **expressions):
+    config = {"tool": "vembrane", "vembrane": {"mode": "tag", "expressions": expressions}}
+    return ("variant_filtration", name, {"depends_on": {"variants": variants}, **config})
+
+
+def _dkfz(name, variants="annotation"):
+    depends_on = {"variants": variants, "alignments": "mapping", "reference": "genome"}
+    return ("variant_filtration", name, {"depends_on": depends_on, "tool": "dkfz", "dkfz": {}})
+
+
+def test_load_project_rejects_a_task_named_like_a_vembrane_filter_id():
+    # bcftools writes its task name into FILTER, vembrane the names of its expressions
+    tag = _vembrane_tag("tag", "annotation", low_qual="QUAL < 10")
+    tasks = _mapping(), _calling(), _annotation(), tag, _filtration("low_qual", variants="tag")
+    with pytest.raises(ValueError, match="'low_qual' is also a FILTER ID of task 'tag'"):
+        load_project(_config(*tasks), WORK_DIR)
+
+
+def test_load_project_rejects_a_task_named_like_a_dkfz_filter_id():
+    tasks = _mapping(), _calling(), _annotation(), _dkfz("dkfz"), _filtration("bPcr", "dkfz")
+    with pytest.raises(ValueError, match="'bPcr' is also a FILTER ID of task 'dkfz'"):
+        load_project(_config(*tasks), WORK_DIR)
+
+
+def test_load_project_allows_a_vembrane_task_named_like_its_own_expression():
+    tag = _vembrane_tag("low_qual", "annotation", low_qual="QUAL < 10")
+    load_project(_config(_mapping(), _calling(), _annotation(), tag), WORK_DIR)
+
+
 def test_load_project_rejects_dependency_on_missing_task():
     with pytest.raises(
         ValueError, match="depends_on.alignments is 'mapping2', which is not a task"

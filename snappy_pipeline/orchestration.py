@@ -84,8 +84,9 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     """Validate ``config`` and resolve its task graph.
 
     Raises ``ValueError`` (or a pydantic ``ValidationError``) for unknown steps, duplicate task
-    names, ``depends_on`` values that name no task, dependency cycles, and upstream tasks that
-    do not produce what a ``depends_on`` field requires.
+    names, ``depends_on`` values that name no task, dependency cycles, upstream tasks that
+    do not produce what a ``depends_on`` field requires, and task names that equal a ``FILTER``
+    ID of another task.
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
@@ -145,7 +146,23 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         file_paths={name: tuple(paths) for name, paths in file_paths.items()},
     )
     _check_granularity(project)
+    _check_filter_ids(project)
     return project
+
+
+def _check_filter_ids(project: Project) -> None:
+    """Raise if a task is named like a ``FILTER`` ID that another task writes under a name of its
+    own (vembrane expressions, DKFZ bias filter); filters such as bcftools write their task name."""
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    for owner, config in project.task_configs.items():
+        workflow_cls = WORKFLOW_REGISTRY[project.task(owner).step]
+        others = set(project.task_configs) - {owner}
+        clashes = sorted(workflow_cls.filter_ids(config) & others)
+        if clashes:
+            raise ValueError(
+                f"Task name {clashes[0]!r} is also a FILTER ID of task {owner!r}; rename one of them"
+            )
 
 
 def _check_granularity(project: Project) -> None:

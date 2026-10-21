@@ -170,6 +170,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A step lists what its tasks produce in `produces`.
   If that depends on the task's config or its inputs, the step overrides the classmethod `task_produces(config, upstream)`.
   For example, `ngs_mapping` produces `alignments [rna]` for STAR, and `variant_filtration` adds `filtered` to the tags of its input.
+- A step whose tasks write `FILTER` IDs other than their task name returns them from the classmethod `filter_ids(config)`, such as the expression names of `vembrane` in tag mode; `load_project()` rejects other tasks named like one of them.
 - `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `proteome`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
   A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`.
   A step that needs only one input of a kind uses the plain key, such as `alignments`, and narrows it by the tags of its `DataSignature` (`alignments [rna]`) instead.

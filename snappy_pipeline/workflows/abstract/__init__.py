@@ -913,6 +913,12 @@ class BaseStep:
         ``"cohort"`` for joint calling; ``None`` takes the one that upstream tasks declare."""
         return None
 
+    @classmethod
+    def filter_ids(cls, config: SnappyStepModel) -> frozenset[str]:
+        """Return the ``FILTER`` IDs that a task of this step writes under names other than its
+        task name; ``load_project()`` rejects other tasks named like one of them."""
+        return frozenset()
+
     @cached_property
     def effective_group_by(self) -> str:
         """Return ``"library"`` or ``"cohort"``: the task's ``group_by``, else its step's
