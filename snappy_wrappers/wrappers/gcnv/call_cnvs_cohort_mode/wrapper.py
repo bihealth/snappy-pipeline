@@ -29,14 +29,16 @@ export OMP_NUM_THREADS=16
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
+mkdir -p {snakemake.output.calls}
+
 gatk GermlineCNVCaller \
     --run-mode COHORT \
     -L {snakemake.input.interval_list_shard} \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
-    --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
+    --contig-ploidy-calls {snakemake.input.ploidy}/ploidy-calls \
     --annotated-intervals {snakemake.input.intervals} \
     --interval-merging-rule {args[interval_merging_rule]} \
-    --output $(dirname {snakemake.output.done}) \
+    --output {snakemake.output.calls} \
     --output-prefix cnv_calls \
     {extra_arguments}
 """

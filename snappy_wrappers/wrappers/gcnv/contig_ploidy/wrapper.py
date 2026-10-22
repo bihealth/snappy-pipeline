@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 # cf. https://github.com/broadinstitute/gatk/issues/8164
 
 
-out_path = pathlib.Path(snakemake.output.done).parent
+out_path = pathlib.Path(snakemake.output.ploidy)
 
 MALE = "male"
 FEMALE = "female"
@@ -74,13 +74,15 @@ echo -e "${{STYLE}}Y\t{y_prior}" >> $PRIORS
 
 set -x
 
+mkdir -p {snakemake.output.ploidy}
+
 gatk DetermineGermlineContigPloidy \
     -L {snakemake.input.interval_list} \
     {par_args} \
     --interval-merging-rule {args[interval_merging_rule]} \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --contig-ploidy-priors $PRIORS \
-    --output $(dirname {snakemake.output}) \
+    --output {snakemake.output.ploidy} \
     --output-prefix ploidy
 """
 )

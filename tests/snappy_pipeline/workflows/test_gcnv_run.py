@@ -5,11 +5,14 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+from snakemake.io import is_flagged
 
+from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import build_ngs_library_to_kit
 from snappy_pipeline.workflows.common.gcnv.gcnv_run import (
     CallCnvsMixin,
     PostGermlineCallsMixin,
+    RunGcnvStepPart,
     ShardsMixin,
 )
 from snappy_pipeline.workflows.gcnv_model.model import GcnvModel
@@ -18,7 +21,7 @@ from snappy_pipeline.workflows.gcnv_model.model import GcnvModel
 def _upstream(field, library_kit, shard="{shard}"):
     assert field == "gcnv_model"
     prefix = f"tasks/model/work/{library_kit}/out/{library_kit}"
-    return SimpleNamespace(calls=f"{prefix}.{shard}.call_cnvs/.done")
+    return SimpleNamespace(calls=f"{prefix}.{shard}.call_cnvs")
 
 
 class _Checkpoint:
@@ -55,9 +58,9 @@ def test_post_germline_calls_reads_the_shards_from_the_local_checkpoint(tmp_path
     inputs = _part(PostGermlineCallsMixin)._get_input_files_post_germline_calls(
         SimpleNamespace(library_name="P001"), checkpoints
     )
-    calls = [f"work/wgs/out/wgs.{s}.call_cnvs/.done" for s in ("0001_of_0002", "0002_of_0002")]
+    calls = [f"work/wgs/out/wgs.{s}.call_cnvs" for s in ("0001_of_0002", "0002_of_0002")]
     assert inputs["calls"] == calls
-    assert inputs["ploidy"] == "work/wgs/out/wgs.contig_ploidy/.done"
+    assert inputs["ploidy"] == "work/wgs/out/wgs.contig_ploidy"
     assert inputs["model"] == [f"tasks/model/{c}" for c in calls]
 
 
@@ -69,8 +72,29 @@ def test_call_cnvs_reads_the_model_of_its_shard():
     inputs = part._get_input_files_call_cnvs(
         SimpleNamespace(library_kit="wgs", shard="0001_of_0002")
     )
-    assert inputs["model"] == "tasks/model/work/wgs/out/wgs.0001_of_0002.call_cnvs/.done"
+    assert inputs["model"] == "tasks/model/work/wgs/out/wgs.0001_of_0002.call_cnvs"
+    assert inputs["ploidy"] == "work/wgs/out/wgs.contig_ploidy"
     assert inputs["tsv"] == ["work/P001/out/P001.coverage.tsv"]
+
+
+@pytest.mark.parametrize(
+    "delete_intermediates, temp", [(False, {"calls"}), (True, {"ploidy", "calls"})]
+)
+def test_ploidy_and_shard_calls_are_directories(delete_intermediates, temp):
+    step = object.__new__(BaseStep)
+    step.config = SimpleNamespace(delete_intermediates=delete_intermediates)
+    part = object.__new__(RunGcnvStepPart)
+    step._get_sub_step = lambda name: part
+
+    outputs = step.get_output_files("gcnv", "contig_ploidy")
+    outputs |= step.get_output_files("gcnv", "call_cnvs")
+
+    assert outputs == {
+        "ploidy": "work/{library_kit}/out/{library_kit}.contig_ploidy",
+        "calls": "work/{library_kit}/out/{library_kit}.{shard}.call_cnvs",
+    }
+    assert all(is_flagged(path, "directory") for path in outputs.values())
+    assert {key for key, path in outputs.items() if is_flagged(path, "temp")} == temp
 
 
 def _model_config(intervals, kits=""):

@@ -3,7 +3,7 @@
 
 import re
 
-from snakemake.io import expand, touch
+from snakemake.io import directory, expand, touch
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.common.gcnv.gcnv_common import GcnvCommonStepPart
@@ -122,8 +122,9 @@ class ContigPloidyMixin:
 
     @dictify
     def _get_output_files_contig_ploidy(self):
-        """Yield dictionary with output files for ``contig_ploidy`` rule in COHORT MODE."""
-        yield "done", touch("work/{library_kit}/out/{library_kit}.contig_ploidy/.done")
+        """Yield dictionary with output files for ``contig_ploidy`` rule in COHORT MODE: the
+        directory of the ploidy model and calls, whose files GATK names."""
+        yield "ploidy", directory("work/{library_kit}/out/{library_kit}.contig_ploidy")
 
 
 class CallCnvsMixin:
@@ -150,7 +151,7 @@ class CallCnvsMixin:
                 tsvs.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "tsv", tsvs
         kit = wildcards.library_kit
-        yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy/.done"
+        yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy"
         yield "intervals", "work/{library_kit}/out/{library_kit}.annotate_gc.tsv"
 
     def _get_params_call_cnvs(self, wildcards):
@@ -159,8 +160,9 @@ class CallCnvsMixin:
 
     @dictify
     def _get_output_files_call_cnvs(self):
-        """Yield dictionary with output files for ``call_cnvs`` rle in COHORT MODE."""
-        yield "done", touch("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done")
+        """Yield dictionary with output files for ``call_cnvs`` rule in COHORT MODE: the
+        directory of the CNV calls model and calls of the shard, whose files GATK names."""
+        yield "calls", directory("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs")
 
 
 class PostGermlineCallsMixin:

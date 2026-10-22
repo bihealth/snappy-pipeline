@@ -5,7 +5,7 @@ import re
 import warnings
 from pathlib import Path
 
-from snakemake.io import expand, touch
+from snakemake.io import directory, expand, touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, flatten, listify
@@ -57,8 +57,9 @@ class ContigPloidyMixin:
 
     @dictify
     def _get_output_files_contig_ploidy(self):
-        """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE."""
-        yield "done", touch("work/{library_kit}/out/{library_kit}.contig_ploidy/.done")
+        """Yield dictionary with output files for ``contig_ploidy`` rule in CASE MODE: the
+        directory of the ploidy calls, whose files GATK names."""
+        yield "ploidy", directory("work/{library_kit}/out/{library_kit}.contig_ploidy")
 
 
 class CallCnvsMixin:
@@ -81,9 +82,9 @@ class CallCnvsMixin:
                 coverage_files.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "tsv", coverage_files
 
-        # Yield ploidy files
+        # Yield ploidy calls
         kit = wildcards.library_kit
-        yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy/.done"
+        yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy"
 
         # Yield the model of the shard
         model = self.parent.get_upstream_paths("gcnv_model", library_kit=kit, shard=wildcards.shard)
@@ -91,8 +92,9 @@ class CallCnvsMixin:
 
     @dictify
     def _get_output_files_call_cnvs(self):
-        """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE."""
-        yield "done", touch("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done")
+        """Yield dictionary with output files for ``call_cnvs`` rule in CASE MODE: the
+        directory of the CNV calls of the shard, whose files GATK names."""
+        yield "calls", directory("work/{library_kit}/out/{library_kit}.{shard}.call_cnvs")
 
 
 class PostGermlineCallsMixin:
@@ -130,11 +132,11 @@ class PostGermlineCallsMixin:
         # Yield cnv calls output
         yield (
             "calls",
-            [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done" for shard in shards],
+            [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs" for shard in shards],
         )
 
         # Yield contig-ploidy output
-        yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
+        yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy"
 
         # Yield the model shards (same order as the calls)
         yield (
@@ -263,11 +265,11 @@ class RunGcnvStepPart(
         "merge_multikit_families",
     )
 
-    temp_outputs = {"call_cnvs": ("done",)}
+    temp_outputs = {"call_cnvs": ("calls",)}
 
     intermediate_outputs = {
         "coverage": ("tsv",),
-        "contig_ploidy": ("done",),
+        "contig_ploidy": ("ploidy",),
         "post_germline_calls": ("seg_vcf",),
         "joint_germline_cnv_segmentation": ("vcf", "vcf_tbi"),
     }

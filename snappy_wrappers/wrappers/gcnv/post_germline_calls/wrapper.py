@@ -26,7 +26,7 @@ itv_vcf={snakemake.output.itv_vcf}
 seg_vcf={snakemake.output.seg_vcf}
 
 sample_index=-1
-for path in $(dirname {snakemake.input.calls[0]})/cnv_calls-calls/SAMPLE_*; do
+for path in {snakemake.input.calls[0]}/cnv_calls-calls/SAMPLE_*; do
     if [[ "$(cat $path/sample_name.txt)" == "{snakemake.wildcards.library_name}" ]]; then
         sample_index=$(basename $path | sed -e 's/SAMPLE_//')
         break
@@ -36,7 +36,7 @@ done
 # Get contig name style
 # Note: the sample_index in '{snakemake.input.ploidy}' and '{snakemake.input.calls[0]}' are NOT guaranteed to be the same
 # -> Sample_0 should always exist and the contig names (which we care for) are the same
-tail -n +2 $(dirname {snakemake.input.ploidy})/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | egrep "^chr[0-9XY]{{1,2}}\s[0-9]\s[0-9.]+" > /dev/null && true
+tail -n +2 {snakemake.input.ploidy}/ploidy-calls/SAMPLE_0/contig_ploidy.tsv | egrep "^chr[0-9XY]{{1,2}}\s[0-9]\s[0-9.]+" > /dev/null && true
 exit_status=$?
 if [[ $exit_status == 0 ]]; then
     STYLE="chr"
@@ -45,9 +45,9 @@ else
 fi
 
 gatk PostprocessGermlineCNVCalls \
-    $(for x in {paths_shards}; do echo --calls-shard-path $(dirname $x)/cnv_calls-calls; done) \
-    $(for x in {paths_shards}; do echo --model-shard-path $(dirname $x)/cnv_calls-model; done) \
-    --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
+    $(for x in {paths_shards}; do echo --calls-shard-path $x/cnv_calls-calls; done) \
+    $(for x in {paths_shards}; do echo --model-shard-path $x/cnv_calls-model; done) \
+    --contig-ploidy-calls {snakemake.input.ploidy}/ploidy-calls \
     --sample-index $sample_index \
     --autosomal-ref-copy-number {args[autosomal_ref_copy_number]} \
     $(for contig in {allosomal_contigs}; do echo --allosomal-contig ${{STYLE}}$contig; done) \

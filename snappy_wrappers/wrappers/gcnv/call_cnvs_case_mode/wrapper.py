@@ -24,19 +24,15 @@ export OMP_NUM_THREADS=16
 export THEANO_FLAGS="base_compiledir=$TMPDIR/theano_compile_dir"
 export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
-# Force full replacement of previous results
-# (this also solves issues when gatk tries to shutil copy file ownership)
-if [ -d $(dirname {snakemake.output.done}) ]
-then
-    rm -rf $(dirname {snakemake.output.done})
-fi
+# Snakemake removed the results of an earlier run (directory output)
+mkdir -p {snakemake.output.calls}
 
 gatk GermlineCNVCaller \
     --run-mode CASE \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
-    --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
-    --model $(dirname {snakemake.input.model})/cnv_calls-model \
-    --output $(dirname {snakemake.output.done}) \
+    --contig-ploidy-calls {snakemake.input.ploidy}/ploidy-calls \
+    --model {snakemake.input.model}/cnv_calls-model \
+    --output {snakemake.output.calls} \
     --output-prefix cnv_calls \
     {extra_arguments}
 """

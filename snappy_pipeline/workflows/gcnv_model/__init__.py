@@ -31,7 +31,7 @@ The model directories stay in ``work/`` and are no result files:
 - ``{library_kit}/out/{library_kit}.scatter_intervals/`` holds the interval lists of the shards, one directory ``temp_{shard}`` each.
   The number of shards is known after the checkpoint ``scatter_intervals``.
 
-The keys for downstream tasks are ``interval_list`` (the binned intervals of the kit), ``ploidy`` and ``calls`` (the ``.done`` files in the model directories) and ``shards`` (the directory of the shard interval lists).
+The keys for downstream tasks are ``interval_list`` (the binned intervals of the kit), ``ploidy`` and ``calls`` (the model directories) and ``shards`` (the directory of the shard interval lists).
 
 The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``.
 They are the calls on the cohort libraries themselves.
@@ -100,9 +100,9 @@ class GcnvModelStepPart(BuildGcnvModelStepPart):
         )
         yield (
             "calls",
-            [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs/.done" for shard in shards],
+            [f"work/{library_kit}/out/{library_kit}.{shard}.call_cnvs" for shard in shards],
         )
-        yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy/.done"
+        yield "ploidy", f"work/{library_kit}/out/{library_kit}.contig_ploidy"
 
 
 class GcnvModelWorkflow(BaseStep):
@@ -129,8 +129,8 @@ class GcnvModelWorkflow(BaseStep):
         prefix = f"work/{library_kit}/out/{library_kit}"
         return {
             "interval_list": f"{prefix}.interval_list",
-            "ploidy": f"{prefix}.contig_ploidy/.done",
-            "calls": f"{prefix}.{shard}.call_cnvs/.done",
+            "ploidy": f"{prefix}.contig_ploidy",
+            "calls": f"{prefix}.{shard}.call_cnvs",
             "shards": f"{prefix}.scatter_intervals",
         }
 

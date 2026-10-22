@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 #
 # cf. https://github.com/broadinstitute/gatk/issues/8164
 
-out_path = pathlib.Path(snakemake.output.done).parent
+out_path = pathlib.Path(snakemake.output.ploidy)
 
 MALE = "male"
 FEMALE = "female"
@@ -38,16 +38,12 @@ export PYTENSOR_FLAGS="base_compiledir=$TMPDIR/pytensor_compile_dir"
 
 set -x
 
-# Force full replacement of previous results
-if [ -d {out_path}/ploidy_calls ]
-then
-    rm -rf {out_path}/ploidy_calls
-fi
+mkdir -p {snakemake.output.ploidy}
 
 gatk DetermineGermlineContigPloidy \
-    --model $(dirname {snakemake.input.model})/ploidy-model \
+    --model {snakemake.input.model}/ploidy-model \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
-    --output $(dirname {snakemake.output}) \
+    --output {snakemake.output.ploidy} \
     --output-prefix ploidy
 """
 )
