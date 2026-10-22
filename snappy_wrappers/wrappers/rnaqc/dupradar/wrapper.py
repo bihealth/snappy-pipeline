@@ -60,15 +60,15 @@ else
     paired_cmd="TRUE"
 fi
 
-snake_log=${PWD}/$(dirname {snakemake.log.log})
+snake_log=${{PWD}}/$(dirname {snakemake.log.log})
 
 pushd $TMPDIR/dupradar
 Rscript --vanilla run_dupradar.R \
     "{snakemake.input.bam}" \
     results.tsv \
     {snakemake.input.features} \
-    ${strand} \
-    ${paired_cmd} \
+    ${{strand}} \
+    ${{paired_cmd}} \
     {args[num_threads]} \
     "."
 popd
