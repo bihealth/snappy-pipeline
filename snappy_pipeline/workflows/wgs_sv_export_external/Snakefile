@@ -10,11 +10,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-localrules:
-    # Writing pedigrees should be done locally as well
-    wgs_sv_export_external_write_pedigree_run,
-
-
 rule wgs_sv_export_external_all:
     default_target: True
     input:
@@ -29,6 +24,7 @@ rule wgs_sv_export_external_all:
 rule wgs_sv_export_external_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree_with_sample_name", "run"),
+    localrule: True
     run:
         wf.substep_dispatch("write_pedigree_with_sample_name", "run", wildcards, output)
 

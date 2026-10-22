@@ -23,6 +23,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_minimap2/work/reference_index/log/reference_index.common.log"
   ],
@@ -85,6 +86,7 @@
    "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.genome",
    "tasks/reference_index_minimap2/work/reference_index/out/reference.mmi"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/reference_index_minimap2/output/.manifest.tsv"

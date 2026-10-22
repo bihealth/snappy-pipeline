@@ -188,6 +188,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -222,6 +223,7 @@
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.csi",
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.csi.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/somatic_wgs_cnv_calling_cnvetti/output/.manifest.tsv"

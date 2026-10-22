@@ -33,6 +33,7 @@
  {
   "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_case_lists.run.tsv",
   "input": [],
+  "local": true,
   "log": [
    "tasks/cbioportal_export/work/log/cbioportal_case_lists.run.log"
   ],
@@ -161,6 +162,7 @@
   "input": [
    "tasks/cbioportal_export/work/maf/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.maf"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/cbioportal_export/work/upload/data_mutation_extended.txt"
@@ -284,6 +286,7 @@
  {
   "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_meta_files.run.tsv",
   "input": [],
+  "local": true,
   "log": [
    "tasks/cbioportal_export/work/log/cbioportal_meta_files.run.log"
   ],
@@ -316,6 +319,7 @@
  {
   "benchmark": "tasks/cbioportal_export/benchmarks/cbioportal_clinical_data.run.tsv",
   "input": [],
+  "local": true,
   "log": [
    "tasks/cbioportal_export/work/log/cbioportal_clinical_data.run.log"
   ],
@@ -395,6 +399,7 @@
    "tasks/cbioportal_export/work/upload/data_cna_gistic.txt",
    "tasks/cbioportal_export/work/upload/data_segment.txt"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/cbioportal_export/output/.manifest.tsv"
@@ -1870,6 +1875,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.scatter.log"
   ],
@@ -1987,6 +1993,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -3716,6 +3723,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.scatter.log"
   ],

@@ -192,6 +192,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -455,6 +456,7 @@
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/variant_checking_peddy/output/.manifest.tsv"
@@ -519,6 +521,7 @@
  {
   "benchmark": null,
   "input": [],
+  "local": true,
   "log": [],
   "output": [
    "tasks/variant_checking_peddy/work/write_pedigree.case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped"

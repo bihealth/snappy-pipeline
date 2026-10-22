@@ -18,11 +18,6 @@ wildcard_constraints:
     library_name="[^/.]+",
 
 
-localrules:
-    # Writing pedigrees should be done locally as well
-    variant_calling_write_pedigree_run,
-
-
 rule variant_calling_all:
     default_target: True
     input:
@@ -39,6 +34,7 @@ rule variant_calling_write_pedigree_run:
         unpack(wf.get_input_files("write_pedigree", "run")),
     output:
         wf.get_output_files("write_pedigree", "run"),
+    localrule: True
     run:
         wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 

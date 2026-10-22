@@ -1306,6 +1306,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.scatter.log"
   ],
@@ -1580,6 +1581,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -1618,6 +1620,7 @@
    "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5",
    "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.loh.csv.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/somatic_targeted_seq_cnv_calling_purecn/output/.manifest.tsv"
@@ -3187,6 +3190,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.scatter.log"
   ],

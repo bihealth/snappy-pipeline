@@ -22,6 +22,7 @@ rule reference_index_common_run:
     log:
         **wf.get_log_file("common", "run"),
     cache: "omit-software"
+    localrule: True
     threads: wf.get_resource("common", "run", "threads")
     resources:
         runtime=wf.get_resource("common", "run", "runtime"),

@@ -241,6 +241,7 @@
    "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
    "tasks/gcnv_model_wgs/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/gcnv_model_wgs/output/.manifest.tsv"
@@ -359,6 +360,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],

@@ -1690,6 +1690,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.scatter.log"
   ],
@@ -1807,6 +1808,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -1834,6 +1836,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_star/work/reference_index/log/reference_index.common.log"
   ],
@@ -1994,6 +1997,7 @@
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacsplice/combined/case001subregion-T1-DNA1-WES1.Combined.all_epitopes.aggregated.tsv",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacsplice/combined/case001subregion-T1-DNA1-WES1.Combined.all_epitopes.aggregated.tsv.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/somatic_neoepitope_prediction_pvactools/output/.manifest.tsv"
@@ -4507,6 +4511,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.scatter.log"
   ],

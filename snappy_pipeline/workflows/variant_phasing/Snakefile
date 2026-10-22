@@ -15,11 +15,6 @@ wf = task_instance(config["__task_name__"])
 # Rules =======================================================================
 
 
-localrules:
-    # Writing pedigrees should be done locally as well
-    variant_phasing_write_trio_pedigree_run,
-
-
 rule variant_phasing_all:
     default_target: True
     input:
@@ -34,6 +29,7 @@ rule variant_phasing_all:
 rule variant_phasing_write_trio_pedigree_run:
     output:
         wf.get_output_files("write_trio_pedigree", "run"),
+    localrule: True
     run:
         wf.substep_dispatch("write_trio_pedigree", "run", wildcards, output)
 

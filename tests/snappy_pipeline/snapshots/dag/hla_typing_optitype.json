@@ -85,6 +85,7 @@
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage_plot.pdf",
    "tasks/hla_typing_optitype/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage_plot.pdf.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/hla_typing_optitype/output/.manifest.tsv"

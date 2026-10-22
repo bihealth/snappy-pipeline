@@ -180,6 +180,7 @@
    "tasks/ngs_mapping_bwa_mem2/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
    "tasks/ngs_mapping_bwa_mem2/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/ngs_mapping_bwa_mem2/output/.manifest.tsv"
@@ -235,6 +236,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.common.log"
   ],

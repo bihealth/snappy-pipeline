@@ -316,6 +316,7 @@
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv",
    "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/panel_of_normals_cnvkit/output/.manifest.tsv"
@@ -372,6 +373,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],

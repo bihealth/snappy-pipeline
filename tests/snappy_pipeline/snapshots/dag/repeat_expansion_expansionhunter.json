@@ -122,6 +122,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -220,6 +221,7 @@
    "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf",
    "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/repeat_expansion_expansionhunter/output/.manifest.tsv"

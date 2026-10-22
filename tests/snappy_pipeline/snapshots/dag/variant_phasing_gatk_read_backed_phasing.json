@@ -246,6 +246,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -623,6 +624,7 @@
    "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/variant_calling_gatk4_hc_gvcf/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
@@ -682,6 +684,7 @@
  {
   "benchmark": null,
   "input": [],
+  "local": true,
   "log": [],
   "output": [
    "tasks/variant_phasing_gatk_phase_by_transmission/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"
@@ -704,6 +707,7 @@
    "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
    "tasks/variant_phasing_gatk_read_backed_phasing/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/variant_phasing_gatk_read_backed_phasing/output/.manifest.tsv"
@@ -856,6 +860,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/variant_phasing_gatk_read_backed_phasing/work/scatter/log.log"
   ],

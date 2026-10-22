@@ -17,16 +17,6 @@ exclude_flag = step_config.exclude_variant_with_flag
 # Rules =======================================================================
 
 
-localrules:
-    # Assembling meta files & concatenating results should be done locally
-    # The sub steps requiring R for merging (CNA) *CANNOT* be done locally
-    # Neither the expression sub-step (computation of RPKM)
-    cbioportal_export_meta_files,
-    cbioportal_export_patient_data,
-    cbioportal_export_case_lists,
-    cbioportal_export_concatenate_maf,
-
-
 rule cbioportal_all:
     default_target: True
     input:
@@ -43,6 +33,7 @@ rule cbioportal_export_meta_files:
         **wf.get_log_file("cbioportal_meta_files", "run"),
     benchmark:
         wf.get_benchmark_file("cbioportal_meta_files", "run")
+    localrule: True
     params:
         args=wf.get_params("cbioportal_meta_files", "run"),
     wrapper:
@@ -59,6 +50,7 @@ rule cbioportal_export_patient_data:
         **wf.get_log_file("cbioportal_clinical_data", "run"),
     benchmark:
         wf.get_benchmark_file("cbioportal_clinical_data", "run")
+    localrule: True
     params:
         args=wf.get_params("cbioportal_clinical_data", "run"),
     wrapper:
@@ -72,6 +64,7 @@ rule cbioportal_export_case_lists:
         **wf.get_log_file("cbioportal_case_lists", "run"),
     benchmark:
         wf.get_benchmark_file("cbioportal_case_lists", "run")
+    localrule: True
     params:
         args=wf.get_params("cbioportal_case_lists", "run"),
     wrapper:
@@ -112,6 +105,7 @@ rule cbioportal_export_concatenate_maf:
         unpack(wf.get_input_files("cbioportal_mutations", "run")),
     output:
         wf.get_output_files("cbioportal_mutations", "run"),
+    localrule: True
     params:
         exclude_flag=wf.config.exclude_variant_with_flag,
     shell:

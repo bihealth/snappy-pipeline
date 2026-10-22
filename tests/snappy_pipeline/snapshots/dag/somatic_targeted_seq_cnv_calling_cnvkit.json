@@ -437,6 +437,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -539,6 +540,7 @@
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt",
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/output/.manifest.tsv"

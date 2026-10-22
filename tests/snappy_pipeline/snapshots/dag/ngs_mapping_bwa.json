@@ -272,6 +272,7 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/ngs_mapping_bwa/output/.manifest.tsv"
@@ -328,6 +329,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],

@@ -37,6 +37,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_star/work/reference_index/log/reference_index.common.log"
   ],
@@ -128,6 +129,7 @@
    "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbList.out.tab",
    "tasks/reference_index_star/work/reference_index/out/reference.index/transcriptInfo.tab"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/reference_index_star/output/.manifest.tsv"

@@ -53,6 +53,7 @@
    "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv",
    "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/gene_expression_quantification_stats/output/.manifest.tsv"
@@ -151,6 +152,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_star/work/reference_index/log/reference_index.common.log"
   ],

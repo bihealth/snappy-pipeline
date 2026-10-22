@@ -83,6 +83,7 @@
    "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json",
    "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/homologous_recombination_deficiency_scarHRD/output/.manifest.tsv"
@@ -263,6 +264,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],

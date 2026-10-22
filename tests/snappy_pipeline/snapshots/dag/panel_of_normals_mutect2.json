@@ -1238,6 +1238,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
   ],
+  "local": true,
   "log": [
    "tasks/panel_of_normals_mutect2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.scatter.log"
   ],
@@ -1323,6 +1324,7 @@
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/panel_of_normals_mutect2/output/.manifest.tsv"
@@ -1379,6 +1381,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],

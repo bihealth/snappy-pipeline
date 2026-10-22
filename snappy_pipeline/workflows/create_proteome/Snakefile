@@ -5,10 +5,6 @@ from snappy_pipeline.orchestration import task_instance
 wf = task_instance(config["__task_name__"])
 
 
-localrules:
-    create_proteome_link_out_run,
-
-
 rule create_proteome_all:
     default_target: True
     input:
@@ -20,6 +16,7 @@ rule create_proteome_link_out_run:
         wf.get_input_files("link_out", "run"),
     output:
         wf.get_output_files("link_out", "run"),
+    localrule: True
     run:
         wf.run_locally("link_out", "run", wildcards)
 

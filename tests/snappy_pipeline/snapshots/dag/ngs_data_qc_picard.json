@@ -112,6 +112,7 @@
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/ngs_data_qc_picard/output/.manifest.tsv"
@@ -230,6 +231,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],

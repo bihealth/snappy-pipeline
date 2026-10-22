@@ -30,6 +30,7 @@
    "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
    "tasks/wgs_cnv_export_external/work/varfish_annotated.case001subregion-N1-DNA1-WES1/out/varfish_annotated.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/wgs_cnv_export_external/output/.manifest.tsv"
@@ -146,6 +147,7 @@
  {
   "benchmark": null,
   "input": [],
+  "local": true,
   "log": [],
   "output": [
    "tasks/wgs_cnv_export_external/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"

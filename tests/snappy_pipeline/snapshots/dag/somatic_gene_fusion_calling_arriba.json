@@ -28,6 +28,7 @@
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.discarded_fusions.tsv.gz",
    "tasks/somatic_gene_fusion_calling_arriba/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.discarded_fusions.tsv.gz.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/somatic_gene_fusion_calling_arriba/output/.manifest.tsv"

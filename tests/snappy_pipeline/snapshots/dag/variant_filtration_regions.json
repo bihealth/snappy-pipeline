@@ -184,6 +184,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -502,6 +503,7 @@
    "tasks/variant_filtration_regions/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
    "tasks/variant_filtration_regions/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/variant_filtration_regions/output/.manifest.tsv"

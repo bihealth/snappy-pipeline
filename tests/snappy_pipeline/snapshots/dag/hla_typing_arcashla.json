@@ -86,6 +86,7 @@
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json",
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/hla_typing_arcashla/output/.manifest.tsv"
@@ -184,6 +185,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_star/work/reference_index/log/reference_index.common.log"
   ],

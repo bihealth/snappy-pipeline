@@ -22,6 +22,7 @@
   "input": [
    "tasks/create_proteome/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/create_proteome/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
@@ -43,6 +44,7 @@
   "input": [
    "tasks/create_proteome/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/create_proteome/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_info.txt"
@@ -64,6 +66,7 @@
   "input": [
    "tasks/create_proteome/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/create_proteome/output/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.conda_list.txt"
@@ -85,6 +88,7 @@
   "input": [
    "tasks/create_proteome/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.fa.gz"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/create_proteome/output/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.fa.gz"
@@ -369,6 +373,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],

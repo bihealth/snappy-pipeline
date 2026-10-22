@@ -99,6 +99,7 @@
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done",
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/adapter_trimming_fastp/output/.manifest.tsv"

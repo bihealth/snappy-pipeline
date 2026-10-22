@@ -12,11 +12,6 @@ tool = str(wf.config.tool)
 # Rules =======================================================================
 
 
-localrules:
-    # Writing out pedigrees can be done locally
-    sv_calling_targeted_write_pedigree_run,
-
-
 rule sv_calling_targeted_all:
     default_target: True
     input:
@@ -33,6 +28,7 @@ rule sv_calling_targeted_all:
 rule sv_calling_targeted_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
+    localrule: True
     run:
         wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 
@@ -44,14 +40,12 @@ if tool == "gcnv":
     # The shards of the model are known after the checkpoint of the model task. A module cannot
     # use the checkpoints of another one, so this local checkpoint lists them for this task.
 
-    localrules:
-        sv_calling_targeted_gcnv_shards,
-
     checkpoint sv_calling_targeted_gcnv_shards:
         input:
             unpack(wf.get_input_files("gcnv", "shards")),
         output:
             **wf.get_output_files("gcnv", "shards"),
+        localrule: True
         run:
             wf.substep_dispatch("gcnv", "write_shards", input, output)
 

@@ -235,6 +235,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -431,6 +432,7 @@
    "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_bam_qc.case001subregion-N1-DNA1-WES1.bam-qc.tsv.gz",
    "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_bam_qc.case001subregion-N1-DNA1-WES1.bam-qc.tsv.gz.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/varfish_export/output/.manifest.tsv"
@@ -560,6 +562,7 @@
  {
   "benchmark": null,
   "input": [],
+  "local": true,
   "log": [],
   "output": [
    "tasks/varfish_export/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"

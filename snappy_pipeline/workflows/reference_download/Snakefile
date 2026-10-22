@@ -82,6 +82,7 @@ rule reference_download_sidecars_run:
         **wf.get_log_file("sidecars", "run"),
     benchmark:
         wf.get_benchmark_file("sidecars", "run")
+    localrule: True
     threads: wf.get_resource("sidecars", "run", "threads")
     resources:
         runtime=wf.get_resource("sidecars", "run", "runtime"),

@@ -64,6 +64,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -98,6 +99,7 @@
    "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
    "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/reference_index_bwa/output/.manifest.tsv"

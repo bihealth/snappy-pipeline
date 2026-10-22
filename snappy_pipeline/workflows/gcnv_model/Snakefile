@@ -13,11 +13,6 @@ wgs = "_wgs" if wf.config.intervals == "wgs" else ""
 # Rules =======================================================================
 
 
-localrules:
-    # Writing out pedigrees can be done locally
-    gcnv_model_write_pedigree_run,
-
-
 rule gcnv_model_all:
     default_target: True
     input:
@@ -27,6 +22,7 @@ rule gcnv_model_all:
 rule gcnv_model_write_pedigree_run:
     output:
         wf.get_output_files("write_pedigree", "run"),
+    localrule: True
     run:
         wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 

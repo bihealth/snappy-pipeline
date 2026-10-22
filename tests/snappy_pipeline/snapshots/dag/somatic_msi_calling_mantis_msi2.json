@@ -184,6 +184,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -214,6 +215,7 @@
    "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.md5",
    "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/somatic_msi_calling_mantis_msi2/output/.manifest.tsv"

@@ -61,6 +61,9 @@ def _job_record(job) -> dict[str, Any]:
     # Outputs that the Snakemake report shows; only when there are some, as most jobs have none
     if report := sorted(str(f) for f in job.output if is_flagged(f, "report")):
         record["report"] = report
+    # Rules that run on the submit node instead of the cluster (``localrule: True``)
+    if job.rule.name in job.rule.workflow._localrules:
+        record["local"] = True
     return record
 
 

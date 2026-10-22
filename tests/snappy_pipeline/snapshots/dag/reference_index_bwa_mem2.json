@@ -63,6 +63,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa_mem2/work/reference_index/log/reference_index.common.log"
   ],
@@ -97,6 +98,7 @@
    "tasks/reference_index_bwa_mem2/work/reference_index/out/reference.bwt.2bit.64",
    "tasks/reference_index_bwa_mem2/work/reference_index/out/reference.pac"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/reference_index_bwa_mem2/output/.manifest.tsv"

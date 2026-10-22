@@ -122,6 +122,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -152,6 +153,7 @@
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/sv_calling_wgs_popdel/output/.manifest.tsv"

@@ -164,6 +164,17 @@ def test_step_snakefiles_fetch_their_workflow_object():
     assert not found, f"use wf = task_instance(config['__task_name__']) only: {found}"
 
 
+def test_local_rules_are_marked_in_the_rule():
+    """A ``localrules:`` list in a step Snakefile names rules without the task prefix that the
+    module import adds, so it has no effect; ``localrule: True`` in the rule works."""
+    found = [
+        str(path.relative_to(REPO))
+        for path in sorted(WORKFLOWS.glob("*/Snakefile"))
+        if re.search(r"^\s*localrules\s*:", path.read_text(encoding="utf-8"), re.M)
+    ]
+    assert not found, f"use localrule: True in the rule instead of localrules: {found}"
+
+
 #: Allowed ``depends_on`` keys: named after the data, with role prefixes where a step needs two
 #: inputs of one kind.
 DEPENDS_ON_KEYS = {

@@ -302,6 +302,7 @@
   "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
   ],
@@ -332,6 +333,7 @@
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
    "tasks/sv_calling_wgs_gcnv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/sv_calling_wgs_gcnv/output/.manifest.tsv"
@@ -458,6 +460,7 @@
   "input": [
    "tasks/gcnv_model_wgs/work/wgs/out/wgs.scatter_intervals"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/sv_calling_wgs_gcnv/work/wgs/out/wgs.shards.txt"
@@ -475,6 +478,7 @@
  {
   "benchmark": null,
   "input": [],
+  "local": true,
   "log": [],
   "output": [
    "tasks/sv_calling_wgs_gcnv/work/write_pedigree.case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.ped"

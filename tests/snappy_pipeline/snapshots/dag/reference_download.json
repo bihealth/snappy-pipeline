@@ -64,6 +64,7 @@
   "input": [
    "tasks/reference_download/work/reference_download/out/reference.fa"
   ],
+  "local": true,
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.sidecars.log"
   ],
@@ -97,6 +98,7 @@
    "tasks/reference_download/work/reference_download/out/reference.dict",
    "tasks/reference_download/work/reference_download/out/reference.dict.md5"
   ],
+  "local": true,
   "log": [],
   "output": [
    "tasks/reference_download/output/.manifest.tsv"
