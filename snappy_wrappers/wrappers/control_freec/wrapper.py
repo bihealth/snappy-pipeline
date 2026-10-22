@@ -26,10 +26,9 @@ ShellWrapper(snakemake).run(
 set -x
 
 # write out configuration -------------------------------------------------------------------------
-export output_prefix=$(basename {snakemake.output.ratio} .ratio.txt)
-export output_dir=$(dirname {snakemake.output.ratio})
+export output_dir=$TMPDIR/freec_out
 
-mkdir -p $TMPDIR/tmp.d
+mkdir -p $TMPDIR/tmp.d $output_dir
 
 cat <<EOF >$TMPDIR/tmp.d/freec.ini
 # http://boevalab.com/FREEC/tutorial.html
@@ -102,16 +101,9 @@ EOF
 
 # Run Control-Freec -------------------------------------------------------------------------------
 
-cp $TMPDIR/tmp.d/freec.ini $output_dir
 freec --conf $TMPDIR/tmp.d/freec.ini {extra_arguments}
 
-pushd $output_dir
-
-for suffix in bam_control.cpn bam_CNVs bam_info.txt bam_ratio.BedGraph bam_ratio.txt bam_sample.cpn bam_subclones.txt; do
-    new_suffix=$(echo ${{suffix}} | sed 's/bam_//')
-    mv *.${{suffix}} $output_prefix.${{new_suffix}}
-done
-popd
-
+# Control-FREEC names its files after the tumor BAM; only the ratios are declared
+mv $output_dir/$(basename {snakemake.input.tumor_bam})_ratio.txt {snakemake.output.ratio}
 """
 )
