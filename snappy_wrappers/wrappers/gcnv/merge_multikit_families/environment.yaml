@@ -9,4 +9,4 @@ dependencies:
   - pandas==2.2.1
   - vcfpy==0.13.8
   - htslib==1.19.1
-  - python==3.10.14
+  - python==3.12.3

@@ -4,3 +4,4 @@ channels:
   - nodefaults
 dependencies:
   - mantis-msi2
+  - python==3.12.15

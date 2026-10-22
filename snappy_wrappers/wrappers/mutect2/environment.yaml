@@ -8,3 +8,4 @@ dependencies:
   - bcftools==1.19
   - gawk==5.1.0
   - binutils==2.43
+  - python==3.12.3

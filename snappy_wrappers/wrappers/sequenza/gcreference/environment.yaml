@@ -3,6 +3,6 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python==3.9.19
+  - python==3.12.3
   - sequenza-utils==3.0.0
   - samtools==1.19.2

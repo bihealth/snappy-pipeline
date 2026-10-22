@@ -3,6 +3,6 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - python==3.10.14
+  - python==3.12.15
   - vcfpy==0.13.8
   - ruamel.yaml==0.18.6
