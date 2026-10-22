@@ -292,8 +292,18 @@
   ],
   "params": {
    "args": {
+    "break_point_threshold": 0.8,
+    "coefficient_of_variation": 0.05,
+    "contamination": 0.4,
+    "contamination_adjustment": true,
     "extra_arguments": [],
+    "force_gc_content_normalization": 0,
+    "min_cna_length": 2,
+    "minimal_subclone_presence": 0.2,
     "path_mappability_enabled": false,
+    "ploidy": 2,
+    "sex": "XX",
+    "unique_match": true,
     "window_size": -1
    }
   },
@@ -332,6 +342,7 @@
   ],
   "params": {
    "args": {
+    "amplification": 6,
     "bs_obj": "BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5",
     "org_obj": "org.Hs.eg.db::org.Hs.eg.db",
     "tumor_library": "case001subregion-T1-DNA1-WES1",

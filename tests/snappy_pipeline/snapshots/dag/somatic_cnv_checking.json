@@ -300,6 +300,7 @@
    "args": {
     "avg_size": null,
     "bp_per_bin": 100000.0,
+    "default_avg_size": 5000,
     "split": false
    }
   },
@@ -432,6 +433,7 @@
   ],
   "params": {
    "args": {
+    "amplification": 7,
     "tumor_library": "case001subregion-T1-DNA1-WES1"
    }
   },
