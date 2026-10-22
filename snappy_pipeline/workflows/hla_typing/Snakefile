@@ -60,7 +60,7 @@ if wf.config.tool == "arcashla":
         benchmark:
             "benchmarks/prepare_reference/prepare_reference.tsv"
         params:
-            reference_version="3.24.0",  # See https://github.com/RabadanLab/arcasHLA/pull/132
+            reference_version=wf.config.arcashla.reference_version,
         wrapper:
             wf.wrapper_path("arcashla/prepare_reference")
 

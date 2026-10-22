@@ -142,7 +142,7 @@ class ArcasHlaStepPart(BaseStepPart):
     def _get_params_run(self, wildcards):
         """The options of ``arcasHLA genotype``; ``avg`` and ``std`` are for single-end reads"""
         return self.config.arcashla.model_dump(
-            mode="json", exclude={"extra_arguments"}, exclude_none=True
+            mode="json", exclude={"extra_arguments", "reference_version"}, exclude_none=True
         )
 
     default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="64000MB")

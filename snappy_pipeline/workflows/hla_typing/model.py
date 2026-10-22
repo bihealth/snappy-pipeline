@@ -43,6 +43,10 @@ class Population(enum.StrEnum):
 
 
 class ArcasHla(ToolModel):
+    reference_version: str = "3.24.0"
+    """IMGT/HLA release of the arcasHLA reference (``arcasHLA reference --version``; 3.24.0, see
+    https://github.com/RabadanLab/arcasHLA/pull/132)"""
+
     population: Population = Population.PRIOR
     min_count: int = 75
     tolerance: float = 1e-7

@@ -10,11 +10,9 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-ARCAS_HLA_REFERENCE_VERSION = "3.24.0"
-
 ShellWrapper(snakemake).run(
     r"""
-arcasHLA reference --version {ARCAS_HLA_REFERENCE_VERSION} --verbose
+arcasHLA reference --version {snakemake.params.reference_version} --verbose
 
 """
 )
