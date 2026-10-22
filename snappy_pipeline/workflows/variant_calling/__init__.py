@@ -33,7 +33,7 @@ The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference
 With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_normals`` task with ``tool: mutect2``, whose panel VCF Mutect2 uses to filter recurrent artefacts.
 ``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
 With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
-Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
+Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel; each caller's section has ``window_length`` and ``padding``, the bases added on both sides of a window.
 Each caller's section has ``ignore_contigs``, regular expressions for contigs that it skips (by default decoys, HLA, EBV and the hs37d5 extras); a YAML anchor in ``config.yaml`` shares one list between tasks.
 The ``FILTER`` IDs of the callers (``LowQual`` of the GATK callers; ``germline``, ``contamination`` and the other filters of ``FilterMutectCalls``) are reserved: no other task may be named like one of them, nor ``PASS``.
 
@@ -233,6 +233,11 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
             "num_threads": self.config.bcftools_call.num_threads,
             "max_depth": self.config.bcftools_call.max_depth,
             "max_indel_depth": self.config.bcftools_call.max_indel_depth,
+            "padding": self.config.bcftools_call.padding,
+            "annotate": self.config.bcftools_call.annotate,
+            "per_sample_mf": self.config.bcftools_call.per_sample_mf,
+            "redo_baq": self.config.bcftools_call.redo_baq,
+            "variants_only": self.config.bcftools_call.variants_only,
         }
 
 

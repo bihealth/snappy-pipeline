@@ -86,11 +86,30 @@ class IgnoreContigs(SnappyModel):
     """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
 
-class BcftoolsCall(ToolModel, IgnoreContigs):
+class IntervalPadding(SnappyModel):
+    """The padding around the windows that a caller processes in parallel"""
+
+    padding: Annotated[int, Field(ge=0)] = 1000
+    """Bases added on both sides of each window (the windows then overlap; duplicate calls are merged)"""
+
+
+class BcftoolsCall(ToolModel, IgnoreContigs, IntervalPadding):
     max_depth: int = 250
     max_indel_depth: int = 250
     window_length: int = 10000000
     num_threads: int = 16
+
+    annotate: str = "FORMAT/AD,FORMAT/DP"
+    """Tags that ``bcftools mpileup`` adds (``--annotate``)"""
+
+    per_sample_mf: bool = True
+    """Apply the minimum number of gapped reads per sample (``bcftools mpileup --per-sample-mF``)"""
+
+    redo_baq: bool = True
+    """Recalculate BAQ on the fly (``bcftools mpileup --redo-BAQ``)"""
+
+    variants_only: bool = True
+    """Output variant sites only (``bcftools call --variants-only``)"""
 
 
 class Gatk3Hc(ToolModel, IgnoreContigs):

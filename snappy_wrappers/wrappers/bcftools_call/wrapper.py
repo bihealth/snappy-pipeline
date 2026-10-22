@@ -19,6 +19,11 @@ max_depth = args["max_depth"]
 max_indel_depth = args["max_indel_depth"]
 
 window_length = args["window_length"]
+padding = args["padding"]
+annotate = args["annotate"]
+per_sample_mf = "--per-sample-mF" if args["per_sample_mf"] else ""
+redo_baq = "--redo-BAQ" if args["redo_baq"] else ""
+variants_only = "--variants-only" if args["variants_only"] else ""
 num_threads = args["num_threads"]
 
 ShellWrapper(snakemake).run(
@@ -40,7 +45,7 @@ gatk PreprocessIntervals \
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
 # passing to ``--intervals``.
-awk -v PADDING=1000 '
+awk -v PADDING={padding} '
     (!/^@/) {{
         chrom=$1;
         start=$2;
@@ -69,12 +74,12 @@ run-shard()
 
     bcftools mpileup \
         -Ou \
-        --annotate FORMAT/AD,FORMAT/DP \
+        --annotate {annotate} \
         -f {reference_path} \
-        --per-sample-mF \
+        {per_sample_mf} \
         --max-depth {max_depth} \
         --max-idepth {max_indel_depth} \
-        --redo-BAQ \
+        {redo_baq} \
         --regions $2 \
         {snakemake.input.bam} \
     | bcftools call \
@@ -83,7 +88,7 @@ run-shard()
             echo --ploidy={assembly}; \
             echo --samples-file {snakemake.input.ped}; \
         fi) \
-        --variants-only \
+        {variants_only} \
         {extra_arguments} \
         -Oz \
         -o $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz
