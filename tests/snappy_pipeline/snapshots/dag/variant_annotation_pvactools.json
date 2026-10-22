@@ -1481,7 +1481,8 @@
    "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
    "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
-   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5"
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.summary.html"
   ],
   "params": {
    "args": {
@@ -1515,6 +1516,9 @@
     "extra_arguments": []
    }
   },
+  "report": [
+   "tasks/variant_annotation_pvactools/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.summary.html"
+  ],
   "resources": {
    "mem": "16 GB",
    "mem_mb": 16000,
