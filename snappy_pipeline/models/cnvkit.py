@@ -1,14 +1,13 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import ConfigPath, SnappyModel, ToolModel
 
 
 class SegmentationMethod(enum.StrEnum):
     cbs = "cbs"
-    flasso = "flasso"
     haar = "haar"
     hmm = "hmm"
     hmm_tumor = "hmm-tumor"
@@ -69,16 +68,34 @@ class Segment(SnappyModel):
     # seg_method: cbs
     # seg_threshold: 0.000001
     method: SegmentationMethod = SegmentationMethod.cbs
-    """[segment] One of cbs, flasso, haar, hmm, hmm-tumor, hmm-germline, none"""
+    """[segment] One of cbs, haar, hmm, hmm-tumor, hmm-germline, none"""
 
     threshold: float = 0.000001
-    """[segment] Significance threshold (hmm methods: smoothing window size)"""
+    """
+    [segment] Significance threshold; for the hmm methods the smoothing window in bins,
+    0 (no smoothing) or an integer of at least 2
+    """
 
     drop_outliers: int = 10
     """[segment] Drop outlier bins (0 for no outlier filtering)"""
 
     smooth_cbs: bool = True
     """[segment] Additional smoothing of CBS segmentation (WARNING- not the default value)"""
+
+    @model_validator(mode="after")
+    def check_hmm_window(self):
+        hmm = (
+            SegmentationMethod.hmm,
+            SegmentationMethod.hmm_tumor,
+            SegmentationMethod.hmm_germline,
+        )
+        window = self.threshold
+        if self.method in hmm and not (window == 0 or (window >= 2 and window.is_integer())):
+            raise ValueError(
+                f"segment method {self.method} takes threshold as a smoothing window: "
+                f"0 or an integer of at least 2, not {window}"
+            )
+        return self
 
 
 class Call(SnappyModel):
@@ -136,8 +153,8 @@ class Segmetrics(SnappyModel):
     bootstrap: int = 100
     """[segmetrics] Number of bootstraps"""
 
-    smooth_bootstrap: bool = False
-    """[segmetrics] Smooth bootstrap results"""
+    smooth_bootstrap: Annotated[int, Field(strict=True, ge=0)] = 0
+    """[segmetrics] Segments with up to this many bins get a smoothed bootstrap (0: none)"""
 
 
 class Breaks(SnappyModel):
