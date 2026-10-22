@@ -1,7 +1,7 @@
 """Reads of a library as rule inputs and params.
 
 Wrappers take the FASTQ files from ``snakemake.input.reads_left`` and ``reads_right``. If another
-task wrote the reads (``adapter_trimming``), only its ``out/.done`` file is a job output, so that
+task wrote the reads (``adapter_trimming``), only its ``out/`` directory is a job output, so that
 is the rule input and the wrappers take the file lists from ``params.args.input`` instead.
 """
 

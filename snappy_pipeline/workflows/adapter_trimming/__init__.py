@@ -10,16 +10,18 @@ Tasks that read reads name this task in ``depends_on.reads``.
 Outputs
 -------
 
-Below ``tasks/<task>/output/``, the files of each library are in ``{library_name}/``:
+The task links the following result directories below ``tasks/<task>/output/`` as symlinks to ``work/``, for each library with name ``{library_name}``:
 
-- ``out/.done`` marks the trimmed FASTQ files, which are in the same directory.
-- ``report/.done`` marks the tool reports (``bbduk``: statistics and histograms per input file, ``fastp``: HTML and JSON reports), which are in the same directory.
+- ``{library_name}/out/`` holds the trimmed FASTQ files.
+- ``{library_name}/report/`` holds the tool reports (``bbduk``: statistics and histograms per input file, ``fastp``: HTML and JSON reports).
 
-Reads that the tool filters out are kept below ``rejected/`` in ``work/`` and are no result files.
+Reads that the tool filters out are kept in ``work/{library_name}/rejected/`` and are no result files.
 Downstream tasks read the trimmed files from ``work/{library_name}/out/`` through the key ``fastq_dir``.
 """
 
 import os
+
+from snakemake.io import directory
 
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
@@ -56,17 +58,18 @@ class AdapterTrimmingStepPart(BaseStepPart):
                 inputs[key] = value
         return inputs
 
-    result_keys = ("out_done", "report_done")
+    result_keys = ("out", "report")
 
     @dictify
     def _get_output_files_run(self):
         tool = self.config.tool
         if self.name != tool:
             return []
+        # The tool writes one file per input file, named by params: directories, not files
         return (
-            ("out_done", "work/{library_name}/out/.done"),
-            ("report_done", "work/{library_name}/report/.done"),
-            ("rejected_done", "work/{library_name}/rejected/.done"),
+            ("out", directory("work/{library_name}/out")),
+            ("report", directory("work/{library_name}/report")),
+            ("rejected", directory("work/{library_name}/rejected")),
         )
 
     @dictify

@@ -837,7 +837,7 @@ class BaseStep:
         - ``data_sets``: the folder named in the sample sheet, below the search paths of the
           library's data set;
         - an ``external_data`` task: a folder named like the library, below its search paths;
-        - a task that writes FASTQs (``adapter_trimming``): its ``output/<library>/out``, where
+        - a task that writes FASTQs (``adapter_trimming``): its ``work/<library>/out``, where
           the files keep the names and sub-directories of the task's own input.
         """
         source = self.depends_on.reads if source is None else source
@@ -872,12 +872,12 @@ class BaseStep:
     def reads_input(self, library_name: str) -> list[str]:
         """Return the Snakemake inputs that provide the reads of ``library_name``.
 
-        These are the FASTQ files themselves, or the ``out/.done`` file of the task that writes
+        These are the FASTQ files themselves, or the ``out/`` directory of the task that writes
         them.
         """
         source = self.depends_on.reads
         if source not in ("", DATA_SETS) and self.project.task(source).step != "external_data":
-            return [self.namespaced_path(source, f"work/{library_name}/out/.done")]
+            return [self.namespaced_path(source, f"work/{library_name}/out")]
         return [path for group in self.read_groups(library_name) for path in group.paths.values()]
 
     def build_library_dataframe(self, include_background: bool = False):

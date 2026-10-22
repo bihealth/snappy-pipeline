@@ -21,7 +21,7 @@ def _step(source, source_step="adapter_trimming", mates=("left", "right")):
         depends_on=SimpleNamespace(reads=source),
         project=SimpleNamespace(task=lambda name: SimpleNamespace(step=source_step)),
         read_groups=lambda library: groups,
-        reads_input=lambda library: [f"tasks/{source}/output/{library}/out/.done"],
+        reads_input=lambda library: [f"tasks/{source}/work/{library}/out"],
     )
 
 
@@ -42,7 +42,7 @@ def test_single_end_has_no_right_reads():
 
 def test_reads_written_by_another_task_are_params():
     step = _step("trimming")
-    assert reads_input_files(step, "lib") == {"reads": ["tasks/trimming/output/lib/out/.done"]}
+    assert reads_input_files(step, "lib") == {"reads": ["tasks/trimming/work/lib/out"]}
     assert reads_params(step, "lib")["input"]["reads_left"] == [
         "/raw/a_R1.fq.gz",
         "/raw/b_R1.fq.gz",

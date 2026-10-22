@@ -64,7 +64,7 @@ It is `data_sets`, an `external_data` task or a task that writes FASTQ files suc
 
 `ReadMappingStepPart` passes them on through `reads_input_files` and `reads_params` (`snappy_pipeline/workflows/common/reads.py`).
 When the files exist before the run, the rule inputs are the FASTQ files themselves (`reads_left` and `reads_right`).
-When another task writes them, the rule input is that task's `out/.done` file, and the wrappers read the file lists from `params.args.input`.
+When another task writes them, the rule input is that task's `out/` directory, and the wrappers read the file lists from `params.args.input`.
 There are no link-in jobs.
 
 ## Index and reference

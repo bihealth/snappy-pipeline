@@ -14,7 +14,7 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 this_file = __file__
 
 args = getattr(snakemake.params, "args", {})
-# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# The reads are inputs. If another task wrote them, the input is that task's out directory and
 # params list the files.
 reads_param = args.get("input", {})
 reads_left = snakemake.input.get("reads_left") or reads_param["reads_left"]

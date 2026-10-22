@@ -14,7 +14,7 @@ out_gc = snakemake.output.get("gene_counts", "__dummy__")
 out_sj = snakemake.output.get("junctions", "__dummy__")
 out_tx = snakemake.output.get("transcriptome", "__dummy__")
 
-# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# The reads are inputs. If another task wrote them, the input is that task's out directory and
 # params list the files.
 reads = args.get("input", {})
 reads_left = snakemake.input.get("reads_left") or reads["reads_left"]

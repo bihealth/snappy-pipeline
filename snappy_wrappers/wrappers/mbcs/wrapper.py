@@ -58,7 +58,7 @@ def pair_fastq_files(input_left, input_right):
 
 
 # Read snakemake input --------------------------------------------------------
-# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# The reads are inputs. If another task wrote them, the input is that task's out directory and
 # params list the files.
 reads = args.get("input", {})
 input_left = snakemake.input.get("reads_left") or reads["reads_left"]

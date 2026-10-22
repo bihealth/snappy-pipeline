@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
-# The reads are inputs. If another task wrote them, the input is that task's .done file and
+# The reads are inputs. If another task wrote them, the input is that task's out directory and
 # params list the files. Params also name the trimmed files, in the order of the inputs.
 args = getattr(snakemake.params, "args", {})
 
@@ -211,21 +211,10 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
 
 done
 
-d=$(dirname {snakemake.output.out_done})
-mkdir -p $d
-cp -r $TMPDIR/out/* $d
-
-d=$(dirname {snakemake.output.report_done})
-mkdir -p $d
-cp -r $TMPDIR/report/* $d
-
-d=$(dirname {snakemake.output.rejected_done})
-mkdir -p $d
-cp -r $TMPDIR/rejected/* $d
-
-touch {snakemake.output.out_done}
-touch {snakemake.output.report_done}
-touch {snakemake.output.rejected_done}
+mkdir -p {snakemake.output.out} {snakemake.output.report} {snakemake.output.rejected}
+cp -r $TMPDIR/out/* {snakemake.output.out}
+cp -r $TMPDIR/report/* {snakemake.output.report}
+cp -r $TMPDIR/rejected/* {snakemake.output.rejected}
 
 """
 )

@@ -411,8 +411,8 @@ def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp
     job, jobs = _mapping_job_with_reads_from(trimming, generated_task_config, tmp_path)
     lib = job["wildcards"]["library_name"]
 
-    # Only the .done file is a job output, so the FASTQs are params, not inputs.
-    assert f"tasks/trimming/work/{lib}/out/.done" in job["input"]
+    # Only the directory is a job output, so the FASTQs are params, not inputs.
+    assert f"tasks/trimming/work/{lib}/out" in job["input"]
     assert not [path for path in job["input"] if path.endswith(".fastq.gz")]
     assert job["params"]["args"]["input"]["reads_left"] == [
         f"tasks/trimming/work/{lib}/out/{lib}.R1.fastq.gz"
