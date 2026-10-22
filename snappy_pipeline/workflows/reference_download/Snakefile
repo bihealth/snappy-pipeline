@@ -23,6 +23,8 @@ if source == "ensembl":
         log:
             **wf.get_log_file("ensembl", "run"),
         cache: "omit-software"
+        # Network access: downloads and installs fail now and then
+        retries: 2
         threads: wf.get_resource("ensembl", "run", "threads")
         resources:
             runtime=wf.get_resource("ensembl", "run", "runtime"),
@@ -42,6 +44,8 @@ elif source == "refseq":
         log:
             **wf.get_log_file("refseq", "run"),
         cache: "omit-software"
+        # Network access: downloads and installs fail now and then
+        retries: 2
         threads: wf.get_resource("refseq", "run", "threads")
         resources:
             runtime=wf.get_resource("refseq", "run", "runtime"),
@@ -61,6 +65,8 @@ elif source == "ucsc":
         log:
             **wf.get_log_file("ucsc", "run"),
         cache: "omit-software"
+        # Network access: downloads and installs fail now and then
+        retries: 2
         threads: wf.get_resource("ucsc", "run", "threads")
         resources:
             runtime=wf.get_resource("ucsc", "run", "runtime"),

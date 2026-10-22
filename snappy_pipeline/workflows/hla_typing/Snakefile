@@ -59,6 +59,12 @@ if wf.config.tool == "arcashla":
             log="work/prepare_reference/log/prepare_reference.log",
         benchmark:
             "benchmarks/prepare_reference/prepare_reference.tsv"
+        # Network access: downloads and installs fail now and then
+        retries: 2
+        threads: 1
+        resources:
+            runtime="4h",
+            mem="8GB",
         params:
             reference_version=wf.config.arcashla.reference_version,
         wrapper:

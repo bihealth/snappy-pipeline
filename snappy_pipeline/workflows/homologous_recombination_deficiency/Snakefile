@@ -34,6 +34,8 @@ rule homologous_recombination_deficiency_scarHRD_install:
         **wf.get_log_file("scarHRD", "install"),
     benchmark:
         wf.get_benchmark_file("scarHRD", "install")
+    # Network access: downloads and installs fail now and then
+    retries: 2
     resources:
         runtime=wf.get_resource("scarHRD", "install", "runtime"),
         mem=wf.get_resource("scarHRD", "install", "mem"),

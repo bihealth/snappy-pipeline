@@ -29,6 +29,8 @@ if not tools.container:
             **wf.get_output_files("pvactools", "install"),
         log:
             **wf.get_log_file("pvactools", "install"),
+        # Network access: downloads and installs fail now and then
+        retries: 2
         threads: wf.get_resource("pvactools", "install", "threads")
         resources:
             runtime=wf.get_resource("pvactools", "install", "runtime"),

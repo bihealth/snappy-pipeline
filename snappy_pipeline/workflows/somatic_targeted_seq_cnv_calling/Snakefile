@@ -46,6 +46,8 @@ elif tool == "sequenza":
             **wf.get_log_file("sequenza", "install"),
         benchmark:
             wf.get_benchmark_file("sequenza", "install")
+        # Network access: downloads and installs fail now and then
+        retries: 2
         threads: wf.get_resource("sequenza", "install", "threads")
         resources:
             runtime=wf.get_resource("sequenza", "install", "runtime"),

@@ -130,7 +130,12 @@
   "params": {
    "reference_version": "3.24.0"
   },
-  "resources": {},
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "runtime": 240
+  },
   "rule": "hla_typing_arcashla_hla_typing_arcashla_prepare_reference",
   "temp": [],
   "threads": 1,

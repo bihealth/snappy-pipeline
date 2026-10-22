@@ -252,6 +252,8 @@ elif tool == "purecn":
             **wf.get_log_file("purecn", "install"),
         benchmark:
             wf.get_benchmark_file("purecn", "install")
+        # Network access: downloads and installs fail now and then
+        retries: 2
         resources:
             runtime=wf.get_resource("purecn", "install", "runtime"),
             mem=wf.get_resource("purecn", "install", "mem"),
