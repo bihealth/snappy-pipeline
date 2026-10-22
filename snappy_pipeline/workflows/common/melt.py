@@ -213,17 +213,18 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
             "work/{library_name}/log/{library_name}.merge_vcf"
         ).items()
 
-    def _get_params_indiv_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
-        params = {
+    def _get_params_group_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {
             "me_refs_infix": self.config.melt.me_refs_infix,
+            "me_type": wildcards.me_type,
         }
+
+    _get_params_genotype = _get_params_group_analysis
+    _get_params_make_vcf = _get_params_group_analysis
+
+    def _get_params_indiv_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
+        """Only IndivAnalysis takes MELT's ``-exome``"""
+        params = self._get_params_group_analysis(wildcards)
         if self.parent.name == "sv_calling_targeted":
             params["exome"] = True
-        if getattr(wildcards, "me_type", None):
-            params["me_type"] = getattr(wildcards, "me_type")
         return params
-
-    _get_params_group_analysis = _get_params_indiv_analysis
-    _get_params_genotype = _get_params_indiv_analysis
-    _get_params_make_vcf = _get_params_indiv_analysis
-    _get_params_merge_vcf = _get_params_indiv_analysis
