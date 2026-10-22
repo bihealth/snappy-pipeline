@@ -53,6 +53,33 @@ jobs:
             You can trigger all lints locally by running `pixi run -e dev lint`
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  pins:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Changed environment files come with their pin files
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          changed=$(git diff --name-only "$BASE"...HEAD)
+          stale=()
+          while read -r env; do
+            pin="$(dirname "$env")/environment.linux-64.pin.txt"
+            # symlinked environment files share their target's pin; unpinned ones have none
+            if [[ -f "$env" && ! -L "$env" && -f "$pin" ]] && ! grep -qxF "$pin" <<< "$changed"; then
+              stale+=("$env")
+            fi
+          done < <(grep -E '^snappy_wrappers/wrappers/.+/environment\.yaml$' <<< "$changed" || true)
+          if (( ${#stale[@]} )); then
+            echo "Pin these environments again: pixi run -e dev update-pins ${stale[*]}"
+            exit 1
+          fi
+
   testing:
     runs-on: ubuntu-latest
     needs: linting

@@ -100,7 +100,8 @@ Snakemake builds it from the exact package URLs in `environment.linux-64.pin.txt
 After changing an environment file, pin it again with `pixi run -e dev update-pins <environment.yaml> ...` (snakedeploy, needs conda); without files, the task pins every environment that has a pin file.
 A symlinked `environment.yaml` gets a symlink to its target's pin file.
 The `conda-autobump` GitHub workflow updates and re-pins the environments weekly, with one pull request per environment.
-`test_wrapper_envs_are_pinned` checks that each environment has its pin file and that the pin file holds the exact versions of the environment file.
+`test_wrapper_envs_are_pinned` checks that each environment has its pin file and that the pin file holds every package of the environment file, at the exact versions it names.
+In a pull request, CI also checks that a changed environment file comes with its changed pin file.
 
 A step part lists the output keys of scatter fragments per action in `temp_outputs`.
 It lists those of per-sample intermediates that only later rules of the same task read in `intermediate_outputs`.

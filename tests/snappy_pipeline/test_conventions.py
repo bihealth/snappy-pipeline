@@ -741,7 +741,14 @@ def test_wrapper_envs_are_pinned():
             continue
         pinned = pin.read_text(encoding="utf-8")
         for dependency in yaml.safe_load(env.read_text(encoding="utf-8"))["dependencies"]:
-            m = isinstance(dependency, str) and _EXACT_DEPENDENCY.match(dependency.replace(" ", ""))
+            if not isinstance(dependency, str):
+                continue
+            package = re.split(r"[=<>!~ ]", dependency.split("::")[-1], maxsplit=1)[0]
+            # <channel>/<subdir>/<name>-<version>-<build>.conda; names may contain "-"
+            if not re.search(rf"/{re.escape(package)}-[^/-]+-[^/-]+\.(conda|tar\.bz2)", pinned):
+                found.append(f"{name}: the pin file does not hold {package}")
+                continue
+            m = _EXACT_DEPENDENCY.match(dependency.replace(" ", ""))
             # conda reads ==4.0 as 4.0.0
             if m and not re.search(rf"/{re.escape(m[1])}-{re.escape(m[2])}(\.[\w.]+)?-", pinned):
                 found.append(f"{name}: the pin file does not hold {dependency}")
