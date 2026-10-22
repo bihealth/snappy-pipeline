@@ -120,6 +120,7 @@ Outputs for the Snakemake report are declared per action in a step part's `repor
 It maps the output key to a `ReportOutput` (subcategory, caption, `htmlindex` for a directory).
 `BaseStep.get_output_files` flags them with `report()`, in the task's category and labelled by the wildcards of the path.
 Captions are RST files in `report/` next to the step module.
+Every plot (PDF, PNG, SVG, HTML) and every output below a `report/` directory is a report output; `test_plots_and_diagnostic_outputs_are_in_the_report` checks the DAG snapshots, which list them as `report`.
 
 ### Defining input files and params
 

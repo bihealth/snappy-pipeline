@@ -172,6 +172,11 @@
     "trim_adapters": false
    }
   },
+  "report": [
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "56 GB",
    "mem_mb": 56000,

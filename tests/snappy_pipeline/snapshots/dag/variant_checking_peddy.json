@@ -55,6 +55,11 @@
     "trim_adapters": false
    }
   },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "73.73 GB",
    "mem_mb": 73728,
@@ -111,6 +116,11 @@
     "trim_adapters": false
    }
   },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "73.73 GB",
    "mem_mb": 73728,
@@ -447,6 +457,9 @@
     "extra_arguments": []
    }
   },
+  "report": [
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html"
+  ],
   "resources": {
    "mem": "15.36 GB",
    "mem_mb": 15360,

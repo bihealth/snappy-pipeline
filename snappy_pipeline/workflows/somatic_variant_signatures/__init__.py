@@ -17,7 +17,7 @@ Downstream tasks read the key ``tsv``.
 """
 
 from snappy_pipeline.utils import dictify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 from snappy_pipeline.workflows.variant_calling.model import ExpectedSomaticVariants
@@ -71,6 +71,10 @@ class TabulateVariantsStepPart(SignaturesStepPart):
 
 class DeconstructSigsStepPart(SignaturesStepPart):
     """Use deconstructSigs R package to identify signatures from tables"""
+
+    report_outputs = {
+        "run": {"pdf": ReportOutput("deconstructSigs", caption="deconstruct_sigs.rst")}
+    }
 
     #: Step name
     name = "deconstruct_sigs"

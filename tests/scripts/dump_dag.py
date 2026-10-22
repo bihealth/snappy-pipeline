@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from snakemake.api import SnakemakeApi
+from snakemake.io import is_flagged
 from snakemake.settings.types import ConfigSettings, DAGSettings, OutputSettings, ResourceSettings
 
 import snappy_pipeline
@@ -40,7 +41,7 @@ def _plain(value: Any) -> Any:
 
 
 def _job_record(job) -> dict[str, Any]:
-    return {
+    record = {
         "rule": job.rule.name,
         "wildcards": _plain(dict(job.wildcards_dict)),
         "input": [str(f) for f in job.input],
@@ -57,6 +58,10 @@ def _job_record(job) -> dict[str, Any]:
         },
         "wrapper": job.rule.wrapper,
     }
+    # Outputs that the Snakemake report shows; only when there are some, as most jobs have none
+    if report := sorted(str(f) for f in job.output if is_flagged(f, "report")):
+        record["report"] = report
+    return record
 
 
 def dump_dag(directory: Path, task: str, frozen: bool = False) -> list[dict[str, Any]]:

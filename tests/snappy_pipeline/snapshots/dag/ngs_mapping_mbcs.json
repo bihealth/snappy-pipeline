@@ -68,6 +68,11 @@
     "sample_name": "case001subregion-N1-DNA1-WES1"
    }
   },
+  "report": [
+   "tasks/ngs_mapping_mbcs/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_mbcs/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_mbcs/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,
@@ -137,6 +142,11 @@
     "sample_name": "case001subregion-T1-DNA1-WES1"
    }
   },
+  "report": [
+   "tasks/ngs_mapping_mbcs/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_mbcs/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_mbcs/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,

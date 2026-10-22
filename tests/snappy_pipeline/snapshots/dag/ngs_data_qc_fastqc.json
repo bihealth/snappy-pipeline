@@ -33,6 +33,9 @@
     "num_threads": 1
    }
   },
+  "report": [
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/html"
+  ],
   "resources": {
    "mem": "4 GB",
    "mem_mb": 4000,

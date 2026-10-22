@@ -32,9 +32,10 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
-    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
+    MATCHED_NORMAL_REQUIREMENT,
+    ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -155,6 +156,13 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
 
 class SomaticCnvCheckingReportStepPart(BaseStepPart):
     """Plots of BAF vs CNV"""
+
+    report_outputs = {
+        "run": {
+            key: ReportOutput("CNV checking", caption="cnv_checking.rst")
+            for key in ("cnv", "locus", "segment")
+        }
+    }
 
     name = "report"
     actions = ("run",)

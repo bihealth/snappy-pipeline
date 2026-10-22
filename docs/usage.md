@@ -79,7 +79,7 @@ Logs are not published.
 
 ## Report
 
-`snappy report` builds the Snakemake report of the QC outputs, with one category per task (FastQC, Picard metrics, `bcftools stats`, cnvkit plots).
+`snappy report` builds the Snakemake report of the plots and QC outputs, with one category per task (for example FastQC, Picard metrics, BAM statistics, `bcftools stats`, the copy number plots, peddy).
 It uses the same Snakefile, directory and profile as `snappy run`, and arguments after `--` go to Snakemake.
 `--output` sets the file below the project directory.
 A `.zip` report (the default `report.zip`) can hold HTML directories such as the FastQC reports.

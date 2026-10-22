@@ -55,6 +55,11 @@
     "trim_adapters": false
    }
   },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "73.73 GB",
    "mem_mb": 73728,
@@ -111,6 +116,11 @@
     "trim_adapters": false
    }
   },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "73.73 GB",
    "mem_mb": 73728,
@@ -1427,6 +1437,9 @@
     "extra_arguments": []
    }
   },
+  "report": [
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.interval_weights.png"
+  ],
   "resources": {
    "mem": "32 GB",
    "mem_mb": 32000,

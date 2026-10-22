@@ -149,6 +149,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
     DataSignature,
+    ReportOutput,
     ResourceUsage,
     select_libraries,
 )
@@ -269,6 +270,13 @@ class ReportGetResultFilesMixin:
 
 class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     """Base class for read mapping step parts"""
+
+    report_outputs = {
+        "run": {
+            f"report_{report}_txt": ReportOutput("BAM QC", caption="bam_qc.rst")
+            for report in ("bamstats", "flagstats", "idxstats")
+        }
+    }
 
     #: Class available actions. Read mapping step parts only support action "run".
     actions = ("run",)
@@ -521,6 +529,8 @@ class Minimap2StepPart(ReadMappingStepPart):
 
 class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Build target coverage report"""
+
+    report_outputs = {"run": {"json": ReportOutput("alfred", caption="alfred.rst")}}
 
     #: Step name
     name = "target_coverage_report"

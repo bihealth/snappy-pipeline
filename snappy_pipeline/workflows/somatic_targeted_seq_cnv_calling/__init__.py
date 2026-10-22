@@ -366,9 +366,17 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     report_outputs = {
         "plot": {
-            "diagram": ReportOutput("cnvkit", caption="cnvkit_plots.rst"),
-            "scatter": ReportOutput("cnvkit", caption="cnvkit_plots.rst"),
-        }
+            key: ReportOutput("cnvkit", caption="cnvkit_plots.rst")
+            for key in (
+                "diagram",
+                "scatter",
+                *(f"scatter_chr{chrom}" for chrom in (*range(1, 23), "X", "Y")),
+            )
+        },
+        "report": {
+            key: ReportOutput("cnvkit", caption="cnvkit_reports.rst")
+            for key in ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+        },
     }
 
     #: Class available actions

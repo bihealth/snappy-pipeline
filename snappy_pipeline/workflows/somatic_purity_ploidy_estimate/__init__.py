@@ -33,7 +33,12 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
-from snappy_pipeline.workflows.abstract import MATCHED_NORMAL_REQUIREMENT, BaseStep, BaseStepPart
+from snappy_pipeline.workflows.abstract import (
+    BaseStep,
+    BaseStepPart,
+    MATCHED_NORMAL_REQUIREMENT,
+    ReportOutput,
+)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 
@@ -54,6 +59,13 @@ class AscatStepPart(BaseStepPart):
     - Although we name the virtual probes "SNP${num}", they are not guaranteed
       to
     """
+
+    report_outputs = {
+        "run_ascat": {
+            key: ReportOutput("ASCAT", caption="ascat_plots.rst")
+            for key in ("plot_tumour", "plot_germline", "plot_aspcf")
+        }
+    }
 
     # Name of the step.
     name = "ascat"

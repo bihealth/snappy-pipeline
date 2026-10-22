@@ -31,11 +31,7 @@ import re
 from snakemake.io import expand
 
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import (
-    BaseStep,
-    BaseStepPart,
-    ResourceUsage,
-)
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
@@ -60,6 +56,8 @@ HLA_TYPERS = ("optitype", "arcashla")
 
 class OptiTypeStepPart(BaseStepPart):
     """HLA Typing using OptiType"""
+
+    report_outputs = {"run": {"cov_pdf": ReportOutput("OptiType", caption="optitype.rst")}}
 
     #: Step name
     name = "optitype"

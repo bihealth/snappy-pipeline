@@ -42,9 +42,10 @@ from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
-    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
+    MATCHED_NORMAL_REQUIREMENT,
+    ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -246,6 +247,21 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
 class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with cnvkit.py"""
+
+    report_outputs = {
+        "plot": {
+            key: ReportOutput("cnvkit", caption="cnvkit_plots.rst")
+            for key in (
+                "diagram",
+                "scatter",
+                *(f"scatter_chr{chrom}" for chrom in (*range(1, 23), "X", "Y")),
+            )
+        },
+        "report": {
+            key: ReportOutput("cnvkit", caption="cnvkit_reports.rst")
+            for key in ("breaks", "genemetrics", "segmetrics", "sex", "metrics")
+        },
+    }
 
     #: Step name
     name = "cnvkit"
@@ -482,6 +498,13 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
 class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     """Somatic WGS CNV calling with Control-FreeC"""
+
+    report_outputs = {
+        "plot": {
+            key: ReportOutput("Control-FREEC", caption="control_freec_plots.rst")
+            for key in ("diagram", "scatter")
+        }
+    }
 
     #: Step name
     name = "control_freec"

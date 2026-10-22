@@ -371,6 +371,42 @@ def test_wrappers_read_the_params_they_get():
     assert not stale, f"remove these entries from WRAPPERS_READING_PARAMS_DYNAMICALLY: {stale}"
 
 
+#: Diagnostic outputs that are not in the report, by wrapper (or rule, for rules without a wrapper),
+#: with the reason
+OUTPUTS_NOT_IN_REPORT: dict[str, str] = {}
+
+#: Plots and HTML pages, by extension
+_PLOT = re.compile(r"\.(pdf|png|svg|html?)$")
+
+
+def _diagnostic(path: str) -> bool:
+    """A plot, or an output below a ``report/`` directory (but no ``.done`` marker or ``.md5``)."""
+    name = path.rsplit("/", 1)[-1]
+    if name == ".done" or name.endswith(".md5"):
+        return False
+    return bool(_PLOT.search(path)) or "/report/" in path
+
+
+def test_plots_and_diagnostic_outputs_are_in_the_report():
+    """Plots and the outputs below ``report/`` are ``report()`` outputs (``report_outputs`` of the
+    step part), so that ``snappy report`` shows them."""
+    found, used = set(), set()
+    for _, job in _snapshot_jobs():
+        owner = (job.get("wrapper") or "").partition("snappy_wrappers/wrappers/")[2] or job["rule"]
+        if job["rule"].endswith("_publish"):
+            continue
+        missing = [o for o in job["output"] if _diagnostic(o) and o not in job.get("report", ())]
+        if not missing:
+            continue
+        if owner in OUTPUTS_NOT_IN_REPORT:
+            used.add(owner)
+        else:
+            found |= {f"{owner}: {o.split('/work/', 1)[-1]}" for o in missing}
+    assert not found, f"add these outputs to report_outputs: {sorted(found)}"
+    stale = sorted(set(OUTPUTS_NOT_IN_REPORT) - used)
+    assert not stale, f"remove these entries from OUTPUTS_NOT_IN_REPORT: {stale}"
+
+
 #: Params that hold file paths. The test fails for new ones and for fixed ones, so
 #: the list only shrinks.
 PARAMS_FILES_BASELINE = SNAPSHOTS / "params_file_violations.json"

@@ -73,11 +73,7 @@ PureCN runs in its container, because its R package requirements are too complex
 from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKitModel
 from snappy_pipeline.utils import dictify, listify
-from snappy_pipeline.workflows.abstract import (
-    BaseStep,
-    BaseStepPart,
-    ResourceUsage,
-)
+from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ReportOutput, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -125,6 +121,10 @@ class PanelOfNormalsStepPart(BaseStepPart):
 
 class PureCnStepPart(PanelOfNormalsStepPart):
     """Creating a panel of normals with GC-corrected coverage"""
+
+    report_outputs = {
+        "create_panel": {"plot": ReportOutput("PureCN", caption="purecn_weights.rst")}
+    }
 
     #: Step name
     name = "purecn"
@@ -374,6 +374,12 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
 class CnvkitStepPart(PanelOfNormalsStepPart):
     """Somatic variant calling with MuTect 2"""
+
+    report_outputs = {
+        "report": {
+            key: ReportOutput("cnvkit", caption="cnvkit_reports.rst") for key in ("sex", "metrics")
+        }
+    }
 
     #: Step name
     name = "cnvkit"

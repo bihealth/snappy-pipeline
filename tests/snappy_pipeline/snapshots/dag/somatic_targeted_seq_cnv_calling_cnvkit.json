@@ -55,6 +55,11 @@
     "trim_adapters": false
    }
   },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "73.73 GB",
    "mem_mb": 73728,
@@ -111,6 +116,11 @@
     "trim_adapters": false
    }
   },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt"
+  ],
   "resources": {
    "mem": "73.73 GB",
    "mem_mb": 73728,
@@ -689,6 +699,34 @@
     "threshold": 0.5
    }
   },
+  "report": [
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.diagram.pdf",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr1.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr10.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr11.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr12.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr13.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr14.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr15.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr16.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr17.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr18.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr19.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr2.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr20.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr21.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr22.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr3.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr4.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr5.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr6.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr7.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr8.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chr9.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrX.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.chrY.png",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.scatter.png"
+  ],
   "resources": {
    "mem": "30.72 GB",
    "mem_mb": 30720,
@@ -779,6 +817,13 @@
     }
    }
   },
+  "report": [
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.breaks.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.genemetrics.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.metrics.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.segmetrics.txt",
+   "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.sex.txt"
+  ],
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,

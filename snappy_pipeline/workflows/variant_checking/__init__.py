@@ -24,6 +24,7 @@ from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    ReportOutput,
     ResourceUsage,
     WritePedigreeStepPart,
 )
@@ -50,6 +51,8 @@ _OUTPUTS = {
 
 class PeddyStepPart(BaseStepPart):
     """Compute variant statistics using peddy"""
+
+    report_outputs = {"run": {"html": ReportOutput("peddy", caption="peddy.rst")}}
 
     #: Step name
     name = "peddy"
