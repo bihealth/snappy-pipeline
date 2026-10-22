@@ -22,7 +22,17 @@ class Strand(enum.IntEnum):
 
 
 class Featurecounts(ToolModel):
-    pass
+    feature_type: str = "exon"
+    """Feature type (GTF column 3) to count (``featureCounts -t``)"""
+
+    gene_attribute: str = "gene_id"
+    """GTF attribute that groups the features into genes (``featureCounts -g``)"""
+
+    exclude_flags: int = 260
+    """SAM flags of the reads to leave out: unmapped and secondary alignments (``samtools view -F``)"""
+
+    min_mapq: int = 255
+    """Minimum mapping quality of the reads (``samtools view -q``); 255 keeps the uniquely mapped reads of STAR"""
 
 
 class Strandedness(ToolModel):

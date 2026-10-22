@@ -266,6 +266,18 @@ class FeatureCountsStepPart(GeneExpressionQuantificationStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "features", self.parent.get_upstream_paths("features").gtf
 
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        params = super()._get_params_run(wildcards)
+        if self.config.tool != self.name:
+            return params
+        section = self.config.featurecounts
+        return params | {
+            "feature_type": section.feature_type,
+            "gene_attribute": section.gene_attribute,
+            "exclude_flags": section.exclude_flags,
+            "min_mapq": section.min_mapq,
+        }
+
     default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="6700MB")
 
 

@@ -27,12 +27,12 @@ fi
 
 bam=$(realpath {snakemake.input.bam})
 pushd $TMPDIR
-samtools view -h -F 260 -q 255 $bam \
+samtools view -h -F {args[exclude_flags]} -q {args[min_mapq]} $bam \
     | samtools sort -n -@ 2 \
     | featureCounts \
-    -T 2 \
-    -g gene_id \
-    -t exon \
+    -T {snakemake.threads} \
+    -g {args[gene_attribute]} \
+    -t {args[feature_type]} \
     -a {snakemake.input.features} \
     -s ${{strand}} \
     -p \

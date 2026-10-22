@@ -9,11 +9,13 @@ import pytest
 
 from snappy_pipeline.workflows.gene_expression_quantification import (
     RNASEQC_FEATURES_SIGNATURE,
+    FeatureCountsStepPart,
     QCStepPartDupradar,
     QCStepPartRnaseqc,
 )
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     ExpectedStrandedness,
+    Featurecounts,
     GeneExpressionQuantification,
 )
 from snappy_pipeline.workflows.abstract import BaseStep
@@ -106,3 +108,17 @@ def test_strandedness_requires_exons():
     depends_on = {"alignments": "mapping"}
     with pytest.raises(pydantic.ValidationError, match="tool=strandedness needs depends_on.exons"):
         GeneExpressionQuantification(tool="strandedness", depends_on=depends_on, strandedness={})
+
+
+def test_featurecounts_passes_its_settings():
+    # The params only read the config, so skip the full step setup.
+    part = object.__new__(FeatureCountsStepPart)
+    part.config = SimpleNamespace(tool="featurecounts", strand=-1, featurecounts=Featurecounts())
+
+    assert part._get_params_run(WILDCARDS) == {
+        "strand": -1,
+        "feature_type": "exon",
+        "gene_attribute": "gene_id",
+        "exclude_flags": 260,
+        "min_mapq": 255,
+    }
