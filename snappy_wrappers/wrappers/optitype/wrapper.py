@@ -37,7 +37,9 @@ yara_indexer -o $TMPDIR/yara_index/$refname $TMPDIR/yara_index/$refname
 
 yara_mapper \
     -t {args[num_mapping_threads]} \
-    --error-rate 5 \
+    --error-rate {args[yara_error_rate]} \
+    --strata-rate {args[yara_strata_rate]} \
+    --sensitivity {args[yara_sensitivity]} \
     --output-format sam \
     $TMPDIR/yara_index/$refname \
     <(zcat --force {reads_left}) \
@@ -47,7 +49,9 @@ yara_mapper \
 if [[ {paired} -eq 1 ]]; then
     yara_mapper \
         -t {args[num_mapping_threads]} \
-        --error-rate 5 \
+        --error-rate {args[yara_error_rate]} \
+        --strata-rate {args[yara_strata_rate]} \
+        --sensitivity {args[yara_sensitivity]} \
         --output-format sam \
         $TMPDIR/yara_index/$refname \
         <(zcat --force {reads_right}) \
@@ -75,7 +79,7 @@ threads=1
 [behavior]
 deletebam=true
 unpaired_weight=0
-use_discordant=false
+use_discordant={args[use_discordant]}
 EOF
 
 mkdir -p $TMPDIR/out.tmp
