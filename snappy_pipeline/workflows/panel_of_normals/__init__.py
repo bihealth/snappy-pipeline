@@ -357,7 +357,7 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
 
     def _get_params_scatter(self, wildcards):
         return {
-            "ignore_chroms": self.config.ignore_chroms,
+            "ignore_contigs": self.config.ignore_contigs,
             "padding": self.config.mutect2.padding,
         }
 

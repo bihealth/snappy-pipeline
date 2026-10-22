@@ -41,16 +41,16 @@ def matches_any(query, patterns):
     return False
 
 
-def yield_contigs(fai_file, ignore_chroms=None):
+def yield_contigs(fai_file, ignore_contigs=None):
     """Yield contig names."""
     csv_reader = csv.reader(fai_file, delimiter="\t")
     for record in csv_reader:
         chrom, _, _, _, _ = record
-        if not matches_any(chrom, ignore_chroms or []):
+        if not matches_any(chrom, ignore_contigs or []):
             yield chrom
 
 
-def yield_regions(fai_file, window_size, subtract_end=0, ignore_chroms=None, padding=0):
+def yield_regions(fai_file, window_size, subtract_end=0, ignore_contigs=None, padding=0):
     """Yield GenomeRegion by GenomeRegion
 
     ``subtract_end`` -- for 0/1 based coordinates.
@@ -59,7 +59,7 @@ def yield_regions(fai_file, window_size, subtract_end=0, ignore_chroms=None, pad
     csv_reader = csv.reader(fai_file, delimiter="\t")
     for record in csv_reader:
         chrom, length, _, _, _ = record
-        if matches_any(chrom, ignore_chroms or []):
+        if matches_any(chrom, ignore_contigs or []):
             continue  # skip this chromosomes
         length = int(length)
         # process chromosome
@@ -83,7 +83,7 @@ def run(args):
     """Main entry point after parsing command line arguments"""
     yielded = 0
     for region in yield_regions(
-        args.fai_file, args.window_size, args.subtract_end, args.ignore_chroms
+        args.fai_file, args.window_size, args.subtract_end, args.ignore_contigs
     ):
         if args.format == "regions":
             print(region.human_readable(), file=args.output_file)
@@ -126,7 +126,7 @@ def create_parser():
         help="Optionally, strip one from end, sometimes required for BED",
     )
     parser.add_argument(
-        "--ignore-chroms",
+        "--ignore-contigs",
         default=[],
         action="append",
         nargs="+",
@@ -142,7 +142,7 @@ def main(argv=None):
     """Main entry point, includes parsing of command line arguments"""
     parser = create_parser()
     args = parser.parse_args(argv)
-    args.ignore_chroms = [item for sublist in args.ignore_chroms for item in sublist]
+    args.ignore_contigs = [item for sublist in args.ignore_contigs for item in sublist]
     run(args)
 
 

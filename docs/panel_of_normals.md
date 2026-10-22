@@ -30,7 +30,7 @@ By default, all normal DNA libraries of the sample sheets build the panel.
 `path_normals_list` selects other libraries: a file with one library name per line.
 These are used even if the sample sheet does not flag them as normal.
 
-`ignore_chroms` restricts the panel to the sequences of interest.
+`ignore_contigs` restricts the panel to the sequences of interest.
 It lists regular expressions, matched with `re.search` against the contig names.
 
 ```yaml
@@ -71,7 +71,7 @@ tasks:
         reference: genome
         germline_resource: gnomad
       tool: mutect2
-      ignore_chroms: ['^NC_007605$', '^hs37d5$', '^chrEBV$', '_decoy$', '^HLA-', '^GL000220']  # for hs37d5
+      ignore_contigs: ['^NC_007605$', '^hs37d5$', '^chrEBV$', '_decoy$', '^HLA-', '^GL000220']  # for hs37d5
       mutect2:
         path_normals_list: ""   # empty: all normal libraries
 ```

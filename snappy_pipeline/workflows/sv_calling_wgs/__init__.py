@@ -127,7 +127,7 @@ class PopDelStepPart(
                 fai_file,
                 window_size=window_size,
                 padding=padding,
-                ignore_chroms=self._get_ignore_chroms(),
+                ignore_contigs=self._get_ignore_contigs(),
             ):
                 if r.begin == 0:
                     r.begin = 1
@@ -140,8 +140,8 @@ class PopDelStepPart(
     def _get_fai_path(self):
         return self.parent.get_upstream_paths("reference").fai
 
-    def _get_ignore_chroms(self):
-        return self.config.ignore_chroms
+    def _get_ignore_contigs(self):
+        return self.config.ignore_contigs
 
     @dictify
     def _get_output_files_concat_calls(self):

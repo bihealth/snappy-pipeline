@@ -1257,7 +1257,7 @@
   ],
   "params": {
    "args": {
-    "ignore_chroms": [],
+    "ignore_contigs": [],
     "padding": 5000
    }
   },

@@ -68,13 +68,13 @@ def partition_lengths_with_splits(
     return partitions
 
 
-def main(fai_path, ignore_chroms, padding, output_regions):
+def main(fai_path, ignore_contigs, padding, output_regions):
     with open(fai_path, "rt") as fai:
         csv_reader = csv.reader(fai, delimiter="\t")
         contigs = {
             contig: int(length)
             for contig, length, *_ in csv_reader
-            if not matches_any(contig, ignore_chroms)
+            if not matches_any(contig, ignore_contigs)
         }
     num_regions = len(output_regions)
     regions = partition_lengths_with_splits(contigs, num_regions)
@@ -110,7 +110,7 @@ if __name__ == "__main__":
         args = snakemake.params.args
         PythonWrapper(snakemake).run(
             lambda: main(
-                snakemake.input.fai, args["ignore_chroms"], args["padding"], snakemake.output.regions
+                snakemake.input.fai, args["ignore_contigs"], args["padding"], snakemake.output.regions
             )
         )
     else:

@@ -1352,7 +1352,7 @@
   ],
   "params": {
    "args": {
-    "ignore_chroms": [],
+    "ignore_contigs": [],
     "padding": 5000
    }
   },
@@ -1544,7 +1544,7 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
      "^chrEBV$",
@@ -1591,7 +1591,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "extra_arguments": [],
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
      "^chrEBV$",
@@ -1641,7 +1641,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "extra_arguments": [],
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
      "^chrEBV$",
@@ -1695,7 +1695,7 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
      "^chrEBV$",
@@ -3202,7 +3202,7 @@
   ],
   "params": {
    "args": {
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^HLA-",
      "^NC_007605$",
      "^chrEBV$",

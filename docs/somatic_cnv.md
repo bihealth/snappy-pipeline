@@ -26,7 +26,7 @@ So `purecn` runs in a container, and `sequenza` uses GitHub forks of R packages.
 The pipeline cannot yet treat male and female samples differently, although the sex strongly influences the results.
 Avoid calling CNVs on the sex chromosomes:
 
-- `sequenza` has the `ignore_chroms` option.
+- `sequenza` has the `ignore_contigs` option.
 - `purecn` handles the sex of a sample itself.
 - `cnvkit` needs the sex chromosomes removed from the access file.
 

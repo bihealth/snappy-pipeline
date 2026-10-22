@@ -125,7 +125,7 @@ class Sequenza(ToolModel):
     )
     """Extra arguments for sequenza bam2seqz"""
 
-    ignore_chroms: list[str] = [
+    ignore_contigs: list[str] = [
         "^X$",
         "^Y$",
         "^MT$",

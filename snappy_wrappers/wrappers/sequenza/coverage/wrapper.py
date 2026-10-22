@@ -25,7 +25,7 @@ genome = snakemake.input.reference
 length = args["length"]
 
 f = open(snakemake.input.reference_fai, "rt")
-contigs = " ".join(yield_contigs(f, args.get("ignore_chroms")))
+contigs = " ".join(yield_contigs(f, args.get("ignore_contigs")))
 f.close()
 
 bam2seqz_options = " ".join(

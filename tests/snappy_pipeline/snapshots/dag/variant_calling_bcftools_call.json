@@ -293,7 +293,7 @@
    "args": {
     "assembly": "unknown",
     "extra_arguments": [],
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
      "^chrEBV$",

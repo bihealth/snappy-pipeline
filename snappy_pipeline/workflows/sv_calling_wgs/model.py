@@ -131,7 +131,7 @@ class SvCallingWgs(SnappyStepModel):
 
     melt: Melt | None = None
 
-    ignore_chroms: list[str] = [
+    ignore_contigs: list[str] = [
         "^NC_007605$",
         "^hs37d5$",
         "^chrEBV$",

@@ -79,40 +79,40 @@ class Tool(enum.StrEnum):
     mutect2 = "mutect2"
 
 
-class IgnoreChroms(SnappyModel):
+class IgnoreContigs(SnappyModel):
     """The contigs that a caller skips"""
 
-    ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
+    ignore_contigs: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
     """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
 
-class BcftoolsCall(ToolModel, IgnoreChroms):
+class BcftoolsCall(ToolModel, IgnoreContigs):
     max_depth: int = 250
     max_indel_depth: int = 250
     window_length: int = 10000000
     num_threads: int = 16
 
 
-class Gatk3Hc(ToolModel, IgnoreChroms):
+class Gatk3Hc(ToolModel, IgnoreContigs):
     num_threads: int = 16
     window_length: int = 10000000
     allow_seq_dict_incompatibility: bool = False
 
 
-class Gatk3Ug(ToolModel, IgnoreChroms):
+class Gatk3Ug(ToolModel, IgnoreContigs):
     num_threads: int = 16
     window_length: int = 10000000
     allow_seq_dict_incompatibility: bool = False
     downsample_to_coverage: int = 250
 
 
-class Gatk4HcJoint(ToolModel, IgnoreChroms):
+class Gatk4HcJoint(ToolModel, IgnoreContigs):
     window_length: int = 10000000
     num_threads: int = 16
     allow_seq_dict_incompatibility: bool = False
 
 
-class Gatk4HcGvcf(ToolModel, IgnoreChroms):
+class Gatk4HcGvcf(ToolModel, IgnoreContigs):
     window_length: int = 10000000
     num_threads: int = 16
     allow_seq_dict_incompatibility: bool = False
@@ -133,7 +133,7 @@ class Contamination(ToggleModel, GATK):
     """Parameters for GetPileupSummaries used on the tumor bam (& normalk if present)"""
 
 
-class Mutect2(Parallel, GATK, IgnoreChroms):
+class Mutect2(Parallel, GATK, IgnoreContigs):
     contamination: Contamination
     """Estimation of contamination using GetPileupSummaries & CalculateContamination"""
 

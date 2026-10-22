@@ -42,7 +42,7 @@ def config_to_r(x):
 genome = snakemake.input.reference
 
 f = open(snakemake.input.reference_fai, "rt")
-contigs = config_to_r(list(yield_contigs(f, args.get("ignore_chroms"))))
+contigs = config_to_r(list(yield_contigs(f, args.get("ignore_contigs"))))
 f.close()
 
 args_extract = config_to_r(dict(args["extra_args_extract"]))

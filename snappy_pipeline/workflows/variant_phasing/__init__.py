@@ -211,7 +211,7 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
         return {"vcf": gather(chunk + ".vcf.gz"), "vcf_tbi": gather(chunk + ".vcf.gz.tbi")}
 
     def _get_params_scatter(self, wildcards):
-        return {"ignore_chroms": self.config.ignore_chroms, "padding": 0}
+        return {"ignore_contigs": self.config.ignore_contigs, "padding": 0}
 
     def _get_params_run(self, wildcards):
         return {

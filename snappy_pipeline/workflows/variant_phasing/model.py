@@ -95,7 +95,7 @@ class VariantPhasing(SnappyStepModel):
 
     tool: Annotated[Tool, EnumField(Tool)]
 
-    ignore_chroms: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
+    ignore_contigs: list[str] = ["^NC_007605$", "^hs37d5$", "^chrEBV$", "_decoy$", "^HLA-"]
     """Regular expressions matched with ``re.search`` against contig names; matching contigs are ignored."""
 
     gatk_read_backed_phasing: GatkReadBackedPhasing = GatkReadBackedPhasing()

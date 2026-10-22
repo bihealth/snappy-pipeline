@@ -225,7 +225,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         extra_args = self._coerce_model(SequenzaExtraArgs, self.config.sequenza.extra_args)
         return {
             "length": self.config.sequenza.length,
-            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "ignore_contigs": self.config.sequenza.ignore_contigs,
             "bam2seqz_options": extra_args.model_dump(by_alias=True),
         }
 
@@ -243,7 +243,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         )
         return {
             "assembly": self.config.sequenza.assembly,
-            "ignore_chroms": self.config.sequenza.ignore_chroms,
+            "ignore_contigs": self.config.sequenza.ignore_contigs,
             "extra_args_extract": extra_args_extract.model_dump(by_alias=True),
             "extra_args_fit": extra_args_fit.model_dump(by_alias=True),
             "library_name": wildcards.tumor_library,

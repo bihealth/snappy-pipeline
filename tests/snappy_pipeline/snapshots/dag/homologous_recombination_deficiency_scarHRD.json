@@ -299,7 +299,7 @@
      "qlimit": 20.0
     },
     "extra_arguments": [],
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^X$",
      "^Y$",
      "^MT$",

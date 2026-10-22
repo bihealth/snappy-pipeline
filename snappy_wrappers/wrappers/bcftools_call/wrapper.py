@@ -13,7 +13,7 @@ reference_index_path = snakemake.input.reference_index
 
 assembly = args["assembly"]
 
-ignore_chroms = args["ignore_chroms"]
+ignore_contigs = args["ignore_contigs"]
 
 max_depth = args["max_depth"]
 max_indel_depth = args["max_indel_depth"]
@@ -33,8 +33,8 @@ gatk PreprocessIntervals \
     --bin-length {window_length} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
-    $(for ignore_chrom in {ignore_chroms}; do \
-        awk "(\$1 ~ /$ignore_chrom/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
+    $(for ignore_contig in {ignore_contigs}; do \
+        awk "(\$1 ~ /$ignore_contig/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
             {reference_index_path}; \
     done)
 

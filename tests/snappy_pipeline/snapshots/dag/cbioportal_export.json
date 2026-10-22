@@ -1872,7 +1872,7 @@
   ],
   "params": {
    "args": {
-    "ignore_chroms": [],
+    "ignore_contigs": [],
     "padding": 5000
    }
   },
@@ -3717,7 +3717,7 @@
   ],
   "params": {
    "args": {
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^HLA-",
      "^NC_007605$",
      "^chrEBV$",

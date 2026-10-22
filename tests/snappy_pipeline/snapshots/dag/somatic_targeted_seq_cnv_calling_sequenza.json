@@ -241,7 +241,7 @@
      "qlimit": 20.0
     },
     "extra_arguments": [],
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^X$",
      "^Y$",
      "^MT$",
@@ -403,7 +403,7 @@
      "ratio.priority": false,
      "segment.filter": 3000000
     },
-    "ignore_chroms": [
+    "ignore_contigs": [
      "^X$",
      "^Y$",
      "^MT$",

@@ -164,7 +164,7 @@ class PanelOfNormals(SnappyStepModel):
 
     tool: Annotated[Tool, EnumField(Tool)]
 
-    ignore_chroms: Annotated[
+    ignore_contigs: Annotated[
         list[str],
         Field(
             examples=[

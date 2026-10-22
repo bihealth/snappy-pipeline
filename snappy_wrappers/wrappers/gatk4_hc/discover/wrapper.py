@@ -19,8 +19,8 @@ gatk PreprocessIntervals \
     --bin-length {args[window_length]} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
-    $(for ignore_chrom in {args[ignore_chroms]}; do \
-        awk "(\$1 ~ /$ignore_chrom/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
+    $(for ignore_contig in {args[ignore_contigs]}; do \
+        awk "(\$1 ~ /$ignore_contig/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
             {snakemake.input.reference}.fai; \
     done)
 
