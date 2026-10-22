@@ -13,8 +13,9 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 
 lib_path = os.path.realpath(os.path.dirname(snakemake.input.done))
-# The R script runs in the output directory, so the input path must not be relative
+# The R script runs in the job's TMPDIR, so the paths must not be relative
 seqz = os.path.abspath(snakemake.input.seqz)
+hrd = os.path.abspath(snakemake.output.hrd)
 
 genome = snakemake.input.reference
 length = args["length"]
@@ -35,9 +36,9 @@ export R_LIBS_USER="{lib_path}"
 export VROOM_CONNECTION_SIZE=2000000000
 
 # Necessary because scarHRD litters the current directory
-pushd $(dirname {snakemake.output.hrd})
+pushd $TMPDIR
 
-fn=$(basename "{snakemake.output.hrd}")
+fn=hrd.json
 
 cat << __EOF | R --vanilla --slave
 library("scarHRD")
@@ -56,5 +57,7 @@ cat('}}\n', file="$fn", append=TRUE)
 __EOF
 
 popd
+
+cp $TMPDIR/$fn {hrd}
 """
 )
