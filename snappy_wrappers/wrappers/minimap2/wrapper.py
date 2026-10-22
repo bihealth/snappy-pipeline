@@ -77,7 +77,6 @@ else
     samtools merge -@ 8 $out_bam $TMPDIR/sorted/*.bam
 fi
 
-cp $out_bam /tmp
 
 samtools index $out_bam
 
