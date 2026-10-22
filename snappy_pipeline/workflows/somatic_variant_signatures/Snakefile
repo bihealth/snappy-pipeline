@@ -66,5 +66,7 @@ rule somatic_variant_signatures_deconstructsigs:
         mem=wf.get_resource("deconstruct_sigs", "run", "mem"),
         partition=wf.get_resource("deconstruct_sigs", "run", "partition"),
         tmpdir=wf.get_resource("deconstruct_sigs", "run", "tmpdir"),
+    params:
+        args=wf.get_params("deconstruct_sigs", "run"),
     wrapper:
         wf.wrapper_path("signatures/deconstruct_sigs")

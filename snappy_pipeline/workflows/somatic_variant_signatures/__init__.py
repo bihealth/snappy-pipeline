@@ -2,6 +2,7 @@
 """Somatic mutational signatures
 
 The step tabulates the somatic variants of each tumor and deconstructs them into the known mutational signatures with the R package deconstructSigs.
+The section ``deconstruct_sigs`` sets the reference signatures (``cosmic`` or ``nature2013``) and the normalization of the trinucleotide counts (``tri_counts_method``).
 The step has no ``tool`` field.
 It reads the bgzip-compressed and indexed VCF files of a somatic variant calling task.
 The task gives one result per tumor DNA library.
@@ -88,6 +89,10 @@ class DeconstructSigsStepPart(SignaturesStepPart):
             "tsv",
             f"work/{wildcards.tumor_library}/out/tabulate_vcf.{wildcards.tumor_library}.tsv",
         )
+
+    def _get_params_run(self, wildcards):
+        """The options of ``whichSignatures``"""
+        return self.config.deconstruct_sigs.model_dump(mode="json")
 
     def _get_output_files_run(self):
         base = "work/{tumor_library}/out/deconstruct_sigs.{tumor_library}"

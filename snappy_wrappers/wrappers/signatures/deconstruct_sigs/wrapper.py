@@ -5,6 +5,8 @@ from snappy_wrappers.snappy_wrapper import RWrapper
 
 __author__ = "Clemens Messerschmidt"
 
+args = getattr(snakemake.params, "args", {})
+
 RWrapper(snakemake).run(
     r"""
 library(tidyverse)
@@ -24,11 +26,9 @@ sigs.input = mut.to.sigs.input(mut.ref = m)
                                #bsg = BSgenome.Hsapiens.UCSC.hg38::Hsapiens)
 
 output.sigs = whichSignatures(tumor.ref = sigs.input,
-                              #signatures.ref = signatures.nature2013,
-                              signatures.ref = signatures.cosmic,
+                              signatures.ref = signatures.{args[signatures]},
                               contexts.needed = TRUE,
-                              #tri.counts.method = "exome2genome")
-                              tri.counts.method = "default")
+                              tri.counts.method = "{args[tri_counts_method]}")
 
 sigs = data.frame(colnames(output.sigs$weights), t(output.sigs$weights))
 write_tsv(sigs, path = "{snakemake.output.tsv}")
