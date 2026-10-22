@@ -34,7 +34,7 @@ java -Xmx{mem_jvm}m -jar $JAR \
     $(if [[ $ME_REFS == *37* ]] || [[ $ME_REFS == *hg19* ]]; then
         echo -v $ME_REFS/../../prior_files/{args[me_type]}.1KGP.sites.vcf;
     fi) \
-    -w $(dirname {snakemake.output.done}) \
+    -w $(dirname {snakemake.output.pre_geno}) \
     -r {args[read_length]} \
     -n {snakemake.input.genes} \
     -discoverydir $discovery

@@ -81,3 +81,21 @@ def test_group_analysis_reads_the_directories_of_all_pedigree_members():
         "work/indiv_analysis.P1.ALU/out",
         "work/indiv_analysis.F1.ALU/out",
     ]
+
+
+def test_genotype_and_make_vcf_read_the_sites_of_group_analysis():
+    part = _part()
+    part.parent.pedigrees = lambda: {"P1": ["P1"]}
+    wildcards = SimpleNamespace(index_library_name="P1", library_name="P1", me_type="ALU")
+    pre_geno = "work/group_analysis.P1.ALU/out/ALU.pre_geno.tsv"
+    assert part._get_output_files_group_analysis()["pre_geno"] == (
+        "work/group_analysis.{index_library_name}.{me_type}/out/{me_type}.pre_geno.tsv"
+    )
+    assert part._get_input_files_genotype(wildcards)["pre_geno"] == pre_geno
+    assert part._get_input_files_make_vcf(wildcards)["pre_geno"] == pre_geno
+
+
+def test_group_analysis_and_make_vcf_write_no_marker():
+    part = _part()
+    assert "done" not in part._get_output_files_group_analysis()
+    assert "done" not in part._get_output_files_make_vcf()

@@ -46,7 +46,9 @@ def test_group_analysis_discoverydir_holds_all_members(tmp_path, monkeypatch):
             me_refs="refs",
             genes="genes.bed",
         ),
-        output=SimpleNamespace(done=str(tmp_path / "group_analysis" / "out" / ".done")),
+        output=SimpleNamespace(
+            pre_geno=str(tmp_path / "group_analysis" / "out" / "ALU.pre_geno.tsv")
+        ),
         log=SimpleNamespace(log=str(tmp_path / "log" / "group_analysis.log")),
         params=SimpleNamespace(
             args={"me_refs_infix": "1KGP_Hg19", "me_type": "ALU", "read_length": 150}

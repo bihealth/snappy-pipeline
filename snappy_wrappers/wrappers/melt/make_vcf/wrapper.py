@@ -16,6 +16,7 @@ JAR={snakemake.input.jar}
 ME_REFS={snakemake.input.me_refs}
 ME_INFIX={args[me_refs_infix]}
 
+out=$(dirname {snakemake.output.vcf})
 genotype_dir=$(dirname {snakemake.input.genotype} | head -n 1)
 ls $genotype_dir/*.{args[me_type]}.tsv \
 | sort \
@@ -28,13 +29,13 @@ java -Xmx{mem_jvm}m -jar $JAR \
     -h {snakemake.input.reference} \
     -j {args[max_no_call_percent]} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
-    -p $(dirname {snakemake.input.group_analysis}) \
-    -w $(dirname {snakemake.output.done}) \
-    -o $(dirname {snakemake.output.done})
+    -p $(dirname {snakemake.input.pre_geno}) \
+    -w $out \
+    -o $out
 
 ## Make file more VCF conforming XXX TODO XXX
-#perl -p -e 's/ID=GL,Number=3/ID=GL,Number=G/' $(dirname {snakemake.output.done})/{args[me_type]}.final_comp.vcf \
-cat $(dirname {snakemake.output.done})/{args[me_type]}.final_comp.vcf \
+#perl -p -e 's/ID=GL,Number=3/ID=GL,Number=G/' $out/{args[me_type]}.final_comp.vcf \
+cat $out/{args[me_type]}.final_comp.vcf \
 | bgzip -c \
 > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}

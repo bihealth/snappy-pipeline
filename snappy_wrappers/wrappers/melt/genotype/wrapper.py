@@ -20,7 +20,7 @@ java -Xmx{mem_jvm}m -jar $JAR \
     Genotype \
     -h {snakemake.input.reference} \
     -bamfile {snakemake.input.bam} \
-    -p $(dirname {snakemake.input.done}) \
+    -p $(dirname {snakemake.input.pre_geno}) \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -w $(dirname {snakemake.output.done})
 
