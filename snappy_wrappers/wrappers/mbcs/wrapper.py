@@ -161,12 +161,13 @@ if mapper_config["trim_adapters"]:
 cmd += (
     "            | {mapper} mem \\\n"
     "                {indices} \\\n"
-    "                -R '@RG\tID:{{name}}\tSM:{sample_name}\tPL:ILLUMINA' \\\n"
+    "                -R '@RG\tID:{{name}}\tSM:{sample_name}\tPL:{platform}' \\\n"
     "                -p {extra_args} -t {threads} /dev/stdin \\\n"
 ).format(
     mapper=mapper,
     indices=snakemake.input.index[0].removesuffix(".amb"),
     sample_name=args["sample_name"],
+    platform=args["platform"],
     extra_args=" ".join(mapper_config.get("extra_arguments", [])),
     threads=mapper_config["num_threads_align"],
 )

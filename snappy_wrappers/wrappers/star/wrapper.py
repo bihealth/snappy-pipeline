@@ -175,7 +175,9 @@ mv $TMPDIR/pre.d/out.SJ.out.tab {out_sj}
 
 if [[ "{args[transcriptome]}" = "True" ]]; then
     if [[ "{args[mask_duplicates]}" == "True" ]]; then
-        samtools view -h -S $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam | mask_duplicates | samtools view -h -b - > {out_tx}
+        samtools view -@ {args[num_threads_bam_view]} -h $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam \
+            | mask_duplicates \
+            | samtools view -@ {args[num_threads_bam_view]} -h -b - > {out_tx}
     else
         mv $TMPDIR/pre.d/out.Aligned.toTranscriptome.out.bam {out_tx}
     fi
