@@ -68,7 +68,8 @@ Notes on PureCN
 
 A ``purecn`` panel is required by ``somatic_targeted_seq_cnv_calling`` with ``tool: purecn``.
 It needs a ``mutect2`` panel of normals task in ``depends_on.panel_of_normals``, because the step uses Mutect2 as variant caller (not Mutect, the PureCN default).
-PureCN runs in its container, because its R package requirements are too complex for a conda environment.
+PureCN runs in its container (``purecn.container``), because its R package requirements are too complex for a conda environment.
+The default image has no version tag, so set one to fix the PureCN version.
 """
 
 from snappy_pipeline.models.cnvkit import Gender as CnvKitGender

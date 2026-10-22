@@ -257,7 +257,7 @@ elif tool == "purecn":
             mem=wf.get_resource("purecn", "install", "mem"),
             partition=wf.get_resource("purecn", "install", "partition"),
         params:
-            container="docker://markusriester/purecn",
+            container=wf.config.purecn.container,
         wrapper:
             wf.wrapper_path("singularity")
 

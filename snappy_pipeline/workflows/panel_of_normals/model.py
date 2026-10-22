@@ -83,6 +83,9 @@ class GenomeName(enum.StrEnum):
 
 
 class PureCn(ToolModel):
+    container: str = "docker://markusriester/purecn"
+    """Container image that runs PureCN (pulled with apptainer); pin a tag for a fixed PureCN version"""
+
     path_normals_list: ConfigPath = ""
     """Optional file listing libraries to include in panel"""
 
