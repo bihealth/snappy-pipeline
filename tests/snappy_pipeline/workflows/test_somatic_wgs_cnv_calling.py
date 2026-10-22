@@ -14,6 +14,7 @@ from snappy_pipeline.workflows.somatic_wgs_cnv_calling import (
 )
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import (
     CnvkitWgs,
+    ControlFreec,
     SomaticWgsCnvCalling,
     Tool,
 )
@@ -120,3 +121,27 @@ def test_control_freec_plot_declares_the_plots_of_cnvkit_plot():
     outputs = object.__new__(ControlFreecSomaticWgsStepPart)._get_output_files_plot()
 
     assert set(outputs) == {"diagram", "diagram_md5", "scatter", "scatter_md5"}
+
+
+def test_control_freec_run_passes_the_settings_of_the_ini_file():
+    # The params only read the Control-FREEC config section, so skip the full step setup.
+    part = object.__new__(ControlFreecSomaticWgsStepPart)
+    part.config = SimpleNamespace(control_freec=ControlFreec(convert={}, ploidy=3, sex="XY"))
+    part.parent = SimpleNamespace(
+        get_upstream_paths=lambda field: SimpleNamespace(mappability="mappability.gem")
+    )
+
+    assert part._get_params_run(WILDCARDS) == {
+        "path_mappability_enabled": True,
+        "window_size": -1,
+        "ploidy": 3,
+        "break_point_threshold": 0.8,
+        "coefficient_of_variation": 0.05,
+        "contamination_adjustment": True,
+        "contamination": 0.4,
+        "minimal_subclone_presence": 0.2,
+        "unique_match": True,
+        "force_gc_content_normalization": 0,
+        "min_cna_length": 2,
+        "sex": "XY",
+    }

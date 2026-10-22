@@ -581,6 +581,16 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
                 self.parent.get_upstream_paths("database").mappability
             ),
             "window_size": cfg.window_size,
+            "ploidy": cfg.ploidy,
+            "break_point_threshold": cfg.break_point_threshold,
+            "coefficient_of_variation": cfg.coefficient_of_variation,
+            "contamination_adjustment": cfg.contamination_adjustment,
+            "contamination": cfg.contamination,
+            "minimal_subclone_presence": cfg.minimal_subclone_presence,
+            "unique_match": cfg.unique_match,
+            "force_gc_content_normalization": cfg.force_gc_content_normalization,
+            "min_cna_length": cfg.min_cna_length,
+            "sex": cfg.sex,
         }
 
     def _get_params_transform(self, wildcards: Wildcards) -> dict[str, Any]:

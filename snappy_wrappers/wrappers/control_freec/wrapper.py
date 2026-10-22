@@ -16,6 +16,9 @@ if w >= 0:
 
 mappability = snakemake.input.get("mappability", "")
 
+contamination_adjustment = "TRUE" if args["contamination_adjustment"] else "FALSE"
+unique_match = "TRUE" if args["unique_match"] else "FALSE"
+
 shell.executable("/bin/bash")
 
 ShellWrapper(snakemake).run(
@@ -32,39 +35,39 @@ cat <<EOF >$TMPDIR/tmp.d/freec.ini
 # http://boevalab.com/FREEC/tutorial.html
 [general]
 
-maxThreads = 16
+maxThreads = {snakemake.threads}
 outputDir = $output_dir
 
 ## path to sambamba (faster BAM file reading)
 sambamba = sambamba
 
 chrLenFile = {snakemake.input.chrlenfile}
-ploidy = 2
+ploidy = {args[ploidy]}
 
-breakPointThreshold = .8
-coefficientOfVariation = 0.05
+breakPointThreshold = {args[break_point_threshold]}
+coefficientOfVariation = {args[coefficient_of_variation]}
 {window_str}
 
-# information from pathology review is that samples are at least 60% tumor tissue
-contaminationAdjustment = TRUE
-contamination = 0.4
-minimalSubclonePresence = 0.2
+# normal cell contamination of the tumor sample
+contaminationAdjustment = {contamination_adjustment}
+contamination = {args[contamination]}
+minimalSubclonePresence = {args[minimal_subclone_presence]}
 
-numberOfProcesses = 4
+numberOfProcesses = {snakemake.threads}
 
 $(if [[ "{args[path_mappability_enabled]}" == True ]]; then
   echo gemMappabilityFile = {mappability};
 fi)
 
-uniqueMatch = TRUE
-forceGCcontentNormalization = 0
+uniqueMatch = {unique_match}
+forceGCcontentNormalization = {args[force_gc_content_normalization]}
 
-minCNAlength = 2
+minCNAlength = {args[min_cna_length]}
 
 BedGraphOutput=TRUE
 
 # this makes CNV predictions on Gonosomes unreliable
-sex=XX
+sex={args[sex]}
 
 # this sets the degree of polynomial; currently the step of estimating it seems to lead to a segmentation fault
 # degree=3

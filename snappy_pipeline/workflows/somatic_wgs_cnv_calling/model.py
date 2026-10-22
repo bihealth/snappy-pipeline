@@ -68,6 +68,36 @@ class ControlFreec(ToolModel):
     window_size: int = -1
     """set to a value >=0 you want a specific fixed window size"""
 
+    ploidy: int = 2
+    """Ploidy of the sample (``ploidy``)"""
+
+    break_point_threshold: float = 0.8
+    """Segmentation sensitivity, lower values give more breakpoints (``breakPointThreshold``)"""
+
+    coefficient_of_variation: float = 0.05
+    """Coefficient of variation to select the window size (``coefficientOfVariation``)"""
+
+    contamination_adjustment: bool = True
+    """Correct the copy numbers for normal cell contamination (``contaminationAdjustment``)"""
+
+    contamination: float = 0.4
+    """Fraction of normal cells in the tumor sample, used with ``contamination_adjustment`` (``contamination``)"""
+
+    minimal_subclone_presence: float = 0.2
+    """Minimal fraction of cells for a subclone to be reported (``minimalSubclonePresence``)"""
+
+    unique_match: bool = True
+    """Use only uniquely mapped reads when a mappability file is given (``uniqueMatch``)"""
+
+    force_gc_content_normalization: int = 0
+    """GC content normalization mode, 0 uses the polynomial fit only when it improves the fit (``forceGCcontentNormalization``)"""
+
+    min_cna_length: int = 2
+    """Minimal number of consecutive windows for a copy number alteration (``minCNAlength``)"""
+
+    sex: str = "XX"
+    """Sex of the sample, XX or XY (``sex``); the copy numbers of the gonosomes are unreliable if it is wrong"""
+
     convert: ControlFreecConvert
 
     diagram: Diagram = Diagram()
