@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Wrapper for combining germline & somatic variants"""
 
+from math import ceil
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc"
@@ -13,6 +15,8 @@ if mem_mb := snakemake.resources.get("mem_gb", None):
     mem_mb *= 1024
 else:
     mem_mb = snakemake.resources.get("mem_mb", 2048)
+
+java_mem_mb = ceil(mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -40,7 +44,7 @@ bcftools annotate \
     --output-type z --output $somatic --write-index=tbi \
     $temp_somatic
 
-java -Xmx{mem_mb}m -jar $gatk -T CombineVariants \
+java -Xmx{java_mem_mb}m -jar $gatk -T CombineVariants \
     --assumeIdenticalSamples \
     -R {snakemake.input.reference} \
     --variant $germline \
