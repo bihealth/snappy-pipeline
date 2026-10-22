@@ -180,6 +180,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         restrictright={config[restrictright]}         \
         mingc={config[mingc]}                         \
         maxgc={config[maxgc]}                         \
+        gcpairs={config[gcpairs]}                     \
         tossjunk={config[tossjunk]}                   \
         swift={config[swift]}                         \
         chastityfilter={config[chastityfilter]}       \
