@@ -57,6 +57,7 @@ run-shard()
         -G StandardAnnotation \
         -G StandardHCAnnotation \
         --intervals $interval \
+        {extra_arguments} \
         $(for path in {snakemake.input.bam}; do \
             echo --input $path; \
         done) \

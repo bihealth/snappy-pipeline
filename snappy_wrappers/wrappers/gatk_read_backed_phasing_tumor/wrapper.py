@@ -17,6 +17,7 @@ java -jar $jar -T ReadBackedPhasing \
     -R {snakemake.input.reference} \
     -I {snakemake.input.bam} \
     -L {snakemake.input.vcf} \
+    {extra_arguments} \
     --variant {snakemake.input.vcf} \
     -o $TMPDIR/phased.vcf
 

@@ -67,6 +67,7 @@ run-shard()
         -G StandardHCAnnotation \
         -G AlleleSpecificAnnotation \
         {allow_seq_dict_incompatibility} \
+        {extra_arguments} \
         -ERC GVCF
 }}
 export -f run-shard

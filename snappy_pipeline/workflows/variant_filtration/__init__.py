@@ -270,6 +270,7 @@ class EbfilterStepPart(_BamAwareStepPart):
     """EBFilter."""
 
     actions = ("run", "write_panel")
+    extra_arguments_action = "run"
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="24h", mem=f"{2 * 1024}MB"),
         "write_panel": ResourceUsage(threads=1, runtime="1h", mem=f"{2 * 1024}MB"),

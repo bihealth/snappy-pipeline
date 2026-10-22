@@ -4,8 +4,15 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToggleModel, validators
+from snappy_pipeline.models import (
+    ConfigPath,
+    EnumField,
+    SnappyModel,
+    SnappyStepModel,
+    ToggleModel,
+    ToolModel,
+    validators,
+)
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -44,16 +51,16 @@ class ExpectedPanelOfNormals(BaseModel):
     vcf_tbi: str
 
 
-class BafFileGeneration(ToggleModel):
+class BafFileGeneration(ToggleModel, ToolModel):
     min_dp: Annotated[int, Field(ge=1)] = 10
     """minimal DP of variant, must be >=1"""
 
 
-class BcftoolsStats(ToggleModel):
+class BcftoolsStats(ToggleModel, ToolModel):
     pass
 
 
-class BcftoolsRoh(ToggleModel):
+class BcftoolsRoh(ToggleModel, ToolModel):
     path_af_file: ConfigPath
 
     ignore_homref: bool = False
@@ -72,33 +79,33 @@ class Tool(enum.StrEnum):
     mutect2 = "mutect2"
 
 
-class BcftoolsCall(SnappyModel):
+class BcftoolsCall(ToolModel):
     max_depth: int = 250
     max_indel_depth: int = 250
     window_length: int = 10000000
     num_threads: int = 16
 
 
-class Gatk3Hc(SnappyModel):
+class Gatk3Hc(ToolModel):
     num_threads: int = 16
     window_length: int = 10000000
     allow_seq_dict_incompatibility: bool = False
 
 
-class Gatk3Ug(SnappyModel):
+class Gatk3Ug(ToolModel):
     num_threads: int = 16
     window_length: int = 10000000
     allow_seq_dict_incompatibility: bool = False
     downsample_to_coverage: int = 250
 
 
-class Gatk4HcJoint(SnappyModel):
+class Gatk4HcJoint(ToolModel):
     window_length: int = 10000000
     num_threads: int = 16
     allow_seq_dict_incompatibility: bool = False
 
 
-class Gatk4HcGvcf(SnappyModel):
+class Gatk4HcGvcf(ToolModel):
     window_length: int = 10000000
     num_threads: int = 16
     allow_seq_dict_incompatibility: bool = False

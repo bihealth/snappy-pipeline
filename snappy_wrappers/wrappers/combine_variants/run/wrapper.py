@@ -45,6 +45,7 @@ java -Xmx{mem_mb}m -jar $gatk -T CombineVariants \
     -R {snakemake.input.reference} \
     --variant $germline \
     --variant $somatic \
+    {extra_arguments} \
     -o $tmp/combined.vcf.gz
 
 bcftools sort --max-mem {mem_mb}M \

@@ -310,6 +310,8 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     actions = ("discover", "combine_gvcfs", "genotype")
 
+    extra_arguments_action = "discover"
+
     intermediate_outputs = {"discover": ("gvcf", "gvcf_tbi")}
 
     #: The genotype rule links the combined gVCF as ``{library}.g.vcf.gz``, for re-genotyping

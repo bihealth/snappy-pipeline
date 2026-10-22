@@ -292,6 +292,7 @@
   "params": {
    "args": {
     "assembly": "unknown",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",

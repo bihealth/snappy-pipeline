@@ -17,6 +17,7 @@ set -x
 bcftools query \
     -s {snakemake.wildcards.donor_library_name} \
     -f '%CHROM\t%POS[\t%DP\t%AD]\n' \
+    {extra_arguments} \
     {snakemake.input.vcf} \
 | awk -F $'\t' 'BEGIN {{ OFS=FS; prev=0; }}
         {{ if (prev != $1) {{

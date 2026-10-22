@@ -47,6 +47,7 @@ run_vep() {
         --{vep_config[tx_flag]} \
         --fasta {snakemake.input.reference} \
         --format vcf --vcf --compress_output bgzip \
+        {extra_arguments} \
         --output_file "$outfile" "$@"
 
     tabix "$outfile"

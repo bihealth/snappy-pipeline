@@ -21,6 +21,7 @@ if mode == "tag":
     cmd = r"""
 bcftools filter --soft-filter {filter_name} --mode + \
     {expression} \
+    {extra_arguments} \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.vcf}
 tabix {snakemake.output.vcf}
@@ -29,6 +30,7 @@ else:
     cmd = r"""
 bcftools filter \
     {expression} \
+    {extra_arguments} \
     -O z -o {snakemake.output.vcf} \
     {snakemake.input.vcf}
 tabix {snakemake.output.vcf}

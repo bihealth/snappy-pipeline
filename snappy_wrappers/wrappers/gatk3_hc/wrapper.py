@@ -57,6 +57,7 @@ run-shard()
         --sample_ploidy 2 \
         --dbsnp {snakemake.input.dbsnp} \
         --intervals $interval \
+        {extra_arguments} \
         $(for path in {snakemake.input.bam}; do \
             echo --input_file $path; \
         done)

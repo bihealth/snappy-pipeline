@@ -294,6 +294,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "downsample_to_coverage": 250,
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",

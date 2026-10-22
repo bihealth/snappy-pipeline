@@ -78,6 +78,7 @@ if [[ $lines -gt 0 ]]; then
         -t 1 \
         -q {args[min_mapq]} \
         -Q {args[min_baseq]} \
+        {extra_arguments} \
         $TMPDIR/for_eb_filter.vcf.gz \
         {snakemake.input.bam} \
         {snakemake.input.txt} \

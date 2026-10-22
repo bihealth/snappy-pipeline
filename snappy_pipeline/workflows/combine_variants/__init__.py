@@ -54,6 +54,11 @@ _OUTPUTS = {
 class CombineVariantsStepPart(BaseStepPart):
     name = "combine"
     actions = ("run",)
+
+    def tool_section(self):
+        """The options of GATK's CombineVariants are on the step model"""
+        return self.config
+
     default_resource_usage = ResourceUsage(threads=1, mem="4G", runtime="4h")
 
     @dictify

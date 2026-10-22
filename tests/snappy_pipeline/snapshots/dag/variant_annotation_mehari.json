@@ -246,7 +246,8 @@
      "report_most_severe_consequence_by": null,
      "report_protein_sequence": null,
      "threads": 1
-    }
+    },
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -334,6 +335,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "caller_key": "gatk4_hc_gvcf",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -385,6 +387,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "caller_key": "gatk4_hc_gvcf",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",

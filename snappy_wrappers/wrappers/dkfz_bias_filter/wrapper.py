@@ -26,6 +26,7 @@ out={snakemake.output.vcf}
 dkfzbiasfilter.py \
     --tempFolder $TMPDIR \
     --writeQC \
+    {extra_arguments} \
     {snakemake.input.vcf} \
     {snakemake.input.bam} \
     {snakemake.input.reference} \

@@ -417,7 +417,8 @@
      "plugins": [],
      "species": "homo_sapiens",
      "tx_flag": "gencode_basic"
-    }
+    },
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -507,6 +508,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "caller_key": "gatk4_hc_gvcf",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -558,6 +560,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "caller_key": "gatk4_hc_gvcf",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -609,6 +612,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "caller_key": "gatk4_hc_gvcf",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",

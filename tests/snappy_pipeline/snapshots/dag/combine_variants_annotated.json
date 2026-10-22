@@ -34,6 +34,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "tumor_library": "case001subregion-T1-DNA1-WES1"
    }
   },
@@ -1530,7 +1531,8 @@
      ],
      "species": "homo_sapiens",
      "tx_flag": "gencode_basic"
-    }
+    },
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -1592,7 +1594,8 @@
      "plugins": [],
      "species": "homo_sapiens",
      "tx_flag": "gencode_basic"
-    }
+    },
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -1680,6 +1683,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "caller_key": "gatk4_hc_gvcf",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -1731,6 +1735,7 @@
    "args": {
     "allow_seq_dict_incompatibility": false,
     "caller_key": "gatk4_hc_gvcf",
+    "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -3363,6 +3368,7 @@
   "params": {
    "args": {
     "exclude": "FILTER ~ 'low_depth'",
+    "extra_arguments": [],
     "filter_name": "variant_filtration_bcftools",
     "include": "",
     "mode": "tag"

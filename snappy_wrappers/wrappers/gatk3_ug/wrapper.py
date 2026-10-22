@@ -55,6 +55,7 @@ run-shard()
         --dbsnp {snakemake.input.dbsnp} \
         --downsample_to_coverage {args[downsample_to_coverage]} \
         --intervals $interval \
+        {extra_arguments} \
         $(for path in {snakemake.input.bam}; do \
             echo --input_file $path; \
         done) \

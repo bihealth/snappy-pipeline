@@ -11,6 +11,7 @@ sample=$(bcftools query --list-samples {snakemake.input.vcf} | head -n 1)
 
 whatshap phase \
     --tag=HP \
+    {extra_arguments} \
     --reference {snakemake.input.reference} \
     --ignore-read-groups --sample "$sample" \
     --output $TMPDIR/phased.vcf \

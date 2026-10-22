@@ -4,8 +4,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
+from snappy_pipeline.models import ConfigPath, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -21,7 +20,7 @@ class ExpectedVariantVcf(BaseModel):
     vcf_tbi: str
 
 
-class Bcftools(SnappyModel):
+class Bcftools(ToolModel):
     include: str = ""
     exclude: str = ""
     mode: Literal["tag", "filter"] = "tag"
@@ -35,7 +34,7 @@ class Bcftools(SnappyModel):
         return self
 
 
-class RegionsFilter(SnappyModel):
+class RegionsFilter(ToolModel):
     action: Literal["include", "exclude"]
     """``exclude`` applies the filter to the variants inside the regions of ``depends_on.regions``,
     ``include`` to the variants outside them."""
@@ -91,13 +90,13 @@ class Vembrane(ToolModel):
         return self
 
 
-class Dkfz(SnappyModel):
+class Dkfz(ToolModel):
     """DKFZ bias filter."""
 
     mode: Literal["tag", "filter"] = "tag"
 
 
-class Ebfilter(SnappyModel):
+class Ebfilter(ToolModel):
     ebfilter_threshold: float = 2.4
     shuffle_seed: int = 1
     panel_of_normals_size: int = 25

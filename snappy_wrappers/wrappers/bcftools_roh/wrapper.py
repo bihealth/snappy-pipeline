@@ -26,6 +26,7 @@ raw_out=${{out%.regions.txt.gz}}.raw.txt.gz
 bcftools roh \
     {path_targets} {path_af_file} \
     {ignore_homref} {skip_indels} {rec_rate} \
+    {extra_arguments} \
     --output $raw_out \
     --output-type srz \
     {snakemake.input.vcf}

@@ -144,6 +144,8 @@ elif wf.config.tool == Tool.gatk_read_backed_phasing_tumor:
             mem=wf.get_resource("gatk_read_backed_phasing_tumor", "run", "mem"),
             partition=wf.get_resource("gatk_read_backed_phasing_tumor", "run", "partition"),
             tmpdir=wf.get_resource("gatk_read_backed_phasing_tumor", "run", "tmpdir"),
+        params:
+            args=wf.get_params("gatk_read_backed_phasing_tumor", "run"),
         wrapper:
             wf.wrapper_path("gatk_read_backed_phasing_tumor")
 
@@ -165,6 +167,8 @@ elif wf.config.tool == Tool.whatshap_tumor:
             mem=wf.get_resource("whatshap_tumor", "run", "mem"),
             partition=wf.get_resource("whatshap_tumor", "run", "partition"),
             tmpdir=wf.get_resource("whatshap_tumor", "run", "tmpdir"),
+        params:
+            args=wf.get_params("whatshap_tumor", "run"),
         wrapper:
             wf.wrapper_path("whatshap/phase")
 

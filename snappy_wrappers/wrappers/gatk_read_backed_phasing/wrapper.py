@@ -111,6 +111,7 @@ gatk_nonfree \
     --analysis_type ReadBackedPhasing \
     -nct 1 \
     --phaseQualityThresh {args[phase_quality_threshold]} \
+    {extra_arguments} \
     --variant $TMPDIR/intervals.pos.nofilter.vcf.gz \
     --out $TMPDIR/phased.nofilter.vcf.gz \
     $(for bam in {snakemake.input.bam}; do echo -I $bam; done) \

@@ -162,6 +162,8 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
     #: Class available actions
     actions = ("scatter", "run", "gather")
 
+    extra_arguments_action = "run"
+
     published_keys = {"gather": tuple(_OUTPUTS)}
 
     temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi")}
@@ -246,6 +248,9 @@ class TumorPhasingStepPart(VariantPhasingBaseStep):
     published_keys = tuple(_OUTPUTS)
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="32GB")
+
+    def _get_params_run(self, wildcards):
+        return {}
 
     def _get_input_files_run(self, wildcards):
         library_name = wildcards.library_name

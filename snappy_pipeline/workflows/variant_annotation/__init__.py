@@ -92,7 +92,7 @@ class VepStepPart(VariantAnnotationStepPart):
             yield "plugins", [plugin.path for plugin in self.config.vep.plugins]
 
     def _get_params_run(self, wildcards):
-        config = self.config.vep.model_dump(by_alias=True)
+        config = self.config.vep.model_dump(by_alias=True, exclude={"extra_arguments"})
         config["plugins"] = [plugin.name for plugin in self.config.vep.plugins]
         return {"config": config}
 
@@ -107,7 +107,7 @@ class MehariStepPart(VariantAnnotationStepPart):
 
     def _get_params_run(self, wildcards):
         """Pass the options; the files (reference, databases) are inputs."""
-        return {"config": self.config.mehari.model_dump(by_alias=True)}
+        return {"config": self.config.mehari.model_dump(by_alias=True, exclude={"extra_arguments"})}
 
     @dictify
     def _get_input_files_run(self, wildcards):

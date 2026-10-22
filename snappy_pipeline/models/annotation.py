@@ -1,7 +1,7 @@
 import enum
 from typing import Literal
 
-from snappy_pipeline.models import ConfigPath, SnappyModel
+from snappy_pipeline.models import ConfigPath, SnappyModel, ToolModel
 
 
 class VepTxFlag(enum.StrEnum):
@@ -18,7 +18,7 @@ class VepPlugin(SnappyModel):
     """The plugin's ``.pm`` file, e.g. ``Frameshift.pm`` and ``Wildtype.pm`` of pVACtools"""
 
 
-class Vep(SnappyModel):
+class Vep(ToolModel):
     species: str = "homo_sapiens"
 
     assembly: str = "GRCh38"
@@ -51,7 +51,7 @@ class Vep(SnappyModel):
     """VEP plugins to run"""
 
 
-class Mehari(SnappyModel):
+class Mehari(ToolModel):
     threads: int = 1
     """
     Number of threads to use for annotation.

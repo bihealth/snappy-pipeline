@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -42,6 +42,6 @@ class CombineVariantsDependsOn(SnappyModel):
     reference: Reference
 
 
-class CombineVariants(SnappyStepModel):
+class CombineVariants(SnappyStepModel, ToolModel):
     depends_on: CombineVariantsDependsOn
     rename_combined: RenameCombine | None = None

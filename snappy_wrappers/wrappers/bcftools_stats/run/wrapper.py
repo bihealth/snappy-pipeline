@@ -9,6 +9,7 @@ ShellWrapper(snakemake).run(
 bcftools stats \
     --split-by-ID \
     -s {args[donor_library_name]} \
+    {extra_arguments} \
     {snakemake.input.vcf} \
 > {snakemake.output.txt}
 """

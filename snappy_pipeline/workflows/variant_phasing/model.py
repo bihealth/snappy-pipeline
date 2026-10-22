@@ -7,6 +7,7 @@ from snappy_pipeline.models import (
     EnumField,
     SnappyModel,
     SnappyStepModel,
+    ToolModel,
     validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -36,7 +37,7 @@ TOOL_DEPENDENCIES = {
 }
 
 
-class GatkReadBackedPhasing(SnappyModel):
+class GatkReadBackedPhasing(ToolModel):
     phase_quality_threshold: float = 20.0
     """quality threshold for phasing"""
 
@@ -44,7 +45,7 @@ class GatkReadBackedPhasing(SnappyModel):
     """number of chunks the genome is split into, each phased in its own job"""
 
 
-class GatkPhaseByTransmission(SnappyModel):
+class GatkPhaseByTransmission(ToolModel):
     de_novo_prior: float = 1e-8
     """use 1e-6 when interested in phasing de novos"""
 
@@ -100,6 +101,10 @@ class VariantPhasing(SnappyStepModel):
     gatk_read_backed_phasing: GatkReadBackedPhasing = GatkReadBackedPhasing()
 
     gatk_phase_by_transmission: GatkPhaseByTransmission = GatkPhaseByTransmission()
+
+    gatk_read_backed_phasing_tumor: ToolModel = ToolModel()
+
+    whatshap_tumor: ToolModel = ToolModel()
 
     @model_validator(mode="after")
     def ensure_tool_dependencies(self):

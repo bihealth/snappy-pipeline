@@ -84,6 +84,7 @@ run-shard()
             echo --samples-file {snakemake.input.ped}; \
         fi) \
         --variants-only \
+        {extra_arguments} \
         -Oz \
         -o $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz
     tabix -f $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz

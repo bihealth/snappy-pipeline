@@ -59,6 +59,7 @@ bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads}
       {tx_args} \
       {freq_arg} \
       {clinvar_arg} \
+      {extra_arguments} \
       --reference {snakemake.input.reference} \
       --input - \
       --output {snakemake.output.vcf}

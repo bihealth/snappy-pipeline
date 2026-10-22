@@ -38,6 +38,7 @@ gatk_nonfree \
     --pedigreeValidationType SILENT \
     --FatherAlleleFirst \
     --DeNovoPrior {args[de_novo_prior]} \
+    {extra_arguments} \
     --pedigree {snakemake.input.ped} \
     --variant $TMPDIR/trio_only.vcf.gz \
     --out {snakemake.output.vcf} \
