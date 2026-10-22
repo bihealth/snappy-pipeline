@@ -342,11 +342,7 @@
   "output": [
    "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cnv_tumor.txt"
   ],
-  "params": {
-   "args": {
-    "tumor_library": "case001subregion-T1-DNA1-WES1"
-   }
-  },
+  "params": {},
   "resources": {
    "mem": "81.92 GB",
    "mem_mb": 81920,

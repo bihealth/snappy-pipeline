@@ -1377,9 +1377,7 @@
      "extra_arguments": [],
      "genome_name": "unknown",
      "seed": 1234567
-    },
-    "library_name": "case001subregion-N1-DNA1-WES1",
-    "mapper": "bwa"
+    }
    }
   },
   "resources": {
@@ -1630,9 +1628,7 @@
      },
      "genome_name": "unknown",
      "seed": 1234567
-    },
-    "library_name": "case001subregion-T1-DNA1-WES1",
-    "mapper": "bwa"
+    }
    }
   },
   "resources": {
@@ -1693,8 +1689,7 @@
      "seed": 1234567
     },
     "extra_arguments": [],
-    "library_name": "case001subregion-T1-DNA1-WES1",
-    "mapper": "bwa"
+    "library_name": "case001subregion-T1-DNA1-WES1"
    }
   },
   "resources": {

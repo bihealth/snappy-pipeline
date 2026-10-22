@@ -194,9 +194,13 @@
   "benchmark": null,
   "input": [
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi",
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.md5",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi.md5"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.csi.md5"
   ],
   "log": [],
   "output": [
@@ -307,9 +311,13 @@
   ],
   "output": [
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi",
    "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.md5",
-   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi.md5"
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bcf.csi.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.md5",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.csi",
+   "tasks/somatic_wgs_cnv_calling_cnvetti/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.windows.bcf.csi.md5"
   ],
   "params": {
    "args": {
