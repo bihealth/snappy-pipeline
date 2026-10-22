@@ -38,13 +38,13 @@ if mode == "tag":
     )
     tag_mode = "--tag-mode pass"
     cmd = rf"""
-vembrane tag {tag_mode} {{extra_arguments}} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads 4 > {snakemake.output.vcf}
+vembrane tag {tag_mode} {{extra_arguments}} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 else:
     expression = shlex.quote(str(args["expression"]))
     cmd = rf"""
-vembrane filter {aux_cmd} {context_cmd} {context_file_cmd} {ontology_cmd} {{extra_arguments}} {expression} {snakemake.input.vcf} | bgzip -c --threads 4 > {snakemake.output.vcf}
+vembrane filter {aux_cmd} {context_cmd} {context_file_cmd} {ontology_cmd} {{extra_arguments}} {expression} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 
