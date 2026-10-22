@@ -349,6 +349,37 @@ def test_frozen_run_uses_existing_upstream_outputs(
     assert "tasks/variant_calling_gatk4_hc_gvcf/work/" in output
 
 
+@pytest.mark.integration
+def test_job_group_groups_the_jobs_of_its_tasks(
+    generated_task_config: dict[str, Any], tmp_path: Path
+) -> None:
+    """The non-local jobs of the tasks with ``job_group`` join that group; local rules stay local,
+    and the jobs of other tasks have no group."""
+    _write_closure_project("variant_filtration_bcftools", generated_task_config, tmp_path)
+    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+    tasks = {task["name"]: task for task in config["tasks"]}
+    upstream = tasks["variant_filtration_bcftools"]["config"]["depends_on"]["variants"]
+    grouped = {"variant_filtration_bcftools", upstream}
+    for name in grouped:
+        tasks[name]["config"]["job_group"] = "tail"
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+    dump_path = tmp_path / "dag.json"
+    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
+    cmd += ["--task", "variant_filtration_bcftools", "--output", str(dump_path)]
+    dump = _run(cmd, cwd=generated_task_config["root"])
+    assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
+    jobs = json.loads(dump_path.read_text(encoding="utf-8"))
+
+    def task_of(job):
+        return next((name for name in tasks if job["rule"].startswith(f"{name}_")), None)
+
+    in_group = [job for job in jobs if task_of(job) in grouped and not job.get("local")]
+    assert in_group and all(job.get("group") == "tail" for job in in_group)
+    assert not [job for job in jobs if job.get("local") and "group" in job]
+    assert not [job for job in jobs if task_of(job) not in grouped and "group" in job]
+
+
 def _mapping_job_with_reads_from(
     source_task: dict[str, Any], generated_task_config: dict[str, Any], tmp_path: Path
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:

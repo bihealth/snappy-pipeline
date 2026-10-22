@@ -64,6 +64,9 @@ def _job_record(job) -> dict[str, Any]:
     # Rules that run on the submit node instead of the cluster (``localrule: True``)
     if job.rule.name in job.rule.workflow._localrules:
         record["local"] = True
+    # The job group as configured: Rule.group is None outside cluster runs and dry runs
+    if job.rule._group is not None:
+        record["group"] = job.rule._group
     return record
 
 

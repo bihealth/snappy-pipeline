@@ -210,6 +210,12 @@ class SnappyStepModel(SnappyModel, object):
     """Delete per-sample intermediate files (raw calls, coverage, panel inputs, gVCFs, ...) once
     the task's later rules have read them. Scatter fragments are always deleted."""
 
+    job_group: str | None = None
+    """Snakemake job group of the task's jobs (local rules stay local): dependent jobs of the tasks
+    with the same group run as one cluster job, and ``--group-components <group>=<n>`` puts n
+    independent ones into one job. Their requests add up, so the members should share a
+    partition."""
+
     group_by: Literal["library", "cohort"] | None = None
     """``library``: one output per library; ``cohort``: one output per cohort (pedigree, donor).
     Unset: the step's default (cohort for joint germline calling), else the granularity that

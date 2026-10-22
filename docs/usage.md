@@ -58,6 +58,15 @@ snappy run --task calling --frozen -- --cores 8 # reuse the existing mapping, ne
 snappy run --slurm                              # all tasks through SLURM
 ```
 
+On a cluster, every job is a cluster job, unless its rule is local.
+The task field `job_group` puts the jobs of a task into a Snakemake job group: dependent jobs of the tasks with the same `job_group` run as one cluster job, for example an annotation and the filters after it, per library.
+Their resource requests add up (runtimes of jobs that run one after another, cores and memory of jobs that run side by side), so the members should share a partition.
+`--group-components <group>=<n>` puts n independent groups into one cluster job, such as many small jobs per library:
+
+```shell
+snappy run -- --group-components tail=10
+```
+
 ## Directories of a task
 
 Each task has its own directory `tasks/<task_name>/`.

@@ -346,6 +346,7 @@
       "enabled": false
      },
      "group_by": null,
+     "job_group": null,
      "library_selection": null,
      "relationships": null,
      "sample_info": {},

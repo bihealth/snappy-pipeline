@@ -79,6 +79,7 @@
       "variants": "external_cnv"
      },
      "group_by": null,
+     "job_group": null,
      "library_selection": null,
      "merge_option": "id",
      "merge_vcf_flag": false,

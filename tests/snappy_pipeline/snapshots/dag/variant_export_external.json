@@ -121,6 +121,7 @@
      "external_tool": "dragen",
      "group_by": null,
      "gvcf_option": true,
+     "job_group": null,
      "library_selection": null,
      "merge_option": null,
      "merge_vcf_flag": false,

@@ -52,7 +52,15 @@ for task in project.model.tasks:
         config: {"__task_name__": t_name}
         replace_prefix: prefixes
 
+    known_rules = {r.name for r in workflow.rules}
+
     use rule * from t_name as alias*
+
+    # The task's jobs join its job group; local rules stay local, which a group would prevent
+    if job_group := project.task_configs[t_name].job_group:
+        for task_rule in workflow.rules:
+            if task_rule.name not in known_rules | workflow._localrules:
+                task_rule.group = job_group
 
 # One local job per targeted task links its result files from work/ into output/.
 # The result files in work/ are targets themselves: a missing one (for example after a failed
