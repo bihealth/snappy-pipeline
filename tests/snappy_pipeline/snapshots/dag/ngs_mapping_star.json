@@ -2,6 +2,22 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.GeneCounts.tab.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/strandedness/case001subregion-T1-RNA1-mRNA_seq1.decision.json.md5",
    "tasks/ngs_mapping_star/output/.manifest.tsv"
   ],
   "log": [],

@@ -2,6 +2,18 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.background_pca.json",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.background_pca.json.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.html.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped.md5",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5",
    "tasks/variant_checking_peddy/output/.manifest.tsv"
   ],
   "log": [],

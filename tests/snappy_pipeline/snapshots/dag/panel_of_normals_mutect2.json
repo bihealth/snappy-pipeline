@@ -2,6 +2,12 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.md5",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.vcf.gz.tbi.md5",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz",
+   "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz.md5",
    "tasks/panel_of_normals_mutect2/output/.manifest.tsv"
   ],
   "log": [],

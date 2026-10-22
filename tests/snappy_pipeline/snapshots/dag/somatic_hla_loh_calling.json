@@ -2,6 +2,7 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.done",
    "tasks/somatic_hla_loh_calling/output/.manifest.tsv"
   ],
   "log": [],

@@ -2,6 +2,8 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/igv_session_generation/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.igv_session.xml",
+   "tasks/igv_session_generation/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.igv_session.xml.md5",
    "tasks/igv_session_generation/output/.manifest.tsv"
   ],
   "log": [],

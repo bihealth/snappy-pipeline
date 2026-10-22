@@ -2,6 +2,14 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa",
    "tasks/reference_index_bwa/output/.manifest.tsv"
   ],
   "log": [],

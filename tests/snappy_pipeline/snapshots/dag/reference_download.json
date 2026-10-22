@@ -2,6 +2,12 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/reference_download/work/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai.md5",
+   "tasks/reference_download/work/reference_download/out/reference.dict",
+   "tasks/reference_download/work/reference_download/out/reference.dict.md5",
    "tasks/reference_download/output/.manifest.tsv"
   ],
   "log": [],

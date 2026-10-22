@@ -2,6 +2,10 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/targeted_seq_mei_calling_scramble/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
    "tasks/targeted_seq_mei_calling_scramble/output/.manifest.tsv"
   ],
   "log": [],

@@ -2,6 +2,8 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/tumor_mutational_burden/work/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json",
+   "tasks/tumor_mutational_burden/work/case001subregion-T1-DNA1-WES1/out/tmb.case001subregion-T1-DNA1-WES1.json.md5",
    "tasks/tumor_mutational_burden/output/.manifest.tsv"
   ],
   "log": [],

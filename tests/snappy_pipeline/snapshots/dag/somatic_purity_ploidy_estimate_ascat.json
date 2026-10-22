@@ -2,6 +2,22 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.goodness_of_fit.txt",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.goodness_of_fit.txt.md5",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ploidy.txt",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ploidy.txt.md5",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.aberrantcellfraction.txt",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.aberrantcellfraction.txt.md5",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments.txt",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments.txt.md5",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments_raw.txt",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.segments_raw.txt.md5",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumour.png",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tumour.png.md5",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.germline.png",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.germline.png.md5",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ASPCF.png",
+   "tasks/somatic_purity_ploidy_estimate_ascat/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ASPCF.png.md5",
    "tasks/somatic_purity_ploidy_estimate_ascat/output/.manifest.tsv"
   ],
   "log": [],

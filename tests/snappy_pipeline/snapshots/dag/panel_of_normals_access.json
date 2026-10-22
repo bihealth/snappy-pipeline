@@ -2,6 +2,8 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed",
+   "tasks/panel_of_normals_access/work/panel_of_normals/out/panel_of_normals.accessible.bed.md5",
    "tasks/panel_of_normals_access/output/.manifest.tsv"
   ],
   "log": [],

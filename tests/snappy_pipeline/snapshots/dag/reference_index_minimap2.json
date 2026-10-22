@@ -2,6 +2,10 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.dict",
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.mmi",
    "tasks/reference_index_minimap2/output/.manifest.tsv"
   ],
   "log": [],

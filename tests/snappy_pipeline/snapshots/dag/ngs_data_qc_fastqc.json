@@ -2,6 +2,7 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/ngs_data_qc_fastqc/work/case001subregion-T1-DNA1-WES1/report/.done",
    "tasks/ngs_data_qc_fastqc/output/.manifest.tsv"
   ],
   "log": [],

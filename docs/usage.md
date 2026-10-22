@@ -73,6 +73,7 @@ Each task has its own directory `tasks/<task_name>/`.
     One local job per task with result files, `<task>_publish`, creates them.
     The manifest lists the path, size and md5 file of each published file.
     Links to files that are no longer published are removed.
+    A result file that is missing in `work/`, for example after a failed rerun, is built and published again by the next `snappy run`.
 
 Only published files have a `.md5` file next to them.
 Logs are not published.

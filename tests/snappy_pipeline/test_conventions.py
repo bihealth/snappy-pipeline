@@ -371,6 +371,22 @@ def test_wrappers_read_the_params_they_get():
     assert not stale, f"remove these entries from WRAPPERS_READING_PARAMS_DYNAMICALLY: {stale}"
 
 
+def test_published_work_files_are_targets():
+    """The work files that a publish job links are targets of ``all``, so that a missing one (for
+    example after a failed rerun) is rebuilt and published again; an existing manifest alone does
+    not make Snakemake rerun the publish job."""
+    found = []
+    for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
+        jobs = json.loads(snapshot.read_text(encoding="utf-8"))
+        targets = {path for job in jobs if job["rule"] == "all" for path in job["input"]}
+        for job in jobs:
+            if job["rule"].endswith("_publish"):
+                found += [
+                    f"{snapshot.stem}: {path}" for path in job["input"] if path not in targets
+                ]
+    assert not found, f"published work files that are no targets of all: {found[:5]}"
+
+
 #: Diagnostic outputs that are not in the report, by wrapper (or rule, for rules without a wrapper),
 #: with the reason
 OUTPUTS_NOT_IN_REPORT: dict[str, str] = {}

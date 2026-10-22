@@ -2,6 +2,16 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.rds",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.rds.md5",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.mapping_bias.rds.md5",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list.md5",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.md5",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.tbi",
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.bed.gz.tbi.md5",
    "tasks/panel_of_normals_purecn/output/.manifest.tsv"
   ],
   "log": [],

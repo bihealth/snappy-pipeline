@@ -2,6 +2,10 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/variant_calling_gatk3_ug/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_gatk3_ug/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_gatk3_ug/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_gatk3_ug/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
    "tasks/variant_calling_gatk3_ug/output/.manifest.tsv"
   ],
   "log": [],

@@ -54,7 +54,9 @@ for task in project.model.tasks:
 
     use rule * from t_name as alias*
 
-# One local job per targeted task links its result files from work/ into output/
+# One local job per targeted task links its result files from work/ into output/.
+# The result files in work/ are targets themselves: a missing one (for example after a failed
+# rerun) is rebuilt and published again, which an existing manifest alone would not trigger.
 targets = []
 for t_name in target_task_names:
     result_files = list(task_instances[t_name].get_result_files())
@@ -63,15 +65,17 @@ for t_name in target_task_names:
         continue
     if not result_files:
         continue
-    targets.append(f"tasks/{t_name}/output/{MANIFEST}")
+    work_files = [f"tasks/{t_name}/{path}" for path in work_paths(result_files)]
+    manifest = f"tasks/{t_name}/output/{MANIFEST}"
+    targets += [*work_files, manifest]
 
     rule:
         name:
             f"{t_name}_publish"
         input:
-            [f"tasks/{t_name}/{path}" for path in work_paths(result_files)]
+            work_files
         output:
-            targets[-1]
+            manifest
         params:
             task_dir=f"tasks/{t_name}"
         localrule: True

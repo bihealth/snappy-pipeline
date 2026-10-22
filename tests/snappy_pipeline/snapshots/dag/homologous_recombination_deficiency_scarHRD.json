@@ -2,6 +2,8 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json",
+   "tasks/homologous_recombination_deficiency_scarHRD/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hrd.json.md5",
    "tasks/homologous_recombination_deficiency_scarHRD/output/.manifest.tsv"
   ],
   "log": [],

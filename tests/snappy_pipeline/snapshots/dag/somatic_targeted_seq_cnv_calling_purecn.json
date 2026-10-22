@@ -2,6 +2,18 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.csv",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.amplification_pvalues.csv",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.loh.csv",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.csv.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.amplification_pvalues.csv.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.loh.csv.md5",
    "tasks/somatic_targeted_seq_cnv_calling_purecn/output/.manifest.tsv"
   ],
   "log": [],

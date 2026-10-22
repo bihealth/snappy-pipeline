@@ -95,6 +95,7 @@ A step's `get_result_files` lists the published files below `output/`, each with
 Bgzipped VCF and BED files also come with `.tbi` and `.tbi.md5`.
 They mirror files below `work/`.
 One local job per task with result files, `<task>_publish` (`snappy_pipeline/publish.py`), links them and writes `output/.manifest.tsv`.
+The result files in `work/` are targets of `rule all` as well: Snakemake does not rerun a job whose output exists because an input is missing, so a manifest alone would hide result files that a failed rerun deleted (`test_published_work_files_are_targets`).
 No other rule writes into `output/`.
 `get_output_paths` returns `work/` paths, so tasks read each other's `work/` files and never `output/`.
 `test_only_the_publish_job_writes_into_output`, `test_no_job_reads_from_output`, `test_logs_hold_only_logs`, `test_logs_are_not_published`, `test_md5_files_only_for_published_files`, `test_published_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.

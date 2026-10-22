@@ -2,6 +2,20 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.ped.md5",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_seqvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.gts.tsv.gz.md5",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.feature-effects.tsv.gz.md5",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_annotate_strucvars.case001subregion-N1-DNA1-WES1.db-infos.tsv.gz.md5",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_bam_qc.case001subregion-N1-DNA1-WES1.bam-qc.tsv.gz",
+   "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/out/mehari_bam_qc.case001subregion-N1-DNA1-WES1.bam-qc.tsv.gz.md5",
    "tasks/varfish_export/output/.manifest.tsv"
   ],
   "log": [],

@@ -2,6 +2,16 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.target.bed.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.antitarget.bed.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/out/panel_of_normals.cnn.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.sex.tsv",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.sex.tsv.md5",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv",
+   "tasks/panel_of_normals_cnvkit/work/panel_of_normals/report/panel_of_normals.metrics.tsv.md5",
    "tasks/panel_of_normals_cnvkit/output/.manifest.tsv"
   ],
   "log": [],

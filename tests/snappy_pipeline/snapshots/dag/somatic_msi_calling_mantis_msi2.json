@@ -2,6 +2,10 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt",
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status",
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.md5",
+   "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status.md5",
    "tasks/somatic_msi_calling_mantis_msi2/output/.manifest.tsv"
   ],
   "log": [],

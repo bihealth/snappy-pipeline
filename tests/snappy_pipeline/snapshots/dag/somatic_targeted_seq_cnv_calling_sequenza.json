@@ -2,6 +2,11 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5",
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/report/.done",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/output/.manifest.tsv"
   ],
   "log": [],

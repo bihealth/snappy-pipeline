@@ -2,6 +2,10 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5",
    "tasks/ngs_data_qc_picard/output/.manifest.tsv"
   ],
   "log": [],

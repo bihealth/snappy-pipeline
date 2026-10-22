@@ -2,6 +2,22 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/cbioportal_export/work/upload/meta_study.txt",
+   "tasks/cbioportal_export/work/upload/meta_clinical_patient.txt",
+   "tasks/cbioportal_export/work/upload/meta_clinical_sample.txt",
+   "tasks/cbioportal_export/work/upload/meta_mutation_extended.txt",
+   "tasks/cbioportal_export/work/upload/meta_cna_gistic.txt",
+   "tasks/cbioportal_export/work/upload/meta_cna_log2.txt",
+   "tasks/cbioportal_export/work/upload/meta_segment.txt",
+   "tasks/cbioportal_export/work/upload/data_clinical_patient.txt",
+   "tasks/cbioportal_export/work/upload/data_clinical_sample.txt",
+   "tasks/cbioportal_export/work/upload/case_lists/all_cases_with_mutation_data.txt",
+   "tasks/cbioportal_export/work/upload/case_lists/all_cases_with_cna_data.txt",
+   "tasks/cbioportal_export/work/upload/case_lists/all_cases_with_mutation_and_cna_data.txt",
+   "tasks/cbioportal_export/work/upload/data_mutation_extended.txt",
+   "tasks/cbioportal_export/work/upload/data_cna_log2.txt",
+   "tasks/cbioportal_export/work/upload/data_cna_gistic.txt",
+   "tasks/cbioportal_export/work/upload/data_segment.txt",
    "tasks/cbioportal_export/output/.manifest.tsv"
   ],
   "log": [],

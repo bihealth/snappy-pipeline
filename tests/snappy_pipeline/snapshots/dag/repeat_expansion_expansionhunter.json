@@ -2,6 +2,10 @@
  {
   "benchmark": null,
   "input": [
+   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json",
+   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json.md5",
+   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf",
+   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.md5",
    "tasks/repeat_expansion_expansionhunter/output/.manifest.tsv"
   ],
   "log": [],
