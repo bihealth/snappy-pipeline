@@ -87,7 +87,7 @@ The log file is named `log`, because the wrapper base classes write to `snakemak
 Snakemake's metadata in `.snakemake/` records the code, params, inputs and conda environment of every output.
 The pinned environments (`environment.linux-64.pin.txt`) fix the package versions.
 Logs are no result files, and `snappy run` archives them per run.
-Only result files, those linked into `output/`, have an md5 file, and every result file has one.
+Only result files, those linked into `output/`, have an md5 file, and every result file except a directory has one.
 SODAR needs one per uploaded file.
 A step declares `<file>.md5` next to `<file>` in the outputs, and the wrapper base classes write it.
 Wrappers never read md5 files.
@@ -99,6 +99,14 @@ The result files in `work/` are targets of `rule all` as well: Snakemake does no
 No other rule writes into `output/`.
 `get_output_paths` returns `work/` paths, so tasks read each other's `work/` files and never `output/`.
 `test_only_the_results_job_writes_into_output`, `test_no_job_reads_from_output`, `test_logs_hold_only_logs`, `test_logs_are_no_result_files`, `test_md5_files_only_for_result_files`, `test_result_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.
+
+A tool that writes a directory of files that the step does not name has a `directory()` output, not a `.done` marker file in it.
+Snakemake removes the directory before the job runs and after a failure, so no file of an earlier run survives.
+Snakemake creates only the parent directory, so the wrapper creates the directory itself.
+No other output can be inside it, and only one job writes it.
+Consumers take the directory as their input; after the job, it also holds Snakemake's hidden `.snakemake_timestamp` file.
+A directory can be a result file: the results job links the directory, which has no md5 file.
+The DAG snapshots list the directory outputs of a job as `directory`.
 
 Every wrapper environment is pinned.
 Snakemake builds it from the exact package URLs in `environment.linux-64.pin.txt` next to `environment.yaml`.

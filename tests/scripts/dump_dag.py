@@ -61,6 +61,9 @@ def _job_record(job) -> dict[str, Any]:
     # Outputs that the Snakemake report shows; only when there are some, as most jobs have none
     if report := sorted(str(f) for f in job.output if is_flagged(f, "report")):
         record["report"] = report
+    # directory() outputs, which have no md5 file; only when there are some, like the report
+    if directories := sorted(str(f) for f in job.output if is_flagged(f, "directory")):
+        record["directory"] = directories
     # Rules that run on the submit node instead of the cluster (``localrule: True``)
     if job.rule.name in job.rule.workflow._localrules:
         record["local"] = True

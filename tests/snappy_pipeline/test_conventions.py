@@ -803,6 +803,8 @@ def test_md5_files_only_for_result_files():
                 payload = path.removesuffix(".md5")
                 if payload not in job["output"]:
                     found.add(f"{name}: {path} (its file is no output of the job)")
+                elif payload in job.get("directory", ()):
+                    found.add(f"{name}: {path} (a directory has no md5)")
                 elif payload not in result_files:
                     found.add(f"{name}: {path} (its file is no result file)")
     assert not found, (
@@ -911,13 +913,16 @@ RESULTS_WITHOUT_MD5 = (
 def test_result_files_come_with_md5_and_index():
     """SODAR needs an md5 for every result file; bgzipped VCF and BED files need their index.
 
-    ``.done`` markers of directories have none.
+    ``directory()`` outputs and ``.done`` markers of directories have none.
     """
     found = set()
-    for name, _, result_files in _snapshot_dags():
+    for name, jobs, result_files in _snapshot_dags():
+        directories = {path for job in jobs for path in job.get("directory", ())}
         for path in result_files:
-            if path.endswith((".md5", ".done")) or path.startswith(
-                tuple(f"tasks/{step}" for step in RESULTS_WITHOUT_MD5)
+            if (
+                path in directories
+                or path.endswith((".md5", ".done"))
+                or path.startswith(tuple(f"tasks/{step}" for step in RESULTS_WITHOUT_MD5))
             ):
                 continue
             companions = [path + ".md5"]

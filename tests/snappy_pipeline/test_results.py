@@ -61,3 +61,15 @@ def test_a_lone_done_marker_links_its_directory(tmp_path):
 
     assert os.readlink(tmp_path / "output/L1/out") == "../../work/L1/out"
     assert (tmp_path / "output/.manifest.tsv").read_text().splitlines()[1:] == ["L1/out\t33\t"]
+
+
+def test_a_directory_result_is_linked_as_a_directory(tmp_path):
+    work = tmp_path / "work" / "L1" / "out"
+    work.mkdir(parents=True)
+    (work / "L1.R1.fastq.gz").write_text("reads")
+    (work / ".snakemake_timestamp").touch()
+
+    link_results(str(tmp_path), [str(work)], str(tmp_path / "output/.manifest.tsv"))
+
+    assert os.readlink(tmp_path / "output/L1/out") == "../../work/L1/out"
+    assert (tmp_path / "output/.manifest.tsv").read_text().splitlines()[1:] == ["L1/out\t5\t"]
