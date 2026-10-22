@@ -344,21 +344,15 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "loh_md5": prefix + ".loh.csv.md5",
         }
 
-    def get_params(self, action):
-        self._validate_action(action)
-        return self._get_params_all
-
-    def _get_params_all(self, wildcards):
-        mapper = str(self.parent.get_task_config("alignments").tool)
+    def _get_params_coverage(self, wildcards):
         # The files reach the wrappers as inputs
         config_dump = self.config.get(self.name).model_dump(
             by_alias=True, exclude={"path_container"}
         )
-        return {
-            "config": config_dump,
-            "mapper": mapper,
-            "library_name": wildcards.tumor_library,
-        }
+        return {"config": config_dump}
+
+    def _get_params_run(self, wildcards):
+        return {**self._get_params_coverage(wildcards), "library_name": wildcards.tumor_library}
 
     def _get_log_file(self, action):
         return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}

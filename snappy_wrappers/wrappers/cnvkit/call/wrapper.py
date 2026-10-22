@@ -19,6 +19,7 @@ else:
 gender = " --gender {}".format(args["gender"]) if args.get("gender", None) else ""
 male = " --male-reference" if args.get("male_reference", False) else ""
 purity = " --purity {}".format(args["purity"]) if args.get("purity", 0.0) > 0.0 else ""
+drop_low_coverage = " --drop-low-coverage" if args["drop_low_coverage"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
@@ -33,7 +34,7 @@ cnvkit.py call \
     $(if [[ -n "{args[filter]}" ]]; then \
         echo --filter {args[filter]}
     fi) \
-    {center} {gender} {male} \
+    {center} {gender} {male} {drop_low_coverage} \
     --ploidy {args[ploidy]} {purity} \
     {snakemake.input}
 """

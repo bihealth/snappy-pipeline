@@ -8,6 +8,8 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
+count = "--count" if args["count"] else ""
+
 ShellWrapper(snakemake).run(
     r"""
 set -x
@@ -19,6 +21,7 @@ coverage()
     cnvkit.py coverage \
         --fasta {snakemake.input.reference} \
         --min-mapq {args[min_mapq]} \
+        {count} \
         --processes {snakemake.threads} \
         {snakemake.input.bam} \
         --output $2 $1

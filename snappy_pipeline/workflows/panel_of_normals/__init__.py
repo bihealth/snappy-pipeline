@@ -243,16 +243,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         }
 
     _get_params_create_panel = _get_params_prepare
-
-    def _get_params_coverage(self, wildcards):
-        mapper = str(self.parent.get_task_config("alignments").tool)
-        return {
-            "config": self.config.get(self.name).model_dump(
-                by_alias=True, exclude=self._config_files
-            ),
-            "mapper": mapper,
-            "library_name": wildcards.library_name,
-        }
+    _get_params_coverage = _get_params_prepare
 
 
 class Mutect2StepPart(PanelOfNormalsStepPart):

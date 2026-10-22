@@ -103,7 +103,9 @@ class SomaticCnvCheckingPileupStepPart(BaseStepPart):
             "max_depth": self.config.max_depth,
         }
 
-    _get_params_tumor = _get_params_normal
+    def _get_params_tumor(self, wildcards):
+        # The tumor is piled up at the heterozygous sites of the normal, without filters
+        return {"max_depth": self.config.max_depth}
 
     def _get_log_file(self, action):
         return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}

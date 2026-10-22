@@ -83,8 +83,6 @@ rule somatic_purity_ploidy_estimate_ascat_cnv_tumor:
         mem=wf.get_resource("ascat", "cnv_tumor", "mem"),
         partition=wf.get_resource("ascat", "cnv_tumor", "partition"),
         tmpdir=wf.get_resource("ascat", "cnv_tumor", "tmpdir"),
-    params:
-        args=wf.get_params("ascat", "cnv_tumor"),
     wrapper:
         wf.wrapper_path("ascat/build_cnv")
 

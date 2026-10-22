@@ -171,9 +171,6 @@ class AscatStepPart(BaseStepPart):
             yield key, path
             yield key + "_md5", path + ".md5"
 
-    def _get_params_cnv_tumor(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"tumor_library": wildcards.tumor_library}
-
     def _get_params_run_ascat(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"tumor_library": wildcards.tumor_library}
 

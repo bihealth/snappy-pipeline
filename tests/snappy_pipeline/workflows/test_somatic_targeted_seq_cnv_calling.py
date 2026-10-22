@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Tests for the CNVkit params of ``somatic_targeted_seq_cnv_calling``."""
+"""Tests for the CNVkit and PureCN params of ``somatic_targeted_seq_cnv_calling``."""
 
 from types import SimpleNamespace
 
 import pytest
 
-from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import CnvKitStepPart
-from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling.model import Cnvkit
+from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
+    CnvKitStepPart,
+    PureCNStepPart,
+)
+from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling.model import Cnvkit, PureCn
 
 
 def _cnvkit_part(**cfg):
@@ -35,3 +38,24 @@ def test_guessed_gender_and_female_reference_are_not_passed():
 
     assert "gender" not in params
     assert "male_reference" not in params
+
+
+def _purecn_part():
+    # The params only read the PureCN config section, so skip the full step setup.
+    part = object.__new__(PureCNStepPart)
+    part.config = SimpleNamespace(get={"purecn": PureCn()}.get)
+    return part
+
+
+def test_purecn_coverage_gets_only_the_config():
+    params = _purecn_part()._get_params_coverage(SimpleNamespace(tumor_library="T1-DNA1-WES1"))
+
+    assert set(params) == {"config"}
+    assert params["config"]["seed"] == 1234567
+
+
+def test_purecn_run_gets_the_config_and_the_tumor_library():
+    params = _purecn_part()._get_params_run(SimpleNamespace(tumor_library="T1-DNA1-WES1"))
+
+    assert set(params) == {"config", "library_name"}
+    assert params["library_name"] == "T1-DNA1-WES1"
