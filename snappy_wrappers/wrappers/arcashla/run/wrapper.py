@@ -32,7 +32,8 @@ arcasHLA genotype \
     extracted/*.fq.gz \
     -o genotyped \
     -t {ARCAS_HLA_THREADS} \
-    -v
+    -v \
+    {extra_arguments}
 
 popd
 

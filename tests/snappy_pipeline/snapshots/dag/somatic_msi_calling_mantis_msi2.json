@@ -233,7 +233,11 @@
    "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.md5",
    "tasks/somatic_msi_calling_mantis_msi2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.results.txt.status.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
   "resources": {
    "mem": "92.16 GB",
    "mem_mb": 92160,

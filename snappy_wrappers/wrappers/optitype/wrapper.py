@@ -84,7 +84,8 @@ OptiTypePipeline.py \
     --verbose \
     --input $TMPDIR/tmp.d/reads_sampled.fastq \
     --$seq_type \
-    --outdir $TMPDIR/out.tmp
+    --outdir $TMPDIR/out.tmp \
+    {extra_arguments}
 
 # move files to the output directory
 prefix=$(basename $(ls $TMPDIR/out.tmp | head -n 1))

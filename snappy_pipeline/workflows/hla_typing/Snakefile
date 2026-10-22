@@ -79,5 +79,7 @@ if wf.config.tool == "arcashla":
             mem=wf.get_resource("arcashla", "run", "mem"),
             partition=wf.get_resource("arcashla", "run", "partition"),
             tmpdir=wf.get_resource("arcashla", "run", "tmpdir"),
+        params:
+            args=wf.get_params("arcashla", "run"),
         wrapper:
             wf.wrapper_path("arcashla/run")

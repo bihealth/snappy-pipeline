@@ -35,6 +35,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "max_reads": 5000,
     "num_mapping_threads": 4,
     "seq_type": "dna",

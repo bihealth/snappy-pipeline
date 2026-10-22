@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -33,7 +33,7 @@ class SomaticMsiCallingDependsOn(SnappyModel):
     """Task with the BED file of the microsatellite loci, such as ``appData/hg38/GRCh38.d1.vd1.all_loci.bed`` of MANTIS"""
 
 
-class SomaticMsiCalling(SnappyStepModel):
+class SomaticMsiCalling(SnappyStepModel, ToolModel):
     depends_on: SomaticMsiCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]

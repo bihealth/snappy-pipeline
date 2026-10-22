@@ -18,7 +18,7 @@ The task publishes the following files below ``tasks/<task>/output/`` as symlink
 Downstream tasks read the key ``results``.
 """
 
-from snappy_pipeline.models import RelationshipDefinition
+from snappy_pipeline.models import RelationshipDefinition, ToolModel
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
@@ -50,6 +50,10 @@ class Mantis2StepPart(BaseStepPart):
     entity_wildcard = "tumor_library"
 
     published_keys = tuple(_OUTPUTS)
+
+    def tool_section(self) -> ToolModel:
+        """The options are on the step model"""
+        return self.config
 
     # Single thread because of https://github.com/OSU-SRLab/MANTIS/issues/57
     default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem=f"{30 * 1024 * 3}MB")
@@ -87,6 +91,9 @@ class Mantis2StepPart(BaseStepPart):
             key: f"work/{{tumor_library}}/out/{{tumor_library}}{ext}"
             for key, ext in _OUTPUTS.items()
         }
+
+    def _get_params_run(self, wildcards):
+        return {}
 
     def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}

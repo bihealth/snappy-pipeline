@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -21,15 +21,15 @@ class Strand(enum.IntEnum):
     reverse = 2
 
 
-class Featurecounts(SnappyModel):
+class Featurecounts(ToolModel):
     pass
 
 
-class Strandedness(SnappyModel):
+class Strandedness(ToolModel):
     threshold: float = 0.85
 
 
-class RnaSeqC(SnappyModel):
+class RnaSeqC(ToolModel):
     pass
 
 
@@ -37,12 +37,12 @@ class DupRadar(SnappyModel):
     num_threads: int = 8
 
 
-class Salmon(SnappyModel):
+class Salmon(ToolModel):
     salmon_params: str = " --gcBias --validateMappings"
     num_threads: int = 16
 
 
-class Duplication(SnappyModel):
+class Duplication(ToolModel):
     pass
 
 

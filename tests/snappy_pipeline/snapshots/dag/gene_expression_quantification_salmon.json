@@ -34,6 +34,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "num_threads": 16,
     "salmon_params": " --gcBias --validateMappings",
     "strand": -1

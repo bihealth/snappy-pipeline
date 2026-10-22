@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -21,7 +21,7 @@ class SomaticHlaLohCallingDependsOn(SnappyModel):
     """HLA types of the normal library, from an ``hla_typing`` task"""
 
 
-class SomaticHlaLohCalling(SnappyStepModel):
+class SomaticHlaLohCalling(SnappyStepModel, ToolModel):
     depends_on: SomaticHlaLohCallingDependsOn
 
     path_hla_dat: ConfigPath

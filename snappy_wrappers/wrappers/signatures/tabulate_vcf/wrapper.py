@@ -17,6 +17,7 @@ ShellWrapper(snakemake).run(
 bcftools query \
     -f '{args[tumor_library]}\t%CHROM\t%POS\t%REF\t%ALT\n' \
     -s {args[tumor_library]} \
+    {extra_arguments} \
     {snakemake.input.vcf} \
 > {snakemake.output.tsv}
 """

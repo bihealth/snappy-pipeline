@@ -6,7 +6,7 @@ from typing import Annotated, Any, TypedDict
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -28,7 +28,7 @@ class NcbiBuild(enum.StrEnum):
     GRCh38 = "GRCh38"
 
 
-class Vcf2Maf(SnappyModel):
+class Vcf2Maf(ToolModel):
     Center: str
     ncbi_build: NcbiBuild
 

@@ -17,7 +17,7 @@ LOHHLA writes its result files into the same directory in ``work/``.
 They are not published.
 """
 
-from snappy_pipeline.models import RelationshipDefinition
+from snappy_pipeline.models import RelationshipDefinition, ToolModel
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
@@ -40,6 +40,10 @@ class LohhlaStepPart(BaseStepPart):
     entity_wildcard = "tumor_library"
 
     published_keys = ("done",)
+
+    def tool_section(self) -> ToolModel:
+        """The options are on the step model"""
+        return self.config
 
     def _get_input_files_run(self, wildcards):
         normal_lib = self.get_normal_lib_name(wildcards)

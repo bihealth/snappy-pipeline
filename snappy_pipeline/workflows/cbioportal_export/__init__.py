@@ -34,6 +34,7 @@ from collections import namedtuple
 
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.models import ToolModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -173,6 +174,10 @@ class cbioportalVcf2MafStepPart(BaseStepPart):
     intermediate_outputs = {"run": ("maf",)}
 
     default_resource_usage = ResourceUsage(threads=2, runtime="2h", mem="5120MB")
+
+    def tool_section(self) -> ToolModel:
+        """The config section is named ``vcf2maf``"""
+        return self.config.vcf2maf
 
     def __init__(self, parent):
         super().__init__(parent)

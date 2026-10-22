@@ -54,7 +54,8 @@ ${{JAVA_HOME}}/bin/java -jar ${{jar_path}} \
     -t {snakemake.input.features} \
     -s "Sample,{snakemake.input.bam}, " \
     ${{paired_cmd}} \
-    -o ${{TMPDIR}}/rnaseqc
+    -o ${{TMPDIR}}/rnaseqc \
+    {extra_arguments}
 
 mv ${{TMPDIR}}/rnaseqc/metrics.tsv {snakemake.output.rnaseqc_metrics}
 mv ${{TMPDIR}}/rnaseqc/meanCoverage_low.txt {snakemake.output.rnaseqc_meancov_low}

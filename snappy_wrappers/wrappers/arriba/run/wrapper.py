@@ -75,7 +75,8 @@ STAR \
     {known_fusions_param} \
     {tags_param} \
     {structural_variants_param} \
-    {protein_domains_param}
+    {protein_domains_param} \
+    {extra_arguments}
 
 cp $TMPDIR/fusions.tsv {snakemake.output.fusions}
 

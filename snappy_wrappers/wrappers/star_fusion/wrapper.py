@@ -35,7 +35,8 @@ STAR-Fusion \
     --genome_lib_dir {snakemake.input.ctat_resource_lib} \
     --left_fq input/reads_1.fastq.gz \
     --right_fq input/reads_2.fastq.gz \
-    --output_dir output
+    --output_dir output \
+    {extra_arguments}
 
 popd
 """

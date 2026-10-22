@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -25,7 +25,7 @@ class Yara(SnappyModel):
     sensitivity: YaraSensitivity = YaraSensitivity.HIGH
 
 
-class Optitype(SnappyModel):
+class Optitype(ToolModel):
     yara_mapper: Yara = Yara()
     max_reads: int = 5000
     """5000 is a suggestion by OptiType author"""
@@ -42,7 +42,7 @@ class Population(enum.StrEnum):
     NATIVE_AMERICAN = "native_american"
 
 
-class ArcasHla(SnappyModel):
+class ArcasHla(ToolModel):
     population: Population = Population.PRIOR
     min_count: int = 75
     tolerance: float = 1e-7

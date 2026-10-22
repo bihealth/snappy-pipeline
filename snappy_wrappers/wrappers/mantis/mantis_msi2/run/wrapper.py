@@ -31,7 +31,8 @@ mantis-msi2 \
     --min-locus-coverage 20 \
     --min-repeat-reads 1 \
     --threads 1 \
-    -o $TMPDIR/out/$(basename {snakemake.output.result})
+    -o $TMPDIR/out/$(basename {snakemake.output.result}) \
+    {extra_arguments}
 
 
 mv $TMPDIR/out/* $(dirname {snakemake.output.result})

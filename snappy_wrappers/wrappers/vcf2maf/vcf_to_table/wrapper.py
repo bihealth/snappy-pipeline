@@ -33,6 +33,7 @@ python {vcf_to_table} \
     --debug --unique --title \
     --NCBI_Build {args[ncbi_build]} --Center "{args[Center]}" \
     {samples} \
+    {extra_arguments} \
     {snakemake.input.vcf} {snakemake.output.maf}
 """
 )

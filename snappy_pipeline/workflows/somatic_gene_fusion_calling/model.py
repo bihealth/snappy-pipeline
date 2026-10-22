@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
@@ -20,11 +20,11 @@ class Tool(enum.StrEnum):
     star_fusion = "star_fusion"
 
 
-class StarFusion(SnappyModel):
+class StarFusion(ToolModel):
     pass
 
 
-class Arriba(SnappyModel):
+class Arriba(ToolModel):
     num_threads: int = 8
 
     trim_adapters: bool = False

@@ -48,7 +48,11 @@
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json",
    "tasks/hla_typing_arcashla/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.json.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
   "resources": {
    "mem": "64 GB",
    "mem_mb": 64000,

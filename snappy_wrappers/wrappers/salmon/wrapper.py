@@ -78,7 +78,8 @@ salmon quant \
     -o $TMPDIR \
     -p {args[num_threads]} \
     --auxDir aux \
-    {args[salmon_params]}
+    {args[salmon_params]} \
+    {extra_arguments}
 
 # Copy over the output files
 cp $TMPDIR/quant.sf {snakemake.output.transcript_sf}

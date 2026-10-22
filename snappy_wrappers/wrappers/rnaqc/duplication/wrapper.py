@@ -32,7 +32,7 @@ fi
 
 # Duplication (from RSeQC package)
 mkdir ${{TMPDIR}}/duplication
-read_duplication.py -i {snakemake.input.bam} -o ${{TMPDIR}}/duplication/out
+read_duplication.py -i {snakemake.input.bam} -o ${{TMPDIR}}/duplication/out {extra_arguments}
 
 mv ${{TMPDIR}}/duplication/out.seq.DupRate.xls {snakemake.output.dupl_seq}
 mv ${{TMPDIR}}/duplication/out.pos.DupRate.xls {snakemake.output.dupl_pos}

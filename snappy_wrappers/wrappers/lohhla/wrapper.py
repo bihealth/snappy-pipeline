@@ -37,7 +37,8 @@ Rscript $lohhla_script \
     --normalBAMfile $TMPDIR/bams/{normal_bam} \
     --novoDir $(dirname $(realpath $lohhla_script)) \
     --outputDir $(dirname $(realpath {snakemake.output.done} )) \
-    --patientId {args[tumor_library]}
+    --patientId {args[tumor_library]} \
+    {extra_arguments}
 
 touch {snakemake.output.done}
 """

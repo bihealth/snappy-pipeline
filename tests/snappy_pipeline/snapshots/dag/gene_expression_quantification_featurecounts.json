@@ -33,6 +33,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "strand": -1
    }
   },
@@ -92,9 +93,11 @@
   "params": {
    "args": {
     "config": {
+     "extra_arguments": [],
      "strand": -1,
      "threshold": 0.85
     },
+    "extra_arguments": [],
     "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
    }
   },

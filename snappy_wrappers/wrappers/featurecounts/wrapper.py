@@ -37,6 +37,7 @@ samtools view -h -F 260 -q 255 $bam \
     -s ${{strand}} \
     -p \
     --verbose \
+    {extra_arguments} \
     -o feature_counts.tsv
 popd
 """

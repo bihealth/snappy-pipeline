@@ -239,6 +239,7 @@
   "params": {
    "args": {
     "Center": "AUTO",
+    "extra_arguments": [],
     "ncbi_build": "GRCh37",
     "normal_id": "case001subregion-N1",
     "normal_sample": "case001subregion-N1-DNA1-WES1",
@@ -338,6 +339,7 @@
      },
      "vcf2maf": {
       "Center": "AUTO",
+      "extra_arguments": [],
       "ncbi_build": "GRCh37"
      }
     },

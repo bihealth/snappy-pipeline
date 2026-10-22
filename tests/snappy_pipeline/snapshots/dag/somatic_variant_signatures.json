@@ -1485,6 +1485,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "normal_library": "case001subregion-N1-DNA1-WES1",
     "tumor_library": "case001subregion-T1-DNA1-WES1"
    }

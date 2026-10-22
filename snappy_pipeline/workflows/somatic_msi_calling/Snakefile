@@ -42,5 +42,7 @@ rule somatic_msi_calling_mantis_msi2:
         mem=wf.get_resource("mantis_msi2", "run", "mem"),
         partition=wf.get_resource("mantis_msi2", "run", "partition"),
         tmpdir=wf.get_resource("mantis_msi2", "run", "tmpdir"),
+    params:
+        args=wf.get_params("mantis_msi2", "run"),
     wrapper:
         wf.wrapper_path("mantis/mantis_msi2/run")
