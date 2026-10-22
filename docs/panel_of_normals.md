@@ -88,6 +88,7 @@ The panels for `cnvkit` and `purecn` need extra files, and their calling tasks r
 Without `depends_on.kits`, `cnvkit` runs in whole genome mode.
 For exomes, `depends_on.kits` names an `external_data` task with `kits`, and the baits of the kit of the normals are the targets.
 All normals must be targeted libraries of the same kit.
+A `somatic_targeted_seq_cnv_calling` task reads an exome panel in `depends_on.panel_of_normals`, a `somatic_wgs_cnv_calling` task a whole genome panel.
 
 An access file lists the regions that are suitable for coverage analysis, without repeats, hard-to-map regions or extreme GC content.
 CNVkit provides one for `GRCh37` but not for `GRCh38`.

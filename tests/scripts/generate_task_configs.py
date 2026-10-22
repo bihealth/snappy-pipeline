@@ -728,6 +728,8 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
     # cnvkit and purecn read the panel of normals built with the same tool.
     if step_name == "somatic_targeted_seq_cnv_calling" and tool in ("cnvkit", "purecn"):
         depends_on["panel_of_normals"] = f"panel_of_normals_{tool}"
+    if step_name == "somatic_wgs_cnv_calling" and tool == "cnvkit":
+        depends_on["panel_of_normals"] = "panel_of_normals_cnvkit"
     return depends_on
 
 

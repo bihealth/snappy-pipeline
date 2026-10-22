@@ -1,15 +1,91 @@
 # -*- coding: utf-8 -*-
-"""Tests for the CNVkit params of ``somatic_wgs_cnv_calling``."""
+"""Tests for the CNVkit step part of ``somatic_wgs_cnv_calling``."""
 
 from types import SimpleNamespace
 
+import pytest
+from snakemake.iocontainers import Wildcards
+
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import CnvkitSomaticWgsStepPart
+from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import CnvkitWgs, SomaticWgsCnvCalling
+
+WILDCARDS = Wildcards(fromdict={"library_name": "T1-DNA1-WGS1"})
+
+
+class _Parent:
+    """The upstream files of a task with a cnvkit panel of normals."""
+
+    def get_upstream_paths(self, field, library_name=None):
+        if field == "panel_of_normals":
+            prefix = "pon/work/panel_of_normals/out/panel_of_normals"
+            return SimpleNamespace(
+                panel_of_normals=prefix + ".cnn",
+                target=prefix + ".target.bed",
+                antitarget=prefix + ".antitarget.bed",
+            )
+        assert field == "alignments"
+        return SimpleNamespace(bam=f"{library_name}.bam", bai=f"{library_name}.bam.bai")
+
+    def reference_inputs(self):
+        return {"reference": "genome.fa", "reference_fai": "genome.fa.fai"}
+
+
+def _cnvkit_part():
+    # The input functions only read the upstream paths, so skip the full step setup.
+    part = object.__new__(CnvkitSomaticWgsStepPart)
+    part.parent = _Parent()
+    return part
 
 
 def test_cnvkit_postprocess_gets_the_library_name():
-    # The params do not depend on the config, so skip the full step setup.
-    part = object.__new__(CnvkitSomaticWgsStepPart)
-
-    params = part._get_params_postprocess(SimpleNamespace(library_name="T1-DNA1-WGS1"))
+    params = _cnvkit_part()._get_params_postprocess(WILDCARDS)
 
     assert params == {"library_name": "T1-DNA1-WGS1"}
+
+
+def test_cnvkit_coverage_reads_the_regions_of_the_panel_of_normals():
+    inputs = _cnvkit_part()._get_input_files_coverage(WILDCARDS)
+
+    assert inputs == {
+        "bam": "T1-DNA1-WGS1.bam",
+        "bai": "T1-DNA1-WGS1.bam.bai",
+        "reference": "genome.fa",
+        "reference_fai": "genome.fa.fai",
+        "target": "pon/work/panel_of_normals/out/panel_of_normals.target.bed",
+        "antitarget": "pon/work/panel_of_normals/out/panel_of_normals.antitarget.bed",
+    }
+
+
+def test_cnvkit_fix_reads_the_panel_of_normals():
+    inputs = _cnvkit_part()._get_input_files_fix(WILDCARDS)
+
+    assert inputs["ref"] == "pon/work/panel_of_normals/out/panel_of_normals.cnn"
+
+
+def test_cnvkit_postprocess_writes_the_dnacopy_segments_from_segments_and_calls():
+    part = _cnvkit_part()
+
+    assert set(part._get_input_files_postprocess(WILDCARDS)) == {"segment", "call"}
+    assert part._get_output_files_postprocess()["final"].endswith(".dnacopy.seg")
+
+
+def test_cnvkit_declares_the_files_its_wrappers_write():
+    part = _cnvkit_part()
+
+    assert not [key for key in part._get_output_files_plot() if key.startswith("heatmap")]
+    assert set(part._get_output_files_export()) == {
+        key + md5 for key in ("bed", "bed_tbi", "seg", "vcf", "vcf_tbi") for md5 in ("", "_md5")
+    }
+
+
+def test_cnvkit_fix_has_no_edge_correction_for_whole_genomes():
+    assert CnvkitWgs().fix.edge_correction is False
+
+
+def test_cnvkit_needs_a_panel_of_normals():
+    with pytest.raises(ValueError, match="depends_on.panel_of_normals"):
+        SomaticWgsCnvCalling(
+            tool="cnvkit",
+            cnvkit={},
+            depends_on={"alignments": "mapping", "reference": "genome"},
+        )

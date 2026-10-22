@@ -6,6 +6,8 @@ The ``tool`` field selects the caller:
 
 - ``cnvetti`` writes the called CNVs as a BCF file.
 - ``cnvkit`` runs the CNVkit workflow for whole genomes and exports the segments in several formats.
+  It needs ``depends_on.panel_of_normals``: a ``panel_of_normals`` task with ``tool: cnvkit`` in whole genome mode (without ``depends_on.kits``), which also gives the target and antitarget regions.
+  Without normals, the panel task builds a flat reference.
 - ``control_freec`` runs Control-FREEC and transforms its ratios into log2 values, calls and segments.
   It needs ``depends_on.database``: an ``external_data`` task with ``{type: database, tags: [control_freec]}``, the key ``chr_len`` (the chromosome lengths) and, optionally, the key ``mappability``.
 
@@ -20,8 +22,8 @@ The task publishes the following files below ``tasks/<task>/output/`` as symlink
 The files depend on the tool and are generally not in a standard format.
 
 - ``cnvetti``: ``{tumor_library}/out/{tumor_library}.bcf`` with ``.csi``.
-- ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.cns``, ``.bed``, ``.dnacopy.seg`` and ``.vcf.gz`` (with ``.tbi``).
-  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf``, ``{tumor_library}.scatter.png`` and ``{tumor_library}.heatmap.pdf`` (also per chromosome, ``{tumor_library}.heatmap.chr1.pdf`` and so on).
+- ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.dnacopy.seg``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
+  The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` (also per chromosome, ``{tumor_library}.scatter.chr1.png`` and so on).
 - ``control_freec``: ``{tumor_library}/out/{tumor_library}.ratio.txt``, ``.gene_log2.txt``, ``.gene_call.txt``, ``.segments.txt``, ``.heatmap.png``, ``.scatter.png`` and ``.diagram.pdf``.
 
 Downstream tasks read the key ``dnacopy_seg``, which only ``cnvkit`` provides, so ``cnvetti`` and ``control_freec`` tasks do not satisfy their requirement.
@@ -327,7 +329,14 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         alignments = self.parent.get_upstream_paths(
             "alignments", library_name=wildcards.library_name
         )
-        return {"bam": alignments.bam, "bai": alignments.bai}
+        pon = self.parent.get_upstream_paths("panel_of_normals")
+        return {
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+            **self.parent.reference_inputs(),
+            "target": pon.target,
+            "antitarget": pon.antitarget,
+        }
 
     def _get_input_files_fix(self, wildcards):
         tpl_base = "{library_name}"
@@ -335,6 +344,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         input_files = {
             "target": tpl.format(target="target", **wildcards),
             "antitarget": tpl.format(target="antitarget", **wildcards),
+            "ref": self.parent.get_upstream_paths("panel_of_normals").panel_of_normals,
         }
         return input_files
 
@@ -349,8 +359,12 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         return input_files
 
     def _get_input_files_postprocess(self, wildcards):
-        segment_pattern = "work/{library_name}/out/{library_name}.call.cns"
-        input_files = {"call": segment_pattern.format(**wildcards)}
+        segment_pattern = "work/{library_name}/out/{library_name}.segment.cns"
+        call_pattern = "work/{library_name}/out/{library_name}.call.cns"
+        input_files = {
+            "segment": segment_pattern.format(**wildcards),
+            "call": call_pattern.format(**wildcards),
+        }
         return input_files
 
     def _get_input_files_export(self, wildcards):
@@ -407,13 +421,13 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @staticmethod
     def _get_output_files_postprocess():
         name_pattern = "{library_name}"
-        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".cns")
+        tpl = os.path.join("work", name_pattern, "out", name_pattern + ".dnacopy.seg")
         return {"final": tpl, "final_md5": tpl + ".md5"}
 
     @dictify
     def _get_output_files_plot(self):
-        plots = (("diagram", "pdf"), ("heatmap", "pdf"), ("scatter", "png"))
-        chrom_plots = (("heatmap", "pdf"), ("scatter", "png"))
+        plots = (("diagram", "pdf"), ("scatter", "png"))
+        chrom_plots = (("scatter", "png"),)
         chroms = list(chain(range(1, 23), ["X", "Y"]))
         output_files = {}
         # Yield file name pairs for global plots
@@ -434,10 +448,11 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     @staticmethod
     def _get_output_files_export():
         exports = (
-            ("bed", ".bed"),
-            ("seg", ".dnacopy.seg"),
+            ("bed", ".bed.gz"),
+            ("bed_tbi", ".bed.gz.tbi"),
+            ("seg", ".seg"),
             ("vcf", ".vcf.gz"),
-            ("tbi", ".vcf.gz.tbi"),
+            ("vcf_tbi", ".vcf.gz.tbi"),
         )
         output_files = {}
         name_pattern = "{library_name}"

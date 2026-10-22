@@ -4,7 +4,7 @@ from typing import Annotated
 from pydantic import model_validator
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
-from snappy_pipeline.models.cnvkit import Cnvkit, Diagram
+from snappy_pipeline.models.cnvkit import Cnvkit, Diagram, Fix
 from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
@@ -76,7 +76,22 @@ class ControlFreec(ToolModel):
 
 # If defaults need to be overwritten, subclass the model and override the defaults
 class CnvkitWgs(Cnvkit):
-    pass
+    fix: Fix = Fix(edge_correction=False)
+    """Whole genomes have no baits, so there is no edge correction, as in ``cnvkit.py batch
+    --method wgs`` and the whole genome panel of normals"""
+
+
+class ExpectedCnvkitPanelOfNormals(SnappyModel):
+    """Consumer-driven contract: the files of a ``cnvkit`` panel of normals task."""
+
+    panel_of_normals: str
+    """The reference (``.cnn``), from the normals or flat"""
+
+    target: str
+    """The target regions the panel was built with"""
+
+    antitarget: str
+    """The antitarget regions the panel was built with (empty for whole genomes)"""
 
 
 class SomaticWgsCnvCallingDependsOn(SnappyModel):
@@ -88,6 +103,15 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
 
     reference: Reference = ""
 
+    panel_of_normals: Annotated[
+        str,
+        DataSignature(DataType.MODELS, frozenset({"pon", "cnvkit"})),
+        ExpectedPathSchema(ExpectedCnvkitPanelOfNormals),
+    ] = ""
+    """Needed for ``tool: cnvkit``: a ``panel_of_normals`` task with ``tool: cnvkit`` in whole
+    genome mode (without ``depends_on.kits``), which also gives the target and antitarget
+    regions"""
+
     database: Annotated[
         str,
         DataSignature(DataType.DATABASE, frozenset({TOOL})),
@@ -97,7 +121,11 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
     mappability"""
 
 
-TOOL_DEPENDENCIES = {Tool.cnvetti: ("reference",), Tool.control_freec: ("database",)}
+TOOL_DEPENDENCIES = {
+    Tool.cnvetti: ("reference",),
+    Tool.cnvkit: ("panel_of_normals", "reference"),
+    Tool.control_freec: ("database",),
+}
 
 
 class SomaticWgsCnvCalling(SnappyStepModel):
