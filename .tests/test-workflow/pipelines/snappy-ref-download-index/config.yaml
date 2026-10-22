@@ -20,7 +20,7 @@ tasks:
         reference: download_chrmt
       tool: minimap2
       minimap2:
-        extra_args: []
+        extra_arguments: []
 
 data_sets:
   reference:

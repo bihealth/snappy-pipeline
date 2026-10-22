@@ -28,8 +28,8 @@ f = open(snakemake.input.reference_fai, "rt")
 contigs = " ".join(yield_contigs(f, args.get("ignore_chroms")))
 f.close()
 
-extra_arguments = " ".join(
-    ["--{} {}".format(k, v) for k, v in args.get("extra_arguments", {}).items()]
+bam2seqz_options = " ".join(
+    ["--{} {}".format(k, v) for k, v in args.get("bam2seqz_options", {}).items()]
 )
 
 ShellWrapper(snakemake).run(
@@ -37,7 +37,7 @@ ShellWrapper(snakemake).run(
 sequenza-utils bam2seqz \
     -gc {snakemake.input.gc} --fasta {genome} \
     -n {snakemake.input.normal_bam} --tumor {snakemake.input.tumor_bam} \
-    -C {contigs} {extra_arguments} \
+    -C {contigs} {bam2seqz_options} \
     | sequenza-utils seqz_binning -s - \
         -w {length} -o {snakemake.output.seqz}
 """

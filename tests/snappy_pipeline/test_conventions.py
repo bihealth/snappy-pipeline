@@ -431,6 +431,49 @@ def test_wrapper_rules_write_a_benchmark():
     assert not found, f"wrapper rules without benchmark: wf.get_benchmark_file(...): {found}"
 
 
+def test_wrappers_use_the_extra_arguments_they_get():
+    """A rule whose params carry the tool's ``extra_arguments`` runs a wrapper that puts them on
+    the command line, as ``{extra_arguments}`` (filled in by the wrapper base classes)."""
+    found = set()
+    for _, job in _snapshot_jobs():
+        args = job["params"].get("args")
+        if not job["wrapper"] or not isinstance(args, dict) or "extra_arguments" not in args:
+            continue
+        wrapper = job["wrapper"].split("/snappy_wrappers/wrappers/", 1)[1]
+        code = "".join(
+            p.read_text(encoding="utf-8")
+            for p in (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py")
+        )
+        if "{extra_arguments}" not in code:
+            found.add(wrapper)
+    assert not found, f"wrappers that ignore their extra_arguments: {sorted(found)}"
+
+
+def test_wrappers_leave_extra_arguments_to_the_base_class():
+    """An f-string that formats ``{extra_arguments}`` needs the name in the wrapper; without it,
+    ``{{extra_arguments}}`` leaves the placeholder to the wrapper base classes."""
+    found = []
+    for path in sorted((REPO / "snappy_wrappers" / "wrappers").rglob("wrapper.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        assigned = {
+            target.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Assign)
+            for target in node.targets
+            if isinstance(target, ast.Name)
+        }
+        formatted = {
+            value.value.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.JoinedStr)
+            for value in node.values
+            if isinstance(value, ast.FormattedValue) and isinstance(value.value, ast.Name)
+        }
+        if "extra_arguments" in formatted - assigned:
+            found.append(str(path.parent.relative_to(REPO / "snappy_wrappers" / "wrappers")))
+    assert not found, f"f-strings that format an undefined extra_arguments: {found}"
+
+
 def test_logs_and_benchmarks_are_unique_per_job():
     """Two jobs of one DAG never share a log or benchmark file."""
     found = []

@@ -114,7 +114,7 @@ The ``mbcs`` tool
 ``mbcs`` maps with one of the DNA mappers named in ``mbcs.mapping_tool`` (``bwa`` or ``bwa_mem2``).
 Handling of molecular barcodes (``use_barcodes``) and BQSR (``recalibrate``) is optional.
 The mapper section (``bwa`` or ``bwa_mem2``) configures the mapping.
-Use ``extra_args: ["-C"]`` there when barcodes are present and processed by AGeNT.
+Use ``extra_arguments: ["-C"]`` there when barcodes are present and processed by AGeNT.
 
 Only the proprietary `AGeNT <https://www.agilent.com/en/product/next-generation-sequencing/hybridization-based-next-generation-sequencing-ngs/ngs-software/agent-232879>`_ is implemented for barcodes.
 It is not open source and not in ``bioconda``, so it must be installed separately.

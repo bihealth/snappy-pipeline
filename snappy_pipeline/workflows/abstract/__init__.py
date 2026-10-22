@@ -16,7 +16,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
-from functools import cached_property, lru_cache
+from functools import cached_property, lru_cache, wraps
 from typing import Any, Callable
 
 import pydantic
@@ -31,7 +31,12 @@ from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 from snappy_pipeline.base import (
     UnsupportedActionException,
 )
-from snappy_pipeline.models import LibraryFolders, RelationshipDefinition, SnappyStepModel
+from snappy_pipeline.models import (
+    LibraryFolders,
+    RelationshipDefinition,
+    SnappyStepModel,
+    ToolModel,
+)
 from snappy_pipeline.utils import listify
 from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -144,6 +149,10 @@ class BaseStepPart:
     #: Wildcard of the output entity (library, tumor library, ...) in the output paths
     entity_wildcard: str = "library_name"
 
+    #: The action whose command gets the ``extra_arguments`` of the tool section; ``None``: the
+    #: only action
+    extra_arguments_action: str | None = None
+
     #: Output keys by action of scatter fragments (per-region or per-chunk pieces that a gather
     #: rule joins): always ``temp()``
     temp_outputs: dict[str, tuple[str, ...]] = {}
@@ -238,6 +247,29 @@ class BaseStepPart:
             value += parse(per_gb) * input.size_mb / 1024
         value *= factor
         return f"{math.ceil(value)}MB" if name == "mem" else f"{math.ceil(value)}m"
+
+    def tool_section(self) -> ToolModel | None:
+        """Return the config section of the step part's tool, ``config.<name>``"""
+        section = getattr(self.config, self.name, None)
+        return section if isinstance(section, ToolModel) else None
+
+    def with_extra_arguments(
+        self, action: str, params: Callable[..., dict[str, Any]]
+    ) -> Callable[..., dict[str, Any]]:
+        """Add the ``extra_arguments`` of the tool section to the params of the action that runs
+        the tool's command, unless the params already have them"""
+        section = self.tool_section()
+        target = self.extra_arguments_action or (
+            self.actions[0] if len(self.actions) == 1 else None
+        )
+        if section is None or action != target:
+            return params
+
+        @wraps(params)
+        def with_extra(*args, **kwargs):
+            return {"extra_arguments": section.extra_arguments} | params(*args, **kwargs)
+
+        return with_extra
 
     def get_params(self, action: str) -> Callable[..., dict[str, Any]]:
         """Return the params function of the given action: ``self._get_params_<action>``
@@ -1405,9 +1437,11 @@ class BaseStep:
     def get_params(self, sub_step: str, action: str) -> Callable[..., Any]:
         """Return the params function for action of substep, for the rule's ``params:`` section
 
-        Delegates to the sub step object's get_params function
+        Delegates to the sub step object's get_params function and adds the ``extra_arguments``
+        of the tool section
         """
-        return self._require_function(sub_step, "get_params", action)
+        params = self._require_function(sub_step, "get_params", action)
+        return self._get_sub_step(sub_step).with_extra_arguments(action, params)
 
     def _require_function(self, sub_step: str, method: str, action: str) -> Callable[..., Any]:
         """Call ``method`` of the sub step and check that it returned a function of wildcards"""

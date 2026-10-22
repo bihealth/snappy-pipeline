@@ -80,6 +80,10 @@ class BuildReferenceCommonStepPart(BaseStepPart):
 class _IndexToolStepPart(BaseStepPart):
     output_suffixes: tuple[str, ...] = ()
 
+    def _get_params_run(self, wildcards):
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}
+
     def _get_input_files_run(self, wildcards):
         return {
             "reference": self.parent.get_reference_path(),
@@ -119,10 +123,6 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
 
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield "extra_args", " ".join(self.config.bwa_mem2.extra_args)
-
 
 class Minimap2IndexStepPart(_IndexToolStepPart):
     name = "minimap2"
@@ -130,10 +130,6 @@ class Minimap2IndexStepPart(_IndexToolStepPart):
     output_suffixes = (".mmi",)
 
     default_resource_usage = ResourceUsage(threads=8, runtime="12h", mem="16GB")
-
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield "extra_args", " ".join(self.config.minimap2.extra_args)
 
 
 class StarIndexStepPart(_IndexToolStepPart):
@@ -146,10 +142,6 @@ class StarIndexStepPart(_IndexToolStepPart):
         return tuple(f".index/{name}" for name in files)
 
     default_resource_usage = ResourceUsage(threads=16, runtime="24h", mem="64GB")
-
-    @dictify
-    def _get_params_run(self, wildcards):
-        yield "extra_args", " ".join(self.config.star.extra_args)
 
     @dictify
     def _get_input_files_run(self, wildcards):

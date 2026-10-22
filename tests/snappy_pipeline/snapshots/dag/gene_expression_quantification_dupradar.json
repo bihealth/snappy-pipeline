@@ -241,7 +241,7 @@
   ],
   "params": {
    "args": {
-    "extra_args": ""
+    "extra_arguments": []
    }
   },
   "resources": {

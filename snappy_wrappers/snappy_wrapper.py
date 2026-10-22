@@ -76,6 +76,14 @@ class SnappyWrapper(metaclass=ABCMeta):
         if not getattr(self._snakemake.log, "log", None):
             raise AttributeError("snakemake.log.log is not defined")
 
+    @property
+    def extra_arguments(self) -> str:
+        """The ``extra_arguments`` of the rule's params as one string, ``{extra_arguments}`` in
+        the command"""
+        args = getattr(self._snakemake.params, "args", None)
+        value = args.get("extra_arguments") if isinstance(args, dict) else None
+        return " ".join(value) if isinstance(value, list) else ""
+
     @abstractmethod
     def run(self, cmd: str) -> None:
         pass
@@ -108,7 +116,12 @@ class SnappyWrapper(metaclass=ABCMeta):
                                     stepout=4,
                                     snakemake=self._snakemake,
                                 ),
-                                snakemake_format(cmd, stepout=4, snakemake=self._snakemake),
+                                snakemake_format(
+                                    cmd,
+                                    stepout=4,
+                                    snakemake=self._snakemake,
+                                    extra_arguments=self.extra_arguments,
+                                ),
                                 snakemake_format(
                                     SnappyWrapper.footer,
                                     stepout=4,
@@ -158,7 +171,10 @@ class RWrapper(SnappyWrapper):
 
     def _run_R(self, cmd: str) -> None:
         with open(self._snakemake.log.script, "wt") as f:
-            print(snakemake_format(cmd, stepout=4, snakemake=self._snakemake), file=f)
+            script = snakemake_format(
+                cmd, stepout=4, snakemake=self._snakemake, extra_arguments=self.extra_arguments
+            )
+            print(script, file=f)
         self._run(f"Rscript --vanilla {self._snakemake.log.script}", None)
 
     def run(self, cmd: str) -> None:

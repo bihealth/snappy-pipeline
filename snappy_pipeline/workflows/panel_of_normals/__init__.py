@@ -262,6 +262,9 @@ class Mutect2StepPart(PanelOfNormalsStepPart):
     #: Class available actions
     actions = ("scatter", "prepare_panel", "gather", "create_panel")
 
+    #: ``create_panel`` takes the arguments of the sub-section ``genomicsdb``
+    extra_arguments_action = "prepare_panel"
+
     #: The genomicsDB of ``create_panel`` is read by the PureCN panel task, so it stays
     temp_outputs = {"scatter": ("regions",), "prepare_panel": ("vcf", "vcf_tbi")}
 

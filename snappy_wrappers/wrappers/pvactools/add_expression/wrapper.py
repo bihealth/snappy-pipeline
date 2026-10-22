@@ -9,7 +9,6 @@ __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-extra_args = " ".join(args.get("extra_args", []))
 
 combine_script = os.path.join(os.path.dirname(__file__), "add_expression.py")
 
@@ -34,7 +33,7 @@ bcftools norm \
 | python {combine_script} \
     --sample {args[tumor_sample]} \
     {expression} \
-    {extra_args} \
+    {extra_arguments} \
     --output {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """

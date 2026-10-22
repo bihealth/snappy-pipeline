@@ -250,7 +250,7 @@ class PredictionStepPart(NeoepitopeStepPart):
             },
             "n_threads": self.cfg.n_threads,
             "exclude_bind": exclude,
-            "extra_args": self.cfg.extra_args,
+            "extra_arguments": self.cfg.extra_arguments,
         }
 
     def mhc_classes(self) -> list[str]:
@@ -305,7 +305,10 @@ class PvacSeqStepPart(PredictionStepPart):
         return {"vcf": f"{_OUT}.pileup.vcf.gz", "vcf_tbi": f"{_OUT}.pileup.vcf.gz.tbi"}
 
     def _get_params_pileup(self, wildcards):
-        return {"tumor_sample": wildcards.tumor_library, "extra_args": self.cfg.pileup.extra_args}
+        return {
+            "tumor_sample": wildcards.tumor_library,
+            "extra_arguments": self.cfg.pileup.extra_arguments,
+        }
 
     def _get_log_file_pileup(self):
         return {"log": f"{_LOG}.pileup.log"}
@@ -334,7 +337,7 @@ class PvacSeqStepPart(PredictionStepPart):
     def _get_params_add_expression(self, wildcards):
         return {
             "format": "salmon",
-            "extra_args": self.cfg.expression.extra_args,
+            "extra_arguments": self.cfg.expression.extra_arguments,
             **self.samples(wildcards.tumor_library),
         }
 
@@ -359,8 +362,8 @@ class PvacSeqStepPart(PredictionStepPart):
     def _get_params_run(self, wildcards):
         params = super()._get_params_run(wildcards)
         if self.cfg.ml_predictions.enabled:
-            params["extra_args"] = [
-                *params["extra_args"],
+            params["extra_arguments"] = [
+                *params["extra_arguments"],
                 "--run-ml-predictions",
                 f"--ml-threshold-accept {self.cfg.ml_predictions.accept}",
                 f"--ml-threshold-reject {self.cfg.ml_predictions.reject}",

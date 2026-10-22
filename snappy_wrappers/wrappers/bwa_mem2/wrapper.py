@@ -96,6 +96,7 @@ run_bwa_mem2()
         $rg_arg \
         -p \
         -t {num_threads_align} \
+        {extra_arguments} \
         /dev/stdin
 }}
 

@@ -112,6 +112,9 @@ class TumorNormalMode(enum.StrEnum):
 
 
 class Contamination(ToggleModel, GATK):
+    java_options: str = "-Xms4000m -Xmx8000m"
+    """Options for the java run-time of ``CalculateContamination``"""
+
     pileup: GATK = GATK()
     """Parameters for GetPileupSummaries used on the tumor bam (& normalk if present)"""
 

@@ -617,6 +617,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         "pileup_tumor",
     )
 
+    #: The sub-sections ``filtration`` and ``contamination`` hold the arguments of the other
+    #: GATK actions
+    extra_arguments_action = "run"
+
     temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi", "stats", "f1r2")}
 
     intermediate_outputs = {
@@ -644,8 +648,6 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         return {
             "ignore_chroms": sorted(set(self.config.ignore_chroms)),
             "padding": self.config.mutect2.padding,
-            "java_options": self.config.mutect2.contamination.java_options,
-            "extra_arguments": self.config.mutect2.contamination.extra_arguments,
         }
 
     def _get_params_pileup_normal(self, wildcards):

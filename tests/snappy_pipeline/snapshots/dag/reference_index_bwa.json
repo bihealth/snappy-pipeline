@@ -60,7 +60,8 @@
   ],
   "params": {
    "args": {
-    "algorithm": "bwtsw"
+    "algorithm": "bwtsw",
+    "extra_arguments": []
    }
   },
   "resources": {

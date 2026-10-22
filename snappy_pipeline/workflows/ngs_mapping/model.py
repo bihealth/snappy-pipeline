@@ -10,6 +10,7 @@ from snappy_pipeline.models import (
     SnappyModel,
     SnappyStepModel,
     ToggleModel,
+    ToolModel,
     validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
@@ -152,7 +153,7 @@ class BwaMode(StrEnum):
     BWA_MEM = "bwa-mem"
 
 
-class BwaMapper(SnappyModel):
+class BwaMapper(ToolModel):
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -164,8 +165,9 @@ class BwaMapper(SnappyModel):
     split_as_secondary: bool = False
     """-M flag"""
 
-    extra_args: list[str] = []
-    """[ "-C" ] when molecular barcodes are processed with AGeNT in the somatic mode"""
+    extra_arguments: list[str] = []
+    """Additional arguments of ``bwa mem``, such as ``["-C"]`` when AGeNT processes molecular
+    barcodes (``mbcs``)"""
 
 
 class Bwa(BwaMapper):
@@ -188,13 +190,13 @@ class AgentLibPrepType(StrEnum):
     SURE_SELECT_QXT = "qxt"
 
 
-class AgentPrepare(SnappyModel):
+class AgentPrepare(ToolModel):
     path: ConfigPath
 
     lib_prep_type: AgentLibPrepType = None
     """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
 
-    extra_args: list[str] = []
+    extra_arguments: list[str] = []
     """Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data"""
 
 
@@ -204,7 +206,7 @@ class AgentMarkDuplicatesConsensusMode(enum.StrEnum):
     DUPLEX = "DUPLEX"
 
 
-class AgentMarkDuplicates(SnappyModel):
+class AgentMarkDuplicates(ToolModel):
     path: ConfigPath
     consensus_mode: AgentMarkDuplicatesConsensusMode = None
     """One of "SINGLE", "HYBRID", "DUPLEX" """
@@ -214,7 +216,7 @@ class AgentMarkDuplicates(SnappyModel):
 
     consensus_filter_args: list[str] = []
 
-    extra_args: list[str] = []
+    extra_arguments: list[str] = []
     """Consider -d 1 (max nb barcode mismatch)"""
 
 
@@ -270,7 +272,7 @@ class Strandedness(SnappyModel):
     """Minimum proportion of reads mapped to forward/reverse direction to call the protocol"""
 
 
-class Minimap2(SnappyModel):
+class Minimap2(ToolModel):
     mapping_threads: int = 16
 
 

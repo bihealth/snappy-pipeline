@@ -3,7 +3,7 @@ from typing import Annotated, Union
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath, SnappyModel, SnappyStepModel, ToggleModel
+from snappy_pipeline.models import ConfigPath, SnappyModel, SnappyStepModel, ToggleModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -90,7 +90,7 @@ class NetMHCStab(ToggleModel):
     """Predict for all epitopes, not only the filtered ones (or those of NetChop)"""
 
 
-class PvacTool(ToggleModel):
+class PvacTool(ToggleModel, ToolModel):
     """Options shared by pVACseq, pVACfuse and pVACsplice"""
 
     n_threads: int = 1
@@ -104,8 +104,6 @@ class PvacTool(ToggleModel):
     netmhc_stab: NetMHCStab = NetMHCStab()
     genes_of_interest: ConfigPath | None = None
     """A file with the genes of interest (``--genes-of-interest-file``)"""
-
-    extra_args: list[str] = []
 
     @model_validator(mode="after")
     def ensure_valid_algorithm_and_length(self):
@@ -121,17 +119,14 @@ class PvacTool(ToggleModel):
         return self
 
 
-class Pileup(ToggleModel):
+class Pileup(ToggleModel, ToolModel):
     """Read counts of the tumor RNA at the somatic variants (``bcftools mpileup``)"""
 
-    extra_args: list[str] = []
 
-
-class Expression(ToggleModel):
+class Expression(ToggleModel, ToolModel):
     """Gene and transcript TPMs of the tumor RNA (salmon), added to the VCF"""
 
     duplicate_transcripts_table: ConfigPath | None = None
-    extra_args: list[str] = []
 
 
 class PVACseq(PvacTool):

@@ -128,7 +128,7 @@ if config["use_barcodes"]:
         ).format(
             trimmer=snakemake.input.agent_prepare,
             lib_prep_type=config_barcodes["prepare"]["lib_prep_type"],
-            extra_args=" ".join(config_barcodes["prepare"]["extra_args"]),
+            extra_args=" ".join(config_barcodes["prepare"]["extra_arguments"]),
             name=name,
             fq2=fq2,
         )
@@ -167,7 +167,7 @@ cmd += (
     mapper=mapper,
     indices=snakemake.input.index[0].removesuffix(".amb"),
     sample_name=args["sample_name"],
-    extra_args=" ".join(mapper_config.get("extra_args", [])),
+    extra_args=" ".join(mapper_config.get("extra_arguments", [])),
     threads=mapper_config["num_threads_align"],
 )
 
@@ -253,7 +253,7 @@ if config["use_barcodes"]:
         marker=snakemake.input.agent_mark_duplicates,
         consensus_mode=config_barcodes["mark_duplicates"]["consensus_mode"],
         baits=snakemake.input.agent_baits,
-        extra_args=" ".join(config_barcodes["mark_duplicates"]["extra_args"]),
+        extra_args=" ".join(config_barcodes["mark_duplicates"]["extra_arguments"]),
         input_filter_args=" ".join(config_barcodes["mark_duplicates"]["input_filter_args"]),
         consensus_filter_args=" ".join(config_barcodes["mark_duplicates"]["consensus_filter_args"]),
     )

@@ -187,6 +187,7 @@ run_bwa_mem()
             $rg_arg \
             -p \
             -t {num_threads_align} \
+            {extra_arguments} \
             /dev/stdin \
         | samtools view \
             -b \

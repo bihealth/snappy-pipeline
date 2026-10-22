@@ -66,6 +66,11 @@ Only inputs order the jobs that produce them first and trigger reruns when they 
 `test_wrappers_get_the_params_they_read` checks that the jobs in the DAG snapshots pass every `args` key their wrapper reads.
 `test_files_are_inputs_not_params` flags params that hold file paths, against a baseline that only shrinks.
 
+The config section of a tool inherits `ToolModel` (`snappy_pipeline/models`), whose `extra_arguments` are additional arguments for the tool's command line.
+`BaseStep.get_params` adds them to the params of the step part's `tool_section()` (by default `config.<name>`), for its `extra_arguments_action` or else its only action, unless the getter returns them itself.
+The wrapper puts `{extra_arguments}` on the tool's command; `ShellWrapper` and `RWrapper` fill it in, and an f-string writes `{{extra_arguments}}` to leave it to them.
+`test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check this.
+
 Rules that run a wrapper declare `benchmark: wf.get_benchmark_file(part, action)`.
 This is the path of the rule's log below `benchmarks/` (`tasks/<task>/benchmarks/` in a project).
 Snakemake writes the wall time, memory and I/O of each job there.

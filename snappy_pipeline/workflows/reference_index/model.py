@@ -9,6 +9,7 @@ from pydantic import (
 from snappy_pipeline.models import (
     SnappyModel,
     SnappyStepModel,
+    ToolModel,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -38,20 +39,20 @@ class Tool(StrEnum):
     star = "star"
 
 
-class Bwa(SnappyModel):
+class Bwa(ToolModel):
     algorithm: str = "bwtsw"
 
 
-class BwaMem2(SnappyModel):
-    extra_args: list[str] = []
+class BwaMem2(ToolModel):
+    pass
 
 
-class Minimap2(SnappyModel):
-    extra_args: list[str] = []
+class Minimap2(ToolModel):
+    pass
 
 
-class Star(SnappyModel):
-    extra_args: list[str] = []
+class Star(ToolModel):
+    pass
 
 
 class ReferenceIndexDependsOn(SnappyModel):

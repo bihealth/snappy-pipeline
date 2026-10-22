@@ -100,12 +100,12 @@ The `agent` paths are inputs of the job.
     bwa_mem2:
       trim_adapters: false
       split_as_secondary: true
-      extra_args: ["-C"]     # -C when AGeNT processed barcodes are present
+      extra_arguments: ["-C"]     # -C when AGeNT processed barcodes are present
     agent:
       prepare:
         path: /path/to/agent/trimmer
         lib_prep_type: v2    # halo, hs, xt, v2 or qxt, see the AGeNT documentation
-        extra_args:
+        extra_arguments:
           - "-polyG 8"
           - "-minFractionRead 50"
       mark_duplicates:
@@ -113,7 +113,7 @@ The `agent` paths are inputs of the job.
         consensus_mode: HYBRID    # SINGLE, DUPLEX or HYBRID
         input_filter_args: ["-mm 13", "-mr 13", "-mq 30"]
         consensus_filter_args: []
-        extra_args: []
+        extra_arguments: []
 ```
 
 The AGeNT documentation comes with its download.

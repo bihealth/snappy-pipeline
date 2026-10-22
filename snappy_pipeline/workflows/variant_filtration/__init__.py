@@ -75,7 +75,7 @@ from typing import Any
 
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.models import RelationshipDefinition
+from snappy_pipeline.models import RelationshipDefinition, ToolModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -117,6 +117,12 @@ class VariantFiltrationStepPart(BaseStepPart):
 
     name = "filter"
     actions = ("run",)
+
+    def tool_section(self) -> ToolModel | None:
+        """The config section of the task's tool; all filter step parts are named ``filter``"""
+        section = getattr(self.config, self.config.tool, None)
+        return section if isinstance(section, ToolModel) else None
+
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
     }
@@ -212,7 +218,7 @@ class VembraneStepPart(VariantFiltrationStepPart):
         cfg = self.config.vembrane
         if cfg is None:
             raise ValueError("vembrane configuration is required")
-        params: dict[str, Any] = {"mode": cfg.mode, "extra_args": cfg.extra_args}
+        params: dict[str, Any] = {"mode": cfg.mode}
         if cfg.mode == "tag":
             params["expressions"] = cfg.expressions
         else:

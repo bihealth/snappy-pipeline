@@ -42,7 +42,7 @@
   ],
   "params": {
    "args": {
-    "extra_args": [],
+    "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
     "num_threads_align": 16,
@@ -98,7 +98,7 @@
   ],
   "params": {
    "args": {
-    "extra_args": [],
+    "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
     "num_threads_align": 16,
@@ -324,7 +324,8 @@
   ],
   "params": {
    "args": {
-    "algorithm": "bwtsw"
+    "algorithm": "bwtsw",
+    "extra_arguments": []
    }
   },
   "resources": {

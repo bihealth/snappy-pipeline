@@ -54,6 +54,7 @@ for fname in {reads}; do
         -a {path_index} \
         -Y \
         --MD \
+        {extra_arguments} \
         /dev/stdin \
     | samtools addreplacerg \
         -r "@RG\tID:{args[library_name]}.$i\tSM:{args[library_name]}\tPL:PACBIO" - \

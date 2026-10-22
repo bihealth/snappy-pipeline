@@ -5,7 +5,7 @@ from typing import Annotated, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -43,7 +43,7 @@ class RegionsFilter(SnappyModel):
     mode: Literal["tag", "filter"] = "tag"
 
 
-class Vembrane(SnappyModel):
+class Vembrane(ToolModel):
     expressions: dict[str, str] = Field(
         default_factory=dict,
         examples=[
@@ -75,8 +75,6 @@ class Vembrane(SnappyModel):
 
     ontology: ConfigPath = ""
     """Optional ontology file passed via ``--ontology``."""
-
-    extra_args: str = ""
 
     @model_validator(mode="after")
     def ensure_mode_specific_fields(self) -> Self:

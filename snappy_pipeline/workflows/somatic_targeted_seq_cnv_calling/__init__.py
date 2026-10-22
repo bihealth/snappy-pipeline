@@ -221,7 +221,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return {
             "length": self.config.sequenza.length,
             "ignore_chroms": self.config.sequenza.ignore_chroms,
-            "extra_arguments": extra_args.model_dump(by_alias=True),
+            "bam2seqz_options": extra_args.model_dump(by_alias=True),
         }
 
     def _get_params_gcreference(self, wildcards: Wildcards) -> dict[str, Any]:

@@ -6,6 +6,7 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 reference = snakemake.input.reference
+java_options = snakemake.params.args["java_options"]
 
 # Test presence/absence of normal
 normal = getattr(snakemake.input, "normal", None)
@@ -23,10 +24,11 @@ export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
 out_base=$TMPDIR/$(basename {snakemake.output.table} .contamination.tbl)
 
-gatk --java-options '-Xms4000m -Xmx8000m' CalculateContamination \
+gatk --java-options '{java_options}' CalculateContamination \
     --input {snakemake.input.tumor} {normal_param} \
     --tumor-segmentation ${{out_base}}.segments.tbl \
-    --output ${{out_base}}.contamination.tbl
+    --output ${{out_base}}.contamination.tbl \
+    {extra_arguments}
 
 
 mv $out_base.* $(dirname {snakemake.output.table})

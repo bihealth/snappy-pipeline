@@ -8,7 +8,6 @@ __author__ = "Eric Blanc"
 __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-extra_args = " ".join(args.get("extra_args", []))
 
 (input_bindings, input_fns) = bindings_for_container(
     snakemake.input, base_container_path="/inputs", exclude_bind=args["exclude_bind"]
@@ -68,7 +67,7 @@ pvacsplice run --n-threads {snakemake.threads} \\
     {normal} \\
     --iedb-install-directory /opt/iedb \\
     --class-i-epitope-length {class_i_epitope_length} --class-ii-epitope-length {class_ii_epitope_length} \\
-    {extra_args} \\
+    {extra_arguments} \\
     {peptides} {genes} \\
     {input_fns[junctions]} \\
     {args[tumor_sample]} {alleles} {algorithms} \\

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, Field
 
-from snappy_pipeline.models import SnappyModel
+from snappy_pipeline.models import ToolModel
 
 
 def argument(args: list[str]) -> list[str]:
@@ -14,7 +14,7 @@ def argument(args: list[str]) -> list[str]:
     return args
 
 
-class GATK(SnappyModel):
+class GATK(ToolModel):
     extra_arguments: Annotated[
         list[str],
         AfterValidator(argument),
@@ -25,11 +25,7 @@ class GATK(SnappyModel):
             ]
         ),
     ] = []
-    """
-    List additional GetPileupSummaries arguments.
-    Each additional argument must be of the form:
-    "--<argument name> <argument value>"
-    """
+    """Additional arguments for the GATK tool, each of the form ``"--<name> <value>"``"""
 
     java_options: Annotated[str, Field(examples=["-Xms4000m -Xmx8000m"])] = ""
     """Options for the java run-time compiler"""

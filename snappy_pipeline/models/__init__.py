@@ -117,6 +117,18 @@ class SnappyModel(BaseModel):
         return self.model_fields.keys()
 
 
+class ToolModel(SnappyModel):
+    """Base class of the config section of one tool
+
+    Its ``extra_arguments`` reach the params of the step part's command (``tool_section``,
+    ``extra_arguments_action`` of ``BaseStepPart``), and the wrapper puts them on the tool's
+    command line.
+    """
+
+    extra_arguments: list[str] = []
+    """Additional arguments for the tool's command line, such as ``["-C"]``"""
+
+
 class RelationshipDefinition(SnappyModel):
     """Definition of a relationship between rows in the library DataFrame.
 

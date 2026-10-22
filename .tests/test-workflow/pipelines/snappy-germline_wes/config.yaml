@@ -85,7 +85,7 @@ tasks:
       vembrane:
         mode: filter
         expression: 'QUAL > 10'
-        extra_args: "--backend pysam"
+        extra_arguments: ["--backend pysam"]
 
 data_sets:
   trbc:

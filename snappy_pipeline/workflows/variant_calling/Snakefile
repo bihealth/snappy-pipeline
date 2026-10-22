@@ -359,6 +359,8 @@ if tool == "mutect2":
                 mem=wf.get_resource("mutect2", "contamination", "mem"),
                 partition=wf.get_resource("mutect2", "contamination", "partition"),
                 tmpdir=wf.get_resource("mutect2", "contamination", "tmpdir"),
+            params:
+                args=wf.get_params("mutect2", "contamination"),
             wrapper:
                 wf.wrapper_path("mutect2/contamination")
 
