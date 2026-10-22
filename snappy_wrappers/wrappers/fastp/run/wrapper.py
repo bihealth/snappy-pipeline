@@ -108,7 +108,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         --max_len2 {config[max_len2]}                                       \
         $(if [[ "{config[dedup]}" = "True" ]]; then \
             echo --dedup --dup_calc_accuracy {config[dup_calc_accuracy]}
-        else \
+        elif [[ "{config[dont_eval_duplication]}" = "True" ]]; then \
             echo --dont_eval_duplication
         fi) \
         $(if [[ "{config[trim_poly_g]}" = "True" ]]; then \
