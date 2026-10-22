@@ -13,6 +13,8 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 args = getattr(snakemake.params, "args", {})
 
 lib_path = os.path.realpath(os.path.dirname(snakemake.input.done))
+# The R script runs in the output directory, so the input path must not be relative
+seqz = os.path.abspath(snakemake.input.seqz)
 
 genome = snakemake.input.reference
 length = args["length"]
@@ -40,7 +42,7 @@ fn=$(basename "{snakemake.output.hrd}")
 cat << __EOF | R --vanilla --slave
 library("scarHRD")
 
-tbl <- scar_score("{snakemake.input.seqz}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name})
+tbl <- scar_score("{seqz}", reference="{genome_name}", seqz=TRUE, chr.in.name={chr_in_name})
 
 warnings()
 
