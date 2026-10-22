@@ -21,6 +21,7 @@ def test_arcashla_passes_its_genotype_options():
         "tolerance": 1e-7,
         "max_iterations": 1000,
         "drop_threshold": 0.1,
+        "zygosity_threshold": 0.15,
     }
 
 

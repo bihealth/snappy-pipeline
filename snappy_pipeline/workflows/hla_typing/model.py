@@ -49,6 +49,8 @@ class ArcasHla(ToolModel):
     max_iterations: int = 1000
     drop_iterations: int | None = None
     drop_threshold: float = 0.1
+    zygosity_threshold: float = 0.15
+    """Proportion of the major allele's abundance needed to call a gene heterozygous"""
     avg: int | None = None
     """Fragment length mean of single-end reads"""
     std: int | None = None

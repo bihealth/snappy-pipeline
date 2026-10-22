@@ -15,7 +15,8 @@ args = getattr(snakemake.params, "args", {})
 genotype_args = (
     f"--population {args['population']} --min_count {args['min_count']} "
     f"--tolerance {args['tolerance']} --max_iterations {args['max_iterations']} "
-    f"--drop_threshold {args['drop_threshold']}"
+    f"--drop_threshold {args['drop_threshold']} "
+    f"--zygosity_threshold {args['zygosity_threshold']}"
 )
 if "drop_iterations" in args:
     genotype_args += f" --drop_iterations {args['drop_iterations']}"

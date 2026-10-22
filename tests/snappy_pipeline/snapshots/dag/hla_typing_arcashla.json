@@ -55,7 +55,8 @@
     "max_iterations": 1000,
     "min_count": 75,
     "population": "prior",
-    "tolerance": 1e-07
+    "tolerance": 1e-07,
+    "zygosity_threshold": 0.15
    }
   },
   "resources": {
