@@ -211,7 +211,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -220,7 +219,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -259,7 +257,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
@@ -269,7 +266,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -311,7 +307,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
@@ -321,7 +316,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -368,7 +362,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -377,7 +370,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },

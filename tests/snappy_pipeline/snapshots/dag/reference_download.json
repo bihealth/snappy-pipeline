@@ -58,8 +58,6 @@
     "contigs_regex": "",
     "datatype": "dna",
     "file_name": "",
-    "molecule": "dna",
-    "source": "ensembl",
     "species": "homo_sapiens",
     "subset": "primary_assembly",
     "url": "",

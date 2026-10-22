@@ -42,7 +42,6 @@ class _ReferenceDownloadStepPart(BaseStepPart):
     def _base_args(self) -> dict:
         source_cfg = getattr(self.config, self.name)
         return {
-            "source": self.name,
             "url": source_cfg.url,
             "species": source_cfg.species,
             "build": source_cfg.build,
@@ -50,7 +49,6 @@ class _ReferenceDownloadStepPart(BaseStepPart):
             "version": source_cfg.version,
             "contigs": source_cfg.contigs,
             "contigs_regex": source_cfg.contigs_regex,
-            "molecule": source_cfg.molecule,
         }
 
     def _get_log_file_run(self):

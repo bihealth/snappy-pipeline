@@ -417,8 +417,6 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
     def _get_params_discover(self, wildcards) -> dict[str, Any]:
         return {
-            "step_key": "variant_calling",
-            "caller_key": "gatk4_hc_gvcf",
             "window_length": self.config.gatk4_hc_gvcf.window_length,
             "num_threads": self.config.gatk4_hc_gvcf.num_threads,
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,

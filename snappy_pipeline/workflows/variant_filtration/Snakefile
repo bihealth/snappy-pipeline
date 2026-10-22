@@ -29,6 +29,8 @@ if wf.config.tool == "ebfilter":
             mem=wf.get_resource("filter", "write_panel", "mem"),
             partition=wf.get_resource("filter", "write_panel", "partition"),
             tmpdir=wf.get_resource("filter", "write_panel", "tmpdir"),
+        params:
+            args=wf.get_params("filter", "write_panel"),
         run:
             wf.substep_getattr("filter", "write_panel_of_normals_file")(wildcards)
 

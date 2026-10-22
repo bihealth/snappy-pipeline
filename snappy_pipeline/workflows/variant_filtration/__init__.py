@@ -267,6 +267,12 @@ class DkfzStepPart(_BamAwareStepPart):
         "run": ResourceUsage(threads=1, runtime="12h", mem=f"{3 * 1024}MB"),
     }
 
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        # The filter writes its own FILTER IDs (bPcr, bSeq), not the task name
+        params = super()._get_params_run(wildcards)
+        params.pop("filter_name")
+        return params
+
 
 class EbfilterStepPart(_BamAwareStepPart):
     """EBFilter."""
@@ -295,7 +301,9 @@ class EbfilterStepPart(_BamAwareStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         params = super()._get_params_run(wildcards)
-        params.pop("path_panel_of_normals_sample_list", None)
+        # The panel file and the options that choose it are inputs of the rule, not of EBFilter
+        for key in ("path_panel_of_normals_sample_list", "panel_of_normals_size", "shuffle_seed"):
+            params.pop(key, None)
         return params | {
             "has_annotation": self.parent.variants_are_annotated,
         }
@@ -306,8 +314,17 @@ class EbfilterStepPart(_BamAwareStepPart):
             for bam in self._get_panel_of_normal_bams(wildcards):
                 print(bam, file=fh)
 
-    @listify
-    def _get_panel_of_normal_bams(self, wildcards):
+    def _get_params_write_panel(self, wildcards):
+        """The panel options and the libraries they choose, so that a change writes the panel again"""
+        cfg: EbfilterConfig = self.config.ebfilter
+        return {
+            "panel_of_normals_size": cfg.panel_of_normals_size,
+            "shuffle_seed": cfg.shuffle_seed,
+            "libraries": self._panel_of_normal_libraries(),
+        }
+
+    def _panel_of_normal_libraries(self) -> list[str]:
+        """The normal DNA libraries of the panel: a seeded shuffle, cut to the panel size"""
         df = self.parent.build_library_dataframe()
         normal_df = df[(df["role"] == "normal") & (df["extraction_type"] == "dna")]
         libraries = sorted(normal_df["library_name"].tolist())
@@ -315,7 +332,11 @@ class EbfilterStepPart(_BamAwareStepPart):
         cfg: EbfilterConfig = self.config.ebfilter
         random.seed(cfg.shuffle_seed)
         random.shuffle(libraries)
-        for lib_name in libraries[: cfg.panel_of_normals_size]:
+        return libraries[: cfg.panel_of_normals_size]
+
+    @listify
+    def _get_panel_of_normal_bams(self, wildcards):
+        for lib_name in self._panel_of_normal_libraries():
             aln: ExpectedAlignments = self.parent.get_upstream_paths(
                 "alignments", library_name=lib_name
             )

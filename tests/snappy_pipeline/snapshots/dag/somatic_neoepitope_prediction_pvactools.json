@@ -2139,8 +2139,6 @@
       18
      ]
     },
-    "n_threads": 1,
-    "tumor_library": "case001subregion-T1-DNA1-WES1",
     "tumor_sample": "case001subregion-T1-DNA1-WES1"
    }
   },
@@ -2180,9 +2178,6 @@
    "args": {
     "extra_arguments": [],
     "format": "salmon",
-    "normal_library": "case001subregion-N1-DNA1-WES1",
-    "normal_sample": "case001subregion-N1-DNA1-WES1",
-    "tumor_library": "case001subregion-T1-DNA1-WES1",
     "tumor_sample": "case001subregion-T1-DNA1-WES1"
    }
   },
@@ -2324,10 +2319,7 @@
       18
      ]
     },
-    "n_threads": 1,
-    "normal_library": "case001subregion-N1-DNA1-WES1",
     "normal_sample": "case001subregion-N1-DNA1-WES1",
-    "tumor_library": "case001subregion-T1-DNA1-WES1",
     "tumor_sample": "case001subregion-T1-DNA1-WES1"
    }
   },
@@ -2486,10 +2478,7 @@
       18
      ]
     },
-    "n_threads": 1,
-    "normal_library": "case001subregion-N1-DNA1-WES1",
     "normal_sample": "case001subregion-N1-DNA1-WES1",
-    "tumor_library": "case001subregion-T1-DNA1-WES1",
     "tumor_sample": "case001subregion-T1-DNA1-WES1"
    }
   },
@@ -2755,7 +2744,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -2764,7 +2752,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -2803,7 +2790,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
@@ -2813,7 +2799,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -2855,7 +2840,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
@@ -2865,7 +2849,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -2907,7 +2890,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
@@ -2917,7 +2899,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -2964,7 +2945,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -2973,7 +2953,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },

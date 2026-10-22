@@ -100,6 +100,10 @@ class NeoepitopeStepPart(BaseStepPart):
             args |= {"normal_sample": normal, "normal_library": normal}
         return args
 
+    def sample_names(self, tumor_library: str) -> dict[str, str]:
+        """The sample names in the VCF, without the library names."""
+        return {k: v for k, v in self.samples(tumor_library).items() if k.endswith("_sample")}
+
     @property
     def container(self) -> str:
         return self.config.pvactools.container or CONTAINER
@@ -242,13 +246,12 @@ class PredictionStepPart(NeoepitopeStepPart):
         exclude = ["container", "alleles", *self._get_output_files_run()]
         exclude.remove("done")
         return {
-            **self.samples(wildcards.tumor_library),
+            **self.sample_names(wildcards.tumor_library),
             "algorithms": self.cfg.algorithms,
             "lengths": {
                 "class_i": self.cfg.class_i_epitope_length,
                 "class_ii": self.cfg.class_ii_epitope_length,
             },
-            "n_threads": self.cfg.n_threads,
             "exclude_bind": exclude,
             "extra_arguments": self.cfg.extra_arguments,
         }
@@ -338,7 +341,7 @@ class PvacSeqStepPart(PredictionStepPart):
         return {
             "format": "salmon",
             "extra_arguments": self.cfg.expression.extra_arguments,
-            **self.samples(wildcards.tumor_library),
+            "tumor_sample": wildcards.tumor_library,
         }
 
     def _get_log_file_add_expression(self):
@@ -385,7 +388,6 @@ class PvacFuseStepPart(PredictionStepPart):
     def _get_params_run(self, wildcards):
         params = super()._get_params_run(wildcards)
         params.pop("normal_sample", None)
-        params.pop("normal_library", None)
         return params
 
 

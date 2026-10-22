@@ -274,7 +274,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -283,7 +282,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -322,7 +320,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
@@ -332,7 +329,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -374,7 +370,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "extra_arguments": [],
     "ignore_chroms": [
      "^NC_007605$",
@@ -384,7 +379,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -431,7 +425,6 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
-    "caller_key": "gatk4_hc_gvcf",
     "ignore_chroms": [
      "^NC_007605$",
      "^hs37d5$",
@@ -440,7 +433,6 @@
      "^HLA-"
     ],
     "num_threads": 16,
-    "step_key": "variant_calling",
     "window_length": 10000000
    }
   },
@@ -488,7 +480,15 @@
   "output": [
    "tasks/variant_filtration_ebfilter/work/eb_filter.panel_of_normals/out/eb_filter.panel_of_normals.txt"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "libraries": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "panel_of_normals_size": 25,
+    "shuffle_seed": 1
+   }
+  },
   "resources": {
    "mem": "2.05 GB",
    "mem_mb": 2048,
@@ -531,9 +531,7 @@
     "has_annotation": true,
     "min_baseq": 15,
     "min_mapq": 20,
-    "mode": "tag",
-    "panel_of_normals_size": 25,
-    "shuffle_seed": 1
+    "mode": "tag"
    }
   },
   "resources": {

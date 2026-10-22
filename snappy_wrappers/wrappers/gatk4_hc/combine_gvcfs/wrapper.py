@@ -3,6 +3,11 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
+allow_seq_dict_incompatibility = (
+    "--disable-sequence-dictionary-validation true"
+    if args.get("allow_seq_dict_incompatibility", False)
+    else ""
+)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -59,6 +64,7 @@ run-shard()
         -G AS_StandardAnnotation \
         -G StandardHCAnnotation \
         -G AlleleSpecificAnnotation \
+        {allow_seq_dict_incompatibility} \
         $(for path in {snakemake.input.gvcf}; do \
             echo --variant $path; \
         done)
