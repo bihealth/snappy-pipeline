@@ -1576,6 +1576,12 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
+    "annotation_groups": [
+     "StandardAnnotation",
+     "AS_StandardAnnotation",
+     "StandardHCAnnotation",
+     "AlleleSpecificAnnotation"
+    ],
     "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
@@ -1584,6 +1590,7 @@
      "^HLA-"
     ],
     "num_threads": 16,
+    "padding": 1000,
     "window_length": 10000000
    }
   },
@@ -1622,6 +1629,12 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
+    "annotation_groups": [
+     "StandardAnnotation",
+     "AS_StandardAnnotation",
+     "StandardHCAnnotation",
+     "AlleleSpecificAnnotation"
+    ],
     "extra_arguments": [],
     "ignore_contigs": [
      "^NC_007605$",
@@ -1631,6 +1644,7 @@
      "^HLA-"
     ],
     "num_threads": 16,
+    "padding": 1000,
     "window_length": 10000000
    }
   },
@@ -1672,6 +1686,12 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
+    "annotation_groups": [
+     "StandardAnnotation",
+     "AS_StandardAnnotation",
+     "StandardHCAnnotation",
+     "AlleleSpecificAnnotation"
+    ],
     "extra_arguments": [],
     "ignore_contigs": [
      "^NC_007605$",
@@ -1681,6 +1701,7 @@
      "^HLA-"
     ],
     "num_threads": 16,
+    "padding": 1000,
     "window_length": 10000000
    }
   },
@@ -1727,6 +1748,11 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
+    "annotation_groups": [
+     "StandardAnnotation",
+     "AS_StandardAnnotation",
+     "StandardHCAnnotation"
+    ],
     "ignore_contigs": [
      "^NC_007605$",
      "^hs37d5$",
@@ -1735,6 +1761,7 @@
      "^HLA-"
     ],
     "num_threads": 16,
+    "padding": 1000,
     "window_length": 10000000
    }
   },

@@ -317,6 +317,8 @@
      "^HLA-"
     ],
     "num_threads": 16,
+    "padding": 1000,
+    "sample_ploidy": 2,
     "window_length": 10000000
    }
   },

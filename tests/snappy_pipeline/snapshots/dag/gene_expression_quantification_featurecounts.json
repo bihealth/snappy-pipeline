@@ -33,7 +33,11 @@
   ],
   "params": {
    "args": {
+    "exclude_flags": 260,
     "extra_arguments": [],
+    "feature_type": "exon",
+    "gene_attribute": "gene_id",
+    "min_mapq": 255,
     "strand": -1
    }
   },

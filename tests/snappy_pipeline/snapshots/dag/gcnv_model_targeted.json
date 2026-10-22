@@ -30,7 +30,11 @@
   "output": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.annotate_gc.tsv"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "interval_merging_rule": "OVERLAPPING_ONLY"
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -61,7 +65,15 @@
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.interval.vcf.gz",
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.post_germline_calls.vcf.gz"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "allosomal_contigs": [
+     "X",
+     "Y"
+    ],
+    "autosomal_ref_copy_number": 2
+   }
+  },
   "resources": {
    "mem": "46.08 GB",
    "mem_mb": 46080,
@@ -93,7 +105,11 @@
   "output": [
    "tasks/gcnv_model_targeted/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage.tsv"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "interval_merging_rule": "OVERLAPPING_ONLY"
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -124,7 +140,15 @@
   "output": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "interval_merging_rule": "OVERLAPPING_ONLY",
+    "maximum_gc_content": 0.9,
+    "maximum_mappability": 1.0,
+    "minimum_gc_content": 0.1,
+    "minimum_mappability": 0.9
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -156,7 +180,12 @@
   "output": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.interval_list"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "bin_length": 0,
+    "interval_merging_rule": "OVERLAPPING_ONLY"
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
@@ -183,7 +212,11 @@
   "output": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.scatter_intervals"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "intervals_per_shard": 5000
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,

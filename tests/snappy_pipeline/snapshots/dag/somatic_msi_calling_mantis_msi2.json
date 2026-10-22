@@ -245,7 +245,12 @@
   ],
   "params": {
    "args": {
-    "extra_arguments": []
+    "extra_arguments": [],
+    "min_locus_coverage": 20,
+    "min_locus_quality": 25.0,
+    "min_read_length": 35,
+    "min_read_quality": 20.0,
+    "min_repeat_reads": 1
    }
   },
   "resources": {

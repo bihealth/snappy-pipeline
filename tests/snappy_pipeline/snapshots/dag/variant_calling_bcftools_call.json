@@ -306,6 +306,7 @@
   ],
   "params": {
    "args": {
+    "annotate": "FORMAT/AD,FORMAT/DP",
     "assembly": "unknown",
     "extra_arguments": [],
     "ignore_contigs": [
@@ -318,6 +319,10 @@
     "max_depth": 250,
     "max_indel_depth": 250,
     "num_threads": 16,
+    "padding": 1000,
+    "per_sample_mf": true,
+    "redo_baq": true,
+    "variants_only": true,
     "window_length": 10000000
    }
   },

@@ -308,6 +308,10 @@
   "params": {
    "args": {
     "allow_seq_dict_incompatibility": false,
+    "annotation_groups": [
+     "StandardAnnotation",
+     "StandardHCAnnotation"
+    ],
     "extra_arguments": [],
     "ignore_contigs": [
      "^NC_007605$",
@@ -317,6 +321,7 @@
      "^HLA-"
     ],
     "num_threads": 16,
+    "padding": 1000,
     "window_length": 10000000
    }
   },

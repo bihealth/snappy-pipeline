@@ -39,6 +39,8 @@
     "max_reads": 5000,
     "num_mapping_threads": 4,
     "seq_type": "dna",
+    "solver": "glpk",
+    "unpaired_weight": 0.0,
     "use_discordant": "false",
     "yara_error_rate": 5,
     "yara_sensitivity": "high",

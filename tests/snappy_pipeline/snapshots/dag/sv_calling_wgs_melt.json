@@ -325,7 +325,8 @@
   "params": {
    "args": {
     "me_refs_infix": "1KGP_Hg19",
-    "me_type": "ALU"
+    "me_type": "ALU",
+    "read_length": 150
    }
   },
   "resources": {
@@ -372,7 +373,8 @@
   "params": {
    "args": {
     "me_refs_infix": "1KGP_Hg19",
-    "me_type": "LINE1"
+    "me_type": "LINE1",
+    "read_length": 150
    }
   },
   "resources": {
@@ -419,7 +421,8 @@
   "params": {
    "args": {
     "me_refs_infix": "1KGP_Hg19",
-    "me_type": "SVA"
+    "me_type": "SVA",
+    "read_length": 150
    }
   },
   "resources": {
@@ -467,7 +470,8 @@
     ],
     "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
-    "me_type": "ALU"
+    "me_type": "ALU",
+    "read_length": 150
    }
   },
   "resources": {
@@ -515,7 +519,8 @@
     ],
     "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
-    "me_type": "LINE1"
+    "me_type": "LINE1",
+    "read_length": 150
    }
   },
   "resources": {
@@ -563,7 +568,8 @@
     ],
     "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
-    "me_type": "SVA"
+    "me_type": "SVA",
+    "read_length": 150
    }
   },
   "resources": {
@@ -606,6 +612,7 @@
   ],
   "params": {
    "args": {
+    "max_no_call_percent": 100,
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "ALU"
    }
@@ -651,6 +658,7 @@
   ],
   "params": {
    "args": {
+    "max_no_call_percent": 100,
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "LINE1"
    }
@@ -696,6 +704,7 @@
   ],
   "params": {
    "args": {
+    "max_no_call_percent": 100,
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "SVA"
    }

@@ -1465,7 +1465,12 @@
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.tsv.md5",
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.pdf"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "signatures": "cosmic",
+    "tri_counts_method": "default"
+   }
+  },
   "report": [
    "tasks/somatic_variant_signatures/work/case001subregion-T1-DNA1-WES1/out/deconstruct_sigs.case001subregion-T1-DNA1-WES1.pdf"
   ],
