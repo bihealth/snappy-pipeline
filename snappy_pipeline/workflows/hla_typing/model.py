@@ -25,12 +25,22 @@ class Yara(SnappyModel):
     sensitivity: YaraSensitivity = YaraSensitivity.HIGH
 
 
+class OptitypeSolver(enum.StrEnum):
+    GLPK = "glpk"
+    CBC = "cbc"
+
+
 class Optitype(ToolModel):
     yara_mapper: Yara = Yara()
     max_reads: int = 5000
     """5000 is a suggestion by OptiType author"""
     num_mapping_threads: int = 4
     use_discordant: bool = False
+    solver: OptitypeSolver = OptitypeSolver.GLPK
+    """ILP solver (``solver`` in the OptiType configuration file)"""
+    unpaired_weight: float = 0
+    """Weight of unpaired reads relative to paired reads (``unpaired_weight`` in the OptiType
+    configuration file)"""
 
 
 class Population(enum.StrEnum):

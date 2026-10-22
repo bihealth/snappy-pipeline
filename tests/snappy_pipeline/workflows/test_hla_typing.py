@@ -29,3 +29,19 @@ def test_arcashla_passes_unset_options_only_when_set():
     params = _arcashla_params(drop_iterations=10, avg=180, std=25)
 
     assert (params["drop_iterations"], params["avg"], params["std"]) == (10, 180, 25)
+
+
+def test_optitype_passes_its_settings(monkeypatch):
+    from snappy_pipeline.workflows import hla_typing
+    from snappy_pipeline.workflows.hla_typing import OptiTypeStepPart
+    from snappy_pipeline.workflows.hla_typing.model import Optitype
+
+    monkeypatch.setattr(hla_typing, "reads_params", lambda parent, library_name: {})
+    part = object.__new__(OptiTypeStepPart)
+    part.parent = SimpleNamespace(extraction_types={"lib": "dna"})
+    part.config = SimpleNamespace(optitype=Optitype(solver="cbc", unpaired_weight=0.5))
+
+    params = part._get_params_run(SimpleNamespace(library_name="lib"))
+
+    assert (params["solver"], params["unpaired_weight"]) == ("cbc", 0.5)
+    assert Optitype().solver == "glpk" and Optitype().unpaired_weight == 0

@@ -90,6 +90,8 @@ class OptiTypeStepPart(BaseStepPart):
         result["seq_type"] = self._get_seq_type(wildcards)
         result["use_discordant"] = "true" if self.config.optitype.use_discordant else "false"
         result["num_mapping_threads"] = self.config.optitype.num_mapping_threads
+        result["solver"] = self.config.optitype.solver
+        result["unpaired_weight"] = self.config.optitype.unpaired_weight
         result["max_reads"] = self.config.optitype.max_reads
         result["yara_error_rate"] = self.config.optitype.yara_mapper.error_rate
         result["yara_strata_rate"] = self.config.optitype.yara_mapper.strata_rate

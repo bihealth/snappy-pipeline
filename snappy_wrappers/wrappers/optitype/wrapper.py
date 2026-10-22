@@ -73,12 +73,12 @@ razers3=razers3
 threads={args[num_mapping_threads]}
 
 [ilp]
-solver=glpk
+solver={args[solver]}
 threads=1
 
 [behavior]
 deletebam=true
-unpaired_weight=0
+unpaired_weight={args[unpaired_weight]}
 use_discordant={args[use_discordant]}
 EOF
 
