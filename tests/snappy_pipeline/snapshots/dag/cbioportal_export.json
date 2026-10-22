@@ -311,7 +311,6 @@
     "config": {
      "background_selection": null,
      "copy_number_alteration": {
-      "copy_number_tool": "cnvkit",
       "enabled": true
      },
      "delete_intermediates": true,
@@ -327,7 +326,6 @@
      },
      "group_by": null,
      "library_selection": null,
-     "patient_info": {},
      "relationships": null,
      "sample_info": {},
      "study": {

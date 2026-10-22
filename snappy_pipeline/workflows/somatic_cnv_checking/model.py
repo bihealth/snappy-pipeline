@@ -1,4 +1,3 @@
-import enum
 from typing import Annotated
 
 from pydantic import Field
@@ -18,11 +17,6 @@ class ExpectedSomaticCnvCalls(SnappyModel):
     """Consumer-driven contract: expected output keys from somatic CNV caller steps."""
 
     dnacopy_seg: str
-
-
-class CnvAssayType(enum.StrEnum):
-    WES = "WES"
-    WGS = "WGS"
 
 
 class SomaticCnvCheckingDependsOn(SnappyModel):
@@ -46,13 +40,6 @@ class SomaticCnvCheckingDependsOn(SnappyModel):
 
 class SomaticCnvChecking(SnappyStepModel):
     depends_on: SomaticCnvCheckingDependsOn
-
-    cnv_assay_type: CnvAssayType | None = None
-    """
-    Empty: no CNV,
-    WES for somatic_targeted_seq_snv_calling step,
-    WGS for somatic_wgs_cnv_calling step
-    """
 
     max_depth: int = 10000
     """Max depth for pileups"""

@@ -23,13 +23,6 @@ class ExpectedCopyNumberCalls(BaseModel):
     dnacopy_seg: str
 
 
-class CopyNumberTool(enum.StrEnum):
-    CNVKIT = "cnvkit"
-    SEQUENZA = "sequenza"
-    CONTROL_FREEC = "Control_FREEC"
-    """unsupported"""
-
-
 class NcbiBuild(enum.StrEnum):
     GRCh37 = "GRCh37"
     GRCh38 = "GRCh38"
@@ -53,8 +46,6 @@ class Expression(ToggleModel):
 
 class CNA(ToggleModel):
     """When missing, no CNV data uploaded to portal. Access WES & WGS steps"""
-
-    copy_number_tool: CopyNumberTool = CopyNumberTool.CNVKIT
 
 
 class Study(SnappyModel):
@@ -141,9 +132,6 @@ class CbioportalExport(SnappyStepModel):
         return self
 
     study: Study
-
-    patient_info: dict[str, Any] = {}
-    """unimplemented"""
 
     sample_info: dict[str, Any] = {}
     """Implementation must be re-designed"""

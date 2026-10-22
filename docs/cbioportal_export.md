@@ -117,4 +117,4 @@ tasks:
 
 The clinical data of patients and samples come from the sample sheets.
 Results of other tasks, such as the tumor mutational burden, are not yet added to the sample table.
-`patient_info` is not implemented, and `sample_info` is to be redesigned.
+`sample_info` is to be redesigned.
