@@ -17,32 +17,8 @@
   "wrapper": null
  },
  {
-  "benchmark": "tasks/homologous_recombination_deficiency_scarHRD/benchmarks/R_packages/scarHRD.tsv",
-  "input": [],
-  "log": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/log/scarHRD.log"
-  ],
-  "output": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/out/scarHRD.done"
-  ],
-  "params": {},
-  "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
-   "partition": "medium",
-   "runtime": 60
-  },
-  "rule": "homologous_recombination_deficiency_scarHRD_homologous_recombination_deficiency_scarHRD_install",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/scarHRD/install"
- },
- {
   "benchmark": "tasks/homologous_recombination_deficiency_scarHRD/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
   "input": [
-   "tasks/homologous_recombination_deficiency_scarHRD/work/R_packages/out/scarHRD.done",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",

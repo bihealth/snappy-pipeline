@@ -50,7 +50,6 @@ args_fit = config_to_r(dict(args["extra_args_fit"]))
 
 ShellWrapper(snakemake).run(
     r"""
-export R_LIBS_USER=$(dirname {snakemake.input.packages})
 export VROOM_CONNECTION_SIZE=2000000000
 
 mkdir -p {snakemake.output.report}

@@ -12,7 +12,6 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
-lib_path = os.path.realpath(os.path.dirname(snakemake.input.done))
 # The R script runs in the job's TMPDIR, so the paths must not be relative
 seqz = os.path.abspath(snakemake.input.seqz)
 hrd = os.path.abspath(snakemake.output.hrd)
@@ -32,7 +31,6 @@ else:
 
 ShellWrapper(snakemake).run(
     r"""
-export R_LIBS_USER="{lib_path}"
 export VROOM_CONNECTION_SIZE=2000000000
 
 # Necessary because scarHRD litters the current directory

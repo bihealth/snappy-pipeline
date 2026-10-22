@@ -16,7 +16,7 @@ Decoupling scarHRD from Sequenza would need work, because scarHRD is poorly docu
 
 scarHRD is not part of CRAN, Bioconductor or bioconda.
 It also needs versions of `sequenza <https://github.com/oicr-gsi/sequenza/tree/master>`_ and `copynumber <https://github.com/aroneklund/copynumber>`_ that are no longer on CRAN or Bioconductor.
-The task installs these R packages in a job of its own.
+The conda environment of the wrapper installs these R packages at fixed commits with a post-deploy script, when Snakemake creates it.
 
 Outputs
 -------
@@ -52,10 +52,7 @@ class ScarHRDStepPart(BaseStepPart):
     name = "scarHRD"
 
     #: Class available actions
-    actions = (
-        "install",
-        "run",
-    )
+    actions = ("run",)
 
     result_keys = {"run": ("hrd", "hrd_md5")}
 
@@ -63,15 +60,11 @@ class ScarHRDStepPart(BaseStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        yield "done", "work/R_packages/out/scarHRD.done"
         copy_number = self.parent.get_upstream_paths(
             "copy_number", library_name=wildcards.library_name
         )
         yield "seqz", copy_number.seqz
         yield from self.parent.reference_inputs().items()
-
-    def _get_output_files_install(self):
-        return {"done": "work/R_packages/out/scarHRD.done"}
 
     def _get_output_files_run(self):
         return {
@@ -81,9 +74,6 @@ class ScarHRDStepPart(BaseStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return self.config.scarHRD.model_dump(by_alias=True)
-
-    def _get_log_file_install(self):
-        return {"log": "work/R_packages/log/scarHRD.log"}
 
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.log"}

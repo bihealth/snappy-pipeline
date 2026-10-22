@@ -321,35 +321,11 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/gcreference"
  },
  {
-  "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/R_packages/packages.tsv",
-  "input": [],
-  "log": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/log/packages.log"
-  ],
-  "output": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/out/packages.done"
-  ],
-  "params": {},
-  "resources": {
-   "mem": "2 GB",
-   "mem_mb": 2000,
-   "mem_mib": 1908,
-   "partition": "medium",
-   "runtime": 60
-  },
-  "rule": "somatic_targeted_seq_cnv_calling_sequenza_somatic_targeted_seq_cnv_calling_sequenza_install",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/sequenza/install"
- },
- {
   "benchmark": "tasks/somatic_targeted_seq_cnv_calling_sequenza/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.run.tsv",
   "directory": [
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/report"
   ],
   "input": [
-   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/R_packages/out/packages.done",
    "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.seqz.gz",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",

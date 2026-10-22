@@ -556,7 +556,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "sequenza/run",
             "signatures/deconstruct_sigs",
         ),
-        "installs software": ("scarHRD/install", "sequenza/install", "singularity"),
+        "installs software": ("singularity",),
         "a helper (scatter, gather, merge, conversion, sidecars), not a tool's main command": (
             "arcashla/prepare_reference",
             "ascat/build_baf",

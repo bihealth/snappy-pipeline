@@ -27,24 +27,6 @@ rule homologous_recombination_deficiency_all:
 # Run scarHRD -----------------------------------------------------------------
 
 
-rule homologous_recombination_deficiency_scarHRD_install:
-    output:
-        **wf.get_output_files("scarHRD", "install"),
-    log:
-        **wf.get_log_file("scarHRD", "install"),
-    benchmark:
-        wf.get_benchmark_file("scarHRD", "install")
-    # Network access: downloads and installs fail now and then
-    retries: 2
-    resources:
-        runtime=wf.get_resource("scarHRD", "install", "runtime"),
-        mem=wf.get_resource("scarHRD", "install", "mem"),
-        partition=wf.get_resource("scarHRD", "install", "partition"),
-        tmpdir=wf.get_resource("scarHRD", "install", "tmpdir"),
-    wrapper:
-        wf.wrapper_path("scarHRD/install")
-
-
 rule homologous_recombination_deficiency_scarHRD_run:
     input:
         unpack(wf.get_input_files("scarHRD", "run")),

@@ -243,6 +243,10 @@ These improve type checking and make wrapper signatures more explicit compared t
 
 The Snakemake version bump also required updates to several dependencies (pandas, pydantic, etc.) to stay compatible with Snakemake's own dependency chain.
 
+snappy uses the development version of Snakemake, which deploys software through plugins.
+The conda plugin builds the wrapper environments from their pin files, below `.snakemake/software/`; `snappy run -- --deploy-software-envs` creates them without running jobs (formerly `--conda-create-envs-only`).
+R packages that are not on conda-forge or bioconda in the needed versions (for sequenza and scarHRD) are installed by the post-deploy script of the wrapper's environment, at fixed versions or commits, when the environment is created.
+
 ## Project management with pixi
 
 We adopted [pixi](https://pixi.sh) as the project manager (install pixi: see <https://pixi.sh/latest/#installation>).
@@ -281,6 +285,7 @@ Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull requ
 - **Multi-tool list configs**: the `tools:` list in step configs is no longer supported.
   Use `tool:` with a single value.
 - **Legacy `snappy-snake` entry point**: removed; use the `snappy` command instead.
+- **R package install jobs of sequenza and scarHRD** and their `work/R_packages/` directories: the environments install these packages when they are created.
 - **Jannovar statistics report** (`jannovar_stats` of `variant_calling`).
 - **`fusioncatcher` tool of `somatic_gene_fusion_calling`**: it had no wrapper (main neither), so it could not run.
 - **`defuse`, `hera`, `jaffa` and `pizzly` tools of `somatic_gene_fusion_calling`**: untested and probably broken; `arriba` (recommended) and `star_fusion` remain.

@@ -139,7 +139,6 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     #: Class available actions
     actions = (
-        "install",
         "gcreference",
         "coverage",
         "run",
@@ -190,13 +189,9 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        yield "packages", "work/R_packages/out/packages.done"
         name_pattern = "{tumor_library}"
         yield "seqz", f"work/{name_pattern}/out/{name_pattern}.seqz.gz"
         yield from self.parent.reference_inputs().items()
-
-    def _get_output_files_install(self):
-        return {"done": "work/R_packages/out/packages.done"}
 
     def _get_output_files_gcreference(self):
         return {"gc": f"work/static_data/out/gc.{self.config.sequenza.length}.wig.gz"}
@@ -250,9 +245,6 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "extra_args_fit": extra_args_fit.model_dump(by_alias=True),
             "library_name": wildcards.tumor_library,
         }
-
-    def _get_log_file_install(self):
-        return {"log": "work/R_packages/log/packages.log"}
 
     def _get_log_file_gcreference(self):
         return {"log": f"work/static_data/log/gc.{self.config.sequenza.length}.log"}
