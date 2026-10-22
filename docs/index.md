@@ -41,6 +41,7 @@ quickstart
 installation
 usage
 overview
+migrations
 ```
 
 ```{toctree}
