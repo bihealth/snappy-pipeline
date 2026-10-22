@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 args = snakemake.params.args
 allosomal_contigs = " ".join(args["allosomal_contigs"])
-paths_calls = " ".join(snakemake.input.calls)
-paths_models = " ".join(snakemake.input.calls)
+# In cohort mode, each shard directory of call_cnvs holds the calls and the model
+paths_shards = " ".join(snakemake.input.calls)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -45,8 +45,8 @@ else
 fi
 
 gatk PostprocessGermlineCNVCalls \
-    $(for x in {paths_calls}; do echo --calls-shard-path $(dirname $x)/cnv_calls-calls; done) \
-    $(for x in {paths_models}; do echo --model-shard-path $(dirname $x)/cnv_calls-model; done) \
+    $(for x in {paths_shards}; do echo --calls-shard-path $(dirname $x)/cnv_calls-calls; done) \
+    $(for x in {paths_shards}; do echo --model-shard-path $(dirname $x)/cnv_calls-model; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
     --sample-index $sample_index \
     --autosomal-ref-copy-number {args[autosomal_ref_copy_number]} \
