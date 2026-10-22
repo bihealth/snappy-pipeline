@@ -16,7 +16,6 @@ The plot ``deconstruct_sigs.{tumor_library}.pdf`` is written to the same directo
 Downstream tasks read the key ``tsv``.
 """
 
-from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -66,22 +65,8 @@ class TabulateVariantsStepPart(SignaturesStepPart):
         return {"tsv": "work/{tumor_library}/out/tabulate_vcf.{tumor_library}.tsv"}
 
     def _get_params_run(self, wildcards):
-        """Return arguments to pass down."""
-        normal = self.get_normal_lib_name(wildcards)
-        if normal:
-            return {
-                "tumor_library": wildcards.tumor_library,
-                "normal_library": normal,
-            }
-        return {}
-
-    def get_normal_lib_name(self, wildcards):
-        """Return name of normal (non-cancer) library"""
-        df = self.parent.build_library_dataframe()
-        tumor_df = df[df["library_name"] == wildcards.tumor_library]
-        if tumor_df.empty:
-            return None
-        return tumor_df.iloc[0].get("matched_normal_lib") or None
+        """The tumor library, whose sample the wrapper tabulates, with or without matched normal"""
+        return {"tumor_library": wildcards.tumor_library}
 
 
 class DeconstructSigsStepPart(SignaturesStepPart):
@@ -118,13 +103,6 @@ class SomaticVariantSignaturesWorkflow(BaseStep):
     produces = [DataSignature(DataType.TABULAR, frozenset({"signatures"}))]
 
     library_requirement = "kind == 'cancer'"
-
-    default_relationships = {
-        "matched_normal_lib": RelationshipDefinition(
-            via="donor_name",
-            target="role == 'normal' and extraction_type == 'dna'",
-        )
-    }
 
     config_model_class = SomaticVariantSignaturesConfigModel
 
