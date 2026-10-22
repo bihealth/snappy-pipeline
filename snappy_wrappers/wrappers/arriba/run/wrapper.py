@@ -88,7 +88,5 @@ for star_log in $star_logs
 do
     cp $TMPDIR/$star_log $log_dir/$star_log
 done
-
-touch {snakemake.output.done}
 """
 )

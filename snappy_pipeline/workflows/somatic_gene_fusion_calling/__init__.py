@@ -21,17 +21,17 @@ Outputs
 
 The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``.
 
-- ``{library_name}/out/.done``: marks a finished library.
-  It is the only file of ``star_fusion``.
-- ``{library_name}/out/{library_name}.fusions.tsv`` and ``{library_name}/out/{library_name}.discarded_fusions.tsv.gz`` (``arriba``), each with a ``.md5`` file.
+- ``arriba``: ``{library_name}/out/{library_name}.fusions.tsv`` and ``{library_name}/out/{library_name}.discarded_fusions.tsv.gz``, each with a ``.md5`` file.
   The files list the affected genes, the supporting reads and a confidence level.
   The discarded fusions have insufficient evidence.
+  Downstream tasks read the key ``fusions``.
+- ``star_fusion``: the directory ``{library_name}/out/``, which holds the STAR-Fusion output (``output/``) and its input reads (``input/``).
+  Downstream tasks read the key ``out``.
 
-Downstream tasks read the key ``done``, and with ``arriba`` also ``fusions``.
-There is no standard format for gene fusions, so the other files depend on the tool.
+There is no standard format for gene fusions, so the files depend on the tool.
 """
 
-from snakemake.io import touch
+from snakemake.io import directory
 
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -66,9 +66,6 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
         if done := [path for path in self.parent.reads_input(library_name) if path not in written]:
             yield "reads_done", done
 
-    def _get_output_files_run(self):
-        return {"done": touch("work/{library_name}/out/.done")}
-
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/snakemake.gene_fusion_calling.log"}
 
@@ -98,6 +95,10 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
     def _get_params_run(self, wildcards):
         """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
         return {}
+
+    def _get_output_files_run(self):
+        # STAR-Fusion writes many files that the step does not name
+        return {"out": directory("work/{library_name}/out")}
 
     default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
 
@@ -144,7 +145,6 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
             path = f"work/{{library_name}}/out/{{library_name}}.{ext}"
             yield key, path
             yield key + "_md5", path + ".md5"
-        yield "done", "work/{library_name}/out/.done"
 
     @dictify
     def _get_log_file_run(self):
@@ -181,13 +181,12 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local fusion-calling output paths for downstream consumers; arriba also gives
-        its fusions table."""
+        """Return local fusion-calling output paths for downstream consumers: the fusions table
+        of arriba, the output directory of STAR-Fusion."""
         lib = kwargs.get("library_name", "{library_name}")
-        paths = {"done": f"work/{lib}/out/.done"}
         if config.tool == Tool.arriba:
-            paths["fusions"] = f"work/{lib}/out/{lib}.fusions.tsv"
-        return paths
+            return {"fusions": f"work/{lib}/out/{lib}.fusions.tsv"}
+        return {"out": f"work/{lib}/out"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
@@ -209,8 +208,9 @@ class SomaticGeneFusionCallingWorkflow(BaseStep):
         sheets.
         """
         for library_name in self.output_entities:
-            yield f"output/{library_name}/out/.done"
             if self.config.tool == Tool.arriba:
                 for ext in ("fusions.tsv", "discarded_fusions.tsv.gz"):
                     yield f"output/{library_name}/out/{library_name}.{ext}"
                     yield f"output/{library_name}/out/{library_name}.{ext}.md5"
+            else:
+                yield f"output/{library_name}/out"

@@ -12,10 +12,10 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 ShellWrapper(snakemake).run(
     r"""
-echo ${{JOB_ID:-unknown}} >$(dirname {snakemake.output.done})/sge_job_id
+workdir={snakemake.output.out}
+mkdir -p $workdir
+echo ${{JOB_ID:-unknown}} >$workdir/sge_job_id
 
-
-workdir=$(dirname {snakemake.output.done})
 inputdir=$workdir/input
 
 mkdir -p $inputdir
