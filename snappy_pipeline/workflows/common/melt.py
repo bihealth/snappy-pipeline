@@ -225,6 +225,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     def _get_params_indiv_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
         """Only IndivAnalysis takes MELT's ``-exome``"""
         params = self._get_params_group_analysis(wildcards)
+        params["exclude_contigs"] = self.config.melt.exclude_contigs
         if self.parent.name == "sv_calling_targeted":
             params["exome"] = True
         return params

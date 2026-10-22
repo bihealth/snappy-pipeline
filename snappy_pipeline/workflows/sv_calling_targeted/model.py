@@ -66,6 +66,9 @@ class Melt(ToolModel):
 
     me_types: list[str] = ["ALU", "LINE1", "SVA"]
 
+    exclude_contigs: list[str] = ["hs37d5", "NC_007605"]
+    """Contigs that IndivAnalysis ignores (MELT's ``-b``), here the GRCh37 decoy and EBV"""
+
     jar_file: ConfigPath = Field(examples=["MELT.jar"])
 
     me_refs_path: ConfigPath = Field(examples=["me_refs"])

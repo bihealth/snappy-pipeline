@@ -456,6 +456,10 @@
   ],
   "params": {
    "args": {
+    "exclude_contigs": [
+     "hs37d5",
+     "NC_007605"
+    ],
     "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "ALU"
@@ -500,6 +504,10 @@
   ],
   "params": {
    "args": {
+    "exclude_contigs": [
+     "hs37d5",
+     "NC_007605"
+    ],
     "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "LINE1"
@@ -544,6 +552,10 @@
   ],
   "params": {
    "args": {
+    "exclude_contigs": [
+     "hs37d5",
+     "NC_007605"
+    ],
     "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "SVA"

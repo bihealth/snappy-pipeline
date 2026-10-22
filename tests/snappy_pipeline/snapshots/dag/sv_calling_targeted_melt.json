@@ -179,7 +179,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "ALU"
    }
@@ -226,7 +225,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "LINE1"
    }
@@ -273,7 +271,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "SVA"
    }
@@ -322,7 +319,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "ALU"
    }
@@ -370,7 +366,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "LINE1"
    }
@@ -418,7 +413,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "SVA"
    }
@@ -462,6 +456,10 @@
   ],
   "params": {
    "args": {
+    "exclude_contigs": [
+     "hs37d5",
+     "NC_007605"
+    ],
     "exome": true,
     "extra_arguments": [],
     "me_refs_infix": "AUTO",
@@ -507,6 +505,10 @@
   ],
   "params": {
    "args": {
+    "exclude_contigs": [
+     "hs37d5",
+     "NC_007605"
+    ],
     "exome": true,
     "extra_arguments": [],
     "me_refs_infix": "AUTO",
@@ -552,6 +554,10 @@
   ],
   "params": {
    "args": {
+    "exclude_contigs": [
+     "hs37d5",
+     "NC_007605"
+    ],
     "exome": true,
     "extra_arguments": [],
     "me_refs_infix": "AUTO",
@@ -598,7 +604,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "ALU"
    }
@@ -644,7 +649,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "LINE1"
    }
@@ -690,7 +694,6 @@
   ],
   "params": {
    "args": {
-    "exome": true,
     "me_refs_infix": "AUTO",
     "me_type": "SVA"
    }

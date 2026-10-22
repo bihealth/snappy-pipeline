@@ -65,6 +65,8 @@ class Manta(ToolModel):
 class Melt(ToolModel):
     me_refs_infix: str = "1KGP_Hg19"
     me_types: list[str] = ["ALU", "LINE1", "SVA"]
+    exclude_contigs: list[str] = ["hs37d5", "NC_007605"]
+    """Contigs that IndivAnalysis ignores (MELT's ``-b``), here the GRCh37 decoy and EBV"""
     me_refs_path: ConfigPath = Field(examples=["me_refs"])
     jar_file: ConfigPath = Field(examples=["/path/to/MELTv2.2.2/MELT.jar"])
 
