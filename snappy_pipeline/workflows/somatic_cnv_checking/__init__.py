@@ -201,6 +201,7 @@ class SomaticCnvCheckingReportStepPart(BaseStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "tumor_library": wildcards.tumor_library,
+            "amplification": self.config.amplification,
         }
 
     def _get_log_file_run(self):

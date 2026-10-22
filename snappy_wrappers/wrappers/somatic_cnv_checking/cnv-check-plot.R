@@ -25,7 +25,7 @@ vcf_to_table <- function(vcf, sample, amplification=7) {
      x <- x |>
          dplyr::filter(!is.na(LFC) & !is.na(CN)) |>
          dplyr::mutate(BAF=t_alt/(t_ref+t_alt)) |>
-         dplyr::mutate(Call=cn_to_call(CN))
+         dplyr::mutate(Call=cn_to_call(CN, amplification=amplification))
     x
 }
 

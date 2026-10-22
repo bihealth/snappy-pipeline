@@ -49,3 +49,6 @@ class SomaticCnvChecking(SnappyStepModel):
 
     min_baf: Annotated[float, Field(0.4, ge=0, le=0.5)]
     """Maximum BAF to consider variant as heterozygous (between 0 & 1/2)"""
+
+    amplification: int = 7
+    """Copy number from which a segment is called an amplification in the plots (gains have more than 2 up to this number minus 1)"""

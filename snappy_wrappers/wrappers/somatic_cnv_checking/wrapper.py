@@ -23,11 +23,11 @@ source("{rscript}")
 
 genome_lengths <- chromosome_lengths("{snakemake.input.reference}") |> dplyr::mutate(n=dplyr::row_number())
 
-x <- vcf_to_table("{snakemake.input.vcf}", sample="{args[tumor_library]}")
+x <- vcf_to_table("{snakemake.input.vcf}", sample="{args[tumor_library]}", amplification={args[amplification]})
 x <- x |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(x=POS + Offset)
 
 y <- read.table("{snakemake.input.tsv}", sep="\t", header=1, check.names=FALSE)
-y <- y |> dplyr::mutate(Call=cn_to_call(CN))
+y <- y |> dplyr::mutate(Call=cn_to_call(CN, amplification={args[amplification]}))
 y <- y |> dplyr::mutate(CHROM=as.character(CHROM)) |> dplyr::left_join(genome_lengths, by="CHROM") |> dplyr::mutate(from=start + Offset, to=stop + Offset)
 
 pdf("{snakemake.output.cnv}", height=6.22, width=9.33)

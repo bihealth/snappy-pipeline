@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from snappy_pipeline.workflows.somatic_cnv_checking import (
     SomaticCnvCheckingCnvStepPart,
     SomaticCnvCheckingPileupStepPart,
+    SomaticCnvCheckingReportStepPart,
 )
 from snappy_pipeline.workflows.somatic_cnv_checking.model import SomaticCnvChecking
 
@@ -36,3 +37,13 @@ def test_tumor_pileup_takes_the_sites_of_the_normal_without_filters():
     params = _pileup_part()._get_params_tumor(SimpleNamespace(tumor_library="T1-DNA1-WES1"))
 
     assert params == {"max_depth": 10000}
+
+
+def test_report_passes_the_amplification_threshold():
+    part = object.__new__(SomaticCnvCheckingReportStepPart)
+    part.config = SomaticCnvChecking.model_construct(amplification=9)
+
+    params = part._get_params_run(SimpleNamespace(tumor_library="T1-DNA1-WES1"))
+
+    assert params == {"tumor_library": "T1-DNA1-WES1", "amplification": 9}
+    assert SomaticCnvChecking.model_fields["amplification"].default == 7
