@@ -9,7 +9,10 @@ Chain several tasks for a sequence of filters.
     Expression-based filtering with ``include`` or ``exclude``.
 
 ``vembrane``
-    Expression-based filtering with ``vembrane``.
+    Expression-based filtering with ``vembrane``: Python expressions on the fields of a record, with ``ANN`` parsed by default.
+    It is the recommended filter for genotype-based criteria, such as inheritance patterns in a family.
+    With ``group_by: cohort`` upstream, one VCF holds the whole pedigree, and an expression addresses samples by name, for example ``is_het("child-N1-DNA1-WGS1") and is_hom_ref("father-N1-DNA1-WGS1") and is_hom_ref("mother-N1-DNA1-WGS1")`` for de novo variants.
+    Helpers that several expressions share go into ``context_files``.
 
 ``regions``
     Filtering by the regions of a BED file, from the task in ``depends_on.regions``.
@@ -26,7 +29,7 @@ Chain several tasks for a sequence of filters.
 Every filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
 ``bcftools``, ``regions`` and ``ebfilter`` use the task name as ``FILTER`` ID, so each task of a chain has its own; ``vembrane`` uses the names of its ``expressions``, ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
 No other task of the project may be named like one of these or like ``PASS``, and no task may write an ID that a task upstream of it writes (such as an expression named after a filter of mutect2).
-The task produces one VCF per tumor library.
+The task produces one VCF per VCF of its upstream task (per tumor library, or per pedigree for germline calls).
 Its output has the input's tags plus ``filtered``.
 
 The example tags the variants in regions of low mappability, from a BED file of an ``external_data`` task:
