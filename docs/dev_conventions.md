@@ -97,7 +97,7 @@ No other rule writes into `output/`.
 
 Every wrapper environment is pinned.
 Snakemake builds it from the exact package URLs in `environment.linux-64.pin.txt` next to `environment.yaml`.
-After changing an environment file, pin it again with `pixi run -e dev update-pins <environment.yaml> ...` (snakedeploy, needs conda).
+After changing an environment file, pin it again with `pixi run -e dev update-pins <environment.yaml> ...` (snakedeploy, needs conda); without files, the task pins every environment that has a pin file.
 A symlinked `environment.yaml` gets a symlink to its target's pin file.
 The `conda-autobump` GitHub workflow updates and re-pins the environments weekly, with one pull request per environment.
 `test_wrapper_envs_are_pinned` checks that each environment has its pin file and that the pin file holds the exact versions of the environment file.

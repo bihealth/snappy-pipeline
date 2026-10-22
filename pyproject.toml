@@ -290,7 +290,7 @@ lint-fmt = { cmd = "ruff format --check .", description = "Check Python formatti
 lint-snakefmt = { cmd = "snakefmt --check snappy_pipeline/workflows/*/Snakefile", description = "Check Snakemake formatting" }
 lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt"], description = "Run all linters" }
 
-update-pins = { cmd = "snakedeploy pin-conda-envs --conda-frontend conda", description = "Pin the given wrapper environment files again (needs conda)" }
+update-pins = { cmd = "python tests/scripts/update_pins.py", description = "Pin all pinned wrapper environments again, or the given environment files (snakedeploy, needs conda)" }
 
 [tool.pixi.feature.dev.dependencies]
 pixi-pycharm = ">=0.0.11,<0.0.12"
