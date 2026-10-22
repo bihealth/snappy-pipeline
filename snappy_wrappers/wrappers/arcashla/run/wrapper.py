@@ -10,33 +10,51 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-ARCAS_HLA_THREADS = 8
-ARCAS_HLA_PAIRED_IS_PAIRED = True
-_ARCAS_HLA_PAIRED = "--paired" if ARCAS_HLA_PAIRED_IS_PAIRED else ""
+args = getattr(snakemake.params, "args", {})
+
+genotype_args = (
+    f"--population {args['population']} --min_count {args['min_count']} "
+    f"--tolerance {args['tolerance']} --max_iterations {args['max_iterations']} "
+    f"--drop_threshold {args['drop_threshold']}"
+)
+if "drop_iterations" in args:
+    genotype_args += f" --drop_iterations {args['drop_iterations']}"
+single_end_args = ""
+if "avg" in args:
+    single_end_args += f" --avg {args['avg']}"
+if "std" in args:
+    single_end_args += f" --std {args['std']}"
 
 ShellWrapper(snakemake).run(
     r"""
-input=$(readlink -f {snakemake.input.bam})
-mkdir -p work/{snakemake.wildcards.library_name}/tmp/{{extracted,genotyped}}
-mkdir -p $(dirname {snakemake.output.txt})
-pushd work/{snakemake.wildcards.library_name}/tmp
+# Single-end reads, if no read is paired in sequencing
+if [[ $(samtools view -c -f 1 -@ {snakemake.threads} {snakemake.input.bam}) -eq 0 ]]; then
+    single="--single"
+    single_end_args="{single_end_args}"
+else
+    single=""
+    single_end_args=""
+fi
 
-arcasHLA extract \
-    {snakemake.input.bam} \
-    -o extracted \
-    {_ARCAS_HLA_PAIRED} \
-    -t {ARCAS_HLA_THREADS} \
-    -v
+mkdir $TMPDIR/tmp
+arcasHLA extract --verbose --threads {snakemake.threads} $single \
+    --temp $TMPDIR/tmp \
+    --outdir $TMPDIR/extracted \
+    {snakemake.input.bam}
 
-arcasHLA genotype \
-    extracted/*.fq.gz \
-    -o genotyped \
-    -t {ARCAS_HLA_THREADS} \
-    -v \
-    {extra_arguments}
+rm -rf $TMPDIR/tmp
 
-popd
+mkdir $TMPDIR/tmp
+arcasHLA genotype --verbose --threads {snakemake.threads} \
+    --outdir $TMPDIR/genotyped \
+    --temp $TMPDIR/tmp \
+    {genotype_args} $single_end_args \
+    {extra_arguments} \
+    $TMPDIR/extracted/*.fq.gz
 
-cp work/{snakemake.wildcards.library_name}/tmp/genotyped/*.genotype.json {snakemake.output.txt}
+cp $TMPDIR/genotyped/*.genotype.json {snakemake.output.json}
+
+# arcasHLA writes no allele list
+touch {snakemake.output.txt}
 """
 )

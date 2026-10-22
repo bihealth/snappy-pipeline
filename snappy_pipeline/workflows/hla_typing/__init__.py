@@ -5,7 +5,7 @@ The step determines the HLA type of each library from its reads.
 The ``tool`` field selects the typer:
 
 - ``optitype``: types DNA and RNA libraries from the FASTQ files. It reads ``depends_on.reads``, which names ``data_sets``, an ``external_data`` task, or an ``adapter_trimming`` task (:ref:`step_adapter_trimming`).
-- ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``. A task takes all RNA libraries unless it sets ``library_selection``.
+- ``arcashla``: types RNA-seq libraries from the BAM files of ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task with ``tool: star``. A task takes all RNA libraries unless it sets ``library_selection``. A library is single-end if no read of its BAM file is paired; the options ``avg`` and ``std`` apply to single-end libraries only.
 
 The result is one set of files per library.
 
@@ -140,7 +140,10 @@ class ArcasHlaStepPart(BaseStepPart):
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
     def _get_params_run(self, wildcards):
-        return {}
+        """The options of ``arcasHLA genotype``; ``avg`` and ``std`` are for single-end reads"""
+        return self.config.arcashla.model_dump(
+            mode="json", exclude={"extra_arguments"}, exclude_none=True
+        )
 
     default_resource_usage = ResourceUsage(threads=4, runtime="60h", mem="64000MB")
 

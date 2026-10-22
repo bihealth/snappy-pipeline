@@ -130,7 +130,12 @@
   ],
   "params": {
    "args": {
-    "extra_arguments": []
+    "drop_threshold": 0.1,
+    "extra_arguments": [],
+    "max_iterations": 1000,
+    "min_count": 75,
+    "population": "prior",
+    "tolerance": 1e-07
    }
   },
   "resources": {

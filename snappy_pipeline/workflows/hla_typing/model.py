@@ -49,9 +49,10 @@ class ArcasHla(ToolModel):
     max_iterations: int = 1000
     drop_iterations: int | None = None
     drop_threshold: float = 0.1
-    zygocity_threshold: float = 0.15
     avg: int | None = None
+    """Fragment length mean of single-end reads"""
     std: int | None = None
+    """Fragment length standard deviation of single-end reads"""
 
 
 class ExpectedHlaTyping(SnappyModel):
