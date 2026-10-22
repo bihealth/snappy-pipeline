@@ -7,6 +7,8 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
+args = snakemake.params.args
+allosomal_contigs = " ".join(args["allosomal_contigs"])
 paths_calls = " ".join(snakemake.input.calls)
 paths_models = " ".join(snakemake.input.model)
 
@@ -49,9 +51,8 @@ gatk PostprocessGermlineCNVCalls \
     $(for x in {paths_models}; do echo --model-shard-path $(dirname $x)/cnv_calls-model; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
     --sample-index $sample_index \
-    --autosomal-ref-copy-number 2 \
-    --allosomal-contig ${{STYLE}}X \
-    --allosomal-contig ${{STYLE}}Y \
+    --autosomal-ref-copy-number {args[autosomal_ref_copy_number]} \
+    $(for contig in {allosomal_contigs}; do echo --allosomal-contig ${{STYLE}}$contig; done) \
     --output-genotyped-intervals ${{itv_vcf%.gz}} \
     --output-genotyped-segments ${{seg_vcf%.gz}} \
     --output-denoised-copy-ratios {snakemake.output.ratio_tsv}

@@ -21,6 +21,9 @@ class AnnotateGcMixin:
         yield "mappability", mappable.bed
         yield "mappability_index", mappable.index
 
+    def _get_params_annotate_gc(self, wildcards):
+        return {"interval_merging_rule": str(self.config.interval_merging_rule)}
+
     @dictify
     def _get_output_files_annotate_gc(self):
         yield "tsv", "work/{library_kit}/out/{library_kit}.annotate_gc.tsv"
@@ -45,6 +48,15 @@ class FilterIntervalsMixin:
                 covs.append(f"work/{lib}/out/{lib}.coverage.tsv")
         yield "covs", covs
 
+    def _get_params_filter_intervals(self, wildcards):
+        return {
+            "interval_merging_rule": str(self.config.interval_merging_rule),
+            "minimum_gc_content": self.config.minimum_gc_content,
+            "maximum_gc_content": self.config.maximum_gc_content,
+            "minimum_mappability": self.config.minimum_mappability,
+            "maximum_mappability": self.config.maximum_mappability,
+        }
+
     @dictify
     def _get_output_files_filter_intervals(self):
         yield "interval_list", "work/{library_kit}/out/{library_kit}.filter_intervals.interval_list"
@@ -60,6 +72,9 @@ class ScatterIntervalsMixin:
     def _get_input_files_scatter_intervals(self, wildcards):
         kit = wildcards.library_kit
         yield "interval_list", f"work/{kit}/out/{kit}.filter_intervals.interval_list"
+
+    def _get_params_scatter_intervals(self, wildcards):
+        return {"intervals_per_shard": self.config.intervals_per_shard}
 
     def _get_output_files_scatter_intervals(self):
         return "work/{library_kit}/out/{library_kit}.scatter_intervals"
@@ -97,6 +112,14 @@ class ContigPloidyMixin:
             peds.append(f"work/{name_pattern}/out/{library_name}.ped")
         yield "ped", peds
 
+    def _get_params_contig_ploidy(self, wildcards):
+        return {
+            "interval_merging_rule": str(self.config.interval_merging_rule),
+            "autosome_ploidy_prior": self.config.autosome_ploidy_prior,
+            "x_ploidy_prior": self.config.x_ploidy_prior,
+            "y_ploidy_prior": self.config.y_ploidy_prior,
+        }
+
     @dictify
     def _get_output_files_contig_ploidy(self):
         """Yield dictionary with output files for ``contig_ploidy`` rule in COHORT MODE."""
@@ -129,6 +152,10 @@ class CallCnvsMixin:
         kit = wildcards.library_kit
         yield "ploidy", f"work/{kit}/out/{kit}.contig_ploidy/.done"
         yield "intervals", "work/{library_kit}/out/{library_kit}.annotate_gc.tsv"
+
+    def _get_params_call_cnvs(self, wildcards):
+        """The tool's ``extra_arguments`` too, which ``with_extra_arguments`` adds"""
+        return {"interval_merging_rule": str(self.config.interval_merging_rule)}
 
     @dictify
     def _get_output_files_call_cnvs(self):
@@ -176,6 +203,15 @@ class BuildGcnvModelStepPart(
         "filter_intervals": ("interval_list",),
         "coverage": ("tsv",),
     }
+
+    def _get_params_preprocess_intervals(self, wildcards):
+        """Targeted intervals take ``--bin-length``, whole genomes ``--padding``"""
+        params = {"interval_merging_rule": str(self.config.interval_merging_rule)}
+        if self.config.intervals == "wgs":
+            params["padding"] = self.config.padding
+        else:
+            params["bin_length"] = self.config.bin_length
+        return params
 
     def tool_section(self):
         """The model task has no tool section: the ``extra_arguments`` are the step's own"""

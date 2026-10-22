@@ -13,7 +13,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Regions,
 )
 from snappy_pipeline.workflows.common.sv_calling_model import GeneRegions
-from snappy_pipeline.workflows.gcnv_model.model import ExpectedGcnvModel
+from snappy_pipeline.workflows.gcnv_model.model import ExpectedGcnvModel, GcnvPostprocess
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
@@ -24,7 +24,7 @@ class Tool(enum.StrEnum):
     melt = "melt"
 
 
-class Gcnv(ToolModel):
+class Gcnv(ToolModel, GcnvPostprocess):
     extra_arguments: list[str] = []
     """Additional arguments for ``GermlineCNVCaller``, the other GATK commands take none"""
 

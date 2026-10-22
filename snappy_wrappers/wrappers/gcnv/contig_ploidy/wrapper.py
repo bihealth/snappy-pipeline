@@ -28,7 +28,13 @@ for ped_path in snakemake.input.ped:
 ploidy_x = {MALE: 1, FEMALE: 2}
 ploidy_y = {MALE: 1, FEMALE: 0}
 
+args = snakemake.params.args
 paths_tsv = " ".join(snakemake.input.tsv)
+
+# Ploidy priors as tab separated values, `echo -e` expands the tabs
+autosome_prior = r"\t".join(f"{p:g}" for p in args["autosome_ploidy_prior"])
+x_prior = r"\t".join(f"{p:g}" for p in args["x_ploidy_prior"])
+y_prior = r"\t".join(f"{p:g}" for p in args["y_ploidy_prior"])
 
 # Add interval block list for PAR regions if configured.
 par_intervals = snakemake.input.get("par_intervals", "")
@@ -61,17 +67,17 @@ PRIORS=$TMPDIR/ploidy_priors.tsv
 echo -e "CONTIG_NAME\tPLOIDY_PRIOR_0\tPLOIDY_PRIOR_1\tPLOIDY_PRIOR_2\tPLOIDY_PRIOR_3" \
 > $PRIORS
 for i in {{1..22}}; do
-    echo -e "$STYLE$i\t0\t0.01\t0.98\t0.01" >> $PRIORS
+    echo -e "$STYLE$i\t{autosome_prior}" >> $PRIORS
 done
-echo -e "${{STYLE}}X\t0.01\t0.49\t0.49\t0.01" >> $PRIORS
-echo -e "${{STYLE}}Y\t0.495\t0.495\t0.01\t0" >> $PRIORS
+echo -e "${{STYLE}}X\t{x_prior}" >> $PRIORS
+echo -e "${{STYLE}}Y\t{y_prior}" >> $PRIORS
 
 set -x
 
 gatk DetermineGermlineContigPloidy \
     -L {snakemake.input.interval_list} \
     {par_args} \
-    --interval-merging-rule OVERLAPPING_ONLY \
+    --interval-merging-rule {args[interval_merging_rule]} \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --contig-ploidy-priors $PRIORS \
     --output $(dirname {snakemake.output}) \

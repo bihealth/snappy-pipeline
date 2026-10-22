@@ -403,6 +403,8 @@ elif tool == "gcnv":
             mem=wf.get_resource("gcnv", "coverage", "mem"),
             partition=wf.get_resource("gcnv", "coverage", "partition"),
             tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
+        params:
+            args=wf.get_params("gcnv", "coverage"),
         wrapper:
             wf.wrapper_path("gcnv/coverage")
 
@@ -459,6 +461,8 @@ elif tool == "gcnv":
             mem=wf.get_resource("gcnv", "post_germline_calls", "mem"),
             partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
             tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
+        params:
+            args=wf.get_params("gcnv", "post_germline_calls"),
         wrapper:
             wf.wrapper_path("gcnv/post_germline_calls_case_mode")
 

@@ -46,6 +46,8 @@ rule gcnv_model_preprocess_intervals:
         mem=wf.get_resource("gcnv", "preprocess_intervals", "mem"),
         partition=wf.get_resource("gcnv", "preprocess_intervals", "partition"),
         tmpdir=wf.get_resource("gcnv", "preprocess_intervals", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "preprocess_intervals"),
     wrapper:
         wf.wrapper_path(f"gcnv/preprocess_intervals{wgs}")
 
@@ -65,6 +67,8 @@ rule gcnv_model_annotate_gc:
         mem=wf.get_resource("gcnv", "annotate_gc", "mem"),
         partition=wf.get_resource("gcnv", "annotate_gc", "partition"),
         tmpdir=wf.get_resource("gcnv", "annotate_gc", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "annotate_gc"),
     wrapper:
         wf.wrapper_path(f"gcnv/annotate_gc{wgs}")
 
@@ -84,6 +88,8 @@ rule gcnv_model_coverage:
         mem=wf.get_resource("gcnv", "coverage", "mem"),
         partition=wf.get_resource("gcnv", "coverage", "partition"),
         tmpdir=wf.get_resource("gcnv", "coverage", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "coverage"),
     wrapper:
         wf.wrapper_path("gcnv/coverage")
 
@@ -103,6 +109,8 @@ rule gcnv_model_filter_intervals:
         mem=wf.get_resource("gcnv", "filter_intervals", "mem"),
         partition=wf.get_resource("gcnv", "filter_intervals", "partition"),
         tmpdir=wf.get_resource("gcnv", "filter_intervals", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "filter_intervals"),
     wrapper:
         wf.wrapper_path("gcnv/filter_intervals")
 
@@ -122,6 +130,8 @@ rule gcnv_model_contig_ploidy:
         mem=wf.get_resource("gcnv", "contig_ploidy", "mem"),
         partition=wf.get_resource("gcnv", "contig_ploidy", "partition"),
         tmpdir=wf.get_resource("gcnv", "contig_ploidy", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "contig_ploidy"),
     wrapper:
         wf.wrapper_path("gcnv/contig_ploidy")
 
@@ -166,6 +176,8 @@ checkpoint gcnv_model_scatter_intervals:
         mem=wf.get_resource("gcnv", "scatter_intervals", "mem"),
         partition=wf.get_resource("gcnv", "scatter_intervals", "partition"),
         tmpdir=wf.get_resource("gcnv", "scatter_intervals", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "scatter_intervals"),
     wrapper:
         wf.wrapper_path("gcnv/scatter_intervals")
 
@@ -185,5 +197,7 @@ rule gcnv_model_calling_gcnv_post_germline_calls:
         mem=wf.get_resource("gcnv", "post_germline_calls", "mem"),
         partition=wf.get_resource("gcnv", "post_germline_calls", "partition"),
         tmpdir=wf.get_resource("gcnv", "post_germline_calls", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "post_germline_calls"),
     wrapper:
         wf.wrapper_path("gcnv/post_germline_calls")

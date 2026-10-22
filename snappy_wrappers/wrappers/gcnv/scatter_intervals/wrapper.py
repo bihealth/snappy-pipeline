@@ -7,6 +7,8 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
+args = snakemake.params.args
+
 # Filter interval list file from gCNV model input
 interval_list = [path for path in snakemake.input if str(path).endswith(".interval_list")]
 
@@ -21,7 +23,7 @@ trap "rm -rf {snakemake.output}" ERR
 gatk IntervalListTools \
     --INPUT {interval_list} \
     --SUBDIVISION_MODE INTERVAL_COUNT \
-    --SCATTER_CONTENT 5000 \
+    --SCATTER_CONTENT {args[intervals_per_shard]} \
     --OUTPUT {snakemake.output}
 
 # With a single shard (small panels), OUTPUT is the interval list itself, not a directory of

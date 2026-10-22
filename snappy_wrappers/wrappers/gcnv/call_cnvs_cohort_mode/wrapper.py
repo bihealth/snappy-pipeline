@@ -7,6 +7,7 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
+args = snakemake.params.args
 paths_tsv = " ".join(snakemake.input.tsv)
 
 print("snakemake.input =", vars(snakemake.input))
@@ -34,7 +35,7 @@ gatk GermlineCNVCaller \
     $(for tsv in {paths_tsv}; do echo -I $tsv; done) \
     --contig-ploidy-calls $(dirname {snakemake.input.ploidy})/ploidy-calls \
     --annotated-intervals {snakemake.input.intervals} \
-    --interval-merging-rule OVERLAPPING_ONLY \
+    --interval-merging-rule {args[interval_merging_rule]} \
     --output $(dirname {snakemake.output.done}) \
     --output-prefix cnv_calls \
     {extra_arguments}

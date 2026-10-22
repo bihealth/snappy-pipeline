@@ -280,6 +280,10 @@ class RunGcnvStepPart(
             self.parent.library_kits,
         )
 
+    def _model_config(self):
+        """Return the config of the ``gcnv_model`` task."""
+        return self.parent.get_task_config("gcnv_model")
+
     def _interval_list_path(self, library_kit: str) -> str:
         """Return the interval list of the model task, which also fixes the intervals of the calls."""
         return self.parent.get_upstream_paths("gcnv_model", library_kit=library_kit).interval_list

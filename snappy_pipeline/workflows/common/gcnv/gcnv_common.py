@@ -85,6 +85,10 @@ class CoverageCommonMixin:
         yield "bai", alignments.bai
         yield from self.parent.reference_inputs().items()
 
+    def _get_params_coverage(self, wildcards):
+        """The interval merging rule of the model task, which also fixes the intervals"""
+        return {"interval_merging_rule": str(self._model_config().interval_merging_rule)}
+
     @dictify
     def _get_output_files_coverage(self):
         yield "tsv", "work/{library_name}/out/{library_name}.coverage.tsv"
@@ -114,6 +118,13 @@ class CallCnvsCommonMixin:
 class GcnvPostGermlineCallsCommonMixin:
     """Mixin used for the ``gcnv_post_germline_calls`` step"""
 
+    def _get_params_post_germline_calls(self, wildcards):
+        section = self.tool_section()
+        return {
+            "autosomal_ref_copy_number": section.autosomal_ref_copy_number,
+            "allosomal_contigs": section.allosomal_contigs,
+        }
+
     def _get_log_file_post_germline_calls(self):
         return {"log": "work/{library_name}/log/{library_name}.post_germline_calls.log"}
 
@@ -136,6 +147,10 @@ class GcnvCommonStepPart(
 
     #: Dictionary: Key: library name (str); Value: library kit (str).
     ngs_library_to_kit = None
+
+    def _model_config(self):
+        """Return the config of the ``gcnv_model`` task, which holds the interval settings."""
+        return self.config
 
     def _interval_list_path(self, library_kit: str) -> str:
         """Return the preprocessed interval list of the kit, a local path of the model task."""

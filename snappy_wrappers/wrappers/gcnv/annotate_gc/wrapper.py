@@ -7,11 +7,13 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
 
+args = snakemake.params.args
+
 ShellWrapper(snakemake).run(
     r"""
 
 gatk AnnotateIntervals \
-    --interval-merging-rule OVERLAPPING_ONLY \
+    --interval-merging-rule {args[interval_merging_rule]} \
     --mappability-track {snakemake.input.mappability} \
     --reference {snakemake.input.reference} \
     --intervals {snakemake.input.interval_list} \
