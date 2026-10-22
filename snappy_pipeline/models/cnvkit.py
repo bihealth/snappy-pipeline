@@ -150,6 +150,8 @@ class Target(SnappyModel):
     """Split large tiled intervals into smaller, consecutive targets."""
     avg_size: int | None = None
     """ Average size of split target bins (results are approximate). Default 266.6666667 is not allowed (ints only)."""
+    default_avg_size: int = 5000
+    """[target] Average size of the target bins in whole genome mode when ``avg_size`` is not set and there are no normals to run ``autobin`` on (``--avg-size``)"""
 
 
 class Antitarget(SnappyModel):

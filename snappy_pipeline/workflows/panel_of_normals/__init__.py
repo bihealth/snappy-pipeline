@@ -55,6 +55,7 @@ Without ``depends_on.kits``, ``cnvkit`` runs in whole genome mode.
 With it, the baits of the common kit of the normals are the targets.
 For exomes, the access file only restricts the antitarget regions.
 For whole genomes, ``autobin`` uses it to compute the average target size.
+Without normals, there is nothing to run ``autobin`` on, and ``cnvkit.target.default_avg_size`` is the average target size.
 Without ``depends_on.access``, whole genome mode creates an access file with default settings.
 The CNVkit distribution provides an access file for ``GRCh37``, but it is incomplete for ``GRCh38``.
 Run a task with ``tool: access`` to create one from regions to exclude (``access.exclude``).

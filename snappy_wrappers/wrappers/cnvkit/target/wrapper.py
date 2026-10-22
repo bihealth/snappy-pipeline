@@ -69,7 +69,7 @@ then
         else
             target="{access}"
         fi
-        target_avg_size=5000
+        target_avg_size={args[default_avg_size]}
     fi
 fi
 
