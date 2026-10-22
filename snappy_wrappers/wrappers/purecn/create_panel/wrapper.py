@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for preparing PureCN panel of normals"""
 
+import os
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
@@ -9,6 +11,9 @@ args = getattr(snakemake.params, "args", {})
 config = args["config"]
 
 genomicsDB = getattr(snakemake.input, "genomicsdb", "")
+if genomicsDB:
+    # The archive is extracted in $TMPDIR, so its path must not be relative
+    genomicsDB = os.path.abspath(genomicsDB)
 
 ShellWrapper(snakemake).run(
     r"""
