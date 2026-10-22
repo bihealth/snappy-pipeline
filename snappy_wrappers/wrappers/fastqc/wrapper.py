@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for FastQC: Snakemake wrapper.py"""
 
+from math import ceil
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -19,13 +20,16 @@ reads_left = snakemake.input.get("reads_left") or reads["reads_left"]
 reads_right = snakemake.input.get("reads_right") or reads.get("reads_right", [])
 more_reads = [*reads_left, *reads_right]
 
+# As an estimate, give 75% of total memory as usable to JVM
+mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
+
 ShellWrapper(snakemake).run(
     r"""
 
 outdir={snakemake.output.html}
 mkdir -p $outdir
 
-_JAVA_OPTIONS="-Xms256m -Xmx512m -XX:CompressedClassSpaceSize=512m" \
+_JAVA_OPTIONS="-Xms256m -Xmx{mem_jvm}m -XX:CompressedClassSpaceSize=512m" \
 fastqc \
     --noextract \
     -o $outdir \
