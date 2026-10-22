@@ -32,7 +32,8 @@ fi
 cmd="/usr/local/bin/Rscript /opt/PureCN/NormalDB.R \
     --out-dir /output \
     --coverage-files /extra/filenames.txt $normal_panel \
-    --genome {config[genome_name]} --assay {config[enrichment_kit_name]}
+    --genome {config[genome_name]} --assay {config[enrichment_kit_name]} \
+    {extra_arguments}
 "
 apptainer exec --home $PWD -B $outdir:/output -B $TMPDIR/pon_db:/pon_db:ro -B $TMPDIR/extra:/extra:ro {snakemake.input.container} $cmd
 

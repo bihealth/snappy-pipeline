@@ -31,6 +31,7 @@ cnvkit.py segment \
     fi) \
     {threshold} \
     --drop-outliers {args[drop_outliers]} \
+    {extra_arguments} \
     {snakemake.input}
 """
 )

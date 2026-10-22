@@ -20,6 +20,7 @@ cnvetti cmd coverage \
     --window-length {args[window_length]} \
     --reference $REF \
     --output $TMPDIR/cov.bcf \
+    {extra_arguments} \
     --input {snakemake.input.bam}
 
 cnvetti cmd normalize \

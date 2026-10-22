@@ -132,6 +132,8 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     #: Actions
     actions = ("install", "prepare", "coverage", "create_panel")
 
+    extra_arguments_action = "create_panel"
+
     #: Per-library coverage is only read by ``create_panel``
     intermediate_outputs = {"coverage": ("coverage",)}
 
@@ -393,6 +395,9 @@ class CnvkitStepPart(PanelOfNormalsStepPart):
         "create_panel",
         "report",
     )
+
+    #: ``create_panel`` runs ``cnvkit.py reference``
+    extra_arguments_action = "create_panel"
 
     #: Per-library coverage is only read by ``create_panel``
     intermediate_outputs = {"coverage": ("target", "antitarget")}

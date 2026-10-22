@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from snappy_pipeline.models import ConfigPath, SnappyModel
+from snappy_pipeline.models import ConfigPath, SnappyModel, ToolModel
 
 
 class SegmentationMethod(enum.StrEnum):
@@ -177,7 +177,7 @@ class Autobin(SnappyModel):
     """Maximum size of antitarget bins"""
 
 
-class Cnvkit(SnappyModel):
+class Cnvkit(ToolModel):
     coverage: Coverage = Coverage()
     fix: Fix = Fix()
     segment: Segment = Segment()
@@ -200,7 +200,7 @@ class Cnvkit(SnappyModel):
     """[call, diagram] Create male reference"""
 
 
-class PanelOfNormals(SnappyModel):
+class PanelOfNormals(ToolModel):
     path_annotation: Annotated[
         ConfigPath | None,
         Field(examples=["/path/to/gencode.v33.annotation.gtf"]),

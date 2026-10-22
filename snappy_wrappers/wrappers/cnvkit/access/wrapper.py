@@ -24,6 +24,7 @@ cnvkit.py access \
         echo --min-gap-size {min_gap_size}
     fi) \
     {exclude} \
+    {extra_arguments} \
     {snakemake.input.reference}
 """
 )

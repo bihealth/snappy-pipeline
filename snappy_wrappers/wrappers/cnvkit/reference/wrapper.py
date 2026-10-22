@@ -34,13 +34,13 @@ then
     cnvkit.py reference \
         --output {snakemake.output.panel} \
         --fasta {snakemake.input.reference} \
-        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
+        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} {extra_arguments} \
         --targets {snakemake.input.target} --antitargets {snakemake.input.antitarget}
 else
     cnvkit.py reference \
         --output {snakemake.output.panel} \
         --fasta {snakemake.input.reference} \
-        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} \
+        {cluster} {gender} {male} {no_gc} {no_edge} {no_rmask} {extra_arguments} \
         {snakemake.input.target} {snakemake.input.antitarget}
 fi
 """

@@ -37,7 +37,7 @@ ShellWrapper(snakemake).run(
 sequenza-utils bam2seqz \
     -gc {snakemake.input.gc} --fasta {genome} \
     -n {snakemake.input.normal_bam} --tumor {snakemake.input.tumor_bam} \
-    -C {contigs} {bam2seqz_options} \
+    -C {contigs} {bam2seqz_options} {extra_arguments} \
     | sequenza-utils seqz_binning -s - \
         -w {length} -o {snakemake.output.seqz}
 """

@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
@@ -60,7 +60,7 @@ class Mutect2(Parallel, GATK):
     """
 
 
-class Access(SnappyModel):
+class Access(ToolModel):
     """Creates access file for cnvkit, based on genomic sequence & excluded regions (optionally)"""
 
     exclude: list[str] = []
@@ -82,7 +82,7 @@ class GenomeName(enum.StrEnum):
     canFam3 = "canFam3"
 
 
-class PureCn(SnappyModel):
+class PureCn(ToolModel):
     path_normals_list: ConfigPath = ""
     """Optional file listing libraries to include in panel"""
 

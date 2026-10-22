@@ -3,7 +3,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -115,7 +115,7 @@ class SequenzaFitExtraArgs(SnappyModel):
     ]
 
 
-class Sequenza(SnappyModel):
+class Sequenza(ToolModel):
     length: int = 50
     assembly: str = "hg19"
     """Must be hg38 for GRCh38. See copynumber for complete list (augmented with hg38)"""
@@ -161,7 +161,7 @@ class GenomeName(enum.StrEnum):
     canFam3 = "canFam3"
 
 
-class PureCn(SnappyModel):
+class PureCn(ToolModel):
     genome_name: Annotated[
         GenomeName | Literal["unknown"],
         EnumField(GenomeName, json_schema_extra={"options": {"unknown"}}),

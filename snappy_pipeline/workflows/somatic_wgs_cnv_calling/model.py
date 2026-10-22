@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.models.cnvkit import Cnvkit, Diagram
 from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
@@ -28,7 +28,7 @@ class CnvettiPreset(SnappyModel):
     normalization: str
 
 
-class Cnvetti(SnappyModel):
+class Cnvetti(ToolModel):
     window_length: int | None = None
     count_kind: str | None = None
     segmentation: str | None = None
@@ -64,7 +64,7 @@ class ExpectedControlFreecDatabase(SnappyModel):
     """Mappability file, used when set"""
 
 
-class ControlFreec(SnappyModel):
+class ControlFreec(ToolModel):
     window_size: int = -1
     """set to a value >=0 you want a specific fixed window size"""
 

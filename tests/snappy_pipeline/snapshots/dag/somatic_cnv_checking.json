@@ -541,6 +541,7 @@
    "args": {
     "drop_low_coverage": false,
     "drop_outliers": 10,
+    "extra_arguments": [],
     "method": "cbs",
     "smooth_cbs": true,
     "threshold": 1e-06

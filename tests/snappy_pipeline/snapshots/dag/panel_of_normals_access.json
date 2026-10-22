@@ -30,6 +30,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "min_gap_size": 0
    }
   },

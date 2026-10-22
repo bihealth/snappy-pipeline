@@ -100,7 +100,7 @@ EOF
 # Run Control-Freec -------------------------------------------------------------------------------
 
 cp $TMPDIR/tmp.d/freec.ini $output_dir
-freec --conf $TMPDIR/tmp.d/freec.ini
+freec --conf $TMPDIR/tmp.d/freec.ini {extra_arguments}
 
 pushd $output_dir
 

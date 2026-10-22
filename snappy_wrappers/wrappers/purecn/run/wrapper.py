@@ -75,7 +75,7 @@ cmd="/usr/local/bin/Rscript /opt/PureCN/PureCN.R \
     --genome {config[genome_name]} \
     --out $outdir --out-vcf --force \
     --seed {config[seed]} --parallel --cores {snakemake.threads} \
-    {extra_commands}
+    {extra_commands} {extra_arguments}
 "
 apptainer exec --home $PWD {bindings} {snakemake.input.container} $cmd
 

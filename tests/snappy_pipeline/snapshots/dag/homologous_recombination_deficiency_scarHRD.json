@@ -298,6 +298,7 @@
      "qformat": "sanger",
      "qlimit": 20.0
     },
+    "extra_arguments": [],
     "ignore_chroms": [
      "^X$",
      "^Y$",

@@ -282,6 +282,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "path_mappability_enabled": false,
     "window_size": -1
    }

@@ -1374,6 +1374,7 @@
    "args": {
     "config": {
      "enrichment_kit_name": "unknown",
+     "extra_arguments": [],
      "genome_name": "unknown",
      "seed": 1234567
     },
@@ -1421,9 +1422,11 @@
    "args": {
     "config": {
      "enrichment_kit_name": "unknown",
+     "extra_arguments": [],
      "genome_name": "unknown",
      "seed": 1234567
-    }
+    },
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -1488,6 +1491,7 @@
    "args": {
     "config": {
      "enrichment_kit_name": "unknown",
+     "extra_arguments": [],
      "genome_name": "unknown",
      "seed": 1234567
     }
@@ -1618,6 +1622,7 @@
    "args": {
     "config": {
      "enrichment_kit_name": "unknown",
+     "extra_arguments": [],
      "extra_commands": {
       "fun-segmentation": "PSCBS",
       "model": "betabin",
@@ -1678,6 +1683,7 @@
    "args": {
     "config": {
      "enrichment_kit_name": "unknown",
+     "extra_arguments": [],
      "extra_commands": {
       "fun-segmentation": "PSCBS",
       "model": "betabin",
@@ -1686,6 +1692,7 @@
      "genome_name": "unknown",
      "seed": 1234567
     },
+    "extra_arguments": [],
     "library_name": "case001subregion-T1-DNA1-WES1",
     "mapper": "bwa"
    }

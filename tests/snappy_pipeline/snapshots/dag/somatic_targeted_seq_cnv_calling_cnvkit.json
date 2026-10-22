@@ -142,6 +142,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "min_gap_size": 0
    }
   },
@@ -248,6 +249,7 @@
   "params": {
    "args": {
     "edge_correction": false,
+    "extra_arguments": [],
     "flat": false,
     "gc_correction": true,
     "min_cluster_size": 0,
@@ -805,6 +807,7 @@
    "args": {
     "drop_low_coverage": false,
     "drop_outliers": 10,
+    "extra_arguments": [],
     "method": "cbs",
     "smooth_cbs": true,
     "threshold": 1e-06

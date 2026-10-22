@@ -96,6 +96,8 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     #: Class available actions
     actions = ("coverage", "tumor_normal_ratio", "segment")
 
+    extra_arguments_action = "coverage"
+
     entity_wildcard = "tumor_library"
 
     published_keys = {"segment": ("bcf", "bcf_csi", "bcf_md5", "bcf_csi_md5")}
@@ -253,6 +255,8 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "plot",
         "report",
     )
+
+    extra_arguments_action = "segment"
 
     intermediate_outputs = {
         "coverage": ("target", "antitarget"),
@@ -462,6 +466,8 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     #: Class available actions
     actions = ("run", "transform", "plot")
+
+    extra_arguments_action = "run"
 
     intermediate_outputs = {"transform": ("cns", "cnr")}
 

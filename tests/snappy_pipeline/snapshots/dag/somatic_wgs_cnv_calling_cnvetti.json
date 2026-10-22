@@ -231,6 +231,7 @@
   "params": {
    "args": {
     "count_kind": "Coverage",
+    "extra_arguments": [],
     "normalization": "MedianGcBinned",
     "window_length": 200
    }
@@ -272,6 +273,7 @@
   "params": {
    "args": {
     "count_kind": "Coverage",
+    "extra_arguments": [],
     "normalization": "MedianGcBinned",
     "window_length": 200
    }

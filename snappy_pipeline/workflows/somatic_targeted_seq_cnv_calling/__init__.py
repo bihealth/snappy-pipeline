@@ -142,6 +142,9 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "run",
     )
 
+    #: ``run`` is an R script without command line, ``coverage`` runs ``sequenza-utils bam2seqz``
+    extra_arguments_action = "coverage"
+
     resource_usage = {
         "coverage": ResourceUsage(
             threads=1,
@@ -263,6 +266,8 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     #: Class available actions
     actions = ("coverage", "run")
 
+    extra_arguments_action = "run"
+
     intermediate_outputs = {"coverage": ("coverage",)}
 
     resource_usage = {
@@ -381,6 +386,8 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "plot",
         "report",
     )
+
+    extra_arguments_action = "segment"
 
     intermediate_outputs = {
         "coverage": ("target", "antitarget"),
