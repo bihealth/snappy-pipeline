@@ -14,7 +14,7 @@ set -x
 
 mkdir -p $TMPDIR/out
 
-# The following config is recommended by the authors for WES,
+# The default thresholds are those that the authors recommend for WES,
 # but should also work for reasonable deep WGS according to them.
 # https://github.com/OSU-SRLab/MANTIS/issues/25
 #
@@ -25,11 +25,11 @@ mantis-msi2 \
     -n {snakemake.input.normal_bam} \
     --genome {snakemake.input.reference} \
     --bedfile {snakemake.input.loci_bed} \
-    --min-read-length 35 \
-    --min-read-quality 20.0 \
-    --min-locus-quality 25.0 \
-    --min-locus-coverage 20 \
-    --min-repeat-reads 1 \
+    --min-read-length {args[min_read_length]} \
+    --min-read-quality {args[min_read_quality]} \
+    --min-locus-quality {args[min_locus_quality]} \
+    --min-locus-coverage {args[min_locus_coverage]} \
+    --min-repeat-reads {args[min_repeat_reads]} \
     --threads 1 \
     -o $TMPDIR/out/$(basename {snakemake.output.result}) \
     {extra_arguments}

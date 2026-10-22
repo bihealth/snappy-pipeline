@@ -37,3 +37,18 @@ class SomaticMsiCalling(SnappyStepModel, ToolModel):
     depends_on: SomaticMsiCallingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]
+
+    min_read_length: int = 35
+    """Minimum read length (``mantis-msi2 --min-read-length``)"""
+
+    min_read_quality: float = 20.0
+    """Minimum mean base quality of a read (``--min-read-quality``)"""
+
+    min_locus_quality: float = 25.0
+    """Minimum mean base quality of the reads at a locus (``--min-locus-quality``)"""
+
+    min_locus_coverage: int = 20
+    """Minimum coverage of a locus in tumor and normal (``--min-locus-coverage``)"""
+
+    min_repeat_reads: int = 1
+    """Minimum number of reads supporting a repeat length (``--min-repeat-reads``)"""

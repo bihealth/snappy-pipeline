@@ -4,6 +4,7 @@
 The step detects microsatellite instability in cancer samples (whole genomes, exomes or large panels).
 The ``tool`` field has the value ``mantis_msi2``, which runs `MANTIS2 <https://github.com/nh13/MANTIS2>`_ on the aligned reads of each tumor and its matched normal.
 MANTIS is not maintained anymore, and MANTIS2 is the only supported version.
+The fields ``min_read_length``, ``min_read_quality``, ``min_locus_quality``, ``min_locus_coverage`` and ``min_repeat_reads`` set the MANTIS thresholds; the defaults are the values that its authors recommend for exomes.
 The microsatellite loci come from the task in ``depends_on.microsatellites``.
 The task gives one result per tumor DNA library.
 
@@ -93,7 +94,16 @@ class Mantis2StepPart(BaseStepPart):
         }
 
     def _get_params_run(self, wildcards):
-        return {}
+        return {
+            name: getattr(self.config, name)
+            for name in (
+                "min_read_length",
+                "min_read_quality",
+                "min_locus_quality",
+                "min_locus_coverage",
+                "min_repeat_reads",
+            )
+        }
 
     def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
