@@ -103,6 +103,7 @@
   ],
   "params": {
    "args": {
+    "aln_max_read_length": 75,
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -164,6 +165,7 @@
   ],
   "params": {
    "args": {
+    "aln_max_read_length": 75,
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",

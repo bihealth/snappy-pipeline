@@ -54,6 +54,7 @@
      "use_barcodes": false
     },
     "mapper_config": {
+     "aln_max_read_length": 75,
      "extra_arguments": [],
      "mask_duplicates": true,
      "memory_bam_sort": "4G",
@@ -61,10 +62,10 @@
      "num_threads_bam_sort": 4,
      "num_threads_bam_view": 4,
      "num_threads_trimming": 8,
+     "platform": "ILLUMINA",
      "split_as_secondary": false,
      "trim_adapters": false
     },
-    "platform": "ILLUMINA",
     "sample_name": "case001subregion-N1-DNA1-WES1"
    }
   },
@@ -128,6 +129,7 @@
      "use_barcodes": false
     },
     "mapper_config": {
+     "aln_max_read_length": 75,
      "extra_arguments": [],
      "mask_duplicates": true,
      "memory_bam_sort": "4G",
@@ -135,10 +137,10 @@
      "num_threads_bam_sort": 4,
      "num_threads_bam_view": 4,
      "num_threads_trimming": 8,
+     "platform": "ILLUMINA",
      "split_as_secondary": false,
      "trim_adapters": false
     },
-    "platform": "ILLUMINA",
     "sample_name": "case001subregion-T1-DNA1-WES1"
    }
   },
