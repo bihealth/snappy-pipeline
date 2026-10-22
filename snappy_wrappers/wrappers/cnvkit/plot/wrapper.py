@@ -47,7 +47,6 @@ then
     cnvkit.py scatter \
         --output {snakemake.output.scatter} \
         --segment {snakemake.input.cns} \
-        {gender} {male} \
         {snakemake.input.cnr}
 else
     touch {snakemake.output.scatter}
@@ -62,7 +61,6 @@ do
             --output $scatter \
             --chromosome $chrom \
             --segment {snakemake.input.cns} \
-            {gender} {male} \
             {snakemake.input.cnr}
     else
         touch $scatter
