@@ -286,7 +286,6 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "sample_name": wildcards.library_name,
-            "platform": "ILLUMINA",
         } | reads_params(self.parent, wildcards.library_name)
 
     def _get_input_files_run(self, wildcards):

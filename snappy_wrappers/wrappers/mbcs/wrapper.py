@@ -4,6 +4,7 @@
 import os
 import sys
 import tempfile
+from math import ceil
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -22,6 +23,10 @@ from snappy_wrappers.nested_snakemake import run_snakemake  # noqa: E402
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
+
+# Memory of the nested jobs of AGeNT. The Java heap gets 75% of it.
+TRIM_MEM_MB = 64000
+MARK_MEM_MB = 96000
 
 
 # Helper functions ------------------------------------------------------------
@@ -121,11 +126,12 @@ if config["use_barcodes"]:
             fq2 = "-fq2 {input.r2}"
 
         cmd = (
-            "            java -Xmx60G -jar {trimmer} \\\n"
+            "            java -Xmx{heap}M -jar {trimmer} \\\n"
             "                -{lib_prep_type} {extra_args} \\\n"
             '                -out "trimmed/{name}" \\\n'
             "                -fq1 {{input.r1}} {fq2}"
         ).format(
+            heap=ceil(TRIM_MEM_MB * 0.75),
             trimmer=snakemake.input.agent_prepare,
             lib_prep_type=config_barcodes["prepare"]["lib_prep_type"],
             extra_args=" ".join(config_barcodes["prepare"]["extra_arguments"]),
@@ -138,7 +144,7 @@ if config["use_barcodes"]:
             "input": inputs[name],
             "output": out,
             "cmds": cmd,
-            "mem": "64000M",
+            "mem": f"{TRIM_MEM_MB}M",
             "time": "24:00:00",
             "threads": "1",
         }
@@ -160,14 +166,15 @@ if mapper_config["trim_adapters"]:
 # Map with read group (bwa & bwa-mem2 only)
 cmd += (
     "            | {mapper} mem \\\n"
-    "                {indices} \\\n"
+    "                {indices} {split_as_secondary} \\\n"
     "                -R '@RG\tID:{{name}}\tSM:{sample_name}\tPL:{platform}' \\\n"
     "                -p {extra_args} -t {threads} /dev/stdin \\\n"
 ).format(
     mapper=mapper,
     indices=snakemake.input.index[0].removesuffix(".amb"),
     sample_name=args["sample_name"],
-    platform=args["platform"],
+    split_as_secondary="-M" if mapper_config["split_as_secondary"] else "",
+    platform=mapper_config["platform"],
     extra_args=" ".join(mapper_config.get("extra_arguments", [])),
     threads=mapper_config["num_threads_align"],
 )
@@ -243,7 +250,7 @@ if config["use_barcodes"]:
         out = os.path.abspath(snakemake.output.bam)
 
     cmd = (
-        "            java -Xmx60G -jar {marker} {extra_args} \\\n"
+        "            java -Xmx{heap}M -jar {marker} {extra_args} \\\n"
         "                --bed-file={baits} \\\n"
         "                -c={consensus_mode} \\\n"
         "                -o={{output.bam}} \\\n"
@@ -251,6 +258,7 @@ if config["use_barcodes"]:
         "                {{input.bam}} \n"
         "            samtools index {{output.bam}}"
     ).format(
+        heap=ceil(MARK_MEM_MB * 0.75),
         marker=snakemake.input.agent_mark_duplicates,
         consensus_mode=config_barcodes["mark_duplicates"]["consensus_mode"],
         baits=snakemake.input.agent_baits,
@@ -264,7 +272,7 @@ if config["use_barcodes"]:
         "input": f'bam = "{in_}"',
         "output": f'bam = "{out}"',
         "cmds": cmd,
-        "mem": "96000M",
+        "mem": f"{MARK_MEM_MB}M",
         "time": "24:00:00",
         "threads": "1",
     }
