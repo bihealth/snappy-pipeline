@@ -62,7 +62,7 @@ args <- c(args, {args_extract})
 seqz <- do.call(sequenza.extract, args=args)
 warnings()
 
-args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores=1)
+args <- list(sequenza.extract=seqz, chromosome.list={contigs}, mc.cores={snakemake.threads})
 args <- c(args, {args_fit})
 CP <- do.call(sequenza.fit, args=args)
 warnings()
