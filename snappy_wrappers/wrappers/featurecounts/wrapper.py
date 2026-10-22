@@ -40,5 +40,7 @@ samtools view -h -F 260 -q 255 $bam \
     {extra_arguments} \
     -o feature_counts.tsv
 popd
+cp $TMPDIR/feature_counts.tsv {snakemake.output.tsv}
+cp $TMPDIR/feature_counts.tsv.summary {snakemake.output.summary}
 """
 )
