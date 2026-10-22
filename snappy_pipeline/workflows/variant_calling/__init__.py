@@ -276,6 +276,8 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
             "window_length": self.config.gatk3_hc.window_length,
             "allow_seq_dict_incompatibility": self.config.gatk3_hc.allow_seq_dict_incompatibility,
             "ignore_contigs": self.config.gatk3_hc.ignore_contigs,
+            "padding": self.config.gatk3_hc.padding,
+            "sample_ploidy": self.config.gatk3_hc.sample_ploidy,
         }
 
 
@@ -292,6 +294,8 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
             "allow_seq_dict_incompatibility": self.config.gatk3_ug.allow_seq_dict_incompatibility,
             "downsample_to_coverage": self.config.gatk3_ug.downsample_to_coverage,
             "ignore_contigs": self.config.gatk3_ug.ignore_contigs,
+            "padding": self.config.gatk3_ug.padding,
+            "sample_ploidy": self.config.gatk3_ug.sample_ploidy,
         }
 
 

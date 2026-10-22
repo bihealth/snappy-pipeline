@@ -2,8 +2,12 @@
 
 from types import SimpleNamespace
 
-from snappy_pipeline.workflows.variant_calling import BcftoolsCallStepPart
-from snappy_pipeline.workflows.variant_calling.model import BcftoolsCall
+from snappy_pipeline.workflows.variant_calling import (
+    BcftoolsCallStepPart,
+    Gatk3HaplotypeCallerStepPart,
+    Gatk3UnifiedGenotyperStepPart,
+)
+from snappy_pipeline.workflows.variant_calling.model import BcftoolsCall, Gatk3Hc, Gatk3Ug
 
 
 def _params(part_class, **sections):
@@ -33,3 +37,15 @@ def test_bcftools_call_passes_changed_settings():
     )
 
     assert (params["padding"], params["redo_baq"], params["annotate"]) == (0, False, "FORMAT/DP")
+
+
+def test_gatk3_hc_passes_its_settings():
+    params = _params(Gatk3HaplotypeCallerStepPart, gatk3_hc=Gatk3Hc(sample_ploidy=3, padding=0))
+
+    assert (params["padding"], params["sample_ploidy"]) == (0, 3)
+
+
+def test_gatk3_ug_passes_its_settings():
+    params = _params(Gatk3UnifiedGenotyperStepPart, gatk3_ug=Gatk3Ug())
+
+    assert (params["padding"], params["sample_ploidy"]) == (1000, 2)

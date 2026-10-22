@@ -112,17 +112,23 @@ class BcftoolsCall(ToolModel, IgnoreContigs, IntervalPadding):
     """Output variant sites only (``bcftools call --variants-only``)"""
 
 
-class Gatk3Hc(ToolModel, IgnoreContigs):
+class Gatk3Hc(ToolModel, IgnoreContigs, IntervalPadding):
     num_threads: int = 16
     window_length: int = 10000000
     allow_seq_dict_incompatibility: bool = False
 
+    sample_ploidy: Annotated[int, Field(ge=1)] = 2
+    """Ploidy of the samples (``--sample_ploidy``)"""
 
-class Gatk3Ug(ToolModel, IgnoreContigs):
+
+class Gatk3Ug(ToolModel, IgnoreContigs, IntervalPadding):
     num_threads: int = 16
     window_length: int = 10000000
     allow_seq_dict_incompatibility: bool = False
     downsample_to_coverage: int = 250
+
+    sample_ploidy: Annotated[int, Field(ge=1)] = 2
+    """Ploidy of the samples (``--sample_ploidy``)"""
 
 
 class Gatk4HcJoint(ToolModel, IgnoreContigs):

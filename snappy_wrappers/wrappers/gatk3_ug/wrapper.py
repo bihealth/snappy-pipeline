@@ -1,8 +1,13 @@
+from math import ceil
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
+
+# Each of the parallel shards gets an equal part of 75% of the job memory as Java heap
+java_mem_mb = ceil(snakemake.resources.mem_mb * 0.75 / args["num_threads"])
 
 ShellWrapper(snakemake).run(
     r"""
@@ -21,7 +26,7 @@ gatk PreprocessIntervals \
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
 # passing to ``--intervals``.
-awk -v PADDING=1000 '
+awk -v PADDING={args[padding]} '
     (!/^@/) {{
         chrom=$1;
         start=$2;
@@ -46,12 +51,12 @@ run-shard()
     job_no=$1
     interval=$2
 
-    GATK_JAVA_MEMORY=3750m
+    GATK_JAVA_MEMORY={java_mem_mb}m
     gatk3 -Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR \
         --analysis_type UnifiedGenotyper \
         --out $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz \
         --reference_sequence {snakemake.input.reference} \
-        --sample_ploidy 2 \
+        --sample_ploidy {args[sample_ploidy]} \
         --dbsnp {snakemake.input.dbsnp} \
         --downsample_to_coverage {args[downsample_to_coverage]} \
         --intervals $interval \
