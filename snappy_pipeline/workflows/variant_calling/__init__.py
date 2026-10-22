@@ -34,6 +34,7 @@ With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_
 ``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
 With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
 Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
+Each caller's section has ``ignore_chroms``, regular expressions for contigs that it skips (by default decoys, HLA, EBV and the hs37d5 extras); a YAML anchor in ``config.yaml`` shares one list between tasks.
 The ``FILTER`` IDs of the callers (``LowQual`` of the GATK callers; ``germline``, ``contamination`` and the other filters of ``FilterMutectCalls``) are reserved: no other task may be named like one of them, nor ``PASS``.
 
 Outputs
@@ -227,7 +228,7 @@ class BcftoolsCallStepPart(VariantCallingStepPart):
 
         return {
             "assembly": assembly,
-            "ignore_chroms": self.config.ignore_chroms,
+            "ignore_chroms": self.config.bcftools_call.ignore_chroms,
             "window_length": self.config.bcftools_call.window_length,
             "num_threads": self.config.bcftools_call.num_threads,
             "max_depth": self.config.bcftools_call.max_depth,
@@ -269,7 +270,7 @@ class Gatk3HaplotypeCallerStepPart(GatkCallerStepPartBase):
             "num_threads": self.config.gatk3_hc.num_threads,
             "window_length": self.config.gatk3_hc.window_length,
             "allow_seq_dict_incompatibility": self.config.gatk3_hc.allow_seq_dict_incompatibility,
-            "ignore_chroms": self.config.ignore_chroms,
+            "ignore_chroms": self.config.gatk3_hc.ignore_chroms,
         }
 
 
@@ -285,7 +286,7 @@ class Gatk3UnifiedGenotyperStepPart(GatkCallerStepPartBase):
             "window_length": self.config.gatk3_ug.window_length,
             "allow_seq_dict_incompatibility": self.config.gatk3_ug.allow_seq_dict_incompatibility,
             "downsample_to_coverage": self.config.gatk3_ug.downsample_to_coverage,
-            "ignore_chroms": self.config.ignore_chroms,
+            "ignore_chroms": self.config.gatk3_ug.ignore_chroms,
         }
 
 
@@ -299,7 +300,7 @@ class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
             "window_length": self.config.gatk4_hc_joint.window_length,
             "num_threads": self.config.gatk4_hc_joint.num_threads,
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_joint.allow_seq_dict_incompatibility,
-            "ignore_chroms": self.config.ignore_chroms,
+            "ignore_chroms": self.config.gatk4_hc_joint.ignore_chroms,
         }
 
 
@@ -421,7 +422,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
             "window_length": self.config.gatk4_hc_gvcf.window_length,
             "num_threads": self.config.gatk4_hc_gvcf.num_threads,
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,
-            "ignore_chroms": self.config.ignore_chroms,
+            "ignore_chroms": self.config.gatk4_hc_gvcf.ignore_chroms,
         }
 
     _get_params_combine_gvcfs = _get_params_discover
@@ -648,7 +649,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
     def _get_params_scatter(self, wildcards):
         return {
-            "ignore_chroms": sorted(set(self.config.ignore_chroms)),
+            "ignore_chroms": sorted(set(self.config.mutect2.ignore_chroms)),
             "padding": self.config.mutect2.padding,
         }
 
