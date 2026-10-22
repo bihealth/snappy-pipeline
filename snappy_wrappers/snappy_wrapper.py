@@ -52,8 +52,8 @@ class SnappyWrapper(metaclass=ABCMeta):
             exec > >(tee -a "{snakemake.log.log}") 2>&1
         fi
 
-        # Create temp directory
-        TMPDIR=$(mktemp -d)
+        # Temp directory of the job, which the wrapper base class removes afterwards
+        export TMPDIR="{tmpdir}"
 
         set -x
 
@@ -101,6 +101,7 @@ class SnappyWrapper(metaclass=ABCMeta):
         :param filename: the path where to save the script
         """
         tempfilename = None
+        tmpdir = tempfile.mkdtemp()
         try:
             # delete=False is safe on all Python versions.
             # It ensures the file is not unlinked upon closing the context manager.
@@ -115,6 +116,7 @@ class SnappyWrapper(metaclass=ABCMeta):
                                     SnappyWrapper.header,
                                     stepout=4,
                                     snakemake=self._snakemake,
+                                    tmpdir=tmpdir,
                                 ),
                                 snakemake_format(
                                     cmd,
@@ -145,7 +147,8 @@ class SnappyWrapper(metaclass=ABCMeta):
             shell(tempfilename)
 
         finally:
-            # Manually clean up the file on exit, regardless of exceptions
+            # Manually clean up the file and the temp directory on exit, regardless of exceptions
+            shutil.rmtree(tmpdir, ignore_errors=True)
             if tempfilename is not None:
                 try:
                     os.unlink(tempfilename)

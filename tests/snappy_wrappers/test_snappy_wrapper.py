@@ -6,7 +6,12 @@ import os
 
 import pytest
 
-from snappy_wrappers.snappy_wrapper import PythonWrapper, SnappyWrapper, write_declared_md5s
+from snappy_wrappers.snappy_wrapper import (
+    PythonWrapper,
+    ShellWrapper,
+    SnappyWrapper,
+    write_declared_md5s,
+)
 
 
 class _Log:
@@ -19,6 +24,7 @@ class _FakeSnakemake:
         self.log = _Log(log_path)
         self.input = None
         self.output = None
+        self.params = None
 
 
 @pytest.mark.parametrize(
@@ -33,7 +39,7 @@ def test_header_always_tees_into_snakemake_log(log_path):
     log stayed empty while the output went to the SLURM job log only.
     """
     snakemake = _FakeSnakemake(log_path)
-    header = SnappyWrapper.header.format(snakemake=snakemake)
+    header = SnappyWrapper.header.format(snakemake=snakemake, tmpdir="/tmp/job")
     assert f'rm -f "{log_path}"' in header
     assert f'tee -a "{log_path}"' in header
     assert "tty" not in header.lower()
@@ -150,3 +156,17 @@ def test_base_classes_run_on_the_oldest_python_that_snakemake_uses_for_wrappers(
     import snappy_wrappers.snappy_wrapper as module
 
     ast.parse(pathlib.Path(module.__file__).read_text(), feature_version=MIN_PY_VERSION)
+
+
+def test_shell_wrapper_removes_its_exported_temp_directory(tmp_path):
+    """The command sees an exported ``TMPDIR``, which is gone after the run, also when the
+    command sets its own ``EXIT`` trap."""
+    snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
+    snakemake.output = []
+    seen = tmp_path / "seen.txt"
+    ShellWrapper(snakemake).run(
+        f'trap "true" EXIT\nsh -c \'echo "$TMPDIR"\' > {seen}\ntouch "$TMPDIR/scratch"'
+    )
+    tmpdir = seen.read_text().strip()
+    assert tmpdir
+    assert not os.path.exists(tmpdir)
