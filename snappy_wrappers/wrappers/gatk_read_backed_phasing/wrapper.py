@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running GATK ReadBackedPhasing on one chunk (``input.region``) of the genome"""
 
+from math import ceil
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -12,17 +13,19 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
+java_mem_mb = ceil(snakemake.resources.mem_mb * 0.75)
+
 ShellWrapper(snakemake).run(
     r"""
 # Hack: get back bin directory of base/root environment.
 export PATH=$PATH:$(dirname $(dirname $(which conda)))/bin
 
-# Allow this number of variant per 10k window.
-PER10K=100
+# Allow this number of variants per window.
+PER_WINDOW={args[max_variants_per_window]}
 
 # Build list of intervals with <1% variants -------------------------------------------------------
 
-# Generate variant counts of 10kbp intervals
+# Generate variant counts of windows
 bcftools query \
     -R {snakemake.input.region} \
     -f "%CHROM\t%POS\n" \
@@ -32,40 +35,40 @@ bcftools query \
         {{
             $2 -= 1;
             if ($1 == prev_chrom &&
-                int($2 / 10000) == prev_window) {{
+                int($2 / {args[window_size]}) == prev_window) {{
                 prev_count += 1;
             }} else {{
                 if (prev_chrom != 0) {{
-                    print prev_chrom, (prev_window * 10000),
-                            (prev_window + 1) * 10000, prev_count;
+                    print prev_chrom, (prev_window * {args[window_size]}),
+                            (prev_window + 1) * {args[window_size]}, prev_count;
                 }}
                 prev_chrom = $1;
-                prev_window = int($2 / 10000);
+                prev_window = int($2 / {args[window_size]});
                 prev_count = 0;
             }}
         }}
         END {{
                 if (prev_chrom != 0) {{
-                    print prev_chrom, (prev_window * 10000),
-                            (prev_window + 1) * 10000, prev_count;
+                    print prev_chrom, (prev_window * {args[window_size]}),
+                            (prev_window + 1) * {args[window_size]}, prev_count;
                 }}
         }}' \
 > $TMPDIR/var_counts.bed
 
 # Cut out intervals to perform phasing for
 awk \
-    -v per10k=$PER10K \
+    -v per_window=$PER_WINDOW \
     -F $'\t' \
-    'BEGIN {{ OFS = FS; }} ($4 > per10k) {{ print }}' \
+    'BEGIN {{ OFS = FS; }} ($4 > per_window) {{ print }}' \
     $TMPDIR/var_counts.bed \
 | bedtools merge \
 > $TMPDIR/intervals.neg.bed
 
 # Cut out intervals to NOT perform phasing for
 awk \
-    -v per10k=$PER10K \
+    -v per_window=$PER_WINDOW \
     -F $'\t' \
-    'BEGIN {{ OFS = FS; }} ($4 <= per10k) {{ print }}' \
+    'BEGIN {{ OFS = FS; }} ($4 <= per_window) {{ print }}' \
     $TMPDIR/var_counts.bed \
 | bedtools merge \
 > $TMPDIR/intervals.pos.bed
@@ -106,7 +109,7 @@ bcftools view -H $TMPDIR/intervals.pos.nofilter.vcf.gz | wc -l
 export MALLOC_ARENA_MAX=4
 
 gatk_nonfree \
-    -Xmx8g \
+    -Xmx{java_mem_mb}m \
     -Djava.io.tmpdir=$TMPDIR \
     --analysis_type ReadBackedPhasing \
     -nct 1 \

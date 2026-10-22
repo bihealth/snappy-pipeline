@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Wrapper code for GATK PhaseByTransmission"""
 
+from math import ceil
 from typing import TYPE_CHECKING
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
@@ -12,6 +13,9 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
 
+java_mem_mb = ceil(snakemake.resources.mem_mb * 0.75)
+father_allele_first = "--FatherAlleleFirst" if args["father_allele_first"] else ""
+
 ShellWrapper(snakemake).run(
     r"""
 which tabix
@@ -21,7 +25,7 @@ which gatk_nonfree
 # Extract pedigree only
 members=$(cut -f 2 {snakemake.input.ped} | tr '\n' ',' | sed -e 's/,$//'g)
 bcftools view \
-    --threads 4 \
+    --threads {snakemake.threads} \
     -s "$members" \
     {snakemake.input.vcf} \
     -O z \
@@ -31,12 +35,12 @@ tabix -f $TMPDIR/trio_only.vcf.gz
 # Call wrapper
 MALLOC_ARENA_MAX=4 \
 gatk_nonfree \
-    -Xmx10g \
+    -Xmx{java_mem_mb}m \
     -Djava.io.tmpdir=$TMPDIR \
     --analysis_type PhaseByTransmission \
     -nct 1 \
-    --pedigreeValidationType SILENT \
-    --FatherAlleleFirst \
+    --pedigreeValidationType {args[pedigree_validation_type]} \
+    {father_allele_first} \
     --DeNovoPrior {args[de_novo_prior]} \
     {extra_arguments} \
     --pedigree {snakemake.input.ped} \

@@ -148,7 +148,12 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
             yield key, _BASE_PATH_OUT + ext
 
     def _get_params_run(self, wildcards) -> dict[str, Any]:
-        return {"de_novo_prior": self.config.gatk_phase_by_transmission.de_novo_prior}
+        config = self.config.gatk_phase_by_transmission
+        return {
+            "de_novo_prior": config.de_novo_prior,
+            "pedigree_validation_type": config.pedigree_validation_type,
+            "father_allele_first": config.father_allele_first,
+        }
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{14 * 1024}MB")
 
@@ -214,8 +219,11 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
         return {"ignore_contigs": self.config.ignore_contigs, "padding": 0}
 
     def _get_params_run(self, wildcards):
+        config = self.config.gatk_read_backed_phasing
         return {
-            "phase_quality_threshold": self.config.gatk_read_backed_phasing.phase_quality_threshold
+            "phase_quality_threshold": config.phase_quality_threshold,
+            "window_size": config.window_size,
+            "max_variants_per_window": config.max_variants_per_window,
         }
 
     def _get_output_files_scatter(self):

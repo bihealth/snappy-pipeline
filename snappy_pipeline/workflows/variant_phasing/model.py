@@ -1,7 +1,7 @@
 import enum
-from typing import Annotated
+from typing import Annotated, Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from snappy_pipeline.models import (
     EnumField,
@@ -44,10 +44,22 @@ class GatkReadBackedPhasing(ToolModel):
     num_jobs: int = 24
     """number of chunks the genome is split into, each phased in its own job"""
 
+    window_size: Annotated[int, Field(ge=1)] = 10000
+    """size of the windows (bases) in which the variants are counted"""
+
+    max_variants_per_window: int = 100
+    """windows with more variants are not phased"""
+
 
 class GatkPhaseByTransmission(ToolModel):
     de_novo_prior: float = 1e-8
     """use 1e-6 when interested in phasing de novos"""
+
+    pedigree_validation_type: Literal["ALL", "STRICT", "SILENT"] = "SILENT"
+    """how strictly GATK validates the pedigree against the VCF (``--pedigreeValidationType``)"""
+
+    father_allele_first: bool = True
+    """write the paternal allele first in phased genotypes (``--FatherAlleleFirst``)"""
 
 
 class ExpectedPhasedVariants(SnappyModel):
