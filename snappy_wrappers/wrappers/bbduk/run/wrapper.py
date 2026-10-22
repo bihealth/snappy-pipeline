@@ -35,7 +35,9 @@ if input_path_right:
     assert len(input_path_left) == len(input_path_right)
 
 config = args["config"]
-adapter_sequences = snakemake.input.adapter_sequences
+references = ",".join(
+    [*snakemake.input.get("adapter_sequences", []), *config["builtin_references"]]
+)
 barcodes = snakemake.input.get("barcodes", "")
 
 ShellWrapper(snakemake).run(
@@ -100,7 +102,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         $(if [[ $paired -eq 1 ]]; then \
             echo in2=$in2 out2=$out2 outm2=$outm2
         fi) \
-        ref=$(echo "{adapter_sequences}" | tr ' ' ',') \
+        ref={references} \
         stats=$TMPDIR/report/$report/stats.tsv       \
         refstats=$TMPDIR/report/$report/refstats.tsv \
         rpkm=$TMPDIR/report/$report/rpkm.tsv         \

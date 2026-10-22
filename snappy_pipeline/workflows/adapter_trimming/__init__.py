@@ -3,6 +3,7 @@
 
 Trims adapters and low-quality bases from the reads of each library.
 The ``tool`` field selects ``bbduk`` (BBDuk of BBTools) or ``fastp``.
+``bbduk`` trims the sequences of the files in ``adapter_sequences`` and of BBDuk's built-in references in ``builtin_references`` (such as ``adapters`` and ``phix``); it needs at least one.
 Each library gives one result, which keeps the sub-directory and file names of its input FASTQ files.
 Tasks that read reads name this task in ``depends_on.reads``.
 

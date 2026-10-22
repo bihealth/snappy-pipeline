@@ -1,6 +1,6 @@
 from enum import IntEnum, StrEnum
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt, model_validator
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import ConfigPath
@@ -14,6 +14,18 @@ from snappy_pipeline.workflows.abstract.protocol import (
 class Tool(StrEnum):
     BBDUK = "bbduk"
     FASTP = "fastp"
+
+
+class BbdukReference(StrEnum):
+    """The reference keywords of BBDuk's ``ref=``, files that come with BBTools"""
+
+    ADAPTERS = "adapters"
+    ARTIFACTS = "artifacts"
+    PHIX = "phix"
+    LAMBDA = "lambda"
+    PJET = "pjet"
+    MTST = "mtst"
+    KAPA = "kapa"
 
 
 class Interleaved(StrEnum):
@@ -361,16 +373,13 @@ class Bbduk(ToolModel):
     """Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads."""
 
     adapter_sequences: Annotated[
-        list[str],
-        Field(
-            examples=[
-                [
-                    "/path/to/bbtools/39.01/resources/adapters.fa",
-                    "/path/to/bbtools/39.01/resources/phix174_ill.ref.fa.gz",
-                ]
-            ]
-        ),
-    ]
+        list[ConfigPath], Field(examples=[["/path/to/adapters.fa", "/path/to/contaminants.fa.gz"]])
+    ] = []
+    """Reference files of adapter and contaminant sequences (rule inputs)"""
+
+    builtin_references: list[BbdukReference] = []
+    """BBDuk's built-in references, such as ``adapters`` and ``phix``; ``ref=`` gets them after
+    ``adapter_sequences``"""
 
     num_threads: int = 8
     interleaved: bool | Interleaved = "auto"
@@ -756,7 +765,7 @@ class Bbduk(ToolModel):
       crash: Crash upon encountering bad barcodes.
     """
 
-    barcodes: str = ""
+    barcodes: ConfigPath = ""
     """
     File of barcodes.
     """
@@ -874,6 +883,12 @@ class Bbduk(ToolModel):
     """
     Use this many buckets for counting.
     """
+
+    @model_validator(mode="after")
+    def check_references(self):
+        if not self.adapter_sequences and not self.builtin_references:
+            raise ValueError("bbduk needs adapter_sequences or builtin_references")
+        return self
 
 
 class AdapterTrimmingDependsOn(SnappyModel):
