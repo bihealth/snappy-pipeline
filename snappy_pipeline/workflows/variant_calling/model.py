@@ -131,16 +131,42 @@ class Gatk3Ug(ToolModel, IgnoreContigs, IntervalPadding):
     """Ploidy of the samples (``--sample_ploidy``)"""
 
 
-class Gatk4HcJoint(ToolModel, IgnoreContigs):
+class Gatk4HcJoint(ToolModel, IgnoreContigs, IntervalPadding):
     window_length: int = 10000000
     num_threads: int = 16
     allow_seq_dict_incompatibility: bool = False
 
+    annotation_groups: list[str] = ["StandardAnnotation", "StandardHCAnnotation"]
+    """Annotation groups of ``HaplotypeCaller`` (``-G``)"""
 
-class Gatk4HcGvcf(ToolModel, IgnoreContigs):
+
+class Gatk4HcGvcf(ToolModel, IgnoreContigs, IntervalPadding):
     window_length: int = 10000000
     num_threads: int = 16
     allow_seq_dict_incompatibility: bool = False
+
+    discover_annotation_groups: list[str] = [
+        "StandardAnnotation",
+        "AS_StandardAnnotation",
+        "StandardHCAnnotation",
+        "AlleleSpecificAnnotation",
+    ]
+    """Annotation groups of ``HaplotypeCaller`` (``-G``)"""
+
+    combine_gvcfs_annotation_groups: list[str] = [
+        "StandardAnnotation",
+        "AS_StandardAnnotation",
+        "StandardHCAnnotation",
+        "AlleleSpecificAnnotation",
+    ]
+    """Annotation groups of ``CombineGVCFs`` (``-G``)"""
+
+    genotype_annotation_groups: list[str] = [
+        "StandardAnnotation",
+        "AS_StandardAnnotation",
+        "StandardHCAnnotation",
+    ]
+    """Annotation groups of ``GenotypeGVCFs`` (``-G``)"""
 
 
 class TumorNormalMode(enum.StrEnum):

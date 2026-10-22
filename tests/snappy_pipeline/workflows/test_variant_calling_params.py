@@ -6,16 +6,24 @@ from snappy_pipeline.workflows.variant_calling import (
     BcftoolsCallStepPart,
     Gatk3HaplotypeCallerStepPart,
     Gatk3UnifiedGenotyperStepPart,
+    Gatk4HaplotypeCallerGvcfStepPart,
+    Gatk4HaplotypeCallerJointStepPart,
 )
-from snappy_pipeline.workflows.variant_calling.model import BcftoolsCall, Gatk3Hc, Gatk3Ug
+from snappy_pipeline.workflows.variant_calling.model import (
+    BcftoolsCall,
+    Gatk3Hc,
+    Gatk3Ug,
+    Gatk4HcGvcf,
+    Gatk4HcJoint,
+)
 
 
-def _params(part_class, **sections):
+def _params(part_class, action="run", **sections):
     # The params only read the tool's config section, so skip the full step setup.
     part = object.__new__(part_class)
     part.config = SimpleNamespace(**{k: v for k, v in sections.items()})
     part.parent = SimpleNamespace(get_upstream_paths=lambda name: SimpleNamespace(fasta="ref.fa"))
-    return part._get_params_run(SimpleNamespace())
+    return getattr(part, f"_get_params_{action}")(SimpleNamespace())
 
 
 def test_bcftools_call_passes_its_settings():
@@ -49,3 +57,24 @@ def test_gatk3_ug_passes_its_settings():
     params = _params(Gatk3UnifiedGenotyperStepPart, gatk3_ug=Gatk3Ug())
 
     assert (params["padding"], params["sample_ploidy"]) == (1000, 2)
+
+
+def test_gatk4_hc_joint_passes_its_settings():
+    params = _params(Gatk4HaplotypeCallerJointStepPart, gatk4_hc_joint=Gatk4HcJoint(padding=500))
+
+    assert params["padding"] == 500
+    assert params["annotation_groups"] == ["StandardAnnotation", "StandardHCAnnotation"]
+
+
+def test_gatk4_hc_gvcf_passes_the_annotation_groups_of_each_action():
+    config = Gatk4HcGvcf(genotype_annotation_groups=["StandardAnnotation"])
+    groups = {
+        action: _params(Gatk4HaplotypeCallerGvcfStepPart, action, gatk4_hc_gvcf=config)[
+            "annotation_groups"
+        ]
+        for action in ("discover", "combine_gvcfs", "genotype")
+    }
+
+    assert groups["genotype"] == ["StandardAnnotation"]
+    assert "AlleleSpecificAnnotation" in groups["discover"]
+    assert "AlleleSpecificAnnotation" in groups["combine_gvcfs"]

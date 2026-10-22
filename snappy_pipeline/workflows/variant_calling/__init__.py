@@ -310,6 +310,8 @@ class Gatk4HaplotypeCallerJointStepPart(GatkCallerStepPartBase):
             "num_threads": self.config.gatk4_hc_joint.num_threads,
             "allow_seq_dict_incompatibility": self.config.gatk4_hc_joint.allow_seq_dict_incompatibility,
             "ignore_contigs": self.config.gatk4_hc_joint.ignore_contigs,
+            "padding": self.config.gatk4_hc_joint.padding,
+            "annotation_groups": self.config.gatk4_hc_joint.annotation_groups,
         }
 
 
@@ -425,15 +427,24 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         yield from result.items()
 
     def _get_params_discover(self, wildcards) -> dict[str, Any]:
-        return {
-            "window_length": self.config.gatk4_hc_gvcf.window_length,
-            "num_threads": self.config.gatk4_hc_gvcf.num_threads,
-            "allow_seq_dict_incompatibility": self.config.gatk4_hc_gvcf.allow_seq_dict_incompatibility,
-            "ignore_contigs": self.config.gatk4_hc_gvcf.ignore_contigs,
-        }
+        return self._params_gvcf("discover")
 
-    _get_params_combine_gvcfs = _get_params_discover
-    _get_params_genotype = _get_params_discover
+    def _get_params_combine_gvcfs(self, wildcards) -> dict[str, Any]:
+        return self._params_gvcf("combine_gvcfs")
+
+    def _get_params_genotype(self, wildcards) -> dict[str, Any]:
+        return self._params_gvcf("genotype")
+
+    def _params_gvcf(self, action: str) -> dict[str, Any]:
+        config = self.config.gatk4_hc_gvcf
+        return {
+            "window_length": config.window_length,
+            "num_threads": config.num_threads,
+            "allow_seq_dict_incompatibility": config.allow_seq_dict_incompatibility,
+            "ignore_contigs": config.ignore_contigs,
+            "padding": config.padding,
+            "annotation_groups": getattr(config, f"{action}_annotation_groups"),
+        }
 
 
 class ReportStepPart(BaseStepPart):

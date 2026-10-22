@@ -1,8 +1,14 @@
+from math import ceil
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
+
+# Each of the parallel shards gets an equal part of 75% of the job memory as Java heap
+java_mem_mb = ceil(snakemake.resources.mem_mb * 0.75 / args["num_threads"])
+annotation_groups = " ".join(f"-G {group}" for group in args["annotation_groups"])
 allow_seq_dict_incompatibility = (
     "--disable-sequence-dictionary-validation true"
     if args.get("allow_seq_dict_incompatibility", False)
@@ -26,7 +32,7 @@ gatk PreprocessIntervals \
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
 # passing to ``--intervals``.
-awk -v PADDING=1000 '
+awk -v PADDING={args[padding]} '
     (!/^@/) {{
         chrom=$1;
         start=$2;
@@ -52,7 +58,7 @@ run-shard()
     interval=$2
 
     # Create per-sample gVCF file
-    GATK_JAVA_MEMORY=3750m
+    GATK_JAVA_MEMORY={java_mem_mb}m
     gatk \
         HaplotypeCaller \
         --java-options "-Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR" \
@@ -62,10 +68,7 @@ run-shard()
         --dbsnp {snakemake.input.dbsnp} \
         --intervals $interval \
         --input {snakemake.input.bam} \
-        -G StandardAnnotation \
-        -G AS_StandardAnnotation \
-        -G StandardHCAnnotation \
-        -G AlleleSpecificAnnotation \
+        {annotation_groups} \
         {allow_seq_dict_incompatibility} \
         {extra_arguments} \
         -ERC GVCF
