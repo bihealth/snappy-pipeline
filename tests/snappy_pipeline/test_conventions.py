@@ -332,6 +332,45 @@ def test_wrappers_get_the_params_they_read():
     assert not stale, f"remove these entries from WRAPPER_PARAM_EXCEPTIONS: {stale}"
 
 
+#: Wrappers that read their params in a way ``test_wrappers_read_the_params_they_get`` does not see
+WRAPPERS_READING_PARAMS_DYNAMICALLY = {
+    "cbioportal/case_lists": "iterates over its params (cbioportal is postponed)",
+    "cbioportal/meta_files": "iterates over its params (cbioportal is postponed)",
+    "mehari/bam_qc": "its keys are library names (varfish export, left for later)",
+    "varfish_annotator/annotate_svs": "varfish export, left for later",
+}
+
+
+def test_wrappers_read_the_params_they_get():
+    """Every param of a wrapper job occurs in the wrapper's Python files.
+
+    A param that no wrapper reads is dead, or a config option that never reaches the tool, while
+    Snakemake reruns the job when it changes. ``extra_arguments`` is read by the base class.
+    """
+    found, used = set(), set()
+    for _, job in _snapshot_jobs():
+        wrapper = (job.get("wrapper") or "").partition("snappy_wrappers/wrappers/")[2]
+        params = job.get("params")
+        if not wrapper or not isinstance(params, dict):
+            continue
+        if wrapper in WRAPPERS_READING_PARAMS_DYNAMICALLY:
+            used.add(wrapper)
+            continue
+        paths = (REPO / "snappy_wrappers" / "wrappers" / wrapper).glob("*.py")
+        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
+        args = params.get("args", {})
+        keys = (
+            {key for key in args if key != "extra_arguments"} if isinstance(args, dict) else set()
+        )
+        keys |= {f"params.{key}" for key in params if key != "args"}
+        for key in keys:
+            if not re.search(rf"\b{re.escape(key.removeprefix('params.'))}\b", text):
+                found.add(f"{wrapper} does not read {key}")
+    assert not found, f"rules pass params that their wrappers do not read: {sorted(found)}"
+    stale = sorted(set(WRAPPERS_READING_PARAMS_DYNAMICALLY) - used)
+    assert not stale, f"remove these entries from WRAPPERS_READING_PARAMS_DYNAMICALLY: {stale}"
+
+
 #: Params that hold file paths. The test fails for new ones and for fixed ones, so
 #: the list only shrinks.
 PARAMS_FILES_BASELINE = SNAPSHOTS / "params_file_violations.json"
