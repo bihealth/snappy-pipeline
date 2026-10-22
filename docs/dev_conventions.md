@@ -64,6 +64,8 @@ Wrappers never read `snakemake.config`.
 Every file a wrapper reads, such as the reference FASTA, is a rule input, and every other value is a param.
 Only inputs order the jobs that produce them first and trigger reruns when they change.
 `test_wrappers_get_the_params_they_read` checks that the jobs in the DAG snapshots pass every `args` key their wrapper reads.
+A changed param also triggers a rerun, so every value a wrapper uses is a config field passed as a param, never a constant in the wrapper or the Snakefile; rules with a `run:` block need params for the config values their output depends on, too.
+`test_wrappers_read_the_params_they_get` checks the other direction: every param of a wrapper job occurs in its wrapper (`WRAPPERS_READING_PARAMS_DYNAMICALLY` lists the exceptions with a reason).
 `test_files_are_inputs_not_params` flags params that hold file paths, against a baseline that only shrinks.
 
 The config section of a tool inherits `ToolModel` (`snappy_pipeline/models`), whose `extra_arguments` are additional arguments for the tool's command line.
