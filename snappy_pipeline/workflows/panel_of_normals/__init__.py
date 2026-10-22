@@ -52,6 +52,7 @@ The two data types differ in the workflow that creates the reference (CNVkit ``b
 The step follows the common practice and distributes the computations over several jobs.
 
 Without ``depends_on.kits``, ``cnvkit`` runs in whole genome mode.
+There, the reference has no edge correction, which models the coverage drop at bait edges, whatever ``cnvkit.reference.edge_correction`` says (as ``cnvkit.py batch --method wgs``).
 With it, the baits of the common kit of the normals are the targets.
 For exomes, the access file only restricts the antitarget regions.
 For whole genomes, ``autobin`` uses it to compute the average target size.
