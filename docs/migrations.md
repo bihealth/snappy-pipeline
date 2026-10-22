@@ -297,7 +297,7 @@ Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull requ
 The rules run the same tools (BWA, STAR, GATK, etc.).
 A real-run comparison of the e2e pipelines against main 0.6.3 gives the same results, with two exceptions: main's bcftools 1.15.1 drops every record of the dkfz-filtered calls (it cannot parse their GT), while snake9's bcftools 1.23.1 keeps and tags them, and `FILTER` IDs are task names (migration note 10).
 The per-step Snakefiles (`workflows/*/Snakefile`) still use the same patterns: `wf.config`, `wf.get_input_files()`, `wf.get_params()` and wrappers.
-Outside the e2e pipelines, results change on purpose where main was wrong or ignored a setting: MELT's GroupAnalysis reads the discovery output of all pedigree members (main read the first member's only), the `ignore_contigs` defaults apply to mutect2 and sequenza (migration note 14), arcasHLA gets `zygosity_threshold` (note 17), VEP annotates multiallelic records split into one record per allele (`bcftools norm`), and the ebfilter panel draws from all normal DNA libraries instead of the normals matched to a tumor.
+Outside the e2e pipelines, results change on purpose where main was wrong or ignored a setting: MELT's GroupAnalysis reads the discovery output of all pedigree members (main read the first member's only), the `ignore_contigs` defaults apply to mutect2 and sequenza (migration note 14), arcasHLA gets `zygosity_threshold` (note 17), VEP annotates multiallelic records split into one record per allele (`bcftools norm`), the ebfilter panel draws from all normal DNA libraries instead of the normals matched to a tumor, and Control-FREEC takes each donor's sex from the sample sheet (main used `XX` for every sample).
 
 ## Migration notes
 

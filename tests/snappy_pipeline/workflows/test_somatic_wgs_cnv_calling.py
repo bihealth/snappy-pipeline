@@ -3,6 +3,7 @@
 
 from types import SimpleNamespace
 
+import pandas as pd
 import pytest
 from snakemake.iocontainers import Wildcards
 
@@ -20,6 +21,7 @@ from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import (
 )
 
 WILDCARDS = Wildcards(fromdict={"library_name": "T1-DNA1-WGS1"})
+TUMOR_WILDCARDS = Wildcards(fromdict={"tumor_library": "T1-DNA1-WGS1"})
 
 
 class _Parent:
@@ -123,15 +125,22 @@ def test_control_freec_plot_declares_the_plots_of_cnvkit_plot():
     assert set(outputs) == {"diagram", "diagram_md5", "scatter", "scatter_md5"}
 
 
-def test_control_freec_run_passes_the_settings_of_the_ini_file():
-    # The params only read the Control-FREEC config section, so skip the full step setup.
+def _control_freec_part(sex, **cfg):
+    # The params only read the Control-FREEC config section and the library table.
     part = object.__new__(ControlFreecSomaticWgsStepPart)
-    part.config = SimpleNamespace(control_freec=ControlFreec(convert={}, ploidy=3, sex="XY"))
+    part.config = SimpleNamespace(control_freec=ControlFreec(convert={}, **cfg))
+    table = pd.DataFrame({"library_name": ["T1-DNA1-WGS1"], "sex": [sex]})
     part.parent = SimpleNamespace(
-        get_upstream_paths=lambda field: SimpleNamespace(mappability="mappability.gem")
+        get_upstream_paths=lambda field: SimpleNamespace(mappability="mappability.gem"),
+        build_library_dataframe=lambda: table,
     )
+    return part
 
-    assert part._get_params_run(WILDCARDS) == {
+
+def test_control_freec_run_passes_the_settings_of_the_ini_file():
+    part = _control_freec_part("male", ploidy=3)
+
+    assert part._get_params_run(TUMOR_WILDCARDS) == {
         "path_mappability_enabled": True,
         "window_size": -1,
         "ploidy": 3,
@@ -145,6 +154,21 @@ def test_control_freec_run_passes_the_settings_of_the_ini_file():
         "min_cna_length": 2,
         "sex": "XY",
     }
+
+
+@pytest.mark.parametrize(
+    "sex, unknown_sex, freec_sex",
+    [
+        ("male", "XX", "XY"),
+        ("female", "XY", "XX"),
+        ("unknown", "XY", "XY"),
+        ("unknown", "XX", "XX"),
+    ],
+)
+def test_control_freec_takes_the_sex_from_the_sample_sheet(sex, unknown_sex, freec_sex):
+    part = _control_freec_part(sex, unknown_sex=unknown_sex)
+
+    assert part._get_params_run(TUMOR_WILDCARDS)["sex"] == freec_sex
 
 
 def test_control_freec_transform_passes_the_amplification_threshold():

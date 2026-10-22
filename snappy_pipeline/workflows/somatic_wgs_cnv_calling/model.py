@@ -1,5 +1,5 @@
 import enum
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import model_validator
 
@@ -98,8 +98,8 @@ class ControlFreec(ToolModel):
     min_cna_length: int = 2
     """Minimal number of consecutive windows for a copy number alteration (``minCNAlength``)"""
 
-    sex: str = "XX"
-    """Sex of the sample, XX or XY (``sex``); the copy numbers of the gonosomes are unreliable if it is wrong"""
+    unknown_sex: Literal["XX", "XY"] = "XX"
+    """Control-FREEC's ``sex`` for donors whose sex the sample sheet does not give; male donors get XY, female ones XX"""
 
     convert: ControlFreecConvert
 

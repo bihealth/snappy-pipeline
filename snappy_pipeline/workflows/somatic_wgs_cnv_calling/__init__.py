@@ -13,6 +13,7 @@ The ``tool`` field selects the caller:
 
 The task gives one result per tumor DNA library.
 ``control_freec`` leaves out tumor libraries without a matched normal, with a warning.
+It takes the sex of each donor from the sample sheet (``XY`` for male, ``XX`` for female donors) and ``control_freec.unknown_sex`` for the others.
 ``cnvetti`` segments the coverage of such a tumor alone.
 The files are unfiltered.
 They contain low-quality calls.
@@ -33,6 +34,7 @@ Downstream tasks read the key ``dnacopy_seg``, which only ``cnvkit`` provides, s
 """
 
 import os
+from functools import cached_property
 from itertools import chain
 from typing import Any
 
@@ -533,6 +535,17 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_log_file(self, action):
         return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
 
+    @cached_property
+    def freec_sex(self) -> dict[str, str]:
+        """Control-FREEC's ``sex`` (XY, XX) of each library whose donor's sex is known"""
+        df = self.parent.build_library_dataframe()
+        sexes = {"male": "XY", "female": "XX"}
+        return {
+            library: sexes[str(sex).lower()]
+            for library, sex in zip(df["library_name"], df["sex"])
+            if str(sex).lower() in sexes
+        }
+
     def _get_output_files_run(self):
         base = "work/{tumor_library}/out/{tumor_library}"
         return {"ratio": base + ".ratio.txt", "ratio_md5": base + ".ratio.txt.md5"}
@@ -590,7 +603,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "unique_match": cfg.unique_match,
             "force_gc_content_normalization": cfg.force_gc_content_normalization,
             "min_cna_length": cfg.min_cna_length,
-            "sex": cfg.sex,
+            "sex": self.freec_sex.get(wildcards.tumor_library, cfg.unknown_sex),
         }
 
     def _get_params_transform(self, wildcards: Wildcards) -> dict[str, Any]:
