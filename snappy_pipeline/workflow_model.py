@@ -50,7 +50,7 @@ class DataSet(LibraryFolders):
 
 class TaskModel(SnappyModel):
     step: str
-    """The workflow to use (e.g., 'ngs_mapping', 'somatic_variant_calling')"""
+    """The workflow to use (e.g., 'ngs_mapping', 'variant_calling')"""
 
     name: str
     """The unique instance name for this pipeline execution (e.g., 'mapping_stringent')"""

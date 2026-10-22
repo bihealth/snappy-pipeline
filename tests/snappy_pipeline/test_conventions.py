@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Checks for the coding conventions in ``docs/dev_conventions.rst``."""
+"""Checks for the coding conventions in ``docs/dev_conventions.md``."""
 
 from __future__ import annotations
 
@@ -211,7 +211,7 @@ def test_depends_on_keys_use_the_vocabulary():
         if depends_on is not None:
             keys = set(depends_on.annotation.model_fields) - DEPENDS_ON_KEYS
             found += [f"{step}.{key}" for key in sorted(keys)]
-    assert not found, f"depends_on keys outside the vocabulary in docs/dev_conventions.rst: {found}"
+    assert not found, f"depends_on keys outside the vocabulary in docs/dev_conventions.md: {found}"
 
 
 def test_tool_is_required():

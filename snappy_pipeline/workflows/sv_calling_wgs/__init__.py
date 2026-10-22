@@ -56,8 +56,6 @@ from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Default configuration for the sv_calling_wgs step
-
 
 def escape_dots_dashes(s: str) -> str:
     """Escape dots and dashes with double-underscore constructs."""

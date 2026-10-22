@@ -101,7 +101,7 @@ class NgsDataQc(SnappyStepModel):
 
     picard: Picard | None = None
 
-    fastqc: Fastqc | None = None  # TODO fastqc has no configuration options in the DEFAULT_CONFIG?
+    fastqc: Fastqc | None = None
 
     @model_validator(mode="after")
     def validate_tool_dependencies(self):

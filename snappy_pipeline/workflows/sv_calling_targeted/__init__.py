@@ -40,8 +40,6 @@ from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Default configuration for the sv_calling_targeted step
-
 
 class SvCallingTargetedWorkflow(BaseStep):
     """Perform germline targeted sequencing CNV calling"""

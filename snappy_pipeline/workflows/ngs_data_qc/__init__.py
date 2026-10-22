@@ -51,7 +51,6 @@ from snappy_pipeline.workflows.common.reads import reads_input_files, reads_para
 
 from .model import NgsDataQc as NgsDataQcConfigModel
 
-#: Default configuration for the ngs_mapping schema
 
 MULTIPLE_METRICS = {
     "CollectAlignmentSummaryMetrics": ["alignment_summary_metrics"],

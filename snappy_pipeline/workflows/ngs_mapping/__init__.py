@@ -197,8 +197,6 @@ BWA_MEM2_INDEX_EXTENSIONS = (".amb", ".ann", ".0123", ".bwt.2bit.64", ".pac")
 #: Files of a STAR index directory that mark it as the index
 STAR_INDEX_FILES = ("Genome", "SA", "SAindex")
 
-#: Default configuration
-
 
 class MappingGetResultFilesMixin:
     """Mixin that provides ``get_result_files()`` for mapping steps"""
@@ -507,8 +505,6 @@ class StrandednessStepPart(BaseStepPart):
             "config": self.config.strandedness.model_dump(by_alias=True),
             "library_name": wildcards.library_name,
         }
-
-    _get_params_counts = _get_params_infer
 
 
 class Minimap2StepPart(ReadMappingStepPart):

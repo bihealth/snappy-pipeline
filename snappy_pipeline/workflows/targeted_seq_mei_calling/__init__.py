@@ -33,9 +33,6 @@ from .model import TargetedSeqMeiCalling as TargetedSeqMeiCallingConfigModel
 EXT_VALUES = (".vcf.gz", ".vcf.gz.tbi", ".vcf.gz.md5", ".vcf.gz.tbi.md5")
 
 
-#: Default configuration for the targeted_seq_mei_calling step.
-
-
 class ScrambleStepPart(BaseStepPart):
     """Mobile element insertion detection using GeneDx::scramble"""
 

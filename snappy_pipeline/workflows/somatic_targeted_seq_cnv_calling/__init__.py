@@ -57,7 +57,6 @@ from .model import SomaticTargetedSeqCnvCalling as SomaticTargetedSeqCnvCallingC
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Default configuration for the somatic_targeted_seq_cnv_calling step
 
 #: JSON key for "isCancer"
 KEY_IS_CANCER = "isCancer"

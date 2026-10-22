@@ -198,9 +198,6 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
         return self._get_params("coverage")
 
-    def _get_params_tumor_normal_ratio(self, wildcards: Wildcards) -> dict[str, Any]:
-        return self._get_params("tumor_normal_ratio")
-
     def _get_params_segment(self, wildcards: Wildcards) -> dict[str, Any]:
         return self._get_params("segment")
 

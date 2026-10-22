@@ -54,9 +54,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 #: Extension of files
 EXTS = (".tsv.gz", ".tsv.gz.md5")
 
-# TODO: the number of restart runtimes is high because tabix in HTSJDK/Jannovar is flaky...
-
-#: Default configuration for the somatic_variant_calling step
 
 #: ``cohort_name`` of libraries in a pedigree whose index has no DNA library
 _NO_INDEX = "unknown"

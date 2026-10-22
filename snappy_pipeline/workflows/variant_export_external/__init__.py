@@ -40,8 +40,6 @@ from snappy_pipeline.workflows.ngs_mapping import TargetCovReportStepPart
 
 from .model import VariantExportExternal as VariantExportExternalConfigModel
 
-#: Default configuration for the somatic_variant_calling step
-
 
 class BamReportsExternalStepPart(TargetCovReportStepPart):
     """Build target coverage report and QC report for external BAM files"""

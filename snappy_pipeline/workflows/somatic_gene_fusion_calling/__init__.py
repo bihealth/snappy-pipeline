@@ -46,8 +46,6 @@ from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Default configuration for the somatic_gene_fusion_calling step
-
 
 class SomaticGeneFusionCallingStepPart(BaseStepPart):
     """Base class for somatic gene fusion calling"""

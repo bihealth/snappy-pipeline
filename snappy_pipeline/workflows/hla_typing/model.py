@@ -8,24 +8,6 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType,
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 
-class MHCIClassDnaTool(enum.StrEnum):
-    optitype = "optitype"
-    hla_la = "hla_la"
-
-
-class MHCIClassRnaTool(enum.StrEnum):
-    optitype = "optitype"
-    arcashla = "arcashla"
-
-
-class MHCIIClassDnaTool(enum.StrEnum):
-    hla_la = "hla_la"
-
-
-class MHCIIClassRnaTool(enum.StrEnum):
-    arcashla = "arcashla"
-
-
 class Tool(enum.StrEnum):
     optitype = "optitype"
     arcashla = "arcashla"

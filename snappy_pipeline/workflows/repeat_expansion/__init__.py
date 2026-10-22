@@ -37,7 +37,6 @@ from .model import RepeatExpansion as RepeatExpansionConfigModel
 EXT_JSON = (".json", ".json.md5")
 #: Extensions of files to create as main payload - VCF.
 EXT_VCF = (".vcf", ".vcf.md5")
-#: Default configuration for the repeat_expansion step.
 
 
 class ExpansionHunterStepPart(BaseStepPart):

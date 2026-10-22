@@ -57,8 +57,6 @@ _OUT_PATTERN = "work/{library_name}/out/{library_name}"
 #: HLA typing tools
 HLA_TYPERS = ("optitype", "arcashla")
 
-#: Default configuration for the hla_typing schema
-
 
 class OptiTypeStepPart(BaseStepPart):
     """HLA Typing using OptiType"""

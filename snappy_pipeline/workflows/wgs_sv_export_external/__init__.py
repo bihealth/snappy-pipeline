@@ -46,8 +46,6 @@ KEY_EXT = {
     "vcf_tbi": ".vcf.gz.tbi",
 }
 
-#: Default configuration for the wgs_sv_export_external step
-
 
 class VarfishAnnotatorExternalStepPart(BaseStepPart):
     """Annotate externally generated VCF file using "varfish-annotator annotate-sv"."""

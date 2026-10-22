@@ -43,8 +43,6 @@ INFIXES = ("gts", "feature-effects", "db-infos")
 #: VCF key to file extensions
 KEY_EXT = {"vcf": ".vcf.gz", "vcf_tbi": ".vcf.gz.tbi"}
 
-#: Default configuration for the wgs_cnv_export_external step
-
 
 class VarfishAnnotatorExternalStepPart(BaseStepPart):
     """Annotate externally generated VCF file using "varfish-annotator annotate-sv"."""

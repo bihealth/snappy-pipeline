@@ -34,8 +34,6 @@ from .model import AdapterTrimming as AdapterTrimmingConfigModel
 #: Adatper trimming tools
 TRIMMERS = ("bbduk", "fastp")
 
-#: Default configuration for the hla_typing schema
-
 
 class AdapterTrimmingStepPart(BaseStepPart):
     """Adapter trimming common features"""

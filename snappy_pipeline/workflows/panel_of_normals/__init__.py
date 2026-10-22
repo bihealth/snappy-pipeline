@@ -86,8 +86,6 @@ from .model import Tool
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Default configuration for the somatic_variant_calling schema
-
 
 class PanelOfNormalsStepPart(BaseStepPart):
     """Base class for panel of normals step parts
@@ -235,15 +233,14 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     #: Config paths reach the wrappers as inputs, so they are left out of the params
     _config_files = {"path_normals_list", "mappability", "reptiming"}
 
-    def _get_params_install(self, wildcards):
+    def _get_params_prepare(self, wildcards):
         return {
             "config": self.config.get(self.name).model_dump(
                 by_alias=True, exclude=self._config_files
             )
         }
 
-    _get_params_prepare = _get_params_install
-    _get_params_create_panel = _get_params_install
+    _get_params_create_panel = _get_params_prepare
 
     def _get_params_coverage(self, wildcards):
         mapper = str(self.parent.get_task_config("alignments").tool)

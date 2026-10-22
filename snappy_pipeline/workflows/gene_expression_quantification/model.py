@@ -140,9 +140,9 @@ class GeneExpressionQuantification(SnappyStepModel):
         default_factory=GeneExpressionQuantificationDependsOn
     )
 
-    tool: Tool  # TODO: add default = [Tool.salmon]
+    tool: Tool
 
-    strand: Strand | int = -1  # TODO: what is this default value of -1?
+    strand: Strand | int = -1
     """Use 0, 1 or 2 to force unstranded, forward or reverse strand. Use -1 to guess."""
 
     featurecounts: Featurecounts | None = None

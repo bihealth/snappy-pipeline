@@ -128,8 +128,6 @@ MUTECT2_FILTER_IDS = frozenset(
 )
 GATK_GERMLINE_FILTER_IDS = frozenset({"LowQual"})
 
-#: Default configuration for the variant_calling step
-
 
 class VariantCallingStepPart(BaseStepPart):
     """Base class for germline variant calling step parts
