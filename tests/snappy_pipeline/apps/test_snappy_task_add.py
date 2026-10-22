@@ -16,7 +16,6 @@ def test_task_add_ngs_mapping(germline_sheet_fake_project_fs, mocker):
     result = runner.invoke(snappy_cli.main, ["task", "add", "ngs_mapping"])
     assert result.exit_code == 0
 
-    assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/pipeline_job.sh")
     assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/config.yaml.bak")
     with germline_sheet_fake_project_fs.open("/project-dir/config.yaml", "rt") as f:
         content = f.read()
@@ -32,7 +31,6 @@ def test_task_add_custom_task_name(germline_sheet_fake_project_fs, mocker):
     result = runner.invoke(snappy_cli.main, ["task", "add", "custom_mapping=ngs_mapping"])
     assert result.exit_code == 0
 
-    assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/pipeline_job.sh")
     assert germline_sheet_fake_project_fs.os.path.exists("/project-dir/config.yaml.bak")
     with germline_sheet_fake_project_fs.open("/project-dir/config.yaml", "rt") as f:
         content = f.read()

@@ -152,14 +152,14 @@ It wraps Snakemake and reads the project configuration from `config.yaml` in the
 : List the tasks of the project and the available steps.
 
 `snappy run`
-: Calls Snakemake with defaults for local execution, or with `--slurm` for SLURM.
+: Calls Snakemake with snappy's workflow profile; the executor, such as SLURM, comes from a profile of the system or the user.
     Other arguments go to Snakemake.
 
-`snappy watch`, `snappy status`, `snappy logs`, `snappy report`
-: Monitor a run, check a SLURM job, archive the logs of a run and build the Snakemake report.
+`snappy watch`, `snappy logs`, `snappy report`
+: Monitor a run, archive the logs of a run and build the Snakemake report.
 
-`snappy check-files`, `snappy refresh`, `snappy pull-sheet`, `snappy completion`
-: List missing files of the configuration, recreate `pipeline_job.sh`, pull a sample sheet from SODAR and print the shell completion script; {ref}`usage` describes every command.
+`snappy check-files`, `snappy pull-sheet`, `snappy completion`
+: List missing files of the configuration, pull a sample sheet from SODAR and print the shell completion script; {ref}`usage` describes every command.
 
 `snappy run` prints the Snakemake command line at the start of every run.
 The generally useful `snakemake` parameters are available through `snappy run`.

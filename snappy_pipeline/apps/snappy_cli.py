@@ -26,7 +26,6 @@ from ..log_archive import build_archive, latest_snakemake_log
 from ..orchestration import load_project, missing_files
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
-    assume_path_existing,
     backup_file,
     create_directory,
     create_from_tpl,
@@ -160,9 +159,6 @@ def _print_steps_table():
 #: README file name
 README_FILENAME = "README.md"
 
-#: File name for pipeline job file
-FILENAME_PIPELINE_JOB_SH = "pipeline_job.sh"
-
 #: Configuration sub directory
 CONFIG_SUBDIR = ""
 
@@ -183,18 +179,12 @@ class AddTaskApp:
         task_name: str,
         project_directory: str,
         manage_config: bool = True,
-        partition: str = "medium",
-        email: str | None = None,
-        conda: str = "",
         config_mode: ConfigMode | str = ConfigMode.COMMENTED,
     ):
         self.step = step
         self.task_name = task_name
         self.project_directory = project_directory
         self.manage_config = manage_config
-        self.partition = partition
-        self.email = email
-        self.conda = conda
         self.config_mode = ConfigMode(config_mode)
 
     def run(self):
@@ -228,9 +218,6 @@ class AddTaskApp:
         if self.manage_config:
             self._setup_configuration(config_yaml)
 
-        # Ensure pipeline_job.sh is present at project root
-        self._ensure_pipeline_job_sh()
-
         log(
             "\nDo not forget to fill out the REQUIRED fields in the project configuration file!\n",
             level=LVL_IMPORTANT,
@@ -250,30 +237,6 @@ class AddTaskApp:
             yaml = ruamel_yaml.YAML()
             config_yaml = yaml.load(f.read())
         return config_yaml
-
-    def _ensure_pipeline_job_sh(self):
-        dest_path = os.path.join(self.project_directory, FILENAME_PIPELINE_JOB_SH)
-        if os.path.exists(dest_path):
-            return
-        create_from_tpl(
-            src_path=os.path.join(os.path.dirname(__file__), "tpls", FILENAME_PIPELINE_JOB_SH),
-            dest_path=dest_path,
-            format_args={
-                "line_m": "##SBATCH --mail-type ALL"
-                if not self.email
-                else "#SBATCH --mail-type ALL",
-                "line_M": (
-                    "##SBATCH --mail-user your.name@mdc-berlin.de"
-                    if not self.email
-                    else "##SBATCH --mail-user {}".format(self.email)
-                ),
-                "partition": self.partition,
-                "conda": self.conda,
-                "project_name": os.path.basename(self.project_directory),
-            },
-            message="Creating master job shell file in {path}",
-            message_args={"path": dest_path},
-        )
 
     def _setup_configuration(self, config_yaml):
         if "tasks" not in config_yaml:
@@ -355,7 +318,6 @@ def main():
     type=str,
     help="A string to use for the project name, used in the README file",
 )
-@click.option("--partition", default="medium", help="Partition to submit into")
 @click.option(
     "--task",
     "tasks",
@@ -369,20 +331,13 @@ def main():
     default=True,
     help="Manage the project config.yaml file automatically",
 )
-@click.option("--email", type=str, help="Email address for pipeline_job.sh file")
-@click.option(
-    "--conda",
-    type=str,
-    default="",
-    help="conda environment to load when submitting job",
-)
 @click.option(
     "--config-mode",
     type=click.Choice(["commented", "full", "minimal"]),
     default="commented",
     help="Style for task config: 'commented' (defaults commented out), 'full' (all defaults active), 'minimal' (strip default options).",
 )
-def init(directory, project_name, partition, tasks, manage_config, email, conda, config_mode):
+def init(directory, project_name, tasks, manage_config, config_mode):
     """Initialize a new snappy project directory."""
     project_directory = directory() if callable(directory) else directory
     log("SNAPPY Pipeline -- init")
@@ -431,27 +386,6 @@ def init(directory, project_name, partition, tasks, manage_config, email, conda,
         message_args={"path": os.path.join(project_directory, README_FILENAME)},
     )
 
-    # Create master job shell file in project directory based on template
-    dest_path = os.path.join(project_directory, "pipeline_job.sh")
-    email_val = email or os.environ.get("SNAPPY_PIPELINE_EMAIL")
-    create_from_tpl(
-        src_path=os.path.join(os.path.dirname(__file__), "tpls", FILENAME_PIPELINE_JOB_SH),
-        dest_path=dest_path,
-        format_args={
-            "line_m": "##SBATCH --mail-type ALL" if not email_val else "#SBATCH --mail-type ALL",
-            "line_M": (
-                "##SBATCH --mail-user your.name@mdc-berlin.de"
-                if not email_val
-                else "##SBATCH --mail-user {}".format(email_val)
-            ),
-            "partition": partition,
-            "conda": conda,
-            "project_name": (project_name or os.path.basename(os.path.abspath(project_directory))),
-        },
-        message="Creating master job shell file in {path}",
-        message_args={"path": dest_path},
-    )
-
     # Create additional tasks if any was provided
     for task_name, step in tasks:
         app = AddTaskApp(
@@ -459,9 +393,6 @@ def init(directory, project_name, partition, tasks, manage_config, email, conda,
             task_name=task_name,
             project_directory=project_directory,
             manage_config=manage_config,
-            partition=partition,
-            email=email_val,
-            conda=conda,
             config_mode=config_mode,
         )
         app.run()
@@ -489,18 +420,10 @@ def task():
     default=_get_cwd,
     help="Project directory, defaults to current working directory",
 )
-@click.option("--partition", default="medium", help="Partition to submit into")
-@click.option("--email", type=str, help="Email address for pipeline_job.sh file")
 @click.option(
     "--manage-config/--no-manage-config",
     default=True,
     help="Manage the project config.yaml file automatically",
-)
-@click.option(
-    "--conda",
-    type=str,
-    default="",
-    help="conda environment to load when submitting job",
 )
 @click.option(
     "--config-mode",
@@ -511,10 +434,7 @@ def task():
 def task_add(
     tasks,
     directory,
-    partition,
-    email,
     manage_config,
-    conda,
     config_mode,
 ):
     """Add tasks to the project configuration.
@@ -522,7 +442,6 @@ def task_add(
     TASKS is a list of tasks to add, formatted as [task_name=]step_type.
     """
     project_directory = directory() if callable(directory) else directory
-    email_val = email or os.environ.get("SNAPPY_EMAIL") or os.environ.get("SNAPPY_PIPELINE_EMAIL")
 
     for task_name, step in tasks:
         app = AddTaskApp(
@@ -530,9 +449,6 @@ def task_add(
             task_name=task_name,
             project_directory=project_directory,
             manage_config=manage_config,
-            partition=partition,
-            email=email_val,
-            conda=conda,
             config_mode=config_mode,
         )
         res = app.run()
@@ -601,11 +517,6 @@ def task_steps():
     help="Path to directory to run in, default is current working directory",
 )
 @click.option(
-    "--slurm",
-    is_flag=True,
-    help="Enable SLURM executor profile (adds executor, job limits, resource defaults)",
-)
-@click.option(
     "--task",
     "task_name",
     type=str,
@@ -624,8 +535,11 @@ def task_steps():
 )
 @click.option("--verbose", is_flag=True, help="Increase verbosity level")
 @click.pass_context
-def run(ctx, directory, slurm, task_name, frozen, verbose):
-    """Run snappy pipeline workflows."""
+def run(ctx, directory, task_name, frozen, verbose):
+    """Run snappy pipeline workflows.
+
+    The executor and its settings, such as SLURM, come from a Snakemake profile of the system or
+    the user (``--profile`` after ``--``, or ``SNAKEMAKE_PROFILE``)."""
     if frozen and not task_name:
         raise click.UsageError("--frozen requires --task")
     directory_path = directory() if callable(directory) else directory
@@ -643,7 +557,7 @@ def run(ctx, directory, slurm, task_name, frozen, verbose):
     if frozen:
         config_args.append("frozen=True")
 
-    snakemake_argv = _snakemake_argv(directory_path, slurm, tuple(config_args))
+    snakemake_argv = _snakemake_argv(directory_path, tuple(config_args))
 
     # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
@@ -750,7 +664,7 @@ def check_files(directory):
     log("All files of {path} exist", {"path": config_path}, level=LVL_SUCCESS)
 
 
-def _snakemake_argv(directory_path: str, slurm: bool = False, config: tuple = ()) -> list[str]:
+def _snakemake_argv(directory_path: str, config: tuple = ()) -> list[str]:
     """Return the Snakemake arguments that snappy run and snappy report share."""
     apps = os.path.dirname(os.path.abspath(__file__))
     argv = [
@@ -765,10 +679,9 @@ def _snakemake_argv(directory_path: str, slurm: bool = False, config: tuple = ()
     ]
     if config:
         argv += ["--config", *config]
-    # Conda and the database persistence backend, plus SLURM on request
+    # Conda, the logger and the database persistence backend; the executor comes from a profile
+    # of the system or the user
     argv += ["--workflow-profile", os.path.join(apps, "profile")]
-    if slurm:
-        argv += ["--workflow-profile", os.path.join(apps, "profile-slurm")]
     # Without an explicit path, the snkmt logger writes to one database per user, shared by all
     # projects. The path must be absolute because the logger resolves it against the process
     # working directory, not against --directory.
@@ -833,83 +746,6 @@ def _snkmt_console_cmd(db_path: str) -> list[str]:
         "--db-path",
         db_path,
     ]
-
-
-@main.command()
-@click.option(
-    "--directory",
-    type=click.Path(),
-    default=_get_cwd,
-    help="Project directory, defaults to current working directory",
-)
-@click.option("--partition", default="medium", help="Partition to submit into")
-@click.option("--email", type=str, help="Email address for pipeline_job.sh file")
-@click.option(
-    "--conda",
-    type=str,
-    default="",
-    help="conda environment to load when submitting job",
-)
-def refresh(directory, partition, email, conda):
-    """Recreate the master pipeline_job.sh and ensure slurm_log exists."""
-    project_directory = directory() if callable(directory) else directory
-    log("CUBI Pipeline -- refresh")
-    log("========================")
-
-    if not assume_path_existing(project_directory):
-        sys.exit(1)
-
-    config_filename = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
-    if not os.path.exists(config_filename):
-        log(
-            "Configuration file does not exist at {path}",
-            {"path": config_filename},
-            level=LVL_ERROR,
-        )
-        sys.exit(1)
-
-    email_val = email or os.environ.get("SNAPPY_EMAIL") or os.environ.get("SNAPPY_PIPELINE_EMAIL")
-
-    create_directory(os.path.join(project_directory, "slurm_log"), exist_ok=True)
-
-    create_from_tpl(
-        src_path=os.path.join(os.path.dirname(__file__), "tpls", FILENAME_PIPELINE_JOB_SH),
-        dest_path=os.path.join(project_directory, FILENAME_PIPELINE_JOB_SH),
-        format_args={
-            "line_m": "##SBATCH --mail-type ALL" if not email_val else "#SBATCH --mail-type ALL",
-            "line_M": (
-                "##SBATCH --mail-user your.name@mdc-berlin.de"
-                if not email_val
-                else "##SBATCH --mail-user {}".format(email_val)
-            ),
-            "partition": partition,
-            "conda": conda,
-            "project_name": os.path.basename(os.path.abspath(project_directory)),
-        },
-        message="creating SGE job shell file in {path}",
-        message_args={"path": os.path.join(project_directory, FILENAME_PIPELINE_JOB_SH)},
-    )
-    log("all done, have a nice day!", level=LVL_SUCCESS)
-
-
-@main.command()
-@click.argument("jobid")
-def status(jobid):
-    """Check the status of a SLURM job ID."""
-    output = str(
-        subprocess.check_output(
-            "sacct -j %s --format State --noheader | head -1 | awk '{print $1}'" % jobid,
-            shell=True,
-        ).strip()
-    )
-
-    running_status = ["PENDING", "CONFIGURING", "COMPLETING", "RUNNING", "SUSPENDED"]
-    if "COMPLETED" in output:
-        click.echo("success")
-    elif any(r in output for r in running_status):
-        click.echo("running")
-    else:
-        click.echo("failed")
 
 
 @main.command(name="pull-sheet")

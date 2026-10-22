@@ -27,7 +27,7 @@ See {ref}`installation` for details.
 
 ## Create the project
 
-`snappy init` creates the project directory with `config.yaml`, `pipeline_job.sh` and `README.md`:
+`snappy init` creates the project directory with `config.yaml` and `README.md`:
 
 ```shell
 snappy init my_project
@@ -155,13 +155,12 @@ Everything after `--` goes to Snakemake.
 snappy run -- --dry-run --cores 1
 ```
 
-Then run locally, or submit through SLURM:
+Then run locally, or through the cluster executor of a Snakemake profile (see {ref}`usage`):
 
 ```shell
 snappy run -- --cores 8
-snappy run --slurm
+snappy run -- --profile slurm
 ```
 
-`pipeline_job.sh` wraps `snappy run --slurm` for `sbatch`.
 Results of a task are in `tasks/<task_name>/work/`.
 `tasks/<task_name>/output/` links the result files, see {ref}`usage`.

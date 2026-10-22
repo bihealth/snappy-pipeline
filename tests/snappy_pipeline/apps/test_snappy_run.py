@@ -81,8 +81,10 @@ def test_run_frozen_requires_a_task(mocker, tmp_path):
     assert "--frozen requires --task" in result.output
 
 
-def test_run_slurm_layers_slurm_profile(mocker, tmp_path):
-    argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--slurm"])
+def test_run_leaves_the_executor_to_the_profile_of_the_user(mocker, tmp_path):
+    # Only the workflow profile; a profile of the system or the user passes through
+    argv = _invoke_run(mocker, ["--directory", str(tmp_path), "--", "--profile", "slurm"])
 
     profiles = [argv[i + 1] for i, arg in enumerate(argv) if arg == "--workflow-profile"]
-    assert [os.path.basename(p) for p in profiles] == ["profile", "profile-slurm"]
+    assert [os.path.basename(p) for p in profiles] == ["profile"]
+    assert argv[argv.index("--profile") + 1] == "slurm"

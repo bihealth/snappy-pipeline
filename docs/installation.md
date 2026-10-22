@@ -7,8 +7,7 @@
 Install [pixi](https://pixi.sh) (see <https://pixi.sh/latest/#installation>).
 pixi manages all dependencies of the pipeline, the Python packages and the conda packages (BWA, STAR, samtools, ...).
 
-Cluster execution needs SLURM.
-`snappy run --slurm` adds the SLURM executor profile.
+For cluster execution, a Snakemake profile of the system or the user selects the executor, for example SLURM; see {ref}`usage`.
 
 ## User installation
 

@@ -182,7 +182,7 @@ The old entry-point scripts are replaced by a single `snappy` command with subco
 
 | Subcommand           | Purpose                                                                               |
 | -------------------- | ------------------------------------------------------------------------------------- |
-| `snappy init`        | Create a project directory with `config.yaml`, `pipeline_job.sh` and `README.md`.     |
+| `snappy init`        | Create a project directory with `config.yaml` and `README.md`.                        |
 | `snappy task add`    | Add tasks to the `config.yaml` of a project.                                          |
 | `snappy task list`   | List the tasks of a project, or the available steps with `--available`.               |
 | `snappy task steps`  | List the available steps.                                                             |
@@ -191,8 +191,6 @@ The old entry-point scripts are replaced by a single `snappy` command with subco
 | `snappy report`      | Build the Snakemake report of the QC outputs (`report.zip` in the project directory). |
 | `snappy watch`       | Open the `snkmt` TUI to monitor a running workflow.                                   |
 | `snappy logs`        | Archive the logs of a run whose Snakemake process was killed.                         |
-| `snappy refresh`     | Recreate `pipeline_job.sh` and ensure that `slurm_log` exists.                        |
-| `snappy status`      | Check the status of a SLURM job with `sacct`.                                         |
 | `snappy pull-sheet`  | Pull a sample sheet from the SODAR API.                                               |
 | `snappy completion`  | Print the shell completion script for bash, zsh or fish.                              |
 
@@ -200,7 +198,6 @@ The old entry-point scripts are replaced by a single `snappy` command with subco
 
 - `--task <name>`: build only the named task and the upstream files it needs, and link its result files (default: every task).
 - `--frozen`: with `--task`, use the existing outputs of the upstream tasks and never rebuild them.
-- `--slurm`: enable SLURM execution (layers a SLURM profile on top of the default profile).
 - `--directory`: the project directory (default: the current directory).
 - `--verbose`: more log output.
 - Everything after `--` is passed verbatim to Snakemake.
@@ -218,11 +215,10 @@ It sets:
 - `persistence-backend: db`: a single SQLite file for Snakemake's metadata instead of many small files in `.snakemake/`.
   This matters when running on shared network filesystems (CephFS, NFS) that handle a single large file much better than thousands of tiny ones.
 
-### SLURM flag
+### Cluster execution
 
-`--slurm` replaces the old `--profile-snappy-pipeline` flag.
-Both are boolean flags, but instead of a hard-coded switch in the code, `--slurm` layers a proper Snakemake workflow profile on top of the defaults.
-The SLURM profile sets the executor to slurm with sensible resource defaults (250 max jobs, 3 restarts on failure, 60 s latency wait, default partition "medium", default memory and disk limits).
+The executor comes from a Snakemake profile of the system or the user (`--profile <name>` after `--`, or `SNAKEMAKE_PROFILE`), not from snappy: the old `--profile-snappy-pipeline` flag, the `pipeline_job.sh` job script and the `snappy refresh` and `snappy status` commands are gone.
+The Snakemake process runs in a terminal multiplexer on the login node or in an allocation (`salloc`), as the documentation of the SLURM executor recommends; {ref}`usage` has an example profile for SLURM.
 
 ### Output path patterns
 
@@ -280,8 +276,8 @@ Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull requ
 - **somatic_wgs_sv_calling workflow**: this workflow was a specialised SV calling pipeline for whole-genome data with its own complex config.
   It was not widely used and has been removed entirely.
   SV calling for targeted data via `sv_calling_targeted` is unaffected.
-- **Old `tpls/profile/` directory**: superseded by the new profiles at `snappy_pipeline/apps/profile/` and `snappy_pipeline/apps/profile-slurm/`.
-- **`--profile-snappy-pipeline` flag**: replaced by `--slurm`.
+- **Old `tpls/profile/` directory**: superseded by the workflow profile `snappy_pipeline/apps/profile/` and a Snakemake profile of the system or the user for the executor.
+- **`--profile-snappy-pipeline` flag, `pipeline_job.sh`, `snappy refresh` and `snappy status`**: cluster execution is configured in a Snakemake profile.
 - **Multi-tool list configs**: the `tools:` list in step configs is no longer supported.
   Use `tool:` with a single value.
 - **Legacy `snappy-snake` entry point**: removed; use the `snappy` command instead.
@@ -305,8 +301,8 @@ To migrate an existing project:
 
 1. Wrap each step's configuration in a `tasks:` list entry with `name` and `step` fields.
 2. Replace `tools: [bwa]` with `tool: bwa` and move tool-specific config out of the list to a top-level key matching the tool name.
-3. Remove `--profile-snappy-pipeline` references from scripts; the default profile is applied automatically.
-   Use `--slurm` for SLURM.
+3. Remove `--profile-snappy-pipeline` references from scripts; the workflow profile of snappy is applied automatically.
+   Put the cluster settings into a Snakemake profile of the system or the user and pass `--profile <name>` after `--`, or set `SNAKEMAKE_PROFILE`.
 4. Use `snappy run` instead of the old entry points.
 5. The old `config.yaml` structure without a `tasks:` key is rejected; run `snappy init` in a fresh directory to see the new layout.
 6. Move files that depend on the reference out of tool sections into `external_data` tasks named in `depends_on` (see Dependencies and task-local files); for example, a VEP task now needs a cache task in `depends_on.database`.

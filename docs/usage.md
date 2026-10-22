@@ -9,7 +9,7 @@ The `snappy` command is the interface to the pipeline.
 
 | Subcommand           | Purpose                                                                               |
 | -------------------- | ------------------------------------------------------------------------------------- |
-| `snappy init`        | Create a project directory with `config.yaml`, `pipeline_job.sh` and `README.md`.     |
+| `snappy init`        | Create a project directory with `config.yaml` and `README.md`.                        |
 | `snappy task add`    | Add tasks to the `config.yaml` of a project.                                          |
 | `snappy task list`   | List the tasks of a project, or the available steps with `--available`.               |
 | `snappy task steps`  | List the available steps.                                                             |
@@ -18,8 +18,6 @@ The `snappy` command is the interface to the pipeline.
 | `snappy report`      | Build the Snakemake report of the QC outputs (`report.zip` in the project directory). |
 | `snappy watch`       | Open the `snkmt` TUI to monitor a running workflow.                                   |
 | `snappy logs`        | Archive the logs of a run whose Snakemake process was killed.                         |
-| `snappy refresh`     | Recreate `pipeline_job.sh` and ensure that `slurm_log` exists.                        |
-| `snappy status`      | Check the status of a SLURM job with `sacct`.                                         |
 | `snappy pull-sheet`  | Pull a sample sheet from the SODAR API.                                               |
 | `snappy completion`  | Print the shell completion script for bash, zsh or fish.                              |
 
@@ -42,10 +40,6 @@ By default, `snappy run` builds every task and links its result files into `outp
     The files of the upstream tasks are used as they are and never rebuilt.
     If one is missing, Snakemake stops with a missing-input error that names the file.
 
-`--slurm`
-: Run the jobs through SLURM.
-    This adds the SLURM executor profile to the default profile.
-
 `--verbose`
 : Log debug messages, too.
 
@@ -55,8 +49,33 @@ Everything after `--` goes to Snakemake:
 snappy run -- --dry-run --cores 1               # list the jobs, run nothing
 snappy run --task mapping -- --cores 8          # one task and its missing upstream files
 snappy run --task calling --frozen -- --cores 8 # reuse the existing mapping, never rerun it
-snappy run --slurm                              # all tasks through SLURM
+snappy run -- --profile slurm                   # all tasks through the executor of a profile
 ```
+
+## Cluster execution
+
+`snappy run` always uses the workflow profile of snappy, which sets conda for the software, the `snkmt` logger and the database persistence backend.
+The executor and its settings belong to the system or the user: a Snakemake profile below `/etc/xdg/snakemake/` (system) or `~/.config/snakemake/` (user), selected with `--profile <name>` after `--` or with the environment variable `SNAKEMAKE_PROFILE`.
+For SLURM, for example `~/.config/snakemake/slurm/config.yaml`:
+
+```yaml
+executor: slurm
+jobs: 250
+restart-times: 3
+max-jobs-per-second: 1
+max-status-checks-per-second: 10
+local-cores: 1
+latency-wait: 60
+default-resources:
+  slurm_partition: medium
+  runtime: 1440
+  mem_mb: 5000
+slurm-logdir: slurm_log
+slurm-keep-successful-logs: true
+```
+
+The Snakemake process itself runs as long as the workflow.
+Start it in a terminal multiplexer such as `tmux` on the login node, or in an allocation (`salloc`), as the documentation of the SLURM executor recommends.
 
 On a cluster, every job is a cluster job, unless its rule is local.
 The task field `job_group` puts the jobs of a task into a Snakemake job group: dependent jobs of the tasks with the same `job_group` run as one cluster job, for example an annotation and the filters after it, per library.
