@@ -13,6 +13,8 @@ The target regions of each library's kit come from ``depends_on.kits``, so every
 
 This step is experimental.
 
+With ``depends_on.exons``, a BED file of exons, the export keeps only the small variants near the exons.
+
 Outputs
 -------
 

@@ -2,7 +2,7 @@
 """Somatic HLA loss of heterozygosity calling
 
 The step detects loss of heterozygosity at the HLA locus in cancer samples (whole genomes, exomes or large panels) with LOHHLA.
-LOHHLA compares the aligned reads of the tumor and its matched normal, using the HLA types of the normal.
+LOHHLA compares the aligned reads of the tumor and its matched normal, using the HLA types of the normal from the ``hla_typing`` task in ``depends_on.hla_types``.
 
 The step has no ``tool`` field.
 It gives one result per tumor DNA library, paired with its matched normal.

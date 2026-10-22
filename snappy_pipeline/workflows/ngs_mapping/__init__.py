@@ -29,7 +29,7 @@ Each file has an ``.md5`` file.
 - ``{library_name}/report/alfred_qc/{library_name}.alfred.json.gz``, if ``target_coverage_report`` is enabled and the library has a kit
 - ``{library_name}/report/cov/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
 - ``{library_name}/report/fingerprint/{library_name}.npz``, if ``ngs_chew_fingerprint`` is enabled
-- with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab`` and ``{library_name}/strandedness/{library_name}.decision.json``
+- with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab`` and ``{library_name}/strandedness/{library_name}.decision.json``
 
 Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, ``idxstats`` and ``alfred_qc``, and for RNA libraries ``gene_counts`` and ``strandedness``.
 
@@ -121,24 +121,7 @@ It is not open source and not in ``bioconda``, so it must be installed separatel
 The AGeNT baits file is the ``baits`` file of the library's kit in ``depends_on.kits``.
 BQSR (``recalibrate``, the default) needs ``depends_on.common_variants``: a VCF of common germline variants, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
 
-.. code-block:: yaml
-
-    - step: ngs_mapping
-      name: mapping
-      config:
-        tool: mbcs
-        mbcs:
-          mapping_tool: bwa_mem2
-          barcode_tool: agent
-          use_barcodes: true
-          recalibrate: true
-        bwa_mem2:
-          extra_args: ["-C"]
-        agent:
-          prepare:
-            path: <path to the AGeNT trimmer>
-          mark_duplicates:
-            path: <path to the AGeNT creak>
+:ref:`somatic_ngs` has a complete example.
 
 A Snakefile runs the sub-steps (barcode trimming, mapping, consensus merging, BQSR) inside one job.
 The other tools use shell script wrappers.

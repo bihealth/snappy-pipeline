@@ -47,7 +47,7 @@ By default, `snappy run` builds and publishes every task.
     This adds the SLURM executor profile to the default profile.
 
 `--verbose`
-: Log more, including the Snakemake command line.
+: Log debug messages, too.
 
 Everything after `--` goes to Snakemake:
 
@@ -70,7 +70,7 @@ Each task has its own directory `tasks/<task_name>/`.
 `tasks/<task_name>/output/`
 : Is for publication only, and no task reads it.
     It holds relative symlinks into `work/` with the same paths, and `output/.manifest.tsv`.
-    One local job per task, `<task>_publish`, creates them.
+    One local job per task with result files, `<task>_publish`, creates them.
     The manifest lists the path, size and md5 file of each published file.
     Links to files that are no longer published are removed.
 

@@ -6,6 +6,7 @@ The ``tool`` field selects ``bwa``, ``bwa_mem2``, ``minimap2`` or ``star``.
 STAR needs an RNA reference (``reference_molecule: rna``) and takes a gene annotation from ``depends_on.features`` to add splice junctions.
 The other tools need a DNA reference.
 The task has one result per project, not per library.
+A task that reads the index must name the same genome in its ``depends_on.reference``; the project does not load otherwise.
 
 Outputs
 -------

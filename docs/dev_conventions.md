@@ -85,7 +85,7 @@ Wrappers never read md5 files.
 A step's `get_result_files` lists the published files below `output/`, each with its md5 file.
 Bgzipped VCF and BED files also come with `.tbi` and `.tbi.md5`.
 They mirror files below `work/`.
-One local job per task, `<task>_publish` (`snappy_pipeline/publish.py`), links them and writes `output/.manifest.tsv`.
+One local job per task with result files, `<task>_publish` (`snappy_pipeline/publish.py`), links them and writes `output/.manifest.tsv`.
 No other rule writes into `output/`.
 `get_output_paths` returns `work/` paths, so tasks read each other's `work/` files and never `output/`.
 `test_only_the_publish_job_writes_into_output`, `test_no_job_reads_from_output`, `test_logs_hold_only_logs`, `test_logs_are_not_published`, `test_md5_files_only_for_published_files`, `test_published_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.
@@ -154,7 +154,7 @@ Germline and generic sheets list all their libraries, with the pedigree columns 
 `library_row(name)` returns the row of one library, which `library_selection` picks if several data sets have a library of that name; read per-library facts (data set, folder, kit) through it, not by indexing the dataframe by name.
 `libraries` is the one selection of the libraries a task takes: the library table (with background data sets if the step sets `background_results`), restricted to the step's `library_requirement`, and filtered by `library_selection` or else by the step's `library_default` (`None`: the default of each library's sheet kind, cancer tumor DNA and germline DNA; `""`: all libraries).
 `library_requirement` is what a step can process at all (RNA for expression quantification, `kind == 'cancer'` for the somatic steps); it always applies.
-Background libraries are only in the table of steps that set `background_results` or `uses_background`, and a task's `background_selection` narrows them (`build_library_dataframe(include_background=True)` and `task_libraries` apply it).
+Background libraries are in the default table only of steps that set `background_results`; steps that set `uses_background` add them where they need them, and a task's `background_selection` narrows them (`build_library_dataframe(include_background=True)` and `task_libraries` apply it).
 `library_selection` is the user's choice within it, such as a batch or dropped samples, and `library_default` replaces it when the task sets none.
 A step whose requirement or default depends on the task's config (its tool) overrides `task_library_requirement(config)` or `task_library_default(config)`.
 `task_libraries(task_name)` gives the libraries of another task from its config, so a step can match the files of an upstream task also under `--frozen`.
@@ -173,7 +173,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A step whose tasks write `FILTER` IDs other than their task name returns them from the classmethod `filter_ids(config)`, such as the filters of mutect2 or the expression names of `vembrane` in tag mode.
   `load_project()` rejects other tasks named like one of them or `PASS`, and a task that writes an ID that a task upstream of it writes.
 - `depends_on` keys are named after the data they bring in, not after the step that produces it: `reads`, `alignments`, `variants`, `copy_number`, `structural_variants`, `fusions`, `expression`, `hla_types`, `strandedness`, `panel_of_normals`, `access`, `reference`, `features`, `proteome`, `dbsnp`, `common_variants`, `germline_resource`, `regions`, `excluded_regions`, `mappable_regions`, `par_regions`, `microsatellites`, `snp_loci`, `gene_regions`, `exons`, `kits`, `index`, `database` and `gcnv_model`.
-  A step with two inputs of one kind qualifies them by role, such as `somatic_variants` and `germline_variants`.
+  A step with two inputs of one kind qualifies them by role: `somatic_variants`, `germline_variants`, `combined_variants`, `annotated_variants` and `phased_variants`.
   A step that needs only one input of a kind uses the plain key, such as `alignments`, and narrows it by the tags of its `DataSignature` (`alignments [rna]`) instead.
   `test_depends_on_keys_use_the_vocabulary` checks this.
 - A file that a step reads is a `depends_on` key if it must match the reference or other data of the project, even if only one tool reads it.

@@ -57,7 +57,7 @@ Each step page ends with the default configuration, with every option and its do
 Relative paths are relative to the project directory, and `pathvars` can name roots for paths, see {ref}`config_paths`.
 `snappy check-files` lists the files that `config.yaml` names but that do not exist.
 Use absolute paths for data that should not move with the project.
-`snappy run --verbose` logs the Snakemake command line.
+`snappy run` logs the Snakemake command line at the start of every run.
 `snappy run -- --dry-run` validates the configuration and lists the jobs without running them.
 ```
 
@@ -100,6 +100,6 @@ Only published files have a `.md5` file.
 It holds relative symlinks into `work/` that mirror the paths below `work/`.
 No task reads from it.
 
-One local job per task, `<task>_publish`, creates the links to the result files of the task.
+One local job per task with result files, `<task>_publish`, creates the links to the result files of the task.
 Each file has its `.md5` file, and VCF and BED files also have their index.
 The job writes `output/.manifest.tsv`, which lists the path, size and md5 file of each published file, and removes links to files that are no longer published.

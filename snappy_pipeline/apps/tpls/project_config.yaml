@@ -20,8 +20,9 @@
 #
 # Files that must match the reference come from tasks, usually external_data, which other
 # tasks name in depends_on: the genome (depends_on.reference; its .fai and .dict must be next
-# to the FASTA), the gene annotation, dbSNP (its .tbi must be next to the VCF), BED files of
-# regions (type regions) and a tool's database (depends_on.database: type database, tagged with
+# to the FASTA), the gene annotation, dbSNP and other VCF resources (their .tbi, or .idx for a
+# plain .vcf, must be next to them), BED files of regions (type regions; the gCNV mappability
+# BED needs its index next to it, too) and a tool's database (depends_on.database: type database, tagged with
 # the tool). Mappers read their index from depends_on.index: a reference_index task built from
 # the genome in their depends_on.reference, or external_data for an existing one.
 # Files that belong to one tool's setup and do not depend on the reference stay in its section.

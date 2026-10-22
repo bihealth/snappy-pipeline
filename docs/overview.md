@@ -370,5 +370,5 @@ resources:
 ```
 
 Partition limits are left to SLURM and its executor plugin.
-Every job that runs a wrapper writes a benchmark (`tasks/<task>/benchmarks/...tsv`) with its wall time (`s`), peak memory (`max_rss`), I/O and CPU time.
+Every job that runs a wrapper, except rules cached between workflows, writes a benchmark (`tasks/<task>/benchmarks/...tsv`) with its wall time (`s`), peak memory (`max_rss`), I/O and CPU time.
 These measurements calibrate the requests.

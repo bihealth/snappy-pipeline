@@ -60,7 +60,7 @@ By default, `snappy run` builds and publishes every task.
 
 `work/` is the contract between tasks.
 A task reads the `work/` files of its upstream tasks and never their `output/` files.
-`output/` is for publication only: one local `<task>_publish` job per task links the result files into `output/` and writes `output/.manifest.tsv`.
+`output/` is for publication only: one local `<task>_publish` job per task with result files links the result files into `output/` and writes `output/.manifest.tsv`.
 
 ## Anatomy of a step
 
@@ -159,6 +159,9 @@ It wraps Snakemake and reads the project configuration from `config.yaml` in the
 
 `snappy watch`, `snappy status`, `snappy logs`, `snappy report`
 : Monitor a run, check a SLURM job, archive the logs of a run and build the Snakemake report.
+
+`snappy check-files`, `snappy refresh`, `snappy pull-sheet`, `snappy completion`
+: List missing files of the configuration, recreate `pipeline_job.sh`, pull a sample sheet from SODAR and print the shell completion script; {ref}`usage` describes every command.
 
 `snappy run` prints the Snakemake command line at the start of every run.
 The generally useful `snakemake` parameters are available through `snappy run`.

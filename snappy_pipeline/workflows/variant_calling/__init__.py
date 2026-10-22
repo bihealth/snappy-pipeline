@@ -34,7 +34,7 @@ With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_
 ``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
 With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
 Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel.
-The ``FILTER`` IDs of the callers (``LowQual`` of the GATK callers; ``germline``, ``contamination`` and the other filters of ``FilterMutectCalls``) are reserved: no other task may be named like one of them.
+The ``FILTER`` IDs of the callers (``LowQual`` of the GATK callers; ``germline``, ``contamination`` and the other filters of ``FilterMutectCalls``) are reserved: no other task may be named like one of them, nor ``PASS``.
 
 Outputs
 -------

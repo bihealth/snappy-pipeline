@@ -10,6 +10,8 @@ With ``depends_on.structural_variants``, set to an :ref:`step_sv_calling_targete
 The step writes one result set per pedigree, named after the DNA library of the index.
 Pedigrees without an index or without a DNA library of the index are skipped with a warning.
 
+With ``depends_on.exons``, a BED file of exons, the export keeps only the small variants near the exons.
+
 Outputs
 -------
 
