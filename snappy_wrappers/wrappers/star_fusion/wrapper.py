@@ -10,6 +10,13 @@ if TYPE_CHECKING:
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
+# The reads are inputs. If another task wrote them, the input is that task's out directory and
+# params list the files.
+args = getattr(snakemake.params, "args", {})
+reads = args.get("input", {})
+reads_left = snakemake.input.get("reads_left") or reads["reads_left"]
+reads_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
+
 ShellWrapper(snakemake).run(
     r"""
 workdir={snakemake.output.out}
@@ -21,10 +28,10 @@ inputdir=$workdir/input
 mkdir -p $inputdir
 
 if [[ ! -f "$inputdir/reads_1.fastq.gz" ]]; then
-    cat {snakemake.input.reads_left} > $inputdir/reads_1.fastq.gz
+    cat {reads_left} > $inputdir/reads_1.fastq.gz
 fi
 if [[ ! -f "$inputdir/reads_2.fastq.gz" ]]; then
-    cat {snakemake.input.reads_right} > $inputdir/reads_2.fastq.gz
+    cat {reads_right} > $inputdir/reads_2.fastq.gz
 fi
 
 pushd $workdir

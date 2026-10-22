@@ -380,35 +380,45 @@ def test_job_group_groups_the_jobs_of_its_tasks(
     assert not [job for job in jobs if task_of(job) not in grouped and "group" in job]
 
 
-def _mapping_job_with_reads_from(
-    source_task: dict[str, Any], generated_task_config: dict[str, Any], tmp_path: Path
+def _job_with_reads_from(
+    task_name: str,
+    rule_suffix: str,
+    source_task: dict[str, Any],
+    generated_task_config: dict[str, Any],
+    tmp_path: Path,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    """Return the first BWA job and all jobs when ngs_mapping_bwa reads from ``source_task``."""
-    _write_closure_project("ngs_mapping_bwa", generated_task_config, tmp_path)
+    """Return the first job of the rule ending in ``rule_suffix`` and all jobs when the task
+    ``task_name`` reads from ``source_task``."""
+    _write_closure_project(task_name, generated_task_config, tmp_path)
     config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
     config["tasks"] = [t for t in config["tasks"] if t["name"] != source_task["name"]]
     config["tasks"].insert(0, source_task)
-    mapping = next(t for t in config["tasks"] if t["name"] == "ngs_mapping_bwa")
-    mapping["config"]["depends_on"]["reads"] = source_task["name"]
+    consumer = next(t for t in config["tasks"] if t["name"] == task_name)
+    consumer["config"]["depends_on"]["reads"] = source_task["name"]
     (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 
     dump_path = tmp_path / "dag.json"
     cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
-    cmd += ["--task", "ngs_mapping_bwa", "--output", str(dump_path)]
+    cmd += ["--task", task_name, "--output", str(dump_path)]
     dump = _run(cmd, cwd=generated_task_config["root"])
     assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
     jobs = json.loads(dump_path.read_text(encoding="utf-8"))
-    return next(j for j in jobs if j["rule"].endswith("_bwa_run")), jobs
+    return next(j for j in jobs if j["rule"].endswith(rule_suffix)), jobs
+
+
+#: An adapter trimming task that reads the FASTQs of the data sets
+TRIMMING = {
+    "step": "adapter_trimming",
+    "name": "trimming",
+    "config": {"depends_on": {"reads": "data_sets"}, "tool": "fastp", "fastp": {}},
+}
 
 
 @pytest.mark.integration
 def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp_path: Path):
-    trimming = {
-        "step": "adapter_trimming",
-        "name": "trimming",
-        "config": {"depends_on": {"reads": "data_sets"}, "tool": "fastp", "fastp": {}},
-    }
-    job, jobs = _mapping_job_with_reads_from(trimming, generated_task_config, tmp_path)
+    job, jobs = _job_with_reads_from(
+        "ngs_mapping_bwa", "_bwa_run", TRIMMING, generated_task_config, tmp_path
+    )
     lib = job["wildcards"]["library_name"]
 
     # Only the directory is a job output, so the FASTQs are params, not inputs.
@@ -418,6 +428,25 @@ def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp
         f"tasks/trimming/work/{lib}/out/{lib}.R1.fastq.gz"
     ]
     assert any(j["rule"].startswith("trimming_adapter_trimming_fastp") for j in jobs)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("tool", ["arriba", "star_fusion"])
+def test_fusion_calling_reads_trimmed_fastqs(
+    tool: str, generated_task_config: dict[str, Any], tmp_path: Path
+):
+    task_name = f"somatic_gene_fusion_calling_{tool}"
+    job, _ = _job_with_reads_from(
+        task_name, f"_{tool}_run", TRIMMING, generated_task_config, tmp_path
+    )
+    lib = job["wildcards"]["library_name"]
+
+    # The trimmed FASTQs are no job outputs, so they are params; the input is their directory.
+    assert f"tasks/trimming/work/{lib}/out" in job["input"]
+    assert not [path for path in job["input"] if path.endswith(".fastq.gz")]
+    assert job["params"]["args"]["input"]["reads_left"] == [
+        f"tasks/trimming/work/{lib}/out/{lib}.R1.fastq.gz"
+    ]
 
 
 @pytest.mark.integration
@@ -438,7 +467,9 @@ def test_mapping_reads_from_an_external_data_task(
             ],
         },
     }
-    job, _ = _mapping_job_with_reads_from(external_reads, generated_task_config, tmp_path)
+    job, _ = _job_with_reads_from(
+        "ngs_mapping_bwa", "_bwa_run", external_reads, generated_task_config, tmp_path
+    )
     lib = job["wildcards"]["library_name"]
 
     assert "input" not in job["params"]["args"]

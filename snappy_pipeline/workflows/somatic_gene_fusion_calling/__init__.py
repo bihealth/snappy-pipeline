@@ -40,6 +40,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import SomaticGeneFusionCalling as SomaticGeneFusionCallingConfigModel
 from .model import Tool
@@ -53,32 +54,12 @@ class SomaticGeneFusionCallingStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    @dictify
     def _get_input_files_run(self, wildcards):
-        """Return the ordered mates, and the upstream ``.done`` file when a task wrote the reads"""
-        library_name = wildcards.library_name
-        left = sorted(self._collect_reads(wildcards, library_name, ""))
-        right = sorted(self._collect_reads(wildcards, library_name, "right-"))
-        yield "reads_left", left
-        if right:
-            yield "reads_right", right
-        written = {*left, *right}
-        if done := [path for path in self.parent.reads_input(library_name) if path not in written]:
-            yield "reads_done", done
+        """Return the ordered mates, or the directory of the task that wrote them"""
+        return reads_input_files(self.parent, wildcards.library_name)
 
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/snakemake.gene_fusion_calling.log"}
-
-    def _collect_reads(self, wildcards, library_name, prefix):
-        """Yield the path to reads
-
-        Yields paths to right reads if prefix=='right-'
-        """
-        _ = wildcards
-        mate = "right" if prefix.startswith("right-") else "left"
-        for group in self.parent.read_groups(library_name):
-            if mate in group.paths:
-                yield group.paths[mate]
 
 
 class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
@@ -93,8 +74,9 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         yield "ctat_resource_lib", self.parent.get_upstream_paths("database").ctat_resource_lib
 
     def _get_params_run(self, wildcards):
-        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
-        return {}
+        """The reads written by another task, and the tool's ``extra_arguments``, which
+        ``with_extra_arguments`` adds"""
+        return reads_params(self.parent, wildcards.library_name)
 
     def _get_output_files_run(self):
         # STAR-Fusion writes many files that the step does not name
@@ -130,7 +112,7 @@ class ArribaStepPart(SomaticGeneFusionCallingStepPart):
                 "num_threads_trimming": self.config.arriba.num_threads_trimming,
                 "num_threads": self.config.arriba.num_threads,
                 "star_parameters": self.config.arriba.star_parameters,
-            }
+            } | reads_params(self.parent, wildcards.library_name)
 
         assert action == "run", "Unsupported actions"
         return args_function

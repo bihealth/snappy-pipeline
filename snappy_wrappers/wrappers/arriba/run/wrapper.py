@@ -12,8 +12,12 @@ __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
 
 args = getattr(snakemake.params, "args", {})
-reads_left = snakemake.input.reads_left
-reads_right = snakemake.input.get("reads_right", "")
+
+# The reads are inputs. If another task wrote them, the input is that task's out directory and
+# params list the files.
+reads = args.get("input", {})
+reads_left = snakemake.input.get("reads_left") or reads["reads_left"]
+reads_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
 
 trim_adapters = args["trim_adapters"]
 num_threads_trimming = args["num_threads_trimming"]
