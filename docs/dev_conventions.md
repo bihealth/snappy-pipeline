@@ -69,7 +69,9 @@ Only inputs order the jobs that produce them first and trigger reruns when they 
 The config section of a tool inherits `ToolModel` (`snappy_pipeline/models`), whose `extra_arguments` are additional arguments for the tool's command line.
 `BaseStep.get_params` adds them to the params of the step part's `tool_section()` (by default `config.<name>`), for its `extra_arguments_action` or else its only action, unless the getter returns them itself.
 The wrapper puts `{extra_arguments}` on the tool's command; `ShellWrapper` and `RWrapper` fill it in, and an f-string writes `{{extra_arguments}}` to leave it to them.
-`test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check this.
+A single-tool step without a tool section takes `extra_arguments` on its step model, and its step part's `tool_section()` returns `self.config`.
+`test_tool_wrappers_get_extra_arguments` requires them for every wrapper, except those that `WRAPPERS_WITHOUT_EXTRA_ARGUMENTS` lists with a reason (Python and R code, installers, helpers, secondary actions).
+`test_wrappers_use_the_extra_arguments_they_get` and `test_wrappers_leave_extra_arguments_to_the_base_class` check that wrappers use them.
 
 Rules that run a wrapper declare `benchmark: wf.get_benchmark_file(part, action)`.
 This is the path of the rule's log below `benchmarks/` (`tasks/<task>/benchmarks/` in a project).

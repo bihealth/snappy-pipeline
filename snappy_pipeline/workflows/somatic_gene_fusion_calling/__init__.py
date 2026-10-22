@@ -95,6 +95,10 @@ class StarFusionStepPart(SomaticGeneFusionCallingStepPart):
         yield from super()._get_input_files_run(wildcards).items()
         yield "ctat_resource_lib", self.parent.get_upstream_paths("database").ctat_resource_lib
 
+    def _get_params_run(self, wildcards):
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}
+
     default_resource_usage = ResourceUsage(threads=4, runtime="5d", mem=f"{30 * 1024 * 4}MB")
 
 

@@ -431,6 +431,126 @@ def test_wrapper_rules_write_a_benchmark():
     assert not found, f"wrapper rules without benchmark: wf.get_benchmark_file(...): {found}"
 
 
+#: Wrappers that run without the ``extra_arguments`` of a tool, by reason; the list only shrinks
+WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
+    wrapper: reason
+    for reason, wrappers in {
+        "Python code, no command line": (
+            "cbioportal/case_lists",
+            "cbioportal/clinical_data",
+            "cbioportal/meta_files",
+            "pvactools/features",
+            "pvactools/hla_types",
+            "reference_download/ensembl",
+        ),
+        "an R script without command line arguments": (
+            "ascat/run_ascat",
+            "cbioportal/generate_cna",
+            "cbioportal/merge_tables",
+            "cnvkit/postprocess",
+            "control_freec/transform",
+            "rnaqc/dupradar",
+            "scarHRD/run",
+            "sequenza/run",
+            "signatures/deconstruct_sigs",
+        ),
+        "installs software": ("scarHRD/install", "sequenza/install", "singularity"),
+        "a helper (scatter, gather, merge, conversion, sidecars), not a tool's main command": (
+            "arcashla/prepare_reference",
+            "ascat/build_baf",
+            "ascat/build_cnv",
+            "bcftools/TMB",
+            "bcftools/concat",
+            "delly2/germline/merge_calls",
+            "delly2/germline/merge_genotypes",
+            "gcnv/joint_germline_cnv_segmentation",
+            "gcnv/merge_multikit_families",
+            "melt/merge_vcf",
+            "mutect2/gather",
+            "picard/prepare",
+            "popdel/concat_calls",
+            "popdel/reorder_vcf",
+            "pvactools/normalize",
+            "reference_download/sidecars",
+            "reference_index/common",
+            "rnaqc/stats",
+            "sequenza/gcreference",
+            "split_regions",
+        ),
+        "a step of several small tools without a main command (somatic_cnv_checking)": (
+            "bcftools/heterozygous_variants",
+            "bcftools/pileups",
+            "somatic_cnv_checking",
+            "vcfpy/add_bed",
+        ),
+        "a secondary action; the step part's extra_arguments_action gets the arguments": (
+            "cnvetti/wgs/segment",
+            "cnvetti/wgs/tumor_normal_ratio",
+            "cnvkit/antitarget",
+            "cnvkit/call",
+            "cnvkit/coverage",
+            "cnvkit/export",
+            "cnvkit/fix",
+            "cnvkit/plot",
+            "cnvkit/report",
+            "cnvkit/target",
+            "delly2/germline/genotype",
+            "gatk4_hc/combine_gvcfs",
+            "gatk4_hc/genotype",
+            "gcnv/annotate_gc",
+            "gcnv/annotate_gc_wgs",
+            "gcnv/coverage",
+            "gcnv/filter_intervals",
+            "gcnv/post_germline_calls",
+            "gcnv/post_germline_calls_case_mode",
+            "gcnv/preprocess_intervals",
+            "gcnv/preprocess_intervals_wgs",
+            "gcnv/scatter_intervals",
+            "melt/genotype",
+            "melt/group_analysis",
+            "melt/make_vcf",
+            "melt/preprocess",
+            "popdel/profile",
+            "purecn/coverage",
+            "purecn/prepare",
+            "pvactools/junction",
+            "scramble/cluster",
+        ),
+        "the tool section depends on the prediction wildcard": (
+            "pvactools/netchop",
+            "pvactools/netstab",
+        ),
+        "puts the mapper section's extra_arguments on bwa mem itself": ("mbcs",),
+        "varfish export, left for later": (
+            "bcftools/gvcf_to_vcf",
+            "bcftools/merge_vcf",
+            "mehari/annotate_seqvars",
+            "mehari/annotate_strucvars",
+            "mehari/bam_qc",
+            "varfish_annotator/annotate",
+            "varfish_annotator/annotate_svs",
+        ),
+    }.items()
+    for wrapper in wrappers
+}
+
+
+def test_tool_wrappers_get_extra_arguments():
+    """Every wrapper runs with the ``extra_arguments`` of its tool section, unless
+    ``WRAPPERS_WITHOUT_EXTRA_ARGUMENTS`` lists it with a reason."""
+    with_arguments, without = set(), set()
+    for _, job in _snapshot_jobs():
+        if job["wrapper"]:
+            wrapper = job["wrapper"].split("/snappy_wrappers/wrappers/", 1)[1]
+            args = job["params"].get("args")
+            has = isinstance(args, dict) and "extra_arguments" in args
+            (with_arguments if has else without).add(wrapper)
+    without -= with_arguments
+    listed = set(WRAPPERS_WITHOUT_EXTRA_ARGUMENTS)
+    assert not without - listed, f"wrappers without extra_arguments: {sorted(without - listed)}"
+    assert not listed - without, f"listed, but they get extra_arguments: {sorted(listed - without)}"
+
+
 def test_wrappers_use_the_extra_arguments_they_get():
     """A rule whose params carry the tool's ``extra_arguments`` runs a wrapper that puts them on
     the command line, as ``{extra_arguments}`` (filled in by the wrapper base classes)."""

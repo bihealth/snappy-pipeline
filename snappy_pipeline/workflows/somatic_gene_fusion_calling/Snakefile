@@ -40,6 +40,8 @@ if str(wf.config.tool) == "star_fusion":
             mem=wf.get_resource("star_fusion", "run", "mem"),
             partition=wf.get_resource("star_fusion", "run", "partition"),
             tmpdir=wf.get_resource("star_fusion", "run", "tmpdir"),
+        params:
+            args=wf.get_params("star_fusion", "run"),
         wrapper:
             wf.wrapper_path("star_fusion")
 
