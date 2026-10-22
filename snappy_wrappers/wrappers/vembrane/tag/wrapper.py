@@ -38,7 +38,7 @@ if mode == "tag":
     )
     tag_mode = "--tag-mode pass"
     cmd = rf"""
-vembrane tag {tag_mode} {{extra_arguments}} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
+vembrane tag {tag_mode} {aux_cmd} {context_cmd} {context_file_cmd} {ontology_cmd} {{extra_arguments}} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 else:

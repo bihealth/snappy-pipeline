@@ -220,24 +220,23 @@ class VembraneStepPart(VariantFiltrationStepPart):
         cfg = self.config.vembrane
         if cfg is None:
             raise ValueError("vembrane configuration is required")
-        params: dict[str, Any] = {"mode": cfg.mode}
+        # vembrane tag and filter both take the aux files, the context and the ontology
+        params: dict[str, Any] = {
+            "mode": cfg.mode,
+            "aux_names": list(cfg.aux),
+            "context": cfg.context,
+        }
         if cfg.mode == "tag":
             params["expressions"] = cfg.expressions
         else:
-            params.update(
-                {
-                    "expression": cfg.expression,
-                    "aux_names": list(cfg.aux),
-                    "context": cfg.context,
-                }
-            )
+            params["expression"] = cfg.expression
         return params
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
         yield from super()._get_input_files_run(wildcards).items()
         cfg = self.config.vembrane
-        if cfg is None or cfg.mode != "filter":
+        if cfg is None:
             return
         if cfg.aux:
             yield "aux", list(cfg.aux.values())
