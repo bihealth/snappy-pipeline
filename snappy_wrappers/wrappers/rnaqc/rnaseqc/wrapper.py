@@ -22,14 +22,6 @@ else
     paired=1
 fi
 
-# Find out strand
-strand={args[strand]}
-
-if [ ${{strand}} -eq -1 ]
-then
-    strand=$(jq -r '.decision' {snakemake.input.decision})
-fi
-
 # RNA-SeQC analysis (coverage from 3' UTR, ...)
 mkdir ${{TMPDIR}}/rnaseqc
 

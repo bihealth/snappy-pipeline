@@ -10,11 +10,14 @@ import pytest
 from snappy_pipeline.workflows.gene_expression_quantification import (
     RNASEQC_FEATURES_SIGNATURE,
     FeatureCountsStepPart,
+    QCStepPartDuplication,
     QCStepPartDupradar,
     QCStepPartRnaseqc,
+    QCStepPartStats,
 )
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     ExpectedStrandedness,
+    TOOL_DEPENDENCIES,
     Featurecounts,
     GeneExpressionQuantification,
 )
@@ -62,7 +65,7 @@ def test_dupradar_inputs_are_named():
 def test_rnaseqc_inputs_are_named():
     part = _part(QCStepPartRnaseqc)
 
-    assert part._get_input_files_run(WILDCARDS) == ALIGNMENTS | DECISION | {
+    assert part._get_input_files_run(WILDCARDS) == ALIGNMENTS | {
         "reference": "/refs/genome.fa",
         "reference_fai": "/refs/genome.fa.fai",
         "reference_dict": "/refs/genome.dict",
@@ -70,6 +73,16 @@ def test_rnaseqc_inputs_are_named():
     }
     # The GTF must be one prepared for RNA-SeQC
     assert part.parent.signatures["features"] == RNASEQC_FEATURES_SIGNATURE
+
+
+@pytest.mark.parametrize("cls", [QCStepPartDuplication, QCStepPartRnaseqc, QCStepPartStats])
+def test_qc_tools_without_strand_option_read_no_strandedness(cls):
+    # RSeQC read_duplication, RNA-SeQC 1.1.8 and the STAR log statistics have no strand option
+    part = _part(cls)
+
+    assert "decision" not in part._get_input_files_run(WILDCARDS)
+    assert part._get_params_run(WILDCARDS) == {}
+    assert "strandedness" not in TOOL_DEPENDENCIES[cls.name]
 
 
 def _tool_section(tool):
@@ -83,18 +96,14 @@ def _tool_section(tool):
     }
 
 
-@pytest.mark.parametrize("tool", ["featurecounts", "dupradar", "duplication", "rnaseqc", "stats"])
+@pytest.mark.parametrize("tool", ["featurecounts", "dupradar"])
 def test_quantifiers_require_a_strandedness_task(tool):
     section = {tool: _tool_section(tool)}
     with pytest.raises(pydantic.ValidationError, match="needs depends_on.strandedness"):
         GeneExpressionQuantification(tool=tool, depends_on={"alignments": "mapping"}, **section)
 
     depends_on = {"alignments": "mapping", "strandedness": "strandedness"}
-    depends_on |= {
-        "featurecounts": {"features": "genes"},
-        "dupradar": {"features": "genes"},
-        "rnaseqc": {"reference": "genome", "features": "genes"},
-    }.get(tool, {})
+    depends_on |= {"features": "genes"}
     config = GeneExpressionQuantification(tool=tool, depends_on=depends_on, **section)
     assert config.depends_on.strandedness == "strandedness"
 

@@ -91,9 +91,9 @@ TOOL_DEPENDENCIES = {
     Tool.strandedness: ("alignments", "exons"),
     Tool.featurecounts: ("alignments", "strandedness", "features"),
     Tool.dupradar: ("alignments", "strandedness", "features"),
-    Tool.duplication: ("alignments", "strandedness"),
-    Tool.rnaseqc: ("alignments", "strandedness", "reference", "features"),
-    Tool.stats: ("alignments", "strandedness"),
+    Tool.duplication: ("alignments",),
+    Tool.rnaseqc: ("alignments", "reference", "features"),
+    Tool.stats: ("alignments",),
     Tool.salmon: ("reads", "features", "index"),
 }
 

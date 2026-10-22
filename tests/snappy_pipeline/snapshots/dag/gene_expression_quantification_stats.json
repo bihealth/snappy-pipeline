@@ -18,8 +18,7 @@
   "benchmark": "tasks/gene_expression_quantification_stats/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
   "input": [
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision"
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai"
   ],
   "log": [
    "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log"
@@ -29,9 +28,7 @@
    "tasks/gene_expression_quantification_stats/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.read_alignment_report.tsv.md5"
   ],
   "params": {
-   "args": {
-    "strand": -1
-   }
+   "args": {}
   },
   "resources": {
    "mem": "4 GB",
@@ -67,48 +64,6 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": null
- },
- {
-  "benchmark": "tasks/gene_expression_quantification_strandedness/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
-  "input": [
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam",
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.bam.bai",
-   "<repo>/tests/scripts/generate_task_configs.py"
-  ],
-  "log": [
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/log/case001subregion-T1-RNA1-mRNA_seq1.log"
-  ],
-  "output": [
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv",
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.tsv.md5",
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision",
-   "tasks/gene_expression_quantification_strandedness/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.decision.md5"
-  ],
-  "params": {
-   "args": {
-    "config": {
-     "extra_arguments": [],
-     "strand": -1,
-     "threshold": 0.85
-    },
-    "extra_arguments": [],
-    "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
-   }
-  },
-  "resources": {
-   "mem": "6.7 GB",
-   "mem_mb": 6700,
-   "mem_mib": 6390,
-   "partition": "medium",
-   "runtime": 720
-  },
-  "rule": "gene_expression_quantification_strandedness_gene_expression_quantification_strandedness_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-T1-RNA1-mRNA_seq1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/rseqc"
  },
  {
   "benchmark": "tasks/ngs_mapping_star/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.mapping.tsv",

@@ -10,26 +10,8 @@ if TYPE_CHECKING:
 
 __author__ = "Clemens Messerschmidt <clemens.messerschmidt@bih-charite.de>"
 
-args = getattr(snakemake.params, "args", {})
-
 ShellWrapper(snakemake).run(
     r"""
-# Find out single or paired ended
-n_pair=$(samtools view -f 0x1 {snakemake.input.bam} | head -n 1000 | wc -l || true)
-if [[ $n_pair -eq 0 ]]; then
-    paired=0
-else
-    paired=1
-fi
-
-# Find out strand
-strand={args[strand]}
-
-if [ ${{strand}} -eq -1 ]
-then
-    strand=$(jq -r '.decision' {snakemake.input.decision})
-fi
-
 # Duplication (from RSeQC package)
 mkdir ${{TMPDIR}}/duplication
 read_duplication.py -i {snakemake.input.bam} -o ${{TMPDIR}}/duplication/out {extra_arguments}

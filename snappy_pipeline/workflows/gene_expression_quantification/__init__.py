@@ -16,9 +16,9 @@ QC and strandedness, all on the BAM files:
 - ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats``: estimate library complexity and duplication rate, and compute coverage and alignment metrics. ``dupradar`` needs BAM files marked for duplicates. ``dupradar`` reads the GTF of ``depends_on.features``.
 - ``rnaseqc`` reads a GTF prepared for RNA-SeQC 1.1.8 from ``depends_on.features``, tagged ``rnaseqc``: every record has a ``transcript_id`` (no ``gene`` records), and rRNA is marked by the GENCODE attribute ``transcript_type``.
 
-``featurecounts``, ``dupradar``, ``duplication``, ``rnaseqc`` and ``stats`` need the strandedness of each library.
+``featurecounts`` and ``dupradar`` need the strandedness of each library; the QC tools ``duplication``, ``rnaseqc`` and ``stats`` have no strand option.
 It comes from a task of this step with ``tool: strandedness``, named in ``depends_on.strandedness``.
-The field ``strand`` forces the strandedness of featurecounts (0 unstranded, 1 forward, 2 reverse) instead.
+The field ``strand`` forces the strandedness of featurecounts and dupradar (0 unstranded, 1 forward, 2 reverse) instead.
 
 The example maps RNA reads with STAR, infers the strandedness, and counts with featurecounts:
 
@@ -310,10 +310,11 @@ class QCStepPartDuplication(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "duplication"
 
-    needs_strandedness = True
-
     #: Class available actions
     actions = ("run",)
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}
 
     default_resource_usage = ResourceUsage(threads=1, runtime="3d", mem="127GB")
 
@@ -348,10 +349,11 @@ class QCStepPartRnaseqc(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "rnaseqc"
 
-    needs_strandedness = True
-
     #: Class available actions
     actions = ("run",)
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}
 
     @dictify
     def _get_input_files_run(self, wildcards: Wildcards):
@@ -369,10 +371,11 @@ class QCStepPartStats(GeneExpressionQuantificationStepPart):
     #: Step name
     name = "stats"
 
-    needs_strandedness = True
-
     #: Class available actions
     actions = ("run",)
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {}
 
     default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="4GB")
 
