@@ -32,6 +32,6 @@ mkdir -p $(dirname {snakemake.output.json})
 ExpansionHunter --reads {snakemake.input.bam} \
         --reference {snakemake.input.reference} \
         --variant-catalog {snakemake.input.repeat_catalog} \
-        --output-prefix {prefix} {sex_argument}
+        --output-prefix {prefix} {sex_argument} {extra_arguments}
 """
 )

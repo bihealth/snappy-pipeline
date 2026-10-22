@@ -153,6 +153,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "indel_score": 80,
     "mei_polya_frac": 0.75,
     "mei_score": 50,

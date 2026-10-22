@@ -41,6 +41,9 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "make_vcf": ("vcf", "vcf_tbi"),
     }
 
+    #: The MELT commands of the other actions take no ``extra_arguments``
+    extra_arguments_action = "indiv_analysis"
+
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="16GB")
 
     def _melt_files(self, *keys: str) -> dict[str, str]:

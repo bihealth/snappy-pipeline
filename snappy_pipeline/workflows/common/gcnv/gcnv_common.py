@@ -103,6 +103,10 @@ class ContigPloidyCommonMixin:
 class CallCnvsCommonMixin:
     """Mixin used for the ``call_cnvs`` step"""
 
+    def _get_params_call_cnvs(self, wildcards):
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}
+
     def _get_log_file_call_cnvs(self):
         return {"log": "work/{library_kit}/log/{library_kit}.{shard}.call_cnvs.log"}
 
@@ -126,6 +130,9 @@ class GcnvCommonStepPart(
 
     #: Step name
     name = "gcnv"
+
+    #: ``extra_arguments`` go to ``GermlineCNVCaller``; the other GATK commands take none
+    extra_arguments_action = "call_cnvs"
 
     #: Dictionary: Key: library name (str); Value: library kit (str).
     ngs_library_to_kit = None

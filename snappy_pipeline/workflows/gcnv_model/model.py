@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -61,7 +61,7 @@ class GcnvModelDependsOn(SnappyModel):
     """Task with the BED file of the pseudo-autosomal regions, excluded from the contig ploidy"""
 
 
-class GcnvModel(SnappyStepModel):
+class GcnvModel(SnappyStepModel, ToolModel):
     depends_on: GcnvModelDependsOn
 
     intervals: Annotated[Intervals, EnumField(Intervals)]
@@ -69,6 +69,9 @@ class GcnvModel(SnappyStepModel):
     ``targeted`` bins the target regions of each library kit, ``wgs`` bins the whole genome
     (one kit, named ``wgs``).
     """
+
+    extra_arguments: list[str] = []
+    """Additional arguments for ``GermlineCNVCaller``, the other GATK commands take none"""
 
     @model_validator(mode="after")
     def check_kits(self):

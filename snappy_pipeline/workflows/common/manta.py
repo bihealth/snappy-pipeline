@@ -23,6 +23,10 @@ class MantaStepPart(
     name = "manta"
     actions = ("run",)
 
+    def _get_params_run(self, wildcards):
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}
+
     @property
     def default_resource_usage(self) -> ResourceUsage:
         num_threads = self.config.manta.num_threads

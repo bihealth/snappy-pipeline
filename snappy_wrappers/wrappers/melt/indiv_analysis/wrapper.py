@@ -20,6 +20,7 @@ java -Xmx13G -jar $JAR \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -w $(dirname {snakemake.output.done}) \
     -r 150 \
+    {extra_arguments} \
     -bamfile {snakemake.input.orig_bam}
 """
 )

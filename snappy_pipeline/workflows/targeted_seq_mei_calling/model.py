@@ -4,7 +4,7 @@ from typing import Annotated
 from pydantic import Field
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, ExpectedPathSchema
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
@@ -13,7 +13,7 @@ class Tool(enum.StrEnum):
     scramble = "scramble"
 
 
-class Scramble(SnappyModel):
+class Scramble(ToolModel):
     blast_ref: ConfigPath
     """path to FASTA reference with BLAST DB (`makeblastdb`)"""
 

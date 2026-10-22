@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     COHORT_LEVEL,
     DataSignature,
@@ -24,7 +24,7 @@ class VariantCheckingDependsOn(SnappyModel):
     ]
 
 
-class VariantChecking(SnappyStepModel):
+class VariantChecking(SnappyStepModel, ToolModel):
     depends_on: VariantCheckingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]

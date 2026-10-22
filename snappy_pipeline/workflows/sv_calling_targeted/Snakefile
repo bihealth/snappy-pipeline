@@ -109,6 +109,8 @@ if tool == "gcnv":
             mem=wf.get_resource("gcnv", "call_cnvs", "mem"),
             partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
             tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
+        params:
+            args=wf.get_params("gcnv", "call_cnvs"),
         wrapper:
             wf.wrapper_path("gcnv/call_cnvs_case_mode")
 
@@ -185,6 +187,8 @@ elif tool == "manta":
             mem=wf.get_resource("manta", "run", "mem"),
             partition=wf.get_resource("manta", "run", "partition"),
             tmpdir=wf.get_resource("manta", "run", "tmpdir"),
+        params:
+            args=wf.get_params("manta", "run"),
         wrapper:
             wf.wrapper_path("manta/germline_targeted")
 
@@ -246,7 +250,7 @@ elif tool == "delly2":
             partition=wf.get_resource("delly2", "genotype", "partition"),
             tmpdir=wf.get_resource("delly2", "genotype", "tmpdir"),
         params:
-            args=wf.get_params("delly2", "call"),
+            args=wf.get_params("delly2", "genotype"),
         wrapper:
             wf.wrapper_path("delly2/germline/genotype")
 

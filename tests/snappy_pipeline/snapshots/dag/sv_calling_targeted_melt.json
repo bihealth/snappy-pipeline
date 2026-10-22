@@ -463,6 +463,7 @@
   "params": {
    "args": {
     "exome": true,
+    "extra_arguments": [],
     "me_refs_infix": "AUTO",
     "me_type": "ALU"
    }
@@ -507,6 +508,7 @@
   "params": {
    "args": {
     "exome": true,
+    "extra_arguments": [],
     "me_refs_infix": "AUTO",
     "me_type": "LINE1"
    }
@@ -551,6 +553,7 @@
   "params": {
    "args": {
     "exome": true,
+    "extra_arguments": [],
     "me_refs_infix": "AUTO",
     "me_type": "SVA"
    }

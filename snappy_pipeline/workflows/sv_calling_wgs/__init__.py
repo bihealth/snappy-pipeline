@@ -76,6 +76,9 @@ class PopDelStepPart(
     name = "popdel"
     actions = ("profile", "call", "concat_calls", "reorder_vcf")
 
+    #: ``profile`` takes no ``extra_arguments``
+    extra_arguments_action = "call"
+
     temp_outputs = {"call": ("vcf", "vcf_tbi")}
 
     intermediate_outputs = {"profile": ("profile",), "concat_calls": ("vcf", "vcf_tbi")}

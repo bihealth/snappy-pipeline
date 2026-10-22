@@ -20,6 +20,7 @@ rm -rf $outdir/* $workdir/*
 configManta.py \
     --referenceFasta {snakemake.input.reference} \
     --runDir $workdir \
+    {extra_arguments} \
     --bam {bams}
 
 perl -p -i -e 's/isEmail = .*/isEmail = False/g' $workdir/runWorkflow.py

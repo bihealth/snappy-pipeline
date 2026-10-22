@@ -456,6 +456,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "ALU"
    }
@@ -499,6 +500,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "LINE1"
    }
@@ -542,6 +544,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "me_refs_infix": "1KGP_Hg19",
     "me_type": "SVA"
    }

@@ -22,6 +22,7 @@ delly call \
     --genome {snakemake.input.reference} \
     --outfile {snakemake.output.bcf} \
     {exclude_str} \
+    {extra_arguments} \
     {snakemake.input.bam}
 
 tabix -f {snakemake.output.bcf}

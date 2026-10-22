@@ -42,6 +42,9 @@ class ScrambleStepPart(BaseStepPart):
     #: Class available actions
     actions = ("cluster", "analysis")
 
+    #: ``cluster`` is scramble's ``cluster_identifier`` script, which takes no tool options
+    extra_arguments_action = "analysis"
+
     intermediate_outputs = {"cluster": ("txt",)}
 
     default_resource_usage = ResourceUsage(threads=1, runtime="6h", mem=f"{8 * 1024}MB")

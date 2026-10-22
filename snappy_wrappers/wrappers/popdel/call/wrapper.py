@@ -39,6 +39,7 @@ done
 popdel call \
     -r {chrom}:{args[begin]}-{args[end]} \
     -o $TMPDIR/tmp.vcf \
+    {extra_arguments} \
     $TMPDIR/profiles.txt
 
 cat >$TMPDIR/header.txt <<EOF

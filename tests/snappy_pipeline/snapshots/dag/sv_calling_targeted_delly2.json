@@ -180,7 +180,8 @@
      "mad_cutoff": 9,
      "map_qual": 1,
      "qual_tra": 20
-    }
+    },
+    "extra_arguments": []
    }
   },
   "resources": {

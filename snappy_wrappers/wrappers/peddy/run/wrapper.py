@@ -10,6 +10,7 @@ ShellWrapper(snakemake).run(
 
 python -m peddy \
     --prefix $(dirname {snakemake.output.html})/$(basename {snakemake.output.html} .html) \
+    {extra_arguments} \
     {snakemake.input.vcf} \
     {snakemake.input.ped}
 

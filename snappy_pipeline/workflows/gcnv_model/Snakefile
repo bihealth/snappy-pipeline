@@ -141,6 +141,8 @@ rule gcnv_model_call_cnvs:
         mem=wf.get_resource("gcnv", "call_cnvs", "mem"),
         partition=wf.get_resource("gcnv", "call_cnvs", "partition"),
         tmpdir=wf.get_resource("gcnv", "call_cnvs", "tmpdir"),
+    params:
+        args=wf.get_params("gcnv", "call_cnvs"),
     wrapper:
         wf.wrapper_path("gcnv/call_cnvs_cohort_mode")
 

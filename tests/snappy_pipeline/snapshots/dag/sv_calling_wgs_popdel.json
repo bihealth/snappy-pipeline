@@ -172,7 +172,8 @@
    "args": {
     "begin": "1",
     "chrom": "12",
-    "end": "10020000"
+    "end": "10020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -211,7 +212,8 @@
    "args": {
     "begin": "109980000",
     "chrom": "12",
-    "end": "120020000"
+    "end": "120020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -250,7 +252,8 @@
    "args": {
     "begin": "119980000",
     "chrom": "12",
-    "end": "130020000"
+    "end": "130020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -289,7 +292,8 @@
    "args": {
     "begin": "129980000",
     "chrom": "12",
-    "end": "133851895"
+    "end": "133851895",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -328,7 +332,8 @@
    "args": {
     "begin": "19980000",
     "chrom": "12",
-    "end": "30020000"
+    "end": "30020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -367,7 +372,8 @@
    "args": {
     "begin": "29980000",
     "chrom": "12",
-    "end": "40020000"
+    "end": "40020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -406,7 +412,8 @@
    "args": {
     "begin": "39980000",
     "chrom": "12",
-    "end": "50020000"
+    "end": "50020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -445,7 +452,8 @@
    "args": {
     "begin": "49980000",
     "chrom": "12",
-    "end": "60020000"
+    "end": "60020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -484,7 +492,8 @@
    "args": {
     "begin": "59980000",
     "chrom": "12",
-    "end": "70020000"
+    "end": "70020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -523,7 +532,8 @@
    "args": {
     "begin": "69980000",
     "chrom": "12",
-    "end": "80020000"
+    "end": "80020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -562,7 +572,8 @@
    "args": {
     "begin": "79980000",
     "chrom": "12",
-    "end": "90020000"
+    "end": "90020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -601,7 +612,8 @@
    "args": {
     "begin": "89980000",
     "chrom": "12",
-    "end": "100020000"
+    "end": "100020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -640,7 +652,8 @@
    "args": {
     "begin": "9980000",
     "chrom": "12",
-    "end": "20020000"
+    "end": "20020000",
+    "extra_arguments": []
    }
   },
   "resources": {
@@ -679,7 +692,8 @@
    "args": {
     "begin": "99980000",
     "chrom": "12",
-    "end": "110020000"
+    "end": "110020000",
+    "extra_arguments": []
    }
   },
   "resources": {

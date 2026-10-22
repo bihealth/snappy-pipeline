@@ -48,6 +48,12 @@ class ExpansionHunterStepPart(BaseStepPart):
     #: Valid actions
     actions = ("run", "annotate")
 
+    extra_arguments_action = "run"
+
+    def tool_section(self):
+        """ExpansionHunter has no tool section: the ``extra_arguments`` are the step's own"""
+        return self.config
+
     intermediate_outputs = {"run": ("json",)}
 
     @cached_property

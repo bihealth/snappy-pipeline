@@ -177,6 +177,10 @@ class BuildGcnvModelStepPart(
         "coverage": ("tsv",),
     }
 
+    def tool_section(self):
+        """The model task has no tool section: the ``extra_arguments`` are the step's own"""
+        return self.config
+
     @listify
     def get_result_files(self):
         """Return list of concrete output paths"""

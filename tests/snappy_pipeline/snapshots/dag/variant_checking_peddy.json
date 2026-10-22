@@ -450,7 +450,11 @@
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
   "resources": {
    "mem": "15.36 GB",
    "mem_mb": 15360,

@@ -173,7 +173,11 @@
    "tasks/sv_calling_wgs_manta/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
    "tasks/sv_calling_wgs_manta/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
   "resources": {
    "mem": "57.34 GB",
    "mem_mb": 57344,

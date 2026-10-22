@@ -55,5 +55,7 @@ rule variant_checking_peddy_run:
         mem=wf.get_resource("peddy", "run", "mem"),
         partition=wf.get_resource("peddy", "run", "partition"),
         tmpdir=wf.get_resource("peddy", "run", "tmpdir"),
+    params:
+        args=wf.get_params("peddy", "run"),
     wrapper:
         wf.wrapper_path("peddy/run")

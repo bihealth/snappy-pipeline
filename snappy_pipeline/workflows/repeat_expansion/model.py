@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
@@ -43,7 +43,7 @@ class Tool(enum.StrEnum):
     expansionhunter = "expansionhunter"
 
 
-class RepeatExpansion(SnappyStepModel):
+class RepeatExpansion(SnappyStepModel, ToolModel):
     depends_on: RepeatExpansionDependsOn
 
     tool: Tool

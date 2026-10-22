@@ -36,6 +36,7 @@ gatk GermlineCNVCaller \
     --annotated-intervals {snakemake.input.intervals} \
     --interval-merging-rule OVERLAPPING_ONLY \
     --output $(dirname {snakemake.output.done}) \
-    --output-prefix cnv_calls
+    --output-prefix cnv_calls \
+    {extra_arguments}
 """
 )

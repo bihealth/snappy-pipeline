@@ -57,6 +57,10 @@ class PeddyStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
+    def tool_section(self):
+        """peddy has no tool section: the ``extra_arguments`` are the step's own"""
+        return self.config
+
     published_keys = tuple(f"{key}{suffix}" for key in _OUTPUTS for suffix in ("", "_md5"))
     entity_wildcard = "index_ngs_library"
     default_resource_usage = ResourceUsage(threads=1, runtime="10h", mem=f"{15 * 1024}MB")
@@ -81,6 +85,10 @@ class PeddyStepPart(BaseStepPart):
             result[key] = prefix + ext
             result[f"{key}_md5"] = prefix + ext + ".md5"
         return result
+
+    def _get_params_run(self, wildcards):
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}
 
     def _get_log_file_run(self):
         return {"log": "work/{index_ngs_library}/log/snakemake.filter.log"}

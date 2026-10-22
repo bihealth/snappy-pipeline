@@ -27,6 +27,9 @@ class Delly2StepPart(
     name = "delly2"
     actions = ("call", "merge_calls", "genotype", "merge_genotypes")
 
+    #: ``genotype`` runs ``delly call`` again, but takes the arguments of the discovery only
+    extra_arguments_action = "call"
+
     intermediate_outputs = {
         "call": ("bcf", "bcf_csi"),
         "merge_calls": ("bcf", "bcf_csi"),

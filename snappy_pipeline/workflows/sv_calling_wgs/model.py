@@ -4,7 +4,7 @@ from typing import Annotated
 from pydantic import Field, model_validator
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -25,7 +25,10 @@ class Tool(enum.StrEnum):
     melt = "melt"
 
 
-class Gcnv(SnappyModel):
+class Gcnv(ToolModel):
+    extra_arguments: list[str] = []
+    """Additional arguments for ``GermlineCNVCaller``, the other GATK commands take none"""
+
     skip_libraries: list[str] = []
     """
     Skip processing of the following libraries.
@@ -33,7 +36,7 @@ class Gcnv(SnappyModel):
     """
 
 
-class Delly2(SnappyModel):
+class Delly2(ToolModel):
     map_qual: int = 1
 
     geno_qual: int = 5
@@ -49,7 +52,7 @@ class Delly2(SnappyModel):
     """
 
 
-class Manta(SnappyModel):
+class Manta(ToolModel):
     num_threads: int = 16
 
     skip_libraries: list[str] = []
@@ -59,7 +62,7 @@ class Manta(SnappyModel):
     """
 
 
-class Melt(SnappyModel):
+class Melt(ToolModel):
     me_refs_infix: str = "1KGP_Hg19"
     me_types: list[str] = ["ALU", "LINE1", "SVA"]
     me_refs_path: ConfigPath = Field(examples=["me_refs"])
@@ -72,7 +75,7 @@ class Melt(SnappyModel):
     """
 
 
-class Popdel(SnappyModel):
+class Popdel(ToolModel):
     window_size: int = 10000000
 
     max_sv_size: int = 20000
