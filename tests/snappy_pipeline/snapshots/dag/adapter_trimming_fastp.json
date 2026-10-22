@@ -1,6 +1,11 @@
 [
  {
   "benchmark": "tasks/adapter_trimming_fastp/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "directory": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/rejected",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report"
+  ],
   "input": [
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz"
@@ -9,9 +14,9 @@
    "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
   "output": [
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/rejected/.done"
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/rejected"
   ],
   "params": {
    "args": {
@@ -96,8 +101,8 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done"
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report"
   ],
   "local": true,
   "log": [],
@@ -117,8 +122,8 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out/.done",
-   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report/.done",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report",
    "tasks/adapter_trimming_fastp/output/.manifest.tsv"
   ],
   "log": [],

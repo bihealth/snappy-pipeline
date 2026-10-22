@@ -206,6 +206,9 @@
  },
  {
   "benchmark": "tasks/gcnv_model_targeted/benchmarks/MedExome/MedExome.scatter_intervals.tsv",
+  "directory": [
+   "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.scatter_intervals"
+  ],
   "input": [
    "tasks/gcnv_model_targeted/work/MedExome/out/MedExome.filter_intervals.interval_list"
   ],

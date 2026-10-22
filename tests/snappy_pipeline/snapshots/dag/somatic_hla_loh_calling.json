@@ -2,7 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.done",
+   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out",
    "tasks/somatic_hla_loh_calling/output/.manifest.tsv"
   ],
   "log": [],
@@ -258,7 +258,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.done"
+   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out"
   ],
   "local": true,
   "log": [],
@@ -277,6 +277,9 @@
  },
  {
   "benchmark": "tasks/somatic_hla_loh_calling/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "directory": [
+   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out"
+  ],
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
@@ -291,7 +294,7 @@
    "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
   ],
   "output": [
-   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.done"
+   "tasks/somatic_hla_loh_calling/work/case001subregion-T1-DNA1-WES1/out"
   ],
   "params": {
    "args": {

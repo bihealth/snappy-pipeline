@@ -169,6 +169,9 @@
  },
  {
   "benchmark": "tasks/gcnv_model_wgs/benchmarks/wgs/wgs.scatter_intervals.tsv",
+  "directory": [
+   "tasks/gcnv_model_wgs/work/wgs/out/wgs.scatter_intervals"
+  ],
   "input": [
    "tasks/gcnv_model_wgs/work/wgs/out/wgs.filter_intervals.interval_list"
   ],

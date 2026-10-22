@@ -2,7 +2,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done",
+   "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/out",
    "tasks/somatic_gene_fusion_calling_star_fusion/output/.manifest.tsv"
   ],
   "log": [],
@@ -18,7 +18,7 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+   "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/out"
   ],
   "local": true,
   "log": [],
@@ -37,6 +37,9 @@
  },
  {
   "benchmark": "tasks/somatic_gene_fusion_calling_star_fusion/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/snakemake.gene_fusion_calling.tsv",
+  "directory": [
+   "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/out"
+  ],
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
@@ -46,7 +49,7 @@
    "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/log/snakemake.gene_fusion_calling.log"
   ],
   "output": [
-   "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/out/.done"
+   "tasks/somatic_gene_fusion_calling_star_fusion/work/case001subregion-T1-RNA1-mRNA_seq1/out"
   ],
   "params": {
    "args": {
