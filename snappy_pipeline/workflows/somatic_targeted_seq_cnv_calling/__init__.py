@@ -11,6 +11,7 @@ The ``tool`` field selects the caller, which starts from the aligned reads:
   See :ref:`step_panel_of_normals`.
 
 The task gives one result per tumor DNA library.
+``sequenza`` leaves out tumor libraries without a matched normal, with a warning.
 All callers write the segments in a table that loosely follows the `DNAcopy format <https://bioconductor.org/packages/devel/bioc/manuals/DNAcopy/man/DNAcopy.pdf>`_.
 The copy number call may be missing, and the chromosome number is replaced by its name.
 
@@ -44,6 +45,7 @@ from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
     ReportOutput,
@@ -625,6 +627,14 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         return tuple(cls.produces)
 
     library_requirement = "kind == 'cancer'"
+
+    @classmethod
+    def task_library_requirement(cls, config):
+        """sequenza compares each tumor with its matched normal, cnvkit and purecn with the panel
+        of normals."""
+        if config.tool == Tool.sequenza:
+            return MATCHED_NORMAL_REQUIREMENT
+        return cls.library_requirement
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

@@ -4,7 +4,8 @@
 The step estimates the tumor cell content (purity) and the ploidy of tumor samples from the B-allele frequencies and the coverage of the tumor and its matched normal.
 The ``tool`` field has the value ``ascat``, which runs ASCAT.
 The B-allele frequencies are taken at the loci of the task in ``depends_on.snp_loci``.
-The task gives one result per tumor DNA library.
+The task gives one result per tumor DNA library with a matched normal.
+It leaves out the other tumor libraries, with a warning.
 
 Whole exome data is not supported yet.
 The coverage of the exome tumor and normal would have to come from a CNV caller that writes bins, and no such caller exists.
@@ -32,7 +33,7 @@ from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
+from snappy_pipeline.workflows.abstract import MATCHED_NORMAL_REQUIREMENT, BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping import ResourceUsage
 
@@ -197,7 +198,7 @@ class SomaticPurityPloidyEstimateWorkflow(BaseStep):
 
     config_model_class = SomaticPurityPloidyEstimateConfigModel
 
-    library_requirement = "kind == 'cancer'"
+    library_requirement = MATCHED_NORMAL_REQUIREMENT
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

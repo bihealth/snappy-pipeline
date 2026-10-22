@@ -8,6 +8,7 @@ The variants in the regions of ``depends_on.excluded_regions`` are left out, if 
 
 The step has no ``tool`` field.
 It gives one result per tumor DNA library, paired with its matched normal.
+It leaves out tumor libraries without a matched normal, with a warning.
 It publishes files only when ``depends_on.copy_number`` names a CNV calling task.
 Without it, the pileups stay in ``work/`` as intermediate files.
 
@@ -31,6 +32,7 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
     ResourceUsage,
@@ -204,7 +206,7 @@ class SomaticCnvCheckingWorkflow(BaseStep):
 
     config_model_class = SomaticCnvCheckingConfigModel
 
-    library_requirement = "kind == 'cancer'"
+    library_requirement = MATCHED_NORMAL_REQUIREMENT
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

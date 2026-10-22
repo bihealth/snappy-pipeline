@@ -1168,8 +1168,23 @@ class BaseStep:
 
     def library_warnings(self) -> list[str]:
         """Return warnings about the libraries of this task, which the main Snakefile prints once
-        per run."""
-        return []
+        per run: by default, the cancer libraries without a matched normal that a task with
+        ``MATCHED_NORMAL_REQUIREMENT`` leaves out."""
+        if self.task_library_requirement(self.config) != MATCHED_NORMAL_REQUIREMENT:
+            return []
+        df = self.build_library_dataframe(include_background=self.background_results)
+        selection = getattr(self.config, "library_selection", None)
+        default = self.task_library_default(self.config)
+        cancer = select_libraries(df, selection, default, "kind == 'cancer'")
+        if cancer.empty:
+            return []
+        unpaired = sorted(set(cancer["library_name"]) - set(self.libraries["library_name"]))
+        if not unpaired:
+            return []
+        return [
+            f"Task {self.task_name!r} leaves out the libraries without a matched normal: "
+            + ", ".join(unpaired)
+        ]
 
     def check_config(self):
         """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
@@ -1598,6 +1613,11 @@ _LIBRARY_SELECTION_DEFAULTS: dict[str, str] = {
 
 #: Library types whose ``libraryKit`` is an enrichment kit
 TARGETED_LIBRARY_TYPES = ("WES", "Panel_seq")
+
+#: ``library_requirement`` of the steps and tools that compare each tumor with its matched
+#: normal (the ``matched_normal_lib`` relationship); ``BaseStep.library_warnings`` names the
+#: libraries they leave out
+MATCHED_NORMAL_REQUIREMENT = "kind == 'cancer' and matched_normal_lib != ''"
 
 #: Standard columns of the library dataframe built by :func:`build_library_dataframe`.
 _LIBRARY_COLUMNS = [

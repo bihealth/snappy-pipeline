@@ -1096,6 +1096,8 @@ class TestScenarioMixedCancerAndGermline:
             [csheet.sheet, gsheet.sheet],
         )
         cls = WORKFLOW_REGISTRY[step]
+        # The requirement may use the step's relationships, such as the matched normal
+        df = resolve_relationships(df, cls.default_relationships)
         # Without an explicit library_selection, and with any selection
         for selection in (None, ""):
             libraries = select_libraries(

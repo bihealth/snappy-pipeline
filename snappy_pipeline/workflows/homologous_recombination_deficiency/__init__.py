@@ -6,7 +6,8 @@ The score combines loss of heterozygosity, large-scale transitions and telomeric
 It is a proxy for the homologous recombination deficiency scores of SNP arrays, as described by `Sztupinszki et al. <https://doi.org/10.1038/s41523-018-0066-6>`_.
 The ``tool`` field has the value ``scarHRD``.
 
-The task gives one result per tumor DNA library.
+The task gives one result per tumor DNA library with a matched normal, as Sequenza does.
+It leaves out the other tumor libraries, with a warning.
 It reads the ``seqz`` file of a ``somatic_targeted_seq_cnv_calling`` task with ``tool: sequenza`` (``depends_on.copy_number``).
 Other CNV callers are rejected.
 scarHRD repeats some Sequenza steps with its own arguments.
@@ -29,8 +30,10 @@ from typing import Any
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
     ResourceUsage,
@@ -95,7 +98,14 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
 
     config_model_class = HomologousRecombinationDeficiencyConfigModel
 
-    library_requirement = "kind == 'cancer'"
+    library_requirement = MATCHED_NORMAL_REQUIREMENT
+
+    default_relationships = {
+        "matched_normal_lib": RelationshipDefinition(
+            via="donor_name",
+            target="role == 'normal' and extraction_type == 'dna'",
+        )
+    }
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

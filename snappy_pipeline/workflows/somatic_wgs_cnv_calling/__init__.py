@@ -12,6 +12,8 @@ The ``tool`` field selects the caller:
   It needs ``depends_on.database``: an ``external_data`` task with ``{type: database, tags: [control_freec]}``, the key ``chr_len`` (the chromosome lengths) and, optionally, the key ``mappability``.
 
 The task gives one result per tumor DNA library.
+``control_freec`` leaves out tumor libraries without a matched normal, with a warning.
+``cnvetti`` segments the coverage of such a tumor alone.
 The files are unfiltered.
 They contain low-quality calls.
 
@@ -40,6 +42,7 @@ from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
     ResourceUsage,
@@ -580,6 +583,14 @@ class SomaticWgsCnvCallingWorkflow(BaseStep):
     config_model_class = SomaticWgsCnvCallingConfigModel
 
     library_requirement = "kind == 'cancer'"
+
+    @classmethod
+    def task_library_requirement(cls, config):
+        """control_freec compares each tumor with its matched normal; cnvkit uses the panel of
+        normals, and cnvetti takes the coverage of a tumor without a normal alone."""
+        if config.tool == Tool.control_freec:
+            return MATCHED_NORMAL_REQUIREMENT
+        return cls.library_requirement
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(

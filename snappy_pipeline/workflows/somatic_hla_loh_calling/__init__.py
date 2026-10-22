@@ -6,6 +6,7 @@ LOHHLA compares the aligned reads of the tumor and its matched normal, using the
 
 The step has no ``tool`` field.
 It gives one result per tumor DNA library, paired with its matched normal.
+It leaves out tumor libraries without a matched normal, with a warning.
 The tumor purity and ploidy estimates of LOHHLA are not used.
 
 Outputs
@@ -18,7 +19,7 @@ They are not published.
 """
 
 from snappy_pipeline.models import RelationshipDefinition, ToolModel
-from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart
+from snappy_pipeline.workflows.abstract import MATCHED_NORMAL_REQUIREMENT, BaseStep, BaseStepPart
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -95,7 +96,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
 
     config_model_class = SomaticHlaLohCallingConfigModel
 
-    library_requirement = "kind == 'cancer'"
+    library_requirement = MATCHED_NORMAL_REQUIREMENT
 
     default_relationships = {
         "matched_normal_lib": RelationshipDefinition(
