@@ -142,6 +142,9 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
             yield key, "work/{tumor_library}/out/{tumor_library}" + ext
             yield key + "_md5", "work/{tumor_library}/out/{tumor_library}" + ext + ".md5"
 
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"tumor_library": wildcards.tumor_library}
+
     def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
 

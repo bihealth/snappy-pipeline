@@ -1,4 +1,3 @@
-import hashlib
 import math
 import os
 import re
@@ -10,37 +9,10 @@ from typing import TYPE_CHECKING
 import tabix
 import vcfpy
 from snakemake.shell import shell
-from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers.snappy_wrapper import PythonWrapper
 
 if TYPE_CHECKING:
     from snakemake.iocontainers import snakemake
-
-tempdir = tempfile.mkdtemp()
-
-variants = [
-    f"bcftools merge {snakemake.input.normal} {snakemake.input.tumor}",
-    'bcftools filter --include "N_ALT=2 & FORMAT/AD[:2]=0"',
-]
-if excluded_regions := snakemake.input.get("excluded_regions", ""):
-    variants.append(f"bcftools view --targets-file ^{excluded_regions}")
-variants = " \\\n    | ".join(variants)
-
-ShellWrapper(snakemake).run(
-    r"""
-set -x
-
-{variants} \
-    | bgzip \
-    > {tempdir}/variants.vcf.gz
-tabix {tempdir}/variants.vcf.gz
-
-tail -n +2 {snakemake.input.cnv} \
-    | awk '{{if ($6 < 0) {{sgn="-"; lfc=-$6}} else {{sgn="+"; lfc=$6}}; printf "%s\t%d\t%d\tseg_%d_cn_%d\t%f\t%s\n", $2, $3-1, $4, NR, $7, lfc, sgn}}' \
-    | bgzip \
-    > {tempdir}/segments.bed.gz
-tabix {tempdir}/segments.bed.gz
-"""
-)
 
 
 # Implmentation of R's quantile function for continuous quantiles.
@@ -97,155 +69,177 @@ CN = {
     "Description": "Number of allele called by the CNV caller",
 }
 
-bed = tabix.open(os.path.join(tempdir, "segments.bed.gz"))
 
-reader = vcfpy.Reader.from_path(os.path.join(tempdir, "variants.vcf.gz"))
+def main():
+    tempdir = tempfile.mkdtemp()
 
-sample = snakemake.wildcards["library_name"]
-iSample = reader.header.samples.name_to_idx[sample]
+    variants = [
+        f"bcftools merge {snakemake.input.normal} {snakemake.input.tumor}",
+        'bcftools filter --include "N_ALT=2 & FORMAT/AD[:2]=0"',
+    ]
+    if excluded_regions := snakemake.input.get("excluded_regions", ""):
+        variants.append(f"bcftools view --targets-file ^{excluded_regions}")
+    variants = " \\\n    | ".join(variants)
 
-reader.header.add_format_line(LFC)
-reader.header.add_format_line(CN)
+    shell(
+        r"""
+set -euo pipefail
 
-writer = vcfpy.Writer.from_path(snakemake.output.vcf, reader.header)
+{variants} \
+    | bgzip \
+    > {tempdir}/variants.vcf.gz
+tabix {tempdir}/variants.vcf.gz
 
-segments = {}
-with open(snakemake.log.log, "+at") as log:
-    for variant in reader:
-        logFoldChange = None
-        cn = None
+tail -n +2 {snakemake.input.cnv} \
+    | awk '{{if ($6 < 0) {{sgn="-"; lfc=-$6}} else {{sgn="+"; lfc=$6}}; printf "%s\t%d\t%d\tseg_%d_cn_%d\t%f\t%s\n", $2, $3-1, $4, NR, $7, lfc, sgn}}' \
+    | bgzip \
+    > {tempdir}/segments.bed.gz
+tabix {tempdir}/segments.bed.gz
+"""
+    )
 
-        # Add default (missing) values for all samples
-        variant.add_format("LFC", logFoldChange)
-        variant.add_format("CN", cn)
+    bed = tabix.open(os.path.join(tempdir, "segments.bed.gz"))
 
-        try:
-            locii = list(bed.query(variant.CHROM, variant.affected_start, variant.affected_end + 1))
+    reader = vcfpy.Reader.from_path(os.path.join(tempdir, "variants.vcf.gz"))
 
-            if len(locii) == 0:
+    sample = snakemake.params.args["tumor_library"]
+    iSample = reader.header.samples.name_to_idx[sample]
+
+    reader.header.add_format_line(LFC)
+    reader.header.add_format_line(CN)
+
+    writer = vcfpy.Writer.from_path(snakemake.output.vcf, reader.header)
+
+    segments = {}
+    with open(snakemake.log.log, "+at") as log:
+        for variant in reader:
+            logFoldChange = None
+            cn = None
+
+            # Add default (missing) values for all samples
+            variant.add_format("LFC", logFoldChange)
+            variant.add_format("CN", cn)
+
+            try:
+                locii = list(
+                    bed.query(variant.CHROM, variant.affected_start, variant.affected_end + 1)
+                )
+
+                if len(locii) == 0:
+                    log.write(
+                        "Variant {}:{}{}>{} not covered by segmentation of sample {}\n".format(
+                            variant.CHROM, variant.POS, variant.REF, variant.ALT[0].value, sample
+                        )
+                    )
+                elif len(locii) == 1:
+                    for locus in locii:
+                        logFoldChange = float(locus[4])
+                        if locus[5] == "-":
+                            logFoldChange = -logFoldChange
+                        m = NAME_PATTERN.match(locus[3])
+                        assert m
+                        cn = int(m.groups()[1])
+                else:
+                    log.write(
+                        "Variant {}:{}{}>{} crosses segments in sample {}\n".format(
+                            variant.CHROM, variant.POS, variant.REF, variant.ALT[0].value, sample
+                        )
+                    )
+                    for locus in locii:
+                        m = NAME_PATTERN.match(locus[3])
+                        assert m
+                        if cn is None:
+                            cn = int(m.groups()[1])
+                        else:
+                            if cn != int(m.groups()[1]):
+                                cn = None
+                                break
+
+            except tabix.TabixError:
                 log.write(
                     "Variant {}:{}{}>{} not covered by segmentation of sample {}\n".format(
                         variant.CHROM, variant.POS, variant.REF, variant.ALT[0].value, sample
                     )
                 )
-            elif len(locii) == 1:
-                for locus in locii:
-                    logFoldChange = float(locus[4])
-                    if locus[5] == "-":
-                        logFoldChange = -logFoldChange
-                    m = NAME_PATTERN.match(locus[3])
-                    assert m
-                    cn = int(m.groups()[1])
-            else:
-                log.write(
-                    "Variant {}:{}{}>{} crosses segments in sample {}\n".format(
-                        variant.CHROM, variant.POS, variant.REF, variant.ALT[0].value, sample
-                    )
-                )
-                for locus in locii:
-                    m = NAME_PATTERN.match(locus[3])
-                    assert m
-                    if cn is None:
-                        cn = int(m.groups()[1])
-                    else:
-                        if cn != int(m.groups()[1]):
-                            cn = None
-                            break
+                locii = None
 
-        except tabix.TabixError:
-            log.write(
-                "Variant {}:{}{}>{} not covered by segmentation of sample {}\n".format(
-                    variant.CHROM, variant.POS, variant.REF, variant.ALT[0].value, sample
-                )
-            )
-            locii = None
+            variant.calls[iSample].data["LFC"] = logFoldChange
+            variant.calls[iSample].data["CN"] = cn
 
-        variant.calls[iSample].data["LFC"] = logFoldChange
-        variant.calls[iSample].data["CN"] = cn
+            writer.write_record(variant)
 
-        writer.write_record(variant)
+            if locii is None or len(locii) != 1:
+                continue
 
-        if locii is None or len(locii) != 1:
-            continue
-
-        locus = locii[0]
-        if locus[3] not in segments:
-            segments[locus[3]] = {
-                "logFoldChange": logFoldChange,
-                "CHROM": locus[0],
-                "start": locus[1],
-                "stop": locus[2],
-                "BAFs": [],
-                "NoData": 0,
-            }
-        depth = variant.call_for_sample[sample].data["AD"]
-        if len(depth) == 0:
-            segments[locus[3]]["NoData"] += 1
-        else:
-            if depth[0] is None:
-                depth[0] = 0
-            if depth[1] is None:
-                depth[1] = 0
-            if depth[0] + depth[1] == 0:
+            locus = locii[0]
+            if locus[3] not in segments:
+                segments[locus[3]] = {
+                    "logFoldChange": logFoldChange,
+                    "CHROM": locus[0],
+                    "start": locus[1],
+                    "stop": locus[2],
+                    "BAFs": [],
+                    "NoData": 0,
+                }
+            depth = variant.call_for_sample[sample].data["AD"]
+            if len(depth) == 0:
                 segments[locus[3]]["NoData"] += 1
             else:
-                baf = min(depth[0], depth[1]) / (depth[0] + depth[1])
-                segments[locus[3]]["BAFs"] += [baf]
+                if depth[0] is None:
+                    depth[0] = 0
+                if depth[1] is None:
+                    depth[1] = 0
+                if depth[0] + depth[1] == 0:
+                    segments[locus[3]]["NoData"] += 1
+                else:
+                    baf = min(depth[0], depth[1]) / (depth[0] + depth[1])
+                    segments[locus[3]]["BAFs"] += [baf]
 
-    writer.close()
+        writer.close()
 
-shutil.rmtree(tempdir)
+    shutil.rmtree(tempdir)
 
-with open(snakemake.output.tsv, "wt") as f:
-    print(
-        "Number\tCHROM\tstart\tstop\tCN\tLFC\tNvariants\tMin\t1st quartile\tMedian\t3rd quartile\tMax\tNoData",
-        file=f,
-    )
-    for segId, segment in segments.items():
-        m = NAME_PATTERN.match(segId)
-        n = int(m.groups()[0])
-        cn = int(m.groups()[1])
-
-        logFoldChange = segment["logFoldChange"]
-        nVar = len(segment["BAFs"])
-        bafs = sorted(segment["BAFs"])
-
-        if nVar > 1:
-            qs = (
-                [bafs[0]]
-                + quantile(segment["BAFs"], (0.25, 0.5, 0.75), method=8)
-                + [bafs[nVar - 1]]
-            )
-        elif nVar == 1:
-            qs = [bafs[0]] * 5
-        else:
-            qs = [""] * 5
-
-        values = (
-            [
-                n,
-                segment["CHROM"],
-                segment["start"],
-                segment["stop"],
-                cn,
-                segment["logFoldChange"],
-                nVar,
-            ]
-            + qs
-            + [segment["NoData"]]
+    with open(snakemake.output.tsv, "wt") as f:
+        print(
+            "Number\tCHROM\tstart\tstop\tCN\tLFC\tNvariants\tMin\t1st quartile\tMedian\t3rd quartile\tMax\tNoData",
+            file=f,
         )
-        print("\t".join(map(str, values)), file=f)
+        for segId, segment in segments.items():
+            m = NAME_PATTERN.match(segId)
+            n = int(m.groups()[0])
+            cn = int(m.groups()[1])
 
-shell("tabix {snakemake.output.vcf}")
+            logFoldChange = segment["logFoldChange"]
+            nVar = len(segment["BAFs"])
+            bafs = sorted(segment["BAFs"])
+
+            if nVar > 1:
+                qs = (
+                    [bafs[0]]
+                    + quantile(segment["BAFs"], (0.25, 0.5, 0.75), method=8)
+                    + [bafs[nVar - 1]]
+                )
+            elif nVar == 1:
+                qs = [bafs[0]] * 5
+            else:
+                qs = [""] * 5
+
+            values = (
+                [
+                    n,
+                    segment["CHROM"],
+                    segment["start"],
+                    segment["stop"],
+                    cn,
+                    segment["logFoldChange"],
+                    nVar,
+                ]
+                + qs
+                + [segment["NoData"]]
+            )
+            print("\t".join(map(str, values)), file=f)
+
+    shell("tabix {snakemake.output.vcf}")
 
 
-def _write_md5(in_path: str, out_path: str) -> None:
-    with open(in_path, "rb") as inputf:
-        digest = hashlib.md5(inputf.read()).hexdigest()
-    with open(out_path, "wt") as outputf:
-        print(f"{digest}  {os.path.basename(in_path)}", file=outputf)
-
-
-_write_md5(str(snakemake.output.vcf), str(snakemake.output.vcf_md5))
-_write_md5(str(snakemake.output.tbi), str(snakemake.output.tbi_md5))
-_write_md5(str(snakemake.output.tsv), str(snakemake.output.tsv_md5))
+PythonWrapper(snakemake).run(main)
