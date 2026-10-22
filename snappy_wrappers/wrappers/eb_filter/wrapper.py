@@ -32,18 +32,20 @@ export REF={snakemake.input.reference}
 
 # Used to be:
 # filter='FILTER == "germline_risk" || FILTER == "t_lod_fstar" || FILTER == "OffExome" || ANN ~ "stream_gene_variant"'
-if [[ {snakemake.input.vcf} == *"mutect2"* ]]; then
-    filter=""
-    for f in $(echo "germline weak_evidence OffExome" | tr ' ' '\n')
-    do
-        use="Yes"
-        zgrep -q "^##FILTER=<ID=$f," {snakemake.input.vcf} || use="No"
-        if [[ $use = "Yes" ]]
-        then
-            filter="$filter || FILTER == \"$f\""
-        fi
-    done
-    filter=$(echo "$filter" | sed -e "s/^ || //")
+# Mutect2 calls are recognized by the FILTER IDs in their header (the paths do not name the caller).
+# Variants with these filters, and those in or near genes with annotation, skip EBFilter.
+filter=""
+for f in $(echo "germline weak_evidence OffExome" | tr ' ' '\n')
+do
+    use="Yes"
+    zgrep -q "^##FILTER=<ID=$f," {snakemake.input.vcf} || use="No"
+    if [[ $use = "Yes" ]]
+    then
+        filter="$filter || FILTER == \"$f\""
+    fi
+done
+filter=$(echo "$filter" | sed -e "s/^ || //")
+if [[ -n "$filter" ]]; then
     ann="CSQ"
     zgrep -q "^##INFO=<ID=CSQ," {snakemake.input.vcf} || ann="ANN"
     if [[ '{has_annotation}' == "True" ]]; then

@@ -24,6 +24,7 @@ Chain several tasks for a sequence of filters.
 
 ``ebfilter``
     EBFilter.
+    Calls of Mutect2 (recognized by the ``germline``, ``weak_evidence`` and ``OffExome`` filters in the header) skip the variants with these filters, and with an annotated input also those in or near genes.
     Needs ``depends_on.alignments`` and ``depends_on.reference``.
 
 Every filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
@@ -71,6 +72,7 @@ Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
 import random
+from functools import cached_property
 from typing import Any
 
 from snakemake.iocontainers import Wildcards
@@ -82,7 +84,7 @@ from snappy_pipeline.workflows.abstract import (
     BaseStepPart,
     ResourceUsage,
 )
-from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 
 from .model import (
@@ -295,7 +297,7 @@ class EbfilterStepPart(_BamAwareStepPart):
         params = super()._get_params_run(wildcards)
         params.pop("path_panel_of_normals_sample_list", None)
         return params | {
-            "has_annotation": getattr(self.config, "has_annotation", True),
+            "has_annotation": self.parent.variants_are_annotated,
         }
 
     def write_panel_of_normals_file(self, wildcards):
@@ -388,3 +390,10 @@ class VariantFiltrationWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         tool_cls = _TOOL_STEP_PART[self.config.tool]
         self.register_sub_step_classes((tool_cls,))
+
+    @cached_property
+    def variants_are_annotated(self) -> bool:
+        """Whether the variants of ``depends_on.variants`` carry an annotation (tag ``annotated``)."""
+        dependency = self.resolve_dependency("variants")
+        produced = self.project.signatures[dependency.task_name]
+        return "annotated" in select_signature(produced, dependency.signature).tags
