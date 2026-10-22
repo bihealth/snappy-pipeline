@@ -89,6 +89,35 @@ class Popdel(ToolModel):
     max_sv_size: int = 20000
     """== padding"""
 
+    profile_regions: list[str] = [
+        "chr1:35000000-36000000",
+        "chr2:174000000-175000000",
+        "chr3:36500000-37500000",
+        "chr4:88000000-89000000",
+        "chr5:38000000-39000000",
+        "chr6:38000000-39000000",
+        "chr7:38000000-39000000",
+        "chr8:19000000-20000000",
+        "chr9:19000000-20000000",
+        "chr10:19000000-20000000",
+        "chr11:19000000-20000000",
+        "chr12:19000000-20000000",
+        "chr13:25000000-26000000",
+        "chr14:25000000-26000000",
+        "chr15:25000000-26000000",
+        "chr16:25000000-26000000",
+        "chr17:31000000-32000000",
+        "chr18:31000000-32000000",
+        "chr19:31000000-32000000",
+        "chr20:33000000-34000000",
+        "chr21:21000000-22000000",
+        "chr22:25000000-26000000",
+    ]
+    """
+    Regions (``chrom:begin-end``) of ``popdel profile`` (``-i``), written with the ``chr`` prefix.
+    The wrapper drops the prefix for a reference without it.
+    """
+
     skip_libraries: list[str] = []
     """
     Skip processing of the following libraries.

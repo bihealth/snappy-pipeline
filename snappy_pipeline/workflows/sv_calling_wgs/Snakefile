@@ -168,6 +168,8 @@ elif tool == "popdel":
             mem=wf.get_resource("popdel", "profile", "mem"),
             partition=wf.get_resource("popdel", "profile", "partition"),
             tmpdir=wf.get_resource("popdel", "profile", "tmpdir"),
+        params:
+            args=wf.get_params("popdel", "profile"),
         wrapper:
             wf.wrapper_path("popdel/profile")
 

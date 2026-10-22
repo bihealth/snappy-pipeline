@@ -160,6 +160,9 @@ class PopDelStepPart(
     def _get_output_files_reorder_vcf(self):
         return dict(VCF_OUTPUTS)
 
+    def _get_params_profile(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"profile_regions": self.config.popdel.profile_regions}
+
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "chrom": wildcards.chrom,
