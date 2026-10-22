@@ -1,3 +1,5 @@
+from math import ceil
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -7,6 +9,9 @@ args = getattr(snakemake.params, "args", {})
 reference = snakemake.input.reference
 individual = snakemake.input.indiv_analysis[0]
 
+# As an estimate, give 75% of total memory as usable to JVM
+mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
+
 ShellWrapper(snakemake).run(
     r"""
 
@@ -14,7 +19,7 @@ JAR={snakemake.input.jar}
 ME_REFS={snakemake.input.me_refs}
 ME_INFIX={args[me_refs_infix]}
 
-java -jar -Xmx13G -jar $JAR \
+java -Xmx{mem_jvm}m -jar $JAR \
     GroupAnalysis \
     -h {reference} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \

@@ -1,8 +1,13 @@
+from math import ceil
+
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 args = getattr(snakemake.params, "args", {})
+
+# As an estimate, give 75% of total memory as usable to JVM
+mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -17,7 +22,7 @@ ls $genotype_dir/*.{args[me_type]}.tsv \
 > {snakemake.output.list_txt}
 
 # TODO: allowing 100% no-call wise?
-java -Xmx13G -jar $JAR \
+java -Xmx{mem_jvm}m -jar $JAR \
     MakeVCF \
     -genotypingdir $genotype_dir \
     -h {snakemake.input.reference} \
