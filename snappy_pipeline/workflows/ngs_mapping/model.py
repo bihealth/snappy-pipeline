@@ -282,6 +282,17 @@ class Strandedness(ToolModel):
 
 class Minimap2(ToolModel):
     mapping_threads: int = 16
+    platform: str = "PACBIO"
+    """Platform (``PL``) of the read group"""
+
+    soft_clip_supplementary: bool = True
+    """Use soft clipping for supplementary alignments (``-Y``)"""
+
+    output_md_tag: bool = True
+    """Write the ``MD`` tag (``--MD``)"""
+
+    memory_bam_sort: SizeString = "4G"
+    """Memory per thread of ``samtools sort`` (``-m``)"""
 
 
 class Mbcs(SnappyModel):

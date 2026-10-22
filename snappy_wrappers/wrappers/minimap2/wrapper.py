@@ -22,6 +22,8 @@ reads_right = snakemake.input.get("reads_right") or reads_param.get("reads_right
 reads = " ".join([*reads_left, *reads_right])
 path_index = snakemake.input.index[0]
 library_kit = args["library_kit"]
+soft_clip_supplementary = "-Y" if args["soft_clip_supplementary"] else ""
+output_md_tag = "--MD" if args["output_md_tag"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
@@ -52,15 +54,15 @@ for fname in {reads}; do
         -t {args[mapping_threads]} \
         -x $preset \
         -a {path_index} \
-        -Y \
-        --MD \
+        {soft_clip_supplementary} \
+        {output_md_tag} \
         {extra_arguments} \
         /dev/stdin \
     | samtools addreplacerg \
-        -r "@RG\tID:{args[library_name]}.$i\tSM:{args[library_name]}\tPL:PACBIO" - \
+        -r "@RG\tID:{args[library_name]}.$i\tSM:{args[library_name]}\tPL:{args[platform]}" - \
     >$TMPDIR/out/$i.bam
 
-    samtools sort -m 4G -@ 3 \
+    samtools sort -m {args[memory_bam_sort]} -@ 3 \
         -O BAM \
         -o $TMPDIR/sorted/$i.bam \
         -T $TMPDIR/sort.tmp/ \
