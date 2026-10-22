@@ -281,7 +281,11 @@
    "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv",
    "tasks/somatic_cnv_checking/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.tsv.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "tumor_library": "case001subregion-T1-DNA1-WES1"
+   }
+  },
   "resources": {
    "mem": "2 GB",
    "mem_mb": 2000,

@@ -718,7 +718,9 @@
    "tasks/somatic_targeted_seq_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.dnacopy.seg.md5"
   ],
   "params": {
-   "args": {}
+   "args": {
+    "library_name": "case001subregion-T1-DNA1-WES1"
+   }
   },
   "resources": {
    "mem": "7.68 GB",

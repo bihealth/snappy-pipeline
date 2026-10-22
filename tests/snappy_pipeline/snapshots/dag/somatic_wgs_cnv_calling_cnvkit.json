@@ -568,7 +568,11 @@
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns",
    "tasks/somatic_wgs_cnv_calling_cnvkit/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cns.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "library_name": "case001subregion-T1-DNA1-WES1"
+   }
+  },
   "resources": {
    "mem": "7.68 GB",
    "mem_mb": 7680,
