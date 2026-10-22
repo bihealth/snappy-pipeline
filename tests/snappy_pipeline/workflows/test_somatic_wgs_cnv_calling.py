@@ -145,3 +145,12 @@ def test_control_freec_run_passes_the_settings_of_the_ini_file():
         "min_cna_length": 2,
         "sex": "XY",
     }
+
+
+def test_control_freec_transform_passes_the_amplification_threshold():
+    part = object.__new__(ControlFreecSomaticWgsStepPart)
+    part.config = SimpleNamespace(control_freec=ControlFreec(convert={"amplification": 8}))
+    wildcards = Wildcards(fromdict={"tumor_library": "T1-DNA1-WGS1"})
+
+    assert part._get_params_transform(wildcards)["amplification"] == 8
+    assert ControlFreec(convert={}).convert.amplification == 6

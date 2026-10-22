@@ -260,6 +260,7 @@ freec_to_calls_log2_segments <- function(ratios, ploidity=2, small_value=0.00000
 #' @param org_obj Bioconductor object defining ids mappings in an organism (default human)
 #' @param tx_obj Bioconductor TxDb object defining gene locations (default human)
 #' @param bs_obj Bioconductor BSgenome object defining the genome sequence(default human)
+#' @param amplification smallest copy number that is called an amplification (GISTIC value 2), gains have 3 up to this number minus 1
 #'
 #' @return TRUE invisibly. The side effects are writing the five files
 #' @export
@@ -274,7 +275,8 @@ control_freec_write_files <- function(sample_name,
                                       cnr_fn=paste("freec.", sample_name, ".cnr", sep=""),
                                       org_obj=org.Hs.eg.db::org.Hs.eg.db,
                                       tx_obj=TxDb.Hsapiens.UCSC.hg19.knownGene::TxDb.Hsapiens.UCSC.hg19.knownGene,
-                                      bs_obj=BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5) {
+                                      bs_obj=BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5,
+                                      amplification=6) {
     if (missing(sample_name) || !is.character(sample_name) || length(sample_name)!=1 ||
         is.na(sample_name) || sample_name=="")
         stop("Missing or invalide sample name")
@@ -301,7 +303,14 @@ control_freec_write_files <- function(sample_name,
     ratios <- read.table(ratios_fn, sep="\t", header=1, stringsAsFactors=FALSE)
 
     # Compute everything
-    tmp <- freec_to_calls_log2_segments(ratios, org_obj=org_obj, tx_obj=tx_obj, bs_obj=bs_obj)
+    GISTIC <- data.frame(
+        Type=c("Deep", "Shallow", "Diploid", "Gain", "Amp"),
+        GISTIC_value=c(-2, -1, 0, 1, 2),
+        From=c(0, 1, 2, 3, amplification),
+        To=c(0, 1, 2, amplification - 1, Inf),
+        stringsAsFactors=FALSE
+    )
+    tmp <- freec_to_calls_log2_segments(ratios, org_obj=org_obj, tx_obj=tx_obj, bs_obj=bs_obj, GISTIC=GISTIC)
 
     # Rename columns & add sample column to segments
     colnames(tmp$Log_2)[3] <- sample_name

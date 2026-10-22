@@ -599,6 +599,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "org_obj": cfg.convert.org_obj,
             "tx_obj": cfg.convert.tx_obj,
             "bs_obj": cfg.convert.bs_obj,
+            "amplification": cfg.convert.amplification,
             "tumor_library": wildcards.tumor_library,
         }
 

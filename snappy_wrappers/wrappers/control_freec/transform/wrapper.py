@@ -30,7 +30,8 @@ R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     cnr_fn = \"{snakemake.output.cnr}\", \
     org_obj={args[org_obj]}, \
     tx_obj={args[tx_obj]}, \
-    bs_obj={args[bs_obj]})"
+    bs_obj={args[bs_obj]}, \
+    amplification={args[amplification]})"
 
 
 """

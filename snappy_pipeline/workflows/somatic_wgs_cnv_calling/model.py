@@ -53,6 +53,9 @@ class ControlFreecConvert(SnappyModel):
 
     bs_obj: str = "BSgenome.Hsapiens.1000genomes.hs37d5::hs37d5"
 
+    amplification: int = 6
+    """Smallest copy number that is called an amplification (GISTIC value 2); gains have 3 up to this number minus 1"""
+
 
 class ExpectedControlFreecDatabase(SnappyModel):
     """Consumer-driven contract: the files of Control-FREEC."""
