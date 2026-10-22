@@ -32,7 +32,7 @@ from snappy_pipeline.base import (
     UnsupportedActionException,
 )
 from snappy_pipeline.models import LibraryFolders, RelationshipDefinition, SnappyStepModel
-from snappy_pipeline.utils import dictify, listify
+from snappy_pipeline.utils import listify
 from snappy_pipeline.reads import ReadGroup
 from snappy_pipeline.workflows.abstract.protocol import (
     DATA_SETS,
@@ -2092,37 +2092,3 @@ def cohort_members(data_set_infos, sheets, selection, relationships=None) -> dic
     """Return cohort name -> its libraries, restricted only by an explicit ``selection``."""
     df = build_library_dataframe(data_set_infos, sheets, relationships=relationships)
     return cohort_libraries(df if selection is None else _query_libraries(df, selection))
-
-
-class InputFilesStepPartMixin:
-    """Mixin with predefined "get_input_files" function."""
-
-    #: Whether to include path to PED file or not
-    include_ped_file = None
-
-    #: Class with input VCF file name
-    prev_class = None
-
-    #: Extensions of files to create as main payload
-    ext_values = None
-
-    #: Names of the files to create for the extension
-    ext_names = None
-
-    def get_input_files(self, action):
-        @dictify
-        def input_function(wildcards):
-            if self.include_ped_file:
-                yield (
-                    "ped",
-                    os.path.realpath(
-                        "work/write_pedigree.{index_library}/out/{index_library}.ped"
-                    ).format(**wildcards),
-                )
-            name_pattern = self.prev_class.name_pattern.replace(r",[^\.]+", "")
-            tpl_path_out = os.path.join("work", name_pattern, "out", name_pattern)
-            for key, ext in zip(self.ext_names, self.ext_values):
-                yield key, tpl_path_out.format(ext=ext, **wildcards) + ext
-
-        assert action == "run"
-        return input_function
