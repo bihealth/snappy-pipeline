@@ -48,7 +48,9 @@ def test_group_analysis_discoverydir_holds_all_members(tmp_path, monkeypatch):
         ),
         output=SimpleNamespace(done=str(tmp_path / "group_analysis" / "out" / ".done")),
         log=SimpleNamespace(log=str(tmp_path / "log" / "group_analysis.log")),
-        params=SimpleNamespace(args={"me_refs_infix": "1KGP_Hg19", "me_type": "ALU"}),
+        params=SimpleNamespace(
+            args={"me_refs_infix": "1KGP_Hg19", "me_type": "ALU", "read_length": 150}
+        ),
         resources=SimpleNamespace(mem_mb=4096),
         rule="melt_group_analysis",
         threads=1,

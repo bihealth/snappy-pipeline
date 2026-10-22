@@ -25,7 +25,7 @@ java -Xmx{mem_jvm}m -jar $JAR \
     -h {snakemake.input.reference} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -w $(dirname {snakemake.output.done}) \
-    -r 150 \
+    -r {args[read_length]} \
     {extra_arguments} \
     -bamfile {snakemake.input.orig_bam}
 """

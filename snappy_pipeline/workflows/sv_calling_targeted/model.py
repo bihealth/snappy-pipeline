@@ -69,6 +69,12 @@ class Melt(ToolModel):
     exclude_contigs: list[str] = ["hs37d5", "NC_007605"]
     """Contigs that IndivAnalysis ignores (MELT's ``-b``), here the GRCh37 decoy and EBV"""
 
+    read_length: int = 150
+    """Read length, for IndivAnalysis and GroupAnalysis (MELT's ``-r``)"""
+
+    max_no_call_percent: int = 100
+    """Percentage of samples with a no-call genotype that MakeVCF tolerates at a site (MELT's ``-j``)"""
+
     jar_file: ConfigPath = Field(examples=["MELT.jar"])
 
     me_refs_path: ConfigPath = Field(examples=["me_refs"])

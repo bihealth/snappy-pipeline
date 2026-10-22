@@ -26,7 +26,7 @@ java -Xmx{mem_jvm}m -jar $JAR \
     MakeVCF \
     -genotypingdir $genotype_dir \
     -h {snakemake.input.reference} \
-    -j 100 \
+    -j {args[max_no_call_percent]} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -p $(dirname {snakemake.input.group_analysis}) \
     -w $(dirname {snakemake.output.done}) \

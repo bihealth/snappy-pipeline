@@ -34,7 +34,7 @@ java -Xmx{mem_jvm}m -jar $JAR \
         echo -v $ME_REFS/../../prior_files/{args[me_type]}.1KGP.sites.vcf;
     fi) \
     -w $(dirname {snakemake.output.done}) \
-    -r 150 \
+    -r {args[read_length]} \
     -n {snakemake.input.genes} \
     -discoverydir $discovery
 """

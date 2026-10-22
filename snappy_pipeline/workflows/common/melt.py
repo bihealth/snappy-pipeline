@@ -213,17 +213,26 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
             "work/{library_name}/log/{library_name}.merge_vcf"
         ).items()
 
-    def _get_params_group_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
+    def _get_params_genotype(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "me_refs_infix": self.config.melt.me_refs_infix,
             "me_type": wildcards.me_type,
         }
 
-    _get_params_genotype = _get_params_group_analysis
-    _get_params_make_vcf = _get_params_group_analysis
+    def _get_params_group_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
+        """GroupAnalysis takes MELT's ``-r``"""
+        params = self._get_params_genotype(wildcards)
+        params["read_length"] = self.config.melt.read_length
+        return params
+
+    def _get_params_make_vcf(self, wildcards: Wildcards) -> dict[str, Any]:
+        """MakeVCF takes MELT's ``-j``"""
+        params = self._get_params_genotype(wildcards)
+        params["max_no_call_percent"] = self.config.melt.max_no_call_percent
+        return params
 
     def _get_params_indiv_analysis(self, wildcards: Wildcards) -> dict[str, Any]:
-        """Only IndivAnalysis takes MELT's ``-exome``"""
+        """IndivAnalysis takes MELT's ``-r``, ``-b`` and, for targeted data, ``-exome``"""
         params = self._get_params_group_analysis(wildcards)
         params["exclude_contigs"] = self.config.melt.exclude_contigs
         if self.parent.name == "sv_calling_targeted":
