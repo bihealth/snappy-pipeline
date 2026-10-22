@@ -25,3 +25,12 @@ def test_ebfilter_knows_whether_the_variants_are_annotated(annotated):
 
     assert params["has_annotation"] is annotated
     assert params["filter_name"] == "filter_task"
+
+
+def test_ebfilter_passes_what_skips_it():
+    part = _part(EbfilterStepPart, "ebfilter", Ebfilter(skip_annotation="intron_variant"))
+
+    params = part._get_params_run(SimpleNamespace())
+
+    assert params["skip_filters"] == ["germline", "weak_evidence", "OffExome"]
+    assert params["skip_annotation"] == "intron_variant"

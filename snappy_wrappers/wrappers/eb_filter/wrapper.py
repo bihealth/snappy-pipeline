@@ -11,6 +11,8 @@ args = getattr(snakemake.params, "args", {})
 filter_name = args["filter_name"] if "filter_name" in args else ""
 mode = args.get("mode", "tag")
 has_annotation = str(args["has_annotation"] if "has_annotation" in args else False)
+skip_filters = " ".join(args["skip_filters"])
+skip_annotation = args["skip_annotation"]
 
 if "interval" in args:
     cmd_fetch = "tabix --print-header {} {}".format(snakemake.input.vcf, args["interval"])
@@ -35,7 +37,7 @@ export REF={snakemake.input.reference}
 # Mutect2 calls are recognized by the FILTER IDs in their header (the paths do not name the caller).
 # Variants with these filters, and those in or near genes with annotation, skip EBFilter.
 filter=""
-for f in $(echo "germline weak_evidence OffExome" | tr ' ' '\n')
+for f in $(echo "{skip_filters}" | tr ' ' '\n')
 do
     use="Yes"
     zgrep -q "^##FILTER=<ID=$f," {snakemake.input.vcf} || use="No"
@@ -48,8 +50,8 @@ filter=$(echo "$filter" | sed -e "s/^ || //")
 if [[ -n "$filter" ]]; then
     ann="CSQ"
     zgrep -q "^##INFO=<ID=CSQ," {snakemake.input.vcf} || ann="ANN"
-    if [[ '{has_annotation}' == "True" ]]; then
-        filter="$filter || $ann ~ \"stream_gene_variant\""
+    if [[ '{has_annotation}' == "True" && -n "{skip_annotation}" ]]; then
+        filter="$filter || $ann ~ \"{skip_annotation}\""
     else
         filter="$filter"
     fi
@@ -77,7 +79,7 @@ set -e
 if [[ $lines -gt 0 ]]; then
     EBFilter \
         -f vcf \
-        -t 1 \
+        -t {snakemake.threads} \
         -q {args[min_mapq]} \
         -Q {args[min_baseq]} \
         {extra_arguments} \

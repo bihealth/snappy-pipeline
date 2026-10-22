@@ -24,7 +24,7 @@ Chain several tasks for a sequence of filters.
 
 ``ebfilter``
     EBFilter.
-    Calls of Mutect2 (recognized by the ``germline``, ``weak_evidence`` and ``OffExome`` filters in the header) skip the variants with these filters, and with an annotated input also those in or near genes.
+    Variants with one of the ``skip_filters`` (by default the ``germline``, ``weak_evidence`` and ``OffExome`` filters of Mutect2, if the header declares them) skip EBFilter, and with an annotated input also those whose annotation contains ``skip_annotation`` (by default ``stream_gene_variant``, i.e. those in or near genes).
     Needs ``depends_on.alignments`` and ``depends_on.reference``.
 
 Every filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.

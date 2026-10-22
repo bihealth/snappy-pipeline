@@ -102,6 +102,13 @@ class Ebfilter(ToolModel):
     panel_of_normals_size: int = 25
     min_mapq: int = 20
     min_baseq: int = 15
+    skip_filters: list[str] = ["germline", "weak_evidence", "OffExome"]
+    """Variants with one of these ``FILTER`` IDs (that the VCF header declares) skip EBFilter"""
+
+    skip_annotation: str = "stream_gene_variant"
+    """With annotated variants, those with this string in their ``CSQ`` or ``ANN`` field skip EBFilter
+    (``bcftools`` ``~`` match); empty for none"""
+
     path_panel_of_normals_sample_list: ConfigPath = ""
     mode: Literal["tag", "filter"] = "tag"
 
