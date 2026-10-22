@@ -10,6 +10,8 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 reference_path = snakemake.input.reference
 fai_path = snakemake.input.reference_fai
 targets_bed = snakemake.input.targets_bed
+args = snakemake.params.args
+ignore_read_groups = "--ignore" if args["ignore_read_groups"] else ""
 
 ShellWrapper(snakemake).run(
     r"""
@@ -28,7 +30,7 @@ bedtools sort \
 
 # Run "alfred qc".
 alfred qc \
-    --ignore \
+    {ignore_read_groups} \
     --reference {reference_path} \
     --bed $TMPDIR/targets.bed \
     --jsonout {snakemake.output.json} \

@@ -544,8 +544,7 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
         super().__init__(parent)
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
-        return {}
+        return {"ignore_read_groups": self.config.target_coverage_report.ignore_read_groups}
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
         return (

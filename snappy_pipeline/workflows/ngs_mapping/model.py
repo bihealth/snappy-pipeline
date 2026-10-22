@@ -138,6 +138,9 @@ class Tool(StrEnum):
 class TargetCoverageReport(ToggleModel, ToolModel):
     """The report takes the ``targets`` of each library's kit from ``depends_on.kits``."""
 
+    ignore_read_groups: bool = True
+    """Compute one set of metrics per library, not per read group (``alfred qc --ignore``)"""
+
 
 class BamCollectDoc(ToggleModel, ToolModel):
     window_length: Annotated[int, Field(gt=0)] = 1000

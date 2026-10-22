@@ -12,8 +12,16 @@ from snappy_pipeline.workflows.ngs_mapping import (
     MBCsStepPart,
     Minimap2StepPart,
     StarStepPart,
+    TargetCovReportStepPart,
 )
-from snappy_pipeline.workflows.ngs_mapping.model import Bwa, BwaMem2, Mbcs, Minimap2, Star
+from snappy_pipeline.workflows.ngs_mapping.model import (
+    Bwa,
+    BwaMem2,
+    Mbcs,
+    Minimap2,
+    Star,
+    TargetCoverageReport,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -89,3 +97,15 @@ def test_mbcs_passes_the_settings_of_its_mapper():
 
     assert params["mapper_config"]["platform"] == "ONT"
     assert params["mapper_config"]["split_as_secondary"] is True
+
+
+def test_target_coverage_report_passes_ignore_read_groups():
+    for value in (True, False):
+        part = object.__new__(TargetCovReportStepPart)
+        part.config = SimpleNamespace(
+            target_coverage_report=TargetCoverageReport(ignore_read_groups=value)
+        )
+
+        assert part._get_params_run(SimpleNamespace(library_name="lib")) == {
+            "ignore_read_groups": value
+        }
