@@ -119,6 +119,9 @@ class PicardStepPart(BaseStepPart):
 
     name = "picard"
     actions = ("prepare", "metrics")
+
+    #: ``prepare`` converts the BED files of the kit to interval lists
+    extra_arguments_action = "metrics"
     intermediate_outputs = {"prepare": ("baits", "targets")}
 
     @property

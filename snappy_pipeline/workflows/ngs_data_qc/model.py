@@ -3,7 +3,13 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import (
+    EnumField,
+    SnappyModel,
+    SnappyStepModel,
+    ToolModel,
+    validators,
+)
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -58,11 +64,13 @@ class PicardProgram(enum.StrEnum):
     """bi-sulfite sequencing, not implemented yet"""
 
 
-class Picard(SnappyModel):
+class Picard(ToolModel):
+    """``extra_arguments`` go to every Picard program of ``programs``"""
+
     programs: Annotated[list[PicardProgram], Field(min_length=1)]
 
 
-class Fastqc(SnappyModel):
+class Fastqc(ToolModel):
     pass
 
 

@@ -439,6 +439,9 @@ class StrandednessStepPart(BaseStepPart):
     name = "strandedness"
     actions = ("infer", "counts")
 
+    #: ``counts`` only selects columns of the STAR counts
+    extra_arguments_action = "infer"
+
     def _get_input_files_infer(self, wildcards):
         # Must reference the mapper-specific work directory
         inputs = {"bam": "work/{library_name}/out/{library_name}.bam".format(**wildcards)}
@@ -531,6 +534,10 @@ class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
     def __init__(self, parent):
         super().__init__(parent)
 
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}
+
     def skip_result_files_for_library(self, library_name: str) -> bool:
         return (
             not self.config.target_coverage_report
@@ -617,6 +624,13 @@ class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     def __init__(self, parent):
         super().__init__(parent)
+
+    def tool_section(self):
+        return self.config.ngs_chew_fingerprint
+
+    def _get_params_fingerprint(self, wildcards: Wildcards) -> dict[str, Any]:
+        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
+        return {}
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
         return not self.config.ngs_chew_fingerprint.enabled

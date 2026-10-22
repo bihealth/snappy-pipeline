@@ -38,6 +38,7 @@
   "params": {
    "args": {
     "bait_name": "MedExome",
+    "extra_arguments": [],
     "prefix": "case001subregion-T1-DNA1-WES1.",
     "programs": [
      "CollectAlignmentSummaryMetrics",

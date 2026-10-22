@@ -49,6 +49,7 @@ if [[ -n "{collect_multiple_metrics}" ]]
 then
     # Setting METRIC_ACCUMULATION_LEVEL causes issues for some programs
     java -jar $picard_jar CollectMultipleMetrics \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectMultipleMetrics \
         -R {reference} \
@@ -60,6 +61,7 @@ fi
 if [[ "{args[programs]}" == *"EstimateLibraryComplexity"* ]]
 then
     java -jar $picard_jar EstimateLibraryComplexity \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}EstimateLibraryComplexity.txt
 fi
@@ -67,6 +69,7 @@ fi
 if [[ "{args[programs]}" == *"CollectJumpingLibraryMetrics"* ]]
 then
     java -jar $picard_jar CollectJumpingLibraryMetrics \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectJumpingLibraryMetrics.txt
 fi
@@ -80,6 +83,7 @@ then
         dbsnp=""
     fi
     java -jar $picard_jar CollectOxoGMetrics \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectOxoGMetrics.txt \
         -R {reference} \
@@ -89,6 +93,7 @@ fi
 if [[ "{args[programs]}" == *"CollectHsMetrics"* ]]
 then
     java -jar $picard_jar CollectHsMetrics \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectHsMetrics.txt \
         -R {reference} \
@@ -100,6 +105,7 @@ fi
 if [[ "{args[programs]}" == *"CollectRawWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectRawWgsMetrics \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectRawWgsMetrics.txt \
         -R {reference}
@@ -108,6 +114,7 @@ fi
 if [[ "{args[programs]}" == *"CollectWgsMetrics"* ]]
 then
     java -jar $picard_jar CollectWgsMetrics \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectWgsMetrics.txt \
         -R {reference}
@@ -116,6 +123,7 @@ fi
 if [[ "{args[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]
 then
     java -jar $picard_jar CollectWgsMetricsWithNonZeroCoverage \
+        {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectWgsMetricsWithNonZeroCoverage.txt \
         -CHART $d/{prefix}CollectWgsMetricsWithNonZeroCoverage.pdf \

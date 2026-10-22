@@ -33,6 +33,7 @@
      "disable_quality_filtering": false,
      "dont_eval_duplication": true,
      "dup_calc_accuracy": 0,
+     "extra_arguments": [],
      "filter_by_index_threshold": 0,
      "length_limit": 0,
      "length_required": 15,
@@ -61,6 +62,7 @@
      "umi_skip": 0,
      "unqualified_percent_limit": 40
     },
+    "extra_arguments": [],
     "library_name": "case001subregion-T1-DNA1-WES1",
     "output_left": [
      {

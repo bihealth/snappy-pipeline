@@ -20,7 +20,8 @@ maelstrom-core \
     --in {snakemake.input.bam} \
     --out {snakemake.output.vcf} \
     --reference {snakemake.input.reference} \
-    --window-length $WINDOW
+    --window-length $WINDOW \
+    {extra_arguments}
 
 find $(dirname $(dirname {snakemake.output.vcf}))
 

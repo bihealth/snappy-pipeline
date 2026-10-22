@@ -113,6 +113,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         phist=$TMPDIR/report/$report/phist.tsv       \
         enthist=$TMPDIR/report/$report/enthist.tsv   \
         t={config[num_threads]} \
+        {extra_arguments} \
         interleaved={config[interleaved]}             \
         qin={config[qin]}                             \
         copyundefined={config[copyundefined]}         \

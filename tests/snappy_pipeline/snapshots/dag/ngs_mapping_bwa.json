@@ -143,7 +143,11 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
   "resources": {
    "mem": "20 GB",
    "mem_mb": 20000,
@@ -176,7 +180,11 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz.md5"
   ],
-  "params": {},
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
   "resources": {
    "mem": "20 GB",
    "mem_mb": 20000,

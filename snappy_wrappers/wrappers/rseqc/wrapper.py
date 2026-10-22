@@ -22,6 +22,7 @@ ShellWrapper(snakemake).run(
 # ----- Run rseqc to infer strandedness
 infer_experiment.py \
     -r "{exon_bed}" \
+    {extra_arguments} \
     -i "{snakemake.input.bam}" \
     > "{snakemake.output.tsv}"
 

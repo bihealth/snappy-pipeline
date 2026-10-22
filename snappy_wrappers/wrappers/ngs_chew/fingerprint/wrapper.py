@@ -18,6 +18,7 @@ ngs-chew fingerprint \
     --reference {snakemake.input.reference} \
     --output-aafs \
     --output-fingerprint {snakemake.output.npz} \
+    {extra_arguments} \
     --input-bam {snakemake.input.bam}
 """
 )

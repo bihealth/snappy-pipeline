@@ -31,6 +31,7 @@
      "entropymask": "f",
      "entropytrim": "f",
      "entropywindow": 50,
+     "extra_arguments": [],
      "filterpolyg": 8,
      "findbestmatch": false,
      "forbidn": false,
@@ -106,6 +107,7 @@
      "ymax": -1,
      "ymin": -1
     },
+    "extra_arguments": [],
     "library_name": "case001subregion-T1-DNA1-WES1",
     "output_left": [
      {

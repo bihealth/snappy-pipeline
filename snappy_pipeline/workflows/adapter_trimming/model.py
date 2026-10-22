@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, PositiveInt
 from typing_extensions import Annotated
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -99,7 +99,7 @@ class UmiLoc(StrEnum):
     NONE = ""
 
 
-class Fastp(SnappyModel):
+class Fastp(ToolModel):
     num_threads: PositiveInt = 4
     trim_front1: int = 0
     """
@@ -357,7 +357,7 @@ class Fastp(SnappyModel):
     """
 
 
-class Bbduk(SnappyModel):
+class Bbduk(ToolModel):
     """Note: The author recommends setting tpe=t & tbo=t when adapter trimming paired reads."""
 
     adapter_sequences: Annotated[

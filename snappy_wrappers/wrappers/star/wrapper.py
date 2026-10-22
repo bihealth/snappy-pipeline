@@ -118,6 +118,7 @@ run_star()
     STAR \
         --readFilesIn ${{left_files}} ${{right_files}} \
         {args[raw_star_options]} \
+        {extra_arguments} \
         $rg_args \
         --readFilesCommand ${{trim_cmd}} \
         --alignIntronMax {args[align_intron_max]} \

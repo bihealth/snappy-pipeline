@@ -168,6 +168,8 @@ rule ngs_mapping_target_coverage_report_run:
         mem=wf.get_resource("target_coverage_report", "run", "mem"),
         partition=wf.get_resource("target_coverage_report", "run", "partition"),
         tmpdir=wf.get_resource("target_coverage_report", "run", "tmpdir"),
+    params:
+        args=wf.get_params("target_coverage_report", "run"),
     wrapper:
         wf.wrapper_path("alfred/qc")
 
@@ -214,6 +216,8 @@ rule ngs_mapping_ngs_chew_fingerprint:
         mem=wf.get_resource("ngs_chew", "fingerprint", "mem"),
         partition=wf.get_resource("ngs_chew", "fingerprint", "partition"),
         tmpdir=wf.get_resource("ngs_chew", "fingerprint", "tmpdir"),
+    params:
+        args=wf.get_params("ngs_chew", "fingerprint"),
     wrapper:
         wf.wrapper_path("ngs_chew/fingerprint")
 

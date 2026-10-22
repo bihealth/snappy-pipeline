@@ -22,7 +22,11 @@ def test_star_requires_exons():
 def test_star_infers_the_strand_without_a_strandedness_section():
     # The strandedness rule runs for every RNA library and its wrapper reads both values.
     config = NgsMapping(tool="star", star={}, depends_on=STAR_DEPENDS_ON | {"exons": "exons"})
-    assert config.strandedness.model_dump() == {"strand": -1, "threshold": 0.85}
+    assert config.strandedness.model_dump() == {
+        "strand": -1,
+        "threshold": 0.85,
+        "extra_arguments": [],
+    }
 
 
 MBCS_DEPENDS_ON = {"reads": "data_sets", "reference": "genome", "index": "bwa"}

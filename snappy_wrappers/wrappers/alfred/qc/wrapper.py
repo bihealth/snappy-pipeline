@@ -32,6 +32,7 @@ alfred qc \
     --reference {reference_path} \
     --bed $TMPDIR/targets.bed \
     --jsonout {snakemake.output.json} \
+    {extra_arguments} \
     --input-file {snakemake.input.bam}
 """
 )

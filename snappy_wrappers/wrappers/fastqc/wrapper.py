@@ -30,6 +30,7 @@ fastqc \
     --noextract \
     -o $outdir \
     -t {args[num_threads]} \
+    {extra_arguments} \
     $(echo {more_reads} | tr ' ' '\n' | grep 'fastq.gz$\|fastq$\|sam$\|bam$')
 
 pushd $outdir

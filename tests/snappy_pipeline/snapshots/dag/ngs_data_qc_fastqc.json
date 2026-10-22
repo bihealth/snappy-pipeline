@@ -29,6 +29,7 @@
   ],
   "params": {
    "args": {
+    "extra_arguments": [],
     "num_threads": 1
    }
   },

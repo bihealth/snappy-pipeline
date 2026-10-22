@@ -99,6 +99,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         --json $TMPDIR/report/$report/report.json \
         --html $TMPDIR/report/$report/report.html \
         --thread {config[num_threads]} \
+        {extra_arguments} \
         --trim_front1 {config[trim_front1]}                                 \
         --trim_tail1 {config[trim_tail1]}                                   \
         --max_len1 {config[max_len1]}                                       \

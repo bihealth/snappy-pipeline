@@ -135,15 +135,15 @@ class Tool(StrEnum):
         return tags
 
 
-class TargetCoverageReport(ToggleModel):
+class TargetCoverageReport(ToggleModel, ToolModel):
     """The report takes the ``targets`` of each library's kit from ``depends_on.kits``."""
 
 
-class BamCollectDoc(ToggleModel):
+class BamCollectDoc(ToggleModel, ToolModel):
     window_length: Annotated[int, Field(gt=0)] = 1000
 
 
-class NgsChewFingerprint(ToggleModel):
+class NgsChewFingerprint(ToggleModel, ToolModel):
     pass
 
 
@@ -225,7 +225,7 @@ class Agent(SnappyModel):
     mark_duplicates: AgentMarkDuplicates
 
 
-class Star(SnappyModel):
+class Star(ToolModel):
     num_threads_align: int = 16
     num_threads_trimming: int = 8
     num_threads_bam_view: int = 4
@@ -264,7 +264,7 @@ class Strand(enum.IntEnum):
     REVERSE = 2
 
 
-class Strandedness(SnappyModel):
+class Strandedness(ToolModel):
     strand: Strand = Strand.UNKNOWN
     """-1: unknown value, use infer_, 0: unstranded, 1: forward, 2: reverse (from featurecounts)"""
 
