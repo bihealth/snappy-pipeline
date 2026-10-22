@@ -18,13 +18,15 @@ JAR={snakemake.input.jar}
 ME_REFS={snakemake.input.me_refs}
 ME_INFIX={args[me_refs_infix]}
 
+mkdir -p {snakemake.output.out}
+
 java -Xmx{mem_jvm}m -jar $JAR \
     IndivAnalysis \
     -b {exclude_contigs} \
     {melt_arg_exome} \
     -h {snakemake.input.reference} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
-    -w $(dirname {snakemake.output.done}) \
+    -w {snakemake.output.out} \
     -r {args[read_length]} \
     {extra_arguments} \
     -bamfile {snakemake.input.orig_bam}

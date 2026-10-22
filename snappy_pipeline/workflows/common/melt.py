@@ -1,6 +1,6 @@
 from typing import Any
 
-from snakemake.io import touch
+from snakemake.io import directory, touch
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
@@ -35,7 +35,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
 
     intermediate_outputs = {
         "preprocess": ("orig_bam", "orig_bai", "disc_bam", "disc_bai"),
-        "indiv_analysis": ("done",),
+        "indiv_analysis": ("out",),
         "group_analysis": ("done",),
         "genotype": ("done",),
         "make_vcf": ("vcf", "vcf_tbi"),
@@ -98,7 +98,8 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_indiv_analysis(self):
-        yield "done", touch("work/indiv_analysis.{library_name}.{me_type}/out/.done.{library_name}")
+        # IndivAnalysis names its files itself
+        yield "out", directory("work/indiv_analysis.{library_name}.{me_type}/out")
 
     @dictify
     def _get_log_file_indiv_analysis(self):
@@ -111,8 +112,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         yield from self.parent.reference_inputs().items()
         indiv_analysis = []
         for library_name in self.parent.pedigrees()[wildcards.index_library_name]:
-            infix = f"indiv_analysis.{library_name}.{wildcards.me_type}"
-            indiv_analysis.append(f"work/{infix}/out/.done.{library_name}")
+            indiv_analysis.append(f"work/indiv_analysis.{library_name}.{wildcards.me_type}/out")
         yield "indiv_analysis", indiv_analysis
         yield from self._melt_files("jar", "me_refs", "genes").items()
 

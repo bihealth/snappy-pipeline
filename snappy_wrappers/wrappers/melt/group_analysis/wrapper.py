@@ -19,11 +19,12 @@ ME_REFS={snakemake.input.me_refs}
 ME_INFIX={args[me_refs_infix]}
 
 # GroupAnalysis reads the IndivAnalysis output of all pedigree members from one directory,
-# but each library's IndivAnalysis wrote to its own: link them together (the .done files are hidden)
+# but each library's IndivAnalysis wrote to its own: link their files together (the glob leaves
+# out Snakemake's hidden .snakemake_timestamp files)
 discovery=$TMPDIR/discovery
 mkdir -p $discovery
-for done in {snakemake.input.indiv_analysis}; do
-    ln -s $(realpath $(dirname $done))/* $discovery/
+for dir in {snakemake.input.indiv_analysis}; do
+    ln -s $(realpath $dir)/* $discovery/
 done
 
 java -Xmx{mem_jvm}m -jar $JAR \

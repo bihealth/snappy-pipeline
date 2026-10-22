@@ -21,14 +21,14 @@ LIBRARIES = ("index", "father", "mother")
 
 
 def test_group_analysis_discoverydir_holds_all_members(tmp_path, monkeypatch):
-    done = []
+    indiv_analysis = []
     for library in LIBRARIES:
         out = tmp_path / f"indiv_analysis.{library}.ALU" / "out"
         out.mkdir(parents=True)
         (out / f"{library}.ALU.tmp.bed").touch()
         (out / f"{library}.ALU.hum_breaks.sorted.bam").touch()
-        (out / f".done.{library}").touch()
-        done.append(str(out / f".done.{library}"))
+        (out / ".snakemake_timestamp").touch()  # Snakemake's, in every directory() output
+        indiv_analysis.append(str(out))
     (tmp_path / "group_analysis" / "out").mkdir(parents=True)
     (tmp_path / "bin").mkdir()
     java = tmp_path / "bin" / "java"
@@ -41,7 +41,7 @@ def test_group_analysis_discoverydir_holds_all_members(tmp_path, monkeypatch):
     snakemake = SimpleNamespace(
         input=SimpleNamespace(
             reference="ref.fa",
-            indiv_analysis=done,
+            indiv_analysis=indiv_analysis,
             jar="MELT.jar",
             me_refs="refs",
             genes="genes.bed",

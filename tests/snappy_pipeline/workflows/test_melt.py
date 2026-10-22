@@ -1,6 +1,8 @@
-"""Tests for the params of the MELT step part."""
+"""Tests for the params and the files of the MELT step part."""
 
 from types import SimpleNamespace
+
+from snakemake.io import is_flagged
 
 from snappy_pipeline.workflows.common.melt import MeltStepPart
 
@@ -52,3 +54,30 @@ def test_make_vcf_gets_the_no_call_percent():
         "me_type": "ALU",
         "max_no_call_percent": 100,
     }
+
+
+def _part():
+    # The input functions only read the MELT files, the pedigrees and the upstream paths.
+    part = object.__new__(MeltStepPart)
+    part.config = SimpleNamespace(melt=SimpleNamespace(jar_file="melt.jar", me_refs_path="refs"))
+    part.parent = SimpleNamespace(
+        pedigrees=lambda: {"P1": ["P1", "F1"]},
+        reference_inputs=lambda: {},
+        get_upstream_paths=lambda field: SimpleNamespace(bed="genes.bed"),
+    )
+    return part
+
+
+def test_indiv_analysis_writes_one_directory_per_library():
+    outputs = _part()._get_output_files_indiv_analysis()
+    assert outputs == {"out": "work/indiv_analysis.{library_name}.{me_type}/out"}
+    assert is_flagged(outputs["out"], "directory")
+
+
+def test_group_analysis_reads_the_directories_of_all_pedigree_members():
+    wildcards = SimpleNamespace(index_library_name="P1", me_type="ALU")
+    inputs = _part()._get_input_files_group_analysis(wildcards)
+    assert inputs["indiv_analysis"] == [
+        "work/indiv_analysis.P1.ALU/out",
+        "work/indiv_analysis.F1.ALU/out",
+    ]
