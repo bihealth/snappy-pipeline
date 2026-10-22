@@ -32,3 +32,6 @@ class SomaticHlaLohCalling(SnappyStepModel, ToolModel):
 
     path_picard_dir: ConfigPath
     """Directory with the picard-tools 1.x jar files that LOHHLA calls (``--gatkDir``)"""
+
+    min_coverage_filter: int = 10
+    """Minimum coverage at a mismatch position in both tumor and normal (``--minCoverageFilter``)"""

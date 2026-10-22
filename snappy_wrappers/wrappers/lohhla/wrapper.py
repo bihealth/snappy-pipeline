@@ -33,7 +33,7 @@ Rscript $lohhla_script \
     --gatkDir {snakemake.input.picard_dir} \
     --hlaPath $(realpath {snakemake.input.hla} ) \
     --mappingStep TRUE \
-    --minCoverageFilter 10 \
+    --minCoverageFilter {args[min_coverage_filter]} \
     --normalBAMfile $TMPDIR/bams/{normal_bam} \
     --novoDir $(dirname $(realpath $lohhla_script)) \
     --outputDir $(dirname $(realpath {snakemake.output.done} )) \
