@@ -313,6 +313,9 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_params_call(self, wildcards: Wildcards) -> dict[str, Any]:
         return self._cnvkit_params("call")
 
+    def _get_params_postprocess(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"library_name": wildcards.library_name}
+
     def _get_params_plot(self, wildcards: Wildcards) -> dict[str, Any]:
         return self._cnvkit_params("diagram")
 

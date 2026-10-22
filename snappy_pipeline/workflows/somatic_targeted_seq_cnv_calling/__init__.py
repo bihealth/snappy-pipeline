@@ -487,7 +487,12 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     def get_params(self, action):
         self._validate_action(action)
+        if action == "postprocess":
+            return self._get_params_postprocess
         return lambda wildcards: self._cnvkit_params(action)
+
+    def _get_params_postprocess(self, wildcards):
+        return {"library_name": wildcards.tumor_library}
 
     def _cnvkit_params(self, action):
         if action == "plot":

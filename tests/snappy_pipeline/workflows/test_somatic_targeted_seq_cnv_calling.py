@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for the CNVkit params of ``somatic_targeted_seq_cnv_calling``."""
 
+from types import SimpleNamespace
+
 import pytest
 
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import CnvKitStepPart
@@ -20,6 +22,12 @@ def test_gender_and_male_reference_are_passed_to_call_and_plot(action):
 
     assert params["gender"] == "male"
     assert params["male_reference"] is True
+
+
+def test_cnvkit_postprocess_gets_the_tumor_library():
+    params = _cnvkit_part().get_params("postprocess")(SimpleNamespace(tumor_library="T1-DNA1-WES1"))
+
+    assert params == {"library_name": "T1-DNA1-WES1"}
 
 
 def test_guessed_gender_and_female_reference_are_not_passed():

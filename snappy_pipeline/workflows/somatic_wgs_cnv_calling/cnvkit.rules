@@ -92,6 +92,8 @@ rule somatic_wgs_cnv_calling_cnvkit_postprocess:
         runtime=wf.get_resource("cnvkit", "postprocess", "runtime"),
         mem=wf.get_resource("cnvkit", "postprocess", "mem"),
         partition=wf.get_resource("cnvkit", "postprocess", "partition"),
+    params:
+        args=wf.get_params("cnvkit", "postprocess"),
     wrapper:
         wf.wrapper_path("cnvkit/postprocess")
 

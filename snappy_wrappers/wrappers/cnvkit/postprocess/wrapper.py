@@ -6,6 +6,8 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 __author__ = "Manuel Holtgrewe"
 __email__ = "manuel.holtgrewe@bih-charite.de"
 
+args = getattr(snakemake.params, "args", {})
+
 ShellWrapper(snakemake).run(
     r"""
 set -x
@@ -46,7 +48,7 @@ segments[,"start"] <- segments[["start"]]-1
 segments[,"end"]   <- segments[["end"]]+1
 
 # Add library name
-segments[,"ID"] <- "{snakemake.wildcards[library_name]}"
+segments[,"ID"] <- "{args[library_name]}"
 
 # Rename columns to follow DNAcopy format (as implemented in PureCN)
 dna_copy_columns <- c(ID="ID", chromosome="chrom", start="loc.start", end="loc.end", probes="num.mark", log2="seg.mean", cn="C")
