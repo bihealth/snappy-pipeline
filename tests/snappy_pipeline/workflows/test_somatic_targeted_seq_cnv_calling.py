@@ -27,10 +27,11 @@ def test_gender_and_male_reference_are_passed_to_call_and_plot(action):
     assert params["male_reference"] is True
 
 
-def test_cnvkit_postprocess_gets_the_tumor_library():
-    params = _cnvkit_part().get_params("postprocess")(SimpleNamespace(tumor_library="T1-DNA1-WES1"))
+def test_cnvkit_postprocess_gets_the_tumor_library_and_the_ploidy():
+    part = _cnvkit_part(call={"ploidy": 3})
+    params = part.get_params("postprocess")(SimpleNamespace(tumor_library="T1-DNA1-WES1"))
 
-    assert params == {"library_name": "T1-DNA1-WES1"}
+    assert params == {"library_name": "T1-DNA1-WES1", "ploidy": 3}
 
 
 def test_guessed_gender_and_female_reference_are_not_passed():

@@ -39,8 +39,9 @@ r2 <- GenomicRanges::GRanges(
 i <- GenomicRanges::findOverlaps(r1, r2, ignore.strand=TRUE)
 stopifnot(!any(duplicated(S4Vectors::queryHits(i))))
 
-# Default value: diploid segment (number of copies = 2)
-segments[,"cn"] <- 2
+# Segments without a call (cnvkit call dropped them, for example for low coverage) get the
+# configured ploidy, the neutral copy number of cnvkit call
+segments[,"cn"] <- {args[ploidy]}
 segments[S4Vectors::queryHits(i),"cn"] <- round(calls[S4Vectors::subjectHits(i),"cn"])
 
 # Reset segment boundaries to original values

@@ -46,13 +46,14 @@ def _cnvkit_part():
     # The input functions only read the upstream paths, so skip the full step setup.
     part = object.__new__(CnvkitSomaticWgsStepPart)
     part.parent = _Parent()
+    part.config = SimpleNamespace(cnvkit=CnvkitWgs())
     return part
 
 
-def test_cnvkit_postprocess_gets_the_library_name():
+def test_cnvkit_postprocess_gets_the_library_name_and_the_ploidy():
     params = _cnvkit_part()._get_params_postprocess(WILDCARDS)
 
-    assert params == {"library_name": "T1-DNA1-WGS1"}
+    assert params == {"library_name": "T1-DNA1-WGS1", "ploidy": 2}
 
 
 def test_cnvkit_coverage_reads_the_regions_of_the_panel_of_normals():

@@ -496,7 +496,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return lambda wildcards: self._cnvkit_params(action)
 
     def _get_params_postprocess(self, wildcards):
-        return {"library_name": wildcards.tumor_library}
+        return {"library_name": wildcards.tumor_library, "ploidy": self.cfg.call.ploidy}
 
     def _cnvkit_params(self, action):
         if action == "plot":

@@ -2125,7 +2125,8 @@
   ],
   "params": {
    "args": {
-    "library_name": "case001subregion-T1-DNA1-WES1"
+    "library_name": "case001subregion-T1-DNA1-WES1",
+    "ploidy": 2
    }
   },
   "resources": {
