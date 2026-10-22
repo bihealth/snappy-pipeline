@@ -31,8 +31,8 @@ def _size(path: Path) -> int:
 
 def _links(relative: list[Path]) -> list[Path]:
     """Return what to link: the files, but for a ``.done`` marker that is the only result
-    file in its directory the directory, whose files are no declared outputs (trimmed reads,
-    the result directories of the fusion callers)."""
+    file in its directory the directory, whose files are no declared outputs (FastQC's
+    ``report/``). A ``directory()`` output is linked as a directory like any other path."""
     parents = [rel.parent for rel in relative]
     return [
         rel.parent if rel.name == ".done" and sum(p == rel.parent for p in parents) == 1 else rel

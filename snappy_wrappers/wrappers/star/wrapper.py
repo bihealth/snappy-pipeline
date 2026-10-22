@@ -20,8 +20,7 @@ reads = args.get("input", {})
 reads_left = snakemake.input.get("reads_left") or reads["reads_left"]
 reads_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
 
-# The index directory holds the input files: Genome, SA and SAindex, or the .done file of the
-# reference_index task.
+# The index inputs are files of the index directory: Genome, SA and SAindex.
 path_index = os.path.dirname(snakemake.input.index[0])
 
 ShellWrapper(snakemake).run(
