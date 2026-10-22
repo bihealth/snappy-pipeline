@@ -165,13 +165,18 @@ class BwaMapper(ToolModel):
     split_as_secondary: bool = False
     """-M flag"""
 
+    platform: str = "ILLUMINA"
+    """Platform (``PL``) of the read group"""
+
     extra_arguments: list[str] = []
     """Additional arguments of ``bwa mem``, such as ``["-C"]`` when AGeNT processes molecular
     barcodes (``mbcs``)"""
 
 
 class Bwa(BwaMapper):
-    pass
+    aln_max_read_length: int = 75
+    """Libraries with an average read length up to this value (estimated from the first 100000
+    reads) are mapped with ``bwa aln``, longer ones with ``bwa mem``"""
 
 
 class BwaMem2(BwaMapper):

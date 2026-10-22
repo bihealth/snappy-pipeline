@@ -28,6 +28,7 @@ memory_bam_sort = args["memory_bam_sort"]
 num_threads_bam_sort = args["num_threads_bam_sort"]
 num_threads_align = args["num_threads_align"]
 split_as_secondary = args["split_as_secondary"]
+aln_max_read_length = args["aln_max_read_length"]
 
 ShellWrapper(snakemake).run(
     r"""
@@ -205,7 +206,7 @@ avg_len=$({{ zcat --force -- ${{reads_left[0]}} || true; }} \
                  END {{ print int(totLen/count) }}')
 
 # Switch to BWA-SAMPE/SAMSE for shorter reads and BWA-MEM for longer ones.
-if [[ $avg_len -le 75 ]]; then
+if [[ $avg_len -le {aln_max_read_length} ]]; then
     run_bwa_aln
 else
     run_bwa_mem
