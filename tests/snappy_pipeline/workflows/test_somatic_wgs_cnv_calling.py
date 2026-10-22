@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Tests for the CNVkit step part of ``somatic_wgs_cnv_calling``."""
+"""Tests for the step parts of ``somatic_wgs_cnv_calling``."""
 
 from types import SimpleNamespace
 
 import pytest
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.workflows.somatic_wgs_cnv_calling import CnvkitSomaticWgsStepPart
-from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import CnvkitWgs, SomaticWgsCnvCalling
+from snappy_pipeline.workflows.somatic_wgs_cnv_calling import (
+    CnvettiSomaticWgsStepPart,
+    CnvkitSomaticWgsStepPart,
+    SomaticWgsCnvCallingWorkflow,
+)
+from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import (
+    CnvkitWgs,
+    SomaticWgsCnvCalling,
+    Tool,
+)
 
 WILDCARDS = Wildcards(fromdict={"library_name": "T1-DNA1-WGS1"})
 
@@ -89,3 +97,18 @@ def test_cnvkit_needs_a_panel_of_normals():
             cnvkit={},
             depends_on={"alignments": "mapping", "reference": "genome"},
         )
+
+
+def test_cnvetti_segment_declares_the_files_its_wrapper_writes():
+    outputs = object.__new__(CnvettiSomaticWgsStepPart)._get_output_files_segment()
+
+    assert outputs["segments_bcf"] == "work/{tumor_library}/out/{tumor_library}.bcf"
+    assert outputs["windows_bcf"] == "work/{tumor_library}/out/{tumor_library}.windows.bcf"
+    # Downstream tasks read the segments
+    paths = SomaticWgsCnvCallingWorkflow.get_output_paths(
+        SimpleNamespace(tool=Tool.cnvetti), library_name="{tumor_library}"
+    )
+    assert (paths["bcf"], paths["bcf_csi"]) == (
+        outputs["segments_bcf"],
+        outputs["segments_bcf_csi"],
+    )

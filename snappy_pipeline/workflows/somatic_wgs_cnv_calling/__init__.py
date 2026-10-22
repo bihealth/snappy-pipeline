@@ -21,13 +21,13 @@ Outputs
 The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 The files depend on the tool and are generally not in a standard format.
 
-- ``cnvetti``: ``{tumor_library}/out/{tumor_library}.bcf`` with ``.csi``.
+- ``cnvetti``: the segments ``{tumor_library}/out/{tumor_library}.bcf`` and the segmented windows ``{tumor_library}/out/{tumor_library}.windows.bcf``, each with ``.csi``.
 - ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.dnacopy.seg``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
   The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` (also per chromosome, ``{tumor_library}.scatter.chr1.png`` and so on).
 - ``control_freec``: ``{tumor_library}/out/{tumor_library}.ratio.txt``, ``.gene_log2.txt``, ``.gene_call.txt``, ``.segments.txt``, ``.heatmap.png``, ``.scatter.png`` and ``.diagram.pdf``.
 
 Downstream tasks read the key ``dnacopy_seg``, which only ``cnvkit`` provides, so ``cnvetti`` and ``control_freec`` tasks do not satisfy their requirement.
-``cnvetti`` also provides the keys ``bcf`` and ``bcf_csi``, and ``control_freec`` the keys ``log2``, ``call`` and ``segments``.
+``cnvetti`` also provides the keys ``bcf`` and ``bcf_csi`` (the segments), and ``control_freec`` the keys ``log2``, ``call`` and ``segments``.
 """
 
 import os
@@ -102,8 +102,6 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = {"segment": ("bcf", "bcf_csi", "bcf_md5", "bcf_csi_md5")}
-
     default_resource_usage = ResourceUsage(threads=4, runtime="4h", mem=f"{int(3.75 * 1024 * 4)}MB")
 
     intermediate_outputs = {
@@ -114,8 +112,15 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     #: Extension file dictionary. Key: file type (string); Value: file extension (string)
     bcf_dict = {"bcf": ".bcf", "bcf_csi": ".bcf.csi"}
 
-    #: The BCF files of the last action are published, so they get md5 files
-    bcf_md5_dict = {"bcf_md5": ".bcf.md5", "bcf_csi_md5": ".bcf.csi.md5"}
+    #: The files of ``cnvetti cmd segment``: the segments and the segmented windows
+    segment_dict = {
+        "segments_bcf": ".bcf",
+        "segments_bcf_csi": ".bcf.csi",
+        "windows_bcf": ".windows.bcf",
+        "windows_bcf_csi": ".windows.bcf.csi",
+    }
+
+    published_keys = {"segment": tuple(k + md5 for k in segment_dict for md5 in ("", "_md5"))}
 
     #: Parameters to pass to the wrapper
     params_for_action = {
@@ -190,14 +195,10 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     @dictify
     def _get_output_files_segment(self):
-        for key, ext in (self.bcf_dict | self.bcf_md5_dict).items():
-            name_pattern = "{tumor_library}"
-            yield (
-                key,
-                "work/{name_pattern}/out/{name_pattern}{ext}".format(
-                    name_pattern=name_pattern, ext=ext
-                ),
-            )
+        prefix = "work/{tumor_library}/out/{tumor_library}"
+        for key, ext in self.segment_dict.items():
+            yield key, prefix + ext
+            yield key + "_md5", prefix + ext + ".md5"
 
     def _get_params_coverage(self, wildcards: Wildcards) -> dict[str, Any]:
         return self._get_params("coverage")
