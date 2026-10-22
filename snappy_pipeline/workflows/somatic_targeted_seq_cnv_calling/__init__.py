@@ -24,7 +24,7 @@ The other files depend on the tool and are generally not in a standard format.
 
 - ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
   The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` (also per chromosome, ``{tumor_library}.scatter.chr1.png`` and so on).
-- ``sequenza``: ``{tumor_library}/out/{tumor_library}.seqz.gz`` and ``{tumor_library}/report/.done``.
+- ``sequenza``: ``{tumor_library}/out/{tumor_library}.seqz.gz``, and the directory ``{tumor_library}/report/`` (without ``.md5`` file) with the plots and tables of ``sequenza.results``.
 - ``purecn``: ``{tumor_library}/out/{tumor_library}.csv``, ``.amplification_pvalues.csv``, ``.loh.csv`` and ``.vcf.gz`` (with ``.tbi``).
 
 Downstream tasks read the key ``dnacopy_seg``, and for ``sequenza`` also the key ``seqz``.
@@ -39,6 +39,7 @@ import os
 from itertools import chain
 from typing import Any
 
+from snakemake.io import directory
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.models import RelationshipDefinition
@@ -162,7 +163,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
 
     result_keys = {
         "coverage": ("seqz", "seqz_md5"),
-        "run": ("seg", "seg_md5", "done"),
+        "run": ("seg", "seg_md5", "report"),
     }
 
     @dictify
@@ -212,7 +213,8 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return {
             "seg": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg",
             "seg_md5": f"work/{name_pattern}/out/{name_pattern}.dnacopy.seg.md5",
-            "done": f"work/{name_pattern}/report/.done",
+            # sequenza.results writes plots and tables that the step does not name
+            "report": directory(f"work/{name_pattern}/report"),
         }
 
     @staticmethod

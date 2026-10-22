@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Tests for the CNVkit and PureCN params of ``somatic_targeted_seq_cnv_calling``."""
+"""Tests for the CNVkit and PureCN params and the sequenza outputs of
+``somatic_targeted_seq_cnv_calling``."""
 
 from types import SimpleNamespace
 
 import pytest
+from snakemake.io import is_flagged
 
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     CnvKitStepPart,
     PureCNStepPart,
+    SequenzaStepPart,
 )
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling.model import Cnvkit, PureCn
 
@@ -60,3 +63,10 @@ def test_purecn_run_gets_the_config_and_the_tumor_library():
 
     assert set(params) == {"config", "library_name"}
     assert params["library_name"] == "T1-DNA1-WES1"
+
+
+def test_sequenza_run_writes_its_report_directory():
+    outputs = object.__new__(SequenzaStepPart)._get_output_files_run()
+    assert outputs["report"] == "work/{tumor_library}/report"
+    assert is_flagged(outputs["report"], "directory")
+    assert "report" in SequenzaStepPart.result_keys["run"]
