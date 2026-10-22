@@ -29,8 +29,13 @@ dependencies = [
     "biomedsheets @ git+https://github.com/bihealth/biomedsheets.git@8a86f4c0b94b2c0bde14a22acf552387958ad688",
     # Helpful for CLIs
     "termcolor >=1.1.0,<3",
-    # Snakemake is used for providing the actual wrapper calling functionality
-    "snakemake >=9.19.0,<10",
+    # Snakemake is used for providing the actual wrapper calling functionality; its development
+    # version, for the software deployment plugins (software: directive, post-deploy scripts)
+    "snakemake @ git+https://github.com/snakemake/snakemake.git@5bf5e21b0d0e7e65e247c1f2c61c1a4f74a1a752",
+    "snakemake-software-deployment-plugin-conda >=0.8.4,<0.9",
+    # 1.24.0 imports enum.StrEnum (Python 3.11), which breaks the wrappers in environments
+    # with an older Python, because the wrapper scripts import it through Snakemake
+    "snakemake-interface-common >=1.23.1,<1.24",
     "snakemake-executor-plugin-slurm >=2,<3",
     "snakemake-logger-plugin-snkmt >=0.1.6",
     # Required for plotting
@@ -246,9 +251,6 @@ htslib = "1.20.*"
 bcftools = "1.20.*"
 samtools = "1.20.*"
 conda = ">=25,<26"
-snakemake = ">=9.19.0,<10"
-snakemake-executor-plugin-slurm = ">=2,<3"
-snakemake-logger-plugin-snkmt = ">=0.1.6"
 
 # PREVENT CONFLICTS: Force Conda to pick older versions of these
 # dependencies so that it doesn't block the PyPI/Git package installations.
@@ -256,6 +258,8 @@ jsonschema = "<4.5"
 tabulate = "<0.10"
 docutils = "<0.21"
 click = ">=8.4.0,<9"
+# Snakemake's development version needs packaging 26.1 or newer
+packaging = ">=26.1,<27"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
@@ -295,4 +299,7 @@ update-pins = { cmd = "python tests/scripts/update_pins.py", description = "Pin 
 [tool.pixi.feature.dev.dependencies]
 pixi-pycharm = ">=0.0.11,<0.0.12"
 pandas-stubs = ">=3.0.3.260530,<4"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+# From PyPI: the conda package caps packaging below 26, which Snakemake's development version needs
 snakedeploy = ">=0.17.1,<0.18"

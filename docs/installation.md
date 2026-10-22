@@ -72,14 +72,13 @@ GATK 3 is not free software and cannot be redistributed.
 Download the tarball [from the Broad archive](https://storage.googleapis.com/gatk-software/package-archive/gatk/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2).
 
 Create the conda environments first.
-Then register the tarball in each environment that needs it:
+Then register the tarball in each environment that has GATK 3:
 
 ```shell
 cd /path/to/project
-snappy run -- --conda-create-envs-only
-grep -l 'gatk.*3' .snakemake/conda/*.yaml
-for yaml in $(grep -l 'gatk.*3' .snakemake/conda/*.yaml); do
-    environ=${yaml%.yaml}
+snappy run -- --deploy-software-envs
+for meta in .snakemake/software/deployments/conda/*/conda-meta/gatk-3.*.json; do
+    environ=$(dirname $(dirname $meta))
     conda activate $environ
     gatk3-register /path/to/GenomeAnalysisTK-3.8-1-0-gf15c1c3ef.tar.bz2
     conda deactivate

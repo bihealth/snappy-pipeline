@@ -24,7 +24,7 @@ from snakemake.settings.types import ConfigSettings, DAGSettings, OutputSettings
 import snappy_pipeline
 
 #: Resources that depend on the machine running the test, not on the workflow.
-_MACHINE_RESOURCES = {"tmpdir"}
+_MACHINE_RESOURCES = {"tmpdir", "shell_exec"}
 
 
 def _plain(value: Any) -> Any:
