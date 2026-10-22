@@ -12,11 +12,11 @@ The tumor purity and ploidy estimates of LOHHLA are not used.
 Outputs
 -------
 
-The task links the result file ``{tumor_library}/out/{tumor_library}.done`` below ``tasks/<task>/output/`` as a symlink to ``work/``.
-This marker file is the key ``done`` for downstream tasks.
-LOHHLA writes its result files into the same directory in ``work/``.
-They are no result files.
+The task links the result directory ``{tumor_library}/out/`` below ``tasks/<task>/output/`` as a symlink to ``work/``.
+It holds the files that LOHHLA writes, and it is the key ``out`` for downstream tasks.
 """
+
+from snakemake.io import directory
 
 from snappy_pipeline.models import RelationshipDefinition, ToolModel
 from snappy_pipeline.workflows.abstract import MATCHED_NORMAL_REQUIREMENT, BaseStep, BaseStepPart
@@ -40,7 +40,7 @@ class LohhlaStepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    result_keys = ("done",)
+    result_keys = ("out",)
 
     def tool_section(self) -> ToolModel:
         """The options are on the step model"""
@@ -84,7 +84,8 @@ class LohhlaStepPart(BaseStepPart):
         return tumor_df.iloc[0].get("matched_normal_lib") or None
 
     def _get_output_files_run(self):
-        return {"done": "work/{tumor_library}/out/{tumor_library}.done"}
+        # LOHHLA writes many files that the step does not name
+        return {"out": directory("work/{tumor_library}/out")}
 
     def _get_log_file_run(self):
         return {"log": "work/{tumor_library}/log/{tumor_library}.log"}
@@ -112,7 +113,7 @@ class SomaticHlaLohCallingWorkflow(BaseStep):
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local HLA LOH output paths for downstream consumers."""
         lib = kwargs.get("library_name", "{library_name}")
-        return {"done": f"work/{lib}/out/{lib}.done"}
+        return {"out": f"work/{lib}/out"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

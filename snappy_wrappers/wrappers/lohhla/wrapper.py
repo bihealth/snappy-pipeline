@@ -15,6 +15,7 @@ ShellWrapper(snakemake).run(
 # Setup subdirectories in the automatically created TMPDIR
 mkdir -p $TMPDIR/out
 mkdir -p $TMPDIR/bams
+mkdir -p {snakemake.output.out}
 
 # need to link bams into the same directory
 ln -sr {snakemake.input.normal_bam} -t $TMPDIR/bams
@@ -36,10 +37,8 @@ Rscript $lohhla_script \
     --minCoverageFilter {args[min_coverage_filter]} \
     --normalBAMfile $TMPDIR/bams/{normal_bam} \
     --novoDir $(dirname $(realpath $lohhla_script)) \
-    --outputDir $(dirname $(realpath {snakemake.output.done} )) \
+    --outputDir $(realpath {snakemake.output.out}) \
     --patientId {args[tumor_library]} \
     {extra_arguments}
-
-touch {snakemake.output.done}
 """
 )
