@@ -21,7 +21,7 @@ set -x
 # export JAVA_HOME=$(dirname $(which gatk))/..
 export LD_LIBRARY_PATH=$(dirname $(which bgzip))/../lib
 
-out_base=$tmpdir/$(basename {snakemake.output.table} .contamination.tbl)
+out_base=$TMPDIR/$(basename {snakemake.output.table} .contamination.tbl)
 
 gatk --java-options '-Xms4000m -Xmx8000m' CalculateContamination \
     --input {snakemake.input.tumor} {normal_param} \

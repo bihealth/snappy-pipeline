@@ -45,9 +45,9 @@ bed_to_interval_list() {{
         | cut -f 1-3 \
         | bedtools sort -i - \
         | bedtools merge -i - \
-        > $tmpdir/$f
+        > $TMPDIR/$f
     java -jar $picard_jar BedToIntervalList \
-        -I $tmpdir/$f \
+        -I $TMPDIR/$f \
         -O /dev/stdout \
         -SD {reference}
 }}
