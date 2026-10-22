@@ -22,6 +22,10 @@ dir_cache = f"--dir_cache {snakemake.input.cache}"
 # VEP reads all plugins from one directory
 plugin_files = " ".join(snakemake.input.get("plugins", []))
 plugins = " ".join(f"--plugin {name}" for name in vep_config["plugins"])
+# The summary is an output unless output_options holds no_stats
+summary = snakemake.output.get("summary")
+stats = "--stats_file $TMPDIR/summary.html" if summary else ""
+copy_summary = f"cp $TMPDIR/summary.html {summary}" if summary else ""
 num_threads = getattr(snakemake, "threads", vep_config.get("num_threads", 1))
 
 ShellWrapper(snakemake).run(
@@ -47,6 +51,7 @@ run_vep() {
         --{vep_config[tx_flag]} \
         --fasta {snakemake.input.reference} \
         --format vcf --vcf --compress_output bgzip \
+        {stats} --warning_file STDERR \
         {extra_arguments} \
         --output_file "$outfile" "$@"
 
@@ -54,5 +59,7 @@ run_vep() {
 }
 
 run_vep "{snakemake.output.vcf}" {pick}
+
+{copy_summary}
 """
 )

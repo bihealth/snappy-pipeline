@@ -1,6 +1,8 @@
 import enum
 from typing import Literal
 
+from pydantic import model_validator
+
 from snappy_pipeline.models import ConfigPath, SnappyModel, ToolModel
 
 
@@ -47,8 +49,16 @@ class Vep(ToolModel):
     num_threads: int = 8
     buffer_size: int = 1000
     output_options: list[str] = ["everything"]
+    """VEP flags (without ``--``); ``no_stats`` switches off the summary report"""
     plugins: list[VepPlugin] = []
     """VEP plugins to run"""
+
+    @model_validator(mode="after")
+    def stats_only_through_output_options(self):
+        """The summary is an output of the rule, which only ``output_options`` switches off"""
+        if any(a.split()[0] in ("--no_stats", "--stats_file") for a in self.extra_arguments if a):
+            raise ValueError("use output_options: [no_stats] instead of --no_stats or --stats_file")
+        return self
 
 
 class Mehari(ToolModel):

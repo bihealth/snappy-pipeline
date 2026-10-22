@@ -27,6 +27,10 @@ Below ``tasks/<task>/output/``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
 
+VEP also writes its summary, ``{library_name}/report/{library_name}.summary.html``, which ``snappy report`` shows.
+It is not a result file, and ``vep.output_options: [no_stats]`` switches it off.
+VEP's warnings go to the log.
+
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
 
@@ -34,6 +38,7 @@ from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -83,6 +88,15 @@ class VariantAnnotationStepPart(BaseStepPart):
 
 class VepStepPart(VariantAnnotationStepPart):
     name = "vep"
+
+    report_outputs = {"run": {"summary": ReportOutput("VEP", caption="vep_summary.rst")}}
+
+    def _get_output_files_run(self):
+        """The annotated VCF and, unless ``output_options`` has ``no_stats``, VEP's summary"""
+        outputs = super()._get_output_files_run()
+        if "no_stats" not in self.config.vep.output_options:
+            outputs["summary"] = "work/{library_name}/report/{library_name}.summary.html"
+        return outputs
 
     @dictify
     def _get_input_files_run(self, wildcards):
