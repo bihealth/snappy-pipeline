@@ -24,7 +24,7 @@ The files depend on the tool and are generally not in a standard format.
 - ``cnvetti``: the segments ``{tumor_library}/out/{tumor_library}.bcf`` and the segmented windows ``{tumor_library}/out/{tumor_library}.windows.bcf``, each with ``.csi``.
 - ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.dnacopy.seg``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
   The directory ``{tumor_library}/report/`` holds the tables ``{tumor_library}.breaks.txt``, ``.genemetrics.txt``, ``.segmetrics.txt``, ``.sex.txt`` and ``.metrics.txt``, and the plots ``{tumor_library}.diagram.pdf`` and ``{tumor_library}.scatter.png`` (also per chromosome, ``{tumor_library}.scatter.chr1.png`` and so on).
-- ``control_freec``: ``{tumor_library}/out/{tumor_library}.ratio.txt``, ``.gene_log2.txt``, ``.gene_call.txt``, ``.segments.txt``, ``.heatmap.png``, ``.scatter.png`` and ``.diagram.pdf``.
+- ``control_freec``: ``{tumor_library}/out/{tumor_library}.ratio.txt``, ``.gene_log2.txt``, ``.gene_call.txt``, ``.segments.txt``, ``.scatter.png`` and ``.diagram.pdf``.
 
 Downstream tasks read the key ``dnacopy_seg``, which only ``cnvkit`` provides, so ``cnvetti`` and ``control_freec`` tasks do not satisfy their requirement.
 ``cnvetti`` also provides the keys ``bcf`` and ``bcf_csi`` (the segments), and ``control_freec`` the keys ``log2``, ``call`` and ``segments``.
@@ -495,7 +495,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     published_keys = {
         "run": ("ratio", "ratio_md5"),
         "transform": ("log2", "call", "segments", "log2_md5", "call_md5", "segments_md5"),
-        "plot": ("heatmap", "scatter", "diagram", "heatmap_md5", "scatter_md5", "diagram_md5"),
+        "plot": ("scatter", "diagram", "scatter_md5", "diagram_md5"),
     }
 
     resource_usage = {
@@ -527,7 +527,6 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     def _get_output_files_plot(self):
         base = "work/{tumor_library}/out/{tumor_library}"
         result = {
-            "heatmap": base + ".heatmap.png",
             "scatter": base + ".scatter.png",
             "diagram": base + ".diagram.pdf",
         }

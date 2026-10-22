@@ -9,6 +9,7 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling import (
     CnvettiSomaticWgsStepPart,
     CnvkitSomaticWgsStepPart,
+    ControlFreecSomaticWgsStepPart,
     SomaticWgsCnvCallingWorkflow,
 )
 from snappy_pipeline.workflows.somatic_wgs_cnv_calling.model import (
@@ -112,3 +113,10 @@ def test_cnvetti_segment_declares_the_files_its_wrapper_writes():
         outputs["segments_bcf"],
         outputs["segments_bcf_csi"],
     )
+
+
+def test_control_freec_plot_declares_the_plots_of_cnvkit_plot():
+    # The plot rule runs the cnvkit/plot wrapper, which writes a diagram and a scatter plot
+    outputs = object.__new__(ControlFreecSomaticWgsStepPart)._get_output_files_plot()
+
+    assert set(outputs) == {"diagram", "diagram_md5", "scatter", "scatter_md5"}
