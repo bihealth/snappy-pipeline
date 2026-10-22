@@ -39,7 +39,8 @@ chr21:21000000-22000000
 chr22:25000000-26000000
 EOF
 
-if [[ "{snakemake.input.reference}" =~ .*hs?37.* ]]; then
+# The intervals have "chr" prefixes; drop them if the first contig of the reference has none
+if ! head -n 1 {snakemake.input.reference_fai} | grep -q '^chr'; then
     perl -p -i -e 's/chr//g' $TMPDIR/intervals.txt
 fi
 
