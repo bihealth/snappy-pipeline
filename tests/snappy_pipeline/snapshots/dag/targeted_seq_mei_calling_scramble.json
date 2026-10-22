@@ -230,7 +230,7 @@
    "task_dir": "tasks/targeted_seq_mei_calling_scramble"
   },
   "resources": {},
-  "rule": "targeted_seq_mei_calling_scramble_publish",
+  "rule": "targeted_seq_mei_calling_scramble_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

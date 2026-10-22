@@ -4,7 +4,7 @@
 
 A pipeline step is a Snakemake workflow plus the Python code that wires its rules.
 A **task** is a configured use of a step in the `tasks` list of the `config.yaml` of a project.
-Each task reads files that other tasks or the project provide, writes its results into its `work/` directory and publishes the result files in its `output/` directory.
+Each task reads files that other tasks or the project provide, writes its results into its `work/` directory and links its result files into its `output/` directory.
 
 ## Configuration
 
@@ -92,7 +92,7 @@ Paths and file names in `work/` are **unstable**: the authors of a step can chan
 
 Scatter fragments are temporary files, and `delete_intermediates` controls the per-sample intermediates, see {ref}`usage`.
 A rule's log is its log file.
-Only published files have a `.md5` file.
+Only result files have a `.md5` file.
 
 ### Directory `output/`
 
@@ -100,6 +100,6 @@ Only published files have a `.md5` file.
 It holds relative symlinks into `work/` that mirror the paths below `work/`.
 No task reads from it.
 
-One local job per task with result files, `<task>_publish`, creates the links to the result files of the task.
+One local job per task with result files, `<task>_results`, creates the links to the result files of the task.
 Each file has its `.md5` file, and VCF and BED files also have their index.
-The job writes `output/.manifest.tsv`, which lists the path, size and md5 file of each published file, and removes links to files that are no longer published.
+The job writes `output/.manifest.tsv`, which lists the path, size and md5 file of each result file, and removes links to files that are no result files any more.

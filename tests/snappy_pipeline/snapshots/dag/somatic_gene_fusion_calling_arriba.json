@@ -36,7 +36,7 @@
    "task_dir": "tasks/somatic_gene_fusion_calling_arriba"
   },
   "resources": {},
-  "rule": "somatic_gene_fusion_calling_arriba_publish",
+  "rule": "somatic_gene_fusion_calling_arriba_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

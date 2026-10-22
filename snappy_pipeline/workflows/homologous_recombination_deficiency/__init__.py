@@ -21,7 +21,7 @@ The task installs these R packages in a job of its own.
 Outputs
 -------
 
-The task publishes ``{library_name}/out/{library_name}.hrd.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+The task links the result file ``{library_name}/out/{library_name}.hrd.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
 Downstream tasks read the key ``json``.
 """
 
@@ -57,7 +57,7 @@ class ScarHRDStepPart(BaseStepPart):
         "run",
     )
 
-    published_keys = {"run": ("hrd", "hrd_md5")}
+    result_keys = {"run": ("hrd", "hrd_md5")}
 
     resource_usage = {"run": ResourceUsage(threads=1, mem="32GB", runtime="24h")}
 

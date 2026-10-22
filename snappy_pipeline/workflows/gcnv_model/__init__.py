@@ -24,7 +24,7 @@ The field ``intervals`` selects how the genome is binned:
 Outputs
 -------
 
-The model directories stay in ``work/`` and are not published:
+The model directories stay in ``work/`` and are no result files:
 
 - ``{library_kit}/out/{library_kit}.contig_ploidy/`` holds the ploidy model (``ploidy-model``) and the ploidy calls per sample.
 - ``{library_kit}/out/{library_kit}.{shard}.call_cnvs/`` holds, for each shard of the genome, the CNV calls model (``cnv_calls-model``), the calls per sample and the tracking data.
@@ -33,7 +33,7 @@ The model directories stay in ``work/`` and are not published:
 
 The keys for downstream tasks are ``interval_list`` (the binned intervals of the kit), ``ploidy`` and ``calls`` (the ``.done`` files in the model directories) and ``shards`` (the directory of the shard interval lists).
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``.
 They are the calls on the cohort libraries themselves.
 
 - ``{library_name}/out/{library_name}.post_germline_calls.vcf.gz``

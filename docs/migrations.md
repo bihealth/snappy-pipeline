@@ -9,7 +9,7 @@ Instead of one block per workflow step, `config.yaml` lists **named tasks**.
 Each task names a step type (`ngs_mapping`, `variant_calling`, ...) and carries its own config: the tool, the library selection, the dependencies and the tool settings.
 Tasks form a DAG through their `depends_on` fields, and `external_data` tasks provide existing files such as the genome, enrichment kit regions, indexes and databases.
 
-By default `snappy run` builds and publishes every task.
+By default `snappy run` builds every task and links its result files into `output/`.
 `snappy run --task <name>` builds one task, and `--frozen` with `--task` uses the existing outputs of the upstream tasks.
 
 ## Single tool per task
@@ -158,8 +158,8 @@ snappy does not check whether the files exist when the project loads, so dry-run
 
 Each task has its own directory `tasks/<task>/`.
 `work/` holds every file the jobs write and is the contract between tasks: a task reads the `work/` files of its upstream tasks, never their `output/`.
-`output/` is for publication only: one local `<task>_publish` job per task with result files links them from `work/` and writes `output/.manifest.tsv`.
-Only published files get an `.md5` file, logs hold only the log, and `snappy run` archives the logs of each run.
+`output/` holds only the result files: one local `<task>_results` job per task with result files links them from `work/` and writes `output/.manifest.tsv`.
+Only result files get an `.md5` file, logs hold only the log, and `snappy run` archives the logs of each run.
 Scatter fragments are temporary, and `delete_intermediates` makes per-sample intermediates temporary, too.
 
 ## Developer contracts: produces and DataSignature
@@ -198,7 +198,7 @@ The old entry-point scripts are replaced by a single `snappy` command with subco
 
 ### `snappy run` options
 
-- `--task <name>`: build and publish only the named task and the upstream files it needs (default: every task).
+- `--task <name>`: build only the named task and the upstream files it needs, and link its result files (default: every task).
 - `--frozen`: with `--task`, use the existing outputs of the upstream tasks and never rebuild them.
 - `--slurm`: enable SLURM execution (layers a SLURM profile on top of the default profile).
 - `--directory`: the project directory (default: the current directory).

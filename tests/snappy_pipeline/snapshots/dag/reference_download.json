@@ -22,30 +22,6 @@
  },
  {
   "benchmark": null,
-  "input": [
-   "tasks/reference_download/work/reference_download/out/reference.fa",
-   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
-   "tasks/reference_download/work/reference_download/out/reference.fa.fai",
-   "tasks/reference_download/work/reference_download/out/reference.fa.fai.md5",
-   "tasks/reference_download/work/reference_download/out/reference.dict",
-   "tasks/reference_download/work/reference_download/out/reference.dict.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/reference_download/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/reference_download"
-  },
-  "resources": {},
-  "rule": "reference_download_publish",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
   "input": [],
   "log": [
    "tasks/reference_download/work/reference_download/log/reference_download.ensembl.log"
@@ -110,5 +86,29 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_download/sidecars"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_download/work/reference_download/out/reference.fa",
+   "tasks/reference_download/work/reference_download/out/reference.fa.md5",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai",
+   "tasks/reference_download/work/reference_download/out/reference.fa.fai.md5",
+   "tasks/reference_download/work/reference_download/out/reference.dict",
+   "tasks/reference_download/work/reference_download/out/reference.dict.md5"
+  ],
+  "log": [],
+  "output": [
+   "tasks/reference_download/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_download"
+  },
+  "resources": {},
+  "rule": "reference_download_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

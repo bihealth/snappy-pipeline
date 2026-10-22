@@ -69,7 +69,7 @@
    "task_dir": "tasks/gene_expression_quantification_duplication"
   },
   "resources": {},
-  "rule": "gene_expression_quantification_duplication_publish",
+  "rule": "gene_expression_quantification_duplication_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

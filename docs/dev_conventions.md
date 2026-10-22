@@ -52,7 +52,7 @@ These are `_get_input_files_<action>(wildcards)`, `_get_params_<action>(wildcard
 One `_get_log_file(action)` can replace the log methods of all actions.
 Resource usage is declared, not computed.
 `default_resource_usage` holds it for all actions and `resource_usage` per action, each as a property when it depends on the config.
-`published_keys` names the output keys whose files are published, for all actions or by action.
+`result_keys` names the output keys whose files are result files, for all actions or by action.
 `BaseStepPart.get_result_files` derives their `output/` paths for each output entity (`entity_wildcard`, other wildcards via `_result_wildcards`).
 `BaseStep.get_result_files` collects them from all step parts.
 Override these only where the derivation does not fit.
@@ -86,19 +86,19 @@ A rule's log holds only its log file (plus a copy of the script, if the wrapper 
 The log file is named `log`, because the wrapper base classes write to `snakemake.log.log` (`RWrapper` also needs `script`); building the DAG in the snapshot tests fails for a wrapper rule without it.
 Snakemake's metadata in `.snakemake/` records the code, params, inputs and conda environment of every output.
 The pinned environments (`environment.linux-64.pin.txt`) fix the package versions.
-Logs are not published, and `snappy run` archives them per run.
-Only published files, those linked into `output/`, have an md5 file, and every published file has one.
+Logs are no result files, and `snappy run` archives them per run.
+Only result files, those linked into `output/`, have an md5 file, and every result file has one.
 SODAR needs one per uploaded file.
 A step declares `<file>.md5` next to `<file>` in the outputs, and the wrapper base classes write it.
 Wrappers never read md5 files.
-A step's `get_result_files` lists the published files below `output/`, each with its md5 file.
+A step's `get_result_files` lists the result files below `output/`, each with its md5 file.
 Bgzipped VCF and BED files also come with `.tbi` and `.tbi.md5`.
 They mirror files below `work/`.
-One local job per task with result files, `<task>_publish` (`snappy_pipeline/publish.py`), links them and writes `output/.manifest.tsv`.
-The result files in `work/` are targets of `rule all` as well: Snakemake does not rerun a job whose output exists because an input is missing, so a manifest alone would hide result files that a failed rerun deleted (`test_published_work_files_are_targets`).
+One local job per task with result files, `<task>_results` (`snappy_pipeline/results.py`), links them and writes `output/.manifest.tsv`.
+The result files in `work/` are targets of `rule all` as well: Snakemake does not rerun a job whose output exists because an input is missing, so a manifest alone would hide result files that a failed rerun deleted (`test_result_files_are_targets`).
 No other rule writes into `output/`.
 `get_output_paths` returns `work/` paths, so tasks read each other's `work/` files and never `output/`.
-`test_only_the_publish_job_writes_into_output`, `test_no_job_reads_from_output`, `test_logs_hold_only_logs`, `test_logs_are_not_published`, `test_md5_files_only_for_published_files`, `test_published_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.
+`test_only_the_results_job_writes_into_output`, `test_no_job_reads_from_output`, `test_logs_hold_only_logs`, `test_logs_are_no_result_files`, `test_md5_files_only_for_result_files`, `test_result_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.
 
 Every wrapper environment is pinned.
 Snakemake builds it from the exact package URLs in `environment.linux-64.pin.txt` next to `environment.yaml`.
@@ -111,7 +111,7 @@ In a pull request, CI also checks that a changed environment file comes with its
 A step part lists the output keys of scatter fragments per action in `temp_outputs`.
 It lists those of per-sample intermediates that only later rules of the same task read in `intermediate_outputs`.
 `BaseStep.get_output_files` marks fragments `temp()` always and intermediates when the task sets `delete_intermediates`.
-Published files, contract outputs, files other tasks read and project-wide resources (installs, prepared references, pedigree files) are neither.
+Result files, contract outputs, files other tasks read and project-wide resources (installs, prepared references, pedigree files) are neither.
 Every temp file needs a declared reader, otherwise Snakemake deletes it right after its job.
 A job that reads a temp file's index implicitly declares the index as input.
 The DAG snapshots are built with `delete_intermediates: true`.

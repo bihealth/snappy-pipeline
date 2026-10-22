@@ -18,8 +18,8 @@ The copy number call may be missing, and the chromosome number is replaced by it
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
-Every caller publishes ``{tumor_library}/out/{tumor_library}.dnacopy.seg``.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+Every caller has the result file ``{tumor_library}/out/{tumor_library}.dnacopy.seg``.
 The other files depend on the tool and are generally not in a standard format.
 
 - ``cnvkit``: ``{tumor_library}/out/{tumor_library}.cnr``, ``.seg``, ``.bed.gz`` (with ``.tbi``) and ``.vcf.gz`` (with ``.tbi``).
@@ -160,7 +160,7 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         ),
     }
 
-    published_keys = {
+    result_keys = {
         "coverage": ("seqz", "seqz_md5"),
         "run": ("seg", "seg_md5", "done"),
     }
@@ -286,7 +286,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     }
 
     @property
-    def published_keys(self):
+    def result_keys(self):
         return {"run": tuple(self._get_output_files_run())}
 
     @dictify
@@ -416,7 +416,7 @@ class CnvKitStepPart(SomaticTargetedSeqCnvCallingStepPart):
     }
 
     @property
-    def published_keys(self):
+    def result_keys(self):
         actions = ("fix", "postprocess", "export", "plot", "report")
         return {action: tuple(self.get_output_files(action)) for action in actions}
 

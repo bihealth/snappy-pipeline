@@ -21,7 +21,7 @@ They contain low-quality calls.
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 The files depend on the tool and are generally not in a standard format.
 
 - ``cnvetti``: the segments ``{tumor_library}/out/{tumor_library}.bcf`` and the segmented windows ``{tumor_library}/out/{tumor_library}.windows.bcf``, each with ``.csi``.
@@ -126,7 +126,7 @@ class CnvettiSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
         "windows_bcf_csi": ".windows.bcf.csi",
     }
 
-    published_keys = {"segment": tuple(k + md5 for k in segment_dict for md5 in ("", "_md5"))}
+    result_keys = {"segment": tuple(k + md5 for k in segment_dict for md5 in ("", "_md5"))}
 
     #: Parameters to pass to the wrapper
     params_for_action = {
@@ -296,7 +296,7 @@ class CnvkitSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem=f"{int(7.5 * 1024)}MB")
 
     @property
-    def published_keys(self):
+    def result_keys(self):
         return {
             "fix": ("ratios", "ratios_md5"),
             "postprocess": ("final", "final_md5"),
@@ -520,7 +520,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = {
+    result_keys = {
         "run": ("ratio", "ratio_md5"),
         "transform": ("log2", "call", "segments", "log2_md5", "call_md5", "segments_md5"),
         "plot": ("scatter", "diagram", "scatter_md5", "diagram_md5"),
@@ -559,7 +559,7 @@ class ControlFreecSomaticWgsStepPart(SomaticWgsCnvCallingStepPart):
             "cns": base + ".cns",
             "cnr": base + ".cnr",
         }
-        for name in ("log2", "call", "segments"):  # published
+        for name in ("log2", "call", "segments"):  # result files
             result[name + "_md5"] = result[name] + ".md5"
         return result
 

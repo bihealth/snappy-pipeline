@@ -164,4 +164,4 @@ snappy run --slurm
 
 `pipeline_job.sh` wraps `snappy run --slurm` for `sbatch`.
 Results of a task are in `tasks/<task_name>/work/`.
-`tasks/<task_name>/output/` links the published files, see {ref}`usage`.
+`tasks/<task_name>/output/` links the result files, see {ref}`usage`.

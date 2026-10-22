@@ -547,7 +547,7 @@
    "task_dir": "tasks/somatic_wgs_cnv_calling_cnvkit"
   },
   "resources": {},
-  "rule": "somatic_wgs_cnv_calling_cnvkit_publish",
+  "rule": "somatic_wgs_cnv_calling_cnvkit_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

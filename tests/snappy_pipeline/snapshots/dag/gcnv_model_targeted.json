@@ -250,7 +250,7 @@
    "task_dir": "tasks/gcnv_model_targeted"
   },
   "resources": {},
-  "rule": "gcnv_model_targeted_publish",
+  "rule": "gcnv_model_targeted_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

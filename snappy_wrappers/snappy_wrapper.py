@@ -23,7 +23,7 @@ __email__ = "eric.blanc@bih-charite.de"
 def write_declared_md5s(snakemake) -> None:
     """Write ``<file>.md5`` for each output whose ``.md5`` is a declared output, too.
 
-    Only published files declare an ``.md5`` (SODAR needs one per file). The format is that of
+    Only result files declare an ``.md5`` (SODAR needs one per file). The format is that of
     ``md5sum``.
     """
     for md5_path in map(str, snakemake.output):

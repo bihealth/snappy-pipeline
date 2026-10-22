@@ -1331,7 +1331,7 @@
    "task_dir": "tasks/panel_of_normals_mutect2"
   },
   "resources": {},
-  "rule": "panel_of_normals_mutect2_publish",
+  "rule": "panel_of_normals_mutect2_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

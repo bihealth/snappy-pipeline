@@ -249,7 +249,7 @@
    "task_dir": "tasks/gcnv_model_wgs"
   },
   "resources": {},
-  "rule": "gcnv_model_wgs_publish",
+  "rule": "gcnv_model_wgs_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

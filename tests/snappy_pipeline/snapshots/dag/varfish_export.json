@@ -439,7 +439,7 @@
    "task_dir": "tasks/varfish_export"
   },
   "resources": {},
-  "rule": "varfish_export_publish",
+  "rule": "varfish_export_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

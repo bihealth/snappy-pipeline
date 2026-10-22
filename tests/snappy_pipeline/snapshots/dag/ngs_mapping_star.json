@@ -200,7 +200,7 @@
    "task_dir": "tasks/ngs_mapping_star"
   },
   "resources": {},
-  "rule": "ngs_mapping_star_publish",
+  "rule": "ngs_mapping_star_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

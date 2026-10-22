@@ -142,9 +142,9 @@ class BaseStepPart:
     #: Outputs that the Snakemake report shows, by action and output key
     report_outputs: dict[str, dict[str, ReportOutput]] = {}
 
-    #: Output keys whose files are published, for all actions or by action; ``get_result_files``
+    #: Output keys whose files are result files, for all actions or by action; ``get_result_files``
     #: derives the result files from them
-    published_keys: tuple[str, ...] | dict[str, tuple[str, ...]] = ()
+    result_keys: tuple[str, ...] | dict[str, tuple[str, ...]] = ()
 
     #: Wildcard of the output entity (library, tumor library, ...) in the output paths
     entity_wildcard: str = "library_name"
@@ -158,7 +158,7 @@ class BaseStepPart:
     temp_outputs: dict[str, tuple[str, ...]] = {}
 
     #: Output keys by action of per-sample intermediates that only later rules of the same task
-    #: read: ``temp()`` when the task sets ``delete_intermediates``. Published files, contract
+    #: read: ``temp()`` when the task sets ``delete_intermediates``. Result files, contract
     #: outputs and project-wide resources are neither.
     intermediate_outputs: dict[str, tuple[str, ...]] = {}
 
@@ -303,11 +303,11 @@ class BaseStepPart:
         return self._get_log_file(action)
 
     def get_result_files(self) -> list[str]:
-        """Return the published files below ``output/``: the outputs of ``published_keys`` for
+        """Return the result files below ``output/``: the outputs of ``result_keys`` for
         each output entity, at their mirror path."""
         result = []
         for action in self.actions:
-            keys = self.published_keys
+            keys = self.result_keys
             if isinstance(keys, dict):
                 keys = keys.get(action, ())
             if not keys:
@@ -1527,7 +1527,7 @@ class BaseStep:
         return self._get_sub_step(sub_step).run(action, wildcards)
 
     def get_result_files(self) -> list[str]:
-        """Return the published files below ``output/``: those of all step parts."""
+        """Return the result files below ``output/``: those of all step parts."""
         return [path for part in self.sub_steps.values() for path in part.get_result_files()]
 
     def substep_getattr(self, step: str, name: str) -> Any:

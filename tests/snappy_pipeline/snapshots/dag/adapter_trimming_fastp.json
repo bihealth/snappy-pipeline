@@ -107,7 +107,7 @@
    "task_dir": "tasks/adapter_trimming_fastp"
   },
   "resources": {},
-  "rule": "adapter_trimming_fastp_publish",
+  "rule": "adapter_trimming_fastp_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

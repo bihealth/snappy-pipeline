@@ -15,7 +15,7 @@ Below ``tasks/<task>/output/``, the files of each library are in ``{library_name
 - ``out/.done`` marks the trimmed FASTQ files, which are in the same directory.
 - ``report/.done`` marks the tool reports (``bbduk``: statistics and histograms per input file, ``fastp``: HTML and JSON reports), which are in the same directory.
 
-Reads that the tool filters out are kept below ``rejected/`` in ``work/`` and are not published.
+Reads that the tool filters out are kept below ``rejected/`` in ``work/`` and are no result files.
 Downstream tasks read the trimmed files from ``work/{library_name}/out/`` through the key ``fastq_dir``.
 """
 
@@ -56,7 +56,7 @@ class AdapterTrimmingStepPart(BaseStepPart):
                 inputs[key] = value
         return inputs
 
-    published_keys = ("out_done", "report_done")
+    result_keys = ("out_done", "report_done")
 
     @dictify
     def _get_output_files_run(self):

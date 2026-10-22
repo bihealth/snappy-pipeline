@@ -267,7 +267,7 @@
    "task_dir": "tasks/somatic_hla_loh_calling"
   },
   "resources": {},
-  "rule": "somatic_hla_loh_calling_publish",
+  "rule": "somatic_hla_loh_calling_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

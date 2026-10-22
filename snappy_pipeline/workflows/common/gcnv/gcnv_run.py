@@ -21,8 +21,8 @@ RESULT_EXTENSIONS = {
     "vcf_tbi": ".vcf.gz.tbi",
 }
 
-#: The published results files also get md5 files.
-PUBLISHED_RESULT_EXTENSIONS = {
+#: The result files with their md5 files.
+RESULT_EXTENSIONS_WITH_MD5 = {
     **RESULT_EXTENSIONS,
     "vcf_md5": ".vcf.gz.md5",
     "vcf_tbi_md5": ".vcf.gz.tbi.md5",
@@ -197,7 +197,7 @@ class MergeMultikitFamiliesMixin:
     def _get_output_files_merge_multikit_families(self):
         prefix = "work/{library_name}/out/{library_name}"
         work_files = {}
-        for key, suffix in PUBLISHED_RESULT_EXTENSIONS.items():
+        for key, suffix in RESULT_EXTENSIONS_WITH_MD5.items():
             work_files[key] = f"{prefix}{suffix}"
         yield from work_files.items()
 

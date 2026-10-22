@@ -1449,7 +1449,7 @@
    "task_dir": "tasks/somatic_variant_signatures"
   },
   "resources": {},
-  "rule": "somatic_variant_signatures_publish",
+  "rule": "somatic_variant_signatures_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

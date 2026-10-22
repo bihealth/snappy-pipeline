@@ -34,7 +34,7 @@
    "task_dir": "tasks/variant_export_external"
   },
   "resources": {},
-  "rule": "variant_export_external_publish",
+  "rule": "variant_export_external_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

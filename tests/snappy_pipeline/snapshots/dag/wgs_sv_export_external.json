@@ -38,7 +38,7 @@
    "task_dir": "tasks/wgs_sv_export_external"
   },
   "resources": {},
-  "rule": "wgs_sv_export_external_publish",
+  "rule": "wgs_sv_export_external_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

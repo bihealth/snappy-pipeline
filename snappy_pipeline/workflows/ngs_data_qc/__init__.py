@@ -12,11 +12,11 @@ The result is one set of files per library.
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+The task links the following result files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
 
 With ``fastqc``:
 
-- ``{library_name}/report/.done``, which marks the finished run. The FastQC HTML reports are in ``work/{library_name}/report/html/`` and are not published.
+- ``{library_name}/report/.done``, which marks the finished run. The FastQC HTML reports are in ``work/{library_name}/report/html/`` and are no result files.
 
 With ``picard``, for each program in ``picard.programs``, with an ``.md5`` file:
 

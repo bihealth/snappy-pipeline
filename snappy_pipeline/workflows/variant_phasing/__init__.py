@@ -130,7 +130,7 @@ class PhaseByTransmissionStepPart(VariantPhasingBaseStep):
     #: Name of the step in the pipeline.
     name = "gatk_phase_by_transmission"
 
-    published_keys = tuple(_OUTPUTS)
+    result_keys = tuple(_OUTPUTS)
 
     @dictify
     def _get_input_files_run(self, wildcards):
@@ -169,7 +169,7 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
 
     extra_arguments_action = "run"
 
-    published_keys = {"gather": tuple(_OUTPUTS)}
+    result_keys = {"gather": tuple(_OUTPUTS)}
 
     temp_outputs = {"scatter": ("regions",), "run": ("vcf", "vcf_tbi")}
 
@@ -253,7 +253,7 @@ class ReadBackedPhasingStepPart(VariantPhasingBaseStep):
 class TumorPhasingStepPart(VariantPhasingBaseStep):
     """Phasing of a tumor library's combined somatic and germline variants with its alignments."""
 
-    published_keys = tuple(_OUTPUTS)
+    result_keys = tuple(_OUTPUTS)
 
     default_resource_usage = ResourceUsage(threads=1, runtime="1d", mem="32GB")
 

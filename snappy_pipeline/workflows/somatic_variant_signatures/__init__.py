@@ -10,9 +10,9 @@ The task gives one result per tumor DNA library.
 Outputs
 -------
 
-The task publishes ``{tumor_library}/out/deconstruct_sigs.{tumor_library}.tsv`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+The task links the result file ``{tumor_library}/out/deconstruct_sigs.{tumor_library}.tsv`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
 The table gives the fraction of variants that each signature explains.
-The plot ``deconstruct_sigs.{tumor_library}.pdf`` is written to the same directory in ``work/`` and is not published.
+The plot ``deconstruct_sigs.{tumor_library}.pdf`` is written to the same directory in ``work/`` and is no result file.
 
 Downstream tasks read the key ``tsv``.
 """
@@ -80,7 +80,7 @@ class DeconstructSigsStepPart(SignaturesStepPart):
     #: Step name
     name = "deconstruct_sigs"
 
-    published_keys = ("tsv", "tsv_md5")
+    result_keys = ("tsv", "tsv_md5")
 
     @dictify
     def _get_input_files_run(self, wildcards):

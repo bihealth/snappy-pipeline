@@ -21,28 +21,6 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_minimap2/work/reference_index/out/reference.dict",
-   "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_minimap2/work/reference_index/out/reference.mmi"
-  ],
-  "log": [],
-  "output": [
-   "tasks/reference_index_minimap2/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/reference_index_minimap2"
-  },
-  "resources": {},
-  "rule": "reference_index_minimap2_publish",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
@@ -98,5 +76,27 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/minimap2"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.dict",
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_minimap2/work/reference_index/out/reference.mmi"
+  ],
+  "log": [],
+  "output": [
+   "tasks/reference_index_minimap2/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_index_minimap2"
+  },
+  "resources": {},
+  "rule": "reference_index_minimap2_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

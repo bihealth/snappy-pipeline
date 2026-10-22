@@ -94,7 +94,7 @@
    "task_dir": "tasks/hla_typing_arcashla"
   },
   "resources": {},
-  "rule": "hla_typing_arcashla_publish",
+  "rule": "hla_typing_arcashla_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

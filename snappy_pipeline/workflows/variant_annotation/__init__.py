@@ -57,7 +57,7 @@ class VariantAnnotationStepPart(BaseStepPart):
 
     actions = ("run",)
 
-    published_keys = tuple(_OUTPUTS)
+    result_keys = tuple(_OUTPUTS)
 
     @dictify
     def _get_input_files_run(self, wildcards):

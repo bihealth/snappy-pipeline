@@ -91,15 +91,15 @@ def _md5sum(path):
 
 
 def test_write_declared_md5s_hashes_only_outputs_with_a_declared_md5(tmp_path):
-    published, intermediate = tmp_path / "out.vcf.gz", tmp_path / "out.tsv"
-    published.write_text("published\n")
+    result, intermediate = tmp_path / "out.vcf.gz", tmp_path / "out.tsv"
+    result.write_text("result\n")
     intermediate.write_text("intermediate\n")
     snakemake = _FakeSnakemake(str(tmp_path / "rule.log"))
-    snakemake.output = [str(published), str(published) + ".md5", str(intermediate)]
+    snakemake.output = [str(result), str(result) + ".md5", str(intermediate)]
 
     write_declared_md5s(snakemake)
 
-    assert (tmp_path / "out.vcf.gz.md5").read_text() == _md5sum(published)
+    assert (tmp_path / "out.vcf.gz.md5").read_text() == _md5sum(result)
     assert sorted(p.name for p in tmp_path.iterdir()) == ["out.tsv", "out.vcf.gz", "out.vcf.gz.md5"]
 
 

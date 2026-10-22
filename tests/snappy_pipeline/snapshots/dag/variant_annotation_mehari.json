@@ -222,7 +222,7 @@
    "task_dir": "tasks/variant_annotation_mehari"
   },
   "resources": {},
-  "rule": "variant_annotation_mehari_publish",
+  "rule": "variant_annotation_mehari_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

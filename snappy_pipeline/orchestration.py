@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-#: Steps on hold, not fully ported yet: they publish with their own link jobs and have no docs page
+#: Steps on hold, not fully ported yet: they link their result files with their own jobs and have no docs page
 ON_HOLD_STEPS = frozenset({"create_proteome"})
 
 #: Task name -> workflow object, filled by the orchestrator before it loads the step modules.
@@ -307,7 +307,7 @@ def register_hooks(workflow: Workflow) -> None:
 
 
 def select_target_tasks(project: Project, target_task: str | None = None) -> list[str]:
-    """Return the names of the tasks that ``snappy run`` builds and publishes, in config order.
+    """Return the names of the tasks that ``snappy run`` builds and links the result files of, in config order.
 
     Every task, or only ``target_task`` if given. Raises ``ValueError`` if no task has that name.
     """

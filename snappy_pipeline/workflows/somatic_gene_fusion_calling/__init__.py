@@ -19,7 +19,7 @@ The sample sheet must be a cancer sheet.
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``.
 
 - ``{library_name}/out/.done``: marks a finished library.
   It is the only file of ``star_fusion``.

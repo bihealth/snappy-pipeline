@@ -32,7 +32,7 @@ Without ``pvactools.container``, the task builds the container from ``docker://g
 Outputs
 -------
 
-The task publishes, below ``tasks/<task>/output/{tumor_library}/out/`` and each with a ``.md5`` file, for each enabled prediction (``pvacseq``, ``pvacfuse``, ``pvacsplice``):
+For each enabled prediction (``pvacseq``, ``pvacfuse``, ``pvacsplice``), the task links these result files below ``tasks/<task>/output/{tumor_library}/out/``, each with a ``.md5`` file:
 
 - ``<prediction>/combined/{tumor_library}.Combined.filtered.tsv``, ``.all_epitopes.tsv`` and ``.all_epitopes.aggregated.tsv``: the epitopes of both MHC classes.
 - with ``net_chop``: ``<prediction>/{tumor_library}.MHC_I.netchop.tsv`` and ``.MHC_II.netchop.tsv``, for the MHC classes that the HLA types and algorithms cover.
@@ -64,8 +64,8 @@ TABLES = {
     "json": "all_epitopes.aggregated.metrics.json",
 }
 
-#: The tables of both classes that the task publishes
-PUBLISHED_TABLES = ("filtered", "all", "aggregated")
+#: The tables of both classes that are result files
+RESULT_TABLES = ("filtered", "all", "aggregated")
 
 #: The predictions, which need a matched RNA library except pVACseq
 PREDICTIONS = ("pvacseq", "pvacfuse", "pvacsplice")
@@ -184,10 +184,8 @@ class PredictionStepPart(NeoepitopeStepPart):
     def default_resource_usage(self) -> ResourceUsage:
         return ResourceUsage(threads=min(16, self.cfg.n_threads), runtime="24h", mem="64GB")
 
-    published_keys = {
-        "run": tuple(
-            f"{key}.{COMBINED[1]}{md5}" for key in PUBLISHED_TABLES for md5 in ("", "_md5")
-        )
+    result_keys = {
+        "run": tuple(f"{key}.{COMBINED[1]}{md5}" for key in RESULT_TABLES for md5 in ("", "_md5"))
     }
 
     @property
@@ -224,7 +222,7 @@ class PredictionStepPart(NeoepitopeStepPart):
             for subdir, infix in (*MHC_CLASSES.values(), COMBINED):
                 path = f"{self.directory}/{subdir}/{{tumor_library}}.{infix}.{ext}"
                 yield f"{key}.{infix}", path
-                if infix == COMBINED[1] and key in PUBLISHED_TABLES:
+                if infix == COMBINED[1] and key in RESULT_TABLES:
                     yield f"{key}.{infix}_md5", path + ".md5"
         if self.cfg.net_chop.enabled:
             yield from self.fasta_outputs().items()
@@ -467,7 +465,7 @@ class NetChopStepPart(PostProcessStepPart):
     """Proteasomal cleavage with NetChop"""
 
     name = "netchop"
-    published_keys = ("netchop", "netchop_md5")
+    result_keys = ("netchop", "netchop_md5")
 
     def _get_input_files_run(self, wildcards):
         prediction = self.prediction(wildcards)
@@ -499,7 +497,7 @@ class NetStabStepPart(PostProcessStepPart):
     """Stability of the MHC class I epitopes with netMHCstabpan"""
 
     name = "netstab"
-    published_keys = ("netstab", "netstab_md5")
+    result_keys = ("netstab", "netstab_md5")
 
     def _get_input_files_run(self, wildcards):
         cfg = self.prediction(wildcards).cfg
@@ -556,7 +554,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
             )
             for prediction in PREDICTIONS
             if getattr(config.pvactools, prediction).enabled
-            for key in PUBLISHED_TABLES
+            for key in RESULT_TABLES
         }
 
     def __init__(self, workflow, project, task_name):
@@ -636,7 +634,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
                 if prediction in NEED_RNA and not self.matched(tumor, "matched_rna_lib"):
                     continue
                 outputs = part._get_output_files_run()
-                for key in part.published_keys["run"]:
+                for key in part.result_keys["run"]:
                     yield outputs[key].replace("work/", "output/", 1).format(tumor_library=tumor)
                 classes = part.mhc_classes()
                 post_processed = [

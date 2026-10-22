@@ -9,13 +9,13 @@ The variants in the regions of ``depends_on.excluded_regions`` are left out, if 
 The step has no ``tool`` field.
 It gives one result per tumor DNA library, paired with its matched normal.
 It leaves out tumor libraries without a matched normal, with a warning.
-It publishes files only when ``depends_on.copy_number`` names a CNV calling task.
+It has result files only when ``depends_on.copy_number`` names a CNV calling task.
 Without it, the pileups stay in ``work/`` as intermediate files.
 
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
 - ``{tumor_library}/out/{tumor_library}.vcf.gz`` with ``.tbi``: the heterozygous variants with their B-allele frequency, and the log2 ratio and copy number call of the segment.
 - ``{tumor_library}/out/{tumor_library}.tsv``
@@ -120,7 +120,7 @@ class SomaticCnvCheckingCnvStepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = ("vcf", "vcf_md5", "tbi", "tbi_md5", "tsv", "tsv_md5")
+    result_keys = ("vcf", "vcf_md5", "tbi", "tbi_md5", "tsv", "tsv_md5")
 
     def _get_input_files_run(self, wildcards):
         normal_library = self.parent._get_normal_lib(wildcards.tumor_library)
@@ -169,7 +169,7 @@ class SomaticCnvCheckingReportStepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = (
+    result_keys = (
         "cnv",
         "cnv_md5",
         "locus",

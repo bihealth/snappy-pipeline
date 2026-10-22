@@ -284,7 +284,7 @@
    "task_dir": "tasks/variant_calling_gatk3_hc"
   },
   "resources": {},
-  "rule": "variant_calling_gatk3_hc_publish",
+  "rule": "variant_calling_gatk3_hc_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

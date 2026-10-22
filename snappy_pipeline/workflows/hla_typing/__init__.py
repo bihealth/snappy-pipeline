@@ -12,13 +12,13 @@ The result is one set of files per library.
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+The task links the following result files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
 Each file has an ``.md5`` file.
 
 - ``{library_name}/out/{library_name}.txt``
 - ``{library_name}/out/{library_name}.json``
 
-With ``optitype``, the task also publishes the result table and the coverage plot:
+With ``optitype``, the result table and the coverage plot are result files, too:
 
 - ``{library_name}/out/{library_name}.result.tsv``
 - ``{library_name}/out/{library_name}.coverage_plot.pdf``

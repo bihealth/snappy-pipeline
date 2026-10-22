@@ -25,32 +25,6 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
-   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
-  ],
-  "log": [],
-  "output": [
-   "tasks/reference_index_bwa/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/reference_index_bwa"
-  },
-  "resources": {},
-  "rule": "reference_index_bwa_publish",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
    "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
@@ -111,5 +85,31 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
+  ],
+  "log": [],
+  "output": [
+   "tasks/reference_index_bwa/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_index_bwa"
+  },
+  "resources": {},
+  "rule": "reference_index_bwa_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

@@ -8,7 +8,7 @@ It is experimental.
 Outputs
 -------
 
-The task publishes ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi`` and ``.md5`` files below ``tasks/<task>/output/``.
+The task links the result file ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi`` and ``.md5`` files below ``tasks/<task>/output/``.
 The paths are the same as below ``work/``.
 The key ``vcf`` is the one downstream tasks read through ``depends_on``.
 """

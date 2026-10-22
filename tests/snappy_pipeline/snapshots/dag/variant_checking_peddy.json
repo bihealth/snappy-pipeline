@@ -463,7 +463,7 @@
    "task_dir": "tasks/variant_checking_peddy"
   },
   "resources": {},
-  "rule": "variant_checking_peddy_publish",
+  "rule": "variant_checking_peddy_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

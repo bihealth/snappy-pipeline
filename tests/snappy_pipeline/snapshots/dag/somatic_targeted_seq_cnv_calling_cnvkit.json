@@ -547,7 +547,7 @@
    "task_dir": "tasks/somatic_targeted_seq_cnv_calling_cnvkit"
   },
   "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_publish",
+  "rule": "somatic_targeted_seq_cnv_calling_cnvkit_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

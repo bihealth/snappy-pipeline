@@ -222,7 +222,7 @@
    "task_dir": "tasks/somatic_msi_calling_mantis_msi2"
   },
   "resources": {},
-  "rule": "somatic_msi_calling_mantis_msi2_publish",
+  "rule": "somatic_msi_calling_mantis_msi2_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

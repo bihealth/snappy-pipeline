@@ -1496,7 +1496,7 @@
    "task_dir": "tasks/panel_of_normals_purecn"
   },
   "resources": {},
-  "rule": "panel_of_normals_purecn_publish",
+  "rule": "panel_of_normals_purecn_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

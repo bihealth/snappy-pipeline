@@ -128,7 +128,7 @@ class VariantFiltrationStepPart(BaseStepPart):
     resource_usage = {
         "run": ResourceUsage(threads=1, runtime="4h", mem=f"{8 * 1024}MB"),
     }
-    published_keys = {"run": tuple(_OUTPUTS)}
+    result_keys = {"run": tuple(_OUTPUTS)}
     entity_wildcard = "tumor_library"
 
     @dictify

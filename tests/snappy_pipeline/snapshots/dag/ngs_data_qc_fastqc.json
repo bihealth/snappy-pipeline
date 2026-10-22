@@ -65,7 +65,7 @@
    "task_dir": "tasks/ngs_data_qc_fastqc"
   },
   "resources": {},
-  "rule": "ngs_data_qc_fastqc_publish",
+  "rule": "ngs_data_qc_fastqc_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -7,7 +7,7 @@ The ``tool`` field selects the caller.
 ``gatk4_hc_gvcf``
     GATK 4 HaplotypeCaller in the gVCF workflow: variant discovery per library, ``CombineGVCFs`` per cohort, then ``GenotypeGVCFs``.
     The output VCF carries physical phasing information.
-    The task also publishes the gVCF files.
+    The gVCF files are result files, too.
 
 ``gatk4_hc_joint``
     GATK 4 HaplotypeCaller with joint calling and direct VCF generation.
@@ -53,7 +53,7 @@ The germline callers produce ``variants`` with tags ``germline``, ``snv``, ``ind
 Statistics
 ----------
 
-The enabled statistics are published below ``{library_name}/report/``, with ``.md5`` files.
+The enabled statistics are result files below ``{library_name}/report/``, with ``.md5`` files.
 
 ``bcftools_stats``
     ``bcftools stats`` per donor of each cohort: ``bcftools_stats/{library_name}.{donor_library_name}.txt``.
@@ -140,7 +140,7 @@ class VariantCallingStepPart(BaseStepPart):
     #: Class available actions
     actions = ("run",)
 
-    published_keys = ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")
+    result_keys = ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")
 
     def _get_log_file(self, action: str) -> SnakemakeDict:
         token = "{library_name}"
@@ -327,7 +327,7 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
     intermediate_outputs = {"discover": ("gvcf", "gvcf_tbi")}
 
     #: The genotype rule links the combined gVCF as ``{library}.g.vcf.gz``, for re-genotyping
-    published_keys = {
+    result_keys = {
         "genotype": (
             "vcf",
             "vcf_md5",
@@ -484,7 +484,7 @@ class BcftoolsStatsStepPart(ReportStepPart):
 
     report_per_donor = True
 
-    published_keys = ("txt", "txt_md5")
+    result_keys = ("txt", "txt_md5")
 
     default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
 
@@ -514,7 +514,7 @@ class BcftoolsRohStepPart(ReportStepPart):
 
     name = "bcftools_roh"
     report_per_donor = False
-    published_keys = ("txt", "txt_md5")
+    result_keys = ("txt", "txt_md5")
     default_resource_usage = ResourceUsage(threads=1, runtime="1h", mem="4GB")
 
     @dictify
@@ -564,7 +564,7 @@ class BafFileGenerationStepPart(ReportStepPart):
     #: Whether to report results per donor
     report_per_donor = True
 
-    published_keys = ("bw", "bw_md5")
+    result_keys = ("bw", "bw_md5")
 
     default_resource_usage = ResourceUsage(threads=1, runtime="2h", mem="1024MB")
 

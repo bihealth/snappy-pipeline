@@ -73,7 +73,7 @@
    "task_dir": "tasks/combine_variants"
   },
   "resources": {},
-  "rule": "combine_variants_publish",
+  "rule": "combine_variants_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

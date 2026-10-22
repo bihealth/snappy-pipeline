@@ -7,7 +7,7 @@ from snakemake.io import expand
 from snappy_pipeline.utils import dictify, flatten, listify
 
 
-#: Output keys and paths of the VCF that the SV callers publish
+#: Output keys and paths of the VCF that is the result file of the SV callers
 VCF_OUTPUTS = {
     "vcf": "work/{library_name}/out/{library_name}.vcf.gz",
     "vcf_md5": "work/{library_name}/out/{library_name}.vcf.gz.md5",

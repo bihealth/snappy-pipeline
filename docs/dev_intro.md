@@ -7,9 +7,7 @@ Before reading this chapter, you should know the pipeline from the user's perspe
 
 After reading this chapter, you should
 
-- know which Python techniques a snappy developer needs,
-- know the components of a pipeline step and how the orchestrator wires them,
-- know that `snappy` is the main CLI entry point.
+- know which Python techniques a snappy developer needs, - know the components of a pipeline step and how the orchestrator wires them, - know that `snappy` is the main CLI entry point.
 ```
 
 This part of the documentation targets developers who change or extend the pipeline.
@@ -55,12 +53,12 @@ That file does three things:
 
 The step Snakefiles do not set up anything themselves.
 They fetch their workflow object with `task_instance(config["__task_name__"])`.
-By default, `snappy run` builds and publishes every task.
-`--task <name>` builds and publishes one task, and `--frozen` with `--task` reads the outputs of the upstream tasks as existing files.
+By default, `snappy run` builds every task and links its result files into `output/`.
+`--task <name>` does so for one task, and `--frozen` with `--task` reads the outputs of the upstream tasks as existing files.
 
 `work/` is the contract between tasks.
 A task reads the `work/` files of its upstream tasks and never their `output/` files.
-`output/` is for publication only: one local `<task>_publish` job per task with result files links the result files into `output/` and writes `output/.manifest.tsv`.
+`output/` holds only the result files: one local `<task>_results` job per task with result files links them into `output/` and writes `output/.manifest.tsv`.
 
 ## Anatomy of a step
 

@@ -1453,7 +1453,7 @@
    "task_dir": "tasks/variant_calling_mutect2"
   },
   "resources": {},
-  "rule": "variant_calling_mutect2_publish",
+  "rule": "variant_calling_mutect2_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

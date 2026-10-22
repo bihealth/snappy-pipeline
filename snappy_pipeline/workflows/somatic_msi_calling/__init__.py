@@ -11,7 +11,7 @@ The task gives one result per tumor DNA library.
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
 - ``{tumor_library}/out/{tumor_library}.results.txt``
 - ``{tumor_library}/out/{tumor_library}.results.txt.status``
@@ -50,7 +50,7 @@ class Mantis2StepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = tuple(_OUTPUTS)
+    result_keys = tuple(_OUTPUTS)
 
     def tool_section(self) -> ToolModel:
         """The options are on the step model"""

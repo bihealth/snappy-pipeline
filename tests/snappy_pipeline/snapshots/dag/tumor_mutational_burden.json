@@ -1449,7 +1449,7 @@
    "task_dir": "tasks/tumor_mutational_burden"
   },
   "resources": {},
-  "rule": "tumor_mutational_burden_publish",
+  "rule": "tumor_mutational_burden_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -324,7 +324,7 @@
    "task_dir": "tasks/panel_of_normals_cnvkit"
   },
   "resources": {},
-  "rule": "panel_of_normals_cnvkit_publish",
+  "rule": "panel_of_normals_cnvkit_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

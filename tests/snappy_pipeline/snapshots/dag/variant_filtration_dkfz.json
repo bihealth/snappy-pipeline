@@ -510,7 +510,7 @@
    "task_dir": "tasks/variant_filtration_dkfz"
   },
   "resources": {},
-  "rule": "variant_filtration_dkfz_publish",
+  "rule": "variant_filtration_dkfz_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

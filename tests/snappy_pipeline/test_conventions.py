@@ -117,7 +117,7 @@ def _path_violations() -> dict[str, list[str]]:
     found: dict[str, set[str]] = {}
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         for job in json.loads(snapshot.read_text(encoding="utf-8")):
-            if job["rule"] == "all" or job["rule"].endswith("_publish"):
+            if job["rule"] == "all" or job["rule"].endswith("_results"):
                 continue
             step = next(s for s in steps if job["rule"].startswith(s + "_"))
             values = sorted(job["wildcards"].items(), key=lambda kv: (-len(str(kv[1])), kv[0]))
@@ -371,20 +371,20 @@ def test_wrappers_read_the_params_they_get():
     assert not stale, f"remove these entries from WRAPPERS_READING_PARAMS_DYNAMICALLY: {stale}"
 
 
-def test_published_work_files_are_targets():
-    """The work files that a publish job links are targets of ``all``, so that a missing one (for
-    example after a failed rerun) is rebuilt and published again; an existing manifest alone does
-    not make Snakemake rerun the publish job."""
+def test_result_files_are_targets():
+    """The work files that a results job links are targets of ``all``, so that a missing one (for
+    example after a failed rerun) is rebuilt and linked again; an existing manifest alone does
+    not make Snakemake rerun the results job."""
     found = []
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         jobs = json.loads(snapshot.read_text(encoding="utf-8"))
         targets = {path for job in jobs if job["rule"] == "all" for path in job["input"]}
         for job in jobs:
-            if job["rule"].endswith("_publish"):
+            if job["rule"].endswith("_results"):
                 found += [
                     f"{snapshot.stem}: {path}" for path in job["input"] if path not in targets
                 ]
-    assert not found, f"published work files that are no targets of all: {found[:5]}"
+    assert not found, f"result files that are no targets of all: {found[:5]}"
 
 
 #: Diagnostic outputs that are not in the report, by wrapper (or rule, for rules without a wrapper),
@@ -409,7 +409,7 @@ def test_plots_and_diagnostic_outputs_are_in_the_report():
     found, used = set(), set()
     for _, job in _snapshot_jobs():
         owner = (job.get("wrapper") or "").partition("snappy_wrappers/wrappers/")[2] or job["rule"]
-        if job["rule"].endswith("_publish"):
+        if job["rule"].endswith("_results"):
             continue
         missing = [o for o in job["output"] if _diagnostic(o) and o not in job.get("report", ())]
         if not missing:
@@ -709,10 +709,10 @@ def _snapshot_jobs() -> Iterator[tuple[str, dict]]:
 
 
 def _snapshot_dags() -> Iterator[tuple[str, list[dict], set[str]]]:
-    """Yield (snapshot, jobs, published files) per DAG snapshot, without the steps on hold.
+    """Yield (snapshot, jobs, result files) per DAG snapshot, without the steps on hold.
 
-    The published files are the inputs of the ``<task>_publish`` jobs: ``work/`` files that the
-    publish job links into ``output/``.
+    The result files are the inputs of the ``<task>_results`` jobs: ``work/`` files that the
+    results job links into ``output/``.
     """
     for snapshot in sorted((SNAPSHOTS / "dag").glob("*.json")):
         jobs = [
@@ -720,19 +720,19 @@ def _snapshot_dags() -> Iterator[tuple[str, list[dict], set[str]]]:
             for job in json.loads(snapshot.read_text(encoding="utf-8"))
             if not job["rule"].startswith(ON_HOLD_RULES)
         ]
-        published = {
-            path for job in jobs if job["rule"].endswith("_publish") for path in job["input"]
+        result_files = {
+            path for job in jobs if job["rule"].endswith("_results") for path in job["input"]
         }
-        yield snapshot.stem, jobs, published
+        yield snapshot.stem, jobs, result_files
 
 
-def test_only_the_publish_job_writes_into_output():
-    """``work/`` is the contract between tasks; ``output/`` is publication only."""
+def test_only_the_results_job_writes_into_output():
+    """``work/`` is the contract between tasks; ``output/`` holds only the result files."""
     found = {
         f"{name}: {job['rule']}: {path}"
         for name, jobs, _ in _snapshot_dags()
         for job in jobs
-        if not job["rule"].endswith("_publish")
+        if not job["rule"].endswith("_results")
         for path in job["output"]
         if "/output/" in path
     }
@@ -763,28 +763,28 @@ def test_logs_hold_only_logs():
     assert not found, f"md5, conda or copied files declared as logs: {sorted(found)[:20]}"
 
 
-def test_logs_are_not_published():
+def test_logs_are_no_result_files():
     """Logs go into the run's log archive, not into output/."""
     found = {
         f"{name}: {path}"
-        for name, _, published in _snapshot_dags()
-        for path in published
+        for name, _, result_files in _snapshot_dags()
+        for path in result_files
         if "/log/" in path
         or path.removesuffix(".md5").endswith(".log")
         or _CONDA_OR_COPY.search(path)
     }
-    assert not found, f"published logs: {sorted(found)[:20]}"
+    assert not found, f"logs among the result files: {sorted(found)[:20]}"
 
 
-def test_md5_files_only_for_published_files():
-    """SODAR needs an md5 per published file; nothing reads the md5 of an intermediate file.
+def test_md5_files_only_for_result_files():
+    """SODAR needs an md5 per result file; nothing reads the md5 of an intermediate file.
 
     The wrapper base classes write ``<file>.md5`` when it is declared next to ``<file>``. Only
-    tasks with a publish job in the snapshot are checked.
+    tasks with a results job in the snapshot are checked.
     """
     found = set()
-    for name, jobs, published in _snapshot_dags():
-        targets = {_task_of(path) for path in published}
+    for name, jobs, result_files in _snapshot_dags():
+        targets = {_task_of(path) for path in result_files}
         for job in jobs:
             for path in job["output"]:
                 if not path.endswith(".md5") or _task_of(path) not in targets:
@@ -792,9 +792,11 @@ def test_md5_files_only_for_published_files():
                 payload = path.removesuffix(".md5")
                 if payload not in job["output"]:
                     found.add(f"{name}: {path} (its file is no output of the job)")
-                elif payload not in published:
-                    found.add(f"{name}: {path} (its file is not published)")
-    assert not found, f"md5 files of unpublished files: {sorted(found)[:20]} ({len(found)} total)"
+                elif payload not in result_files:
+                    found.add(f"{name}: {path} (its file is no result file)")
+    assert not found, (
+        f"md5 files of files that are no result files: {sorted(found)[:20]} ({len(found)} total)"
+    )
 
 
 def test_wrappers_read_no_md5_or_conda_files():
@@ -820,7 +822,7 @@ NOT_TEMP = {
     r"\.shards\.txt$": "checkpoint output that is read while the DAG is built",
     r"^tasks/gcnv_model\w*/work/[^/]+/out/[^/.]+\.interval_list$": "the callers read it",
     r"gatk4_hc_gvcf_combine_gvcfs\.[^/]+/out/[^/]+\.g\.vcf\.gz(\.tbi)?$": (
-        "the published {library}.g.vcf.gz of the genotype rule links to it"
+        "the result file {library}.g.vcf.gz of the genotype rule links to it"
     ),
 }
 
@@ -830,9 +832,9 @@ def _task_of(path: str) -> str:
 
 
 def _intermediate_jobs() -> Iterator[tuple[str, dict, list[dict], set[str], dict]]:
-    """Yield (snapshot, job, jobs, published files, readers) for jobs of the published tasks."""
-    for name, jobs, published in _snapshot_dags():
-        targets = {_task_of(path) for path in published}
+    """Yield (snapshot, job, jobs, result files, readers) for jobs of the tasks with result files."""
+    for name, jobs, result_files in _snapshot_dags():
+        targets = {_task_of(path) for path in result_files}
         readers = collections.defaultdict(set)
         for job in jobs:
             for path in job["input"]:
@@ -844,13 +846,13 @@ def _intermediate_jobs() -> Iterator[tuple[str, dict, list[dict], set[str], dict
         }
         for job in jobs:
             if job["output"] and _task_of(job["output"][0]) in targets:
-                yield name, job, jobs, published, readers
+                yield name, job, jobs, result_files, readers
 
 
 def test_intermediates_are_temp():
     """Files that only later rules of the same task read are temp()."""
     found = set()
-    for name, job, _, published, readers in _intermediate_jobs():
+    for name, job, _, result_files, readers in _intermediate_jobs():
         if _PROJECT_RESOURCES.search(job["rule"]):
             continue
         for path in job["output"]:
@@ -859,7 +861,7 @@ def test_intermediates_are_temp():
                 path in job.get("temp", ())
                 or "/work/" not in path
                 or path.endswith(".md5")
-                or path in published
+                or path in result_files
                 or tasks != {_task_of(path)}
                 or any(re.search(pattern, path) for pattern in NOT_TEMP)
             ):
@@ -869,13 +871,13 @@ def test_intermediates_are_temp():
 
 
 def test_temp_files_are_intermediates():
-    """A temp file is unpublished and has a declared reader; its index is temp, too."""
+    """A temp file is no result file and has a declared reader; its index is temp, too."""
     found = set()
-    for name, job, _, published, readers in _intermediate_jobs():
+    for name, job, _, result_files, readers in _intermediate_jobs():
         temp = set(job.get("temp", ()))
         for path in temp:
-            if path in published:
-                found.add(f"{name}: {path} is published")
+            if path in result_files:
+                found.add(f"{name}: {path} is a result file")
             if not readers.get(path):
                 found.add(f"{name}: {path} has no reader, Snakemake deletes it right away")
             elif readers[path] != {_task_of(path)}:
@@ -886,32 +888,32 @@ def test_temp_files_are_intermediates():
     assert not found, f"temp files that are no intermediates: {sorted(found)[:20]} ({len(found)})"
 
 
-#: Steps that publish without md5 files: steps whose results are not uploaded to SODAR
+#: Steps whose result files have no md5 files: their results are not uploaded to SODAR
 #: (reference indices, gCNV models, cBioPortal files)
-UNCHECKED_PUBLISHING = (
+RESULTS_WITHOUT_MD5 = (
     "reference_index",
     "gcnv_model",
     "cbioportal_export",
 )
 
 
-def test_published_files_come_with_md5_and_index():
-    """SODAR needs an md5 for every published file; bgzipped VCF and BED files need their index.
+def test_result_files_come_with_md5_and_index():
+    """SODAR needs an md5 for every result file; bgzipped VCF and BED files need their index.
 
     ``.done`` markers of directories have none.
     """
     found = set()
-    for name, _, published in _snapshot_dags():
-        for path in published:
+    for name, _, result_files in _snapshot_dags():
+        for path in result_files:
             if path.endswith((".md5", ".done")) or path.startswith(
-                tuple(f"tasks/{step}" for step in UNCHECKED_PUBLISHING)
+                tuple(f"tasks/{step}" for step in RESULTS_WITHOUT_MD5)
             ):
                 continue
             companions = [path + ".md5"]
             if re.search(r"\.(vcf|bed)\.gz$", path):
                 companions += [path + ".tbi", path + ".tbi.md5"]
-            found.update(f"{name}: {c}" for c in companions if c not in published)
-    assert not found, f"published files without md5 or index: {sorted(found)[:20]} ({len(found)})"
+            found.update(f"{name}: {c}" for c in companions if c not in result_files)
+    assert not found, f"result files without md5 or index: {sorted(found)[:20]} ({len(found)})"
 
 
 #: Wrappers on hold, not pinned yet

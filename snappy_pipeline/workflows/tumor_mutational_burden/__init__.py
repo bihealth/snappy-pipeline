@@ -14,7 +14,7 @@ The task gives one result per tumor DNA library.
 Outputs
 -------
 
-The task publishes ``{tumor_library}/out/tmb.{tumor_library}.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
+The task links the result file ``{tumor_library}/out/tmb.{tumor_library}.json`` with a ``.md5`` file below ``tasks/<task>/output/`` as a symlink to ``work/``.
 The JSON file holds the TMB, the numbers of variants, SNVs and indels, and the total length of the regions.
 With ``has_annotation: true``, it also holds the missense TMB and the number of missense variants.
 It also records the names and checksums of the VCF and BED files.
@@ -43,7 +43,7 @@ class TumorMutationalBurdenCalculationStepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = ("json", "json_md5")
+    result_keys = ("json", "json_md5")
 
     default_resource_usage = ResourceUsage(threads=2, runtime="1h", mem="4096MB")
 

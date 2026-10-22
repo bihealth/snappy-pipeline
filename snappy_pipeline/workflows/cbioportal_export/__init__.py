@@ -14,7 +14,7 @@ The segment files are written only if the study uses the reference genome ``hg19
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/upload/`` as symlinks to ``work/upload/``.
+The task links the following result files below ``tasks/<task>/output/upload/`` as symlinks to ``work/upload/``.
 
 - ``meta_study.txt``, ``meta_clinical_patient.txt``, ``meta_clinical_sample.txt`` and ``meta_mutation_extended.txt``
 - ``data_clinical_patient.txt``, ``data_clinical_sample.txt`` and ``data_mutation_extended.txt``
@@ -587,7 +587,7 @@ class cbioportalExportWorkflow(BaseStep):
 
     @listify
     def get_result_files(self):
-        """Return the upload files, published below ``output/``"""
+        """Return the upload files, the result files below ``output/``"""
         for path in self._get_work_files():
             yield re.sub(r"^work/", "output/", path)
 

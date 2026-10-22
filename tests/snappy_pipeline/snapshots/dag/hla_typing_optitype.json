@@ -93,7 +93,7 @@
    "task_dir": "tasks/hla_typing_optitype"
   },
   "resources": {},
-  "rule": "hla_typing_optitype_publish",
+  "rule": "hla_typing_optitype_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -510,7 +510,7 @@
    "task_dir": "tasks/variant_filtration_ebfilter"
   },
   "resources": {},
-  "rule": "variant_filtration_ebfilter_publish",
+  "rule": "variant_filtration_ebfilter_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

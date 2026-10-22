@@ -403,7 +403,7 @@
    "task_dir": "tasks/cbioportal_export"
   },
   "resources": {},
-  "rule": "cbioportal_export_publish",
+  "rule": "cbioportal_export_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -28,7 +28,7 @@
    "task_dir": "tasks/somatic_gene_fusion_calling_star_fusion"
   },
   "resources": {},
-  "rule": "somatic_gene_fusion_calling_star_fusion_publish",
+  "rule": "somatic_gene_fusion_calling_star_fusion_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

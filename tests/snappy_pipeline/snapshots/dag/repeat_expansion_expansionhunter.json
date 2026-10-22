@@ -147,28 +147,6 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json",
-   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json.md5",
-   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf",
-   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.md5"
-  ],
-  "log": [],
-  "output": [
-   "tasks/repeat_expansion_expansionhunter/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/repeat_expansion_expansionhunter"
-  },
-  "resources": {},
-  "rule": "repeat_expansion_expansionhunter_publish",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
    "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.json",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
@@ -233,5 +211,27 @@
    "library_name": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/expansionhunter"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json",
+   "tasks/repeat_expansion_expansionhunter/work/annotated.case001subregion-N1-DNA1-WES1/out/annotated.case001subregion-N1-DNA1-WES1.json.md5",
+   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf",
+   "tasks/repeat_expansion_expansionhunter/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.md5"
+  ],
+  "log": [],
+  "output": [
+   "tasks/repeat_expansion_expansionhunter/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/repeat_expansion_expansionhunter"
+  },
+  "resources": {},
+  "rule": "repeat_expansion_expansionhunter_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

@@ -9,7 +9,7 @@ It is experimental.
 Outputs
 -------
 
-The task publishes these files below ``tasks/<task>/output/``, each with a ``.md5`` file.
+The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file.
 The paths are the same as below ``work/``.
 
 - ``{library_name}/out/{library_name}.vcf``, the repeat expansion calls

@@ -18,8 +18,8 @@ The step gives no results if the mapper of the alignments is not a DNA mapper.
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
-All tools publish the same files.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+All tools have the same result files.
 
 - ``{library_name}/out/{library_name}.vcf.gz``
 - ``{library_name}/out/{library_name}.vcf.gz.tbi``

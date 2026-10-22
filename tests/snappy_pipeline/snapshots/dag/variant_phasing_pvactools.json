@@ -3418,7 +3418,7 @@
    "task_dir": "tasks/variant_phasing_pvactools"
   },
   "resources": {},
-  "rule": "variant_phasing_pvactools_publish",
+  "rule": "variant_phasing_pvactools_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

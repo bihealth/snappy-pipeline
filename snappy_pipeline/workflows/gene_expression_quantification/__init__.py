@@ -7,7 +7,7 @@ The step uses RNA libraries only; a task takes all RNA libraries unless it sets 
 
 Quantification:
 
-- ``featurecounts``: counts reads per gene from the BAM files, with the GTF of ``depends_on.features``. It publishes a table of counts and gene lengths.
+- ``featurecounts``: counts reads per gene from the BAM files, with the GTF of ``depends_on.features``. Its result file is a table of counts and gene lengths.
 - ``salmon``: estimates expression from the FASTQ files, without prior mapping. It needs a prebuilt index and a table that maps transcripts to genes from ``depends_on.index``.
 
 QC and strandedness, all on the BAM files:
@@ -77,7 +77,7 @@ The example maps RNA reads with STAR, infers the strandedness, and counts with f
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/``, for each RNA library with name ``{library_name}``.
+The task links the following result files below ``tasks/<task>/output/``, for each RNA library with name ``{library_name}``.
 Each file has an ``.md5`` file.
 The files are in ``{library_name}/out/`` and start with ``{library_name}``:
 

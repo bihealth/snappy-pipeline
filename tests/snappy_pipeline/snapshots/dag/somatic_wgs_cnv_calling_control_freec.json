@@ -238,7 +238,7 @@
    "task_dir": "tasks/somatic_wgs_cnv_calling_control_freec"
   },
   "resources": {},
-  "rule": "somatic_wgs_cnv_calling_control_freec_publish",
+  "rule": "somatic_wgs_cnv_calling_control_freec_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -18,7 +18,7 @@ With ``depends_on.exons``, a BED file of exons, the export keeps only the small 
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
 - ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.gts.tsv.gz``
 - ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.db-infos.tsv.gz``
@@ -70,7 +70,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
 
     def _get_output_files_run(self):
-        """The alfred report, without md5: it is not published."""
+        """The alfred report, without md5: it is no result file."""
         return {"json": super()._get_output_files_run()["json"]}
 
     @dictify
@@ -83,7 +83,7 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
         return {"log": "work/{library_name}/log/{library_name}.bam_qc.log"}
 
     def get_result_files(self):
-        """The reports are not published."""
+        """The reports are no result files."""
         return []
 
 

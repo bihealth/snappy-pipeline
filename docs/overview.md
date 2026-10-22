@@ -356,7 +356,7 @@ my_project/
 ```
 
 All files of a task are in `work/`, and other tasks read them there.
-`output/` only holds symlinks to the published files, and `output/.manifest.tsv`.
+`output/` only holds symlinks to the result files, and `output/.manifest.tsv`.
 See {ref}`usage` and {ref}`generic_pipeline_step`.
 
 ## Resource requests

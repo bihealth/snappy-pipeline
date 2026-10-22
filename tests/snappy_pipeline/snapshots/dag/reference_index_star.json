@@ -35,42 +35,6 @@
  {
   "benchmark": null,
   "input": [
-   "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
-   "tasks/reference_index_star/work/reference_index/out/reference.dict",
-   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/chrLength.txt",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/chrName.txt",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/chrNameLength.txt",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/chrStart.txt",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/Genome",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/genomeParameters.txt",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/SA",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/SAindex",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/exonGeTrInfo.tab",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/exonInfo.tab",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/geneInfo.tab",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbInfo.txt",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbList.fromGTF.out.tab",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbList.out.tab",
-   "tasks/reference_index_star/work/reference_index/out/reference.index/transcriptInfo.tab"
-  ],
-  "log": [],
-  "output": [
-   "tasks/reference_index_star/output/.manifest.tsv"
-  ],
-  "params": {
-   "task_dir": "tasks/reference_index_star"
-  },
-  "resources": {},
-  "rule": "reference_index_star_publish",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": null
- },
- {
-  "benchmark": null,
-  "input": [
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
   ],
   "log": [
@@ -141,5 +105,41 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/star"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_star/work/reference_index/out/reference.dict",
+   "tasks/reference_index_star/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/chrLength.txt",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/chrName.txt",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/chrNameLength.txt",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/chrStart.txt",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/Genome",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/genomeParameters.txt",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/SA",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/SAindex",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/exonGeTrInfo.tab",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/exonInfo.tab",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/geneInfo.tab",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbInfo.txt",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbList.fromGTF.out.tab",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/sjdbList.out.tab",
+   "tasks/reference_index_star/work/reference_index/out/reference.index/transcriptInfo.tab"
+  ],
+  "log": [],
+  "output": [
+   "tasks/reference_index_star/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_index_star"
+  },
+  "resources": {},
+  "rule": "reference_index_star_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
  }
 ]

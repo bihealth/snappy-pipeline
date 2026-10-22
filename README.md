@@ -31,7 +31,7 @@ snappy run -- --dry-run --cores 1
 snappy run -- --cores 8
 ```
 
-`snappy run` builds and publishes every task.
+`snappy run` builds every task and links its result files into its `output/` directory.
 `snappy run --task <name>` builds one task, and `--frozen` with `--task` uses the existing outputs of the upstream tasks.
 
 See the [user quickstart](docs/quickstart.md) for details.

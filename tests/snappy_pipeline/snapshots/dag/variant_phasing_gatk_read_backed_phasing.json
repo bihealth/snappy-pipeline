@@ -712,7 +712,7 @@
    "task_dir": "tasks/variant_phasing_gatk_read_backed_phasing"
   },
   "resources": {},
-  "rule": "variant_phasing_gatk_read_backed_phasing_publish",
+  "rule": "variant_phasing_gatk_read_backed_phasing_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

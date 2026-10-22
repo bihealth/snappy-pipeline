@@ -6,7 +6,7 @@ from snappy_pipeline.orchestration import (
     register_hooks,
     select_target_tasks,
 )
-from snappy_pipeline.publish import MANIFEST, publish, work_paths
+from snappy_pipeline.results import MANIFEST, link_results, work_paths
 from snappy_pipeline.sheet_summary import print_library_summary
 
 configfile: "config.yaml"
@@ -16,7 +16,7 @@ configfile: "config.yaml"
 project = load_project(config, os.path.dirname(os.path.abspath(workflow.configfiles[0])))
 
 # Targeting mode:
-#   default          - every task builds and publishes its result files
+#   default          - every task builds and links its result files into output/
 #   config["task"]   - only the named task; upstream tasks run as far as it needs them
 #   config["frozen"] - with "task": load only that task's rules; upstream outputs are inputs
 target_task = config.get("task")
@@ -56,7 +56,7 @@ for task in project.model.tasks:
 
 # One local job per targeted task links its result files from work/ into output/.
 # The result files in work/ are targets themselves: a missing one (for example after a failed
-# rerun) is rebuilt and published again, which an existing manifest alone would not trigger.
+# rerun) is rebuilt and linked again, which an existing manifest alone would not trigger.
 targets = []
 for t_name in target_task_names:
     result_files = list(task_instances[t_name].get_result_files())
@@ -71,7 +71,7 @@ for t_name in target_task_names:
 
     rule:
         name:
-            f"{t_name}_publish"
+            f"{t_name}_results"
         input:
             work_files
         output:
@@ -80,7 +80,7 @@ for t_name in target_task_names:
             task_dir=f"tasks/{t_name}"
         localrule: True
         run:
-            publish(params.task_dir, list(input), output[0])
+            link_results(params.task_dir, list(input), output[0])
 
 rule all:
     input:

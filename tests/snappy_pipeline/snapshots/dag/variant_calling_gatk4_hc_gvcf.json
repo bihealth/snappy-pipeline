@@ -292,7 +292,7 @@
    "task_dir": "tasks/variant_calling_gatk4_hc_gvcf"
   },
   "resources": {},
-  "rule": "variant_calling_gatk4_hc_gvcf_publish",
+  "rule": "variant_calling_gatk4_hc_gvcf_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

@@ -120,7 +120,7 @@
    "task_dir": "tasks/ngs_data_qc_picard"
   },
   "resources": {},
-  "rule": "ngs_data_qc_picard_publish",
+  "rule": "ngs_data_qc_picard_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

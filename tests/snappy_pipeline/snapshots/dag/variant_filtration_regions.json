@@ -510,7 +510,7 @@
    "task_dir": "tasks/variant_filtration_regions"
   },
   "resources": {},
-  "rule": "variant_filtration_regions_publish",
+  "rule": "variant_filtration_regions_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

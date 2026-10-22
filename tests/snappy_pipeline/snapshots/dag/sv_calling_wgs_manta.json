@@ -160,7 +160,7 @@
    "task_dir": "tasks/sv_calling_wgs_manta"
   },
   "resources": {},
-  "rule": "sv_calling_wgs_manta_publish",
+  "rule": "sv_calling_wgs_manta_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

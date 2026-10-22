@@ -121,7 +121,7 @@
    "task_dir": "tasks/gene_expression_quantification_rnaseqc"
   },
   "resources": {},
-  "rule": "gene_expression_quantification_rnaseqc_publish",
+  "rule": "gene_expression_quantification_rnaseqc_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

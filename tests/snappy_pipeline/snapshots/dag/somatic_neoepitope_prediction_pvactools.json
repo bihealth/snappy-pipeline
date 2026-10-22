@@ -2002,7 +2002,7 @@
    "task_dir": "tasks/somatic_neoepitope_prediction_pvactools"
   },
   "resources": {},
-  "rule": "somatic_neoepitope_prediction_pvactools_publish",
+  "rule": "somatic_neoepitope_prediction_pvactools_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

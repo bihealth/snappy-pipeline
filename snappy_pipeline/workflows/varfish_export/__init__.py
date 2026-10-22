@@ -15,7 +15,7 @@ With ``depends_on.exons``, a BED file of exons, the export keeps only the small 
 Outputs
 -------
 
-The task publishes these files below ``tasks/<task>/output/``, each with a ``.md5`` file.
+The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file.
 The paths are the same as below ``work/``.
 
 - ``varfish_export.{library_name}/out/mehari_annotate_seqvars.{library_name}.ped``
@@ -78,7 +78,7 @@ class MehariStepPart(BaseStepPart):
         task_name = self.parent.config.depends_on.structural_variants
         return self.parent.project.task(task_name).step == "sv_calling_targeted"
 
-    def _is_published(self, action: str) -> bool:
+    def _has_result_files(self, action: str) -> bool:
         """Whether the config asks for the files of the action."""
         if action == "annotate_strucvars":
             return bool(self.parent.config.depends_on.structural_variants)
@@ -88,7 +88,7 @@ class MehariStepPart(BaseStepPart):
 
     def get_result_files(self):
         result = []
-        for action in filter(self._is_published, self.actions):
+        for action in filter(self._has_result_files, self.actions):
             index_ngs_libraries = self._get_index_ngs_libraries(
                 require_consistent_pedigree_kits=(
                     action == "annotate_strucvars" and self._sv_calling_is_targeted()

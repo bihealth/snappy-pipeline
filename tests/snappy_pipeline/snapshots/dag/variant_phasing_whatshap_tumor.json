@@ -3350,7 +3350,7 @@
    "task_dir": "tasks/variant_phasing_whatshap_tumor"
   },
   "resources": {},
-  "rule": "variant_phasing_whatshap_tumor_publish",
+  "rule": "variant_phasing_whatshap_tumor_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

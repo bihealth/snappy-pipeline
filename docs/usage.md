@@ -30,11 +30,11 @@ The `snappy` command is the interface to the pipeline.
 
 `snappy run` reads `config.yaml` from the current directory, or from `--directory`.
 It validates the whole project first, so a configuration error stops the run before any job starts.
-By default, `snappy run` builds and publishes every task.
+By default, `snappy run` builds every task and links its result files into `output/`.
 
 `--task <name>`
-: Build and publish only the named task.
-    Upstream tasks whose files are missing or outdated are built as well, but not published.
+: Build only the named task, and link its result files.
+    Upstream tasks whose files are missing or outdated are built as well, without linking their result files.
 
 `--frozen`
 : Needs `--task`.
@@ -68,15 +68,15 @@ Each task has its own directory `tasks/<task_name>/`.
     Paths in `work/` can change between versions.
 
 `tasks/<task_name>/output/`
-: Is for publication only, and no task reads it.
+: Holds only the result files, and no task reads it.
     It holds relative symlinks into `work/` with the same paths, and `output/.manifest.tsv`.
-    One local job per task with result files, `<task>_publish`, creates them.
-    The manifest lists the path, size and md5 file of each published file.
-    Links to files that are no longer published are removed.
-    A result file that is missing in `work/`, for example after a failed rerun, is built and published again by the next `snappy run`.
+    One local job per task with result files, `<task>_results`, creates them.
+    The manifest lists the path, size and md5 file of each result file.
+    Links to files that are no result files any more are removed.
+    A result file that is missing in `work/`, for example after a failed rerun, is built and linked again by the next `snappy run`.
 
-Only published files have a `.md5` file next to them.
-Logs are not published.
+Only result files have a `.md5` file next to them.
+Logs are no result files.
 
 ## Report
 

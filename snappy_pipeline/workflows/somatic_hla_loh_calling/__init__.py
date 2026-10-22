@@ -12,10 +12,10 @@ The tumor purity and ploidy estimates of LOHHLA are not used.
 Outputs
 -------
 
-The task publishes ``{tumor_library}/out/{tumor_library}.done`` below ``tasks/<task>/output/`` as a symlink to ``work/``.
+The task links the result file ``{tumor_library}/out/{tumor_library}.done`` below ``tasks/<task>/output/`` as a symlink to ``work/``.
 This marker file is the key ``done`` for downstream tasks.
 LOHHLA writes its result files into the same directory in ``work/``.
-They are not published.
+They are no result files.
 """
 
 from snappy_pipeline.models import RelationshipDefinition, ToolModel
@@ -40,7 +40,7 @@ class LohhlaStepPart(BaseStepPart):
 
     entity_wildcard = "tumor_library"
 
-    published_keys = ("done",)
+    result_keys = ("done",)
 
     def tool_section(self) -> ToolModel:
         """The options are on the step model"""

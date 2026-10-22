@@ -510,7 +510,7 @@
    "task_dir": "tasks/variant_filtration_bcftools"
   },
   "resources": {},
-  "rule": "variant_filtration_bcftools_publish",
+  "rule": "variant_filtration_bcftools_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

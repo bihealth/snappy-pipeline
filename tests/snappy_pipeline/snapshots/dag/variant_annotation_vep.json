@@ -222,7 +222,7 @@
    "task_dir": "tasks/variant_annotation_vep"
   },
   "resources": {},
-  "rule": "variant_annotation_vep_publish",
+  "rule": "variant_annotation_vep_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

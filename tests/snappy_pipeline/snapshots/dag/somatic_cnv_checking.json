@@ -419,7 +419,7 @@
    "task_dir": "tasks/somatic_cnv_checking"
   },
   "resources": {},
-  "rule": "somatic_cnv_checking_publish",
+  "rule": "somatic_cnv_checking_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

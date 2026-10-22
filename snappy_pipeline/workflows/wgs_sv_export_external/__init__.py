@@ -14,7 +14,7 @@ This step is experimental.
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
 - ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.gts.tsv.gz``
 - ``varfish_annotated.{library_name}/out/varfish_annotated.{library_name}.feature-effects.tsv.gz``

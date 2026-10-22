@@ -246,7 +246,7 @@
    "task_dir": "tasks/somatic_purity_ploidy_estimate_ascat"
   },
   "resources": {},
-  "rule": "somatic_purity_ploidy_estimate_ascat_publish",
+  "rule": "somatic_purity_ploidy_estimate_ascat_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

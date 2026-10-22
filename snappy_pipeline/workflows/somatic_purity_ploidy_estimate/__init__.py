@@ -13,7 +13,7 @@ The coverage of the exome tumor and normal would have to come from a CNV caller 
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 
 - ``{tumor_library}/out/{tumor_library}.ploidy.txt``: the estimated ploidy.
 - ``{tumor_library}/out/{tumor_library}.aberrantcellfraction.txt``: the estimated purity.
@@ -98,7 +98,7 @@ class AscatStepPart(BaseStepPart):
         "plot_aspcf": "ASPCF.png",
     }
 
-    published_keys = {"run_ascat": tuple(k + md5 for k in result_suffixes for md5 in ("", "_md5"))}
+    result_keys = {"run_ascat": tuple(k + md5 for k in result_suffixes for md5 in ("", "_md5"))}
 
     default_resource_usage = ResourceUsage(threads=8, runtime="2d", mem=f"{10 * 1024 * 8}MB")
 

@@ -91,7 +91,7 @@
    "task_dir": "tasks/homologous_recombination_deficiency_scarHRD"
   },
   "resources": {},
-  "rule": "homologous_recombination_deficiency_scarHRD_publish",
+  "rule": "homologous_recombination_deficiency_scarHRD_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

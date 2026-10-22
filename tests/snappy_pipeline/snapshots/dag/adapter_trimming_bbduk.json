@@ -153,7 +153,7 @@
    "task_dir": "tasks/adapter_trimming_bbduk"
   },
   "resources": {},
-  "rule": "adapter_trimming_bbduk_publish",
+  "rule": "adapter_trimming_bbduk_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

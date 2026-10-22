@@ -64,7 +64,7 @@ class PeddyStepPart(BaseStepPart):
         """peddy has no tool section: the ``extra_arguments`` are the step's own"""
         return self.config
 
-    published_keys = tuple(f"{key}{suffix}" for key in _OUTPUTS for suffix in ("", "_md5"))
+    result_keys = tuple(f"{key}{suffix}" for key in _OUTPUTS for suffix in ("", "_md5"))
     entity_wildcard = "index_ngs_library"
     default_resource_usage = ResourceUsage(threads=1, runtime="10h", mem=f"{15 * 1024}MB")
 

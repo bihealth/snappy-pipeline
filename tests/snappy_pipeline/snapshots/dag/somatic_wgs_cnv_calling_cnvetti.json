@@ -230,7 +230,7 @@
    "task_dir": "tasks/somatic_wgs_cnv_calling_cnvetti"
   },
   "resources": {},
-  "rule": "somatic_wgs_cnv_calling_cnvetti_publish",
+  "rule": "somatic_wgs_cnv_calling_cnvetti_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

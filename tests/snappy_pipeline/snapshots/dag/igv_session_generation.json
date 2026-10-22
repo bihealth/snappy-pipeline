@@ -59,7 +59,7 @@
    "task_dir": "tasks/igv_session_generation"
   },
   "resources": {},
-  "rule": "igv_session_generation_publish",
+  "rule": "igv_session_generation_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

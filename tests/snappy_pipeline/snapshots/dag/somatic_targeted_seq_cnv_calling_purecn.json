@@ -1626,7 +1626,7 @@
    "task_dir": "tasks/somatic_targeted_seq_cnv_calling_purecn"
   },
   "resources": {},
-  "rule": "somatic_targeted_seq_cnv_calling_purecn_publish",
+  "rule": "somatic_targeted_seq_cnv_calling_purecn_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

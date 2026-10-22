@@ -284,7 +284,7 @@
    "task_dir": "tasks/variant_calling_gatk3_ug"
   },
   "resources": {},
-  "rule": "variant_calling_gatk3_ug_publish",
+  "rule": "variant_calling_gatk3_ug_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

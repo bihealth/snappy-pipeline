@@ -1,6 +1,6 @@
 """Read mapping of DNA and RNA libraries
 
-The step aligns the reads of each library to the reference genome and publishes sorted, indexed BAM files.
+The step aligns the reads of each library to the reference genome; its result files are sorted, indexed BAM files.
 It also computes alignment statistics and, if configured, target coverage and fingerprints.
 Marking of duplicates and trimming of adapters depend on the tool configuration.
 
@@ -8,7 +8,7 @@ The ``tool`` field selects the aligner:
 
 - ``bwa`` and ``bwa_mem2``: short-read DNA.
 - ``minimap2``: long-read DNA (PacBio, Oxford Nanopore).
-- ``star``: short-read RNA. It also publishes gene counts and the strandedness decision.
+- ``star``: short-read RNA. Its result files also include gene counts and the strandedness decision.
 - ``mbcs``: short-read DNA with molecular barcodes and optional base quality score recalibration (BQSR). See the notes below.
 
 The task maps all libraries of its sample sheets, including those of background data sets, unless ``library_selection`` narrows them.
@@ -21,7 +21,7 @@ A ``reference_index`` task must build it from the genome in ``depends_on.referen
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
+The task links the following result files below ``tasks/<task>/output/``, for each library with name ``{library_name}``.
 Each file has an ``.md5`` file.
 
 - ``{library_name}/out/{library_name}.bam`` and ``{library_name}/out/{library_name}.bam.bai``
@@ -100,7 +100,7 @@ STAR
 
 STAR needs a gene model for the gene counts and for the transcriptome alignment. It comes from the ``features`` task in ``depends_on``.
 STAR writes counts for unstranded, forward and reverse protocols.
-The step keeps the column of the library's strand and publishes it as ``GeneCounts.tab``.
+The step keeps the column of the library's strand and writes it as the result file ``GeneCounts.tab``.
 The strand is the configured protocol (0 unstranded, 1 forward, 2 reverse).
 Without it, the step infers the strand with ``infer_experiment`` from RSeQC.
 ``infer_experiment`` runs in both cases and reads the BED file of ``depends_on.exons``: non-overlapping, sorted intervals of ubiquitously expressed genes with well-defined strand (12 columns, 6 also work).
@@ -187,8 +187,8 @@ class MappingGetResultFilesMixin:
 
     tool_category = None
 
-    #: Keys of the output files that are not published
-    unpublished_keys: tuple[str, ...] = ()
+    #: Keys of the output files that are no result files
+    non_result_keys: tuple[str, ...] = ()
 
     def skip_result_files_for_library(self, library_name: str) -> bool:
         """Override function such that the mapper is applicable to the library"""
@@ -204,7 +204,7 @@ class MappingGetResultFilesMixin:
 
         The implementation will return the paths returned by ``self.get_output_files()`` for all
         actions in ``self.actions``, with the prefix ``work/`` replaced by ``output/``. Keys in
-        ``unpublished_keys`` are skipped.
+        ``non_result_keys`` are skipped.
 
         You can override the ``skip_result_files_for_library()`` method to skip result files for
         a library.
@@ -218,7 +218,7 @@ class MappingGetResultFilesMixin:
             result_paths_tpls = [
                 re.sub(r"^work/", "output/", path)
                 for key, path in self.get_output_files(action).items()
-                if key not in self.unpublished_keys
+                if key not in self.non_result_keys
             ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
@@ -404,9 +404,9 @@ class StarStepPart(ReadMappingStepPart):
     #: Tool category
     tool_category = "rna"
 
-    #: The gene counts of STAR (all strands) are input of the strandedness step, which publishes
-    #: the counts of the inferred strand
-    unpublished_keys = ("gene_counts",)
+    #: The gene counts of STAR (all strands) are input of the strandedness step, whose result
+    #: file holds the counts of the inferred strand
+    non_result_keys = ("gene_counts",)
 
     intermediate_outputs = {"run": ("gene_counts",)}
 

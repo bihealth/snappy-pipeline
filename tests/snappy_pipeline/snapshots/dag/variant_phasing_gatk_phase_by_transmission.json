@@ -653,7 +653,7 @@
    "task_dir": "tasks/variant_phasing_gatk_phase_by_transmission"
   },
   "resources": {},
-  "rule": "variant_phasing_gatk_phase_by_transmission_publish",
+  "rule": "variant_phasing_gatk_phase_by_transmission_results",
   "temp": [],
   "threads": 1,
   "wildcards": {},

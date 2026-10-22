@@ -23,7 +23,7 @@ The listed libraries are used even if the sample sheet does not flag them as nor
 Outputs
 -------
 
-The task publishes the following files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
+The task links the following result files below ``tasks/<task>/output/`` as symlinks to ``work/``, each with a ``.md5`` file.
 The individual files per normal stay in ``work/``, so the panel can be extended when more normals are available.
 
 - ``mutect2``: ``panel_of_normals/out/panel_of_normals.vcf.gz`` (with ``.tbi``) and ``panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz``.
