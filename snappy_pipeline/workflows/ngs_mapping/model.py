@@ -238,6 +238,9 @@ class Star(ToolModel):
     memory_bam_sort: SizeString = "4G"
     genome_load: str = "NoSharedMemory"
     raw_star_options: str = ""
+    platform: str = "ILLUMINA"
+    """Platform (``PL``) of the read group"""
+
     align_intron_max: int = 1000000  # ENCODE option
     align_intron_min: int = 20  # ENCODE option
     align_mates_gap_max: int = 1000000  # ENCODE option

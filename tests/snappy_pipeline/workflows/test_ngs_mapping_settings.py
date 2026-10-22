@@ -6,8 +6,8 @@ from types import SimpleNamespace
 import pytest
 
 from snappy_pipeline.workflows import ngs_mapping
-from snappy_pipeline.workflows.ngs_mapping import BwaMem2StepPart, BwaStepPart
-from snappy_pipeline.workflows.ngs_mapping.model import Bwa, BwaMem2
+from snappy_pipeline.workflows.ngs_mapping import BwaMem2StepPart, BwaStepPart, StarStepPart
+from snappy_pipeline.workflows.ngs_mapping.model import Bwa, BwaMem2, Star
 
 
 @pytest.fixture(autouse=True)
@@ -41,3 +41,8 @@ def test_bwa_mem2_passes_platform():
     params = _params(BwaMem2StepPart, bwa_mem2=BwaMem2(platform="ONT"))
 
     assert params["platform"] == "ONT"
+
+
+def test_star_passes_platform():
+    assert _params(StarStepPart, star=Star())["platform"] == "ILLUMINA"
+    assert _params(StarStepPart, star=Star(platform="ONT"))["platform"] == "ONT"
