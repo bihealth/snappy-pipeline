@@ -229,7 +229,7 @@ if len(pairs.keys()) > 1:
         cmds=cmd,
         threads="1",
         mem="16000M",
-        runtime="4:00:00",
+        time="4:00:00",
     )
     snakefile.append(rule)
 in_ = out
@@ -349,10 +349,8 @@ ShellWrapper(snakemake).run(
 set -x
 
 # Concatenate all log files into main log
-jobid=$(ls {tempdir}/slurm_log)
-fns=$(ls -tr {tempdir}/slurm_log/$jobid/*.log)
-ls -al $fns
-for fn in $fns
+# (the nested run writes none if it did not submit jobs)
+for fn in $(ls -tr {tempdir}/slurm_log/*/*.log 2>/dev/null || true)
 do
     f=$(basename $fn)
     echo "# ==============================================================" >> {snakemake.log.log}
@@ -362,7 +360,9 @@ do
 done
 
 # Copy BQSR table just in case (not on output)
-mv {tempdir}/bqsr.tbl $(dirname {snakemake.output.bam})
+if [[ -e {tempdir}/bqsr.tbl ]]; then
+    mv {tempdir}/bqsr.tbl $(dirname {snakemake.output.bam})
+fi
 
 # QC Report ---------------------------------------------------------------------------------------
 
