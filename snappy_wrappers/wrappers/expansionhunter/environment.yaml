@@ -3,5 +3,4 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - expansionhunter==5.0.0
-  - python==3.12.15
+  - expansionhunter==3.2.2

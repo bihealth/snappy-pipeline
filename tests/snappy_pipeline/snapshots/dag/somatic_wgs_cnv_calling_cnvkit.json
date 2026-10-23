@@ -893,7 +893,7 @@
     "segmetrics": {
      "alpha": 0.05,
      "bootstrap": 100,
-     "smooth_bootstrap": 0
+     "smooth_bootstrap": false
     }
    }
   },

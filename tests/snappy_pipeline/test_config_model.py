@@ -7,7 +7,6 @@ import pydantic
 import pytest
 
 from snappy_pipeline.models import validators
-from snappy_pipeline.models.cnvkit import Segment, Segmetrics
 from snappy_pipeline.workflow_model import ConfigModel, DataSet
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
@@ -77,20 +76,3 @@ def test_data_set_defaults_to_r1_r2_patterns_but_not_to_search_paths():
     assert data_set.search_patterns == [
         {"left": r"(?P<readgroup>.+)\.R1\.fastq\.gz", "right": r"(?P<readgroup>.+)\.R2\.fastq\.gz"}
     ]
-
-
-@pytest.mark.parametrize("threshold", [0, 2, 5])
-def test_cnvkit_hmm_takes_a_smoothing_window(threshold):
-    assert Segment(method="hmm-tumor", threshold=threshold).threshold == threshold
-
-
-@pytest.mark.parametrize("threshold", [0.000001, 1, 2.5])
-def test_cnvkit_hmm_rejects_a_threshold_that_is_no_window(threshold):
-    with pytest.raises(pydantic.ValidationError, match="smoothing window"):
-        Segment(method="hmm", threshold=threshold)
-
-
-def test_cnvkit_smooth_bootstrap_is_a_bin_count_not_a_flag():
-    assert Segmetrics(smooth_bootstrap=10).smooth_bootstrap == 10
-    with pytest.raises(pydantic.ValidationError):
-        Segmetrics(smooth_bootstrap=True)

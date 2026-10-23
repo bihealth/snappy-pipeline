@@ -31,15 +31,13 @@ else:
 
 if getattr(snakemake.output, "genemetrics", ""):
     if input_cnr != "" and input_cns != "":
-        # No --mode: its kernel density estimate fails for a gene whose bins all have the same
-        # log2 ratio, such as a gene without coverage against a flat reference
         genemetrics = """
 cnvkit.py genemetrics \
     --output {out} \
     --segment {input_cns} \
     --min-probes {args[genemetrics][min_probes]} --threshold {args[genemetrics][threshold]} \
     {drop_low_coverage} {gender} {male} \
-    --mean --median --ttest --stdev --sem --mad --mse --iqr --bivar --ci --pi \
+    --mean --median --mode --ttest --stdev --sem --mad --mse --iqr --bivar --ci --pi \
     --alpha {args[genemetrics][alpha]} --bootstrap {args[genemetrics][bootstrap]} \
     {input_cnr}
         """.format(
@@ -72,7 +70,9 @@ cnvkit.py segmetrics \
             args=args,
             out=snakemake.output.segmetrics,
             drop_low_coverage=drop_low_coverage,
-            smooth_bootstrap="--smooth-bootstrap {}".format(args["segmetrics"]["smooth_bootstrap"]),
+            smooth_bootstrap="--smooth-bootstrap"
+            if args["segmetrics"].get("smooth_bootstrap", False)
+            else "",
         )
     else:
         segmetrics = "touch {out}".format(out=snakemake.output.segmetrics)

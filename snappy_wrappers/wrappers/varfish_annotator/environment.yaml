@@ -10,5 +10,4 @@ dependencies:
   - openjdk==8.0.382
   - jq==1.7.1
   - vcfpy==0.13.8
-  - pysam==0.22.1
-  - python==3.12.3
+  - pysam==0.22.0
