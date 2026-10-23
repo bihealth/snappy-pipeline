@@ -55,6 +55,12 @@ class SnappyWrapper(metaclass=ABCMeta):
         # Temp directory of the job, which the wrapper base class removes afterwards
         export TMPDIR="{tmpdir}"
 
+        # The job's threads for OpenMP and BLAS: Snakemake's shell() sets these to None when a
+        # wrapper calls it
+        export OMP_NUM_THREADS={snakemake.threads} GOTO_NUM_THREADS={snakemake.threads} \
+            OPENBLAS_NUM_THREADS={snakemake.threads} MKL_NUM_THREADS={snakemake.threads} \
+            VECLIB_MAXIMUM_THREADS={snakemake.threads} NUMEXPR_NUM_THREADS={snakemake.threads}
+
         set -x
 
         # --------------------------------- Start command -----------------------------------------

@@ -25,6 +25,7 @@ class _FakeSnakemake:
         self.input = None
         self.output = None
         self.params = None
+        self.threads = 4
 
 
 @pytest.mark.parametrize(
@@ -43,6 +44,13 @@ def test_header_always_tees_into_snakemake_log(log_path):
     assert f'rm -f "{log_path}"' in header
     assert f'tee -a "{log_path}"' in header
     assert "tty" not in header.lower()
+
+
+def test_header_gives_openmp_and_blas_the_threads_of_the_job():
+    # Snakemake's shell() sets them to None when a wrapper calls it
+    header = SnappyWrapper.header.format(snakemake=_FakeSnakemake("rule.log"), tmpdir="/tmp/job")
+    for variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+        assert f"{variable}=4" in header
 
 
 def test_python_wrapper_logging_context_redirects_output(tmp_path):
