@@ -7,6 +7,8 @@ from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
 
+script = os.path.join(os.path.dirname(__file__), "genomicsdb_integers.py")
+
 args = getattr(snakemake.params, "args", {})
 config = args["config"]
 
@@ -28,6 +30,8 @@ normal_panel=""
 if [[ -n "{genomicsDB}" ]]
 then
     pushd $TMPDIR ; tar -zxvf {genomicsDB} ; popd
+    # The genomicsdb R package of the image needs integers where GATK writes strings
+    python {script} $TMPDIR/pon_db
     normal_panel=" --normal-panel $TMPDIR/pon_db "
 fi
 
