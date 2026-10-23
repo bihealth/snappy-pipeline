@@ -30,12 +30,15 @@ dependencies = [
     # Helpful for CLIs
     "termcolor >=1.1.0,<3",
     # Snakemake is used for providing the actual wrapper calling functionality; its development
-    # version, for the software deployment plugins (software: directive, post-deploy scripts)
-    "snakemake @ git+https://github.com/snakemake/snakemake.git@5bf5e21b0d0e7e65e247c1f2c61c1a4f74a1a752",
+    # version, for the software deployment plugins (software: directive, post-deploy scripts).
+    # Until they are merged, the heads of open pull requests: snakemake#4357 (snakemake.params
+    # in scripts with Python < 3.11), snakemake-interface-common#101 (no enum.StrEnum on
+    # Python < 3.11, as in the gCNV environment), and the container plugin's #31 (apptainer
+    # runs the pulled image)
+    "snakemake @ git+https://github.com/snakemake/snakemake.git@7ad2c0e90ca727f7629618535f315e3eb8178a0b",
+    "snakemake-interface-common @ git+https://github.com/snakemake/snakemake-interface-common.git@edaadd2e765f020a625612aef6f2c98e230e8784",
     "snakemake-software-deployment-plugin-conda >=0.8.4,<0.9",
-    # 1.24.0 imports enum.StrEnum (Python 3.11), which breaks the wrappers in environments
-    # with an older Python, because the wrapper scripts import it through Snakemake
-    "snakemake-interface-common >=1.23.1,<1.24",
+    "snakemake-software-deployment-plugin-container @ git+https://github.com/snakemake/snakemake-software-deployment-plugin-container.git@80be55cbaa3168566e3ad5503b8951187633a521",
     "snakemake-executor-plugin-slurm >=2,<3",
     "snakemake-logger-plugin-snkmt >=0.1.6",
     # Required for plotting
