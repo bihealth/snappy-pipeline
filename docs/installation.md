@@ -9,6 +9,9 @@ pixi manages all dependencies of the pipeline, the Python packages and the conda
 
 For cluster execution, a Snakemake profile of the system or the user selects the executor, for example SLURM; see {ref}`usage`.
 
+PureCN and pVACtools run from container images, which need [apptainer](https://apptainer.org) on the machines that run their jobs.
+On Ubuntu 24.04 and newer, apptainer also needs an AppArmor profile that allows unprivileged user namespaces.
+
 ## User installation
 
 To run the pipeline, clone the repository and let pixi create the environment:

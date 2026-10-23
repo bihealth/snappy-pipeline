@@ -69,8 +69,8 @@ It reads the target and antitarget regions from the panel task, so the config ha
 1. A `purecn` panel of normals, which needs a `mutect2` panel of normals.
 2. VCF files with germline and somatic variants.
    Mutect2 must call these with other options than the usual somatic calling, so the `variant_calling` step runs a second time as its own task.
-3. The container of the panel task, so that the PureCN version of the panel and the calls are the same.
-   The `cnv_purecn` task reads it from `depends_on.panel_of_normals`.
+3. The container image of the panel task (`purecn.container`), so that the panel and the calls use the same PureCN.
+   The `cnv_purecn` task runs its PureCN jobs in the image of the task in `depends_on.panel_of_normals`.
 
 The second `mutect2` task needs `--genotype-germline-sites true` and `--genotype-pon-sites true`, and the `mutect2` panel of normals.
 
@@ -171,6 +171,6 @@ tasks:
         enrichment_kit_name: exome
 ```
 
-The `cnv_purecn` task reads the normal database, the mapping bias, the intervals and the container from `pon_purecn`.
+The `cnv_purecn` task reads the normal database, the mapping bias and the intervals from `pon_purecn`, and runs PureCN in its image.
 The intervals depend only on the genome and the exome kit.
 The normal database and the mapping bias can change with the mapper.

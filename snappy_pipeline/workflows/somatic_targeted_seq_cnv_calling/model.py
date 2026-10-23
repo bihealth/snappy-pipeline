@@ -23,10 +23,9 @@ class ExpectedPonPaths(BaseModel):
     #: cnvkit: the target and antitarget regions the panel was built with
     target: str | None = None
     antitarget: str | None = None
-    #: purecn: mapping bias, interval list and the container that built them
+    #: purecn: mapping bias and interval list
     mapping_bias: str | None = None
     intervals: str | None = None
-    container: str | None = None
 
 
 class Tool(enum.StrEnum):
@@ -202,7 +201,7 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
     Required when ``tool: cnvkit`` or ``tool: purecn``.
     Must name the upstream ``panel_of_normals`` task with the same ``tool``
     (e.g. ``panel_of_normals_cnvkit`` or ``panel_of_normals_purecn``).
-    The CNVkit target and antitarget regions and the PureCN container come from this task, too.
+    The CNVkit target and antitarget regions and the PureCN image come from this task, too.
     """
 
     reference: Reference = ""

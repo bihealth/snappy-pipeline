@@ -6,6 +6,8 @@ from snappy_pipeline.orchestration import task_instance
 __author__ = "Eric Blanc"
 
 
+# The software directives are in fmt: off regions, because snakefmt does not know them yet
+
 # WorkflowImpl Object Setup ===================================================
 
 wf = task_instance(config["__task_name__"])
@@ -21,27 +23,6 @@ rule somatic_neoepitope_prediction_all:
 
 
 # Preparation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-if not tools.container:
-
-    rule somatic_neoepitope_prediction_pvactools_install:
-        output:
-            **wf.get_output_files("pvactools", "install"),
-        log:
-            **wf.get_log_file("pvactools", "install"),
-        # Network access: downloads and installs fail now and then
-        retries: 2
-        threads: wf.get_resource("pvactools", "install", "threads")
-        resources:
-            runtime=wf.get_resource("pvactools", "install", "runtime"),
-            mem=wf.get_resource("pvactools", "install", "mem"),
-            partition=wf.get_resource("pvactools", "install", "partition"),
-            tmpdir=wf.get_resource("pvactools", "install", "tmpdir"),
-        params:
-            image="docker://griffithlab/pvactools:7.1.3",
-        shell:
-            "apptainer build --ignore-proot {output.container} {params.image} > {log.log} 2>&1"
-
 
 if tools.pvacseq.enabled or tools.pvacsplice.enabled:
 
@@ -152,6 +133,10 @@ if tools.pvacseq.enabled:
             tmpdir=wf.get_resource("pvacseq", "run", "tmpdir"),
         params:
             args=wf.get_params("pvacseq", "run"),
+        # fmt: off
+        software:
+            container(image_uri=tools.container)
+        # fmt: on
         wrapper:
             wf.wrapper_path("pvactools/pvacseq")
 
@@ -177,6 +162,10 @@ if tools.pvacfuse.enabled:
             tmpdir=wf.get_resource("pvacfuse", "run", "tmpdir"),
         params:
             args=wf.get_params("pvacfuse", "run"),
+        # fmt: off
+        software:
+            container(image_uri=tools.container)
+        # fmt: on
         wrapper:
             wf.wrapper_path("pvactools/pvacfuse")
 
@@ -238,6 +227,10 @@ if tools.pvacsplice.enabled:
             tmpdir=wf.get_resource("pvacsplice", "run", "tmpdir"),
         params:
             args=wf.get_params("pvacsplice", "run"),
+        # fmt: off
+        software:
+            container(image_uri=tools.container)
+        # fmt: on
         wrapper:
             wf.wrapper_path("pvactools/pvacsplice")
 
@@ -288,5 +281,9 @@ if any(prediction.netmhc_stab.enabled for prediction in predictions):
             tmpdir=wf.get_resource("netstab", "run", "tmpdir"),
         params:
             args=wf.get_params("netstab", "run"),
+        # fmt: off
+        software:
+            container(image_uri=tools.container)
+        # fmt: on
         wrapper:
             wf.wrapper_path("pvactools/netstab")

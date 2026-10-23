@@ -6,6 +6,8 @@ from snappy_pipeline.orchestration import task_instance
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 
+# The software directives are in fmt: off regions, because snakefmt does not know them yet
+
 # WorkflowImpl Object Setup ===================================================
 
 wf = task_instance(config["__task_name__"])
@@ -122,6 +124,10 @@ elif tool == "purecn":
             tmpdir=wf.get_resource("purecn", "coverage", "tmpdir"),
         params:
             args=wf.get_params("purecn", "coverage"),
+        # fmt: off
+        software:
+            container(image_uri=wf.substep_getattr("purecn", "image"))
+        # fmt: on
         wrapper:
             wf.wrapper_path("purecn/coverage")
 
@@ -142,5 +148,9 @@ elif tool == "purecn":
             tmpdir=wf.get_resource("purecn", "run", "tmpdir"),
         params:
             args=wf.get_params("purecn", "run"),
+        # fmt: off
+        software:
+            container(image_uri=wf.substep_getattr("purecn", "image"))
+        # fmt: on
         wrapper:
             wf.wrapper_path("purecn/run")

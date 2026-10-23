@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for computing CNV using PureCN"""
 
-import os
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc <eric.blanc@bih-charite.de>"
@@ -18,37 +16,10 @@ extra_commands = " ".join(
     ]
 )
 
-# List files that must be accessible from the container
-files_to_bind = {
-    "vcf": snakemake.input.vcf,
-    "mapping_bias": snakemake.input.mapping_bias,
-    "normaldb": snakemake.input.normaldb,
-    "intervals": snakemake.input.intervals,
-}
 if "segments" in snakemake.input.keys() and snakemake.input.segments:
-    files_to_bind["seg-file"] = snakemake.input.segments
+    extra_commands += " --seg-file={}".format(snakemake.input.segments)
 if "log2" in snakemake.input.keys() and snakemake.input.log2:
-    files_to_bind["log-ratio-file"] = snakemake.input.log2
-
-# TODO: Put the following in a function (decide where...)
-# Replace with full absolute paths
-files_to_bind = {k: os.path.realpath(v) for k, v in files_to_bind.items()}
-# Directories that mut be bound
-dirs_to_bind = {k: os.path.dirname(v) for k, v in files_to_bind.items()}
-# List of unique directories to bind: on cluster: <directory> -> from container: /bindings/d<i>)
-bound_dirs = {e[1]: e[0] for e in enumerate(list(set(dirs_to_bind.values())))}
-# Binding command
-bindings = " ".join(["-B {}:/bindings/d{}:ro".format(k, v) for k, v in bound_dirs.items()])
-# Path to files from the container
-bound_files = {
-    k: "/bindings/d{}/{}".format(bound_dirs[dirs_to_bind[k]], os.path.basename(v))
-    for k, v in files_to_bind.items()
-}
-
-if "seg-file" in bound_files.keys():
-    extra_commands += " --seg-file={}".format(bound_files["seg-file"])
-if "log-ratio-file" in bound_files.keys():
-    extra_commands += " --log-ratio-file={}".format(bound_files["log-ratio-file"])
+    extra_commands += " --log-ratio-file={}".format(snakemake.input.log2)
 
 ShellWrapper(snakemake).run(
     r"""
@@ -65,19 +36,17 @@ outdir=$(dirname {snakemake.output.segments})
 mkdir -p $outdir
 
 # Run PureCN with a panel of normals
-cmd="/usr/local/bin/Rscript /opt/PureCN/PureCN.R \
+Rscript /opt/PureCN/PureCN.R \
     --sampleid {args[library_name]} \
     --tumor {snakemake.input.tumor} \
-    --vcf {bound_files[vcf]} \
-    --mapping-bias-file {bound_files[mapping_bias]} \
-    --normaldb {bound_files[normaldb]} \
-    --intervals {bound_files[intervals]} \
+    --vcf {snakemake.input.vcf} \
+    --mapping-bias-file {snakemake.input.mapping_bias} \
+    --normaldb {snakemake.input.normaldb} \
+    --intervals {snakemake.input.intervals} \
     --genome {config[genome_name]} \
     --out $outdir --out-vcf --force \
     --seed {config[seed]} --parallel --cores {snakemake.threads} \
     {extra_commands} {extra_arguments}
-"
-apptainer exec --home $PWD {bindings} {snakemake.input.container} $cmd
 
 rename {snakemake.output.segments} _dnacopy.seg
 rename {snakemake.output.ploidy} .csv

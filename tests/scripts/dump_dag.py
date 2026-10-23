@@ -64,6 +64,10 @@ def _job_record(job) -> dict[str, Any]:
     # directory() outputs, which have no md5 file; only when there are some, like the report
     if directories := sorted(str(f) for f in job.output if is_flagged(f, "directory")):
         record["directory"] = directories
+    # The image of rules that run in a container (``software: container(...)``)
+    spec = getattr(job.rule.software_env_specs, "software_spec", None)
+    if getattr(spec, "kind", None) == "container":
+        record["container"] = spec.image_uri
     # Rules that run on the submit node instead of the cluster (``localrule: True``)
     if job.rule.name in job.rule.workflow._localrules:
         record["local"] = True

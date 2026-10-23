@@ -1384,8 +1384,8 @@
  },
  {
   "benchmark": "tasks/panel_of_normals_purecn/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.coverage.tsv",
+  "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
   "input": [
-   "tasks/panel_of_normals_purecn/work/containers/out/container.simg",
    "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam"
   ],
@@ -1398,7 +1398,7 @@
   "params": {
    "args": {
     "config": {
-     "container": "docker://markusriester/purecn",
+     "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
      "enrichment_kit_name": "unknown",
      "extra_arguments": [],
      "genome_name": "unknown",
@@ -1425,8 +1425,8 @@
  },
  {
   "benchmark": "tasks/panel_of_normals_purecn/benchmarks/panel_of_normals/panel_of_normals.tsv",
+  "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
   "input": [
-   "tasks/panel_of_normals_purecn/work/containers/out/container.simg",
    "tasks/panel_of_normals_purecn/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.coverage_loess.txt.gz",
    "tasks/panel_of_normals_mutect2/work/panel_of_normals/out/panel_of_normals.genomicsDB.tar.gz"
   ],
@@ -1445,7 +1445,7 @@
   "params": {
    "args": {
     "config": {
-     "container": "docker://markusriester/purecn",
+     "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
      "enrichment_kit_name": "unknown",
      "extra_arguments": [],
      "genome_name": "unknown",
@@ -1471,34 +1471,9 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/purecn/create_panel"
  },
  {
-  "benchmark": "tasks/panel_of_normals_purecn/benchmarks/containers/container.tsv",
-  "input": [],
-  "log": [
-   "tasks/panel_of_normals_purecn/work/containers/log/container.log"
-  ],
-  "output": [
-   "tasks/panel_of_normals_purecn/work/containers/out/container.simg"
-  ],
-  "params": {
-   "container": "docker://markusriester/purecn"
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 60
-  },
-  "rule": "panel_of_normals_purecn_panel_of_normals_purecn_install",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/singularity"
- },
- {
   "benchmark": "tasks/panel_of_normals_purecn/benchmarks/panel_of_normals/panel_of_normals.prepare.tsv",
+  "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
   "input": [
-   "tasks/panel_of_normals_purecn/work/containers/out/container.simg",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
@@ -1518,7 +1493,7 @@
   "params": {
    "args": {
     "config": {
-     "container": "docker://markusriester/purecn",
+     "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
      "enrichment_kit_name": "unknown",
      "extra_arguments": [],
      "genome_name": "unknown",
@@ -1637,11 +1612,11 @@
  },
  {
   "benchmark": "tasks/somatic_targeted_seq_cnv_calling_purecn/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.coverage.tsv",
+  "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
   "input": [
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
-   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list",
-   "tasks/panel_of_normals_purecn/work/containers/out/container.simg"
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list"
   ],
   "log": [
    "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.coverage.log"
@@ -1683,13 +1658,13 @@
  },
  {
   "benchmark": "tasks/somatic_targeted_seq_cnv_calling_purecn/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.run.tsv",
+  "container": "docker://markusriester/purecn@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce",
   "input": [
    "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.coverage_loess.txt.gz",
    "tasks/variant_calling_mutect2/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
    "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.rds",
    "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
-   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list",
-   "tasks/panel_of_normals_purecn/work/containers/out/container.simg"
+   "tasks/panel_of_normals_purecn/work/panel_of_normals/out/panel_of_normals.intervals.list"
   ],
   "log": [
    "tasks/somatic_targeted_seq_cnv_calling_purecn/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.run.log"

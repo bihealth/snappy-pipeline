@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Somatic neoepitope prediction with pVACtools
 
-The step predicts neoepitopes of the tumor DNA libraries with pVACtools, run from its container: pVACseq from somatic small variants, pVACfuse from gene fusions, pVACsplice from splicing events.
+The step predicts neoepitopes of the tumor DNA libraries with pVACtools: pVACseq from somatic small variants, pVACfuse from gene fusions, pVACsplice from splicing events.
 The single ``tool`` is ``pvactools``; ``pvactools.pvacseq``, ``pvacfuse`` and ``pvacsplice`` are enabled separately (pVACseq by default) and share the preparation of the task.
 The IEDB tools in the container are *not* free software; their use is restricted to academic, non-profit research unless a licence is acquired.
 
@@ -26,8 +26,10 @@ pVACseq options and their inputs:
 The matched normal library is the ``matched_normal_lib`` relationship (normal DNA of the donor); the matched RNA library is ``matched_rna_lib`` (tumor RNA of the same sample); both can be redefined in ``relationships``.
 pVACfuse and pVACsplice skip tumor libraries without a matched RNA library.
 
-``net_chop`` (with the path of a local NetChop installation) and ``netmhc_stab`` (netMHCstabpan in the container, MHC class I) post-process the epitopes of each prediction.
-Without ``pvactools.container``, the task builds the container from ``docker://griffithlab/pvactools:7.1.3``.
+``net_chop`` (with the path of a local NetChop installation) and ``netmhc_stab`` (netMHCstabpan of the IEDB tools in the container, MHC class I) post-process the epitopes of each prediction.
+
+The jobs of pVACseq, pVACfuse, pVACsplice and netMHCstabpan run in the container image ``pvactools.container`` (pVACtools 7.1.3, pinned by its digest), which Snakemake pulls once per project.
+The other jobs run in conda environments.
 
 Outputs
 -------
@@ -71,10 +73,6 @@ RESULT_TABLES = ("filtered", "all", "aggregated")
 PREDICTIONS = ("pvacseq", "pvacfuse", "pvacsplice")
 NEED_RNA = ("pvacfuse", "pvacsplice")
 
-#: The container that the task builds without ``pvactools.container``
-CONTAINER_IMAGE = "docker://griffithlab/pvactools:7.1.3"
-CONTAINER = "work/container/out/image.sif"
-
 _OUT = "work/{tumor_library}/out/{tumor_library}"
 _LOG = "work/{tumor_library}/log/{tumor_library}"
 
@@ -104,32 +102,21 @@ class NeoepitopeStepPart(BaseStepPart):
         """The sample names in the VCF, without the library names."""
         return {k: v for k, v in self.samples(tumor_library).items() if k.endswith("_sample")}
 
-    @property
-    def container(self) -> str:
-        return self.config.pvactools.container or CONTAINER
-
     def variants(self, tumor_library: str) -> str:
         return self.parent.get_upstream_paths("variants", library_name=tumor_library).vcf
 
 
 class PvacToolsStepPart(NeoepitopeStepPart):
-    """Preparation shared by the predictions: container, VCF samples, HLA types"""
+    """Preparation shared by the predictions: VCF samples, HLA types"""
 
     name = "pvactools"
-    actions = ("install", "normalize", "hla_types")
+    actions = ("normalize", "hla_types")
 
     resource_usage = {
-        "install": ResourceUsage(threads=1, runtime="4h", mem="64GB"),
         "normalize": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
         "hla_types": ResourceUsage(threads=1, runtime="1h", mem="4GB"),
     }
     intermediate_outputs = {"normalize": ("vcf", "vcf_tbi"), "hla_types": ("hla_types",)}
-
-    def _get_output_files_install(self):
-        return {"container": CONTAINER}
-
-    def _get_log_file_install(self):
-        return {"log": "work/container/log/image.log"}
 
     def _get_input_files_normalize(self, wildcards):
         return {"annotated": self.variants(wildcards.tumor_library)}
@@ -232,7 +219,6 @@ class PredictionStepPart(NeoepitopeStepPart):
 
     @dictify
     def _get_input_files_run(self, wildcards):
-        yield "container", self.container
         yield "alleles", f"{_OUT}.hla_types.txt".format(**wildcards)
         if self.cfg.genes_of_interest:
             yield "genes", self.cfg.genes_of_interest
@@ -240,9 +226,6 @@ class PredictionStepPart(NeoepitopeStepPart):
             yield "peptides", self.parent.get_upstream_paths("proteome").fasta
 
     def _get_params_run(self, wildcards):
-        # The tables are written in the container's output directory, not bound one by one
-        exclude = ["container", "alleles", *self._get_output_files_run()]
-        exclude.remove("done")
         return {
             **self.sample_names(wildcards.tumor_library),
             "algorithms": self.cfg.algorithms,
@@ -250,7 +233,6 @@ class PredictionStepPart(NeoepitopeStepPart):
                 "class_i": self.cfg.class_i_epitope_length,
                 "class_ii": self.cfg.class_ii_epitope_length,
             },
-            "exclude_bind": exclude,
             "extra_arguments": self.cfg.extra_arguments,
         }
 
@@ -507,7 +489,6 @@ class NetStabStepPart(PostProcessStepPart):
         else:
             epitopes = self.epitopes(wildcards, cfg.netmhc_stab.all_epitopes, "MHC_I")
         return {
-            "container": self.container,
             "epitopes": epitopes,
             "alleles": f"{_OUT}.hla_types.txt".format(**wildcards),
         }

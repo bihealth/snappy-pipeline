@@ -54,7 +54,7 @@ snappy run -- --profile slurm                   # all tasks through the executor
 
 ## Cluster execution
 
-`snappy run` always uses the workflow profile of snappy, which sets conda for the software, the `snkmt` logger and the database persistence backend.
+`snappy run` always uses the workflow profile of snappy, which deploys the software with conda and, for the tools that run from a container image, with apptainer, and sets the `snkmt` logger and the database persistence backend.
 The executor and its settings belong to the system or the user: a Snakemake profile below `/etc/xdg/snakemake/` (system) or `~/.config/snakemake/` (user), selected with `--profile <name>` after `--` or with the environment variable `SNAKEMAKE_PROFILE`.
 For SLURM, for example `~/.config/snakemake/slurm/config.yaml`:
 
@@ -85,6 +85,20 @@ Their resource requests add up (runtimes of jobs that run one after another, cor
 ```shell
 snappy run -- --group-components tail=10
 ```
+
+## Containers
+
+PureCN and pVACtools run from container images, which their tool sections pin by digest (`purecn.container`, `pvactools.container`); a local `.sif` file works too.
+Snakemake pulls each image once into `.snakemake/software/` of the project and runs the jobs of these tools inside it with apptainer.
+A job in a container sees `$HOME`, `/tmp`, the project directory and the snappy installation.
+Other directories that it reads, such as references outside the project, go into `APPTAINER_BIND`, a comma-separated list:
+
+```shell
+export APPTAINER_BIND=<reference directory>,<another directory>
+```
+
+apptainer keeps image layers in `~/.apptainer/cache`.
+On clusters with a small home quota, point `APPTAINER_CACHEDIR` and `APPTAINER_TMPDIR` to a scratch directory.
 
 ## Directories of a task
 

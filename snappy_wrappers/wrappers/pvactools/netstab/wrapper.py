@@ -16,19 +16,13 @@ ShellWrapper(snakemake).run(
     r"""
 if [[ -s {snakemake.input.epitopes} ]]
 then
-    # Re-home pVACtools to avoid conflicts with user's setting (.bashrc, ...)
-    out=$(mktemp -d)
-    out=$(realpath $out)
-    mkdir -p $out
-
-    # IMPORTANT: use local /tmp to avoid clobbering cephfs with the creation of many small files
-    export TMPDIR=/tmp
     export LC_ALL=C.UTF-8
 
+    # netMHCstabpan of the IEDB tools in the pVACtools container; its many small temporary files
+    # go to the temporary directory of the job
     python {script} --verbose --workers {snakemake.threads} \
         --tool {args[tool]} {lengths} \
-        --base-path $(dirname $out) \
-        --container {snakemake.input.container} \
+        --base-path $TMPDIR \
         --output {snakemake.output.netstab} \
         {snakemake.input.epitopes}
 else

@@ -1,7 +1,6 @@
 import csv
 import os
 
-from snappy_wrappers.pvactools import bindings_for_container
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Eric Blanc"
@@ -9,17 +8,10 @@ __email__ = "eric.blanc@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
 
-(input_bindings, input_fns) = bindings_for_container(
-    snakemake.input, base_container_path="/inputs", exclude_bind=args["exclude_bind"]
-)
-(output_bindings, output_fns) = bindings_for_container(
-    snakemake.output, base_container_path="/outputs", access="rw", exclude_bind=args["exclude_bind"]
-)
-
 if peptides := getattr(snakemake.input, "peptides", ""):
-    peptides = f"--run-reference-proteome-similarity --peptide-fasta {input_fns['peptides']}"
+    peptides = f"--run-reference-proteome-similarity --peptide-fasta {peptides}"
 if genes := getattr(snakemake.input, "genes", ""):
-    genes = f"--genes-of-interest-file {input_fns['genes']}"
+    genes = f"--genes-of-interest-file {genes}"
 
 normal = f"--normal-sample-name {args['normal_sample']}" if args.get("normal_sample") else ""
 
@@ -44,52 +36,25 @@ ShellWrapper(snakemake).run(
     r"""
 export LC_ALL=C.UTF-8
 
-# snakemake.output.done is needed because pVACtools modules create MHC_class_iI? folders
-# so the path to bind is work/mapper.caller.annotator(.filtered)?.tumor_dna/out
-# rather than the dirname of snakemake.output.all (which is the MHC_class_II? subdir of the
-# bound directory)
+# pVACsplice writes the MHC_Class_I, MHC_Class_II and combined directories below $out
 out=$(dirname {snakemake.output.done})
 rm -rf $out
 mkdir -p $out
-out=$(realpath $out)
-
-tmp=$(dirname $out)/tmp/pvacsplice
-rm -rf $tmp
-mkdir -p $tmp
-
-scripts=$(dirname $out)/scripts
-mkdir -p $scripts
-
-cat << __EOF > $scripts/run_pVACsplice.sh
-set -x
-export TMPDIR=/short_tmp
-pvacsplice run --n-threads {snakemake.threads} \\
-    {normal} \\
-    --iedb-install-directory /opt/iedb \\
-    --class-i-epitope-length {class_i_epitope_length} --class-ii-epitope-length {class_ii_epitope_length} \\
-    {extra_arguments} \\
-    {peptides} {genes} \\
-    {input_fns[junctions]} \\
-    {args[tumor_sample]} {alleles} {algorithms} \\
-    $(dirname {output_fns[done]}) \\
-    {input_fns[annotated]} {input_fns[reference]} {input_fns[features]}
-if [[ $? -eq 0 ]]
-then
-    echo "pvacsplice finished without errors, cleaning up tmp"
-    rm -rf /short_tmp/*
-else
-    echo "ERROR during pvacsplice"
-fi
-__EOF
-chmod +x $scripts/run_pVACsplice.sh
 
 # pVACsplice (version 7.1.1) fails with an error when there are no predicted neo-epitopes from splice variants
 # The current workaround is to prevent snakemake to fail, and to manually create the required directories
 # before creating an empty target file.
-# Short path tmp to avoid AF_UNIX path too long error
-apptainer exec \
-    --no-home --bind $tmp:/short_tmp:rw --bind $scripts:/scripts:ro \
-    {input_bindings} {output_bindings} {snakemake.input[container]} bash /scripts/run_pVACsplice.sh || true
+pvacsplice run --n-threads {snakemake.threads} \
+    {normal} \
+    --iedb-install-directory /opt/iedb \
+    --class-i-epitope-length {class_i_epitope_length} --class-ii-epitope-length {class_ii_epitope_length} \
+    {extra_arguments} \
+    {peptides} {genes} \
+    {snakemake.input.junctions} \
+    {args[tumor_sample]} {alleles} {algorithms} \
+    $out \
+    {snakemake.input.annotated} {snakemake.input.reference} {snakemake.input.features} \
+    || true
 
 link_missing() {{
     combined=$1

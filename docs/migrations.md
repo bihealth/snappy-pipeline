@@ -246,6 +246,7 @@ The Snakemake version bump also required updates to several dependencies (pandas
 snappy uses the development version of Snakemake, which deploys software through plugins.
 The conda plugin builds the wrapper environments from their pin files, below `.snakemake/software/`; `snappy run -- --deploy-software-envs` creates them without running jobs (formerly `--conda-create-envs-only`).
 R packages that are not on conda-forge or bioconda in the needed versions (for sequenza and scarHRD) are installed by the post-deploy script of the wrapper's environment, at fixed versions or commits, when the environment is created.
+PureCN and pVACtools run from their container images (`software: container(...)`), which Snakemake pulls and runs with apptainer.
 
 ## Project management with pixi
 
@@ -286,6 +287,7 @@ Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull requ
   Use `tool:` with a single value.
 - **Legacy `snappy-snake` entry point**: removed; use the `snappy` command instead.
 - **R package install jobs of sequenza and scarHRD** and their `work/R_packages/` directories: the environments install these packages when they are created.
+- **Container builds of PureCN and pVACtools**: the rules `panel_of_normals_purecn_install` (the `singularity` wrapper, `work/containers/`) and `somatic_neoepitope_prediction_pvactools_install` (`work/container/`), and the key `container` of a PureCN panel's outputs; Snakemake pulls the images.
 - **Jannovar statistics report** (`jannovar_stats` of `variant_calling`).
 - **`fusioncatcher` tool of `somatic_gene_fusion_calling`**: it had no wrapper (main neither), so it could not run.
 - **`defuse`, `hera`, `jaffa` and `pizzly` tools of `somatic_gene_fusion_calling`**: untested and probably broken; `arriba` (recommended) and `star_fusion` remain.
@@ -341,6 +343,9 @@ To migrate an existing project:
 16. The `tag_mode` of main's vembrane filter is gone: an expression names the variants to tag, so `tag_mode: include` becomes the negated expression, `not (...)`.
 17. `arcashla.zygocity_threshold` is `arcashla.zygosity_threshold`, and it now reaches arcasHLA (main never passed it, so arcasHLA ran with its own default 0.1 instead of the configured 0.15).
 18. `somatic_wgs_cnv_calling` with `tool: cnvkit` needs `depends_on.panel_of_normals`: a whole-genome `panel_of_normals` task with `tool: cnvkit` (a flat reference when there are no normals).
+19. `purecn.container` and `pvactools.container` are the images that Snakemake pulls, pinned by digest by default (`markusriester/purecn` of 2024-05-28, `griffithlab/pvactools:7.1.3`); the path of a local `.sif` file works too, and `pvactools.container: null` is no longer valid.
+    A PureCN calling task runs the image of its panel of normals task.
+    Jobs in a container see the project, `$HOME`, `/tmp` and the snappy installation; other directories they read go into `APPTAINER_BIND`, see {ref}`usage`.
 
 ## Example: a neoepitope config from main and its translation
 

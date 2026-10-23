@@ -6,6 +6,8 @@ from snappy_pipeline.orchestration import task_instance
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bihealth.de>"
 
 
+# The software directives are in fmt: off regions, because snakefmt does not know them yet
+
 # WorkflowImpl Object Setup ===================================================
 
 wf = task_instance(config["__task_name__"])
@@ -243,26 +245,6 @@ elif tool == "cnvkit":
 
 elif tool == "purecn":
 
-    # Install the annotation R package --------------------------
-
-    rule panel_of_normals_purecn_install:
-        output:
-            **wf.get_output_files("purecn", "install"),
-        log:
-            **wf.get_log_file("purecn", "install"),
-        benchmark:
-            wf.get_benchmark_file("purecn", "install")
-        # Network access: downloads and installs fail now and then
-        retries: 2
-        resources:
-            runtime=wf.get_resource("purecn", "install", "runtime"),
-            mem=wf.get_resource("purecn", "install", "mem"),
-            partition=wf.get_resource("purecn", "install", "partition"),
-        params:
-            container=wf.config.purecn.container,
-        wrapper:
-            wf.wrapper_path("singularity")
-
     rule panel_of_normals_purecn_prepare:
         input:
             unpack(wf.get_input_files("purecn", "prepare")),
@@ -278,6 +260,10 @@ elif tool == "purecn":
             partition=wf.get_resource("purecn", "prepare", "partition"),
         params:
             args=wf.get_params("purecn", "prepare"),
+        # fmt: off
+        software:
+            container(image_uri=wf.config.purecn.container)
+        # fmt: on
         wrapper:
             wf.wrapper_path("purecn/prepare")
 
@@ -296,6 +282,10 @@ elif tool == "purecn":
             partition=wf.get_resource("purecn", "coverage", "partition"),
         params:
             args=wf.get_params("purecn", "coverage"),
+        # fmt: off
+        software:
+            container(image_uri=wf.config.purecn.container)
+        # fmt: on
         wrapper:
             wf.wrapper_path("purecn/coverage")
 
@@ -314,5 +304,9 @@ elif tool == "purecn":
             partition=wf.get_resource("purecn", "create_panel", "partition"),
         params:
             args=wf.get_params("purecn", "create_panel"),
+        # fmt: off
+        software:
+            container(image_uri=wf.config.purecn.container)
+        # fmt: on
         wrapper:
             wf.wrapper_path("purecn/create_panel")

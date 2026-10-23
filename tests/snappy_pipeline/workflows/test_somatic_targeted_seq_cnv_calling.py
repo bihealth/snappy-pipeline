@@ -12,6 +12,7 @@ from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling import (
     PureCNStepPart,
     SequenzaStepPart,
 )
+from snappy_pipeline.workflows.panel_of_normals.model import PureCn as PanelOfNormalsPureCn
 from snappy_pipeline.workflows.somatic_targeted_seq_cnv_calling.model import Cnvkit, PureCn
 
 
@@ -63,6 +64,14 @@ def test_purecn_run_gets_the_config_and_the_tumor_library():
 
     assert set(params) == {"config", "library_name"}
     assert params["library_name"] == "T1-DNA1-WES1"
+
+
+def test_purecn_runs_in_the_image_of_its_panel_of_normals():
+    part = object.__new__(PureCNStepPart)
+    panel = SimpleNamespace(purecn=PanelOfNormalsPureCn(container="purecn.sif"))
+    part.parent = SimpleNamespace(get_task_config={"panel_of_normals": panel}.get)
+
+    assert part.image == "purecn.sif"
 
 
 def test_sequenza_run_writes_its_report_directory():

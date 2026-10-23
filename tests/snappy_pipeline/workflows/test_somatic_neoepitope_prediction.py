@@ -3,7 +3,25 @@
 
 from types import SimpleNamespace
 
+from snakemake.pathvars import Pathvars
+
 from snappy_pipeline.workflows.somatic_neoepitope_prediction import NetChopStepPart
+from snappy_pipeline.workflows.somatic_neoepitope_prediction.model import PvacTools
+
+
+def test_container_is_an_image_uri_or_a_local_image_file():
+    # The context that load_project() gives: a local image is a path of the configuration
+    context = {"project_dir": "/projects/p1", "pathvars": Pathvars.with_defaults(), "paths": []}
+
+    default = PvacTools.model_validate({}, context=context)
+    local = PvacTools.model_validate({"container": "images/pvactools.sif"}, context=context)
+
+    assert default.container == (
+        "docker://griffithlab/pvactools"
+        "@sha256:0297856ce7a9dec7339f3405f92fcfb37be48a6a2b06ec809270b93c7a81f25c"
+    )
+    assert local.container == "/projects/p1/images/pvactools.sif"
+    assert context["paths"] == ["/projects/p1/images/pvactools.sif"]
 
 
 def test_netchop_reads_the_options_of_its_prediction():

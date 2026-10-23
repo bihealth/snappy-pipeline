@@ -24,23 +24,19 @@ mkdir $TMPDIR/extra
 echo "{snakemake.input.normals}" | tr " " "\n" > $TMPDIR/extra/filenames.txt
 
 # Extract Mutect2 genomicsDB when present
+normal_panel=""
 if [[ -n "{genomicsDB}" ]]
 then
     pushd $TMPDIR ; tar -zxvf {genomicsDB} ; popd
-    normal_panel=" --normal-panel /pon_db "
-else
-    mkdir $TMPDIR/pon_db
-    normal_panel=""
+    normal_panel=" --normal-panel $TMPDIR/pon_db "
 fi
 
 # Create panel
-cmd="/usr/local/bin/Rscript /opt/PureCN/NormalDB.R \
-    --out-dir /output \
-    --coverage-files /extra/filenames.txt $normal_panel \
+Rscript /opt/PureCN/NormalDB.R \
+    --out-dir $outdir \
+    --coverage-files $TMPDIR/extra/filenames.txt $normal_panel \
     --genome {config[genome_name]} --assay {config[enrichment_kit_name]} \
     {extra_arguments}
-"
-apptainer exec --home $PWD -B $outdir:/output -B $TMPDIR/pon_db:/pon_db:ro -B $TMPDIR/extra:/extra:ro {snakemake.input.container} $cmd
 
 # Move output to destination
 mv $outdir/normalDB_{config[enrichment_kit_name]}_{config[genome_name]}.rds {snakemake.output.db}

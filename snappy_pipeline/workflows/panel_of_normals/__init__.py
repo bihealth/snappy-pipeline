@@ -35,7 +35,7 @@ Downstream tasks read these keys through their ``depends_on.panel_of_normals``:
 
 - ``mutect2``: ``vcf`` and ``vcf_tbi`` (the panel, read by ``variant_calling``), and ``genomicsdb`` (read by the ``purecn`` task).
 - ``cnvkit``: ``panel_of_normals``, ``target`` and ``antitarget``.
-- ``purecn``: ``panel_of_normals``, ``mapping_bias``, ``intervals`` and ``container``.
+- ``purecn``: ``panel_of_normals``, ``mapping_bias`` and ``intervals``.
 
 The ``access`` task gives the key ``access``.
 A ``cnvkit`` task names it in ``depends_on.access``, as it can an ``external_data`` task that produces ``{type: raw, tags: [access]}`` with the key ``access``.
@@ -69,8 +69,10 @@ Notes on PureCN
 
 A ``purecn`` panel is required by ``somatic_targeted_seq_cnv_calling`` with ``tool: purecn``.
 It needs a ``mutect2`` panel of normals task in ``depends_on.panel_of_normals``, because the step uses Mutect2 as variant caller (not Mutect, the PureCN default).
-PureCN runs in its container (``purecn.container``), because its R package requirements are too complex for a conda environment.
-The default image has no version tag, so set one to fix the PureCN version.
+PureCN runs in a container image, because its R package requirements are too complex for a conda environment.
+Snakemake pulls the image ``purecn.container`` and runs the PureCN jobs inside it with apptainer (see :ref:`usage`).
+The default image is pinned by its digest.
+A ``somatic_targeted_seq_cnv_calling`` task with ``tool: purecn`` runs its PureCN jobs in the image of its panel of normals task, so the panel and the calls use the same PureCN.
 """
 
 from snappy_pipeline.models.cnvkit import Gender as CnvKitGender
@@ -133,7 +135,7 @@ class PureCnStepPart(PanelOfNormalsStepPart):
     name = "purecn"
 
     #: Actions
-    actions = ("install", "prepare", "coverage", "create_panel")
+    actions = ("prepare", "coverage", "create_panel")
 
     extra_arguments_action = "create_panel"
 
@@ -145,7 +147,6 @@ class PureCnStepPart(PanelOfNormalsStepPart):
         self.kit = self._common_kit()
 
     log_templates = {
-        "install": "work/containers/log/container",
         "prepare": "work/panel_of_normals/log/panel_of_normals.prepare",
         "coverage": "work/{library_name}/log/{library_name}.coverage",
         "create_panel": "work/panel_of_normals/log/panel_of_normals",
@@ -153,11 +154,6 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     #: Resources
     resource_usage = {
-        "install": ResourceUsage(
-            threads=1,
-            runtime="1h",
-            mem="24GB",
-        ),
         "prepare": ResourceUsage(
             threads=1,
             runtime="4h",  # 4 hours
@@ -177,7 +173,6 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     @dictify
     def _get_input_files_prepare(self, wildcards):
-        yield "container", "work/containers/out/container.simg"
         yield from self.parent.reference_inputs().items()
         yield "bait_regions", self.parent.get_upstream_paths("kits", library_kit=self.kit).baits
         for key, path in (
@@ -189,7 +184,6 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
-        yield "container", "work/containers/out/container.simg"
         yield (
             "intervals",
             "work/panel_of_normals/out/panel_of_normals.intervals.list",
@@ -201,14 +195,10 @@ class PureCnStepPart(PanelOfNormalsStepPart):
 
     @dictify
     def _get_input_files_create_panel(self, wildcards):
-        yield "container", "work/containers/out/container.simg"
         tpl = "work/{library_name}/out/{library_name}.coverage_loess.txt.gz"
         yield "normals", [tpl.format(library_name=lib) for lib in self.normal_libraries]
         # The Mutect2 genomicsDB is the output of the upstream panel_of_normals (mutect2) task.
         yield "genomicsdb", self.parent.get_upstream_paths("panel_of_normals").genomicsdb
-
-    def _get_output_files_install(self):
-        return {"container": "work/containers/out/container.simg"}
 
     def _get_output_files_prepare(self):
         base_out = "work/panel_of_normals/out/panel_of_normals.intervals"
@@ -660,7 +650,6 @@ class PanelOfNormalsWorkflow(BaseStep):
                     "panel_of_normals": "work/panel_of_normals/out/panel_of_normals.rds",
                     "mapping_bias": "work/panel_of_normals/out/panel_of_normals.mapping_bias.rds",
                     "intervals": "work/panel_of_normals/out/panel_of_normals.intervals.list",
-                    "container": "work/containers/out/container.simg",
                 }
             case Tool.access:
                 return {"access": "work/panel_of_normals/out/panel_of_normals.accessible.bed"}

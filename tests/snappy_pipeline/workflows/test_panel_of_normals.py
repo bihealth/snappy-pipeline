@@ -32,6 +32,5 @@ def test_cnvkit_target_passes_the_default_average_size():
     assert CnvKit().target.default_avg_size == 5000
 
 
-def test_purecn_container_is_a_config_field():
-    assert PureCn().container == "docker://markusriester/purecn"
-    assert PureCn(container="docker://markusriester/purecn:2.8.0").container.endswith(":2.8.0")
+def test_purecn_image_is_pinned_by_digest():
+    assert PureCn().container.startswith("docker://markusriester/purecn@sha256:")

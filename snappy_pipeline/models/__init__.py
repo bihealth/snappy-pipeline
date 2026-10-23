@@ -49,6 +49,18 @@ def _resolve_path(value: str, info: ValidationInfo) -> str:
 ConfigPath = Annotated[str, AfterValidator(_resolve_path)]
 """A file or directory in the configuration: a task-local file or an ``external_data`` path."""
 
+#: The scheme of an image URI, such as ``docker:`` or ``oras:``
+_IMAGE_SCHEME = re.compile(r"[a-z][a-z0-9+.-]*:")
+
+
+def _image(value: str, info: ValidationInfo) -> str:
+    """Keep an image URI; resolve a local image file like a ``ConfigPath``."""
+    return value if _IMAGE_SCHEME.match(value) else _resolve_path(value, info)
+
+
+ContainerImage = Annotated[str, AfterValidator(_image)]
+"""A container image: a URI such as ``docker://...``, or the path of a local ``.sif`` file."""
+
 
 def enum_options(enum: Enum) -> list[tuple[str, typing.Any]]:
     """Returns a list of tuples containing the name and value of each enum member."""
@@ -575,6 +587,7 @@ class ToggleModel(SnappyModel):
 
 __all__ = [
     "ConfigPath",
+    "ContainerImage",
     "LibraryFolders",
     "RelationshipDefinition",
     "SnappyModel",

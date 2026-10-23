@@ -6,8 +6,9 @@ The ``tool`` field selects the caller, which starts from the aligned reads:
 
 - ``cnvkit`` compares the tumor coverage with a CNVkit panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: cnvkit``) and reads its target and antitarget regions.
 - ``sequenza`` compares the tumor with its matched normal and estimates the purity and ploidy.
-- ``purecn`` needs a PureCN panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: purecn``, which also gives the container) and somatic variants (``depends_on.variants``).
+- ``purecn`` needs a PureCN panel of normals (``depends_on.panel_of_normals``, from a ``panel_of_normals`` task with ``tool: purecn``) and somatic variants (``depends_on.variants``).
   The variants must come from Mutect2 and include the germline variants.
+  The PureCN jobs run in the container image of the panel of normals task (its ``purecn.container``), so the panel and the calls use the same PureCN.
   See :ref:`step_panel_of_normals`.
 
 The task gives one result per tumor DNA library.
@@ -283,6 +284,12 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     def result_keys(self):
         return {"run": tuple(self._get_output_files_run())}
 
+    @property
+    def image(self) -> str:
+        """The PureCN image of the panel of normals task, so that the panel and the calls use the
+        same PureCN"""
+        return self.parent.get_task_config("panel_of_normals").purecn.container
+
     @dictify
     def _get_input_files_run(self, wildcards):
         name_pattern = "{tumor_library}".format(**wildcards)
@@ -303,7 +310,6 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "normaldb", pon.panel_of_normals
         yield "mapping_bias", pon.mapping_bias
         yield "intervals", pon.intervals
-        yield "container", pon.container
 
     @dictify
     def _get_input_files_coverage(self, wildcards):
@@ -314,7 +320,6 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         yield "bai", alignments.bai
         pon = self.parent.get_upstream_paths("panel_of_normals")
         yield "intervals", pon.intervals
-        yield "container", pon.container
 
     _prefix = "work/{tumor_library}/out/{tumor_library}"
 

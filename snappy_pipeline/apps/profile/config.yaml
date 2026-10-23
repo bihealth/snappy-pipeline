@@ -1,3 +1,6 @@
-software-deployment-method: conda
+software-deployment-method:
+  - conda
+  - container
+sdm-container-runtime: apptainer
 logger: snkmt
 persistence-backend: db

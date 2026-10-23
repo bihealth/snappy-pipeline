@@ -3,7 +3,14 @@ from typing import Annotated, Union
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath, SnappyModel, SnappyStepModel, ToggleModel, ToolModel
+from snappy_pipeline.models import (
+    ConfigPath,
+    ContainerImage,
+    SnappyModel,
+    SnappyStepModel,
+    ToggleModel,
+    ToolModel,
+)
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -156,9 +163,13 @@ class PVACsplice(PvacTool):
 
 
 class PvacTools(SnappyModel):
-    container: ConfigPath | None = None
-    """The pVACtools container image (``.sif``); without it, the task builds one from
-    ``docker://griffithlab/pvactools:7.1.3``"""
+    container: ContainerImage = (
+        "docker://griffithlab/pvactools"
+        "@sha256:0297856ce7a9dec7339f3405f92fcfb37be48a6a2b06ec809270b93c7a81f25c"
+    )
+    """The image that Snakemake pulls to run pVACseq, pVACfuse, pVACsplice and netMHCstabpan;
+    the default is ``griffithlab/pvactools:7.1.3``, pinned by its digest.
+    The path of a local ``.sif`` file works too."""
 
     pvacseq: PVACseq = PVACseq()
     pvacfuse: PVACfuse = PVACfuse()

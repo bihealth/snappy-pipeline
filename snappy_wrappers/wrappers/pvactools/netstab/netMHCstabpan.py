@@ -26,10 +26,6 @@ length=$2
 fasta=$3
 out=$4
 
-export TMPDIR=/base_temp
-export NETMHCpan={netMHCpan_path}
-export NETMHCstabpan={netMHCstabpan_path}
-
 grep -q $allele $NETMHCstabpan/data/MHC_pseudo.dat
 if [[ $? -eq 0 ]]
 then
@@ -205,7 +201,7 @@ def _parse_output_file(fn: str) -> list[dict[str, Any]]:
     return results
 
 
-def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 43200):
+def _run_netMHCstabpan_command(cmd: list[str], env: dict[str, str], timeout: int = 43200):
     """
     Runs netMHCstabpan on one fasta file, to find peptide stability score
 
@@ -219,7 +215,7 @@ def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 4
     logger.debug(f"Process {current_process().name}, cmd = {' '.join(cmd)}, timeout = {timeout}")
 
     # Compute stability scores
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, env=env)
     try:
         out, err = p.communicate(timeout=timeout)
     except (TimeoutError, subprocess.TimeoutExpired):
@@ -236,26 +232,25 @@ def _run_netMHCstabpan_command(cmd: list[str], worker_tmp: str, timeout: int = 4
 def _run_task(
     hla_type: str,
     length: int,
-    cmd_part1: list[str],
-    cmd_part2: list[str],
+    env: dict[str, str],
+    main_path: str,
     workers_dir: str,
     timeout: int = 43200,
 ):
     """Runs netMHCstabpan for one HLA type & length, in its own temp directory"""
     name = _clean_filename(_epitope_length(hla_type, length))
     with tempfile.TemporaryDirectory(dir=workers_dir) as task_temp:
-        cmd = (
-            cmd_part1
-            + ["--bind", f"{task_temp}:/base_temp:rw"]
-            + cmd_part2
-            + [
-                hla_type.replace("*", ""),
-                str(length),
-                f"/main_path/seqs/{name}.fasta",
-                f"/main_path/out/{name}.xls",
-            ]
-        )
-        return _run_netMHCstabpan_command(cmd, "/base_temp", timeout)
+        cmd = [
+            "bash",
+            "-c",
+            NETMHCSTABPAN_CMD,
+            "netMHCstabpan",
+            hla_type.replace("*", ""),
+            str(length),
+            os.path.join(main_path, "seqs", f"{name}.fasta"),
+            os.path.join(main_path, "out", f"{name}.xls"),
+        ]
+        return _run_netMHCstabpan_command(cmd, {**env, "TMPDIR": task_temp}, timeout)
 
 
 def run_netMHCstabpan(
@@ -263,7 +258,6 @@ def run_netMHCstabpan(
     hla_types: set[str],
     lengths: set[int],
     base_path: str,
-    container: str,
     netMHCstabpan_path: str,
     netMHCpan_path: str,
     epitope_seq_column_name: str = "MT Epitope Seq",
@@ -271,7 +265,7 @@ def run_netMHCstabpan(
     timeout: int = 43200,
 ):
     """
-    Runs netMHCstabpan within docker container
+    Runs netMHCstabpan
 
     Because computing stability is quite time-consuming, the function delegates
     the bulk of the work to a number of workers, each running netMHCstabpan on
@@ -283,14 +277,10 @@ def run_netMHCstabpan(
     Finally, is waits for the workers to finish, and collects the results into
     the main epitope table.
 
-    There are several directories that must be created and bound to the container.
-    All those directories are temporary to a different degree. Some contain the
+    All directories below base_path are temporary to a different degree. Some contain the
     input data prepared by the main process and must remain present until
     the job is finished. Some are private temporary directories used by the workers.
-    Finally, a separate directory is created to hold the script that is executed
-    in the container (to allow to keep in read-only during binding to the container).
     """
-    # Real paths and bound paths
     base_path = os.path.realpath(base_path)
     base_path = os.path.join(base_path, "tmp", "netMHCstabpan")
     if os.path.exists(base_path):
@@ -301,16 +291,6 @@ def run_netMHCstabpan(
     out_dir = "out"
     for d in (seq_dir, out_dir):
         os.makedirs(os.path.join(main_path, d), mode=0o750, exist_ok=False)
-
-    script = os.path.join(base_path, "scripts", "run_netMHCstabpan.sh")
-    os.makedirs(os.path.dirname(script), mode=0o750, exist_ok=True)
-    with open(script, "wt") as f:
-        f.write(
-            NETMHCSTABPAN_CMD.format(
-                netMHCstabpan_path=os.path.dirname(os.path.dirname(netMHCstabpan_path)),
-                netMHCpan_path=os.path.dirname(os.path.dirname(netMHCpan_path)),
-            )
-        )
 
     workers_dir = os.path.join(base_path, "workers")
     os.makedirs(workers_dir, mode=0o700, exist_ok=False)
@@ -327,24 +307,13 @@ def run_netMHCstabpan(
         "Internal error: verification of sequence files failed"
     )
 
-    # Prepare netMHCstabpan command (binding, container path, ...)
-    cmd_part1 = [
-        "apptainer",
-        "run",
-        "--no-home",
-        "--bind",
-        f"{main_path}:/main_path:rw",
-        "--bind",
-        f"{os.path.dirname(script)}:/scripts:ro",
-    ]
-    cmd_part2 = [
-        os.path.realpath(container),
-        "bash",
-        os.path.join("/scripts", os.path.basename(script)),
-    ]
-    logger.info(
-        f"netMHCstabpan command: {' '.join(cmd_part1 + ['--bind', '<base_path>/workers/<i_worker>:/base_temp:rw'] + cmd_part2 + ['<hla_type>', '<length>', '<fasta>', '<xls>'])}"
-    )
+    # The installations of netMHCstabpan and netMHCpan (Linux_x86_64 below their directories)
+    env = {
+        **os.environ,
+        "NETMHCstabpan": os.path.dirname(os.path.dirname(netMHCstabpan_path)),
+        "NETMHCpan": os.path.dirname(os.path.dirname(netMHCpan_path)),
+    }
+    logger.info(f"netMHCstabpan installation: {env['NETMHCstabpan']}")
 
     # Fill all epitopes with stability default values
     for i in range(len(epitopes)):
@@ -357,8 +326,8 @@ def run_netMHCstabpan(
                 _run_task,
                 file_list[fn]["hla_type"],
                 file_list[fn]["length"],
-                cmd_part1,
-                cmd_part2,
+                env,
+                main_path,
                 workers_dir,
             )
             for fn in random.sample(list(file_list.keys()), k=len(file_list))
@@ -453,19 +422,18 @@ def main() -> int:
         "-w", "--workers", type=int, default=1, help="Number of threads for netMHCstabpan"
     )
     parser.add_argument(
-        "--base-path", help="Base directory to create scripts & tmp/netMHCstabpan sub-directories"
+        "--base-path", help="Base directory to create the tmp/netMHCstabpan sub-directory"
     )
 
-    parser.add_argument("--container", help="Path to the pVACtools container")
     parser.add_argument(
         "--netMHCstabpan",
         default="/opt/iedb/mhc_i/method/netmhcstabpan-1.0-executable/netmhcstabpan_1_0_executable/Linux_x86_64/bin/netMHCstabpan",
-        help="Path to the netMHCstabpan binary in the docker container",
+        help="Path to the netMHCstabpan binary in the pVACtools container",
     )
     parser.add_argument(
         "--netMHCpan",
         default="/opt/iedb/mhc_i/method/netmhcpan-2.8-executable/netmhcpan_2_8_executable/Linux_x86_64/bin/netMHCpan",
-        help="Path to the netMHCpan binary in the docker container",
+        help="Path to the netMHCpan binary in the pVACtools container",
     )
 
     parser.add_argument(
@@ -520,7 +488,6 @@ def main() -> int:
         hla_types=hla_types,
         lengths=lengths,
         base_path=base_path,
-        container=args.container,
         netMHCstabpan_path=args.netMHCstabpan,
         netMHCpan_path=args.netMHCpan,
         epitope_seq_column_name=colname,

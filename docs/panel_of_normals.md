@@ -147,6 +147,8 @@ Create the `mutect2` task first, and name it in `depends_on.panel_of_normals`:
       enrichment_kit_name: exome    # used to name output files
 ```
 
-PureCN runs in a container, because its R packages are too complex for a conda environment.
-The panel task installs the container in `work/containers/out/container.simg`.
+PureCN runs in a container image, because its R packages are too complex for a conda environment.
+Snakemake pulls the image `purecn.container` and runs the PureCN jobs inside it, see {ref}`usage`.
+The default image is pinned by its digest.
+The path of a local `.sif` file works too.
 See {ref}`somatic_cnv` for how a calling task uses the panel.

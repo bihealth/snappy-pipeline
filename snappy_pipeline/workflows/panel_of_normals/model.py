@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath
+from snappy_pipeline.models import ConfigPath, ContainerImage
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
@@ -83,8 +83,15 @@ class GenomeName(enum.StrEnum):
 
 
 class PureCn(ToolModel):
-    container: str = "docker://markusriester/purecn"
-    """Container image that runs PureCN (pulled with apptainer); pin a tag for a fixed PureCN version"""
+    container: ContainerImage = (
+        "docker://markusriester/purecn"
+        "@sha256:5d676079969281d343199e291cfbc529bf1b2c69c70342311998f90386acddce"
+    )
+    """
+    The image that Snakemake pulls to run the PureCN jobs, also those of the calling tasks that read
+    this panel; the default is ``markusriester/purecn:latest`` of 2024-05-28, pinned by its digest.
+    The path of a local ``.sif`` file works too.
+    """
 
     path_normals_list: ConfigPath = ""
     """Optional file listing libraries to include in panel"""
