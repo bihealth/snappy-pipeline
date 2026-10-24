@@ -41,11 +41,11 @@ input_files()
     set -x
 
     if [[ -z "{input_right}" ]]; then
-        (zcat {input_right})
+        (zcat {input_left})
     else
         seqtk mergepe \
-            <(zcat {input_left} | tee >(wc -l > $TMPDIR/count_left)) \
-            <(zcat {input_right} | tee >(wc -l > $TMPDIR/count_right))
+            <({{ zcat {input_left} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_left)) \
+            <({{ zcat {input_right} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_right))
     fi
 }}
 
@@ -146,9 +146,14 @@ postproc_bam()
     fi
 }}
 
-# Check input line counts written out in input_files()
+# Check input line counts written out in input_files(). A failing zcat in a process substitution
+# does not fail the pipeline, so it leaves a marker.
 check_input_line_counts()
 {{
+    if [[ -e $TMPDIR/zcat_failed ]]; then
+        >&2 echo "Could not decompress the reads."
+        exit 1
+    fi
     if [[ -e $TMPDIR/count_left ]]; then
         if ! diff $TMPDIR/count_left $TMPDIR/count_right >/dev/null; then
             >&2 echo "Different number of lines in left/right file."
