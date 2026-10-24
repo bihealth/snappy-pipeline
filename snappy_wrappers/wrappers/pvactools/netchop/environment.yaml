@@ -4,4 +4,3 @@ channels:
   - nodefaults
 dependencies:
   - python>=3.12
-  - bcftools=1.21
