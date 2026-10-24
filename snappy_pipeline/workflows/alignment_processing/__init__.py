@@ -10,8 +10,13 @@ Downstream tasks read the BAM files of the last task of the chain, through the k
     ``BaseRecalibrator`` models the errors of the base qualities per read group, by quality score, cycle and sequence context, and ignores the known variant sites of ``depends_on.common_variants`` (for example ``small_exac_common_3.vcf`` of the GATK resource bundle) and reads marked as duplicates.
     ``ApplyBQSR`` writes the BAM file with the recalibrated base qualities.
 
+``agent``
+    Duplicate marking with the molecular barcodes (MBCs) of Agilent's AGeNT (LocatIt), with the ``baits`` of each library's kit in ``depends_on.kits``.
+    The reads must come from AGeNT's trimming (``adapter_trimming`` tool ``agent``), mapped with the barcodes as tags (``extra_arguments: ["-C"]`` of the BWA mapper) and without ``mask_duplicates``.
+    AGeNT is not open source and not in bioconda; ``path`` names its jar file.
+
 The task processes the DNA libraries of its upstream task, those of background data sets included, unless ``library_selection`` narrows them.
-Its output has the input's tags plus ``recalibrated`` (``gatk4_bqsr``).
+Its output has the input's tags plus ``recalibrated`` (``gatk4_bqsr``) or ``deduplicated`` (``agent``).
 With ``delete_intermediates: [bam]``, the BAM file of the task is temporary, for a later task that processes it further (see :ref:`usage`).
 
 Outputs
@@ -35,7 +40,7 @@ from .model import AlignmentProcessing as AlignmentProcessingConfigModel
 from .model import Tool
 
 #: The tag that each tool adds to the tags of its input
-TOOL_TAGS = {Tool.gatk4_bqsr: "recalibrated"}
+TOOL_TAGS = {Tool.gatk4_bqsr: "recalibrated", Tool.agent: "deduplicated"}
 
 #: The processed BAM file of a library
 BAM = "work/{library_name}/out/{library_name}.bam"
@@ -93,6 +98,28 @@ class Gatk4BqsrStepPart(AlignmentProcessingStepPart):
         return {"log": "work/{library_name}/log/{library_name}.recalibration.log"}
 
 
+class AgentStepPart(AlignmentProcessingStepPart):
+    """Duplicate marking with the molecular barcodes of AGeNT"""
+
+    name = "agent"
+
+    result_keys = ("bam", "bam_bai", "bam_md5", "bam_bai_md5")
+
+    default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="96000MB")
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from super()._get_input_files_run(wildcards).items()
+        yield "jar", self.config.agent.path
+        yield "baits", self.parent.library_kit_paths("kits", wildcards.library_name).baits
+
+    def _get_params_run(self, wildcards):
+        return self.config.agent.model_dump(by_alias=True, exclude={"path", "extra_arguments"})
+
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.mark_duplicates.log"}
+
+
 class AlignmentProcessingWorkflow(BaseStep):
     """Process the alignments of a mapping task"""
 
@@ -120,5 +147,7 @@ class AlignmentProcessingWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        tool_to_class = {Tool.gatk4_bqsr: Gatk4BqsrStepPart}
+        tool_to_class = {Tool.gatk4_bqsr: Gatk4BqsrStepPart, Tool.agent: AgentStepPart}
         self.register_sub_step_classes((tool_to_class[self.config.tool],))
+        if self.config.tool == Tool.agent:
+            self.check_library_kits("kits", self.libraries["library_name"])
