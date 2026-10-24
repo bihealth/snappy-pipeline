@@ -42,7 +42,7 @@ def test_model_parts_are_directories_that_the_callers_read():
     """The ploidy model and the model of each shard are directories, not temp: other tasks
     read them through the contract."""
     step = object.__new__(BaseStep)
-    step.config = SimpleNamespace(delete_intermediates=True)
+    step.config = SimpleNamespace(delete_intermediates=["intermediates"])
     part = object.__new__(BuildGcnvModelStepPart)
     step._get_sub_step = lambda name: part
 

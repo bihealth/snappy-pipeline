@@ -4,6 +4,7 @@
 import pydantic
 import pytest
 
+from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.workflows.ngs_mapping.model import NgsMapping
 
 STAR_DEPENDS_ON = {
@@ -49,3 +50,15 @@ def test_mbcs_without_recalibration_needs_no_common_variants():
         bwa={},
         depends_on=MBCS_DEPENDS_ON,
     )
+
+
+def test_only_steps_with_a_bam_for_other_tasks_delete_it():
+    class NoBam(SnappyStepModel):
+        pass
+
+    with pytest.raises(pydantic.ValidationError, match="writes no BAM file to delete"):
+        NoBam(delete_intermediates=["bam"])
+    assert NoBam(delete_intermediates=["intermediates"]).delete_intermediates == ["intermediates"]
+    depends_on = {"reads": "data_sets", "reference": "genome", "index": "bwa"}
+    config = NgsMapping(tool="bwa", bwa={}, depends_on=depends_on, delete_intermediates=["bam"])
+    assert config.delete_intermediates == ["bam"]

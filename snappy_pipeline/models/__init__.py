@@ -7,7 +7,7 @@ import typing
 from enum import Enum
 from inspect import isclass
 from io import StringIO
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
 import ruamel
 import typing_extensions
@@ -194,6 +194,16 @@ class RelationshipDefinition(SnappyModel):
     the column value is a single ``str`` (or ``""`` if no match)."""
 
 
+class Intermediate(enum.StrEnum):
+    """What a task deletes once its readers are done (``delete_intermediates``)"""
+
+    intermediates = "intermediates"
+    """Per-sample intermediates that only later rules of the task read"""
+
+    bam = "bam"
+    """The BAM file of the task and its index, which another task processes further"""
+
+
 # This exists to distinguish the task config models of workflow steps from other snappy
 # specific models.
 class SnappyStepModel(SnappyModel, object):
@@ -218,9 +228,16 @@ class SnappyStepModel(SnappyModel, object):
     SV and gCNV callers): a pandas ``DataFrame.query()`` expression that narrows them, such as
     ``data_set == 'cohort_1000g'``. Unset: all background libraries."""
 
-    delete_intermediates: bool = False
-    """Delete per-sample intermediate files (raw calls, coverage, panel inputs, gVCFs, ...) once
-    the task's later rules have read them. Scatter fragments are always deleted."""
+    delete_intermediates: list[Intermediate] = []
+    """What the task deletes once its readers are done: ``intermediates``, the per-sample
+    intermediate files that only later rules of the task read (raw calls, coverage, panel inputs,
+    gVCFs, ...); ``bam``, the BAM file of a task whose BAM another task processes further
+    (duplicate marking, BQSR), which then is no result file. Scatter fragments are always
+    deleted."""
+
+    #: Whether the step writes a BAM file that another task can process further, so that
+    #: ``delete_intermediates`` may name ``bam``
+    bam_intermediate: ClassVar[bool] = False
 
     job_group: str | None = None
     """Snakemake job group of the task's jobs (local rules stay local): dependent jobs of the tasks
@@ -244,6 +261,12 @@ class SnappyStepModel(SnappyModel, object):
         """The tag that the ``TOOL`` placeholder of a ``depends_on`` requirement stands for: the
         task's tool."""
         return getattr(self, "tool", None)
+
+    @model_validator(mode="after")
+    def validate_bam_intermediate(self):
+        if Intermediate.bam in self.delete_intermediates and not self.bam_intermediate:
+            raise ValueError("delete_intermediates: the step writes no BAM file to delete")
+        return self
 
     @model_validator(mode="after")
     def validate_selected_tool_config(self):

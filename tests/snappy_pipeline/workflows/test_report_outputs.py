@@ -22,7 +22,7 @@ class _PlotPart(BaseStepPart):
 
 def _outputs():
     step = object.__new__(BaseStep)
-    step.config = SimpleNamespace(delete_intermediates=False)
+    step.config = SimpleNamespace(delete_intermediates=[])
     step.task_name = "qc"
     step._get_sub_step = lambda name: object.__new__(_PlotPart)
     return step.get_output_files("plot", "run")

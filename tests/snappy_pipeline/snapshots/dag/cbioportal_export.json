@@ -334,7 +334,9 @@
      "copy_number_alteration": {
       "enabled": true
      },
-     "delete_intermediates": true,
+     "delete_intermediates": [
+      "intermediates"
+     ],
      "depends_on": {
       "alignments": "",
       "copy_number": "somatic_wgs_cnv_calling_cnvkit",

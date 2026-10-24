@@ -160,7 +160,7 @@ Each task has its own directory `tasks/<task>/`.
 `work/` holds every file the jobs write and is the contract between tasks: a task reads the `work/` files of its upstream tasks, never their `output/`.
 `output/` holds only the result files: one local `<task>_results` job per task with result files links them from `work/` and writes `output/.manifest.tsv`.
 Only result files get an `.md5` file, logs hold only the log, and `snappy run` archives the logs of each run.
-Scatter fragments are temporary, and `delete_intermediates` makes per-sample intermediates temporary, too.
+Scatter fragments are temporary, and `delete_intermediates: [intermediates]` makes per-sample intermediates temporary, too; `[bam]` does so for the BAM of a mapping task that a later task processes further.
 
 ## Developer contracts: produces and DataSignature
 

@@ -118,11 +118,12 @@ In a pull request, CI also checks that a changed environment file comes with its
 
 A step part lists the output keys of scatter fragments per action in `temp_outputs`.
 It lists those of per-sample intermediates that only later rules of the same task read in `intermediate_outputs`.
-`BaseStep.get_output_files` marks fragments `temp()` always and intermediates when the task sets `delete_intermediates`.
+`BaseStep.get_output_files` marks fragments `temp()` always and intermediates when the task's `delete_intermediates` names `intermediates`.
 Result files, contract outputs, files other tasks read and project-wide resources (installs, prepared references, pedigree files) are neither.
+The exception is a BAM that another task processes further: a step part lists it in `bam_outputs`, and it is `temp()` and no result file (without `.md5`) when `delete_intermediates` names `bam`; only steps with `bam_intermediate = True` in their config model accept `bam`.
 Every temp file needs a declared reader, otherwise Snakemake deletes it right after its job.
 A job that reads a temp file's index implicitly declares the index as input.
-The DAG snapshots are built with `delete_intermediates: true`.
+The DAG snapshots are built with `delete_intermediates: [intermediates]`.
 `test_intermediates_are_temp` and `test_temp_files_are_intermediates` check them.
 
 Outputs for the Snakemake report are declared per action in a step part's `report_outputs`.

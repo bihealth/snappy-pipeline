@@ -78,7 +78,7 @@ def test_call_cnvs_reads_the_model_of_its_shard():
 
 
 @pytest.mark.parametrize(
-    "delete_intermediates, temp", [(False, {"calls"}), (True, {"ploidy", "calls"})]
+    "delete_intermediates, temp", [([], {"calls"}), (["intermediates"], {"ploidy", "calls"})]
 )
 def test_ploidy_and_shard_calls_are_directories(delete_intermediates, temp):
     step = object.__new__(BaseStep)

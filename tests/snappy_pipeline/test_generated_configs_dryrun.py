@@ -257,7 +257,7 @@ def _write_closure_project(
         if task["step"] == "external_data" and "search_paths" in task["config"]:
             task["config"]["search_paths"] = [str(raw_dir)]
         # The snapshots record every declared intermediate as temp, not only scatter fragments
-        task["config"]["delete_intermediates"] = True
+        task["config"]["delete_intermediates"] = ["intermediates"]
 
     # Touch dummy FASTQ files, and VCFs for the external_data tasks
     for folder in _task_raw_folders(task_name):
@@ -428,6 +428,34 @@ def test_mapping_reads_trimmed_fastqs(generated_task_config: dict[str, Any], tmp
         f"tasks/trimming/work/{lib}/out/{lib}.R1.fastq.gz"
     ]
     assert any(j["rule"].startswith("trimming_adapter_trimming_fastp") for j in jobs)
+
+
+@pytest.mark.integration
+def test_mapping_bam_is_temp_when_the_task_deletes_it(
+    generated_task_config: dict[str, Any], tmp_path: Path
+):
+    """With ``delete_intermediates: [bam]`` the BAM is temp, has no .md5 and is no result file."""
+    _write_closure_project("ngs_mapping_bwa", generated_task_config, tmp_path)
+    config = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+    mapping = next(t for t in config["tasks"] if t["name"] == "ngs_mapping_bwa")
+    mapping["config"]["delete_intermediates"] = ["intermediates", "bam"]
+    (tmp_path / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+
+    dump_path = tmp_path / "dag.json"
+    cmd = [sys.executable, "tests/scripts/dump_dag.py", "--directory", str(tmp_path)]
+    cmd += ["--task", "ngs_mapping_bwa", "--output", str(dump_path)]
+    dump = _run(cmd, cwd=generated_task_config["root"])
+    assert dump.returncode == 0, _tail((dump.stdout or "") + (dump.stderr or ""))
+    jobs = json.loads(dump_path.read_text(encoding="utf-8"))
+
+    job = next(j for j in jobs if j["rule"].endswith("_bwa_run"))
+    lib = job["wildcards"]["library_name"]
+    bam = f"tasks/ngs_mapping_bwa/work/{lib}/out/{lib}.bam"
+    assert {bam, bam + ".bai"} <= set(job["temp"])
+    assert not [path for path in job["output"] if path.endswith((".bam.md5", ".bai.md5"))]
+    results = next(j for j in jobs if j["rule"] == "ngs_mapping_bwa_results")
+    assert not [path for path in results["input"] if path.endswith((".bam", ".bai"))]
+    assert any(path.endswith(".bamstats.txt") for path in results["input"])
 
 
 @pytest.mark.integration

@@ -142,7 +142,7 @@ A killed Snakemake process (walltime, `scancel`) does not run its end hooks.
 Scatter fragments are the per-region or per-chunk pieces that a later rule of the task joins.
 They are `temp()` files, and Snakemake deletes them when the joining job is done.
 
-Per-sample intermediates are kept, unless the task sets `delete_intermediates: true`.
+Per-sample intermediates are kept, unless the task sets `delete_intermediates: [intermediates]`.
 These are files that only later rules of the same task read, such as raw calls before filtering, coverage files, the normals of a panel and gVCFs.
 
 These files are never deleted:
@@ -153,9 +153,14 @@ These files are never deleted:
 
 So `--task` and `--frozen` runs find what they need.
 
+The one exception is the BAM of an `ngs_mapping` task that a later task processes further, such as duplicate marking or BQSR.
+With `delete_intermediates: [bam]`, the BAM and its index are temporary, have no `.md5` and are not linked into `output/`; the BAM QC reports stay results.
+Snakemake deletes the BAM once the tasks that read it are done, and maps again when a later run needs it.
+A `--frozen` run of a later task cannot map again, so it needs the BAM to still exist.
+
 Once a temporary file is gone, a change to a later rule (a parameter or its code) also reruns the rules that produced the file.
 For example, this reruns all scatter jobs of a caller.
-With `delete_intermediates`, it reruns the calling when only the filter changed.
+With `delete_intermediates: [intermediates]`, it reruns the calling when only the filter changed.
 
 Snakemake options for temporary files, after `--`:
 

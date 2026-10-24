@@ -73,7 +73,9 @@
    "args": {
     "config": {
      "background_selection": null,
-     "delete_intermediates": true,
+     "delete_intermediates": [
+      "intermediates"
+     ],
      "depends_on": {
       "reference": "genome",
       "variants": "external_cnv"

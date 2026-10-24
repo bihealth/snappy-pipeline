@@ -69,7 +69,7 @@ The `run` action then reads the panel VCF and its index from the keys `vcf` and 
 The fragments of `scatter` and `run` are listed in `temp_outputs`.
 They are `temp()` and deleted after `gather`.
 The outputs of `gather`, the pileups and the contamination tables are listed in `intermediate_outputs`.
-They are deleted only if the task sets `delete_intermediates`.
+They are deleted only if the task's `delete_intermediates` names `intermediates`.
 The Snakefile declares `scattergather: mutect2=...` with `mutect2.num_jobs` as the number of regions.
 The step part reaches the scatter and gather functions through `self.parent.workflow.globals`.
 

@@ -47,7 +47,7 @@ Unknown keys are an error.
     Without it, the task takes its step's default (`cohort` for germline variant calling), else the granularity of its upstream tasks, else `library`.
 
 `delete_intermediates`
-: Deletes per-sample intermediate files once the later rules of the task have read them, see {ref}`usage`.
+: What the task deletes once its readers are done, see {ref}`usage`: `intermediates`, the per-sample intermediate files that only later rules of the task read, and `bam`, the BAM of an `ngs_mapping` task that a later task processes further, which then is no result file.
 
 Each step page ends with the default configuration, with every option and its documentation.
 `snappy task add` writes the same into `config.yaml`.

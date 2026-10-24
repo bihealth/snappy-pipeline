@@ -324,6 +324,8 @@ TOOL_DEPENDENCIES = {Tool.star: ("features", "exons")}
 
 
 class NgsMapping(SnappyStepModel):
+    bam_intermediate = True
+
     depends_on: NgsMappingDependsOn
 
     tool: Tool

@@ -32,6 +32,7 @@ from snappy_pipeline.base import (
     UnsupportedActionException,
 )
 from snappy_pipeline.models import (
+    Intermediate,
     LibraryFolders,
     RelationshipDefinition,
     SnappyStepModel,
@@ -158,9 +159,13 @@ class BaseStepPart:
     temp_outputs: dict[str, tuple[str, ...]] = {}
 
     #: Output keys by action of per-sample intermediates that only later rules of the same task
-    #: read: ``temp()`` when the task sets ``delete_intermediates``. Result files, contract
-    #: outputs and project-wide resources are neither.
+    #: read: ``temp()`` when the task's ``delete_intermediates`` names ``intermediates``. Result
+    #: files, contract outputs and project-wide resources are neither.
     intermediate_outputs: dict[str, tuple[str, ...]] = {}
+
+    #: Output keys by action of the task's BAM file and its index, which another task may process
+    #: further: ``temp()`` and no result files when ``delete_intermediates`` names ``bam``
+    bam_outputs: dict[str, tuple[str, ...]] = {}
 
     def __init__[P: BaseStep](self, parent: P):
         self.name = self.__class__.name
@@ -1403,7 +1408,7 @@ class BaseStep:
 
         Delegates to the sub step object's get_output_files function, flags the outputs in its
         ``report_outputs`` for the Snakemake report and marks its ``temp_outputs`` (and, if the
-        task deletes intermediates, its ``intermediate_outputs``) as ``temp()``.
+        task deletes them, its ``intermediate_outputs`` and ``bam_outputs``) as ``temp()``.
         """
         part = self._get_sub_step(sub_step)
         outputs = part.get_output_files(action)
@@ -1413,8 +1418,10 @@ class BaseStep:
                 for key, value in outputs.items()
             }
         keys = set(part.temp_outputs.get(action, ()))
-        if self.config.delete_intermediates:
+        if Intermediate.intermediates in self.config.delete_intermediates:
             keys |= set(part.intermediate_outputs.get(action, ()))
+        if Intermediate.bam in self.config.delete_intermediates:
+            keys |= set(part.bam_outputs.get(action, ()))
         if keys:
             outputs = {key: temp(value) if key in keys else value for key, value in outputs.items()}
         return outputs

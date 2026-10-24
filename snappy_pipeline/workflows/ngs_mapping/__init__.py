@@ -146,6 +146,7 @@ from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.models import Intermediate
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -218,11 +219,14 @@ class MappingGetResultFilesMixin:
             return
 
         for action in self.actions:
+            skipped = set(self.non_result_keys)
+            if Intermediate.bam in self.config.delete_intermediates:
+                skipped |= set(self.bam_outputs.get(action, ()))
             # Get list of result path templates.
             result_paths_tpls = [
                 re.sub(r"^work/", "output/", path)
                 for key, path in self.get_output_files(action).items()
-                if key not in self.non_result_keys
+                if key not in skipped
             ]
             #: Generate all concrete output paths.
             for path_tpl in result_paths_tpls:
@@ -285,6 +289,9 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     #: Class available actions. Read mapping step parts only support action "run".
     actions = ("run",)
 
+    #: The BAM, which a duplicate marking or BQSR task may process further
+    bam_outputs = {"run": ("bam", "bam_bai")}
+
     base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
@@ -305,7 +312,10 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
         """Return the output files that all read mapping sub steps write."""
         if self.name != self.config.tool:
             return
-        for ext in (".bam", ".bam.bai", ".bam.md5", ".bam.bai.md5"):
+        exts = (".bam", ".bam.bai")
+        if Intermediate.bam not in self.config.delete_intermediates:
+            exts += (".bam.md5", ".bam.bai.md5")  # only result files have an .md5
+        for ext in exts:
             yield ext[1:].replace(".", "_"), self.base_path_out.format(ext=ext)
         reports = ("bamstats", "flagstats", "idxstats")
         for suffix in ("", ".md5"):

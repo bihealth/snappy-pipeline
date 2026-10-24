@@ -14,13 +14,25 @@ class _Part(BaseStepPart):
     actions = ("run",)
     temp_outputs = {"run": ("chunk",)}
     intermediate_outputs = {"run": ("raw",)}
+    bam_outputs = {"run": ("bam",)}
 
     def get_output_files(self, action):
-        return {"chunk": "work/1-of-2.vcf", "raw": "work/raw.vcf", "vcf": "work/out.vcf"}
+        return {
+            "chunk": "work/1-of-2.vcf",
+            "raw": "work/raw.vcf",
+            "vcf": "work/out.vcf",
+            "bam": "work/out.bam",
+        }
 
 
 @pytest.mark.parametrize(
-    "delete_intermediates, temp", [(False, ["chunk"]), (True, ["chunk", "raw"])]
+    "delete_intermediates, temp",
+    [
+        ([], ["chunk"]),
+        (["intermediates"], ["chunk", "raw"]),
+        (["bam"], ["chunk", "bam"]),
+        (["intermediates", "bam"], ["chunk", "raw", "bam"]),
+    ],
 )
 def test_fragments_are_temp_and_intermediates_on_request(delete_intermediates, temp):
     step = object.__new__(BaseStep)

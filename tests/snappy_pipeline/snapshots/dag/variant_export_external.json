@@ -110,7 +110,9 @@
     "config": {
      "background_selection": null,
      "bam_available_flag": false,
-     "delete_intermediates": true,
+     "delete_intermediates": [
+      "intermediates"
+     ],
      "depends_on": {
       "alignments": "ngs_mapping_bwa",
       "exons": "exons",
