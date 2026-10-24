@@ -73,6 +73,14 @@ jobs:
         run: |
           git lfs pull --include=".tests/test-workflow/pipelines/**,.tests/test-workflow/resources/**"
 
+      # The package archives of the wrapper environments, shared by the pipelines (--sdm-cache-prefix)
+      - name: Cache wrapper environment packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/snappy-sdm
+          key: sdm-${{ hashFiles('snappy_wrappers/wrappers/**/environment.linux-64.pin.txt') }}
+          restore-keys: sdm-
+
       - name: Run each pipeline
         run: |
           set -euo pipefail
@@ -85,5 +93,6 @@ jobs:
           for config_path in "${configs[@]}"; do
             pipeline_dir="$(dirname "${config_path}")"
             echo "==> Running: ${config_path}"
-            (cd "${pipeline_dir}" && pixi run snappy run -- --cores 1 --software-deployment-method conda --show-failed-logs)
+            (cd "${pipeline_dir}" && pixi run snappy run -- --cores 1 --software-deployment-method conda \
+              --sdm-cache-prefix "$HOME/.cache/snappy-sdm" --show-failed-logs)
           done
