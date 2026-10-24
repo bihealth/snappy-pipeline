@@ -74,8 +74,11 @@ mask_duplicates()
 {{
     set -x
 
-    if [[ "{mask_duplicates}" == "True" ]]; then
+    if [[ "{mask_duplicates}" == "True" ]] && [[ ${{#reads_right[@]}} -gt 0 ]]; then
         samblaster --addMateTags
+    elif [[ "{mask_duplicates}" == "True" ]]; then
+        # samblaster aborts on reads without mates, unless they are single-end reads by design
+        samblaster --addMateTags --ignoreUnmated
     else
         cat
     fi

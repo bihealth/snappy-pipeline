@@ -80,8 +80,11 @@ mask_duplicates()
 {{
     set -x
 
-    if [[ "{mask_duplicates}" == "True" ]]; then
+    if [[ "{mask_duplicates}" == "True" ]] && [[ $paired -eq 1 ]]; then
         samblaster --addMateTags
+    elif [[ "{mask_duplicates}" == "True" ]]; then
+        # samblaster aborts on reads without mates, unless they are single-end reads by design
+        samblaster --addMateTags --ignoreUnmated
     else
         cat  # TODO: can we somehow remove this?
     fi
@@ -183,7 +186,7 @@ run_bwa_mem()
         if [[ ! -z "$fastq_right" ]]; then
             seqtk mergepe ${{reads_left[$i]}} $fastq_right
         else
-            zcat ${{reads_left[$i] }}
+            zcat ${{reads_left[$i]}}
         fi \
         | trim_adapters \
         | bwa mem \

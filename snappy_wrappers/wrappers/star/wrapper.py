@@ -46,7 +46,12 @@ mask_duplicates()
 {{
     set -x
 
-    samblaster --addMateTags
+    if [[ "{reads_right}" != "" ]]; then
+        samblaster --addMateTags
+    else
+        # samblaster aborts on reads without mates, unless they are single-end reads by design
+        samblaster --addMateTags --ignoreUnmated
+    fi
 }}
 
 # Sort by coordinate input SAM from STDIN
