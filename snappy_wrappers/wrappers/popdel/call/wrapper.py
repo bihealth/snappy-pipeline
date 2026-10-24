@@ -33,7 +33,7 @@ with tempfile.NamedTemporaryFile("wt") as tmpf:
     ShellWrapper(snakemake).run(
         r"""
 for name in $(cat {tmpf.name}); do
-    echo $name >>$TMPDIR/profiles.txt
+    echo $name >> $TMPDIR/profiles.txt
 done
 
 popdel call \
@@ -42,28 +42,28 @@ popdel call \
     {extra_arguments} \
     $TMPDIR/profiles.txt
 
-cat >$TMPDIR/header.txt <<EOF
+cat > $TMPDIR/header.txt << EOF
 ##INFO=<ID=SVMETHOD,Number=1,Type=String,Description="Type of approach used to detect SV">
 EOF
 
 # Profile paths no longer carry a dotted prefix, so drop any directory part before splitting.
 for sample in $(bcftools view --header-only $TMPDIR/tmp.vcf | grep '^#CHROM' | cut -f 10-); do
-    echo -e "$sample\t$(basename $sample | rev | cut -d . -f 1 | rev)" >>$TMPDIR/samples.txt
+    echo -e "$sample\t$(basename $sample | rev | cut -d . -f 1 | rev)" >> $TMPDIR/samples.txt
 done
 
 bcftools annotate \
     --header-lines $TMPDIR/header.txt \
     $TMPDIR/tmp.vcf \
-| awk -F $'\t' \
-    'BEGIN {{ OFS = FS }}
+    | awk -F $'\t' \
+        'BEGIN {{ OFS = FS }}
      /^#/ {{ print $0; }}
      /^[^#]/ {{ $8 = $8 ";SVMETHOD=POPDELv1.1.0"; print; }}' \
-| bcftools reheader \
-    --samples $TMPDIR/samples.txt \
-| bcftools sort \
-    -T $TMPDIR \
-    -O z \
-    -o {snakemake.output.vcf}
+    | bcftools reheader \
+        --samples $TMPDIR/samples.txt \
+    | bcftools sort \
+        -T $TMPDIR \
+        -O z \
+        -o {snakemake.output.vcf}
 
 tabix -f {snakemake.output.vcf}
 """

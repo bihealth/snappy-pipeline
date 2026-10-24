@@ -41,19 +41,19 @@ run_vep() {{
     local outfile="$1"
     shift
 
-    bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force | \
-    vep --verbose --force_overwrite --offline --cache \
-        --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
-        --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
-        {dir_cache} \
-        {script_output_options} \
-        {plugins} --dir_plugins $plugins_dir \
-        --{vep_config[tx_flag]} \
-        --fasta {snakemake.input.reference} \
-        --format vcf --vcf --compress_output bgzip \
-        {stats} --warning_file STDERR \
-        {extra_arguments} \
-        --output_file "$outfile" "$@"
+    bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force \
+        | vep --verbose --force_overwrite --offline --cache \
+            --fork {vep_config[num_threads]} --buffer_size {vep_config[buffer_size]} \
+            --species {vep_config[species]} --cache_version {vep_config[cache_version]} --assembly {vep_config[assembly]} \
+            {dir_cache} \
+            {script_output_options} \
+            {plugins} --dir_plugins $plugins_dir \
+            --{vep_config[tx_flag]} \
+            --fasta {snakemake.input.reference} \
+            --format vcf --vcf --compress_output bgzip \
+            {stats} --warning_file STDERR \
+            {extra_arguments} \
+            --output_file "$outfile" "$@"
 
     tabix "$outfile"
 }}

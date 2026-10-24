@@ -29,8 +29,7 @@ set -x
 
 # -----------------------------------------------------------------------------
 
-if [[ "{args[flat]}" = "True" ]]
-then
+if [[ "{args[flat]}" = "True" ]]; then
     cnvkit.py reference \
         --output {snakemake.output.panel} \
         --fasta {snakemake.input.reference} \

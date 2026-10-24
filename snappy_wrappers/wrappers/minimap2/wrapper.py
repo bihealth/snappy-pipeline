@@ -45,22 +45,22 @@ i=1
 for fname in {reads}; do
     basename=$(basename $fname .bam)
 
-    if [[ "$fname" == *.bam ]]; then \
-        samtools fastq -F 2048 $fname; \
-    else \
-        zcat $fname; \
+    if [[ "$fname" == *.bam ]]; then
+        samtools fastq -F 2048 $fname
+    else
+        zcat $fname
     fi \
-    | minimap2 \
-        -t {args[mapping_threads]} \
-        -x $preset \
-        -a {path_index} \
-        {soft_clip_supplementary} \
-        {output_md_tag} \
-        {extra_arguments} \
-        /dev/stdin \
-    | samtools addreplacerg \
-        -r "@RG\tID:{args[library_name]}.$i\tSM:{args[library_name]}\tPL:{args[platform]}" - \
-    >$TMPDIR/out/$i.bam
+        | minimap2 \
+            -t {args[mapping_threads]} \
+            -x $preset \
+            -a {path_index} \
+            {soft_clip_supplementary} \
+            {output_md_tag} \
+            {extra_arguments} \
+            /dev/stdin \
+        | samtools addreplacerg \
+            -r "@RG\tID:{args[library_name]}.$i\tSM:{args[library_name]}\tPL:{args[platform]}" - \
+            > $TMPDIR/out/$i.bam
 
     samtools sort -m {args[memory_bam_sort]} -@ 3 \
         -O BAM \
@@ -79,14 +79,13 @@ else
     samtools merge -@ 8 $out_bam $TMPDIR/sorted/*.bam
 fi
 
-
 samtools index $out_bam
 
 # QC Report ---------------------------------------------------------------------------------------
 
 # gather statistics from BAM file
 # TODO: use pipes for only reading once from disk?
-samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
+samtools stats {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
 samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
 """

@@ -23,13 +23,13 @@ if [[ -n "{path_exon_bed}" ]]; then
     bcftools view \
         -R {path_exon_bed} \
         {snakemake.input.vcf} \
-    | bcftools norm \
-        -m -any \
-        --force \
-        --fasta-ref {reference} \
-    | bcftools sort -T $TMPDIR \
-    | bgzip -c \
-    > $TMPDIR/tmp.vcf.gz
+        | bcftools norm \
+            -m -any \
+            --force \
+            --fasta-ref {reference} \
+        | bcftools sort -T $TMPDIR \
+        | bgzip -c \
+            > $TMPDIR/tmp.vcf.gz
     tabix -f $TMPDIR/tmp.vcf.gz
 else
     set -e
@@ -38,9 +38,9 @@ else
         --force \
         --fasta-ref {reference} \
         {snakemake.input.vcf} \
-    | bcftools sort -T $TMPDIR \
-    | bgzip -c \
-    > $TMPDIR/tmp.vcf.gz
+        | bcftools sort -T $TMPDIR \
+        | bgzip -c \
+            > $TMPDIR/tmp.vcf.gz
     tabix -f $TMPDIR/tmp.vcf.gz
 fi
 
@@ -64,7 +64,7 @@ mehari \
     --path-output-tsv {snakemake.output.gts}
 
 # FIXME this should really not be hardcoded.
-cat <<EOF | gzip -c > {snakemake.output.db_infos}
+cat << EOF | gzip -c > {snakemake.output.db_infos}
 genomebuild	db_name	release
 GRCh37	clinvar	20210728
 GRCh37	gnomad_exomes	r2.1.1

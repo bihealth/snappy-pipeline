@@ -19,7 +19,7 @@ bcftools query \
     -f '%CHROM\t%POS[\t%DP\t%AD]\n' \
     {extra_arguments} \
     {snakemake.input.vcf} \
-| awk -F $'\t' 'BEGIN {{ OFS=FS; prev=0; }}
+    | awk -F $'\t' 'BEGIN {{ OFS=FS; prev=0; }}
         {{ if (prev != $1) {{
             printf("variableStep chrom=%s\n", $1, span);
         }} else {{
@@ -37,10 +37,10 @@ bcftools query \
         old4=$4;
         prev=$1;
     }}' \
-> $TMPDIR/tmp.wig
+        > $TMPDIR/tmp.wig
 
 cut -f 1-2 {reference_index_path} \
-> $TMPDIR/chrom.sizes
+    > $TMPDIR/chrom.sizes
 
 wigToBigWig $TMPDIR/tmp.wig $TMPDIR/chrom.sizes {snakemake.output.bw}
 """

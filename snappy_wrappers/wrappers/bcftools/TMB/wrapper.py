@@ -41,15 +41,14 @@ name_vcf=$(basename {snakemake.input.vcf})
 cmd=zcat
 gzip -t $bed_file || cmd=cat
 
-total_exom_length=$($cmd $bed_file | \
-    awk '{{dis+=$3-$2}} END {{print dis}}') #TMB_rounded=`printf "%.3f" $TMB`
+total_exom_length=$($cmd $bed_file \
+    | awk '{{dis+=$3-$2}} END {{print dis}}') #TMB_rounded=`printf "%.3f" $TMB`
 
-number_snvs=$(bcftools view -R $bed_file -v snps --threads {snakemake.threads} -H {snakemake.input.vcf}| wc -l)
-number_indels=$(bcftools view -R $bed_file -v indels --threads {snakemake.threads} -H {snakemake.input.vcf}| wc -l)
-number_variants=$(bcftools view -R $bed_file --threads {snakemake.threads} -H {snakemake.input.vcf}| wc -l)
+number_snvs=$(bcftools view -R $bed_file -v snps --threads {snakemake.threads} -H {snakemake.input.vcf} | wc -l)
+number_indels=$(bcftools view -R $bed_file -v indels --threads {snakemake.threads} -H {snakemake.input.vcf} | wc -l)
+number_variants=$(bcftools view -R $bed_file --threads {snakemake.threads} -H {snakemake.input.vcf} | wc -l)
 
-if [[ -n "{missense_re}" ]]
-then
+if [[ -n "{missense_re}" ]]; then
     number_missense_variants=$(bcftools view -R $bed_file --threads {snakemake.threads} -H {snakemake.input.vcf} | grep -E '{missense_re}' | wc -l || true)
 else
     number_missense_variants=0
@@ -57,8 +56,7 @@ fi
 
 TMB=$(printf "%f" $(echo "1000000*($number_variants/$total_exom_length)" | bc -l))
 missense_TMB=$(printf "%f" $(echo "1000000*($number_missense_variants/$total_exom_length)" | bc -l))
-if [[ $(echo "{has_annotation}" | tr '[a-z]' '[A-Z]') = "TRUE" ]]
-then
+if [[ $(echo "{has_annotation}" | tr '[a-z]' '[A-Z]') = "TRUE" ]]; then
     cat << EOF > {snakemake.output.json}
 {{
     "Library_name": "{snakemake.wildcards.tumor_library}",
@@ -91,6 +89,5 @@ else
 }}
 EOF
 fi
-
 """
 )

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 algorithm = snakemake.params.args.get("algorithm", "bwtsw")
 
 ShellWrapper(snakemake).run(
-    f"""
-bwa index -a {algorithm} {{extra_arguments}} -p "$(dirname {{snakemake.output.amb}})/reference" {{snakemake.input.reference}}
+    r"""
+bwa index -a {algorithm} {extra_arguments} -p "$(dirname {snakemake.output.amb})/reference" {snakemake.input.reference}
 """
 )

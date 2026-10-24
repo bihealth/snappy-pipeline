@@ -99,114 +99,114 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
 
     bbduk.sh \
         in=$in out=$out outm=$outm \
-        $(if [[ $paired -eq 1 ]]; then \
+        $(if [[ $paired -eq 1 ]]; then
             echo in2=$in2 out2=$out2 outm2=$outm2
         fi) \
         ref={references} \
-        stats=$TMPDIR/report/$report/stats.tsv       \
+        stats=$TMPDIR/report/$report/stats.tsv \
         refstats=$TMPDIR/report/$report/refstats.tsv \
-        rpkm=$TMPDIR/report/$report/rpkm.tsv         \
-        bhist=$TMPDIR/report/$report/bhist.tsv       \
-        qhist=$TMPDIR/report/$report/qhist.tsv       \
-        qchist=$TMPDIR/report/$report/qchist.tsv     \
-        aqhist=$TMPDIR/report/$report/aqhist.tsv     \
-        bqhist=$TMPDIR/report/$report/bqhist.tsv     \
-        lhist=$TMPDIR/report/$report/lhist.tsv       \
-        phist=$TMPDIR/report/$report/phist.tsv       \
-        enthist=$TMPDIR/report/$report/enthist.tsv   \
+        rpkm=$TMPDIR/report/$report/rpkm.tsv \
+        bhist=$TMPDIR/report/$report/bhist.tsv \
+        qhist=$TMPDIR/report/$report/qhist.tsv \
+        qchist=$TMPDIR/report/$report/qchist.tsv \
+        aqhist=$TMPDIR/report/$report/aqhist.tsv \
+        bqhist=$TMPDIR/report/$report/bqhist.tsv \
+        lhist=$TMPDIR/report/$report/lhist.tsv \
+        phist=$TMPDIR/report/$report/phist.tsv \
+        enthist=$TMPDIR/report/$report/enthist.tsv \
         t={config[num_threads]} \
         {extra_arguments} \
-        interleaved={config[interleaved]}             \
-        qin={config[qin]}                             \
-        copyundefined={config[copyundefined]}         \
-        nzo={config[nzo]}                             \
-        qout={config[qout]}                           \
-        statscolumns={config[statscolumns]}           \
-        rename={config[rename]}                       \
-        refnames={config[refnames]}                   \
-        trd={config[trd]}                             \
-        ordered={config[ordered]}                     \
-        gcbins={config[gcbins]}                       \
-        maxhistlen={config[maxhistlen]}               \
-        histbefore={config[histbefore]}               \
-        idbins={config[idbins]}                       \
-        k={config[k]}                                 \
-        rcomp={config[rcomp]}                         \
-        maskmiddle={config[maskmiddle]}               \
-        minkmerhits={config[minkmerhits]}             \
-        minkmerfraction={config[minkmerfraction]}     \
-        mincovfraction={config[mincovfraction]}       \
-        hammingdistance={config[hammingdistance]}     \
-        qhdist={config[qhdist]}                       \
-        editdistance={config[editdistance]}           \
-        hammingdistance2={config[hammingdistance2]}   \
-        qhdist2={config[qhdist2]}                     \
-        editdistance2={config[editdistance2]}         \
-        forbidn={config[forbidn]}                     \
+        interleaved={config[interleaved]} \
+        qin={config[qin]} \
+        copyundefined={config[copyundefined]} \
+        nzo={config[nzo]} \
+        qout={config[qout]} \
+        statscolumns={config[statscolumns]} \
+        rename={config[rename]} \
+        refnames={config[refnames]} \
+        trd={config[trd]} \
+        ordered={config[ordered]} \
+        gcbins={config[gcbins]} \
+        maxhistlen={config[maxhistlen]} \
+        histbefore={config[histbefore]} \
+        idbins={config[idbins]} \
+        k={config[k]} \
+        rcomp={config[rcomp]} \
+        maskmiddle={config[maskmiddle]} \
+        minkmerhits={config[minkmerhits]} \
+        minkmerfraction={config[minkmerfraction]} \
+        mincovfraction={config[mincovfraction]} \
+        hammingdistance={config[hammingdistance]} \
+        qhdist={config[qhdist]} \
+        editdistance={config[editdistance]} \
+        hammingdistance2={config[hammingdistance2]} \
+        qhdist2={config[qhdist2]} \
+        editdistance2={config[editdistance2]} \
+        forbidn={config[forbidn]} \
         removeifeitherbad={config[removeifeitherbad]} \
-        trimfailures={config[trimfailures]}           \
-        findbestmatch={config[findbestmatch]}         \
-        skipr1={config[skipr1]}                       \
-        skipr2={config[skipr2]}                       \
-        ecco={config[ecco]}                           \
-        ktrim={config[ktrim]}                         \
-        $(if [[ -n "{config[kmask]}" ]] ; then \
+        trimfailures={config[trimfailures]} \
+        findbestmatch={config[findbestmatch]} \
+        skipr1={config[skipr1]} \
+        skipr2={config[skipr2]} \
+        ecco={config[ecco]} \
+        ktrim={config[ktrim]} \
+        $(if [[ -n "{config[kmask]}" ]]; then
             echo kmask={config[kmask]}
         fi) \
-        maskfullycovered={config[maskfullycovered]}   \
-        ksplit={config[ksplit]}                       \
-        mink={config[mink]}                           \
-        qtrim={config[qtrim]}                         \
-        trimq={config[trimq]}                         \
-        minlength={config[minlength]}                 \
-        mlf={config[mlf]}                             \
-        minavgquality={config[minavgquality]}         \
-        maqb={config[maqb]}                           \
-        minbasequality={config[minbasequality]}       \
-        maxns={config[maxns]}                         \
-        mcb={config[mcb]}                             \
-        ottm={config[ottm]}                           \
-        tp={config[tp]}                               \
-        tbo={config[tbo]}                             \
-        strictoverlap={config[strictoverlap]}         \
-        minoverlap={config[minoverlap]}               \
-        mininsert={config[mininsert]}                 \
-        tpe={config[tpe]}                             \
-        forcetrimleft={config[forcetrimleft]}         \
-        forcetrimright={config[forcetrimright]}       \
-        forcetrimright2={config[forcetrimright2]}     \
-        forcetrimmod={config[forcetrimmod]}           \
-        restrictleft={config[restrictleft]}           \
-        restrictright={config[restrictright]}         \
-        mingc={config[mingc]}                         \
-        maxgc={config[maxgc]}                         \
-        gcpairs={config[gcpairs]}                     \
-        tossjunk={config[tossjunk]}                   \
-        swift={config[swift]}                         \
-        chastityfilter={config[chastityfilter]}       \
-        barcodefilter={config[barcodefilter]}         \
-        $(if [[ -n "{barcodes}" ]]; then \
+        maskfullycovered={config[maskfullycovered]} \
+        ksplit={config[ksplit]} \
+        mink={config[mink]} \
+        qtrim={config[qtrim]} \
+        trimq={config[trimq]} \
+        minlength={config[minlength]} \
+        mlf={config[mlf]} \
+        minavgquality={config[minavgquality]} \
+        maqb={config[maqb]} \
+        minbasequality={config[minbasequality]} \
+        maxns={config[maxns]} \
+        mcb={config[mcb]} \
+        ottm={config[ottm]} \
+        tp={config[tp]} \
+        tbo={config[tbo]} \
+        strictoverlap={config[strictoverlap]} \
+        minoverlap={config[minoverlap]} \
+        mininsert={config[mininsert]} \
+        tpe={config[tpe]} \
+        forcetrimleft={config[forcetrimleft]} \
+        forcetrimright={config[forcetrimright]} \
+        forcetrimright2={config[forcetrimright2]} \
+        forcetrimmod={config[forcetrimmod]} \
+        restrictleft={config[restrictleft]} \
+        restrictright={config[restrictright]} \
+        mingc={config[mingc]} \
+        maxgc={config[maxgc]} \
+        gcpairs={config[gcpairs]} \
+        tossjunk={config[tossjunk]} \
+        swift={config[swift]} \
+        chastityfilter={config[chastityfilter]} \
+        barcodefilter={config[barcodefilter]} \
+        $(if [[ -n "{barcodes}" ]]; then
             echo barcodes={barcodes}
         fi) \
-        xmin={config[xmin]}                           \
-        ymin={config[ymin]}                           \
-        xmax={config[xmax]}                           \
-        ymax={config[ymax]}                           \
-        trimpolya={config[trimpolya]}                 \
-        trimpolygleft={config[trimpolygleft]}         \
-        trimpolygright={config[trimpolygright]}       \
-        trimpolyg={config[trimpolyg]}                 \
-        filterpolyg={config[filterpolyg]}             \
-        entropy={config[entropy]}                     \
-        entropywindow={config[entropywindow]}         \
-        entropyk={config[entropyk]}                   \
-        minbasefrequency={config[minbasefrequency]}   \
-        entropytrim={config[entropytrim]}             \
-        entropymask={config[entropymask]}             \
-        entropymark={config[entropymark]}             \
-        cardinality={config[cardinality]}             \
-        cardinalityout={config[cardinalityout]}       \
-        loglogk={config[loglogk]}                     \
+        xmin={config[xmin]} \
+        ymin={config[ymin]} \
+        xmax={config[xmax]} \
+        ymax={config[ymax]} \
+        trimpolya={config[trimpolya]} \
+        trimpolygleft={config[trimpolygleft]} \
+        trimpolygright={config[trimpolygright]} \
+        trimpolyg={config[trimpolyg]} \
+        filterpolyg={config[filterpolyg]} \
+        entropy={config[entropy]} \
+        entropywindow={config[entropywindow]} \
+        entropyk={config[entropyk]} \
+        minbasefrequency={config[minbasefrequency]} \
+        entropytrim={config[entropytrim]} \
+        entropymask={config[entropymask]} \
+        entropymark={config[entropymark]} \
+        cardinality={config[cardinality]} \
+        cardinalityout={config[cardinalityout]} \
+        loglogk={config[loglogk]} \
         loglogbuckets={config[loglogbuckets]}
 
 done
@@ -215,6 +215,5 @@ mkdir -p {snakemake.output.out} {snakemake.output.report} {snakemake.output.reje
 cp -r $TMPDIR/out/* {snakemake.output.out}
 cp -r $TMPDIR/report/* {snakemake.output.report}
 cp -r $TMPDIR/rejected/* {snakemake.output.rejected}
-
 """
 )

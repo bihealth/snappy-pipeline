@@ -11,7 +11,6 @@ mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
-
 JAR={snakemake.input.jar}
 ME_REFS={snakemake.input.me_refs}
 ME_INFIX={args[me_refs_infix]}
@@ -19,8 +18,8 @@ ME_INFIX={args[me_refs_infix]}
 out=$(dirname {snakemake.output.vcf})
 genotype_dir=$(dirname {snakemake.input.genotype} | head -n 1)
 ls $genotype_dir/*.{args[me_type]}.tsv \
-| sort \
-> {snakemake.output.list_txt}
+    | sort \
+        > {snakemake.output.list_txt}
 
 # TODO: allowing 100% no-call wise?
 java -Xmx{mem_jvm}m -jar $JAR \
@@ -36,8 +35,8 @@ java -Xmx{mem_jvm}m -jar $JAR \
 ## Make file more VCF conforming XXX TODO XXX
 #perl -p -e 's/ID=GL,Number=3/ID=GL,Number=G/' $out/{args[me_type]}.final_comp.vcf \
 cat $out/{args[me_type]}.final_comp.vcf \
-| bgzip -c \
-> {snakemake.output.vcf}
+    | bgzip -c \
+        > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
 """
 )

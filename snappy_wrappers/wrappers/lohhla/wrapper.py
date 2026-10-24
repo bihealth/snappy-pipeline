@@ -26,13 +26,13 @@ ln -sr {snakemake.input.tumor_bai} -t $TMPDIR/bams
 lohhla_script=$(which lohhla)
 
 Rscript $lohhla_script \
-    --BAMDir $TMPDIR/bams/  \
+    --BAMDir $TMPDIR/bams/ \
     --HLAexonLoc {snakemake.input.hla_dat} \
     --HLAfastaLoc {snakemake.input.hla_fasta} \
     --cleanUp FALSE \
     --fishingStep FALSE \
     --gatkDir {snakemake.input.picard_dir} \
-    --hlaPath $(realpath {snakemake.input.hla} ) \
+    --hlaPath $(realpath {snakemake.input.hla}) \
     --mappingStep TRUE \
     --minCoverageFilter {args[min_coverage_filter]} \
     --normalBAMfile $TMPDIR/bams/{normal_bam} \

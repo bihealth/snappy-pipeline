@@ -56,11 +56,17 @@ declare -a reads_left=({reads_left})
 # declared but never used
 declare -a reads_right=({reads_right})
 
-left_files=$(IFS="," ; echo "${{reads_left[*]}}")
+left_files=$(
+    IFS=","
+    echo "${{reads_left[*]}}"
+)
 
 right_files=""
 if [[ "{reads_right}" != "" ]]; then
-    right_files=$(IFS="," ; echo "${{reads_right[*]}}")
+    right_files=$(
+        IFS=","
+        echo "${{reads_right[*]}}"
+    )
 fi
 
 STAR \
@@ -70,17 +76,17 @@ STAR \
     --outStd BAM_Unsorted --outSAMtype BAM Unsorted --outSAMunmapped Within --outBAMcompression 0 \
     --outFileNamePrefix $TMPDIR/ \
     {star_parameters} \
-| arriba \
-    -x /dev/stdin \
-    -o $TMPDIR/fusions.tsv -O $TMPDIR/fusions.discarded.tsv \
-    -a {reference_path} \
-    -g {features_path} \
-    {blacklist_param} \
-    {known_fusions_param} \
-    {tags_param} \
-    {structural_variants_param} \
-    {protein_domains_param} \
-    {extra_arguments}
+    | arriba \
+        -x /dev/stdin \
+        -o $TMPDIR/fusions.tsv -O $TMPDIR/fusions.discarded.tsv \
+        -a {reference_path} \
+        -g {features_path} \
+        {blacklist_param} \
+        {known_fusions_param} \
+        {tags_param} \
+        {structural_variants_param} \
+        {protein_domains_param} \
+        {extra_arguments}
 
 cp $TMPDIR/fusions.tsv {snakemake.output.fusions}
 
@@ -88,8 +94,7 @@ gzip -c $TMPDIR/fusions.discarded.tsv > {snakemake.output.discarded}
 
 log_dir=$(dirname {snakemake.log.log})
 star_logs=$(echo "Log.out Log.std.out Log.final.out SJ.out.tab" | tr ' ' '\n')
-for star_log in $star_logs
-do
+for star_log in $star_logs; do
     cp $TMPDIR/$star_log $log_dir/$star_log
 done
 """

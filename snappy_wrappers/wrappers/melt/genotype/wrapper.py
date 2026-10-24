@@ -11,7 +11,6 @@ mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
-
 JAR={snakemake.input.jar}
 ME_REFS={snakemake.input.me_refs}
 ME_INFIX={args[me_refs_infix]}
@@ -23,6 +22,5 @@ java -Xmx{mem_jvm}m -jar $JAR \
     -p $(dirname {snakemake.input.pre_geno}) \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     -w $(dirname {snakemake.output.done})
-
 """
 )

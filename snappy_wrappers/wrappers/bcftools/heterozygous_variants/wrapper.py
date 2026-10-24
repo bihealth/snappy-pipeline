@@ -35,8 +35,8 @@ bcftools mpileup \
     -a "FORMAT/AD" \
     {snakemake.input.bam} \
     | bcftools filter \
-    --include "$only_one_variant & $min_depth & $hetero" \
-    -O z -o {snakemake.output.vcf}
+        --include "$only_one_variant & $min_depth & $hetero" \
+        -O z -o {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 )

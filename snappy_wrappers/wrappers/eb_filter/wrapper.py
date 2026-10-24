@@ -35,12 +35,10 @@ export REF={snakemake.input.reference}
 # Mutect2 calls are recognized by the FILTER IDs in their header (the paths do not name the caller).
 # Variants with these filters, and those in or near genes with annotation, skip EBFilter.
 filter=""
-for f in $(echo "{skip_filters}" | tr ' ' '\n')
-do
+for f in $(echo "{skip_filters}" | tr ' ' '\n'); do
     use="Yes"
     zgrep -q "^##FILTER=<ID=$f," {snakemake.input.vcf} || use="No"
-    if [[ $use = "Yes" ]]
-    then
+    if [[ $use = "Yes" ]]; then
         filter="$filter || FILTER == \"$f\""
     fi
 done
@@ -54,16 +52,16 @@ if [[ -n "$filter" ]]; then
         filter="$filter"
     fi
     {cmd_fetch} \
-    | bcftools view \
-        -e "$filter" \
-        -O z \
-        -o $TMPDIR/for_eb_filter.vcf.gz
+        | bcftools view \
+            -e "$filter" \
+            -O z \
+            -o $TMPDIR/for_eb_filter.vcf.gz
 
     {cmd_fetch} \
-    | bcftools view \
-        -i "$filter" \
-        -O z \
-        -o $TMPDIR/not_for_eb_filter.vcf.gz
+        | bcftools view \
+            -i "$filter" \
+            -O z \
+            -o $TMPDIR/not_for_eb_filter.vcf.gz
 else
     {cmd_fetch} | bgzip -c > $TMPDIR/for_eb_filter.vcf.gz
     zgrep "^#" {snakemake.input.vcf} | bgzip -c > $TMPDIR/not_for_eb_filter.vcf.gz
@@ -85,10 +83,8 @@ if [[ $lines -gt 0 ]]; then
         {snakemake.input.bam} \
         {snakemake.input.txt} \
         $TMPDIR/after_running_eb_filter.vcf
-    if [[ "{mode}" == "tag" ]]
-    then
-        if [[ -n "{filter_name}" ]]
-        then
+    if [[ "{mode}" == "tag" ]]; then
+        if [[ -n "{filter_name}" ]]; then
             bcftools filter --soft-filter {filter_name} --mode + \
                 --exclude "INFO/EB < {args[ebfilter_threshold]}" \
                 -O z -o $TMPDIR/after_eb_filter.vcf.gz \
@@ -114,7 +110,7 @@ bcftools concat \
     --allow-overlaps \
     $TMPDIR/after_eb_filter.vcf.gz \
     $TMPDIR/not_for_eb_filter.vcf.gz \
-| bcftools sort --output {snakemake.output.vcf} --output-type z
+    | bcftools sort --output {snakemake.output.vcf} --output-type z
 
 tabix -f {snakemake.output.vcf}
 """

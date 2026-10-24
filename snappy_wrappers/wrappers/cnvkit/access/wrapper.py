@@ -20,7 +20,7 @@ set -x
 
 cnvkit.py access \
     -o {snakemake.output.access} \
-    $(if [[ {min_gap_size} -gt 0 ]]; then \
+    $(if [[ {min_gap_size} -gt 0 ]]; then
         echo --min-gap-size {min_gap_size}
     fi) \
     {exclude} \

@@ -36,7 +36,7 @@ for vcf in {snakemake.input.vcf}; do
 
     # Add the missing "GT" tag
     echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
-    > $TMPDIR/header.gt.txt
+        > $TMPDIR/header.gt.txt
 
     bcftools annotate \
         -h $TMPDIR/header.gt.txt \
@@ -57,10 +57,10 @@ varfish-annotator \
     \
     --release {export_config[release]} \
     \
-    $(if [[ "{coverage_vcf}" != "" ]]; then \
-        for path in {coverage_vcf}; do \
-            echo --coverage-vcf $path; \
-        done; \
+    $(if [[ "{coverage_vcf}" != "" ]]; then
+        for path in {coverage_vcf}; do
+            echo --coverage-vcf $path
+        done
     fi) \
     \
     --db-path {snakemake.input.db} \
@@ -68,8 +68,8 @@ varfish-annotator \
     --ensembl-ser-path {snakemake.input.ensembl_ser} \
     --input-ped {snakemake.input.ped} \
     \
-    $(for vcf in $TMPDIR/final_for_import.*.vcf.gz; do \
-        echo --input-vcf $vcf; \
+    $(for vcf in $TMPDIR/final_for_import.*.vcf.gz; do
+        echo --input-vcf $vcf
     done) \
     --output-db-info {snakemake.output.db_infos} \
     --output-gts {snakemake.output.gts} \

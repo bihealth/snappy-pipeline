@@ -30,7 +30,7 @@ bcftools query \
     -R {snakemake.input.region} \
     -f "%CHROM\t%POS\n" \
     {snakemake.input.vcf} \
-| awk -F $'\t' '
+    | awk -F $'\t' '
         BEGIN {{ OFS = FS; prev_chrom = 0; prev_count = 0; }}
         {{
             $2 -= 1;
@@ -53,7 +53,7 @@ bcftools query \
                             (prev_window + 1) * {args[window_size]}, prev_count;
                 }}
         }}' \
-> $TMPDIR/var_counts.bed
+        > $TMPDIR/var_counts.bed
 
 # Cut out intervals to perform phasing for
 awk \
@@ -61,8 +61,8 @@ awk \
     -F $'\t' \
     'BEGIN {{ OFS = FS; }} ($4 > per_window) {{ print }}' \
     $TMPDIR/var_counts.bed \
-| bedtools merge \
-> $TMPDIR/intervals.neg.bed
+    | bedtools merge \
+        > $TMPDIR/intervals.neg.bed
 
 # Cut out intervals to NOT perform phasing for
 awk \
@@ -70,8 +70,8 @@ awk \
     -F $'\t' \
     'BEGIN {{ OFS = FS; }} ($4 <= per_window) {{ print }}' \
     $TMPDIR/var_counts.bed \
-| bedtools merge \
-> $TMPDIR/intervals.pos.bed
+    | bedtools merge \
+        > $TMPDIR/intervals.pos.bed
 
 head -n 1000 $TMPDIR/intervals.*.bed
 
@@ -84,22 +84,22 @@ else
 fi
 
 bcftools view $arg {snakemake.input.vcf} \
-| bgzip -c > $TMPDIR/intervals.neg.vcf.gz
+    | bgzip -c > $TMPDIR/intervals.neg.vcf.gz
 tabix $TMPDIR/intervals.neg.vcf.gz
 
 bcftools view -H $TMPDIR/intervals.neg.vcf.gz | wc -l
 
-if [[  -s $TMPDIR/intervals.pos.bed ]]; then
+if [[ -s $TMPDIR/intervals.pos.bed ]]; then
     arg="-R $TMPDIR/intervals.pos.bed"
 else
     arg="-r ''"
 fi
 
 bcftools view $arg {snakemake.input.vcf} \
-| snappy-vcf_filter_to_info \
-    --input-vcf /dev/stdin \
-    --output-vcf /dev/stdout \
-| bgzip -c > $TMPDIR/intervals.pos.nofilter.vcf.gz
+    | snappy-vcf_filter_to_info \
+        --input-vcf /dev/stdin \
+        --output-vcf /dev/stdout \
+    | bgzip -c > $TMPDIR/intervals.pos.nofilter.vcf.gz
 tabix $TMPDIR/intervals.pos.nofilter.vcf.gz
 
 bcftools view -H $TMPDIR/intervals.pos.nofilter.vcf.gz | wc -l

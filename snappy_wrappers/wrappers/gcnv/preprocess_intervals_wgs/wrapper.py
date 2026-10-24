@@ -11,11 +11,10 @@ args = snakemake.params.args
 
 ShellWrapper(snakemake).run(
     r"""
-
 gatk PreprocessIntervals \
-   --padding {args[padding]} \
-   --interval-merging-rule {args[interval_merging_rule]} \
-   --reference {snakemake.input.reference} \
-   --output {snakemake.output.interval_list}
+    --padding {args[padding]} \
+    --interval-merging-rule {args[interval_merging_rule]} \
+    --reference {snakemake.input.reference} \
+    --output {snakemake.output.interval_list}
 """
 )

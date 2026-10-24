@@ -14,7 +14,6 @@ interval_list = [path for path in snakemake.input if str(path).endswith(".interv
 
 ShellWrapper(snakemake).run(
     r"""
-
 set -euo pipefail
 
 rm -rf "{snakemake.output}"

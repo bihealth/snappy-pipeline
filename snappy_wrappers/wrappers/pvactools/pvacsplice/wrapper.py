@@ -60,14 +60,11 @@ link_missing() {{
     cls_i=$2
     cls_ii=$3
 
-    if [[ ! -e $combined ]]
-    then
+    if [[ ! -e $combined ]]; then
         mkdir -p $(dirname $combined)
-        if [[ ! -e $cls_i ]]
-        then
+        if [[ ! -e $cls_i ]]; then
             mkdir -p $(dirname $cls_i)
-            if [[ ! -e $cls_ii ]]
-            then
+            if [[ ! -e $cls_ii ]]; then
                 mkdir -p $(dirname $cls_ii)
                 echo "WARNING: Missing $cls_i and $cls_ii, pVACsplice didn't finish gracefully."
                 touch $cls_i
@@ -85,13 +82,15 @@ link_missing() {{
     fi
 }}
 
-
 link_missing {snakemake.output[all.Combined]} {snakemake.output[all.MHC_I]} {snakemake.output[all.MHC_II]}
 link_missing {snakemake.output[aggregated.Combined]} {snakemake.output[aggregated.MHC_I]} {snakemake.output[aggregated.MHC_II]}
 link_missing {snakemake.output[filtered.Combined]} {snakemake.output[filtered.MHC_I]} {snakemake.output[filtered.MHC_II]}
 
 for path in {fasta}; do
-    [[ -e $path ]] || {{ mkdir -p $(dirname $path); touch $path; }}
+    [[ -e $path ]] || {{
+        mkdir -p $(dirname $path)
+        touch $path
+    }}
 done
 
 ls -altrR $(dirname {snakemake.output.done})

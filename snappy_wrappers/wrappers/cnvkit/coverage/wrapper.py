@@ -16,8 +16,7 @@ set -x
 
 # Function definitions ---------------------------------------------------------
 
-coverage()
-{{
+coverage() {{
     cnvkit.py coverage \
         --fasta {snakemake.input.reference} \
         --min-mapq {args[min_mapq]} \

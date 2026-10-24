@@ -7,7 +7,6 @@ if TYPE_CHECKING:
 
 ShellWrapper(snakemake).run(
     r"""
-
 python -m peddy \
     --prefix $(dirname {snakemake.output.html})/$(basename {snakemake.output.html} .html) \
     {extra_arguments} \

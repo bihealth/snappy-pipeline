@@ -42,8 +42,7 @@ declare -a reads_right=({reads_right})
 # Function Definitions ----------------------------------------------------------------------------
 
 # Duplicate masking from SAM file in STDIN to STDOUT
-mask_duplicates()
-{{
+mask_duplicates() {{
     set -x
 
     if [[ "{reads_right}" != "" ]]; then
@@ -55,8 +54,7 @@ mask_duplicates()
 }}
 
 # Sort by coordinate input SAM from STDIN
-sort_by_coord()
-{{
+sort_by_coord() {{
     set -x
 
     samtools sort -O BAM \
@@ -66,8 +64,7 @@ sort_by_coord()
 }}
 
 # Merge and index STAR output
-index_bam()
-{{
+index_bam() {{
     set -x
 
     out_bam=$1
@@ -78,8 +75,7 @@ index_bam()
 }}
 
 # Function for running STAR
-run_star()
-{{
+run_star() {{
     set -x
 
     rg_args=""
@@ -95,11 +91,17 @@ run_star()
         done
     fi
 
-    left_files=$(IFS="," ; echo "${{reads_left[*]}}")
+    left_files=$(
+        IFS=","
+        echo "${{reads_left[*]}}"
+    )
 
     right_files=""
     if [[ "{reads_right}" != "" ]]; then
-        right_files=$(IFS="," ; echo "${{reads_right[*]}}")
+        right_files=$(
+            IFS=","
+            echo "${{reads_right[*]}}"
+        )
     fi
 
     trim_cmd=""
@@ -110,12 +112,10 @@ run_star()
     fi
 
     quant_mode=""
-    if [[ -n "{snakemake.input.features}" ]]
-    then
+    if [[ -n "{snakemake.input.features}" ]]; then
         quant_mode="$quant_mode GeneCounts"
     fi
-    if [[ "{args[transcriptome]}" = "True" ]]
-    then
+    if [[ "{args[transcriptome]}" = "True" ]]; then
         quant_mode="$quant_mode TranscriptomeSAM"
     fi
 
@@ -139,21 +139,21 @@ run_star()
         --outFilterMultimapNmax {args[out_filter_multimap_n_max]} \
         --outFilterType {args[out_filter_type]} \
         --outSAMstrandField {args[out_sam_strand_field]} \
-        --outSAMunmapped $(if [[ "{args[include_unmapped]}" == "True" ]]; then \
-                echo "Within"; \
-            else
-                echo "None"; \
-            fi) \
-        $(if [[ -n "$quant_mode" ]]; then \
+        --outSAMunmapped $(if [[ "{args[include_unmapped]}" == "True" ]]; then
+            echo "Within"
+        else
+            echo "None"
+        fi) \
+        $(if [[ -n "$quant_mode" ]]; then
             echo "--quantMode $quant_mode"
         fi) \
-        $(if [[ -n "{snakemake.input.features}" ]]; then \
+        $(if [[ -n "{snakemake.input.features}" ]]; then
             echo --sjdbGTFfile "{snakemake.input.features}"
         fi) \
-        $(if [[ "{args[mask_duplicates]}" == "True" ]]; then \
-            echo " --outStd SAM " ; \
+        $(if [[ "{args[mask_duplicates]}" == "True" ]]; then
+            echo " --outStd SAM "
         else
-            echo " --outSAMtype BAM SortedByCoordinate "; \
+            echo " --outSAMtype BAM SortedByCoordinate "
         fi) \
         --runThreadN {args[num_threads_align]}
 
@@ -191,9 +191,8 @@ fi
 
 # gather statistics from BAM file
 # TODO: use pipes for only reading once from disk?
-samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
+samtools stats {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
 samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
-
 """
 )

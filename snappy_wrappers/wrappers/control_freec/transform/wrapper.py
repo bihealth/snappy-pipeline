@@ -32,7 +32,5 @@ R --vanilla -e "source(\"{rscript}\") ; library(magrittr) ; \
     tx_obj={args[tx_obj]}, \
     bs_obj={args[bs_obj]}, \
     amplification={args[amplification]})"
-
-
 """
 )

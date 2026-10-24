@@ -13,6 +13,5 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 ShellWrapper(snakemake).run(
     r"""
 arcasHLA reference --version {snakemake.params.reference_version} --verbose
-
 """
 )

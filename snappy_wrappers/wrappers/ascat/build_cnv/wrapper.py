@@ -17,18 +17,18 @@ ShellWrapper(snakemake).run(
 # Create VCF file from spots
 #
 echo "##fileformat=VCFv4.2" \
-> $TMPDIR/spots.vcf
+    > $TMPDIR/spots.vcf
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
->> $TMPDIR/spots.vcf
+    >> $TMPDIR/spots.vcf
 
 zcat -f {snakemake.input.b_af_loci} \
-| awk \
-    -F $'\t' '
+    | awk \
+        -F $'\t' '
     BEGIN {{ OFS=FS; }}
     ($2 > 0) {{
         print $1, $2 + 1, "SPOT" NR, "N", ".", ".", ".", "."
     }}' \
->> $TMPDIR/spots.vcf
+        >> $TMPDIR/spots.vcf
 bgzip $TMPDIR/spots.vcf
 tabix -f $TMPDIR/spots.vcf.gz
 
@@ -46,32 +46,32 @@ cnvetti quick wgs-cov-bins \
 bcftools query \
     -f "%CHROM\t%POS0\t%END[\t%NCOV]\n" \
     $TMPDIR/cov.bcf \
-| bgzip -c \
-> $TMPDIR/ncov.bed.gz
+    | bgzip -c \
+        > $TMPDIR/ncov.bed.gz
 tabix -f $TMPDIR/ncov.bed.gz
 
 # -------------------------------------------------------------------------------------------------
 # Annotate spots VCF and build resulting file from this.
 #
-cat <<"EOF" >$TMPDIR/ad_header.txt
+cat << "EOF" > $TMPDIR/ad_header.txt
 ##INFO=<ID=NCOV,Number=1,Type=String,Description="Normalized coverage (incl. q0 reads)">
 EOF
 
 echo -e "\tchrs\tpos\tSAMPLE" \
-> {snakemake.output.txt}
+    > {snakemake.output.txt}
 bcftools annotate \
     --header-lines $TMPDIR/ad_header.txt \
     --annotations $TMPDIR/ncov.bed.gz \
     --columns -CHROM,-FROM,-TO,NCOV \
     $TMPDIR/spots.vcf.gz \
-| bcftools query \
-    -f "%ID\t%CHROM\t%POS\t%NCOV\n" \
-| sed -e 's/,/\t/g' \
-| awk -F $'\t' '
+    | bcftools query \
+        -f "%ID\t%CHROM\t%POS\t%NCOV\n" \
+    | sed -e 's/,/\t/g' \
+    | awk -F $'\t' '
     BEGIN {{ OFS=FS; }}
     ($2 == 0 ) {{ next; }}
     {{ print $1, $2, $3, log($4) / log(2); }}
     ' \
->> {snakemake.output.txt}
+        >> {snakemake.output.txt}
 """
 )

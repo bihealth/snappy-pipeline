@@ -14,14 +14,14 @@ delly merge \
 bcftools view \
     -O v \
     $TMPDIR/tmp.bcf \
-| awk -F $'\t' '
+    | awk -F $'\t' '
     BEGIN {{ OFS=FS; }}
     (/^#/ || ($2 != 0)) {{ print $0; }}
     ($2 == 0) {{ $2 = 1; print $0; }}' \
-| bcftools view \
-    -O b \
-    /dev/stdin \
-> {snakemake.output.bcf}
+    | bcftools view \
+        -O b \
+        /dev/stdin \
+        > {snakemake.output.bcf}
 
 tabix -f {snakemake.output.bcf}
 """

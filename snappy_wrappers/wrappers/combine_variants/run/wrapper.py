@@ -23,8 +23,7 @@ ShellWrapper(snakemake).run(
 tmp=$(mktemp -d)
 gatk=$(find ${{CONDA_PREFIX:-}} -name GenomeAnalysisTK.jar)
 
-if [[ -n "{sample_name}" ]]
-then
+if [[ -n "{sample_name}" ]]; then
     germline=$tmp/germline.vcf.gz
     bcftools reheader --samples <(echo "{sample_name}") {snakemake.input.germline_vcf} > $germline
     tabix $germline

@@ -13,7 +13,6 @@ mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
-
 JAR={snakemake.input.jar}
 ME_REFS={snakemake.input.me_refs}
 ME_INFIX={args[me_refs_infix]}
@@ -32,7 +31,7 @@ java -Xmx{mem_jvm}m -jar $JAR \
     -h {reference} \
     -t $ME_REFS/$ME_INFIX/{args[me_type]}_MELT.zip \
     $(if [[ $ME_REFS == *37* ]] || [[ $ME_REFS == *hg19* ]]; then
-        echo -v $ME_REFS/../../prior_files/{args[me_type]}.1KGP.sites.vcf;
+        echo -v $ME_REFS/../../prior_files/{args[me_type]}.1KGP.sites.vcf
     fi) \
     -w $(dirname {snakemake.output.pre_geno}) \
     -r {args[read_length]} \

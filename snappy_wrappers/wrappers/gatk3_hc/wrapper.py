@@ -19,9 +19,9 @@ gatk PreprocessIntervals \
     --bin-length {args[window_length]} \
     --output $TMPDIR/raw.interval_list \
     --interval-merging-rule OVERLAPPING_ONLY \
-    $(for ignore_contig in {args[ignore_contigs]}; do \
+    $(for ignore_contig in {args[ignore_contigs]}; do
         awk "(\$1 ~ /$ignore_contig/) {{ printf(\"--exclude-intervals %s:1-%d\\n\", \$1, \$2) }}" \
-            {snakemake.input.reference}.fai; \
+            {snakemake.input.reference}.fai
     done)
 
 # Postprocess the Picard-style interval list into properly padded interval strings suitable for
@@ -39,23 +39,22 @@ awk -v PADDING={args[padding]} '
         printf("%s:%d-%d\n", chrom, start, end);
     }}
 ' $TMPDIR/raw.interval_list \
-> $TMPDIR/final_intervals.txt
+    > $TMPDIR/final_intervals.txt
 wc -l $TMPDIR/final_intervals.txt
 
 # Create per-shard output directory
 mkdir -p $TMPDIR/shards-output
 
 # Function to run HaplotypeCaller in "joint" mode - cannot generate gVCF
-run-shard()
-{{
+run-shard() {{
     job_no=$1
     interval=$2
 
     GATK_JAVA_MEMORY={java_mem_mb}m
     gatk3 -Xmx$GATK_JAVA_MEMORY -Djava.io.tmpdir=$TMPDIR \
         --analysis_type HaplotypeCaller \
-        $(if [[ {args[allow_seq_dict_incompatibility]} == "True" ]]; then \
-            echo --disable-sequence-dictionary-validation true; \
+        $(if [[ {args[allow_seq_dict_incompatibility]} == "True" ]]; then
+            echo --disable-sequence-dictionary-validation true
         fi) \
         --out $TMPDIR/shards-output/$(printf %06d $job_no).vcf.gz \
         --reference_sequence {snakemake.input.reference} \
@@ -63,33 +62,36 @@ run-shard()
         --dbsnp {snakemake.input.dbsnp} \
         --intervals $interval \
         {extra_arguments} \
-        $(for path in {snakemake.input.bam}; do \
-            echo --input_file $path; \
+        $(for path in {snakemake.input.bam}; do
+            echo --input_file $path
         done)
 }}
 export -f run-shard
 
 # Perform parallel execution
-(set -x; sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s) # sleep up to 10s to work around bug
+(
+    set -x
+    sleep $(echo "scale=3; $RANDOM/32767*10" | bc)s
+) # sleep up to 10s to work around bug
 num_threads={args[num_threads]}
 cat $TMPDIR/final_intervals.txt \
-| parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
+    | parallel --plain -j $num_threads 'run-shard {{#}} {{}}'
 
 # Merge the individual shards' output VCF
 bcftools concat \
-    --allow-overlaps  \
+    --allow-overlaps \
     -d none \
     -O u \
     $TMPDIR/shards-output/*.vcf.gz \
-| bcftools sort \
-    -T $TMPDIR/bcftools.sort.XXXXXX \
-    -O u \
-    /dev/stdin \
-| bcftools norm \
-    -d exact \
-    -f {snakemake.input.reference} \
-    -O z \
-    -o {snakemake.output.vcf}
+    | bcftools sort \
+        -T $TMPDIR/bcftools.sort.XXXXXX \
+        -O u \
+        /dev/stdin \
+    | bcftools norm \
+        -d exact \
+        -f {snakemake.input.reference} \
+        -O z \
+        -o {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 )

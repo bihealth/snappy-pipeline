@@ -16,10 +16,10 @@ if [[ -n "{path_exon_bed}" ]]; then
     bcftools view \
         -R {path_exon_bed} \
         {snakemake.input.vcf} \
-    | bcftools sort -T $TMPDIR \
-    | bcftools norm -d all \
-    | bgzip -c \
-    > $TMPDIR/tmp.vcf.gz
+        | bcftools sort -T $TMPDIR \
+        | bcftools norm -d all \
+        | bgzip -c \
+            > $TMPDIR/tmp.vcf.gz
     tabix -f $TMPDIR/tmp.vcf.gz
 else
     set -e

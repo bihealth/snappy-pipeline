@@ -13,3 +13,10 @@ repos:
         # snakefmt cannot parse `use rule * from <module> as <prefix>*` in the orchestrator;
         # CI likewise only checks snappy_pipeline/workflows/*/Snakefile.
         exclude: ^snappy_pipeline/Snakefile$
+  - repo: local
+    hooks:
+      - id: shfmt
+        name: shfmt (shell scripts and the shell templates of the wrappers)
+        entry: pixi run --frozen -e dev python tests/scripts/shell_templates.py --write
+        language: system
+        files: ^(snappy_wrappers/wrappers/.*\.py|.*\.sh)$

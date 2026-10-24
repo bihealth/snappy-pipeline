@@ -31,7 +31,7 @@ cnvkit.py call \
     --output {snakemake.output.calls} \
     --method {args[method]} \
     --thresholds={args[thresholds]} \
-    $(if [[ -n "{args[filter]}" ]]; then \
+    $(if [[ -n "{args[filter]}" ]]; then
         echo --filter {args[filter]}
     fi) \
     {center} {gender} {male} {drop_low_coverage} \

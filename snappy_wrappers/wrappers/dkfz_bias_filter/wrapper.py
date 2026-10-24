@@ -32,7 +32,7 @@ dkfzbiasfilter.py \
 
 if [[ ! -s ${{out%.gz}} ]]; then
     bcftools view --header-only {snakemake.input.vcf} \
-    > ${{out%.gz}}
+        > ${{out%.gz}}
 fi
 
 if [[ "{mode}" == "filter" ]]; then

@@ -19,6 +19,6 @@ bcftools query \
     -s {args[tumor_library]} \
     {extra_arguments} \
     {snakemake.input.vcf} \
-> {snakemake.output.tsv}
+    > {snakemake.output.tsv}
 """
 )

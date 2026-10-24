@@ -26,7 +26,7 @@ set -x
 cnvkit.py segment \
     --output {snakemake.output.segments} \
     --method {method} \
-    $(if [[ "{args[drop_low_coverage]}" = "True" ]]; then \
+    $(if [[ "{args[drop_low_coverage]}" = "True" ]]; then
         echo --drop-low-coverage
     fi) \
     {threshold} \

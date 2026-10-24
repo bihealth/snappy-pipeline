@@ -14,8 +14,7 @@ timeout = 60 * int(snakemake.resources.runtime)
 
 ShellWrapper(snakemake).run(
     r"""
-if [[ -s {snakemake.input.epitopes} ]]
-then
+if [[ -s {snakemake.input.epitopes} ]]; then
     tmpdir=$(dirname {snakemake.output.netchop})/tmp/netchop.$(basename {snakemake.output.netchop})
     mkdir -p $tmpdir
 

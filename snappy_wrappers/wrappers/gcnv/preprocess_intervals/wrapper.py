@@ -16,7 +16,6 @@ target_interval_bed = f"-L {target_bed}" if target_bed else ""
 
 ShellWrapper(snakemake).run(
     r"""
-
 gatk PreprocessIntervals \
     --bin-length {args[bin_length]} \
     --interval-merging-rule {args[interval_merging_rule]} \

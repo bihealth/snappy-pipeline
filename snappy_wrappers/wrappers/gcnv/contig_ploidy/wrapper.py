@@ -62,10 +62,9 @@ else
     STYLE=""
 fi
 
-
 PRIORS=$TMPDIR/ploidy_priors.tsv
 echo -e "CONTIG_NAME\tPLOIDY_PRIOR_0\tPLOIDY_PRIOR_1\tPLOIDY_PRIOR_2\tPLOIDY_PRIOR_3" \
-> $PRIORS
+    > $PRIORS
 for i in {{1..22}}; do
     echo -e "$STYLE$i\t{autosome_prior}" >> $PRIORS
 done

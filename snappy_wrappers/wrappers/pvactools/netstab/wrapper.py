@@ -14,8 +14,7 @@ lengths = f"--lengths {lengths}" if lengths else ""
 
 ShellWrapper(snakemake).run(
     r"""
-if [[ -s {snakemake.input.epitopes} ]]
-then
+if [[ -s {snakemake.input.epitopes} ]]; then
     export LC_ALL=C.UTF-8
 
     # netMHCstabpan of the IEDB tools in the pVACtools container; its many small temporary files

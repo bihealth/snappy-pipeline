@@ -30,7 +30,7 @@ export output_dir=$TMPDIR/freec_out
 
 mkdir -p $TMPDIR/tmp.d $output_dir
 
-cat <<EOF >$TMPDIR/tmp.d/freec.ini
+cat << EOF > $TMPDIR/tmp.d/freec.ini
 # http://boevalab.com/FREEC/tutorial.html
 [general]
 
@@ -55,7 +55,7 @@ minimalSubclonePresence = {args[minimal_subclone_presence]}
 numberOfProcesses = {snakemake.threads}
 
 $(if [[ "{args[path_mappability_enabled]}" == True ]]; then
-  echo gemMappabilityFile = {mappability};
+    echo gemMappabilityFile = {mappability}
 fi)
 
 uniqueMatch = {unique_match}
@@ -97,7 +97,6 @@ mateOrientation = 0
 [target]
 # no parameters to be set
 EOF
-
 
 # Run Control-Freec -------------------------------------------------------------------------------
 

@@ -19,14 +19,14 @@ set -x
 
 # Get sorted targets BED file.
 zcat --force {targets_bed} \
-| awk -F $'\t' 'BEGIN {{ OFS = FS; }} ($2 < $3) {{ print; }}' \
-> $TMPDIR/targets.tmp.bed
+    | awk -F $'\t' 'BEGIN {{ OFS = FS; }} ($2 < $3) {{ print; }}' \
+        > $TMPDIR/targets.tmp.bed
 
 bedtools sort \
     -i $TMPDIR/targets.tmp.bed \
     -faidx {fai_path} \
-| uniq \
-> $TMPDIR/targets.bed
+    | uniq \
+        > $TMPDIR/targets.bed
 
 # Run "alfred qc".
 alfred qc \

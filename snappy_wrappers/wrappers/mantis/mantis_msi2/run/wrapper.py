@@ -21,7 +21,7 @@ mkdir -p $TMPDIR/out
 # Only one thread is used, see https://github.com/OSU-SRLab/MANTIS/issues/57
 
 mantis-msi2 \
-    -t {snakemake.input.tumor_bam}  \
+    -t {snakemake.input.tumor_bam} \
     -n {snakemake.input.normal_bam} \
     --genome {snakemake.input.reference} \
     --bedfile {snakemake.input.loci_bed} \
@@ -33,7 +33,6 @@ mantis-msi2 \
     --threads 1 \
     -o $TMPDIR/out/$(basename {snakemake.output.result}) \
     {extra_arguments}
-
 
 mv $TMPDIR/out/* $(dirname {snakemake.output.result})
 """

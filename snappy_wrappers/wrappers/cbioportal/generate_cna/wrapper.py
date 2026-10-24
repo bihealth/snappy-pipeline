@@ -24,6 +24,5 @@ write.table(
     file="{snakemake.output}", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE
 )
 __EOF
-
 """
 )

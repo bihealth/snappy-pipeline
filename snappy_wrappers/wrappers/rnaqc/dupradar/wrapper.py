@@ -23,8 +23,7 @@ fi
 # Find out strand
 strand={args[strand]}
 
-if [ ${{strand}} -eq -1 ]
-then
+if [ ${{strand}} -eq -1 ]; then
     strand=$(jq -r '.decision' {snakemake.input.decision})
 fi
 

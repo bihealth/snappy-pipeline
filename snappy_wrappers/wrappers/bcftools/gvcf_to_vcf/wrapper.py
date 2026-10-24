@@ -18,7 +18,7 @@ check_vcf() {{
 
     # Check
     if bcftools query --list-samples $1 | grep --quiet --word-regexp $2; then
-       return 0
+        return 0
     else
         echo "VCF header doesn't contain sample '$2': $1"
         echo "Samples:" $(bcftools query --list-samples $1)
@@ -28,10 +28,10 @@ check_vcf() {{
 
 # Convert gVCF to VCF, filter at least one allele
 bcftools convert --gvcf2vcf \
-        --output-type u \
-        --fasta-ref {snakemake.input.reference} \
-        {snakemake.input.vcf} \
-| bcftools view --no-update --min-ac 1 \
+    --output-type u \
+    --fasta-ref {snakemake.input.reference} \
+    {snakemake.input.vcf} \
+    | bcftools view --no-update --min-ac 1 \
         --output-type z \
         --output {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
@@ -40,6 +40,5 @@ tabix -f {snakemake.output.vcf}
 while read sample; do
     check_vcf {snakemake.output.vcf} $sample
 done < <(echo {snakemake.params.args[sample_names]})
-
 """
 )

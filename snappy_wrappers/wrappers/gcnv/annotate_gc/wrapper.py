@@ -11,7 +11,6 @@ args = snakemake.params.args
 
 ShellWrapper(snakemake).run(
     r"""
-
 gatk AnnotateIntervals \
     --interval-merging-rule {args[interval_merging_rule]} \
     --mappability-track {snakemake.input.mappability} \

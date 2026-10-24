@@ -17,8 +17,7 @@ get_value() {{
     fn=$1
     pattern=$2
     grep -q "$pattern" $fn
-    if [ $? -ne 0 ]
-    then
+    if [ $? -ne 0 ]; then
         echo "0"
     else
         grep "$pattern" $fn | sed -e "s/.*	//"
@@ -30,8 +29,7 @@ star_log=$(readlink -f {snakemake.input.bam})
 star_log=$(dirname ${{star_log}})
 star_log=${{star_log}}/../log/Log.final.out
 
-if [ -r ${{star_log}} ]
-then
+if [ -r ${{star_log}} ]; then
     awk -v v=0 '{{if(v==1){{print $0}}; if(match($0, "^ *$")>0){{v=1}}}}' \
         ${{star_log}} \
         | grep -v ':$' | sed -e "s/^ *//" | sed -e "s/ |//" \

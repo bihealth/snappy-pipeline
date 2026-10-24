@@ -25,12 +25,11 @@ mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
-
 outdir={snakemake.output.html}
 mkdir -p $outdir
 
 _JAVA_OPTIONS="-Xms256m -Xmx{mem_jvm}m -XX:CompressedClassSpaceSize=512m" \
-fastqc \
+    fastqc \
     --noextract \
     -o $outdir \
     -t {args[num_threads]} \

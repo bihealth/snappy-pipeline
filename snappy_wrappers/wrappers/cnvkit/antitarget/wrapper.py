@@ -22,15 +22,14 @@ set -x
 
 # -----------------------------------------------------------------------------
 
-if [[ -n "{target}" ]]
-then
+if [[ -n "{target}" ]]; then
     cnvkit.py antitarget \
         --output {snakemake.output.antitarget} \
         {access} \
-        $(if [[ {args[avg_size]} -gt 0 ]]; then \
+        $(if [[ {args[avg_size]} -gt 0 ]]; then
             echo --avg-size {args[avg_size]}
         fi) \
-        $(if [[ {args[min_size]} -gt 0 ]]; then \
+        $(if [[ {args[min_size]} -gt 0 ]]; then
             echo --min-size {args[min_size]}
         fi) \
         {target}

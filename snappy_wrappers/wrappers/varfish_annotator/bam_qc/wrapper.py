@@ -71,68 +71,67 @@ with tempfile.TemporaryDirectory() as tmpdir, tempfile.NamedTemporaryFile("wt") 
     # Actually run the script.
     ShellWrapper(snakemake).run(
         r"""
-    set -x
+set -x
 
-    # --------------------- #
-    # Get output identifier #
-    # --------------------- #
-    get_output_identifier() {{
-        # Parameters:
-        # $1: file being processed
-        # $2: path to temporary file with identifiers hash
-        # The reports are named {{library_name}}.bam.{{report}}.txt
-        library_name=$(basename $1)
-        library_name=${{library_name%%.bam.*}}
-        sample=$(grep $library_name $2 | cut -f2 -d' ')
-        if [[ -z "$sample" ]]; then
-            echo "Could not find '$1' in $2"
-            cat $2
-            exit 1
-        fi
-        echo $sample
-        return 0
-    }}
+# --------------------- #
+# Get output identifier #
+# --------------------- #
+get_output_identifier() {{
+    # Parameters:
+    # $1: file being processed
+    # $2: path to temporary file with identifiers hash
+    # The reports are named {{library_name}}.bam.{{report}}.txt
+    library_name=$(basename $1)
+    library_name=${{library_name%%.bam.*}}
+    sample=$(grep $library_name $2 | cut -f2 -d' ')
+    if [[ -z "$sample" ]]; then
+        echo "Could not find '$1' in $2"
+        cat $2
+        exit 1
+    fi
+    echo $sample
+    return 0
+}}
 
-    # Extract "samtools stats" outputs into JSON
-    for bamstats in {snakemake.input.bamstats}; do
-        # Define identifier to be used in output
-        sample=$(get_output_identifier $bamstats {json_tmpf.name})
+# Extract "samtools stats" outputs into JSON
+for bamstats in {snakemake.input.bamstats}; do
+    # Define identifier to be used in output
+    sample=$(get_output_identifier $bamstats {json_tmpf.name})
 
-        grep '^SN' $bamstats \
+    grep '^SN' $bamstats \
         | cut -f 2-3 \
         | sed -e 's/:\t/\t/g' \
         | awk -F $'\t' -v sample=$sample 'BEGIN {{ print "{{ \"" sample "\": {{ \"bamstats\": {{"; }}
             {{ if (NR > 1) print ","; print "\"" $1 "\":" $2 }}
             END {{ print "}} }} }}" }}' \
         | jq '.' \
-        > $TMPDIR/bamstats.$sample
-    done
+            > $TMPDIR/bamstats.$sample
+done
 
-    # Extract "samtools idxstats" into JSON
-    for idxstats in {snakemake.input.idxstats}; do
-        # Define identifier to be used in output
-        sample=$(get_output_identifier $idxstats {json_tmpf.name})
+# Extract "samtools idxstats" into JSON
+for idxstats in {snakemake.input.idxstats}; do
+    # Define identifier to be used in output
+    sample=$(get_output_identifier $idxstats {json_tmpf.name})
 
-        cat $idxstats \
+    cat $idxstats \
         | cut -f 1,3,4 \
         | awk -F $'\t' -v sample=$sample 'BEGIN {{ print "{{ \"" sample "\": {{ \"idxstats\": {{"; }}
             {{ if (NR > 1) print ","; print "\"" $1 "\":{{\"mapped\":" $2 ",\"unmapped\":" $3 "}}" }}
             END {{ print "}} }} }}" }}' \
         | jq '.' \
-        > $TMPDIR/idxstats.$sample
-    done
+            > $TMPDIR/idxstats.$sample
+done
 
-    # Merge JSON files
-    out_bam_qc={snakemake.output.bam_qc}
+# Merge JSON files
+out_bam_qc={snakemake.output.bam_qc}
 
-    echo -en "case_id\tset_id\tbam_stats\n.\t.\t" \
-    >${{out_bam_qc%.gz}}
+echo -en "case_id\tset_id\tbam_stats\n.\t.\t" \
+    > ${{out_bam_qc%.gz}}
 
-    jq -c --slurp 'reduce .[] as $item ({{}}; . * $item)' {tmpdir}/alfred_qc.* $TMPDIR/* \
+jq -c --slurp 'reduce .[] as $item ({{}}; . * $item)' {tmpdir}/alfred_qc.* $TMPDIR/* \
     | sed -e 's/"/\"""/g' \
-    >> ${{out_bam_qc%.gz}}
+        >> ${{out_bam_qc%.gz}}
 
-    # Compress output files and create MD5 sums.
-    gzip ${{out_bam_qc%.gz}}
-    """
+# Compress output files and create MD5 sums.
+gzip ${{out_bam_qc%.gz}}"""
     )

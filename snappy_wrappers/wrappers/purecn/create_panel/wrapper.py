@@ -27,9 +27,10 @@ echo "{snakemake.input.normals}" | tr " " "\n" > $TMPDIR/extra/filenames.txt
 
 # Extract Mutect2 genomicsDB when present
 normal_panel=""
-if [[ -n "{genomicsDB}" ]]
-then
-    pushd $TMPDIR ; tar -zxvf {genomicsDB} ; popd
+if [[ -n "{genomicsDB}" ]]; then
+    pushd $TMPDIR
+    tar -zxvf {genomicsDB}
+    popd
     # The genomicsdb R package of the image needs integers where GATK writes strings
     python {script} $TMPDIR/pon_db
     normal_panel=" --normal-panel $TMPDIR/pon_db "

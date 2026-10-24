@@ -29,22 +29,19 @@ set -x
 
 # Concatenate vcfs & index result ----------------------
 bcftools concat \
-     --allow-overlaps --rm-dups none \
+    --allow-overlaps --rm-dups none \
     {input.vcf} \
-| bcftools sort \
-     --output-type z --output {output.vcf}
+    | bcftools sort \
+        --output-type z --output {output.vcf}
 tabix -f {output.vcf}
 
 # Concatenate stats with GATK tool -------------------------------
-if [[ -n "{stats}" ]]
-then
+if [[ -n "{stats}" ]]; then
     gatk MergeMutectStats {stats} -O {output_stats}
 fi
 
 # Create orientation model from all F1R2 files -------------------
-if [[ -n "{orientation}" ]]
-then
+if [[ -n "{orientation}" ]]; then
     gatk LearnReadOrientationModel {orientation} -O {output_orientation}
 fi
-
 """)

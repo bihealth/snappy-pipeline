@@ -14,10 +14,10 @@ bcftools concat \
     --allow-overlaps \
     --rm-dups none \
     {snakemake.input.vcf} \
-| bcftools sort \
-    --temp-dir $TMPDIR \
-    --output-type z \
-    --output {snakemake.output.vcf}
+    | bcftools sort \
+        --temp-dir $TMPDIR \
+        --output-type z \
+        --output {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
 """
 )

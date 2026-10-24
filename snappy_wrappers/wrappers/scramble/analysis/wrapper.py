@@ -27,16 +27,16 @@ ShellWrapper(snakemake).run(
 mkdir -p $(dirname {snakemake.output.txt})
 
 # Call tool
-scramble.sh  {mei_ref_argument} \
-  --ref {snakemake.input.reference_genome} \
-  --out-name {prefix} \
-  --cluster-file {input_full_path} \
-  --nCluster {args[n_cluster]} \
-  --mei-score {args[mei_score]} \
-  --indel-score {args[indel_score]} \
-  --poly-a-frac {args[mei_polya_frac]} \
-  --eval-meis \
-  {extra_arguments}
+scramble.sh {mei_ref_argument} \
+    --ref {snakemake.input.reference_genome} \
+    --out-name {prefix} \
+    --cluster-file {input_full_path} \
+    --nCluster {args[n_cluster]} \
+    --mei-score {args[mei_score]} \
+    --indel-score {args[indel_score]} \
+    --poly-a-frac {args[mei_polya_frac]} \
+    --eval-meis \
+    {extra_arguments}
 
 # Scramble names its table {{prefix}}_MEIs.txt, the declared name is {{prefix}}.MEIs.txt
 mv {prefix}_MEIs.txt {snakemake.output.txt}

@@ -41,12 +41,11 @@ vcfs=$(echo "{snakemake.input.normals}" | tr ' ' '\n')
 # Create a file with the list of contigs & vcf list for GenomicsDBImport
 rm -f $TMPDIR/contigs.txt
 cmd=""
-for vcf in ${{vcfs}}
-do
+for vcf in ${{vcfs}}; do
     bcftools view -h ${{vcf}} \
         | grep "^##contig=<" \
         | sed -re "s/.*ID=([^,>]+),length=([^,>]+).*/\1:1-\2/" \
-        >> $TMPDIR/contigs_all.list
+            >> $TMPDIR/contigs_all.list
     cmd="$cmd -V ${{vcf}} "
 done
 sort $TMPDIR/contigs_all.list | uniq > $TMPDIR/contigs.list

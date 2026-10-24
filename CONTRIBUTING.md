@@ -50,7 +50,7 @@ Here is how to set up `snappy-pipeline` for local development.
    git clone git@github.com:<your-user>/snappy-pipeline.git
    ```
 
-3. Install the development environment with [pixi](https://pixi.sh) (Python 3.12 or newer) and the pre-commit hooks (ruff and snakefmt):
+3. Install the development environment with [pixi](https://pixi.sh) (Python 3.12 or newer) and the pre-commit hooks (ruff, snakefmt and shfmt):
 
    ```shell
    cd snappy-pipeline/
@@ -64,7 +64,8 @@ Here is how to set up `snappy-pipeline` for local development.
    git checkout -b name-of-your-bugfix-or-feature
    ```
 
-5. Format the code, then check that the linters and the tests pass:
+5. Format the code, then check that the linters and the tests pass.
+   `srcfmt` also formats the shell scripts and the shell templates of the wrappers with shfmt, and `lint` fails on shell that does not parse:
 
    ```shell
    pixi run -e dev srcfmt

@@ -10,7 +10,7 @@ set -x
 mkdir -p $TMPDIR/tmp.d
 
 # QC Report
-samtools stats    {snakemake.input.bam} > {snakemake.output.bamstats}
+samtools stats {snakemake.input.bam} > {snakemake.output.bamstats}
 samtools flagstat {snakemake.input.bam} > {snakemake.output.flagstats}
 samtools idxstats {snakemake.input.bam} > {snakemake.output.idxstats}
 """

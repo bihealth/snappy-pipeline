@@ -21,7 +21,7 @@ ShellWrapper(snakemake).run(
     r"""
 workdir={snakemake.output.out}
 mkdir -p $workdir
-echo ${{JOB_ID:-unknown}} >$workdir/sge_job_id
+echo ${{JOB_ID:-unknown}} > $workdir/sge_job_id
 
 inputdir=$workdir/input
 

@@ -30,11 +30,11 @@ ShellWrapper(snakemake).run(
 bcftools norm \
     --rm-dup exact --do-not-normalize --multiallelics -any \
     {snakemake.input.annotated} \
-| python {combine_script} \
-    --sample {args[tumor_sample]} \
-    {expression} \
-    {extra_arguments} \
-    --output {snakemake.output.vcf}
+    | python {combine_script} \
+        --sample {args[tumor_sample]} \
+        {expression} \
+        {extra_arguments} \
+        --output {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 )

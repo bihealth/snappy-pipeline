@@ -24,57 +24,57 @@ samtools mpileup \
     -t AD \
     -f {snakemake.input.reference} \
     {snakemake.input.bam} \
-| bcftools call \
-    -c \
-    -O u \
-| bcftools query -f "%CHROM\t%POS0\t%END[\t%AD]\n" \
-| bgzip -c \
-> $TMPDIR/calls.bed.gz
+    | bcftools call \
+        -c \
+        -O u \
+    | bcftools query -f "%CHROM\t%POS0\t%END[\t%AD]\n" \
+    | bgzip -c \
+        > $TMPDIR/calls.bed.gz
 tabix -f $TMPDIR/calls.bed.gz
 
 # -------------------------------------------------------------------------------------------------
 # Create VCF file from spots
 #
 echo "##fileformat=VCFv4.2" \
-> $TMPDIR/spots.vcf
+    > $TMPDIR/spots.vcf
 echo -e "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO" \
->> $TMPDIR/spots.vcf
+    >> $TMPDIR/spots.vcf
 
 zcat -f {snakemake.input.b_af_loci} \
-| awk \
-    -F $'\t' \
-    'BEGIN {{ OFS=FS; }}
+    | awk \
+        -F $'\t' \
+        'BEGIN {{ OFS=FS; }}
     ($2 > 0) {{
         print $1, $2 + 1, "SPOT" NR, "N", ".", ".", ".", "."
     }}' \
->> $TMPDIR/spots.vcf
+        >> $TMPDIR/spots.vcf
 bgzip $TMPDIR/spots.vcf
 tabix -f $TMPDIR/spots.vcf.gz
 
 # -------------------------------------------------------------------------------------------------
 # Annotate spots VCF and build resulting file from this.
 #
-cat <<"EOF" >$TMPDIR/ad_header.txt
+cat << "EOF" > $TMPDIR/ad_header.txt
 ##INFO=<ID=XAD,Number=1,Type=String,Description="Allelic depth">
 EOF
 
 echo -e "\tchrs\tpos\tSAMPLE" \
-> {snakemake.output.txt}
+    > {snakemake.output.txt}
 bcftools annotate \
     --header-lines $TMPDIR/ad_header.txt \
     --annotations $TMPDIR/calls.bed.gz \
     --columns -CHROM,-FROM,-TO,XAD \
     $TMPDIR/spots.vcf.gz \
-| bcftools query \
-    -f "%ID\t%CHROM\t%POS\t%XAD\n" \
-| sed -e 's/,/\t/g' \
-| awk -F $'\t' \
-    '
+    | bcftools query \
+        -f "%ID\t%CHROM\t%POS\t%XAD\n" \
+    | sed -e 's/,/\t/g' \
+    | awk -F $'\t' \
+        '
     BEGIN {{ OFS=FS; }}
     (NF == 4) {{ print $1, $2, $3, 0; }}
     (NF == 5 && ($4 + $5 == 0)) {{ print $1, $2, $3, "Inf"; }}
     (NF == 5 && ($4 + $5 > 0)) {{ print $1, $2, $3, $5 / ($4 + $5); }}
     ' \
->> {snakemake.output.txt}
+        >> {snakemake.output.txt}
 """
 )

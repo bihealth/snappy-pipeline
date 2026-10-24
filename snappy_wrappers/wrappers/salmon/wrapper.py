@@ -36,31 +36,33 @@ declare -a reads_left=({reads_left})
 # declared but never used
 declare -a reads_right=({reads_right})
 
-left_files=$(IFS=" " ; echo "${{reads_left[*]}}")
+left_files=$(
+    IFS=" "
+    echo "${{reads_left[*]}}"
+)
 left_files_prefixed=" ${{left_files}}"
 
 right_files_prefixed=""
 if [[ "{reads_right}" != "" ]]; then
-    right_files=$(IFS=" " ; echo "${{reads_right[*]}}")
+    right_files=$(
+        IFS=" "
+        echo "${{reads_right[*]}}"
+    )
     right_files_prefixed=" -2 ${{right_files}}"
 fi
 
 t2g="{t2g}"
 t2g_cmd=""
-if [[ "$t2g" != "" ]] && [[ "$t2g" != "REQUIRED" ]] && [[ -r "$t2g" ]]
-then
+if [[ "$t2g" != "" ]] && [[ "$t2g" != "REQUIRED" ]] && [[ -r "$t2g" ]]; then
     t2g_cmd=" -g $t2g"
 fi
 
 libraryType="A"
-if [[ {args[strand]} -ge 0 ]]
-then
+if [[ {args[strand]} -ge 0 ]]; then
     libraryType="I"
-    if [[ {args[strand]} -gt 0 ]]
-    then
+    if [[ {args[strand]} -gt 0 ]]; then
         libraryType="${{libraryType}}S"
-        if [[ {args[strand]} -eq 1 ]]
-        then
+        if [[ {args[strand]} -eq 1 ]]; then
             libraryType="${{libraryType}}F"
         else
             libraryType="${{libraryType}}R"
@@ -83,8 +85,7 @@ salmon quant \
 
 # Copy over the output files
 cp $TMPDIR/quant.sf {snakemake.output.transcript_sf}
-if [[ "${{t2g_cmd}}" != "" ]]
-then
+if [[ "${{t2g_cmd}}" != "" ]]; then
     cp $TMPDIR/quant.genes.sf {snakemake.output.gene_sf}
 fi
 

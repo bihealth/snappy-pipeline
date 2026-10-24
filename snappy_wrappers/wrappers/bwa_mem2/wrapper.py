@@ -43,8 +43,7 @@ declare -a read_groups=({read_groups})
 #
 # In the case of paired reads, write out line counts to temporary files so we can check for problems
 # later. A failing zcat in a process substitution does not fail the pipeline, so it leaves a marker.
-input_files()
-{{
+input_files() {{
     set -x
     i=$1
 
@@ -58,8 +57,7 @@ input_files()
 }}
 
 # Adapter trimming
-trim_adapters()
-{{
+trim_adapters() {{
     set -x
 
     if [[ "{trim_adapters}" == "True" ]]; then
@@ -70,8 +68,7 @@ trim_adapters()
 }}
 
 # Duplicate masking
-mask_duplicates()
-{{
+mask_duplicates() {{
     set -x
 
     if [[ "{mask_duplicates}" == "True" ]] && [[ ${{#reads_right[@]}} -gt 0 ]]; then
@@ -85,8 +82,7 @@ mask_duplicates()
 }}
 
 # Run BWA-MEM2 on the reads of read group $1
-run_bwa_mem2()
-{{
+run_bwa_mem2() {{
     set -x
     i=$1
 
@@ -114,24 +110,22 @@ run_bwa_mem2()
 }}
 
 # The alignments of all read groups, still grouped by read name, under one header
-merge_read_groups()
-{{
+merge_read_groups() {{
     set -x
 
     for f in $TMPDIR/out.d/*.bam; do
-        samtools view -H $f >${{f%.bam}}.hdr.sam
+        samtools view -H $f > ${{f%.bam}}.hdr.sam
     done
     samtools merge $TMPDIR/merged.hdr.bam $TMPDIR/out.d/*.hdr.sam
     samtools cat -h $TMPDIR/merged.hdr.bam $TMPDIR/out.d/*.bam \
-    | samtools view -h -@ {num_threads_bam_view}
+        | samtools view -h -@ {num_threads_bam_view}
 }}
 
 # Alignment postprocessing
 #
 # This function makes extensive use of tee-piping to prevent the BAM to be read from the disk
 # again for statistics.
-postproc_bam()
-{{
+postproc_bam() {{
     set -x
 
     samtools sort \
@@ -141,10 +135,10 @@ postproc_bam()
         -O BAM \
         -o /dev/stdout \
         /dev/stdin \
-    | tee >(samtools stats    /dev/stdin >{snakemake.output.report_bamstats_txt}) \
-    | tee >(samtools flagstat /dev/stdin >{snakemake.output.report_flagstats_txt}) \
-    | tee >(stdbuf -o0 samtools index /dev/stdin -o /dev/stdout >{snakemake.output.bam_bai}) \
-    > {snakemake.output.bam}
+        | tee >(samtools stats /dev/stdin > {snakemake.output.report_bamstats_txt}) \
+        | tee >(samtools flagstat /dev/stdin > {snakemake.output.report_flagstats_txt}) \
+        | tee >(stdbuf -o0 samtools index /dev/stdin -o /dev/stdout > {snakemake.output.bam_bai}) \
+            > {snakemake.output.bam}
 
     touch \
         {snakemake.output.bam} \
@@ -157,7 +151,7 @@ postproc_bam()
     # robust.
     for i in {{1..5}}; do
         set +e
-        samtools idxstats {snakemake.output.bam} >{snakemake.output.report_idxstats_txt}
+        samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
         ret=$?
         set -e
         if [[ "$ret" -eq 0 ]]; then
@@ -173,15 +167,14 @@ postproc_bam()
 }}
 
 # Check the decompression and the input line counts written out in input_files()
-check_input_line_counts()
-{{
+check_input_line_counts() {{
     if [[ -e $TMPDIR/zcat_failed ]]; then
         >&2 echo "Could not decompress the reads."
         exit 1
     fi
     for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         if [[ -e $TMPDIR/count_left.$i ]]; then
-            if ! diff $TMPDIR/count_left.$i $TMPDIR/count_right.$i >/dev/null; then
+            if ! diff $TMPDIR/count_left.$i $TMPDIR/count_right.$i > /dev/null; then
                 >&2 echo "Different number of lines in left/right file of read group ${{read_groups[$i]}}."
                 >&2 cat $TMPDIR/count_left.$i
                 >&2 cat $TMPDIR/count_right.$i
@@ -196,21 +189,21 @@ check_input_line_counts()
 # Map each read group with its own read group ID; several are concatenated for duplicate masking
 if [[ ${{#reads_left[@]}} -eq 1 ]]; then
     input_files 0 \
-    | trim_adapters \
-    | run_bwa_mem2 0 \
-    | mask_duplicates \
-    | postproc_bam
+        | trim_adapters \
+        | run_bwa_mem2 0 \
+        | mask_duplicates \
+        | postproc_bam
 else
     mkdir -p $TMPDIR/out.d
     for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         input_files $i \
-        | trim_adapters \
-        | run_bwa_mem2 $i \
-        | samtools view -b -@ {num_threads_bam_view} -o $TMPDIR/out.d/$(printf %05d $i).bam
+            | trim_adapters \
+            | run_bwa_mem2 $i \
+            | samtools view -b -@ {num_threads_bam_view} -o $TMPDIR/out.d/$(printf %05d $i).bam
     done
     merge_read_groups \
-    | mask_duplicates \
-    | postproc_bam
+        | mask_duplicates \
+        | postproc_bam
 fi
 
 check_input_line_counts

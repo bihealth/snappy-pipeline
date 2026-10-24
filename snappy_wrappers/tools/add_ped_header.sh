@@ -1,14 +1,13 @@
 #!/bin/bash
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && pwd)"
 
 snappy-add_ped_header_usage() {
     >&2 echo Usage: add_ped_header PED VCF OUT.VCF
     exit 1
 }
 
-snappy-add_ped_header()
-{
+snappy-add_ped_header() {
     PED=$1
     VCF=$2
     OUT=$3

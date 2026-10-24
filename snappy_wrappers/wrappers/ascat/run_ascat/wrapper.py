@@ -41,18 +41,18 @@ grep -v '^.chrs' {snakemake.input.baf_normal} > $TMPDIR/baf_normal.raw.txt
 grep -v '^.chrs' {snakemake.input.cnv_normal} > $TMPDIR/cnv_normal.raw.txt
 
 comm -12 \
-    <(  \
+    <(
         comm -12 \
             <(cut -f 1 $TMPDIR/baf_tumor.raw.txt | sort) \
-            <(cut -f 1 $TMPDIR/cnv_tumor.raw.txt | sort) \
+            <(cut -f 1 $TMPDIR/cnv_tumor.raw.txt | sort)
     ) \
-    <( \
+    <(
         comm -12 \
             <(cut -f 1 $TMPDIR/baf_normal.raw.txt | sort) \
-            <(cut -f 1 $TMPDIR/cnv_normal.raw.txt | sort) \
+            <(cut -f 1 $TMPDIR/cnv_normal.raw.txt | sort)
     ) \
-| grep -v '^$' \
-> $TMPDIR/ids.txt
+    | grep -v '^$' \
+        > $TMPDIR/ids.txt
 
 for name in baf_tumor baf_normal cnv_tumor cnv_normal; do
     echo -e "\tchrs\tpos\t{args[tumor_library]}" > $TMPDIR/$name.txt
@@ -62,7 +62,7 @@ done
 # -------------------------------------------------------------------------------------------------
 # Write ASCAT script and call R
 #
-cat <<"EOF" > $TMPDIR/run_ascat.R
+cat << "EOF" > $TMPDIR/run_ascat.R
 library(ASCAT)
 
 ascat.bc = ascat.loadData(

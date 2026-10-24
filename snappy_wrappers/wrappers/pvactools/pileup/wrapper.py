@@ -16,16 +16,16 @@ trap "rm -rf $TMPDIR" EXIT
 bcftools query \
     --format '%CHROM\t%POS0\t%END' \
     {snakemake.input.loci} \
-| bedtools merge -i - \
-> $TMPDIR/regions.bed
+    | bedtools merge -i - \
+        > $TMPDIR/regions.bed
 
 bcftools mpileup \
     --fasta-ref {snakemake.input.reference} \
     --regions-file $TMPDIR/regions.bed \
     {extra_arguments} \
     {snakemake.input.bam} \
-| bcftools reheader --samples <(echo "{args[tumor_sample]}") \
-| bcftools norm --multiallelics -both --remove-duplicates \
-| bcftools view -AA --output-type z --output {snakemake.output.vcf} --write-index=tbi
+    | bcftools reheader --samples <(echo "{args[tumor_sample]}") \
+    | bcftools norm --multiallelics -both --remove-duplicates \
+    | bcftools view -AA --output-type z --output {snakemake.output.vcf} --write-index=tbi
 """
 )

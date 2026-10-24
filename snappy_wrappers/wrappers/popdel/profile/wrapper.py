@@ -17,7 +17,7 @@ profile_regions = "\n".join(args["profile_regions"])
 
 ShellWrapper(snakemake).run(
     r"""
-cat >$TMPDIR/intervals.txt <<"EOF"
+cat > $TMPDIR/intervals.txt << "EOF"
 {profile_regions}
 EOF
 
@@ -27,7 +27,7 @@ if ! head -n 1 {snakemake.input.reference_fai} | grep -q '^chr'; then
 fi
 
 OMP_NUM_THREADS=2 \
-popdel profile \
+    popdel profile \
     --merge-read-groups \
     -i $TMPDIR/intervals.txt \
     -o {snakemake.output.profile} \

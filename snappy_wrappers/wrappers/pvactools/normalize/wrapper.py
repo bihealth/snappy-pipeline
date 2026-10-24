@@ -22,10 +22,10 @@ bcftools view \
     --no-update \
     --samples-file <(echo "{libraries}" | tr '\t' '\n') \
     {snakemake.input.annotated} \
-| bcftools reheader \
-    --samples <(echo "{samples}" | tr '\t' '\n') \
-| bcftools norm \
-    --multiallelics -any \
-    --output-type z --output {snakemake.output.vcf} --write-index=tbi
+    | bcftools reheader \
+        --samples <(echo "{samples}" | tr '\t' '\n') \
+    | bcftools norm \
+        --multiallelics -any \
+        --output-type z --output {snakemake.output.vcf} --write-index=tbi
 """
 )

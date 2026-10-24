@@ -71,7 +71,7 @@ gatk {java_options} Mutect2 \
     {input_params} \
     --output $out_base.vcf \
     {max_mnp_distance} \
-    $(if [[ -n "{with_f1r2_tar_gz}" ]]; then \
+    $(if [[ -n "{with_f1r2_tar_gz}" ]]; then
         echo --f1r2-tar-gz ${{out_base}}.f1r2.tar.gz
     fi) \
     {germline_resource_param} \
@@ -83,7 +83,6 @@ rm -f $out_base.vcf.idx
 
 bgzip $out_base.vcf
 tabix -f $out_base.vcf.gz
-
 
 mv $out_base.* $(dirname {vcf_output})
 """

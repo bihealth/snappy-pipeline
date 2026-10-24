@@ -26,8 +26,7 @@ set -x
 
 # -----------------------------------------------------------------------------
 
-access()
-{{
+access() {{
     cnvkit.py access \
         -o $tmpdir/access.bed \
         {reference}
@@ -39,13 +38,11 @@ target="{target}"
 target_avg_size={target_avg_size}
 
 # No target file -> in WGS mode -> targets are accessible regions
-if [[ -z "$target" ]] && [[ -z "$target_avg_size" ]]
-then
+if [[ -z "$target" ]] && [[ -z "$target_avg_size" ]]; then
     tmpdir=$(mktemp -d)
 
     # Normals are available -> compute target_avg_size from bams, without using user-defined access file
-    if [[ -n "{bams}" ]]
-    then
+    if [[ -n "{bams}" ]]; then
         access
         cnvkit.py autobin --method wgs \
             --fasta {reference} \
@@ -55,15 +52,13 @@ then
             {bams} > $tmpdir/autobin.txt
         target_avg_size=$(cat $tmpdir/autobin.txt | grep "Target:" | cut -f 3)
 
-        if [[ -z "{access}" ]]
-        then
+        if [[ -z "{access}" ]]; then
             target=$tmpdir/access.bed
         else
             target="{access}"
         fi
     else
-        if [[ -z "{access}" ]]
-        then
+        if [[ -z "{access}" ]]; then
             access
             target=$tmpdir/access.bed
         else
@@ -76,10 +71,10 @@ fi
 cnvkit.py target \
     --output {snakemake.output.target} \
     {annotate} \
-    $(if [[ "{args[split]}" = "True" ]]; then \
+    $(if [[ "{args[split]}" = "True" ]]; then
         echo --split
     fi) \
-    $(if [[ -n "$target_avg_size" ]]; then \
+    $(if [[ -n "$target_avg_size" ]]; then
         echo --avg-size $target_avg_size
     fi) \
     $target

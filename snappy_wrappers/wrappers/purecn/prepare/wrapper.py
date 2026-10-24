@@ -24,10 +24,10 @@ Rscript /opt/PureCN/IntervalFile.R \
     --export $uncompressed \
     --in-file {snakemake.input.bait_regions} \
     --fasta {snakemake.input.reference} --genome {config[genome_name]} \
-    $(if [[ -n "{mappability}" ]]; then \
+    $(if [[ -n "{mappability}" ]]; then
         echo "--mappability {mappability}"
     fi) \
-    $(if [[ -n "{reptiming}" ]]; then \
+    $(if [[ -n "{reptiming}" ]]; then
         echo "--reptiming {reptiming}"
     fi)
 

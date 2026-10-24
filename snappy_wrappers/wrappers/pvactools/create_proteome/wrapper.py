@@ -10,19 +10,23 @@ shell(
 # -----------------------------------------------------------------------------
 # Redirect stderr to log file by default and enable printing executed commands
 if [[ -n "{snakemake.log.log}" ]]; then
-    if [[ "$(set +e; tty; set -e)" != "" ]]; then
+    if [[ "$(
+        set +e
+        tty
+        set -e
+    )" != "" ]]; then
         rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
         exec 2> >(tee -a "{snakemake.log.log}" >&2)
     else
         rm -f "{snakemake.log.log}" && mkdir -p $(dirname {snakemake.log.log})
-        echo "No tty, logging disabled" >"{snakemake.log.log}"
+        echo "No tty, logging disabled" > "{snakemake.log.log}"
     fi
 fi
 # Write out information about conda installation.
-conda list >{snakemake.log.conda_list}
-conda info >{snakemake.log.conda_info}
-md5sum {snakemake.log.conda_list} >{snakemake.log.conda_list_md5}
-md5sum {snakemake.log.conda_info} >{snakemake.log.conda_info_md5}
+conda list > {snakemake.log.conda_list}
+conda info > {snakemake.log.conda_info}
+md5sum {snakemake.log.conda_list} > {snakemake.log.conda_list_md5}
+md5sum {snakemake.log.conda_info} > {snakemake.log.conda_info_md5}
 
 export TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT

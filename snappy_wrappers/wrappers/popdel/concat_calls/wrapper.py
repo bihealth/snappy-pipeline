@@ -14,7 +14,7 @@ __email__ = "manuel.holtgrewe@bih-charite.de"
 ShellWrapper(snakemake).run(
     r"""
 bcftools concat {snakemake.input.vcf} \
-| bcftools sort -O z -o {snakemake.output.vcf}
+    | bcftools sort -O z -o {snakemake.output.vcf}
 
 tabix -f {snakemake.output.vcf}
 """

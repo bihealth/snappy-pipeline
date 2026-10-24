@@ -92,7 +92,7 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
 
     fastp \
         --in1 $in --out1 $out \
-        $(if [[ $paired -eq 1 ]]; then \
+        $(if [[ $paired -eq 1 ]]; then
             echo --unpaired1 $unpaired --in2 $in2 --out2 $out2 --unpaired2 $unpaired2
         fi) \
         --failed_out $failed \
@@ -100,74 +100,73 @@ for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         --html $TMPDIR/report/$report/report.html \
         --thread {config[num_threads]} \
         {extra_arguments} \
-        --trim_front1 {config[trim_front1]}                                 \
-        --trim_tail1 {config[trim_tail1]}                                   \
-        --max_len1 {config[max_len1]}                                       \
-        --trim_front2 {config[trim_front2]}                                 \
-        --trim_tail2 {config[trim_tail2]}                                   \
-        --max_len2 {config[max_len2]}                                       \
-        $(if [[ "{config[dedup]}" = "True" ]]; then \
+        --trim_front1 {config[trim_front1]} \
+        --trim_tail1 {config[trim_tail1]} \
+        --max_len1 {config[max_len1]} \
+        --trim_front2 {config[trim_front2]} \
+        --trim_tail2 {config[trim_tail2]} \
+        --max_len2 {config[max_len2]} \
+        $(if [[ "{config[dedup]}" = "True" ]]; then
             echo --dedup --dup_calc_accuracy {config[dup_calc_accuracy]}
-        elif [[ "{config[dont_eval_duplication]}" = "True" ]]; then \
+        elif [[ "{config[dont_eval_duplication]}" = "True" ]]; then
             echo --dont_eval_duplication
         fi) \
-        $(if [[ "{config[trim_poly_g]}" = "True" ]]; then \
+        $(if [[ "{config[trim_poly_g]}" = "True" ]]; then
             echo --trim_poly_g --poly_g_min_len {config[poly_g_min_len]}
-        else \
+        else
             echo --disable_trim_poly_g
         fi) \
-        $(if [[ "{config[trim_poly_x]}" = "True" ]]; then \
+        $(if [[ "{config[trim_poly_x]}" = "True" ]]; then
             echo --trim_poly_x --poly_x_min_len {config[poly_x_min_len]}
         fi) \
-        $(if [[ "{config[cut_front]}" = "True" ]]; then \
+        $(if [[ "{config[cut_front]}" = "True" ]]; then
             echo --cut_front --cut_front_window_size {config[cut_front_window_size]} --cut_front_mean_quality {config[cut_front_mean_quality]}
         fi) \
-        $(if [[ "{config[cut_tail]}" = "True" ]]; then \
+        $(if [[ "{config[cut_tail]}" = "True" ]]; then
             echo --cut_tail --cut_tail_window_size {config[cut_tail_window_size]} --cut_tail_mean_quality {config[cut_tail_mean_quality]}
         fi) \
-        $(if [[ "{config[cut_right]}" = "True" ]]; then \
+        $(if [[ "{config[cut_right]}" = "True" ]]; then
             echo --cut_right --cut_right_window_size {config[cut_right_window_size]} --cut_right_mean_quality {config[cut_right_mean_quality]}
         fi) \
-        $(if [[ "{config[disable_quality_filtering]}" = "False" ]]; then \
+        $(if [[ "{config[disable_quality_filtering]}" = "False" ]]; then
             echo --qualified_quality_phred {config[qualified_quality_phred]}
             echo --unqualified_percent_limit {config[unqualified_percent_limit]}
             echo --n_base_limit {config[n_base_limit]}
             echo --average_qual {config[average_qual]}
-        else \
+        else
             echo --disable_quality_filtering
         fi) \
-        $(if [[ "{config[disable_length_filtering]}" = "False" ]]; then \
+        $(if [[ "{config[disable_length_filtering]}" = "False" ]]; then
             echo --length_required {config[length_required]}
             echo --length_limit {config[length_limit]}
-        else \
+        else
             echo --disable_length_filtering
         fi) \
-        $(if [[ "{config[low_complexity_filter]}" = "True" ]]; then \
+        $(if [[ "{config[low_complexity_filter]}" = "True" ]]; then
             echo --low_complexity_filter --complexity_threshold {config[complexity_threshold]}
         fi) \
-        $(if [[ -n "{filter_by_index1}" ]]; then \
+        $(if [[ -n "{filter_by_index1}" ]]; then
             echo --filter_by_index1 {filter_by_index1} --filter_by_index_threshold {config[filter_by_index_threshold]}
         fi) \
-        $(if [[ -n "{filter_by_index2}" ]]; then \
+        $(if [[ -n "{filter_by_index2}" ]]; then
             echo --filter_by_index2 {filter_by_index2} --filter_by_index_threshold {config[filter_by_index_threshold]}
         fi) \
-        $(if [[ "{config[correction]}" = "True" ]]; then \
+        $(if [[ "{config[correction]}" = "True" ]]; then
             echo --correction
             echo --overlap_len_require {config[overlap_len_require]}
             echo --overlap_diff_limit {config[overlap_diff_limit]}
             echo --overlap_diff_percent_limit {config[overlap_diff_percent_limit]}
         fi) \
-        $(if [[ "{config[umi]}" = "True" ]]; then \
+        $(if [[ "{config[umi]}" = "True" ]]; then
             echo --umi
             echo --umi_loc {config[umi_loc]}
             echo --umi_len {config[umi_len]}
             echo --umi_prefix {config[umi_prefix]}
             echo --umi_skip {config[umi_skip]}
         fi) \
-        $(if [[ "{config[overrepresentation_analysis]}" = "True" ]]; then \
+        $(if [[ "{config[overrepresentation_analysis]}" = "True" ]]; then
             echo --overrepresentation_analysis
         fi)
-
 
 done
 
@@ -175,6 +174,5 @@ mkdir -p {snakemake.output.out} {snakemake.output.report} {snakemake.output.reje
 cp -r $TMPDIR/out/* {snakemake.output.out}
 cp -r $TMPDIR/report/* {snakemake.output.report}
 cp -r $TMPDIR/rejected/* {snakemake.output.rejected}
-
 """
 )

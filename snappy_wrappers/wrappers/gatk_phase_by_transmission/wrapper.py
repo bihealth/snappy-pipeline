@@ -34,7 +34,7 @@ tabix -f $TMPDIR/trio_only.vcf.gz
 
 # Call wrapper
 MALLOC_ARENA_MAX=4 \
-gatk_nonfree \
+    gatk_nonfree \
     -Xmx{java_mem_mb}m \
     -Djava.io.tmpdir=$TMPDIR \
     --analysis_type PhaseByTransmission \

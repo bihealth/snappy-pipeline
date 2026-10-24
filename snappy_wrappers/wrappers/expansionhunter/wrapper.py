@@ -23,9 +23,9 @@ ShellWrapper(snakemake).run(
 prefix=$TMPDIR/expansionhunter
 
 ExpansionHunter --reads {snakemake.input.bam} \
-        --reference {snakemake.input.reference} \
-        --variant-catalog {snakemake.input.repeat_catalog} \
-        --output-prefix $prefix {sex_argument} {extra_arguments}
+    --reference {snakemake.input.reference} \
+    --variant-catalog {snakemake.input.repeat_catalog} \
+    --output-prefix $prefix {sex_argument} {extra_arguments}
 
 cp $prefix.json {snakemake.output.json}
 cp $prefix.vcf {snakemake.output.vcf}

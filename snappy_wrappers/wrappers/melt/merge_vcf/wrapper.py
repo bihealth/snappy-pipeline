@@ -14,8 +14,8 @@ for vcf in {snakemake.input.vcf}; do
 done
 
 bcftools concat -a $input \
-| bgzip -c \
-> {snakemake.output.vcf}
+    | bgzip -c \
+        > {snakemake.output.vcf}
 tabix -f {snakemake.output.vcf}
 """
 )

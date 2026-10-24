@@ -53,16 +53,16 @@ set -x
 
 # using --force here because GATK sometimes produces incorrect VCF headers;
 # should probably introduce a GATK cleanup rule instead.
-bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force | \
-  mehari annotate seqvars \
-      {mehari_options} \
-      {tx_args} \
-      {freq_arg} \
-      {clinvar_arg} \
-      {extra_arguments} \
-      --reference {snakemake.input.reference} \
-      --input - \
-      --output {snakemake.output.vcf}
+bcftools norm --multiallelics -any {snakemake.input.vcf} --threads {num_threads} --force \
+    | mehari annotate seqvars \
+        {mehari_options} \
+        {tx_args} \
+        {freq_arg} \
+        {clinvar_arg} \
+        {extra_arguments} \
+        --reference {snakemake.input.reference} \
+        --input - \
+        --output {snakemake.output.vcf}
 
 # Index the resulting VCF
 tabix --threads {num_threads} {snakemake.output.vcf}

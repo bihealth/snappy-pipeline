@@ -11,7 +11,6 @@ args = snakemake.params.args
 
 ShellWrapper(snakemake).run(
     r"""
-
 gatk CollectReadCounts \
     --interval-merging-rule {args[interval_merging_rule]} \
     -R {snakemake.input.reference} \

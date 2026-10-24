@@ -43,7 +43,7 @@ zcat {snakemake.input.raw} \
             print $0;
         }}
     }}' \
-    > $TMPDIR/in.vcf
+        > $TMPDIR/in.vcf
 
 # Filter calls
 gatk {java_options} FilterMutectCalls \
@@ -66,11 +66,9 @@ else
     > "$TMPDIR/normal.lst"
 fi
 
-
 # Validate
 num_tumor=$(wc -l < $TMPDIR/tumor.lst)
 num_normal=$(wc -l < $TMPDIR/normal.lst)
-
 
 if [[ $num_tumor -gt 1 ]]; then
     echo "ERROR: More than one tumor sample found (not supported yet)" >&2
@@ -95,8 +93,6 @@ elif [[ $num_normal -eq 0 && $num_tumor -eq 1 ]]; then
     # Tumor-only case
     bgzip -c $TMPDIR/out.vcf > {snakemake.output.full_vcf}
 fi
-
-
 
 tabix {snakemake.output.full_vcf}
 # Keep only PASS variants in main output

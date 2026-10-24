@@ -39,13 +39,13 @@ for vcf in {snakemake.input.vcf}; do
 
     # Add the missing "GT" tag
     echo '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' \
-    > $TMPDIR/header.gt.txt
+        > $TMPDIR/header.gt.txt
 
     # Annotate and normalise the VCF files.
     bcftools annotate \
         -h $TMPDIR/header.gt.txt \
-        $TMPDIR/fixed_bnd_to_inv.$num.vcf |
-        bcftools norm \
+        $TMPDIR/fixed_bnd_to_inv.$num.vcf \
+        | bcftools norm \
             -m -any \
             -c w \
             --fasta-ref {snakemake.input.reference} \
@@ -54,7 +54,7 @@ for vcf in {snakemake.input.vcf}; do
     tabix -s1 -b2 -e2 -f $TMPDIR/final_for_import.$num.vcf.gz
 done
 
-cat <<"EOF" > $TMPDIR/feature-effects.tsv
+cat << "EOF" > $TMPDIR/feature-effects.tsv
 case_id
 set_id
 sv_uuid
@@ -69,22 +69,22 @@ ensembl_effect
 EOF
 
 cat $TMPDIR/feature-effects.tsv \
-| tr '\n' '\t' \
-| sed -e 's/\t$/\n/g' \
-| gzip \
->{snakemake.output.feature_effects}
+    | tr '\n' '\t' \
+    | sed -e 's/\t$/\n/g' \
+    | gzip \
+        > {snakemake.output.feature_effects}
 
 # Perform Mehari structural variant annotation.
 mehari \
     annotate \
     strucvars \
     --path-input-ped {snakemake.input.ped} \
-    $(for p in $TMPDIR/final_for_import.*.vcf.gz; do \
-        echo --path-input-vcf $p; \
+    $(for p in $TMPDIR/final_for_import.*.vcf.gz; do
+        echo --path-input-vcf $p
     done) \
     --path-output-tsv >(gzip -c > {snakemake.output.gts})
 
-cat <<EOF | gzip -c > {snakemake.output.db_infos}
+cat << EOF | gzip -c > {snakemake.output.db_infos}
 genomebuild	db_name	release
 GRCh37	clinvar	20210728
 GRCh37	gnomad_exomes	r2.1.1

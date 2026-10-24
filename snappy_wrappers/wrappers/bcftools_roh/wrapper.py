@@ -35,11 +35,11 @@ bcftools roh \
 (
     set +o pipefail
     zcat $raw_out \
-    | head -n 3
+        | head -n 3
     zcat $raw_out \
-    | tail -n +4 \
-    | egrep "^RG|^# RG"
+        | tail -n +4 \
+        | egrep "^RG|^# RG"
 ) | bgzip -c \
-> {snakemake.output.txt}
+    > {snakemake.output.txt}
 """
 )

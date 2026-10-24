@@ -27,14 +27,13 @@ set -x
 
 unset DISPLAY
 
-if [[ -n "{snakemake.output.diagram}" ]]
-then
+if [[ -n "{snakemake.output.diagram}" ]]; then
     cnvkit.py diagram \
         --output {snakemake.output.diagram} \
         --segment {snakemake.input.cns} \
         {gender} {male} \
         --threshold {args[threshold]} --min-probes {args[min_probes]} \
-        $(if [[ "{args[shift_xy]}" = "False" ]]; then \
+        $(if [[ "{args[shift_xy]}" = "False" ]]; then
             echo --no-shift-xy
         fi) \
         {snakemake.input.cnr}
@@ -42,8 +41,7 @@ else
     touch {snakemake.output.diagram}
 fi
 
-if [[ -n "{snakemake.output.scatter}" ]]
-then
+if [[ -n "{snakemake.output.scatter}" ]]; then
     cnvkit.py scatter \
         --output {snakemake.output.scatter} \
         --segment {snakemake.input.cns} \
@@ -52,10 +50,8 @@ else
     touch {snakemake.output.scatter}
 fi
 
-for scatter in {scatters}
-do
-    if [[ -n "$scatter" ]]
-    then
+for scatter in {scatters}; do
+    if [[ -n "$scatter" ]]; then
         chrom=$(basename -s .png $scatter | sed -re "s/.*\.(chr([0-9]+|[XY]))$/\1/")
         cnvkit.py scatter \
             --output $scatter \

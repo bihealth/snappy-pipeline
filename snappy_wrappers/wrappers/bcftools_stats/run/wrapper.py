@@ -11,6 +11,6 @@ bcftools stats \
     -s {args[donor_library_name]} \
     {extra_arguments} \
     {snakemake.input.vcf} \
-> {snakemake.output.txt}
+    > {snakemake.output.txt}
 """
 )

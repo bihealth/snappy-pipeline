@@ -9,7 +9,6 @@ mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
-
 ln -sr {snakemake.input.bam} {snakemake.output.orig_bam}
 ln -sr {snakemake.input.bai} {snakemake.output.orig_bai}
 

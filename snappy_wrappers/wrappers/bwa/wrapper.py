@@ -64,20 +64,18 @@ fi
 # Function Definitions ----------------------------------------------------------------------------
 
 # Adapter trimming
-trim_adapters()
-{{
+trim_adapters() {{
     set -x
 
     if [[ "{trim_adapters}" == "True" ]]; then
         trimadap-mt -p {num_threads_trimming}
     else
-        cat  # TODO: can we somehow remove this?
+        cat # TODO: can we somehow remove this?
     fi
 }}
 
 # Duplicate masking
-mask_duplicates()
-{{
+mask_duplicates() {{
     set -x
 
     if [[ "{mask_duplicates}" == "True" ]] && [[ $paired -eq 1 ]]; then
@@ -86,43 +84,41 @@ mask_duplicates()
         # samblaster aborts on reads without mates, unless they are single-end reads by design
         samblaster --addMateTags --ignoreUnmated
     else
-        cat  # TODO: can we somehow remove this?
+        cat # TODO: can we somehow remove this?
     fi
 }}
 
 # Alignment postprocessing
-postproc_bam()
-{{
+postproc_bam() {{
     set -x
     out=$1
 
     mask_duplicates \
-    | samtools view \
-        -u \
-        -Sb \
-        -@ {num_threads_bam_view} \
-    | samtools sort \
-        -T $TMPDIR/sort_bam \
-        -m {memory_bam_sort} \
-        -@ {num_threads_bam_sort} \
-        -O BAM \
-        -o $out
+        | samtools view \
+            -u \
+            -Sb \
+            -@ {num_threads_bam_view} \
+        | samtools sort \
+            -T $TMPDIR/sort_bam \
+            -m {memory_bam_sort} \
+            -@ {num_threads_bam_sort} \
+            -O BAM \
+            -o $out
 }}
 
 # Function for running BWA-ALN
-run_bwa_aln()
-{{
+run_bwa_aln() {{
     set -euo pipefail
     set -x
 
     for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
         # Compute suffix array indices for BWA-ALN
-        bwa aln -t {num_threads_align} $INDEX ${{reads_left[$i]}} >$TMPDIR/left.sai
+        bwa aln -t {num_threads_align} $INDEX ${{reads_left[$i]}} > $TMPDIR/left.sai
         if [[ $paired -eq 1 ]]; then
             sai_right=$TMPDIR/right.sai
             fastq_right=${{reads_right[$i]}}
 
-            bwa aln -t {num_threads_align} $INDEX $fastq_right >$sai_right
+            bwa aln -t {num_threads_align} $INDEX $fastq_right > $sai_right
             bwa_cmd=sampe
         else
             sai_right=
@@ -130,8 +126,7 @@ run_bwa_aln()
             bwa_cmd=samse
         fi
 
-        add_rg()
-        {{
+        add_rg() {{
             if [[ "{snakemake.params.args[sample_name]}" != "" ]]; then
                 samtools addreplacerg \
                     --input-fmt SAM \
@@ -151,17 +146,16 @@ run_bwa_aln()
             $sai_right \
             ${{reads_left[$i]}} \
             $fastq_right \
-        | add_rg \
-        | samtools view \
-            -b \
-            -@ {num_threads_bam_view} \
-            -o $TMPDIR/tmp.d/out.$i.bam
+            | add_rg \
+            | samtools view \
+                -b \
+                -@ {num_threads_bam_view} \
+                -o $TMPDIR/tmp.d/out.$i.bam
     done
 }}
 
 # Function for running BWA-MEM
-run_bwa_mem()
-{{
+run_bwa_mem() {{
     set -x
 
     # Decide whether to write split reads as supplementary or secondary (-M means secondary)
@@ -188,20 +182,20 @@ run_bwa_mem()
         else
             zcat ${{reads_left[$i]}}
         fi \
-        | trim_adapters \
-        | bwa mem \
-            $INDEX \
-            $split_as_supp_flag \
-            $rg_arg \
-            -p \
-            -t {num_threads_align} \
-            -K {bases_per_batch} \
-            {extra_arguments} \
-            /dev/stdin \
-        | samtools view \
-            -b \
-            -@ {num_threads_bam_view} \
-            -o $TMPDIR/tmp.d/out.$i.bam
+            | trim_adapters \
+            | bwa mem \
+                $INDEX \
+                $split_as_supp_flag \
+                $rg_arg \
+                -p \
+                -t {num_threads_align} \
+                -K {bases_per_batch} \
+                {extra_arguments} \
+                /dev/stdin \
+            | samtools view \
+                -b \
+                -@ {num_threads_bam_view} \
+                -o $TMPDIR/tmp.d/out.$i.bam
     done
 }}
 
@@ -209,8 +203,8 @@ run_bwa_mem()
 
 # estimate read length from first 100k reads
 avg_len=$({{ zcat --force -- ${{reads_left[0]}} || true; }} \
-          | head -n 400000 \
-          | awk '(NR % 4 == 2) {{ count += 1; totLen += length($0) }}
+    | head -n 400000 \
+    | awk '(NR % 4 == 2) {{ count += 1; totLen += length($0) }}
                  END {{ print int(totLen/count) }}')
 
 # Switch to BWA-SAMPE/SAMSE for shorter reads and BWA-MEM for longer ones.
@@ -225,13 +219,13 @@ if [[ ${{#reads_left[@]}} -eq 1 ]]; then
     samtools view \
         -@ {num_threads_bam_view} \
         -h $TMPDIR/tmp.d/out.0.bam \
-    | postproc_bam {snakemake.output.bam}
+        | postproc_bam {snakemake.output.bam}
 else
     # Create merged header
     for f in $TMPDIR/tmp.d/out.*.bam; do
         samtools view \
             -@ {num_threads_bam_view} \
-            -H $f >${{f%.bam}}.hdr.sam
+            -H $f > ${{f%.bam}}.hdr.sam
     done
     samtools merge $TMPDIR/merged.hdr.bam $TMPDIR/tmp.d/out.*.hdr.sam
 
@@ -239,8 +233,8 @@ else
     samtools cat \
         -h $TMPDIR/merged.hdr.bam \
         $TMPDIR/tmp.d/out.*.bam \
-    | samtools view -h \
-    | postproc_bam {snakemake.output.bam}
+        | samtools view -h \
+        | postproc_bam {snakemake.output.bam}
 fi
 
 # Index resulting BAM file
@@ -250,7 +244,7 @@ samtools index {snakemake.output.bam}
 
 # gather statistics from BAM file
 # TODO: use pipes for only reading once from disk?
-samtools stats    {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
+samtools stats {snakemake.output.bam} > {snakemake.output.report_bamstats_txt}
 samtools flagstat {snakemake.output.bam} > {snakemake.output.report_flagstats_txt}
 samtools idxstats {snakemake.output.bam} > {snakemake.output.report_idxstats_txt}
 """

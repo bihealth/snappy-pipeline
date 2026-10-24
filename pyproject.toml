@@ -292,18 +292,21 @@ pytest-xdist = ">=3.8.0,<4"
 [tool.pixi.feature.dev.tasks]
 fmt = { cmd = "ruff format .", description = "Apply Ruff code formatter" }
 snakefmt = { cmd = "snakefmt snappy_pipeline/workflows/*/Snakefile", description = "Apply Snakefmt code formatter" }
-srcfmt = { depends-on = ["fmt", "snakefmt"], description = "Apply Python and Snakemake formatters" }
+shfmt = { cmd = "python tests/scripts/shell_templates.py --write", description = "Apply shfmt to the shell scripts and the shell templates of the wrappers" }
+srcfmt = { depends-on = ["fmt", "snakefmt", "shfmt"], description = "Apply Python, Snakemake and shell formatters" }
 
 check = { cmd = "ruff check .", description = "Run Ruff code checker" }
 lint-fmt = { cmd = "ruff format --check .", description = "Check Python formatting" }
 lint-snakefmt = { cmd = "snakefmt --check snappy_pipeline/workflows/*/Snakefile", description = "Check Snakemake formatting" }
-lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt"], description = "Run all linters" }
+lint-shell = { cmd = "python tests/scripts/shell_templates.py", description = "Check the shell scripts and the shell templates of the wrappers with shfmt" }
+lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt", "lint-shell"], description = "Run all linters" }
 
 update-pins = { cmd = "python tests/scripts/update_pins.py", description = "Pin all pinned wrapper environments again, or the given environment files (snakedeploy, needs conda)" }
 
 [tool.pixi.feature.dev.dependencies]
 pixi-pycharm = ">=0.0.11,<0.0.12"
 pandas-stubs = ">=3.0.3.260530,<4"
+go-shfmt = "==3.14.1"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 # From PyPI: the conda package caps packaging below 26, which Snakemake's development version needs

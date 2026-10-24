@@ -15,7 +15,6 @@ mem_jvm = ceil(snakemake.resources.mem_mb * 0.75)
 
 ShellWrapper(snakemake).run(
     r"""
-
 gatk --java-options "-Xmx{mem_jvm}m" \
     FilterIntervals \
     --intervals {snakemake.input.interval_list} \

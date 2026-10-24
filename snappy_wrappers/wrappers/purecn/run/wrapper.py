@@ -54,16 +54,14 @@ rename {snakemake.output.loh} _loh.csv
 vcf_chrnames=$(zgrep '^##contig=<ID=' {snakemake.input.vcf} | sed -re "s/^##contig=<ID=([^,]*),.*/\1/" | sort | uniq | grep -E "^(chr)?([0-9]+|[XY])$")
 n_prefix=0
 n_tot=0
-for chrname in $vcf_chrnames
-do
-    ((n_tot=n_tot + 1))
+for chrname in $vcf_chrnames; do
+    ((n_tot = n_tot + 1))
     n=$(echo "$chrname" | grep -c "^$chrname$" || true)
     n_prefix=$((n_prefix + $n))
 done
 [ $n_prefix -eq 0 ] || [ $n_prefix -eq $n_tot ]
 
-if [[ $n_prefix -eq $n_tot ]]
-then
+if [[ $n_prefix -eq $n_tot ]]; then
     pgm='{{
         chr=$2
         if(chr=="23"){{chr="X"}}

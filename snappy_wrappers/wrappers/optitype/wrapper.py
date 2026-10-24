@@ -43,8 +43,8 @@ yara_mapper \
     --output-format sam \
     $TMPDIR/yara_index/$refname \
     <(zcat --force {reads_left}) \
-| samtools fastq -F 4 - \
-> $TMPDIR/tmp.d/reads_left.fastq
+    | samtools fastq -F 4 - \
+        > $TMPDIR/tmp.d/reads_left.fastq
 
 if [[ {paired} -eq 1 ]]; then
     yara_mapper \
@@ -55,19 +55,19 @@ if [[ {paired} -eq 1 ]]; then
         --output-format sam \
         $TMPDIR/yara_index/$refname \
         <(zcat --force {reads_right}) \
-    | samtools fastq -F 4 - \
-    > $TMPDIR/tmp.d/reads_right.fastq
+        | samtools fastq -F 4 - \
+            > $TMPDIR/tmp.d/reads_right.fastq
 fi
 
-cat $TMPDIR/tmp.d/reads_*.fastq | \
-seqtk sample - {args[max_reads]} \
-> $TMPDIR/tmp.d/reads_sampled.fastq
+cat $TMPDIR/tmp.d/reads_*.fastq \
+    | seqtk sample - {args[max_reads]} \
+        > $TMPDIR/tmp.d/reads_sampled.fastq
 
 wc -l $TMPDIR/tmp.d/reads_*.fastq
 
 # Run OptiType ------------------------------------------------------------------------------------
 
-cat <<"EOF" >$TMPDIR/tmp.d/optitype.ini
+cat << "EOF" > $TMPDIR/tmp.d/optitype.ini
 [mapping]
 razers3=razers3
 threads={args[num_mapping_threads]}
@@ -101,10 +101,10 @@ tail -n +2 {snakemake.output.tsv} \
     | cut -f 2-7 \
     | tr '\t' '\n' \
     | sort \
-    > {snakemake.output.txt}
+        > {snakemake.output.txt}
 
 # create final .json file with the two alleles of each gene
-python3 - {snakemake.output.tsv} {snakemake.output.json} <<'EOF'
+python3 - {snakemake.output.tsv} {snakemake.output.json} << 'EOF'
 import csv
 import json
 import sys

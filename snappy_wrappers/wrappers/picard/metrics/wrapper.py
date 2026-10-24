@@ -37,16 +37,14 @@ set -x
 
 d=$(ls $CONDA_PREFIX/share | grep picard)
 picard_jar="$CONDA_PREFIX/share/$d/picard.jar"
-if [[ ! -r $picard_jar ]]
-then
+if [[ ! -r $picard_jar ]]; then
     echo "Can't find picard jar"
     exit -1
 fi
 
 d=$(dirname {snakemake.output[0]})
 
-if [[ -n "{collect_multiple_metrics}" ]]
-then
+if [[ -n "{collect_multiple_metrics}" ]]; then
     # Setting METRIC_ACCUMULATION_LEVEL causes issues for some programs
     java -jar $picard_jar CollectMultipleMetrics \
         {extra_arguments} \
@@ -58,26 +56,22 @@ then
         {collect_multiple_metrics}
 fi
 
-if [[ "{args[programs]}" == *"EstimateLibraryComplexity"* ]]
-then
+if [[ "{args[programs]}" == *"EstimateLibraryComplexity"* ]]; then
     java -jar $picard_jar EstimateLibraryComplexity \
         {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}EstimateLibraryComplexity.txt
 fi
 
-if [[ "{args[programs]}" == *"CollectJumpingLibraryMetrics"* ]]
-then
+if [[ "{args[programs]}" == *"CollectJumpingLibraryMetrics"* ]]; then
     java -jar $picard_jar CollectJumpingLibraryMetrics \
         {extra_arguments} \
         -I {snakemake.input.bam} \
         -O $d/{prefix}CollectJumpingLibraryMetrics.txt
 fi
 
-if [[ "{args[programs]}" == *"CollectOxoGMetrics"* ]]
-then
-    if [[ -n "{dbsnp}" ]]
-    then
+if [[ "{args[programs]}" == *"CollectOxoGMetrics"* ]]; then
+    if [[ -n "{dbsnp}" ]]; then
         dbsnp="-DB_SNP {dbsnp}"
     else
         dbsnp=""
@@ -90,8 +84,7 @@ then
         $dbsnp
 fi
 
-if [[ "{args[programs]}" == *"CollectHsMetrics"* ]]
-then
+if [[ "{args[programs]}" == *"CollectHsMetrics"* ]]; then
     java -jar $picard_jar CollectHsMetrics \
         {extra_arguments} \
         -I {snakemake.input.bam} \
@@ -102,8 +95,7 @@ then
         -TARGET_INTERVALS {snakemake.input.targets}
 fi
 
-if [[ "{args[programs]}" == *"CollectRawWgsMetrics"* ]]
-then
+if [[ "{args[programs]}" == *"CollectRawWgsMetrics"* ]]; then
     java -jar $picard_jar CollectRawWgsMetrics \
         {extra_arguments} \
         -I {snakemake.input.bam} \
@@ -111,8 +103,7 @@ then
         -R {reference}
 fi
 
-if [[ "{args[programs]}" == *"CollectWgsMetrics"* ]]
-then
+if [[ "{args[programs]}" == *"CollectWgsMetrics"* ]]; then
     java -jar $picard_jar CollectWgsMetrics \
         {extra_arguments} \
         -I {snakemake.input.bam} \
@@ -120,8 +111,7 @@ then
         -R {reference}
 fi
 
-if [[ "{args[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]
-then
+if [[ "{args[programs]}" == *"CollectWgsMetricsWithNonZeroCoverage"* ]]; then
     java -jar $picard_jar CollectWgsMetricsWithNonZeroCoverage \
         {extra_arguments} \
         -I {snakemake.input.bam} \

@@ -87,13 +87,13 @@ set -euo pipefail
 
 {variants} \
     | bgzip \
-    > {tempdir}/variants.vcf.gz
+        > {tempdir}/variants.vcf.gz
 tabix {tempdir}/variants.vcf.gz
 
 tail -n +2 {snakemake.input.cnv} \
     | awk '{{if ($6 < 0) {{sgn="-"; lfc=-$6}} else {{sgn="+"; lfc=$6}}; printf "%s\t%d\t%d\tseg_%d_cn_%d\t%f\t%s\n", $2, $3-1, $4, NR, $7, lfc, sgn}}' \
     | bgzip \
-    > {tempdir}/segments.bed.gz
+        > {tempdir}/segments.bed.gz
 tabix {tempdir}/segments.bed.gz
 """
     )

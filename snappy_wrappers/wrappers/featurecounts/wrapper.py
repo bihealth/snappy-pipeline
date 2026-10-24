@@ -14,11 +14,9 @@ args = getattr(snakemake.params, "args", {})
 
 ShellWrapper(snakemake).run(
     r"""
-
 strand={args[strand]}
 
-if [ ${{strand}} -eq -1 ]
-then
+if [ ${{strand}} -eq -1 ]; then
     strand=$(jq -r '.decision' {snakemake.input.decision})
 fi
 
@@ -30,15 +28,15 @@ pushd $TMPDIR
 samtools view -h -F {args[exclude_flags]} -q {args[min_mapq]} $bam \
     | samtools sort -n -@ 2 \
     | featureCounts \
-    -T {snakemake.threads} \
-    -g {args[gene_attribute]} \
-    -t {args[feature_type]} \
-    -a {snakemake.input.features} \
-    -s ${{strand}} \
-    -p \
-    --verbose \
-    {extra_arguments} \
-    -o feature_counts.tsv
+        -T {snakemake.threads} \
+        -g {args[gene_attribute]} \
+        -t {args[feature_type]} \
+        -a {snakemake.input.features} \
+        -s ${{strand}} \
+        -p \
+        --verbose \
+        {extra_arguments} \
+        -o feature_counts.tsv
 popd
 cp $TMPDIR/feature_counts.tsv {snakemake.output.tsv}
 cp $TMPDIR/feature_counts.tsv.summary {snakemake.output.summary}

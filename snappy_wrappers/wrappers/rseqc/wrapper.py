@@ -33,8 +33,7 @@ endedness=$(grep -E "$pattern" {snakemake.output.tsv} | sed -E "s/$pattern/\1/")
 pattern="^Fraction of reads failed to determine: *([+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([EeDd][+-]?[0-9]+)?)$"
 failed=$(grep -E "$pattern" {snakemake.output.tsv} | sed -E "s/$pattern/\1/")
 
-if [[ "$endedness" = "Single" ]]
-then
+if [[ "$endedness" = "Single" ]]; then
     pattern="^Fraction of reads explained by \"\\+\\+,\\-\\-\": *([+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([EeDd][+-]?[0-9]+)?)$"
     forward=$(grep -E "$pattern" {snakemake.output.tsv} | sed -E "s/$pattern/\1/")
     pattern="^Fraction of reads explained by \"\\+\\-,\\-\\+\": *([+-]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([EeDd][+-]?[0-9]+)?)$"
@@ -51,18 +50,15 @@ reverse=$(echo $reverse | tr '[Dde]' 'E')
 
 # ----- Infer protocol strandedness
 infer=0
-if [ $(echo "$forward > {config[threshold]}" | bc -l) -gt 0 ]
-then
+if [ $(echo "$forward > {config[threshold]}" | bc -l) -gt 0 ]; then
     infer=1
 fi
-if [ $(echo "$reverse > {config[threshold]}" | bc -l) -gt 0 ]
-then
+if [ $(echo "$reverse > {config[threshold]}" | bc -l) -gt 0 ]; then
     infer=2
 fi
 
 decision="{config[strand]}"
-if [[ $decision -eq -1 ]]
-then
+if [[ $decision -eq -1 ]]; then
     decision=$infer
 fi
 
