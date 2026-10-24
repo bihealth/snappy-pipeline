@@ -30,21 +30,22 @@ context_file_cmd = " ".join(
 ontology = snakemake.input.get("ontology", "")
 ontology_cmd = f"--ontology {shlex.quote(str(ontology))}" if ontology else ""
 
-# Actually run the script.
+# Actually run the script. The commands are templates, not f-strings: Snakemake inserts the
+# values, so braces in expressions stay literal.
 if mode == "tag":
     expressions = args["expressions"]
     expressions_cmd = " ".join(
         f"--tag {tag}={shlex.quote(str(expr))}" for tag, expr in expressions.items()
     )
     tag_mode = "--tag-mode pass"
-    cmd = rf"""
-vembrane tag {tag_mode} {aux_cmd} {context_cmd} {context_file_cmd} {ontology_cmd} {{extra_arguments}} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
+    cmd = r"""
+vembrane tag {tag_mode} {aux_cmd} {context_cmd} {context_file_cmd} {ontology_cmd} {extra_arguments} {expressions_cmd} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 else:
     expression = shlex.quote(str(args["expression"]))
-    cmd = rf"""
-vembrane filter {aux_cmd} {context_cmd} {context_file_cmd} {ontology_cmd} {{extra_arguments}} {expression} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
+    cmd = r"""
+vembrane filter {aux_cmd} {context_cmd} {context_file_cmd} {ontology_cmd} {extra_arguments} {expression} {snakemake.input.vcf} | bgzip -c --threads {snakemake.threads} > {snakemake.output.vcf}
 tabix {snakemake.output.vcf}
 """
 
