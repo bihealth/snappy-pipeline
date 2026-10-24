@@ -3,6 +3,7 @@
 
 import os
 
+import click
 from click.testing import CliRunner
 
 from snappy_pipeline.apps import snappy_cli
@@ -78,7 +79,8 @@ def test_run_frozen_requires_a_task(mocker, tmp_path):
     mocker.patch("snappy_pipeline.apps.snappy_cli.snakemake_main", return_value=0)
     result = CliRunner().invoke(snappy_cli.main, ["run", "--directory", str(tmp_path), "--frozen"])
     assert result.exit_code != 0
-    assert "--frozen requires --task" in result.output
+    # rich-click colors the options in its error box on GitHub Actions (GITHUB_ACTIONS)
+    assert "--frozen requires --task" in click.unstyle(result.output)
 
 
 def test_run_leaves_the_executor_to_the_profile_of_the_user(mocker, tmp_path):
