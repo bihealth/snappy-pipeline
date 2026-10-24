@@ -5,13 +5,13 @@
 Somatic variants in low-purity or degraded samples, and sub-clonal variants, depend on the quality of the mapping.
 Adapter trimming, molecular barcodes (UMIs, MBCs) and base quality score recalibration (BQSR) can improve it.
 
-Adapter trimming is its own step, `adapter_trimming`.
-Barcodes and BQSR are part of the `ngs_mapping` step, in the `mbcs` tool.
+Each is a task of its own: `adapter_trimming` before the mapping, `alignment_processing` after it.
+A chain of tasks combines them, and the variant callers read the BAM files of its last task.
 
 ## Adapter trimming
 
 The `bwa`, `bwa_mem2` and `bwa_mem3` sections of `ngs_mapping` have a fast option, `trim_adapters`, to trim adapters on the fly.
-Where that is not enough, `adapter_trimming` offers two tools, `bbduk` and `fastp`.
+Where that is not enough, `adapter_trimming` offers `bbduk` and `fastp`, and `agent` for reads with molecular barcodes.
 
 Unlike other steps, `adapter_trimming` produces FASTQ files.
 A task that reads FASTQ files uses them when its `depends_on.reads` names the `adapter_trimming` task.
@@ -65,64 +65,94 @@ Barcodes are handled in three operations:
 3. The aligned reads and the barcode sequences are used for deduplication.
    This can produce consensus reads that are longer than the original reads.
 
-The `mbcs` tool does all three operations in one job per library, followed by optional BQSR.
-`mbcs.mapping_tool` selects the mapper, `bwa` or `bwa_mem2`.
-The pipeline is only tested with these short-read mappers.
-The mapper section (`bwa` or `bwa_mem2`) configures the mapping.
+Three tasks do them with Agilent's AGeNT:
 
-The task takes the index of its `mapping_tool`: `depends_on.index` names a task tagged with that tool, such as `bwa_mem2`.
+1. `adapter_trimming` with `tool: agent` clips the barcodes and moves them into the read names.
+2. `ngs_mapping` maps the reads with `extra_arguments: ["-C"]`, so that the barcodes become tags.
+3. `alignment_processing` with `tool: agent` marks the duplicates with the barcodes, with the `baits` of each library's kit in `depends_on.kits`.
 
 ```{note}
 Only [AGeNT](https://www.agilent.com/en/product/next-generation-sequencing/hybridization-based-next-generation-sequencing-ngs/ngs-software/agent-232879) from Agilent is implemented for barcodes.
-It is not open source and not in bioconda, so install it separately.
+It is not open source and not in bioconda, so install it separately; the `path` of the AGeNT tasks names its jar files.
 Open-source alternatives such as [UMI-tools](https://umi-tools.readthedocs.io/en/latest/index.html) may replace it.
-```
-
-An `mbcs` task with AGeNT looks like this.
-The `agent` paths are inputs of the job.
-
-```yaml
-- step: ngs_mapping
-  name: mapping
-  config:
-    depends_on:
-      reads: data_sets
-      reference: genome
-      index: bwa_mem2_index
-      kits: kits    # external_data task with the targets and baits of each kit
-      common_variants: common_variants    # external_data task with the VCF of common germline variants, for BQSR
-    tool: mbcs
-    mbcs:
-      mapping_tool: bwa_mem2
-      barcode_tool: agent    # the only barcode tool
-      use_barcodes: true
-      recalibrate: true
-    bwa_mem2:
-      trim_adapters: false
-      split_as_secondary: true
-      extra_arguments: ["-C"]     # -C when AGeNT processed barcodes are present
-    agent:
-      prepare:
-        path: /path/to/agent/trimmer
-        lib_prep_type: v2    # halo, hs, xt, v2 or qxt, see the AGeNT documentation
-        extra_arguments:
-          - "-polyG 8"
-          - "-minFractionRead 50"
-      mark_duplicates:
-        path: /path/to/agent/creak
-        consensus_mode: HYBRID    # SINGLE, DUPLEX or HYBRID
-        input_filter_args: ["-mm 13", "-mr 13", "-mq 30"]
-        consensus_filter_args: []
-        extra_arguments: []
-```
-
 The AGeNT documentation comes with its download.
-The AGeNT baits file is the `baits` file of the library's kit in the `kits` task.
-Each library names its kit in the sample sheet column `libraryKit`.
+```
 
 ## Base quality score recalibration
 
 [BQSR should generally be applied](https://gatk.broadinstitute.org/hc/en-us/articles/360035890531-Base-Quality-Score-Recalibration-BQSR).
-It is implemented only in the `mbcs` tool, with `recalibrate: true` (the default).
-Without barcodes, set `use_barcodes: false` (the default).
+`alignment_processing` with `tool: gatk4_bqsr` recalibrates the base qualities of the BAM files of a mapping task, or of another `alignment_processing` task.
 `depends_on.common_variants` names an `external_data` task with a VCF of common germline variants, for example `small_exac_common_3.vcf` of the GATK resource bundle.
+
+## Recipe: barcodes and BQSR
+
+This chain replaces the `mbcs` tool of `ngs_mapping` in snappy 0.6.
+The mapping and the duplicate marking hand their BAM files on and delete them once the next task has read them (`delete_intermediates: [bam]`).
+Variant callers name `bqsr` in `depends_on.alignments`.
+Without barcodes, the chain is the mapping followed by `bqsr`.
+
+```yaml
+tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: /path/to/genome.fa}
+
+  - name: kits
+    step: external_data
+    config:
+      produces: {type: regions, tags: [kits]}
+      kits:
+        V5: {targets: /path/to/v5_targets.bed, baits: /path/to/v5_baits.bed}
+
+  - name: common_variants
+    step: external_data
+    config:
+      produces: {type: variants, tags: [population, common]}
+      files: {vcf: /path/to/small_exac_common_3.vcf.gz}
+
+  - name: bwa_mem2_index
+    step: reference_index
+    config:
+      depends_on: {reference: genome}
+      tool: bwa_mem2
+
+  - name: trimming
+    step: adapter_trimming
+    config:
+      depends_on: {reads: data_sets}
+      tool: agent
+      agent:
+        path: /path/to/agent/trimmer.jar
+        lib_prep_type: v2    # halo, hs, xt, v2 or qxt, see the AGeNT documentation
+        extra_arguments: ["-polyG 8", "-minFractionRead 50"]
+
+  - name: mapping
+    step: ngs_mapping
+    config:
+      depends_on: {reads: trimming, reference: genome, index: bwa_mem2_index, kits: kits}
+      tool: bwa_mem2
+      bwa_mem2:
+        split_as_secondary: true
+        extra_arguments: ["-C"]    # the barcodes become tags
+      delete_intermediates: [bam]
+
+  - name: marking
+    step: alignment_processing
+    config:
+      depends_on: {alignments: mapping, reference: genome, kits: kits}
+      tool: agent
+      agent:
+        path: /path/to/agent/creak.jar
+        consensus_mode: HYBRID    # SINGLE, DUPLEX or HYBRID
+        input_filter_args: ["-mm 13", "-mr 13", "-mq 30"]
+      delete_intermediates: [bam]
+
+  - name: bqsr
+    step: alignment_processing
+    config:
+      depends_on: {alignments: marking, reference: genome, common_variants: common_variants}
+      tool: gatk4_bqsr
+      gatk4_bqsr: {}
+```

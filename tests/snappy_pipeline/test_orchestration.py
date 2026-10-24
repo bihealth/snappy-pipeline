@@ -506,7 +506,7 @@ def test_external_data_files_may_name_lists():
 
 
 def test_requirement_with_tool_placeholder_names_the_task_tool():
-    # ngs_mapping requires the index of its tool (mbcs: of its mapping_tool)
+    # ngs_mapping requires the index of its tool
     bwa_mem2 = _mapping(tool="bwa_mem2", bwa_mem2={})
     with pytest.raises(
         ValueError,
@@ -514,8 +514,8 @@ def test_requirement_with_tool_placeholder_names_the_task_tool():
     ):
         load_project(_config(bwa_mem2), WORK_DIR)
 
-    mbcs = _mapping(tool="mbcs", mbcs={"mapping_tool": "bwa", "recalibrate": False})
-    load_project(_config(mbcs), WORK_DIR)
+    bwa = _mapping(tool="bwa", bwa={})
+    load_project(_config(bwa), WORK_DIR)
 
 
 def test_tool_placeholder_needs_a_tool():

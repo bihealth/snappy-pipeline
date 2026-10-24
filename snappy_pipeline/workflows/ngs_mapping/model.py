@@ -4,7 +4,6 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath
 from snappy_pipeline.models import (
     SizeString,
     SnappyModel,
@@ -14,7 +13,6 @@ from snappy_pipeline.models import (
     validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
-    CommonVariants,
     DataSignature,
     DataType,
     Exons,
@@ -73,7 +71,7 @@ class NgsMappingDependsOn(SnappyModel):
         ),
         ExpectedPathSchema(ExpectedIndex),
     ]
-    """Task with the index of the mapper, tagged with its tool (mbcs: its ``mapping_tool``)."""
+    """Task with the index of the mapper, tagged with its tool."""
 
     reference: Reference
 
@@ -85,26 +83,6 @@ class NgsMappingDependsOn(SnappyModel):
     """Task with a BED file of ubiquitously expressed genes with a well-defined strand; needed
     for star, which infers the strandedness from it."""
 
-    common_variants: CommonVariants = ""
-    """Needed by ``tool: mbcs`` with ``recalibrate`` (BQSR)"""
-
-
-class DnaMapper(StrEnum):
-    BWA = "bwa"
-    BWA_MEM2 = "bwa_mem2"
-
-
-class LongDnaMapper(StrEnum):
-    MINIMAP2 = "minimap2"
-
-
-class RnaMapper(StrEnum):
-    STAR = "star"
-
-
-class MetaTool(StrEnum):
-    MBCS = "mbcs"
-
 
 class Tool(StrEnum):
     bwa = "bwa"
@@ -112,10 +90,9 @@ class Tool(StrEnum):
     bwa_mem3 = "bwa_mem3"
     minimap2 = "minimap2"
     star = "star"
-    mbcs = "mbcs"
 
     def is_dna(self):
-        return self in {self.bwa, self.bwa_mem2, self.bwa_mem3, self.minimap2, self.mbcs}
+        return self in {self.bwa, self.bwa_mem2, self.bwa_mem3, self.minimap2}
 
     def is_rna(self):
         return self in {self.star}
@@ -131,8 +108,6 @@ class Tool(StrEnum):
             tags |= {"rna"}
         if self.supports_long_reads():
             tags |= {"long_read"}
-        if self == self.mbcs:
-            tags |= {"mbcs", "meta"}
         return tags
 
 
@@ -178,8 +153,8 @@ class BwaMapper(ToolModel):
     """Platform (``PL``) of the read group"""
 
     extra_arguments: list[str] = []
-    """Additional arguments of ``bwa mem``, such as ``["-C"]`` when AGeNT processes molecular
-    barcodes (``mbcs``)"""
+    """Additional arguments of ``bwa mem``, such as ``["-C"]`` for reads that AGeNT trimmed, so that
+    their molecular barcodes become tags for AGeNT's duplicate marking"""
 
 
 class Bwa(BwaMapper):
@@ -195,53 +170,6 @@ class BwaMem2(BwaMapper):
 class BwaMem3(BwaMapper):
     """BWA-MEM3 (Fulcrum Genomics) with its default settings: the alignments of BWA-MEM2, plus
     the tags ``MQ`` (mate mapping quality) and ``HN`` (number of hits)"""
-
-
-class BarcodeTool(StrEnum):
-    AGENT = "agent"
-
-
-class AgentLibPrepType(StrEnum):
-    HALO_PLEX = "halo"
-    HALO_PLEX_HS = "hs"
-    SURE_SELECT = "xt"
-    SURE_SELECT_HS2 = "v2"
-    SURE_SELECT_QXT = "qxt"
-
-
-class AgentPrepare(ToolModel):
-    path: ConfigPath
-
-    lib_prep_type: AgentLibPrepType = None
-    """One of "halo" (HaloPlex), "hs" (HaloPlexHS), "xt" (SureSelect XT, XT2, XT HS), "v2" (SureSelect XT HS2) & "qxt" (SureSelect QXT)"""
-
-    extra_arguments: list[str] = []
-    """Consider "-polyG 8" for NovaSeq data & "-minFractionRead 50" for 100 cycles data"""
-
-
-class AgentMarkDuplicatesConsensusMode(enum.StrEnum):
-    SINGLE = "SINGLE"
-    HYBRID = "HYBRID"
-    DUPLEX = "DUPLEX"
-
-
-class AgentMarkDuplicates(ToolModel):
-    path: ConfigPath
-    consensus_mode: AgentMarkDuplicatesConsensusMode = None
-    """One of "SINGLE", "HYBRID", "DUPLEX" """
-
-    input_filter_args: list[str] = []
-    """Consider -mm 13 (min base qual) -mr 13 (min barcode base qual) -mq 30 (min map qual)"""
-
-    consensus_filter_args: list[str] = []
-
-    extra_arguments: list[str] = []
-    """Consider -d 1 (max nb barcode mismatch)"""
-
-
-class Agent(SnappyModel):
-    prepare: AgentPrepare
-    mark_duplicates: AgentMarkDuplicates
 
 
 class Star(ToolModel):
@@ -309,17 +237,6 @@ class Minimap2(ToolModel):
     """Memory per thread of ``samtools sort`` (``-m``)"""
 
 
-class Mbcs(SnappyModel):
-    mapping_tool: DnaMapper
-    """Either bwa or bwa_mem2. The indices & other parameters are taken from mapper config"""
-
-    barcode_tool: BarcodeTool = BarcodeTool.AGENT
-    """Only agent currently implemented"""
-
-    use_barcodes: bool = False
-    recalibrate: bool = True
-
-
 TOOL_DEPENDENCIES = {Tool.star: ("features", "exons")}
 
 
@@ -349,44 +266,12 @@ class NgsMapping(SnappyStepModel):
     bwa_mem3: BwaMem3 | None = None
     """Configuration for BWA-MEM3"""
 
-    agent: Agent | None = None
-
     star: Star | None = None
     """Configuration for STAR"""
 
     strandedness: Strandedness = Strandedness()
 
     minimap2: Minimap2 | None = None
-
-    mbcs: Mbcs | None = None
-    """
-    Configuration for somatic ngs_calling
-    (separate read groups, molecular barcodes & base quality recalibration)
-    """
-
-    def tool_tag(self) -> str | None:
-        """mbcs maps with ``mbcs.mapping_tool``, whose index it reads."""
-        if self.tool == Tool.mbcs and self.mbcs:
-            return self.mbcs.mapping_tool
-        return self.tool
-
-    @model_validator(mode="after")
-    def check_mbcs_prerequisites(self):
-        if self.mbcs:
-            tool = self.mbcs.mapping_tool
-            if not getattr(self, str(tool)):
-                raise ValueError(f"Tool {tool} not configured")
-
-            if self.mbcs.use_barcodes:
-                if not self.agent:
-                    raise ValueError("Agent configuration required for MBCS")
-                if not self.depends_on.kits:
-                    raise ValueError("mbcs with use_barcodes needs depends_on.kits")
-
-            if self.mbcs.recalibrate:
-                if not self.depends_on.common_variants:
-                    raise ValueError("mbcs with recalibrate needs depends_on.common_variants")
-        return self
 
     @model_validator(mode="after")
     def check_target_coverage_report_kits(self):

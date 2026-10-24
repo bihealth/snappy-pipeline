@@ -409,11 +409,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA},
     ("ngs_mapping", "bwa_mem3"): {"library_selection": DNA},
     ("ngs_mapping", "minimap2"): {"library_selection": DNA},
-    ("ngs_mapping", "mbcs"): {
-        "library_selection": DNA,
-        "mbcs": {"mapping_tool": "bwa"},
-        "bwa": {},
-    },
     ("ngs_mapping", "star"): {
         "library_selection": RNA,
         "strandedness": {"strand": -1, "threshold": 0.85},
@@ -686,9 +681,9 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
     if step_name == "hla_typing" and tool == "arcashla":
         depends_on["alignments"] = "ngs_mapping_star"
 
-    # A mapper reads the index of its own tool (mbcs maps with bwa).
+    # A mapper reads the index of its own tool.
     if step_name == "ngs_mapping" and tool is not None:
-        depends_on["index"] = f"reference_index_{'bwa' if tool == 'mbcs' else tool}"
+        depends_on["index"] = f"reference_index_{tool}"
 
     # The purecn panel of normals builds on the mutect2 one, the cnvkit one uses the access regions.
     # Only purecn reads kits; the cnvkit panel stays whole genome.

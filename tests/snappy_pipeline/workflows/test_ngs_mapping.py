@@ -30,28 +30,6 @@ def test_star_infers_the_strand_without_a_strandedness_section():
     }
 
 
-MBCS_DEPENDS_ON = {"reads": "data_sets", "reference": "genome", "index": "bwa"}
-
-
-def test_mbcs_recalibration_requires_common_variants():
-    with pytest.raises(pydantic.ValidationError, match="needs depends_on.common_variants"):
-        NgsMapping(
-            tool="mbcs",
-            mbcs={"mapping_tool": "bwa"},
-            bwa={},
-            depends_on=MBCS_DEPENDS_ON,
-        )
-
-
-def test_mbcs_without_recalibration_needs_no_common_variants():
-    NgsMapping(
-        tool="mbcs",
-        mbcs={"mapping_tool": "bwa", "recalibrate": False},
-        bwa={},
-        depends_on=MBCS_DEPENDS_ON,
-    )
-
-
 def test_only_steps_with_a_bam_for_other_tasks_delete_it():
     class NoBam(SnappyStepModel):
         pass

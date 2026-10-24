@@ -255,7 +255,6 @@ WRAPPER_PARAM_EXCEPTIONS = {
     ("cnvkit/report", "breaks"): "read only for a breaks output",
     ("cnvkit/report", "genemetrics"): "read only for a genemetrics output",
     ("cnvkit/report", "segmetrics"): "read only for a segmetrics output",
-    ("mbcs", "barcode_config"): "read only with mbcs.use_barcodes",
     ("vembrane/tag", "expression"): "read only in filter mode",
 }
 
@@ -621,7 +620,6 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "pvactools/netchop",
             "pvactools/netstab",
         ),
-        "puts the mapper section's extra_arguments on bwa mem itself": ("mbcs",),
         "varfish export, left for later": (
             "bcftools/gvcf_to_vcf",
             "bcftools/merge_vcf",

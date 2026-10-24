@@ -12,7 +12,7 @@ Downstream tasks read the BAM files of the last task of the chain, through the k
 
 ``agent``
     Duplicate marking with the molecular barcodes (MBCs) of Agilent's AGeNT (LocatIt), with the ``baits`` of each library's kit in ``depends_on.kits``.
-    The reads must come from AGeNT's trimming (``adapter_trimming`` tool ``agent``), mapped with the barcodes as tags (``extra_arguments: ["-C"]`` of the BWA mapper) and without ``mask_duplicates``.
+    The reads must come from AGeNT's trimming (``adapter_trimming`` tool ``agent``), mapped with the barcodes as tags (``extra_arguments: ["-C"]`` of the BWA mapper).
     AGeNT is not open source and not in bioconda; ``path`` names its jar file.
 
 The task processes the DNA libraries of its upstream task, those of background data sets included, unless ``library_selection`` narrows them.

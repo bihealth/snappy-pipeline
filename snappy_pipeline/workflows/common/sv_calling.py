@@ -37,7 +37,7 @@ class SvCallingGetResultFilesMixin:
         is_dna = (
             ngs_mapping_tool.is_dna()
             if hasattr(ngs_mapping_tool, "is_dna")
-            else str(ngs_mapping_tool) in {"bwa", "bwa_mem2", "bwa_mem3", "minimap2", "mbcs"}
+            else str(ngs_mapping_tool) in {"bwa", "bwa_mem2", "bwa_mem3", "minimap2"}
         )
         if is_dna:
             # Get list of result path templates.

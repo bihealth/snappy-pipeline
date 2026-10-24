@@ -9,7 +9,6 @@ The ``tool`` field selects the aligner:
 - ``bwa``, ``bwa_mem2`` and ``bwa_mem3``: short-read DNA.
 - ``minimap2``: long-read DNA (PacBio, Oxford Nanopore).
 - ``star``: short-read RNA. Its result files also include gene counts and the strandedness decision.
-- ``mbcs``: short-read DNA with molecular barcodes and optional base quality score recalibration (BQSR). See the notes below.
 
 The task maps all libraries of its sample sheets, including those of background data sets, unless ``library_selection`` narrows them.
 A task with a DNA tool maps the DNA libraries, a task with ``star`` the RNA libraries.
@@ -49,7 +48,7 @@ Then a library is either single-end or paired-end, and different libraries may d
 Exome enrichment kits
 ~~~~~~~~~~~~~~~~~~~~~
 
-The target coverage report and the AGeNT barcode processing of ``mbcs`` read the region files of the library's enrichment kit.
+The target coverage report reads the region files of the library's enrichment kit.
 The files come from an ``external_data`` task in ``kits`` mode, named in ``depends_on.kits``.
 The sample sheet gets the optional library column ``libraryKit`` with the name of the kit in that task:
 
@@ -71,7 +70,6 @@ The target coverage report reads the ``targets`` file of the kit and needs ``dep
 Only targeted libraries (library type ``WES`` or ``Panel_seq``) have a kit.
 The report skips all others.
 A ``libraryKit`` that the kits task lacks is an error.
-``mbcs`` with ``use_barcodes`` reads the ``baits`` file, and every DNA library needs a kit, so it fails for libraries that are not targeted.
 
 .. code-block:: yaml
 
@@ -110,24 +108,12 @@ Without it, the step infers the strand with ``infer_experiment`` from RSeQC.
 With ``transcriptome: true``, STAR also writes the reads mapped to the transcriptome to a BAM file.
 It is not indexed, because it has no positional order.
 
-The ``mbcs`` tool
-~~~~~~~~~~~~~~~~~
+Molecular barcodes and BQSR
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``mbcs`` maps with one of the DNA mappers named in ``mbcs.mapping_tool`` (``bwa`` or ``bwa_mem2``).
-Handling of molecular barcodes (``use_barcodes``) and BQSR (``recalibrate``) is optional.
-The mapper section (``bwa`` or ``bwa_mem2``) configures the mapping.
-Use ``extra_arguments: ["-C"]`` there when barcodes are present and processed by AGeNT.
-
-Only the proprietary `AGeNT <https://www.agilent.com/en/product/next-generation-sequencing/hybridization-based-next-generation-sequencing-ngs/ngs-software/agent-232879>`_ is implemented for barcodes.
-It is not open source and not in ``bioconda``, so it must be installed separately.
-The AGeNT baits file is the ``baits`` file of the library's kit in ``depends_on.kits``.
-BQSR (``recalibrate``, the default) needs ``depends_on.common_variants``: a VCF of common germline variants, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
-
-:ref:`somatic_ngs` has a complete example.
-
-A Snakefile runs the sub-steps (barcode trimming, mapping, consensus merging, BQSR) inside one job.
-The other tools use shell script wrappers.
-This avoids long shell scripts and a shared temporary directory between jobs.
+Tasks of other steps process the mapping further: ``adapter_trimming`` with ``tool: agent`` before the mapping moves AGeNT's molecular barcodes into the read names, and ``alignment_processing`` after it marks duplicates with them (``tool: agent``) and recalibrates the base qualities (``tool: gatk4_bqsr``).
+Map such reads with ``extra_arguments: ["-C"]``, so that the barcodes become tags.
+:ref:`somatic_ngs` has the complete chain.
 
 Fingerprints
 ~~~~~~~~~~~~
@@ -165,7 +151,7 @@ from .model import NgsMapping as NgsMappingConfigModel
 from .model import Tool
 
 #: Available read mappers for (short/Illumina) DNA-seq data
-READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "bwa_mem3", "mbcs")
+READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "bwa_mem3")
 
 #: Available read mappers for (short/Illumina) RNA-seq data
 READ_MAPPERS_RNA = ("star",)
@@ -395,45 +381,6 @@ class BwaMem3StepPart(ReadMappingStepPart):
     def _get_input_files_run(self, wildcards):
         inputs = super()._get_input_files_run(wildcards)
         return inputs | {"index": self.parent.get_index_files("bwa_mem3")}
-
-
-class MBCsStepPart(ReadMappingStepPart):
-    """Support for performing NGS alignment on MBC data"""
-
-    name = "mbcs"
-    tool_category = "dna"
-
-    default_resource_usage = ResourceUsage(threads=1, runtime="72h", mem="4GB", partition="medium")
-
-    def _get_input_files_run(self, wildcards):
-        inputs = super()._get_input_files_run(wildcards) | {
-            **self.parent.reference_inputs(),
-            "index": self.parent.get_index_files(str(self.config.mbcs.mapping_tool)),
-        }
-        if self.config.mbcs.use_barcodes:
-            agent = getattr(self.config, self.config.mbcs.barcode_tool)
-            inputs["agent_prepare"] = agent.prepare.path
-            inputs["agent_mark_duplicates"] = agent.mark_duplicates.path
-            inputs["agent_baits"] = self.parent.library_kit_paths(
-                "kits", wildcards.library_name
-            ).baits
-        if self.config.mbcs.recalibrate:
-            inputs |= self.parent.vcf_inputs("common_variants")
-        return inputs
-
-    def _get_params_run(self, wildcards: Wildcards):
-        args = super()._get_params_run(wildcards)
-        mapper = getattr(self.config, self.config.mbcs.mapping_tool)
-        args |= {
-            "config": self.config.mbcs.model_dump(by_alias=True),
-            "mapper_config": mapper.model_dump(by_alias=True),
-        }
-        if self.config.mbcs.use_barcodes:
-            args["barcode_config"] = getattr(self.config, self.config.mbcs.barcode_tool).model_dump(
-                by_alias=True,
-                exclude={"prepare": {"path"}, "mark_duplicates": {"path"}},
-            )
-        return args
 
 
 class StarStepPart(ReadMappingStepPart):
@@ -757,8 +704,6 @@ class NgsMappingWorkflow(BaseStep):
                 selected_mapper = BwaMem2StepPart
             case "bwa_mem3":
                 selected_mapper = BwaMem3StepPart
-            case "mbcs":
-                selected_mapper = MBCsStepPart
             case "minimap2":
                 selected_mapper = Minimap2StepPart
             case "star":
@@ -829,10 +774,6 @@ class NgsMappingWorkflow(BaseStep):
                 "kits",
                 [name for name, cat in by_category.items() if cat in ("dna", "dna_long")],
                 require=False,
-            )
-        if self.config.tool == "mbcs" and self.config.mbcs.use_barcodes:
-            self.check_library_kits(
-                "kits", [name for name, cat in by_category.items() if cat == "dna"]
             )
 
     def validate_project(self, config):

@@ -289,6 +289,7 @@ Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull requ
 - **R package install jobs of sequenza and scarHRD** and their `work/R_packages/` directories: the environments install these packages when they are created.
 - **Container builds of PureCN and pVACtools**: the rules `panel_of_normals_purecn_install` (the `singularity` wrapper, `work/containers/`) and `somatic_neoepitope_prediction_pvactools_install` (`work/container/`), and the key `container` of a PureCN panel's outputs; Snakemake pulls the images.
 - **Jannovar statistics report** (`jannovar_stats` of `variant_calling`).
+- **`mbcs` tool of `ngs_mapping`** and its nested Snakemake run (`nested_snakemake.py`), with `depends_on.common_variants` of `ngs_mapping`: a chain of tasks replaces it (migration note 20).
 - **`fusioncatcher` tool of `somatic_gene_fusion_calling`**: it had no wrapper (main neither), so it could not run.
 - **`defuse`, `hera`, `jaffa` and `pizzly` tools of `somatic_gene_fusion_calling`**: untested and probably broken; `arriba` (recommended) and `star_fusion` remain.
 - **main's germline filters** (`variant_denovo_filtration`, the germline filters of main's `variant_filtration` and the `protected` rescue filter): they no longer ran on main (a deleted shell library, Jannovar inputs); `vembrane` expressions in a `variant_filtration` task cover their per-record criteria.
@@ -346,6 +347,10 @@ To migrate an existing project:
 19. `purecn.container` and `pvactools.container` are the images that Snakemake pulls, pinned by digest by default (`markusriester/purecn` of 2024-05-28, `griffithlab/pvactools:7.1.3`); the path of a local `.sif` file works too, and `pvactools.container: null` is no longer valid.
     A PureCN calling task runs the image of its panel of normals task.
     Jobs in a container see the project, `$HOME`, `/tmp` and the snappy installation; other directories they read go into `APPTAINER_BIND`, see {ref}`usage`.
+20. `tool: mbcs` of `ngs_mapping` becomes a chain of tasks, see the recipe in {ref}`somatic_ngs`: `adapter_trimming` with `tool: agent` (from `agent.prepare`, `use_barcodes`), a mapping task with the tool of `mbcs.mapping_tool`, `alignment_processing` with `tool: agent` (from `agent.mark_duplicates`) and `alignment_processing` with `tool: gatk4_bqsr` (`recalibrate`, `depends_on.common_variants`).
+    `lib_prep_type` and `consensus_mode` are required now; main's mbcs passed `-None` and `-c=None` without them, and it could not run with `bwa` at all (literal tabs in its read group line, which bwa rejects) nor with `recalibrate: false`.
+    The read groups are those of the data set's search pattern, as in mbcs (`<library>_L001`); duplicates are masked across the lanes of a library, while mbcs masked them per lane, so more reads carry the duplicate flag.
+    With main's mbcs output without BQSR as input, `gatk4_bqsr` writes main's recalibrated BAM.
 
 ## Example: a neoepitope config from main and its translation
 
