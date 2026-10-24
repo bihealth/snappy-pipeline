@@ -15,10 +15,11 @@ tasks:
           baits: resources/Exome-MedExome.chr12.bed
 
   - name: bwa_index
-    step: external_data
+    step: reference_index
     config:
-      produces: {type: index, tags: [bwa, dna]}
-      files: {index: ../../resources/refs/subregion}
+      depends_on:
+        reference: genome
+      tool: bwa
 
   - name: dbsnp
     step: external_data

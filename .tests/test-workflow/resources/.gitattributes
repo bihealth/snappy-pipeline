@@ -1,2 +1,1 @@
-refs/* filter=lfs diff=lfs merge=lfs -text
-refs filter=lfs diff=lfs merge=lfs -text
+refs/*.fa filter=lfs diff=lfs merge=lfs -text

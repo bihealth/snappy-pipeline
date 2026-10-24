@@ -114,9 +114,4 @@ work/
 !.tests/test-workflow/resources/refs/subregion.fa
 !.tests/test-workflow/resources/refs/subregion.fa.fai
 !.tests/test-workflow/resources/refs/subregion.dict
-!.tests/test-workflow/resources/refs/subregion.amb
-!.tests/test-workflow/resources/refs/subregion.ann
-!.tests/test-workflow/resources/refs/subregion.bwt
-!.tests/test-workflow/resources/refs/subregion.pac
-!.tests/test-workflow/resources/refs/subregion.sa
 

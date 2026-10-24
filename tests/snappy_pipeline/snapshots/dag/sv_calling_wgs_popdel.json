@@ -209,142 +209,22 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-109980000-120020000/12-109980000-120020000.call.tsv",
+  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-19980000-27500000/12-19980000-27500000.call.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
   ],
   "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/log/12-109980000-120020000.call.log"
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/log/12-19980000-27500000.call.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "109980000",
-    "chrom": "12",
-    "end": "120020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "109980000",
-   "chrom": "12",
-   "end": "120020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-119980000-130020000/12-119980000-130020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/log/12-119980000-130020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "119980000",
-    "chrom": "12",
-    "end": "130020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "119980000",
-   "chrom": "12",
-   "end": "130020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-129980000-133851895/12-129980000-133851895.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/log/12-129980000-133851895.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "129980000",
-    "chrom": "12",
-    "end": "133851895",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "129980000",
-   "chrom": "12",
-   "end": "133851895"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-19980000-30020000/12-19980000-30020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/log/12-19980000-30020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz.tbi"
   ],
   "params": {
    "args": {
     "begin": "19980000",
     "chrom": "12",
-    "end": "30020000",
+    "end": "27500000",
     "extra_arguments": []
    }
   },
@@ -357,294 +237,14 @@
   },
   "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
   "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz.tbi"
   ],
   "threads": 1,
   "wildcards": {
    "begin": "19980000",
    "chrom": "12",
-   "end": "30020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-29980000-40020000/12-29980000-40020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/log/12-29980000-40020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "29980000",
-    "chrom": "12",
-    "end": "40020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "29980000",
-   "chrom": "12",
-   "end": "40020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-39980000-50020000/12-39980000-50020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/log/12-39980000-50020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "39980000",
-    "chrom": "12",
-    "end": "50020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "39980000",
-   "chrom": "12",
-   "end": "50020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-49980000-60020000/12-49980000-60020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/log/12-49980000-60020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "49980000",
-    "chrom": "12",
-    "end": "60020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "49980000",
-   "chrom": "12",
-   "end": "60020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-59980000-70020000/12-59980000-70020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/log/12-59980000-70020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "59980000",
-    "chrom": "12",
-    "end": "70020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "59980000",
-   "chrom": "12",
-   "end": "70020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-69980000-80020000/12-69980000-80020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/log/12-69980000-80020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "69980000",
-    "chrom": "12",
-    "end": "80020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "69980000",
-   "chrom": "12",
-   "end": "80020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-79980000-90020000/12-79980000-90020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/log/12-79980000-90020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "79980000",
-    "chrom": "12",
-    "end": "90020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "79980000",
-   "chrom": "12",
-   "end": "90020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-89980000-100020000/12-89980000-100020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/log/12-89980000-100020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "89980000",
-    "chrom": "12",
-    "end": "100020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "89980000",
-   "chrom": "12",
-   "end": "100020000"
+   "end": "27500000"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
@@ -689,76 +289,14 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
  },
  {
-  "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/12-99980000-110020000/12-99980000-110020000.call.tsv",
-  "input": [
-   "tasks/sv_calling_wgs_popdel/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.profile"
-  ],
-  "log": [
-   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/log/12-99980000-110020000.call.log"
-  ],
-  "output": [
-   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz.tbi"
-  ],
-  "params": {
-   "args": {
-    "begin": "99980000",
-    "chrom": "12",
-    "end": "110020000",
-    "extra_arguments": []
-   }
-  },
-  "resources": {
-   "mem": "24 GB",
-   "mem_mb": 24000,
-   "mem_mib": 22889,
-   "partition": "medium",
-   "runtime": 5760
-  },
-  "rule": "sv_calling_wgs_popdel_sv_calling_wgs_popdel_call",
-  "temp": [
-   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz.tbi"
-  ],
-  "threads": 1,
-  "wildcards": {
-   "begin": "99980000",
-   "chrom": "12",
-   "end": "110020000"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/popdel/call"
- },
- {
   "benchmark": "tasks/sv_calling_wgs_popdel/benchmarks/cohort/cohort.concat_calls.tsv",
   "input": [
    "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz",
    "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz",
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz",
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz",
    "tasks/sv_calling_wgs_popdel/work/12-1-10020000/out/12-1-10020000.call.vcf.gz.tbi",
    "tasks/sv_calling_wgs_popdel/work/12-9980000-20020000/out/12-9980000-20020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-19980000-30020000/out/12-19980000-30020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-29980000-40020000/out/12-29980000-40020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-39980000-50020000/out/12-39980000-50020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-49980000-60020000/out/12-49980000-60020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-59980000-70020000/out/12-59980000-70020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-69980000-80020000/out/12-69980000-80020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-79980000-90020000/out/12-79980000-90020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-89980000-100020000/out/12-89980000-100020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-99980000-110020000/out/12-99980000-110020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-109980000-120020000/out/12-109980000-120020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-119980000-130020000/out/12-119980000-130020000.call.vcf.gz.tbi",
-   "tasks/sv_calling_wgs_popdel/work/12-129980000-133851895/out/12-129980000-133851895.call.vcf.gz.tbi"
+   "tasks/sv_calling_wgs_popdel/work/12-19980000-27500000/out/12-19980000-27500000.call.vcf.gz.tbi"
   ],
   "log": [
    "tasks/sv_calling_wgs_popdel/work/cohort/log/cohort.concat_calls.log"
