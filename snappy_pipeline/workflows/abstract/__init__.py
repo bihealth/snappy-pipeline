@@ -315,6 +315,8 @@ class BaseStepPart:
             keys = self.result_keys
             if isinstance(keys, dict):
                 keys = keys.get(action, ())
+            if Intermediate.bam in self.config.delete_intermediates:
+                keys = set(keys) - set(self.bam_outputs.get(action, ()))
             if not keys:
                 continue
             for key, paths in self.get_output_files(action).items():

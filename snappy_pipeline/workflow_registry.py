@@ -1,4 +1,5 @@
 from snappy_pipeline.workflows.adapter_trimming import AdapterTrimmingWorkflow
+from snappy_pipeline.workflows.alignment_processing import AlignmentProcessingWorkflow
 from snappy_pipeline.workflows.cbioportal_export import cbioportalExportWorkflow
 from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
 from snappy_pipeline.workflows.create_proteome import CreateProteomeWorkflow
@@ -51,6 +52,7 @@ from snappy_pipeline.workflows.wgs_sv_export_external import WgsSvExportExternal
 
 WORKFLOW_REGISTRY = {
     "adapter_trimming": AdapterTrimmingWorkflow,
+    "alignment_processing": AlignmentProcessingWorkflow,
     "cbioportal_export": cbioportalExportWorkflow,
     "combine_variants": CombineVariantsWorkflow,
     "create_proteome": CreateProteomeWorkflow,

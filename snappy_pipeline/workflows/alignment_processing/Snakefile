@@ -1,0 +1,46 @@
+# -*- coding: utf-8 -*-
+"""CUBI Pipeline alignment_processing step Snakefile"""
+
+from snappy_pipeline.orchestration import task_instance
+
+__author__ = ""
+
+
+# WorkflowImpl Object Setup ===================================================
+
+wf = task_instance(config["__task_name__"])
+
+
+# Rules =======================================================================
+
+
+rule alignment_processing_all:
+    default_target: True
+    input:
+        wf.get_result_files(),
+
+
+# Base quality score recalibration with GATK ----------------------------------
+
+
+if wf.config.tool == "gatk4_bqsr":
+
+    rule alignment_processing_gatk4_bqsr_run:
+        input:
+            unpack(wf.get_input_files("gatk4_bqsr", "run")),
+        output:
+            **wf.get_output_files("gatk4_bqsr", "run"),
+        log:
+            **wf.get_log_file("gatk4_bqsr", "run"),
+        benchmark:
+            wf.get_benchmark_file("gatk4_bqsr", "run")
+        threads: wf.get_resource("gatk4_bqsr", "run", "threads")
+        resources:
+            runtime=wf.get_resource("gatk4_bqsr", "run", "runtime"),
+            mem=wf.get_resource("gatk4_bqsr", "run", "mem"),
+            partition=wf.get_resource("gatk4_bqsr", "run", "partition"),
+            tmpdir=wf.get_resource("gatk4_bqsr", "run", "tmpdir"),
+        params:
+            args=wf.get_params("gatk4_bqsr", "run"),
+        wrapper:
+            wf.wrapper_path("gatk4_bqsr")
