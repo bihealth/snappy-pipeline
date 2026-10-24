@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - snake9
   pull_request:
     branches_ignore: [ ]
 
@@ -17,7 +18,7 @@ env:
 jobs:
   cancel-previous:
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'
+    if: github.event_name == 'pull_request'
     steps:
       - uses: khan/pull-request-workflow-cancel@1.0.0
         with:

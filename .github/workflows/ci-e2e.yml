@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, snake9 ]
   pull_request:
     branches_ignore: [ ]
     paths:
