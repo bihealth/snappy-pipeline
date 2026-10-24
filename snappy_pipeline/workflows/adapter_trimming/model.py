@@ -14,6 +14,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
 class Tool(StrEnum):
     BBDUK = "bbduk"
     FASTP = "fastp"
+    AGENT = "agent"
 
 
 class BbdukReference(StrEnum):
@@ -905,9 +906,36 @@ class ExpectedTrimmedRawFastq(BaseModel):
     fastq_dir: str
 
 
+class AgentLibPrepType(StrEnum):
+    HALO_PLEX = "halo"
+    HALO_PLEX_HS = "hs"
+    SURE_SELECT = "xt"
+    SURE_SELECT_HS2 = "v2"
+    SURE_SELECT_QXT = "qxt"
+
+
+class Agent(ToolModel):
+    """Trimming with Agilent's AGeNT, which moves the molecular barcodes (MBCs) of the reads into
+    their names for the duplicate marking of AGeNT (``alignment_processing`` tool ``agent``)"""
+
+    path: ConfigPath
+    """The jar file of AGeNT's trimmer; AGeNT is not open source and not in bioconda"""
+
+    lib_prep_type: AgentLibPrepType
+    """``halo`` (HaloPlex), ``hs`` (HaloPlex HS), ``xt`` (SureSelect XT, XT2, XT HS), ``v2``
+    (SureSelect XT HS2) or ``qxt`` (SureSelect QXT)"""
+
+    java_options: str = "-Xmx48000M"
+    """Options of the Java virtual machine; the heap is 75% of the job's memory"""
+
+    extra_arguments: list[str] = []
+    """For example ``-polyG 8`` for NovaSeq data and ``-minFractionRead 50`` for 100 cycles"""
+
+
 class AdapterTrimming(SnappyStepModel):
     depends_on: AdapterTrimmingDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]
     bbduk: Bbduk | None = None
     fastp: Fastp | None = None
+    agent: Agent | None = None

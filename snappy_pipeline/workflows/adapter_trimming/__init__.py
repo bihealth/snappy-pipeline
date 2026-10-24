@@ -2,8 +2,9 @@
 """Adapter trimming of FASTQ files
 
 Trims adapters and low-quality bases from the reads of each library.
-The ``tool`` field selects ``bbduk`` (BBDuk of BBTools) or ``fastp``.
+The ``tool`` field selects ``bbduk`` (BBDuk of BBTools), ``fastp`` or ``agent`` (Agilent's AGeNT).
 ``bbduk`` trims the sequences of the files in ``adapter_sequences`` and of BBDuk's built-in references in ``builtin_references`` (such as ``adapters`` and ``phix``); it needs at least one.
+``agent`` moves the molecular barcodes (MBCs) of the reads into their names, for the duplicate marking of ``alignment_processing`` with ``tool: agent``; AGeNT is not open source and not in bioconda, so ``path`` names its jar file.
 Each library gives one result, which keeps the sub-directory and file names of its input FASTQ files.
 Tasks that read reads name this task in ``depends_on.reads``.
 
@@ -35,7 +36,7 @@ from snappy_pipeline.workflows.common.reads import reads_input_files, reads_para
 from .model import AdapterTrimming as AdapterTrimmingConfigModel
 
 #: Adatper trimming tools
-TRIMMERS = ("bbduk", "fastp")
+TRIMMERS = ("bbduk", "fastp", "agent")
 
 
 class AdapterTrimmingStepPart(BaseStepPart):
@@ -121,6 +122,19 @@ class FastpStepPart(AdapterTrimmingStepPart):
         return ResourceUsage(threads=self.config.fastp.num_threads, runtime="12h", mem="24000MB")
 
 
+class AgentStepPart(AdapterTrimmingStepPart):
+    name = "agent"
+    file_keys = ("path",)
+
+    default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="64000MB")
+
+    def _get_params_run(self, wildcards):
+        # AGeNT names its files by a prefix, not by the library
+        params = super()._get_params_run(wildcards)
+        del params["library_name"]
+        return params
+
+
 class AdapterTrimmingWorkflow(BaseStep):
     name = "adapter_trimming"
     produces = [DataSignature(DataType.RAW, frozenset({"trimmed"}))]
@@ -139,6 +153,8 @@ class AdapterTrimmingWorkflow(BaseStep):
                 selected = BbdukStepPart
             case "fastp":
                 selected = FastpStepPart
+            case "agent":
+                selected = AgentStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes((selected,))

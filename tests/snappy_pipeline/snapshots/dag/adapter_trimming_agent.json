@@ -1,0 +1,97 @@
+[
+ {
+  "benchmark": "tasks/adapter_trimming_agent/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.tsv",
+  "directory": [
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/rejected",
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/report"
+  ],
+  "input": [
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+   "<repo>/tests/scripts/generate_task_configs.py"
+  ],
+  "log": [
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/report",
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/rejected"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "extra_arguments": [],
+     "java_options": "-Xmx48000M",
+     "lib_prep_type": "v2"
+    },
+    "extra_arguments": [],
+    "output_left": [
+     {
+      "filename": "case001subregion-T1-DNA1-WES1.R1.fastq.gz",
+      "relative_path": "."
+     }
+    ],
+    "output_right": [
+     {
+      "filename": "case001subregion-T1-DNA1-WES1.R2.fastq.gz",
+      "relative_path": "."
+     }
+    ]
+   }
+  },
+  "resources": {
+   "mem": "64 GB",
+   "mem_mb": 64000,
+   "mem_mib": 61036,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "adapter_trimming_agent_adapter_trimming_agent_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/agent/trim"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/report"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/adapter_trimming_agent/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/adapter_trimming_agent"
+  },
+  "resources": {},
+  "rule": "adapter_trimming_agent_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/out",
+   "tasks/adapter_trimming_agent/work/case001subregion-T1-DNA1-WES1/report",
+   "tasks/adapter_trimming_agent/output/.manifest.tsv"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ }
+]
