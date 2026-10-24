@@ -110,15 +110,10 @@ work/
 !.tests/test-workflow/resources/.gitattributes
 !.tests/test-workflow/resources/mehari/
 !.tests/test-workflow/resources/mehari/GRCh37-ensembl.chr12.txs.bin.zst
-!.tests/test-workflow/resources/cache/
-!.tests/test-workflow/resources/cache/.gitattributes
-!.tests/test-workflow/resources/cache/vep/
-!.tests/test-workflow/resources/cache/vep/**
 !.tests/test-workflow/resources/refs/
 !.tests/test-workflow/resources/refs/subregion.fa
 !.tests/test-workflow/resources/refs/subregion.fa.fai
 !.tests/test-workflow/resources/refs/subregion.dict
-!.tests/test-workflow/resources/refs/subregion.fa.genome
 !.tests/test-workflow/resources/refs/subregion.amb
 !.tests/test-workflow/resources/refs/subregion.ann
 !.tests/test-workflow/resources/refs/subregion.bwt
