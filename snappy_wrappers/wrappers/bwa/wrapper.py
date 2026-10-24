@@ -30,6 +30,8 @@ num_threads_align = args["num_threads_align"]
 bases_per_batch = args["bases_per_batch"]
 split_as_secondary = args["split_as_secondary"]
 aln_max_read_length = args["aln_max_read_length"]
+# The read group IDs, one per read group (file pair) of the library
+read_groups = " ".join(args["read_groups"])
 
 ShellWrapper(snakemake).run(
     r"""
@@ -42,6 +44,7 @@ INDEX={path_bwa_index}
 # Define left and right reads as Bash arrays
 declare -a reads_left=({input_left})
 declare -a reads_right=({input_right})
+declare -a read_groups=({read_groups})
 
 # Check whether we have paired reads
 if [[ ${{#reads_right[*]}} -eq 0 ]]; then
@@ -130,7 +133,7 @@ run_bwa_aln()
                 samtools addreplacerg \
                     --input-fmt SAM \
                     --output-fmt SAM \
-                    -r "@RG\tID:{snakemake.params.args[sample_name]}.$i\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}" \
+                    -r "@RG\tID:${{read_groups[$i]}}\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}" \
                     /dev/stdin \
                     /dev/stdout
             else
@@ -172,7 +175,7 @@ run_bwa_mem()
         fi
 
         if [[ "{snakemake.params.args[sample_name]}" != "" ]]; then
-            rg_arg="-R @RG\tID:{snakemake.params.args[sample_name]}.$i\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}"
+            rg_arg="-R @RG\tID:${{read_groups[$i]}}\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}"
         else
             rg_arg=
         fi

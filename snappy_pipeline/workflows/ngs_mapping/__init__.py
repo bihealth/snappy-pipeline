@@ -39,6 +39,8 @@ Reads and sample sheet
 A data set or an ``external_data`` task locates the reads below its ``search_paths``, in a folder per library.
 Each entry of ``search_patterns`` holds regular expressions for the path below that folder.
 The keys ``left`` and ``right`` select the mates, and a ``(?P<readgroup>...)`` group pairs the mates of one read group.
+``bwa``, ``bwa_mem2`` and ``bwa_mem3`` map each read group with its own ``@RG``: the ID is the name the group captured (for example ``<library>_L001``), ``SM`` the library name and ``PL`` the mapper's ``platform``.
+They mask duplicates (``mask_duplicates``) across all read groups of a library.
 
 By default, every pattern must match as many ``left`` as ``right`` files.
 With ``mixed_se_pe: true`` in the data set or the ``external_data`` task, ``right`` may match nothing.
@@ -160,8 +162,6 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
 from .model import NgsMapping as NgsMappingConfigModel
 from .model import Tool
-
-# TODO: Need something smarter still for @RG
 
 #: Available read mappers for (short/Illumina) DNA-seq data
 READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "bwa_mem3", "mbcs")
@@ -292,6 +292,11 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
             "sample_name": wildcards.library_name,
         } | reads_params(self.parent, wildcards.library_name)
 
+    def _read_group_names(self, wildcards: Wildcards) -> list[str]:
+        """The read group IDs of the BWA mappers: the names of the discovered read groups, in
+        the order of their files"""
+        return [group.name for group in self.parent.read_groups(wildcards.library_name)]
+
     def _get_input_files_run(self, wildcards):
         return reads_input_files(self.parent, wildcards.library_name)
 
@@ -334,6 +339,7 @@ class BwaStepPart(ReadMappingStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.bwa.model_dump(by_alias=True))
+        parent_args["read_groups"] = self._read_group_names(wildcards)
         return parent_args
 
     def _get_input_files_run(self, wildcards):
@@ -353,6 +359,7 @@ class BwaMem2StepPart(ReadMappingStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.bwa_mem2.model_dump(by_alias=True))
+        parent_args["read_groups"] = self._read_group_names(wildcards)
         return parent_args
 
     def _get_input_files_run(self, wildcards):
@@ -372,6 +379,7 @@ class BwaMem3StepPart(ReadMappingStepPart):
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         parent_args = super()._get_params_run(wildcards)
         parent_args.update(self.config.bwa_mem3.model_dump(by_alias=True))
+        parent_args["read_groups"] = self._read_group_names(wildcards)
         return parent_args
 
     def _get_input_files_run(self, wildcards):

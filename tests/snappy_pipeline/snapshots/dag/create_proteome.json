@@ -183,6 +183,9 @@
     "num_threads_bam_view": 4,
     "num_threads_trimming": 8,
     "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
     "sample_name": "case001subregion-N1-DNA1-WES1",
     "split_as_secondary": false,
     "trim_adapters": false
@@ -246,6 +249,9 @@
     "num_threads_bam_view": 4,
     "num_threads_trimming": 8,
     "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregion-T1-DNA1-WES1"
+    ],
     "sample_name": "case001subregion-T1-DNA1-WES1",
     "split_as_secondary": false,
     "trim_adapters": false
@@ -309,6 +315,9 @@
     "num_threads_bam_view": 4,
     "num_threads_trimming": 8,
     "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregion-T1-RNA1-mRNA_seq1"
+    ],
     "sample_name": "case001subregion-T1-RNA1-mRNA_seq1",
     "split_as_secondary": false,
     "trim_adapters": false

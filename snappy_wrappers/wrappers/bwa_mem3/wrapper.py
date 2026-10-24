@@ -26,27 +26,34 @@ num_threads_bam_sort = args["num_threads_bam_sort"]
 num_threads_align = args["num_threads_align"]
 bases_per_batch = args["bases_per_batch"]
 split_as_secondary = args["split_as_secondary"]
+# The read group IDs, one per read group (file pair) of the library
+read_groups = " ".join(args["read_groups"])
 
 ShellWrapper(snakemake).run(
     r"""
 set -x
 
+declare -a reads_left=({input_left})
+declare -a reads_right=({input_right})
+declare -a read_groups=({read_groups})
+
 # Function Definitions ----------------------------------------------------------------------------
 
-# Input file merging with seqtk
+# The reads of read group $1, paired reads interleaved with seqtk
 #
-# In the case of paired reads, write out line counts to temporary file so we can check for problems
-# later.
+# In the case of paired reads, write out line counts to temporary files so we can check for problems
+# later. A failing zcat in a process substitution does not fail the pipeline, so it leaves a marker.
 input_files()
 {{
     set -x
+    i=$1
 
-    if [[ -z "{input_right}" ]]; then
-        (zcat {input_left})
+    if [[ ${{#reads_right[@]}} -eq 0 ]]; then
+        zcat ${{reads_left[$i]}}
     else
         seqtk mergepe \
-            <({{ zcat {input_left} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_left)) \
-            <({{ zcat {input_right} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_right))
+            <({{ zcat ${{reads_left[$i]}} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_left.$i)) \
+            <({{ zcat ${{reads_right[$i]}} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_right.$i))
     fi
 }}
 
@@ -74,10 +81,11 @@ mask_duplicates()
     fi
 }}
 
-# Run BWA-MEM3
+# Run BWA-MEM3 on the reads of read group $1
 run_bwa_mem3()
 {{
     set -x
+    i=$1
 
     # Decide whether to write split reads as supplementary or secondary (-M means secondary)
     split_as_supp_flag=
@@ -86,7 +94,7 @@ run_bwa_mem3()
     fi
 
     if [[ "{snakemake.params.args[sample_name]}" != "" ]]; then
-        rg_arg="-R @RG\tID:{snakemake.params.args[sample_name]}\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}"
+        rg_arg="-R @RG\tID:${{read_groups[$i]}}\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}"
     else
         rg_arg=
     fi
@@ -100,6 +108,19 @@ run_bwa_mem3()
         -K {bases_per_batch} \
         {extra_arguments} \
         /dev/stdin
+}}
+
+# The alignments of all read groups, still grouped by read name, under one header
+merge_read_groups()
+{{
+    set -x
+
+    for f in $TMPDIR/out.d/*.bam; do
+        samtools view -H $f >${{f%.bam}}.hdr.sam
+    done
+    samtools merge $TMPDIR/merged.hdr.bam $TMPDIR/out.d/*.hdr.sam
+    samtools cat -h $TMPDIR/merged.hdr.bam $TMPDIR/out.d/*.bam \
+    | samtools view -h -@ {num_threads_bam_view}
 }}
 
 # Alignment postprocessing
@@ -148,31 +169,46 @@ postproc_bam()
     fi
 }}
 
-# Check input line counts written out in input_files(). A failing zcat in a process substitution
-# does not fail the pipeline, so it leaves a marker.
+# Check the decompression and the input line counts written out in input_files()
 check_input_line_counts()
 {{
     if [[ -e $TMPDIR/zcat_failed ]]; then
         >&2 echo "Could not decompress the reads."
         exit 1
     fi
-    if [[ -e $TMPDIR/count_left ]]; then
-        if ! diff $TMPDIR/count_left $TMPDIR/count_right >/dev/null; then
-            >&2 echo "Different number of lines in left/right file."
-            >&2 cat $TMPDIR/count_left
-            >&2 cat $TMPDIR/count_right
-            exit 1
+    for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
+        if [[ -e $TMPDIR/count_left.$i ]]; then
+            if ! diff $TMPDIR/count_left.$i $TMPDIR/count_right.$i >/dev/null; then
+                >&2 echo "Different number of lines in left/right file of read group ${{read_groups[$i]}}."
+                >&2 cat $TMPDIR/count_left.$i
+                >&2 cat $TMPDIR/count_right.$i
+                exit 1
+            fi
         fi
-    fi
+    done
 }}
 
 # Run actual tools --------------------------------------------------------------------------------
 
-input_files \
-| trim_adapters \
-| run_bwa_mem3 \
-| mask_duplicates \
-| postproc_bam
+# Map each read group with its own read group ID; several are concatenated for duplicate masking
+if [[ ${{#reads_left[@]}} -eq 1 ]]; then
+    input_files 0 \
+    | trim_adapters \
+    | run_bwa_mem3 0 \
+    | mask_duplicates \
+    | postproc_bam
+else
+    mkdir -p $TMPDIR/out.d
+    for ((i = 0; i < ${{#reads_left[@]}}; i++)); do
+        input_files $i \
+        | trim_adapters \
+        | run_bwa_mem3 $i \
+        | samtools view -b -@ {num_threads_bam_view} -o $TMPDIR/out.d/$(printf %05d $i).bam
+    done
+    merge_read_groups \
+    | mask_duplicates \
+    | postproc_bam
+fi
 
 check_input_line_counts
 """

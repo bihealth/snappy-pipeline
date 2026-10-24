@@ -8,6 +8,7 @@ import pytest
 from snappy_pipeline.workflows import ngs_mapping
 from snappy_pipeline.workflows.ngs_mapping import (
     BwaMem2StepPart,
+    BwaMem3StepPart,
     BwaStepPart,
     MBCsStepPart,
     Minimap2StepPart,
@@ -17,6 +18,7 @@ from snappy_pipeline.workflows.ngs_mapping import (
 from snappy_pipeline.workflows.ngs_mapping.model import (
     Bwa,
     BwaMem2,
+    BwaMem3,
     Mbcs,
     Minimap2,
     Star,
@@ -33,7 +35,13 @@ def no_reads(monkeypatch):
 def _params(part_class, **config):
     part = object.__new__(part_class)
     part.config = SimpleNamespace(**config)
-    part.parent = SimpleNamespace(library_infos={"lib": {"library_kit": "PacBio HiFi"}})
+    part.parent = SimpleNamespace(
+        library_infos={"lib": {"library_kit": "PacBio HiFi"}},
+        read_groups=lambda library_name: [
+            SimpleNamespace(name=f"{library_name}_L001"),
+            SimpleNamespace(name=f"{library_name}_L002"),
+        ],
+    )
     return part._get_params_run(SimpleNamespace(library_name="lib"))
 
 
@@ -55,6 +63,20 @@ def test_bwa_mem2_passes_platform():
     params = _params(BwaMem2StepPart, bwa_mem2=BwaMem2(platform="ONT"))
 
     assert params["platform"] == "ONT"
+
+
+@pytest.mark.parametrize(
+    "part_class, config",
+    [
+        (BwaStepPart, {"bwa": Bwa()}),
+        (BwaMem2StepPart, {"bwa_mem2": BwaMem2()}),
+        (BwaMem3StepPart, {"bwa_mem3": BwaMem3()}),
+    ],
+)
+def test_bwa_mappers_name_read_groups_after_the_discovered_ones(part_class, config):
+    params = _params(part_class, **config)
+
+    assert params["read_groups"] == ["lib_L001", "lib_L002"]
 
 
 def test_star_passes_platform():
