@@ -24,6 +24,7 @@ num_threads_bam_view = args["num_threads_bam_view"]
 memory_bam_sort = args["memory_bam_sort"]
 num_threads_bam_sort = args["num_threads_bam_sort"]
 num_threads_align = args["num_threads_align"]
+bases_per_batch = args["bases_per_batch"]
 split_as_secondary = args["split_as_secondary"]
 
 ShellWrapper(snakemake).run(
@@ -96,6 +97,7 @@ run_bwa_mem2()
         $rg_arg \
         -p \
         -t {num_threads_align} \
+        -K {bases_per_batch} \
         {extra_arguments} \
         /dev/stdin
 }}

@@ -169,6 +169,11 @@ class BwaMapper(ToolModel):
     split_as_secondary: bool = False
     """-M flag"""
 
+    bases_per_batch: Annotated[int, Field(gt=0)] = 100_000_000
+    """Input bases per batch of ``bwa mem`` (``-K``). A fixed batch makes the alignments
+    independent of ``num_threads_align``: without it, the batch is 10 Mbp per thread, and the
+    insert size distribution is estimated per batch."""
+
     platform: str = "ILLUMINA"
     """Platform (``PL``) of the read group"""
 

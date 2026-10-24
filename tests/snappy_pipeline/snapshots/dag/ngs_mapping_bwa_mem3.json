@@ -61,6 +61,7 @@
   ],
   "params": {
    "args": {
+    "bases_per_batch": 100000000,
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",
@@ -121,6 +122,7 @@
   ],
   "params": {
    "args": {
+    "bases_per_batch": 100000000,
     "extra_arguments": [],
     "mask_duplicates": true,
     "memory_bam_sort": "4G",

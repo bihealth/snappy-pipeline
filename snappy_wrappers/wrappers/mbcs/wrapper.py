@@ -168,7 +168,7 @@ cmd += (
     "            | {mapper} mem \\\n"
     "                {indices} {split_as_secondary} \\\n"
     "                -R '@RG\tID:{{name}}\tSM:{sample_name}\tPL:{platform}' \\\n"
-    "                -p {extra_args} -t {threads} /dev/stdin \\\n"
+    "                -p {extra_args} -t {threads} -K {bases_per_batch} /dev/stdin \\\n"
 ).format(
     mapper=mapper,
     indices=snakemake.input.index[0].removesuffix(".amb"),
@@ -177,6 +177,7 @@ cmd += (
     platform=mapper_config["platform"],
     extra_args=" ".join(mapper_config.get("extra_arguments", [])),
     threads=mapper_config["num_threads_align"],
+    bases_per_batch=mapper_config["bases_per_batch"],
 )
 
 # Optionally mask duplicates
