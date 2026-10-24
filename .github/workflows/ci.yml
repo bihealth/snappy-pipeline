@@ -16,16 +16,6 @@ env:
   PIXI_VERSION: v0.75.0
 
 jobs:
-  cancel-previous:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: khan/pull-request-workflow-cancel@1.0.0
-        with:
-          workflows: "main.yml"
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-
   linting:
     runs-on: ubuntu-latest
     steps:
@@ -101,9 +91,6 @@ jobs:
 
       - name: Run tests
         run: pixi run -e test test
-        env:
-          DIFF_MAIN: ${{ github.event_name == 'pull_request' }}
-          DIFF_LAST_COMMIT: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Coveralls
         uses: AndreMiras/coveralls-python-action@develop
