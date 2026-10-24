@@ -1,0 +1,113 @@
+[
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa_mem3/output/.manifest.tsv"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.genome"
+  ],
+  "log": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/log/reference_index.index.log"
+  ],
+  "output": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "reference_index_bwa_mem3_reference_index_bwa_mem3_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa_mem3"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "local": true,
+  "log": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/log/reference_index.common.log"
+  ],
+  "output": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.genome"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_index_bwa_mem3_reference_index_common_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.fa.genome",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.bwt.2bit.64",
+   "tasks/reference_index_bwa_mem3/work/reference_index/out/reference.pac"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/reference_index_bwa_mem3/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/reference_index_bwa_mem3"
+  },
+  "resources": {},
+  "rule": "reference_index_bwa_mem3_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ }
+]

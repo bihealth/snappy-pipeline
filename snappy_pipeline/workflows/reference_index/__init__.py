@@ -2,7 +2,7 @@
 """Indices of a reference sequence
 
 Builds the indices of a reference FASTA file for one mapper.
-The ``tool`` field selects ``bwa``, ``bwa_mem2``, ``minimap2`` or ``star``.
+The ``tool`` field selects ``bwa``, ``bwa_mem2``, ``bwa_mem3``, ``minimap2`` or ``star``.
 STAR needs an RNA reference (``reference_molecule: rna``) and takes a gene annotation from ``depends_on.features`` to add splice junctions.
 The other tools need a DNA reference.
 The task has one result per project, not per library.
@@ -16,11 +16,12 @@ Below ``tasks/<task>/output/reference_index/out/``, with the prefix ``reference`
 - ``reference.fa.fai``, ``reference.dict`` and ``reference.fa.genome`` for every tool.
 - ``bwa``: ``.amb``, ``.ann``, ``.bwt``, ``.pac`` and ``.sa``.
 - ``bwa_mem2``: ``.0123``, ``.amb``, ``.ann``, ``.bwt.2bit.64`` and ``.pac``.
+- ``bwa_mem3``: ``.amb``, ``.ann``, ``.bwt.2bit.64`` and ``.pac``.
 - ``minimap2``: ``.mmi``.
 - ``star``: the directory ``reference.index/`` with the STAR genome files, plus the splice junction files if ``features`` is set.
 
 Downstream tasks read the index through the key ``index``.
-This is the prefix of the files for ``bwa`` and ``bwa_mem2``, the ``.mmi`` file for ``minimap2`` and the directory for ``star``.
+This is the prefix of the files for ``bwa``, ``bwa_mem2`` and ``bwa_mem3``, the ``.mmi`` file for ``minimap2`` and the directory for ``star``.
 The keys ``reference_fai``, ``reference_dict`` and ``reference_genome`` name the other three files.
 """
 
@@ -124,6 +125,14 @@ class BwaMem2IndexStepPart(_IndexToolStepPart):
     default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
 
 
+class BwaMem3IndexStepPart(_IndexToolStepPart):
+    name = "bwa_mem3"
+    actions = ("run",)
+    output_suffixes = (".amb", ".ann", ".bwt.2bit.64", ".pac")
+
+    default_resource_usage = ResourceUsage(threads=8, runtime="24h", mem="16GB")
+
+
 class Minimap2IndexStepPart(_IndexToolStepPart):
     name = "minimap2"
     actions = ("run",)
@@ -155,6 +164,7 @@ class ReferenceIndexWorkflow(BaseStep):
     produces = [
         DataSignature(DataType.INDEX, frozenset({"bwa", "dna"})),
         DataSignature(DataType.INDEX, frozenset({"bwa_mem2", "dna"})),
+        DataSignature(DataType.INDEX, frozenset({"bwa_mem3", "dna"})),
         DataSignature(DataType.INDEX, frozenset({"minimap2", "dna"})),
         DataSignature(DataType.INDEX, frozenset({"star", "rna"})),
     ]
@@ -182,6 +192,7 @@ class ReferenceIndexWorkflow(BaseStep):
         tool_to_class = {
             Tool.bwa: BwaIndexStepPart,
             Tool.bwa_mem2: BwaMem2IndexStepPart,
+            Tool.bwa_mem3: BwaMem3IndexStepPart,
             Tool.minimap2: Minimap2IndexStepPart,
             Tool.star: StarIndexStepPart,
         }

@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - bwa-mem3==0.15.0
+  - samtools==1.24
+  - htslib==1.24
+  - samblaster==0.1.26
+  - seqtk==1.5
+  - trimadap==r11

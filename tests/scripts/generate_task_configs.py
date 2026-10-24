@@ -407,6 +407,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         "target_coverage_report": {"enabled": Overwrite(True)},
     },
     ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA},
+    ("ngs_mapping", "bwa_mem3"): {"library_selection": DNA},
     ("ngs_mapping", "minimap2"): {"library_selection": DNA},
     ("ngs_mapping", "mbcs"): {
         "library_selection": DNA,

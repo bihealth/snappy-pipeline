@@ -35,6 +35,7 @@ class ExpectedIndex(BaseModel):
 class Tool(StrEnum):
     bwa = "bwa"
     bwa_mem2 = "bwa_mem2"
+    bwa_mem3 = "bwa_mem3"
     minimap2 = "minimap2"
     star = "star"
 
@@ -44,6 +45,10 @@ class Bwa(ToolModel):
 
 
 class BwaMem2(ToolModel):
+    pass
+
+
+class BwaMem3(ToolModel):
     pass
 
 
@@ -78,6 +83,7 @@ class ReferenceIndex(SnappyStepModel):
 
     bwa: Bwa = Bwa()
     bwa_mem2: BwaMem2 = BwaMem2()
+    bwa_mem3: BwaMem3 = BwaMem3()
     minimap2: Minimap2 = Minimap2()
     star: Star = Star()
 
@@ -86,5 +92,7 @@ class ReferenceIndex(SnappyStepModel):
         if self.tool == Tool.star and self.reference_molecule != Molecule.rna:
             raise ValueError("tool='star' requires reference_molecule='rna'")
         if self.tool != Tool.star and self.reference_molecule != Molecule.dna:
-            raise ValueError("tool in {bwa,bwa_mem2,minimap2} requires reference_molecule='dna'")
+            raise ValueError(
+                "tool in {bwa,bwa_mem2,bwa_mem3,minimap2} requires reference_molecule='dna'"
+            )
         return self

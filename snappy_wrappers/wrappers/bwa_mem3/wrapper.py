@@ -1,0 +1,177 @@
+from typing import TYPE_CHECKING
+
+from snappy_wrappers.snappy_wrapper import ShellWrapper
+
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
+
+__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+
+args = getattr(snakemake.params, "args", {})
+
+# The reads are inputs. If another task wrote them, the input is that task's out directory and
+# params list the files.
+reads = args.get("input", {})
+input_left = snakemake.input.get("reads_left") or reads["reads_left"]
+input_right = snakemake.input.get("reads_right") or reads.get("reads_right", "")
+
+# The index files are inputs, the first one is the .amb file.
+path_index = snakemake.input.index[0].removesuffix(".amb")
+trim_adapters = args["trim_adapters"]
+num_threads_trimming = args["num_threads_trimming"]
+mask_duplicates = args["mask_duplicates"]
+num_threads_bam_view = args["num_threads_bam_view"]
+memory_bam_sort = args["memory_bam_sort"]
+num_threads_bam_sort = args["num_threads_bam_sort"]
+num_threads_align = args["num_threads_align"]
+split_as_secondary = args["split_as_secondary"]
+
+ShellWrapper(snakemake).run(
+    r"""
+set -x
+
+# Function Definitions ----------------------------------------------------------------------------
+
+# Input file merging with seqtk
+#
+# In the case of paired reads, write out line counts to temporary file so we can check for problems
+# later.
+input_files()
+{{
+    set -x
+
+    if [[ -z "{input_right}" ]]; then
+        (zcat {input_left})
+    else
+        seqtk mergepe \
+            <({{ zcat {input_left} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_left)) \
+            <({{ zcat {input_right} || touch $TMPDIR/zcat_failed; }} | tee >(wc -l > $TMPDIR/count_right))
+    fi
+}}
+
+# Adapter trimming
+trim_adapters()
+{{
+    set -x
+
+    if [[ "{trim_adapters}" == "True" ]]; then
+        trimadap-mt -p {num_threads_trimming}
+    else
+        cat
+    fi
+}}
+
+# Duplicate masking
+mask_duplicates()
+{{
+    set -x
+
+    if [[ "{mask_duplicates}" == "True" ]]; then
+        samblaster --addMateTags
+    else
+        cat
+    fi
+}}
+
+# Run BWA-MEM3
+run_bwa_mem3()
+{{
+    set -x
+
+    # Decide whether to write split reads as supplementary or secondary (-M means secondary)
+    split_as_supp_flag=
+    if [[ "{split_as_secondary}" == "True" ]]; then
+        split_as_supp_flag="-M"
+    fi
+
+    if [[ "{snakemake.params.args[sample_name]}" != "" ]]; then
+        rg_arg="-R @RG\tID:{snakemake.params.args[sample_name]}\tSM:{snakemake.params.args[sample_name]}\tPL:{snakemake.params.args[platform]}"
+    else
+        rg_arg=
+    fi
+
+    bwa-mem3 mem \
+        {path_index} \
+        $split_as_supp_flag \
+        $rg_arg \
+        -p \
+        -t {num_threads_align} \
+        {extra_arguments} \
+        /dev/stdin
+}}
+
+# Alignment postprocessing
+#
+# This function makes extensive use of tee-piping to prevent the BAM to be read from the disk
+# again for statistics.
+postproc_bam()
+{{
+    set -x
+
+    samtools sort \
+        -T $TMPDIR/sort_bam \
+        -m {memory_bam_sort} \
+        -@ {num_threads_bam_sort} \
+        -O BAM \
+        -o /dev/stdout \
+        /dev/stdin \
+    | tee >(samtools stats    /dev/stdin >{snakemake.output.report_bamstats_txt}) \
+    | tee >(samtools flagstat /dev/stdin >{snakemake.output.report_flagstats_txt}) \
+    | tee >(stdbuf -o0 samtools index /dev/stdin -o /dev/stdout >{snakemake.output.bam_bai}) \
+    > {snakemake.output.bam}
+
+    touch \
+        {snakemake.output.bam} \
+        {snakemake.output.bam_bai}
+
+    # We use stdbuf on samtools index above toether with stdout redirection.  We have seen
+    # some interesting timing issues with clustered/distributed file systems and the small
+    # index file not having been written by the time that samtools idxstats uses it.  In
+    # addition we attempt to run it 5 times with incremental waits to make things more
+    # robust.
+    for i in {{1..5}}; do
+        set +e
+        samtools idxstats {snakemake.output.bam} >{snakemake.output.report_idxstats_txt}
+        ret=$?
+        set -e
+        if [[ "$ret" -eq 0 ]]; then
+            break
+        elif [[ "$i" -lt 5 ]]; then
+            sleep "${{i}}m"
+        fi
+    done
+    if [[ "$ret" -ne 0 ]]; then
+        >&2 echo "samtools idxstats failed 5 times - something wrong with the index?"
+        exit 1
+    fi
+}}
+
+# Check input line counts written out in input_files(). A failing zcat in a process substitution
+# does not fail the pipeline, so it leaves a marker.
+check_input_line_counts()
+{{
+    if [[ -e $TMPDIR/zcat_failed ]]; then
+        >&2 echo "Could not decompress the reads."
+        exit 1
+    fi
+    if [[ -e $TMPDIR/count_left ]]; then
+        if ! diff $TMPDIR/count_left $TMPDIR/count_right >/dev/null; then
+            >&2 echo "Different number of lines in left/right file."
+            >&2 cat $TMPDIR/count_left
+            >&2 cat $TMPDIR/count_right
+            exit 1
+        fi
+    fi
+}}
+
+# Run actual tools --------------------------------------------------------------------------------
+
+input_files \
+| trim_adapters \
+| run_bwa_mem3 \
+| mask_duplicates \
+| postproc_bam
+
+check_input_line_counts
+"""
+)

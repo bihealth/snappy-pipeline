@@ -10,7 +10,7 @@ Barcodes and BQSR are part of the `ngs_mapping` step, in the `mbcs` tool.
 
 ## Adapter trimming
 
-The `bwa` and `bwa_mem2` sections of `ngs_mapping` have a fast option, `trim_adapters`, to trim adapters on the fly.
+The `bwa`, `bwa_mem2` and `bwa_mem3` sections of `ngs_mapping` have a fast option, `trim_adapters`, to trim adapters on the fly.
 Where that is not enough, `adapter_trimming` offers two tools, `bbduk` and `fastp`.
 
 Unlike other steps, `adapter_trimming` produces FASTQ files.

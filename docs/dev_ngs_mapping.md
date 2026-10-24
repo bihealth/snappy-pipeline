@@ -51,7 +51,7 @@ tasks:
 ```
 
 `tool` selects the mapper.
-`NgsMappingWorkflow.__init__` registers the step part of that tool (`BwaStepPart`, `BwaMem2StepPart`, `MBCsStepPart`, `Minimap2StepPart` or `StarStepPart`).
+`NgsMappingWorkflow.__init__` registers the step part of that tool (`BwaStepPart`, `BwaMem2StepPart`, `BwaMem3StepPart`, `MBCsStepPart`, `Minimap2StepPart` or `StarStepPart`).
 It also registers the report step parts.
 The Snakefile defines the rules of the selected tool only.
 

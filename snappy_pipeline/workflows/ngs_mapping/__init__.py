@@ -6,7 +6,7 @@ Marking of duplicates and trimming of adapters depend on the tool configuration.
 
 The ``tool`` field selects the aligner:
 
-- ``bwa`` and ``bwa_mem2``: short-read DNA.
+- ``bwa``, ``bwa_mem2`` and ``bwa_mem3``: short-read DNA.
 - ``minimap2``: long-read DNA (PacBio, Oxford Nanopore).
 - ``star``: short-read RNA. Its result files also include gene counts and the strandedness decision.
 - ``mbcs``: short-read DNA with molecular barcodes and optional base quality score recalibration (BQSR). See the notes below.
@@ -164,7 +164,7 @@ from .model import Tool
 # TODO: Need something smarter still for @RG
 
 #: Available read mappers for (short/Illumina) DNA-seq data
-READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "mbcs")
+READ_MAPPERS_DNA = ("bwa", "bwa_mem2", "bwa_mem3", "mbcs")
 
 #: Available read mappers for (short/Illumina) RNA-seq data
 READ_MAPPERS_RNA = ("star",)
@@ -177,6 +177,10 @@ BWA_INDEX_EXTENSIONS = (".amb", ".ann", ".bwt", ".pac", ".sa")
 
 #: Files of a BWA-MEM2 index below its prefix. The wrapper takes the prefix from the first.
 BWA_MEM2_INDEX_EXTENSIONS = (".amb", ".ann", ".0123", ".bwt.2bit.64", ".pac")
+
+#: Files of a BWA-MEM3 index below its prefix (no ``.0123``). The wrapper takes the prefix from
+#: the first.
+BWA_MEM3_INDEX_EXTENSIONS = (".amb", ".ann", ".bwt.2bit.64", ".pac")
 
 #: Files of a STAR index directory that mark it as the index
 STAR_INDEX_FILES = ("Genome", "SA", "SAindex")
@@ -354,6 +358,25 @@ class BwaMem2StepPart(ReadMappingStepPart):
     def _get_input_files_run(self, wildcards):
         inputs = super()._get_input_files_run(wildcards)
         return inputs | {"index": self.parent.get_index_files("bwa_mem2")}
+
+
+class BwaMem3StepPart(ReadMappingStepPart):
+    name = "bwa_mem3"
+    tool_category = "dna"
+
+    @property
+    def default_resource_usage(self) -> ResourceUsage:
+        threads = self.config.bwa_mem3.num_threads_align
+        return ResourceUsage(threads=threads, runtime="3d", mem=f"{int(4.5 * 1024 * threads)}MB")
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        parent_args = super()._get_params_run(wildcards)
+        parent_args.update(self.config.bwa_mem3.model_dump(by_alias=True))
+        return parent_args
+
+    def _get_input_files_run(self, wildcards):
+        inputs = super()._get_input_files_run(wildcards)
+        return inputs | {"index": self.parent.get_index_files("bwa_mem3")}
 
 
 class MBCsStepPart(ReadMappingStepPart):
@@ -714,6 +737,8 @@ class NgsMappingWorkflow(BaseStep):
                 selected_mapper = BwaStepPart
             case "bwa_mem2":
                 selected_mapper = BwaMem2StepPart
+            case "bwa_mem3":
+                selected_mapper = BwaMem3StepPart
             case "mbcs":
                 selected_mapper = MBCsStepPart
             case "minimap2":
@@ -758,9 +783,9 @@ class NgsMappingWorkflow(BaseStep):
     def get_index_files(self, tool_name: str) -> list[str]:
         """Return the files of the mapper index, which are rule inputs.
 
-        The ``depends_on.index`` task provides them. BWA and BWA-MEM2 indices are file prefixes with
-        ``.amb`` first. The STAR index is a directory, given by its first file: the wrappers
-        take its ``dirname``.
+        The ``depends_on.index`` task provides them. BWA, BWA-MEM2 and BWA-MEM3 indices are file
+        prefixes with ``.amb`` first. The STAR index is a directory, given by its first file: the
+        wrappers take its ``dirname``.
         """
         path = self.get_index_path(tool_name)
         match tool_name:
@@ -768,6 +793,8 @@ class NgsMappingWorkflow(BaseStep):
                 return [path + ext for ext in BWA_INDEX_EXTENSIONS]
             case "bwa_mem2":
                 return [path + ext for ext in BWA_MEM2_INDEX_EXTENSIONS]
+            case "bwa_mem3":
+                return [path + ext for ext in BWA_MEM3_INDEX_EXTENSIONS]
             case "star":
                 return [os.path.join(path, name) for name in STAR_INDEX_FILES]
         return [path]

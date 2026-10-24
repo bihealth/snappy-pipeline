@@ -109,18 +109,19 @@ class MetaTool(StrEnum):
 class Tool(StrEnum):
     bwa = "bwa"
     bwa_mem2 = "bwa_mem2"
+    bwa_mem3 = "bwa_mem3"
     minimap2 = "minimap2"
     star = "star"
     mbcs = "mbcs"
 
     def is_dna(self):
-        return self in {self.bwa, self.bwa_mem2, self.minimap2, self.mbcs}
+        return self in {self.bwa, self.bwa_mem2, self.bwa_mem3, self.minimap2, self.mbcs}
 
     def is_rna(self):
         return self in {self.star}
 
     def supports_long_reads(self):
-        return self in {self.bwa_mem2, self.minimap2}
+        return self in {self.bwa_mem2, self.bwa_mem3, self.minimap2}
 
     def get_tags(self):
         tags = set()
@@ -184,6 +185,11 @@ class Bwa(BwaMapper):
 
 class BwaMem2(BwaMapper):
     pass
+
+
+class BwaMem3(BwaMapper):
+    """BWA-MEM3 (Fulcrum Genomics) with its default settings: the alignments of BWA-MEM2, plus
+    the tags ``MQ`` (mate mapping quality) and ``HN`` (number of hits)"""
 
 
 class BarcodeTool(StrEnum):
@@ -332,6 +338,9 @@ class NgsMapping(SnappyStepModel):
 
     bwa_mem2: BwaMem2 | None = None
     """Configuration for BWA-MEM2"""
+
+    bwa_mem3: BwaMem3 | None = None
+    """Configuration for BWA-MEM3"""
 
     agent: Agent | None = None
 
