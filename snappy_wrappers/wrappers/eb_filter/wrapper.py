@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for EBFilter flagging."""
 
-from snakemake import shell
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 

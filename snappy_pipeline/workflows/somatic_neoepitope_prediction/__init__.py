@@ -488,10 +488,7 @@ class NetStabStepPart(PostProcessStepPart):
             epitopes = path.format(tumor_library=wildcards.tumor_library)
         else:
             epitopes = self.epitopes(wildcards, cfg.netmhc_stab.all_epitopes, "MHC_I")
-        return {
-            "epitopes": epitopes,
-            "alleles": f"{_OUT}.hla_types.txt".format(**wildcards),
-        }
+        return {"epitopes": epitopes}
 
     def _get_output_files_run(self):
         path = _post_processed("netstab", mhc_class="MHC_I")

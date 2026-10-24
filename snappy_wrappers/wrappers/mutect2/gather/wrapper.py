@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MuTect 2 gather."""
 
-from snakemake import shell
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 

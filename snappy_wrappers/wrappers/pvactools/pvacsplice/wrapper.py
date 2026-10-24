@@ -1,5 +1,4 @@
 import csv
-import os
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 

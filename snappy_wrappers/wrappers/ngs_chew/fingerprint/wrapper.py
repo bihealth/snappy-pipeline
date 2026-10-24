@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running ``ngs-chew fingerprint``."""
 
-from snakemake.shell import shell
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 

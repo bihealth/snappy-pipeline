@@ -16,11 +16,6 @@ extra_commands = " ".join(
     ]
 )
 
-if "segments" in snakemake.input.keys() and snakemake.input.segments:
-    extra_commands += " --seg-file={}".format(snakemake.input.segments)
-if "log2" in snakemake.input.keys() and snakemake.input.log2:
-    extra_commands += " --log-ratio-file={}".format(snakemake.input.log2)
-
 ShellWrapper(snakemake).run(
     r"""
 # Rename PureCN files to snappy conventions

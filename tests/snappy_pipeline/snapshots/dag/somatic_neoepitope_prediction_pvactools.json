@@ -2096,8 +2096,7 @@
   "benchmark": "tasks/somatic_neoepitope_prediction_pvactools/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.pvacseq.netstab.tsv",
   "container": "docker://griffithlab/pvactools@sha256:0297856ce7a9dec7339f3405f92fcfb37be48a6a2b06ec809270b93c7a81f25c",
   "input": [
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacseq/case001subregion-T1-DNA1-WES1.MHC_I.netchop.tsv",
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.hla_types.txt"
+   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacseq/case001subregion-T1-DNA1-WES1.MHC_I.netchop.tsv"
   ],
   "log": [
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.pvacseq.netstab.log"

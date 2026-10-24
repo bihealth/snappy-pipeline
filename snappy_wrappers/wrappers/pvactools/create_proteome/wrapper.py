@@ -1,8 +1,3 @@
-import gzip
-import os
-import subprocess
-import sys
-
 from snakemake import shell
 
 __author__ = "Eric Blanc"

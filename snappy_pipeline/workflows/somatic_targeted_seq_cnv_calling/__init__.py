@@ -344,11 +344,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         }
 
     def _get_params_coverage(self, wildcards):
-        # The files reach the wrappers as inputs
-        config_dump = self.config.get(self.name).model_dump(
-            by_alias=True, exclude={"path_container"}
-        )
-        return {"config": config_dump}
+        return {"config": self.config.get(self.name).model_dump(by_alias=True)}
 
     def _get_params_run(self, wildcards):
         return {**self._get_params_coverage(wildcards), "library_name": wildcards.tumor_library}
