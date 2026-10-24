@@ -37,7 +37,7 @@ for plugin in {plugin_files}; do
 done
 
 # Helper function to normalize, annotate with VEP, and index output
-run_vep() {
+run_vep() {{
     local outfile="$1"
     shift
 
@@ -56,7 +56,7 @@ run_vep() {
         --output_file "$outfile" "$@"
 
     tabix "$outfile"
-}
+}}
 
 run_vep "{snakemake.output.vcf}" {pick}
 
