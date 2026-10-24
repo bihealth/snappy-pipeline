@@ -120,4 +120,3 @@ bcftools concat \
 tabix {snakemake.output.vcf}
 """
 )
-

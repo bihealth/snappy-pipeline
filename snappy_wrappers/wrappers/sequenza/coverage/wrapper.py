@@ -42,4 +42,3 @@ sequenza-utils bam2seqz \
         -w {length} -o {snakemake.output.seqz}
 """
 )
-

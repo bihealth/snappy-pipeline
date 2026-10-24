@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for oxo-G flagging."""
 
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"

@@ -36,4 +36,3 @@ gatk {java_options} GetPileupSummaries \
 mv $out_base.* $(dirname {snakemake.output.pileup})
 """
 )
-

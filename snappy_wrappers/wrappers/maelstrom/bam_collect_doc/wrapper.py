@@ -69,4 +69,3 @@ wigToBigWig $TMPDIR/out_mq.wig $TMPDIR/chrom.sizes $(basename {snakemake.output.
 popd
 """
 )
-

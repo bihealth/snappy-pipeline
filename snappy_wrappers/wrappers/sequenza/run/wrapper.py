@@ -96,4 +96,3 @@ write.table(dnacopy, file="{snakemake.output.seg}", sep="\t", col.names=TRUE, ro
 __EOF
 """
 )
-

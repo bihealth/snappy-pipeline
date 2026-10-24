@@ -90,7 +90,6 @@ if getattr(snakemake.output, "sex", ""):
             input_cns=input_cns,
             input_target=input_target,
             input_antitarget=input_antitarget,
-            args=args,
             out=snakemake.output.sex,
             male=male,
         )
@@ -111,7 +110,6 @@ cnvkit.py metrics \
             input_target=input_target,
             input_antitarget=input_antitarget,
             input_cns=f"--segments {input_cns}" if input_cns else "",
-            args=args,
             out=snakemake.output.metrics,
             drop_low_coverage=drop_low_coverage,
         )
@@ -135,4 +133,3 @@ set -x
 {metrics}
 """
 )
-

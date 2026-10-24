@@ -12,4 +12,3 @@ ShellWrapper(snakemake).run(
 bwa index -a {algorithm} {{extra_arguments}} -p "$(dirname {{snakemake.output.amb}})/reference" {{snakemake.input.reference}}
 """
 )
-

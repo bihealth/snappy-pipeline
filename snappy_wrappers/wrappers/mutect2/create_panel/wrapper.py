@@ -82,4 +82,3 @@ cp ${{out_base}}.vcf.gz {snakemake.output.vcf}
 cp ${{out_base}}.vcf.gz.tbi {snakemake.output.vcf}.tbi
 """
 )
-

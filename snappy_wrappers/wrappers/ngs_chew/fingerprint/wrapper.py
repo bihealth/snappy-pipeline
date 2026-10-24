@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Wrapper for running ``ngs-chew fingerprint``."""
 
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Manuel Holtgrewe"

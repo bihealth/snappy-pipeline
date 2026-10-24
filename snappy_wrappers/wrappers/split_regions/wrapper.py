@@ -110,7 +110,10 @@ if __name__ == "__main__":
         args = snakemake.params.args
         PythonWrapper(snakemake).run(
             lambda: main(
-                snakemake.input.fai, args["ignore_contigs"], args["padding"], snakemake.output.regions
+                snakemake.input.fai,
+                args["ignore_contigs"],
+                args["padding"],
+                snakemake.output.regions,
             )
         )
     else:

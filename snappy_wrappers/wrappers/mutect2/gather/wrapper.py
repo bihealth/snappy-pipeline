@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """CUBI+Snakemake wrapper code for MuTect 2 gather."""
 
-
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
 __author__ = "Till Hartmann <till.hartmann@bih-charite.de>"

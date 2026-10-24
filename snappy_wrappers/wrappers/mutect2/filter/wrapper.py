@@ -104,4 +104,3 @@ bcftools view -i 'FILTER="PASS"' -O z -o {snakemake.output.vcf} {snakemake.outpu
 tabix -f {snakemake.output.vcf}
 """
 )
-

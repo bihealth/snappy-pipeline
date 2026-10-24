@@ -10,4 +10,3 @@ ShellWrapper(snakemake).run(
 bwa-mem2 index {extra_arguments} -p "$(dirname {snakemake.output.amb})/reference" {snakemake.input.reference}
 """
 )
-

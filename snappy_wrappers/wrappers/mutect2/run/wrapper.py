@@ -88,4 +88,3 @@ tabix -f $out_base.vcf.gz
 mv $out_base.* $(dirname {vcf_output})
 """
 )
-

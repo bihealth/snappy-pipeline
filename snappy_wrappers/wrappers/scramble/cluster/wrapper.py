@@ -17,4 +17,3 @@ mkdir -p $(dirname {snakemake.output.txt})
 cluster_identifier {snakemake.input} > {snakemake.output.txt}
 """
 )
-

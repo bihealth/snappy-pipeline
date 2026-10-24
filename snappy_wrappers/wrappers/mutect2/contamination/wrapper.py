@@ -34,4 +34,3 @@ gatk --java-options '{java_options}' CalculateContamination \
 mv $out_base.* $(dirname {snakemake.output.table})
 """
 )
-

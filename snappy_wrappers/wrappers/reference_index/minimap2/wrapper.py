@@ -10,4 +10,3 @@ ShellWrapper(snakemake).run(
 minimap2 -t {snakemake.threads} -d {snakemake.output.mmi} {extra_arguments} {snakemake.input.reference}
 """
 )
-

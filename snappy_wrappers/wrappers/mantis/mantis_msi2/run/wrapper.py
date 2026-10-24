@@ -38,4 +38,3 @@ mantis-msi2 \
 mv $TMPDIR/out/* $(dirname {snakemake.output.result})
 """
 )
-
