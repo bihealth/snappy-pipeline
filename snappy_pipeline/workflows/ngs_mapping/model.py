@@ -153,8 +153,7 @@ class BwaMapper(ToolModel):
     """Platform (``PL``) of the read group"""
 
     extra_arguments: list[str] = []
-    """Additional arguments of ``bwa mem``, such as ``["-C"]`` for reads that AGeNT trimmed, so that
-    their molecular barcodes become tags for AGeNT's duplicate marking"""
+    """Additional arguments of ``bwa mem``"""
 
 
 class Bwa(BwaMapper):

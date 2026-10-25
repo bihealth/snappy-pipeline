@@ -289,7 +289,7 @@ Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull requ
 - **R package install jobs of sequenza and scarHRD** and their `work/R_packages/` directories: the environments install these packages when they are created.
 - **Container builds of PureCN and pVACtools**: the rules `panel_of_normals_purecn_install` (the `singularity` wrapper, `work/containers/`) and `somatic_neoepitope_prediction_pvactools_install` (`work/container/`), and the key `container` of a PureCN panel's outputs; Snakemake pulls the images.
 - **Jannovar statistics report** (`jannovar_stats` of `variant_calling`).
-- **`mbcs` tool of `ngs_mapping`** and its nested Snakemake run (`nested_snakemake.py`), with `depends_on.common_variants` of `ngs_mapping`: a chain of tasks replaces it (migration note 20).
+- **`mbcs` tool of `ngs_mapping`** and its nested Snakemake run (`nested_snakemake.py`), with `depends_on.common_variants` of `ngs_mapping`: molecular barcodes have no replacement, BQSR is a task of its own (migration note 20).
 - **`fusioncatcher` tool of `somatic_gene_fusion_calling`**: it had no wrapper (main neither), so it could not run.
 - **`defuse`, `hera`, `jaffa` and `pizzly` tools of `somatic_gene_fusion_calling`**: untested and probably broken; `arriba` (recommended) and `star_fusion` remain.
 - **main's germline filters** (`variant_denovo_filtration`, the germline filters of main's `variant_filtration` and the `protected` rescue filter): they no longer ran on main (a deleted shell library, Jannovar inputs); `vembrane` expressions in a `variant_filtration` task cover their per-record criteria.
@@ -325,7 +325,7 @@ To migrate an existing project:
 10. The `bcftools`, `regions` and `ebfilter` filters of `variant_filtration` use the task name as FILTER ID instead of main's `<filter>_<position in filter_list>` (`bcftools_2`); expressions that test FILTER values need the new names.
     No task may be named `PASS` or like a FILTER ID that another task writes (the filters of mutect2, `LowQual` of the GATK callers, the expression names of `vembrane` in tag mode, `bPcr` and `bSeq` of `dkfz`), and no task may write an ID that a task upstream of it writes.
 11. Every tool's config section takes `extra_arguments`, a list of additional arguments for the tool's main command line; a single-tool step without a section (such as `variant_checking` or `repeat_expansion`) takes it on its step model.
-    The former `extra_args` fields (`bwa`, `bwa_mem2`, AGeNT, pVACtools, `reference_index` and `vembrane`, whose value was a string) are renamed.
+    The former `extra_args` fields (`bwa`, `bwa_mem2`, pVACtools, `reference_index` and `vembrane`, whose value was a string) are renamed.
     A tool with several commands passes them to one, such as HaplotypeCaller for `gatk4_hc_gvcf`, `segment` for cnvkit or `GermlineCNVCaller` for gCNV.
     The tumor phasing tools (`gatk_read_backed_phasing_tumor`, `whatshap_tumor`) and `somatic_variant_signatures` (`tabulate_vcf`) have new sections for it.
 12. The BED file of mappable regions for gCNV needs its index next to it (`.idx` from `gatk IndexFeatureFile`, or `.tbi` for a bgzipped BED); `snappy check-files` lists it.
@@ -347,9 +347,8 @@ To migrate an existing project:
 19. `purecn.container` and `pvactools.container` are the images that Snakemake pulls, pinned by digest by default (`markusriester/purecn` of 2024-05-28, `griffithlab/pvactools:7.1.3`); the path of a local `.sif` file works too, and `pvactools.container: null` is no longer valid.
     A PureCN calling task runs the image of its panel of normals task.
     Jobs in a container see the project, `$HOME`, `/tmp` and the snappy installation; other directories they read go into `APPTAINER_BIND`, see {ref}`usage`.
-20. `tool: mbcs` of `ngs_mapping` becomes a chain of tasks, see the recipe in {ref}`somatic_ngs`: `adapter_trimming` with `tool: agent` (from `agent.prepare`, `use_barcodes`), a mapping task with the tool of `mbcs.mapping_tool`, `alignment_processing` with `tool: agent` (from `agent.mark_duplicates`) and `alignment_processing` with `tool: gatk4_bqsr` (`recalibrate`, `depends_on.common_variants`).
-    `lib_prep_type` and `consensus_mode` are required now; main's mbcs passed `-None` and `-c=None` without them, and it could not run with `bwa` at all (literal tabs in its read group line, which bwa rejects) nor with `recalibrate: false`.
-    The read groups are those of the data set's search pattern, as in mbcs (`<library>_L001`); duplicates are masked across the lanes of a library, while mbcs masked them per lane, so more reads carry the duplicate flag.
+20. `tool: mbcs` of `ngs_mapping` is removed with its AGeNT steps, and snappy handles no molecular barcodes for now.
+    Its BQSR (`recalibrate`, `depends_on.common_variants`) is an `alignment_processing` task with `tool: gatk4_bqsr` after a mapping task with the tool of `mbcs.mapping_tool`, see the recipe in {ref}`somatic_ngs`.
     With main's mbcs output without BQSR as input, `gatk4_bqsr` writes main's recalibrated BAM.
 
 ## Example: a neoepitope config from main and its translation

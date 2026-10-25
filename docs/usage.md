@@ -153,7 +153,7 @@ These files are never deleted:
 
 So `--task` and `--frozen` runs find what they need.
 
-The one exception is the BAM of an `ngs_mapping` task that a later task processes further, such as duplicate marking or BQSR.
+The one exception is the BAM of an `ngs_mapping` task that a later task processes further, such as BQSR.
 With `delete_intermediates: [bam]`, the BAM and its index are temporary, have no `.md5` and are not linked into `output/`; the BAM QC reports stay results.
 Snakemake deletes the BAM once the tasks that read it are done, and maps again when a later run needs it.
 A `--frozen` run of a later task cannot map again, so it needs the BAM to still exist.

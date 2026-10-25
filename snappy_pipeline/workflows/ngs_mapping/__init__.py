@@ -108,11 +108,10 @@ Without it, the step infers the strand with ``infer_experiment`` from RSeQC.
 With ``transcriptome: true``, STAR also writes the reads mapped to the transcriptome to a BAM file.
 It is not indexed, because it has no positional order.
 
-Molecular barcodes and BQSR
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+BQSR
+~~~~
 
-Tasks of other steps process the mapping further: ``adapter_trimming`` with ``tool: agent`` before the mapping moves AGeNT's molecular barcodes into the read names, and ``alignment_processing`` after it marks duplicates with them (``tool: agent``) and recalibrates the base qualities (``tool: gatk4_bqsr``).
-Map such reads with ``extra_arguments: ["-C"]``, so that the barcodes become tags.
+``alignment_processing`` with ``tool: gatk4_bqsr`` recalibrates the base qualities of the mapping.
 :ref:`somatic_ngs` has the complete chain.
 
 Fingerprints
@@ -275,7 +274,7 @@ class ReadMappingStepPart(MappingGetResultFilesMixin, BaseStepPart):
     #: Class available actions. Read mapping step parts only support action "run".
     actions = ("run",)
 
-    #: The BAM, which a duplicate marking or BQSR task may process further
+    #: The BAM, which a BQSR task may process further
     bam_outputs = {"run": ("bam", "bam_bai")}
 
     base_path_out = "work/{{library_name}}/out/{{library_name}}{ext}"

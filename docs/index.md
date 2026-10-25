@@ -10,7 +10,7 @@ Pipeline User Docs
 
 The somatic pipeline in detail
 : Documentation for the **users of the somatic pipeline**.
-    It covers adapter trimming, barcodes, the panel of normals and copy number calling.
+    It covers adapter trimming, BQSR, the panel of normals and copy number calling.
     This section starts at {ref}`somatic_ngs`.
 
 Pipeline Step Docs

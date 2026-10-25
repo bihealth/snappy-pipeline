@@ -232,7 +232,7 @@ class SnappyStepModel(SnappyModel, object):
     """What the task deletes once its readers are done: ``intermediates``, the per-sample
     intermediate files that only later rules of the task read (raw calls, coverage, panel inputs,
     gVCFs, ...); ``bam``, the BAM file of a task whose BAM another task processes further
-    (duplicate marking, BQSR), which then is no result file. Scatter fragments are always
+    (BQSR), which then is no result file. Scatter fragments are always
     deleted."""
 
     #: Whether the step writes a BAM file that another task can process further, so that

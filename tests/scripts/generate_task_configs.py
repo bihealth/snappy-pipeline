@@ -440,8 +440,6 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         }
     },
     ("somatic_wgs_cnv_calling", "control_freec"): {"control_freec": {}},
-    ("adapter_trimming", "agent"): {"agent": {"path": PLACEHOLDER, "lib_prep_type": "v2"}},
-    ("alignment_processing", "agent"): {"agent": {"path": PLACEHOLDER, "consensus_mode": "HYBRID"}},
     ("sv_calling_targeted", "melt"): {"melt": MELT_FILES},
     ("sv_calling_wgs", "melt"): {"melt": MELT_FILES},
     ("targeted_seq_mei_calling", "scramble"): {"scramble": {"blast_ref": REFERENCE}},
