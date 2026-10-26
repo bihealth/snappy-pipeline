@@ -89,15 +89,11 @@ if [[ "${{t2g_cmd}}" != "" ]]; then
     cp $TMPDIR/quant.genes.sf {snakemake.output.gene_sf}
 fi
 
-# Copy log files
-log=$(dirname {snakemake.log.log})
-cp $TMPDIR/cmd_info.json $log/cmd_info.json
-cp $TMPDIR/lib_format_counts.json $log/lib_format_counts.json
-cp $TMPDIR/logs/salmon_quant.log $log/salmon_quant.log
+# Salmon's command line and log go to the job's log
+cat $TMPDIR/cmd_info.json $TMPDIR/logs/salmon_quant.log >&2
 
-# Copy extra files
-aux=$(dirname {snakemake.output.transcript_sf})/aux
-mkdir -p $aux
-cp -R $TMPDIR/aux/* $aux/.
+cp $TMPDIR/lib_format_counts.json {snakemake.output.lib_format_counts}
+mkdir -p {snakemake.output.aux}
+cp -R $TMPDIR/aux/. {snakemake.output.aux}
 """
 )

@@ -174,6 +174,7 @@ index_bam {snakemake.output.bam}
 
 mv $TMPDIR/pre.d/out.ReadsPerGene.out.tab {out_gc}
 mv $TMPDIR/pre.d/out.SJ.out.tab {out_sj}
+mv $TMPDIR/pre.d/out.Log.final.out {snakemake.output.log_final}
 
 # Optional output: mapping on transcriptome -------------------------------------------------------
 

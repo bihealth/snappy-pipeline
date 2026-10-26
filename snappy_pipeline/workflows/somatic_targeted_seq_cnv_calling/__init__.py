@@ -261,6 +261,16 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         return {"log": f"work/{{tumor_library}}/log/{{tumor_library}}.{action}.log"}
 
 
+#: The plots of ``PureCN.R``: the solutions, their purity and ploidy, the segmentation and the
+#: allele fractions per chromosome
+PURECN_PLOTS = {
+    "plot": ".pdf",
+    "plot_local_optima": ".local_optima.pdf",
+    "plot_segmentation": ".segmentation.pdf",
+    "plot_chromosomes": ".chromosomes.pdf",
+}
+
+
 class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
     """Perform somatic targeted CNV calling using PureCN"""
 
@@ -287,9 +297,14 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
         ),
     }
 
+    #: The plots of ``PureCN.R``, for the report
+    report_outputs = {
+        "run": {key: ReportOutput("PureCN", caption="purecn.rst") for key in PURECN_PLOTS}
+    }
+
     @property
     def result_keys(self):
-        return {"run": tuple(self._get_output_files_run())}
+        return {"run": tuple(k for k in self._get_output_files_run() if k not in PURECN_PLOTS)}
 
     @property
     def image(self) -> str:
@@ -348,7 +363,7 @@ class PureCNStepPart(SomaticTargetedSeqCnvCallingStepPart):
             "vcf_md5": prefix + ".vcf.gz.md5",
             "vcf_tbi_md5": prefix + ".vcf.gz.tbi.md5",
             "loh_md5": prefix + ".loh.csv.md5",
-        }
+        } | {key: prefix + ext for key, ext in PURECN_PLOTS.items()}
 
     def _get_params_coverage(self, wildcards):
         return {"config": self.config.get(self.name).model_dump(by_alias=True)}

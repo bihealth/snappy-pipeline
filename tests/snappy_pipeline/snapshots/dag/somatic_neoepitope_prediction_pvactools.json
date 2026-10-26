@@ -79,6 +79,9 @@
  },
  {
   "benchmark": "tasks/gene_expression_quantification_salmon/benchmarks/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.tsv",
+  "directory": [
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.aux"
+  ],
   "input": [
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R1.fastq.gz",
    "<project>/raw/case001subregion-T1-RNA1-mRNA_seq1/case001subregion-T1-RNA1-mRNA_seq1.R2.fastq.gz",
@@ -93,7 +96,10 @@
    "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf",
    "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.gene.sf.md5",
    "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf",
-   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf.md5"
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.transcript.sf.md5",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.lib_format_counts.json",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.lib_format_counts.json.md5",
+   "tasks/gene_expression_quantification_salmon/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.aux"
   ],
   "params": {
    "args": {
@@ -498,7 +504,9 @@
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/report/bam_qc/case001subregion-T1-RNA1-mRNA_seq1.bam.idxstats.txt.md5",
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.ReadsPerGene.tab",
    "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab",
-   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab.md5"
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Junctions.tab.md5",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Log.final.out",
+   "tasks/ngs_mapping_star/work/case001subregion-T1-RNA1-mRNA_seq1/out/case001subregion-T1-RNA1-mRNA_seq1.Log.final.out.md5"
   ],
   "params": {
    "args": {

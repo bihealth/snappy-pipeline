@@ -82,7 +82,7 @@ Each file has an ``.md5`` file.
 The files are in ``{library_name}/out/`` and start with ``{library_name}``:
 
 - ``featurecounts``: ``.tsv`` and ``.tsv.summary``
-- ``salmon``: ``.gene.sf`` and ``.transcript.sf``
+- ``salmon``: ``.gene.sf`` and ``.transcript.sf``, ``.lib_format_counts.json`` (the library type that Salmon detected) and the directory ``.aux`` (its auxiliary files, such as the mapping rate in ``meta_info.json``)
 - ``strandedness``: ``.tsv`` and ``.decision``
 - ``dupradar``: ``.tsv``
 - ``duplication``: ``.seq.DupRate.xls`` and ``.pos.DupRate.xls``
@@ -100,7 +100,7 @@ The key ``index`` is the directory of the prebuilt index, with files such as ``s
 
 from typing import Any
 
-from snakemake.io import expand
+from snakemake.io import directory, expand
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify, listify
@@ -174,6 +174,10 @@ EXTENSIONS = {
         "gene_sf_md5": ".gene.sf.md5",
         "transcript_sf": ".transcript.sf",
         "transcript_sf_md5": ".transcript.sf.md5",
+        "lib_format_counts": ".lib_format_counts.json",
+        "lib_format_counts_md5": ".lib_format_counts.json.md5",
+        # Salmon's auxiliary directory: mapping rate (meta_info.json), fragment lengths, bias
+        "aux": ".aux",
     },
 }
 
@@ -228,6 +232,12 @@ class SalmonStepPart(GeneExpressionQuantificationStepPart):
 
     #: Class available actions
     actions = ("run",)
+
+    def _get_output_files_run(self):
+        outputs = super()._get_output_files_run()
+        if "aux" in outputs:
+            outputs["aux"] = directory(outputs["aux"])
+        return outputs
 
     @dictify
     def _get_input_files_run(self, wildcards):

@@ -19,7 +19,12 @@ It holds the files that LOHHLA writes, and it is the key ``out`` for downstream 
 from snakemake.io import directory
 
 from snappy_pipeline.models import RelationshipDefinition, ToolModel
-from snappy_pipeline.workflows.abstract import MATCHED_NORMAL_REQUIREMENT, BaseStep, BaseStepPart
+from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_REQUIREMENT,
+    BaseStep,
+    BaseStepPart,
+    ReportOutput,
+)
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.hla_typing.model import ExpectedHlaTyping
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
@@ -82,6 +87,14 @@ class LohhlaStepPart(BaseStepPart):
         if tumor_df.empty:
             return None
         return tumor_df.iloc[0].get("matched_normal_lib") or None
+
+    #: The plots of each HLA gene in LOHHLA's ``Figures`` directory; it writes none when all
+    #: HLA alleles are homozygous
+    report_outputs = {
+        "run": {
+            "out": ReportOutput("LOHHLA", caption="lohhla.rst", patterns=("Figures/{plot}.pdf",))
+        }
+    }
 
     def _get_output_files_run(self):
         # LOHHLA writes many files that the step does not name

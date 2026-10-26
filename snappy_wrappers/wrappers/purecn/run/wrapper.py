@@ -49,6 +49,10 @@ rename {snakemake.output.pvalues} _amplification_pvalues.csv
 rename {snakemake.output.vcf} .vcf.gz
 rename {snakemake.output.vcf_tbi} .vcf.gz.tbi
 rename {snakemake.output.loh} _loh.csv
+rename {snakemake.output.plot} .pdf
+rename {snakemake.output.plot_local_optima} _local_optima.pdf
+rename {snakemake.output.plot_segmentation} _segmentation.pdf
+rename {snakemake.output.plot_chromosomes} _chromosomes.pdf
 
 # Fix chromosome names (https://github.com/lima1/PureCN/issues/331)
 vcf_chrnames=$(zgrep '^##contig=<ID=' {snakemake.input.vcf} | sed -re "s/^##contig=<ID=([^,]*),.*/\1/" | sort | uniq | grep -E "^(chr)?([0-9]+|[XY])$")

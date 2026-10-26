@@ -27,7 +27,7 @@ Each file has an ``.md5`` file.
 - ``{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt``, ``.bam.flagstats.txt`` and ``.bam.idxstats.txt``
 - ``{library_name}/report/alfred_qc/{library_name}.alfred.json.gz``, if ``target_coverage_report`` is enabled and the library has a kit
 - ``{library_name}/out/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
-- with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab`` and ``{library_name}/strandedness/{library_name}.decision.json``
+- with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab``, ``{library_name}/out/{library_name}.Log.final.out`` (STAR's mapping summary) and ``{library_name}/strandedness/{library_name}.decision.json``
 
 Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, ``idxstats`` and ``alfred_qc``, and for RNA libraries ``gene_counts`` and ``strandedness``.
 
@@ -398,6 +398,8 @@ class StarStepPart(ReadMappingStepPart):
         output_files["gene_counts"] = self.base_path_out.format(ext=".ReadsPerGene.tab")
         output_files["junctions"] = self.base_path_out.format(ext=".Junctions.tab")
         output_files["junctions_md5"] = output_files["junctions"] + ".md5"
+        output_files["log_final"] = self.base_path_out.format(ext=".Log.final.out")
+        output_files["log_final_md5"] = output_files["log_final"] + ".md5"
         if cfg.transcriptome:
             output_files["transcriptome"] = self.base_path_out.format(ext=".toTranscriptome.bam")
             output_files["transcriptome_md5"] = output_files["transcriptome"] + ".md5"
