@@ -202,7 +202,6 @@ class PredictionStepPart(NeoepitopeStepPart):
 
     @dictify
     def _get_output_files_run(self):
-        yield "done", f"{self.directory}/.done"
         for key, ext in TABLES.items():
             if key == "json" and self.name != "pvacseq":
                 continue

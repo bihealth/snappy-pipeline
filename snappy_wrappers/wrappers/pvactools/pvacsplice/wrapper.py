@@ -36,7 +36,7 @@ ShellWrapper(snakemake).run(
 export LC_ALL=C.UTF-8
 
 # pVACsplice writes the MHC_Class_I, MHC_Class_II and combined directories below $out
-out=$(dirname {snakemake.output.done})
+out=$(dirname $(dirname {snakemake.output[all.Combined]}))
 rm -rf $out
 mkdir -p $out
 
@@ -93,7 +93,6 @@ for path in {fasta}; do
     }}
 done
 
-ls -altrR $(dirname {snakemake.output.done})
-touch {snakemake.output.done}
+ls -altrR $out
 """
 )

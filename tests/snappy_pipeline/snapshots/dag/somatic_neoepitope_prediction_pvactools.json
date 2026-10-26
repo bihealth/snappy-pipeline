@@ -2156,7 +2156,6 @@
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.pvacfuse.log"
   ],
   "output": [
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacfuse/.done",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacfuse/MHC_Class_I/case001subregion-T1-DNA1-WES1.MHC_I.all_epitopes.tsv",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacfuse/MHC_Class_II/case001subregion-T1-DNA1-WES1.MHC_II.all_epitopes.tsv",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacfuse/combined/case001subregion-T1-DNA1-WES1.Combined.all_epitopes.tsv",
@@ -2310,7 +2309,6 @@
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.pvacseq.log"
   ],
   "output": [
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacseq/.done",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacseq/MHC_Class_I/case001subregion-T1-DNA1-WES1.MHC_I.all_epitopes.tsv",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacseq/MHC_Class_II/case001subregion-T1-DNA1-WES1.MHC_II.all_epitopes.tsv",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacseq/combined/case001subregion-T1-DNA1-WES1.Combined.all_epitopes.tsv",
@@ -2458,7 +2456,6 @@
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.pvacsplice.log"
   ],
   "output": [
-   "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacsplice/.done",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacsplice/MHC_Class_I/case001subregion-T1-DNA1-WES1.MHC_I.all_epitopes.tsv",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacsplice/MHC_Class_II/case001subregion-T1-DNA1-WES1.MHC_II.all_epitopes.tsv",
    "tasks/somatic_neoepitope_prediction_pvactools/work/case001subregion-T1-DNA1-WES1/out/pvacsplice/combined/case001subregion-T1-DNA1-WES1.Combined.all_epitopes.tsv",

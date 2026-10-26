@@ -1,6 +1,6 @@
 from typing import Any
 
-from snakemake.io import directory, touch
+from snakemake.io import directory
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.utils import dictify
@@ -37,7 +37,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         "preprocess": ("orig_bam", "orig_bai", "disc_bam", "disc_bai"),
         "indiv_analysis": ("out",),
         "group_analysis": ("pre_geno",),
-        "genotype": ("done",),
+        "genotype": ("tsv",),
         "make_vcf": ("vcf", "vcf_tbi"),
     }
 
@@ -155,8 +155,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_output_files_genotype(self):
         infix = "genotype.{index_library_name}.{me_type}"
-        yield "done", touch(f"work/{infix}/out/.done.{{library_name}}")
-        yield "_more", [f"work/{infix}/out/{{library_name}}.{{me_type}}.tsv"]
+        yield "tsv", f"work/{infix}/out/{{library_name}}.{{me_type}}.tsv"
 
     @dictify
     def _get_log_file_genotype(self):
@@ -169,7 +168,7 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
         yield "pre_geno", self._pre_geno(wildcards)
         infix = f"genotype.{wildcards.index_library_name}.{wildcards.me_type}"
         paths = [
-            f"work/{infix}/out/.done.{library_name}"
+            f"work/{infix}/out/{library_name}.{wildcards.me_type}.tsv"
             for library_name in self.parent.pedigrees()[wildcards.index_library_name]
         ]
         yield "genotype", paths

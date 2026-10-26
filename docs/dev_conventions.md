@@ -101,6 +101,7 @@ No other rule writes into `output/`.
 `test_only_the_results_job_writes_into_output`, `test_no_job_reads_from_output`, `test_logs_hold_only_logs`, `test_logs_are_no_result_files`, `test_md5_files_only_for_result_files`, `test_result_files_come_with_md5_and_index` and `test_wrappers_read_no_md5_or_conda_files` check this.
 
 A tool that writes a directory of files that the step does not name has a `directory()` output, not a `.done` marker file in it.
+A job whose files the step names declares them and no marker next to them.
 Snakemake removes the directory before the job runs and after a failure, so no file of an earlier run survives.
 Snakemake creates only the parent directory, so the wrapper creates the directory itself.
 No other output can be inside it, and only one job writes it.

@@ -190,7 +190,6 @@
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/log/case001subregion-N1-DNA1-WES1.ALU.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1",
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.tsv"
   ],
   "params": {
@@ -208,7 +207,7 @@
   },
   "rule": "sv_calling_wgs_melt_sv_calling_wgs_melt_genotype",
   "temp": [
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1"
+   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.tsv"
   ],
   "threads": 1,
   "wildcards": {
@@ -236,7 +235,6 @@
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/log/case001subregion-N1-DNA1-WES1.LINE1.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1",
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.tsv"
   ],
   "params": {
@@ -254,7 +252,7 @@
   },
   "rule": "sv_calling_wgs_melt_sv_calling_wgs_melt_genotype",
   "temp": [
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1"
+   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.tsv"
   ],
   "threads": 1,
   "wildcards": {
@@ -282,7 +280,6 @@
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/log/case001subregion-N1-DNA1-WES1.SVA.log"
   ],
   "output": [
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1",
    "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.tsv"
   ],
   "params": {
@@ -300,7 +297,7 @@
   },
   "rule": "sv_calling_wgs_melt_sv_calling_wgs_melt_genotype",
   "temp": [
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1"
+   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.tsv"
   ],
   "threads": 1,
   "wildcards": {
@@ -611,7 +608,7 @@
   "benchmark": "tasks/sv_calling_wgs_melt/benchmarks/make_vcf.case001subregion-N1-DNA1-WES1.ALU/case001subregion-N1-DNA1-WES1.ALU.tsv",
   "input": [
    "tasks/sv_calling_wgs_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.ALU/out/ALU.pre_geno.tsv",
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/.done.case001subregion-N1-DNA1-WES1",
+   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.ALU/out/case001subregion-N1-DNA1-WES1.ALU.tsv",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
@@ -656,7 +653,7 @@
   "benchmark": "tasks/sv_calling_wgs_melt/benchmarks/make_vcf.case001subregion-N1-DNA1-WES1.LINE1/case001subregion-N1-DNA1-WES1.LINE1.tsv",
   "input": [
    "tasks/sv_calling_wgs_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.LINE1/out/LINE1.pre_geno.tsv",
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/.done.case001subregion-N1-DNA1-WES1",
+   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.LINE1/out/case001subregion-N1-DNA1-WES1.LINE1.tsv",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
@@ -701,7 +698,7 @@
   "benchmark": "tasks/sv_calling_wgs_melt/benchmarks/make_vcf.case001subregion-N1-DNA1-WES1.SVA/case001subregion-N1-DNA1-WES1.SVA.tsv",
   "input": [
    "tasks/sv_calling_wgs_melt/work/group_analysis.case001subregion-N1-DNA1-WES1.SVA/out/SVA.pre_geno.tsv",
-   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/.done.case001subregion-N1-DNA1-WES1",
+   "tasks/sv_calling_wgs_melt/work/genotype.case001subregion-N1-DNA1-WES1.SVA/out/case001subregion-N1-DNA1-WES1.SVA.tsv",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
