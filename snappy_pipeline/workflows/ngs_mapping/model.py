@@ -18,7 +18,6 @@ from snappy_pipeline.workflows.abstract.protocol import (
     Exons,
     ExpectedPathSchema,
     Features,
-    Kits,
     Reference,
     TOOL,
 )
@@ -38,8 +37,6 @@ class ExpectedAlignmentQc(BaseModel):
     bamstats: str
     flagstats: str
     idxstats: str
-    alfred_qc: str | None = None
-    """only if the task enables ``target_coverage_report``"""
 
 
 class ExpectedRnaAlignments(BaseModel):
@@ -77,8 +74,6 @@ class NgsMappingDependsOn(SnappyModel):
 
     features: Features = ""
 
-    kits: Kits = ""
-
     exons: Exons = ""
     """Task with a BED file of ubiquitously expressed genes with a well-defined strand; needed
     for star, which infers the strandedness from it."""
@@ -109,13 +104,6 @@ class Tool(StrEnum):
         if self.supports_long_reads():
             tags |= {"long_read"}
         return tags
-
-
-class TargetCoverageReport(ToggleModel, ToolModel):
-    """The report takes the ``targets`` of each library's kit from ``depends_on.kits``."""
-
-    ignore_read_groups: bool = True
-    """Compute one set of metrics per library, not per read group (``alfred qc --ignore``)"""
 
 
 class BamCollectDoc(ToggleModel, ToolModel):
@@ -243,9 +231,6 @@ class NgsMapping(SnappyStepModel):
     tool: Tool
     """Aligner to use for the NGS library"""
 
-    target_coverage_report: TargetCoverageReport | None = None
-    """Thresholds for targeted sequencing coverage QC."""
-
     bam_collect_doc: BamCollectDoc = BamCollectDoc()
     """Depth of coverage collection, mainly useful for genomes."""
 
@@ -264,13 +249,6 @@ class NgsMapping(SnappyStepModel):
     strandedness: Strandedness = Strandedness()
 
     minimap2: Minimap2 | None = None
-
-    @model_validator(mode="after")
-    def check_target_coverage_report_kits(self):
-        if self.target_coverage_report and self.target_coverage_report.enabled:
-            if not self.depends_on.kits:
-                raise ValueError("target_coverage_report needs depends_on.kits")
-        return self
 
     @model_validator(mode="after")
     def validate_tool_dependencies(self):

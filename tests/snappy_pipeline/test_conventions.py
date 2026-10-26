@@ -204,6 +204,7 @@ DEPENDS_ON_KEYS = {
     "expression",
     "hla_types",
     "strandedness",
+    "qc",
     "panel_of_normals",
     "access",
     "reference",

@@ -9,6 +9,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     ExpectedPathSchema,
     Reference,
 )
+from snappy_pipeline.workflows.ngs_data_qc.model import ExpectedAlfredQc
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignmentQc
 from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
@@ -27,6 +28,14 @@ class VarfishExportDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedAlignmentQc),
     ]
     """Used output of ngs_mapping is alignment quality control data"""
+
+    qc: Annotated[
+        str,
+        DataSignature(DataType.QC, frozenset({"alfred"})),
+        ExpectedPathSchema(ExpectedAlfredQc),
+    ] = ""
+    """Optional ``ngs_data_qc`` task with ``tool: alfred``: the coverage of the targets of the
+    libraries with a kit; the BAM QC export (``mehari_bam_qc``) needs it"""
 
     variants: Annotated[
         str,

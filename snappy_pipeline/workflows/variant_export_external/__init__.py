@@ -38,12 +38,11 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeSampleNameStepPart,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
-from snappy_pipeline.workflows.ngs_mapping import TargetCovReportStepPart
 
 from .model import VariantExportExternal as VariantExportExternalConfigModel
 
 
-class BamReportsExternalStepPart(TargetCovReportStepPart):
+class BamReportsExternalStepPart(BaseStepPart):
     """Build target coverage report and QC report for external BAM files"""
 
     #: Step name
@@ -51,6 +50,8 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
 
     #: Class available actions
     actions = ("bam_qc", "run")
+
+    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
 
     def _alignments(self, library_name):
         return self.parent.get_upstream_paths("alignments", library_name=library_name)
@@ -71,7 +72,10 @@ class BamReportsExternalStepPart(TargetCovReportStepPart):
 
     def _get_output_files_run(self):
         """The alfred report, without md5: it is no result file."""
-        return {"json": super()._get_output_files_run()["json"]}
+        return {"json": "work/{library_name}/out/{library_name}.target_coverage.json.gz"}
+
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.target_cov_report.log"}
 
     @dictify
     def _get_output_files_bam_qc(self):
@@ -184,7 +188,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             tpl = f"work/{library_name}/report/bam_qc/{library_name}.bam.%s.txt"
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(tpl % key)
-            path = f"work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
+            path = f"work/{library_name}/out/{library_name}.target_coverage.json.gz"
             result["alfred_qc"].append(path)
 
         return result

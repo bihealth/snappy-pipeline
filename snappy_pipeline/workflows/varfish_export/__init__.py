@@ -24,7 +24,7 @@ The paths are the same as below ``work/``.
 - ``varfish_export.{library_name}/out/mehari_annotate_strucvars.{library_name}.gts.tsv.gz``
 - ``varfish_export.{library_name}/out/mehari_annotate_strucvars.{library_name}.feature-effects.tsv.gz``
 - ``varfish_export.{library_name}/out/mehari_annotate_strucvars.{library_name}.db-infos.tsv.gz``
-- ``varfish_export.{library_name}/out/mehari_bam_qc.{library_name}.bam-qc.tsv.gz``, only if the ``ngs_mapping`` task enables ``target_coverage_report``
+- ``varfish_export.{library_name}/out/mehari_bam_qc.{library_name}.bam-qc.tsv.gz``, only with ``depends_on.qc``, an ``ngs_data_qc`` task with ``tool: alfred``
 
 Here ``{library_name}`` is the DNA library of the pedigree index.
 The keys ``gts`` and ``db_infos`` (small variants) are the ones downstream tasks read through ``depends_on``.
@@ -32,6 +32,7 @@ The keys ``gts`` and ``db_infos`` (small variants) are the ones downstream tasks
 
 import typing
 import warnings
+from functools import cached_property
 
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
@@ -83,7 +84,7 @@ class MehariStepPart(BaseStepPart):
         if action == "annotate_strucvars":
             return bool(self.parent.config.depends_on.structural_variants)
         if action == "bam_qc":
-            return self.parent.get_task_config("alignments").target_coverage_report.enabled
+            return bool(self.parent.config.depends_on.qc)
         return True
 
     def get_result_files(self):
@@ -244,9 +245,9 @@ class MehariStepPart(BaseStepPart):
             qc = self.parent.get_upstream_paths("alignments", library_name=library_name)
             for key in ("bamstats", "flagstats", "idxstats"):
                 result[key].append(getattr(qc, key))
-            # The coverage report covers only libraries with a kit
-            if library_name in self.parent.library_kits:
-                result["alfred_qc"].append(qc.alfred_qc)
+            if library_name in self.parent.coverage_qc_libraries:
+                coverage = self.parent.get_upstream_paths("qc", library_name=library_name)
+                result["alfred_qc"].append(coverage.alfred_qc)
         return result
 
     @dictify
@@ -287,6 +288,14 @@ class VarfishExportWorkflow(BaseStep):
     name = "varfish_export"
     produces = [DataSignature(DataType.EXPORTS, frozenset({"varfish"}))]
     config_model_class = VarfishExportConfigModel
+
+    @cached_property
+    def coverage_qc_libraries(self) -> set[str]:
+        """The libraries that the ``depends_on.qc`` task reports on: those with a kit among its
+        libraries."""
+        if not (task := self.config.depends_on.qc):
+            return set()
+        return set(self.task_libraries(task)["library_name"]) & set(self.library_kits)
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

@@ -8,6 +8,8 @@ The ``tool`` field selects the tool:
 - ``picard``: runs the Picard programs listed in ``picard.programs`` on the BAM files of DNA libraries. It reads ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task.
 - ``ngs_chew``: writes a fingerprint of each DNA library with `ngs-chew <https://github.com/bihealth/ngs-chew>`_, its genotypes at selected common germline variants, from the BAM files of ``depends_on.alignments``.
   One job compares the fingerprints of all libraries of the task.
+- ``alfred``: reports the coverage of the targets of each DNA library's kit with ``alfred qc``, for the libraries that have a kit (``WES``, ``Panel_seq``); it reads the ``targets`` of the kit from ``depends_on.kits``.
+  ``varfish_export`` reads the report through its ``depends_on.qc``.
 
 The result is one set of files per library.
 The task processes all libraries, normals and tumors alike, unless ``library_selection`` narrows them.
@@ -32,7 +34,11 @@ With ``ngs_chew``, with an ``.md5`` file:
 - ``cohort/out/cohort.relatedness.txt``, ``cohort.ibs0.txt`` and ``cohort.mask.txt``, for each pair of libraries the relatedness, the number of sites where they share no allele (IBS0) and the number of sites both cover
 - ``cohort/out/cohort.stats.txt``, for each library its heterozygous and homozygous sites, the variance of the allele fractions at its heterozygous sites (``var_het``) and its chrX and chrY fractions
 
-Downstream tasks read the key ``done``, or ``npz`` with ``ngs_chew``.
+With ``alfred``, with an ``.md5`` file:
+
+- ``{library_name}/out/{library_name}.target_coverage.json.gz``
+
+Downstream tasks read the key ``done``, ``npz`` with ``ngs_chew`` or ``alfred_qc`` with ``alfred``.
 
 Notes
 -----
@@ -45,6 +51,48 @@ Fingerprints assign a sample to a patient more sensitively than HLA typing, whic
 ``CollectHsMetrics`` needs ``depends_on.kits``, an ``external_data`` task with ``kits``, and a kit for each DNA library, so it runs on targeted libraries only.
 The step converts the baits and targets BED files of each kit to interval lists in one preparation job per kit, ``work/{library_kit}/out/{library_kit}.{baits,targets}.interval_list``.
 The kit name labels the ``BAIT_SET`` column of the metrics.
+
+Enrichment kits
+~~~~~~~~~~~~~~~
+
+``alfred`` and Picard's ``CollectHsMetrics`` read the region files of each library's enrichment kit.
+The files come from an ``external_data`` task in ``kits`` mode, named in ``depends_on.kits``.
+A library uses the kit named exactly like its ``libraryKit`` in the sample sheet:
+
+::
+
+    [Custom Fields]
+    key     annotatedEntity docs    type    minimum maximum unit    choices pattern
+    libraryKit      ngsLibrary      exome enrichment kit    string  0       0       0       0       0
+
+    [Data]
+    patientName     sampleName      isTumor extractionType  libraryType     folderName      libraryKit
+    case001 N1      N       DNA     WES     case001-N1-DNA1-WES1    V5_noUTR
+    case002 N1      N       DNA     WES     case002-N1-DNA1-WES1    V5_UTR
+    [...]
+
+Only targeted libraries (library type ``WES`` or ``Panel_seq``) have a kit; ``alfred`` skips all others.
+A ``libraryKit`` that the kits task lacks is an error.
+
+.. code-block:: yaml
+
+    - step: external_data
+      name: kits
+      config:
+        produces: {type: regions, tags: [kits]}
+        kits:
+          V5_noUTR:
+            targets: resources/v5.bed
+            baits: resources/v5_baits.bed
+    - step: ngs_data_qc
+      name: coverage_qc
+      config:
+        depends_on:
+          alignments: mapping
+          reference: genome
+          kits: kits
+        tool: alfred
+        alfred: {}
 """
 
 from typing import Any
@@ -63,6 +111,7 @@ from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import NgsDataQc as NgsDataQcConfigModel
+from .model import Tool
 
 
 MULTIPLE_METRICS = {
@@ -255,12 +304,47 @@ class NgsChewStepPart(BaseStepPart):
         return {"log": "work/cohort/log/cohort.compare.log"}
 
 
+class AlfredStepPart(BaseStepPart):
+    """Coverage of the targets of each library's kit with ``alfred qc``"""
+
+    name = "alfred"
+    actions = ("run",)
+
+    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        alignments = self.parent.get_upstream_paths(
+            "alignments", library_name=wildcards.library_name
+        )
+        yield "bam", alignments.bam
+        yield "bai", alignments.bai
+        yield from self.parent.reference_inputs().items()
+        yield "targets_bed", self.parent.library_kit_paths("kits", wildcards.library_name).targets
+
+    def _get_output_files_run(self):
+        json = "work/{library_name}/out/{library_name}.target_coverage.json.gz"
+        return {"json": json, "json_md5": json + ".md5"}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"ignore_read_groups": self.config.alfred.ignore_read_groups}
+
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.log"}
+
+
 class NgsDataQcWorkflow(BaseStep):
     """Perform NGS raw data QC"""
 
     name = "ngs_data_qc"
     config_model_class = NgsDataQcConfigModel
-    produces = [DataSignature(DataType.QC)]
+    #: QC data tagged with the tool, so that a consumer can require one
+    produces = [DataSignature(DataType.QC, frozenset({tool})) for tool in Tool]
+
+    @classmethod
+    def task_produces(cls, config, upstream):
+        """QC data tagged with the tool (``varfish_export`` reads alfred's)."""
+        return (DataSignature(DataType.QC, frozenset({str(config.tool)})),)
 
     #: Every library, not only the tumors of cancer sheets
     library_default = ""
@@ -271,6 +355,8 @@ class NgsDataQcWorkflow(BaseStep):
         lib = kwargs.get("library_name", "{library_name}")
         if config.tool == "ngs_chew":
             return {"npz": f"work/{lib}/out/{lib}.npz"}
+        if config.tool == "alfred":
+            return {"alfred_qc": f"work/{lib}/out/{lib}.target_coverage.json.gz"}
         return {"done": f"work/{lib}/report/.done"}
 
     def __init__(self, workflow, project, task_name):
@@ -279,10 +365,17 @@ class NgsDataQcWorkflow(BaseStep):
             "fastqc": FastQcReportStepPart,
             "picard": PicardStepPart,
             "ngs_chew": NgsChewStepPart,
+            "alfred": AlfredStepPart,
         }
         self.register_sub_step_classes((tool_to_class[self.config.tool],))
         if self.config.tool == "picard" and "CollectHsMetrics" in self.config.picard.programs:
             self.check_library_kits("kits", self.dna_libraries())
+        if self.config.tool == "alfred":
+            self.check_library_kits("kits", self.dna_libraries(), require=False)
+
+    def kit_libraries(self) -> list[str]:
+        """Return the DNA libraries with a kit, which ``alfred`` runs on."""
+        return [name for name in self.dna_libraries() if name in self.library_kits]
 
     def dna_libraries(self) -> list[str]:
         """Return the DNA libraries that ``picard`` and ``ngs_chew`` run on."""
@@ -330,6 +423,10 @@ class NgsDataQcWorkflow(BaseStep):
             for table in COMPARE_TABLES:
                 yield f"output/cohort/out/cohort.{table}.txt"
                 yield f"output/cohort/out/cohort.{table}.txt.md5"
+        if self.config.tool == "alfred":
+            for library_name in self.kit_libraries():
+                json = f"output/{library_name}/out/{library_name}.target_coverage.json.gz"
+                yield from (json, json + ".md5")
 
     def _yield_result_files(self, tpl, allowed_extraction_types, **kwargs):
         """Build output paths from path template and extension list"""

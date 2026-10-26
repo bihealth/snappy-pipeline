@@ -355,6 +355,9 @@ To migrate an existing project:
 21. `ngs_chew_fingerprint` of `ngs_mapping` becomes an `ngs_data_qc` task with `tool: ngs_chew` and `depends_on.alignments` naming the mapping task; its `extra_arguments` go to `ngs_chew.extra_arguments`.
     The fingerprints are `{library}/out/{library}.npz` instead of `{library}/report/fingerprint/{library}.npz`, and the task also compares them across its libraries (relatedness and var(het), with plots in the report).
     ngs-chew guesses the release from the contig lengths of complete GRCh37, hg19 or GRCh38 references; `extra_arguments: ["--genome-release", ...]` names it otherwise, but the reference still needs all contigs of the release, so the e2e pipelines with their chr12 reference have no fingerprint task.
+22. `target_coverage_report` of `ngs_mapping` becomes an `ngs_data_qc` task with `tool: alfred` and `depends_on.kits`; `ngs_mapping` no longer takes `depends_on.kits`.
+    The report is `{library}/out/{library}.target_coverage.json.gz` instead of `{library}/report/alfred_qc/{library}.alfred.json.gz`.
+    `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only with it.
 
 ## Example: a neoepitope config from main and its translation
 

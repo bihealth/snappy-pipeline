@@ -99,11 +99,17 @@ The regions of two exome kits, read by the coverage report of ``ngs_mapping``:
             reads: data_sets
             index: bwa_index
             reference: genome
-            kits: kits
           tool: bwa
           bwa: {}
-          target_coverage_report:
-            enabled: true
+      - step: ngs_data_qc
+        name: coverage_qc
+        config:
+          depends_on:
+            alignments: mapping
+            reference: genome
+            kits: kits
+          tool: alfred
+          alfred: {}
 
 Existing per-library variant calls, found as ``<search path>/<library name>/...``:
 

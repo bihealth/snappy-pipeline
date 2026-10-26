@@ -136,3 +136,29 @@ if wf.config.tool == "ngs_chew":
             tmpdir=wf.get_resource("ngs_chew", "compare", "tmpdir"),
         wrapper:
             wf.wrapper_path("ngs_chew/compare")
+
+
+# Target coverage with alfred -------------------------------------------------
+
+
+if wf.config.tool == "alfred":
+
+    rule ngs_data_qc_alfred_run:
+        input:
+            unpack(wf.get_input_files("alfred", "run")),
+        output:
+            **wf.get_output_files("alfred", "run"),
+        log:
+            **wf.get_log_file("alfred", "run"),
+        benchmark:
+            wf.get_benchmark_file("alfred", "run")
+        threads: wf.get_resource("alfred", "run", "threads")
+        resources:
+            runtime=wf.get_resource("alfred", "run", "runtime"),
+            mem=wf.get_resource("alfred", "run", "mem"),
+            partition=wf.get_resource("alfred", "run", "partition"),
+            tmpdir=wf.get_resource("alfred", "run", "tmpdir"),
+        params:
+            args=wf.get_params("alfred", "run"),
+        wrapper:
+            wf.wrapper_path("alfred/qc")

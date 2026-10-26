@@ -12,7 +12,6 @@ from snappy_pipeline.workflows.ngs_mapping import (
     BwaStepPart,
     Minimap2StepPart,
     StarStepPart,
-    TargetCovReportStepPart,
 )
 from snappy_pipeline.workflows.ngs_mapping.model import (
     Bwa,
@@ -20,7 +19,6 @@ from snappy_pipeline.workflows.ngs_mapping.model import (
     BwaMem3,
     Minimap2,
     Star,
-    TargetCoverageReport,
 )
 
 
@@ -106,15 +104,3 @@ def test_minimap2_passes_its_settings():
     assert params["soft_clip_supplementary"] is False
     assert params["output_md_tag"] is False
     assert params["memory_bam_sort"] == "2G"
-
-
-def test_target_coverage_report_passes_ignore_read_groups():
-    for value in (True, False):
-        part = object.__new__(TargetCovReportStepPart)
-        part.config = SimpleNamespace(
-            target_coverage_report=TargetCoverageReport(ignore_read_groups=value)
-        )
-
-        assert part._get_params_run(SimpleNamespace(library_name="lib")) == {
-            "ignore_read_groups": value
-        }

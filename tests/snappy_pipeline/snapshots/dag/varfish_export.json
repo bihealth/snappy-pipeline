@@ -29,6 +29,44 @@
   "wrapper": null
  },
  {
+  "benchmark": "tasks/ngs_data_qc_alfred/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.tsv",
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
+  ],
+  "log": [
+   "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.log"
+  ],
+  "output": [
+   "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.target_coverage.json.gz",
+   "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.target_coverage.json.gz.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "ignore_read_groups": true
+   }
+  },
+  "resources": {
+   "mem": "20 GB",
+   "mem_mb": 20000,
+   "mem_mib": 19074,
+   "partition": "medium",
+   "runtime": 240
+  },
+  "rule": "ngs_data_qc_alfred_ngs_data_qc_alfred_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/alfred/qc"
+ },
+ {
   "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
   "input": [
    "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
@@ -159,47 +197,6 @@
    "library_name": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
- },
- {
-  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.target_cov_report.tsv",
-  "input": [
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
-   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "<repo>/tests/snappy_pipeline/fixtures/cnvkit_targets.bed"
-  ],
-  "log": [
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.target_cov_report.log"
-  ],
-  "output": [
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz.md5"
-  ],
-  "params": {
-   "args": {
-    "extra_arguments": [],
-    "ignore_read_groups": true
-   }
-  },
-  "report": [
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz"
-  ],
-  "resources": {
-   "mem": "20 GB",
-   "mem_mb": 20000,
-   "mem_mib": 19074,
-   "partition": "medium",
-   "runtime": 240
-  },
-  "rule": "ngs_mapping_bwa_ngs_mapping_target_coverage_report_run",
-  "temp": [],
-  "threads": 1,
-  "wildcards": {
-   "library_name": "case001subregion-N1-DNA1-WES1"
-  },
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/alfred/qc"
  },
  {
   "benchmark": null,
@@ -538,7 +535,7 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
-   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz"
+   "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.target_coverage.json.gz"
   ],
   "log": [
    "tasks/varfish_export/work/varfish_export.case001subregion-N1-DNA1-WES1/log/mehari_bam_qc.case001subregion-N1-DNA1-WES1.log"

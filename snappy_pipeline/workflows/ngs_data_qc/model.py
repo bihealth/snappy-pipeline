@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import (
     EnumField,
@@ -25,6 +25,7 @@ class Tool(enum.StrEnum):
     fastqc = "fastqc"
     picard = "picard"
     ngs_chew = "ngs_chew"
+    alfred = "alfred"
 
 
 class PicardProgram(enum.StrEnum):
@@ -75,6 +76,19 @@ class Fastqc(ToolModel):
     pass
 
 
+class Alfred(ToolModel):
+    """Coverage of the targets of each library's kit with ``alfred qc``"""
+
+    ignore_read_groups: bool = True
+    """Compute one set of metrics per library, not per read group (``alfred qc --ignore``)"""
+
+
+class ExpectedAlfredQc(BaseModel):
+    """Consumer-driven contract: the ``alfred qc`` report of an ``ngs_data_qc`` task."""
+
+    alfred_qc: str
+
+
 class NgsChew(ToolModel):
     """``extra_arguments`` go to ``ngs-chew fingerprint``, for example
     ``["--genome-release", "GRCh38"]`` when ngs-chew cannot tell the release from the contigs;
@@ -88,7 +102,7 @@ class NgsDataQcDependsOn(SnappyModel):
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = ""
-    """Alignments of DNA libraries, read by ``picard`` and ``ngs_chew``"""
+    """Alignments of DNA libraries, read by ``picard``, ``ngs_chew`` and ``alfred``"""
 
     reads: Annotated[
         str,
@@ -101,7 +115,8 @@ class NgsDataQcDependsOn(SnappyModel):
     dbsnp: Dbsnp = ""
 
     kits: Kits = ""
-    """Baits and targets of the library kits, read by ``picard`` for ``CollectHsMetrics``"""
+    """Baits and targets of the library kits, read by ``picard`` for ``CollectHsMetrics`` and by
+    ``alfred``"""
 
 
 #: The ``depends_on`` fields each tool reads.
@@ -109,6 +124,7 @@ TOOL_DEPENDENCIES = {
     Tool.fastqc: ("reads",),
     Tool.picard: ("alignments", "reference"),
     Tool.ngs_chew: ("alignments", "reference"),
+    Tool.alfred: ("alignments", "reference", "kits"),
 }
 
 
@@ -124,6 +140,8 @@ class NgsDataQc(SnappyStepModel):
     fastqc: Fastqc | None = None
 
     ngs_chew: NgsChew | None = None
+
+    alfred: Alfred | None = None
 
     @model_validator(mode="after")
     def validate_tool_dependencies(self):

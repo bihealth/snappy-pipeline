@@ -31,6 +31,7 @@ yaml.indent(sequence=4, offset=2)
 #: Upstream task of each ``depends_on`` field.
 DEPENDENCY_TASKS: dict[str, str] = {
     "alignments": "ngs_mapping_bwa",
+    "qc": "ngs_data_qc_alfred",
     "annotated_variants": "variant_annotation_vep",
     "combined_variants": "combine_variants",
     "copy_number": "somatic_wgs_cnv_calling_cnvkit",
@@ -401,12 +402,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("ngs_data_qc", "picard"): {
         "picard": {"programs": ["CollectAlignmentSummaryMetrics", "CollectHsMetrics"]}
     },
-    ("ngs_mapping", None): {"target_coverage_report": {"enabled": False}},
-    ("ngs_mapping", "bwa"): {
-        "library_selection": DNA,
-        "target_coverage_report": {"enabled": Overwrite(True)},
-        "bam_collect_doc": {"enabled": True},
-    },
+    ("ngs_mapping", "bwa"): {"library_selection": DNA, "bam_collect_doc": {"enabled": True}},
     ("ngs_mapping", "bwa_mem2"): {"library_selection": DNA},
     ("ngs_mapping", "bwa_mem3"): {"library_selection": DNA},
     ("ngs_mapping", "minimap2"): {"library_selection": DNA},

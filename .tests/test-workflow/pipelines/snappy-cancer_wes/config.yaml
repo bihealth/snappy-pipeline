@@ -36,7 +36,6 @@ tasks:
         reads: data_sets
         reference: genome
         index: bwa_index
-        kits: kits
       tool: bwa
       bwa:
         mask_duplicates: false
@@ -44,8 +43,16 @@ tasks:
         num_threads_bam_sort: 2
         num_threads_bam_view: 2
         num_threads_align: 2
-      target_coverage_report:
-        enabled: true
+
+  - name: coverage_qc
+    step: ngs_data_qc
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        kits: kits
+      tool: alfred
+      alfred: {}
 
   - name: variant_calling
     step: variant_calling

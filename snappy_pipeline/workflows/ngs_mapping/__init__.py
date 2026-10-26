@@ -1,7 +1,7 @@
 """Read mapping of DNA and RNA libraries
 
 The step aligns the reads of each library to the reference genome; its result files are sorted, indexed BAM files.
-It also computes alignment statistics and, if configured, target coverage.
+It also computes alignment statistics.
 Marking of duplicates and trimming of adapters depend on the tool configuration.
 
 The ``tool`` field selects the aligner:
@@ -25,11 +25,10 @@ Each file has an ``.md5`` file.
 
 - ``{library_name}/out/{library_name}.bam`` and ``{library_name}/out/{library_name}.bam.bai``
 - ``{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt``, ``.bam.flagstats.txt`` and ``.bam.idxstats.txt``
-- ``{library_name}/report/alfred_qc/{library_name}.alfred.json.gz``, if ``target_coverage_report`` is enabled and the library has a kit
 - ``{library_name}/out/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
 - with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab``, ``{library_name}/out/{library_name}.Log.final.out`` (STAR's mapping summary) and ``{library_name}/strandedness/{library_name}.decision.json``
 
-Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, ``idxstats`` and ``alfred_qc``, and for RNA libraries ``gene_counts`` and ``strandedness``.
+Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, and ``idxstats``, and for RNA libraries ``gene_counts`` and ``strandedness``.
 
 Reads and sample sheet
 ----------------------
@@ -43,53 +42,6 @@ They mask duplicates (``mask_duplicates``) across all read groups of a library.
 By default, every pattern must match as many ``left`` as ``right`` files.
 With ``mixed_se_pe: true`` in the data set or the ``external_data`` task, ``right`` may match nothing.
 Then a library is either single-end or paired-end, and different libraries may differ.
-
-Exome enrichment kits
-~~~~~~~~~~~~~~~~~~~~~
-
-The target coverage report reads the region files of the library's enrichment kit.
-The files come from an ``external_data`` task in ``kits`` mode, named in ``depends_on.kits``.
-The sample sheet gets the optional library column ``libraryKit`` with the name of the kit in that task:
-
-::
-
-    [Custom Fields]
-    key     annotatedEntity docs    type    minimum maximum unit    choices pattern
-    libraryKit      ngsLibrary      exome enrichment kit    string  0       0       0       0       0
-
-    [Data]
-    patientName     sampleName      isTumor extractionType  libraryType     folderName      libraryKit
-    case001 N1      N       DNA     WES     case001-N1-DNA1-WES1    V5_noUTR
-    case002 N1      N       DNA     WES     case002-N1-DNA1-WES1    V5_UTR
-    case003 N1      N       DNA     WES     case003-N1-DNA1-WES1
-    [...]
-
-A library uses the kit named exactly like its ``libraryKit``.
-The target coverage report reads the ``targets`` file of the kit and needs ``depends_on.kits``.
-Only targeted libraries (library type ``WES`` or ``Panel_seq``) have a kit.
-The report skips all others.
-A ``libraryKit`` that the kits task lacks is an error.
-
-.. code-block:: yaml
-
-    - step: external_data
-      name: kits
-      config:
-        produces: {type: regions, tags: [kits]}
-        kits:
-          V5_noUTR:
-            targets: resources/v5.bed
-            baits: resources/v5_baits.bed
-          V5_UTR:
-            targets: resources/v5_utr.bed
-            baits: resources/v5_utr_baits.bed
-    - step: ngs_mapping
-      name: mapping
-      config:
-        depends_on:
-          kits: kits
-        target_coverage_report:
-          enabled: true
 
 Notes
 -----
@@ -507,52 +459,6 @@ class Minimap2StepPart(ReadMappingStepPart):
         return params
 
 
-class TargetCovReportStepPart(ReportGetResultFilesMixin, BaseStepPart):
-    """Build target coverage report"""
-
-    report_outputs = {"run": {"json": ReportOutput("alfred", caption="alfred.rst")}}
-
-    #: Step name
-    name = "target_coverage_report"
-
-    #: Run for "dna" and "dna_long" only
-    tool_categories = ("dna", "dna_long")
-
-    #: Class available actions
-    actions = ("run",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        return {"ignore_read_groups": self.config.target_coverage_report.ignore_read_groups}
-
-    def skip_result_files_for_library(self, library_name: str) -> bool:
-        return (
-            not self.config.target_coverage_report
-            or not self.config.target_coverage_report.enabled
-            or library_name not in self.parent.library_kits
-            or super().skip_result_files_for_library(library_name)
-        )
-
-    @dictify
-    def _get_input_files_run(self, wildcards):
-        library_name = wildcards.library_name
-        yield "bam", f"work/{library_name}/out/{library_name}.bam"
-        yield "bai", f"work/{library_name}/out/{library_name}.bam.bai"
-        yield from self.parent.reference_inputs().items()
-        yield "targets_bed", self.parent.library_kit_paths("kits", library_name).targets
-
-    def _get_output_files_run(self):
-        prefix = "work/{library_name}/report/alfred_qc/{library_name}.alfred.json.gz"
-        return {"json": prefix, "json_md5": prefix + ".md5"}
-
-    def _get_log_file_run(self):
-        return {"log": "work/{library_name}/log/{library_name}.target_cov_report.log"}
-
-    default_resource_usage = ResourceUsage(threads=2, runtime="4h", mem="20GB")
-
-
 class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     """Generate depth of coverage files."""
 
@@ -643,8 +549,6 @@ class NgsMappingWorkflow(BaseStep):
             "flagstats": f"work/{lib}/report/bam_qc/{lib}.bam.flagstats.txt",
             "idxstats": f"work/{lib}/report/bam_qc/{lib}.bam.idxstats.txt",
         }
-        if config.target_coverage_report and config.target_coverage_report.enabled:
-            paths["alfred_qc"] = f"work/{lib}/report/alfred_qc/{lib}.alfred.json.gz"
         if config.tool == "star":
             # Strandedness inference and the gene counts it passes on
             paths["gene_counts"] = f"work/{lib}/out/{lib}.GeneCounts.tab"
@@ -670,11 +574,9 @@ class NgsMappingWorkflow(BaseStep):
             (
                 selected_mapper,
                 StrandednessStepPart,
-                TargetCovReportStepPart,
                 BamCollectDocStepPart,
             )
         )
-        self._check_kits()
         # Validate project
         self.validate_project(config=self.config)
 
@@ -716,20 +618,6 @@ class NgsMappingWorkflow(BaseStep):
             case "star":
                 return [os.path.join(path, name) for name in STAR_INDEX_FILES]
         return [path]
-
-    def _check_kits(self):
-        """Check that ``depends_on.kits`` has the kit of each library that needs one."""
-        if not self.config.depends_on.kits:
-            return
-        by_category = {
-            name: self.library_tool_category(name) for name in self.libraries["library_name"]
-        }
-        if self.config.target_coverage_report and self.config.target_coverage_report.enabled:
-            self.check_library_kits(
-                "kits",
-                [name for name, cat in by_category.items() if cat in ("dna", "dna_long")],
-                require=False,
-            )
 
     def validate_project(self, config):
         """Validates project.
