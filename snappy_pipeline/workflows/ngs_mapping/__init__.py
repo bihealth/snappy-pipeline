@@ -1,7 +1,7 @@
 """Read mapping of DNA and RNA libraries
 
 The step aligns the reads of each library to the reference genome; its result files are sorted, indexed BAM files.
-It also computes alignment statistics and, if configured, target coverage and fingerprints.
+It also computes alignment statistics and, if configured, target coverage.
 Marking of duplicates and trimming of adapters depend on the tool configuration.
 
 The ``tool`` field selects the aligner:
@@ -27,7 +27,6 @@ Each file has an ``.md5`` file.
 - ``{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt``, ``.bam.flagstats.txt`` and ``.bam.idxstats.txt``
 - ``{library_name}/report/alfred_qc/{library_name}.alfred.json.gz``, if ``target_coverage_report`` is enabled and the library has a kit
 - ``{library_name}/report/cov/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
-- ``{library_name}/report/fingerprint/{library_name}.npz``, if ``ngs_chew_fingerprint`` is enabled
 - with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab`` and ``{library_name}/strandedness/{library_name}.decision.json``
 
 Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, ``idxstats`` and ``alfred_qc``, and for RNA libraries ``gene_counts`` and ``strandedness``.
@@ -113,13 +112,6 @@ BQSR
 
 ``alignment_processing`` with ``tool: gatk4_bqsr`` recalibrates the base qualities of the mapping.
 :ref:`somatic_ngs` has the complete chain.
-
-Fingerprints
-~~~~~~~~~~~~
-
-``ngs_chew_fingerprint`` writes a fingerprint of carefully selected germline variants with `ngs-chew <https://github.com/bihealth/ngs-chew>`_.
-Fingerprints detect sample swaps and contamination.
-They assign a sample to a patient more sensitively than HLA typing, which is matched between donor and recipient in stem-cell treatments.
 """
 
 import os
@@ -608,43 +600,6 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="2GB")
 
 
-class NgsChewStepPart(ReportGetResultFilesMixin, BaseStepPart):
-    """Analyze BAM File with ``ngs-chew``, e.g., ``fingerprint``"""
-
-    #: Step name
-    name = "ngs_chew"
-
-    #: Class available actions
-    actions = ("fingerprint",)
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def tool_section(self):
-        return self.config.ngs_chew_fingerprint
-
-    def _get_params_fingerprint(self, wildcards: Wildcards) -> dict[str, Any]:
-        """The tool's ``extra_arguments`` only, which ``with_extra_arguments`` adds"""
-        return {}
-
-    def skip_result_files_for_library(self, library_name: str) -> bool:
-        return not self.config.ngs_chew_fingerprint.enabled
-
-    @dictify
-    def _get_input_files_fingerprint(self, wildcards):
-        yield "bam", "work/{library_name}/out/{library_name}.bam".format(**wildcards)
-        yield from self.parent.reference_inputs().items()
-
-    def _get_output_files_fingerprint(self):
-        prefix = "work/{library_name}/report/fingerprint/{library_name}.npz"
-        return {"npz": prefix, "npz_md5": prefix + ".md5"}
-
-    def _get_log_file_fingerprint(self):
-        return {"log": "work/{library_name}/log/{library_name}.ngs_chew_fingerprint.log"}
-
-    default_resource_usage = ResourceUsage(threads=1, runtime="4h", mem="2GB")
-
-
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
 
@@ -715,7 +670,6 @@ class NgsMappingWorkflow(BaseStep):
                 StrandednessStepPart,
                 TargetCovReportStepPart,
                 BamCollectDocStepPart,
-                NgsChewStepPart,
             )
         )
         self._check_kits()

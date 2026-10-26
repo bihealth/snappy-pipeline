@@ -24,6 +24,7 @@ from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 class Tool(enum.StrEnum):
     fastqc = "fastqc"
     picard = "picard"
+    ngs_chew = "ngs_chew"
 
 
 class PicardProgram(enum.StrEnum):
@@ -74,13 +75,20 @@ class Fastqc(ToolModel):
     pass
 
 
+class NgsChew(ToolModel):
+    """``extra_arguments`` go to ``ngs-chew fingerprint``, for example
+    ``["--genome-release", "GRCh38"]`` when ngs-chew cannot tell the release from the contigs;
+    the reference must have all contigs of the release, since ngs-chew calls its sites on all of
+    them"""
+
+
 class NgsDataQcDependsOn(SnappyModel):
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
     ] = ""
-    """Alignments of DNA libraries, read by ``picard``"""
+    """Alignments of DNA libraries, read by ``picard`` and ``ngs_chew``"""
 
     reads: Annotated[
         str,
@@ -97,7 +105,11 @@ class NgsDataQcDependsOn(SnappyModel):
 
 
 #: The ``depends_on`` fields each tool reads.
-TOOL_DEPENDENCIES = {Tool.fastqc: ("reads",), Tool.picard: ("alignments", "reference")}
+TOOL_DEPENDENCIES = {
+    Tool.fastqc: ("reads",),
+    Tool.picard: ("alignments", "reference"),
+    Tool.ngs_chew: ("alignments", "reference"),
+}
 
 
 class NgsDataQc(SnappyStepModel):
@@ -110,6 +122,8 @@ class NgsDataQc(SnappyStepModel):
     picard: Picard | None = None
 
     fastqc: Fastqc | None = None
+
+    ngs_chew: NgsChew | None = None
 
     @model_validator(mode="after")
     def validate_tool_dependencies(self):

@@ -350,6 +350,9 @@ To migrate an existing project:
 20. `tool: mbcs` of `ngs_mapping` is removed with its AGeNT steps, and snappy handles no molecular barcodes for now.
     Its BQSR (`recalibrate`, `depends_on.common_variants`) is an `alignment_processing` task with `tool: gatk4_bqsr` after a mapping task with the tool of `mbcs.mapping_tool`, see the recipe in {ref}`somatic_ngs`.
     With main's mbcs output without BQSR as input, `gatk4_bqsr` writes main's recalibrated BAM.
+21. `ngs_chew_fingerprint` of `ngs_mapping` becomes an `ngs_data_qc` task with `tool: ngs_chew` and `depends_on.alignments` naming the mapping task; its `extra_arguments` go to `ngs_chew.extra_arguments`.
+    The fingerprints are `{library}/out/{library}.npz` instead of `{library}/report/fingerprint/{library}.npz`, and the task also compares them across its libraries (relatedness and var(het), with plots in the report).
+    ngs-chew guesses the release from the contig lengths of complete GRCh37, hg19 or GRCh38 references; `extra_arguments: ["--genome-release", ...]` names it otherwise, but the reference still needs all contigs of the release, so the e2e pipelines with their chr12 reference have no fingerprint task.
 
 ## Example: a neoepitope config from main and its translation
 

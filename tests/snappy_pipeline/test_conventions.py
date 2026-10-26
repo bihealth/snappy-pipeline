@@ -610,6 +610,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "melt/group_analysis",
             "melt/make_vcf",
             "melt/preprocess",
+            "ngs_chew/compare",
             "popdel/profile",
             "purecn/coverage",
             "purecn/prepare",

@@ -44,8 +44,6 @@ tasks:
         num_threads_bam_sort: 2
         num_threads_bam_view: 2
         num_threads_align: 2
-      ngs_chew_fingerprint:
-        enabled: false
       target_coverage_report:
         enabled: true
 

@@ -25,25 +25,27 @@ rule ngs_data_qc_all:
 # Run FastQC ------------------------------------------------------------------
 
 
-rule ngs_data_qc_fastqc_run:
-    input:
-        unpack(wf.get_input_files("fastqc", "run")),
-    output:
-        **wf.get_output_files("fastqc", "run"),
-    log:
-        **wf.get_log_file("fastqc", "run"),
-    benchmark:
-        wf.get_benchmark_file("fastqc", "run")
-    threads: wf.get_resource("fastqc", "run", "threads")
-    resources:
-        runtime=wf.get_resource("fastqc", "run", "runtime"),
-        mem=wf.get_resource("fastqc", "run", "mem"),
-        partition=wf.get_resource("fastqc", "run", "partition"),
-        tmpdir=wf.get_resource("fastqc", "run", "tmpdir"),
-    params:
-        args=wf.get_params("fastqc", "run"),
-    wrapper:
-        wf.wrapper_path("fastqc")
+if wf.config.tool == "fastqc":
+
+    rule ngs_data_qc_fastqc_run:
+        input:
+            unpack(wf.get_input_files("fastqc", "run")),
+        output:
+            **wf.get_output_files("fastqc", "run"),
+        log:
+            **wf.get_log_file("fastqc", "run"),
+        benchmark:
+            wf.get_benchmark_file("fastqc", "run")
+        threads: wf.get_resource("fastqc", "run", "threads")
+        resources:
+            runtime=wf.get_resource("fastqc", "run", "runtime"),
+            mem=wf.get_resource("fastqc", "run", "mem"),
+            partition=wf.get_resource("fastqc", "run", "partition"),
+            tmpdir=wf.get_resource("fastqc", "run", "tmpdir"),
+        params:
+            args=wf.get_params("fastqc", "run"),
+        wrapper:
+            wf.wrapper_path("fastqc")
 
 
 # Bam Data QC ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,41 +53,86 @@ rule ngs_data_qc_fastqc_run:
 # Run picard ------------------------------------------------------------------
 
 
-rule ngs_data_qc_picard_prepare:
-    input:
-        unpack(wf.get_input_files("picard", "prepare")),
-    output:
-        **wf.get_output_files("picard", "prepare"),
-    log:
-        **wf.get_log_file("picard", "prepare"),
-    benchmark:
-        wf.get_benchmark_file("picard", "prepare")
-    threads: wf.get_resource("picard", "prepare", "threads")
-    resources:
-        runtime=wf.get_resource("picard", "prepare", "runtime"),
-        mem=wf.get_resource("picard", "prepare", "mem"),
-        partition=wf.get_resource("picard", "prepare", "partition"),
-        tmpdir=wf.get_resource("picard", "prepare", "tmpdir"),
-    wrapper:
-        wf.wrapper_path("picard/prepare")
+if wf.config.tool == "picard":
+
+    rule ngs_data_qc_picard_prepare:
+        input:
+            unpack(wf.get_input_files("picard", "prepare")),
+        output:
+            **wf.get_output_files("picard", "prepare"),
+        log:
+            **wf.get_log_file("picard", "prepare"),
+        benchmark:
+            wf.get_benchmark_file("picard", "prepare")
+        threads: wf.get_resource("picard", "prepare", "threads")
+        resources:
+            runtime=wf.get_resource("picard", "prepare", "runtime"),
+            mem=wf.get_resource("picard", "prepare", "mem"),
+            partition=wf.get_resource("picard", "prepare", "partition"),
+            tmpdir=wf.get_resource("picard", "prepare", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("picard/prepare")
+
+    rule ngs_data_qc_picard_metrics:
+        input:
+            unpack(wf.get_input_files("picard", "metrics")),
+        output:
+            **wf.get_output_files("picard", "metrics"),
+        log:
+            **wf.get_log_file("picard", "metrics"),
+        benchmark:
+            wf.get_benchmark_file("picard", "metrics")
+        threads: wf.get_resource("picard", "metrics", "threads")
+        resources:
+            runtime=wf.get_resource("picard", "metrics", "runtime"),
+            mem=wf.get_resource("picard", "metrics", "mem"),
+            partition=wf.get_resource("picard", "metrics", "partition"),
+            tmpdir=wf.get_resource("picard", "metrics", "tmpdir"),
+        params:
+            args=wf.get_params("picard", "metrics"),
+        wrapper:
+            wf.wrapper_path("picard/metrics")
 
 
-rule ngs_data_qc_picard_metrics:
-    input:
-        unpack(wf.get_input_files("picard", "metrics")),
-    output:
-        **wf.get_output_files("picard", "metrics"),
-    log:
-        **wf.get_log_file("picard", "metrics"),
-    benchmark:
-        wf.get_benchmark_file("picard", "metrics")
-    threads: wf.get_resource("picard", "metrics", "threads")
-    resources:
-        runtime=wf.get_resource("picard", "metrics", "runtime"),
-        mem=wf.get_resource("picard", "metrics", "mem"),
-        partition=wf.get_resource("picard", "metrics", "partition"),
-        tmpdir=wf.get_resource("picard", "metrics", "tmpdir"),
-    params:
-        args=wf.get_params("picard", "metrics"),
-    wrapper:
-        wf.wrapper_path("picard/metrics")
+# Fingerprints with ngs-chew --------------------------------------------------
+
+
+if wf.config.tool == "ngs_chew":
+
+    rule ngs_data_qc_ngs_chew_fingerprint:
+        input:
+            unpack(wf.get_input_files("ngs_chew", "fingerprint")),
+        output:
+            **wf.get_output_files("ngs_chew", "fingerprint"),
+        log:
+            **wf.get_log_file("ngs_chew", "fingerprint"),
+        benchmark:
+            wf.get_benchmark_file("ngs_chew", "fingerprint")
+        threads: wf.get_resource("ngs_chew", "fingerprint", "threads")
+        resources:
+            runtime=wf.get_resource("ngs_chew", "fingerprint", "runtime"),
+            mem=wf.get_resource("ngs_chew", "fingerprint", "mem"),
+            partition=wf.get_resource("ngs_chew", "fingerprint", "partition"),
+            tmpdir=wf.get_resource("ngs_chew", "fingerprint", "tmpdir"),
+        params:
+            args=wf.get_params("ngs_chew", "fingerprint"),
+        wrapper:
+            wf.wrapper_path("ngs_chew/fingerprint")
+
+    rule ngs_data_qc_ngs_chew_compare:
+        input:
+            unpack(wf.get_input_files("ngs_chew", "compare")),
+        output:
+            **wf.get_output_files("ngs_chew", "compare"),
+        log:
+            **wf.get_log_file("ngs_chew", "compare"),
+        benchmark:
+            wf.get_benchmark_file("ngs_chew", "compare")
+        threads: wf.get_resource("ngs_chew", "compare", "threads")
+        resources:
+            runtime=wf.get_resource("ngs_chew", "compare", "runtime"),
+            mem=wf.get_resource("ngs_chew", "compare", "mem"),
+            partition=wf.get_resource("ngs_chew", "compare", "partition"),
+            tmpdir=wf.get_resource("ngs_chew", "compare", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("ngs_chew/compare")

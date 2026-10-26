@@ -122,10 +122,6 @@ class BamCollectDoc(ToggleModel, ToolModel):
     window_length: Annotated[int, Field(gt=0)] = 1000
 
 
-class NgsChewFingerprint(ToggleModel, ToolModel):
-    pass
-
-
 class BwaMode(StrEnum):
     AUTO = "auto"
     BWA_ALN = "bwa-aln"
@@ -252,9 +248,6 @@ class NgsMapping(SnappyStepModel):
 
     bam_collect_doc: BamCollectDoc = BamCollectDoc()
     """Depth of coverage collection, mainly useful for genomes."""
-
-    ngs_chew_fingerprint: NgsChewFingerprint = NgsChewFingerprint()
-    """Compute fingerprints with ngs-chew"""
 
     bwa: Bwa | None = None
     """Configuration for BWA"""
