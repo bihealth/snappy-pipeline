@@ -357,7 +357,7 @@ To migrate an existing project:
     ngs-chew guesses the release from the contig lengths of complete GRCh37, hg19 or GRCh38 references; `extra_arguments: ["--genome-release", ...]` names it otherwise, but the reference still needs all contigs of the release, so the e2e pipelines with their chr12 reference have no fingerprint task.
 22. `target_coverage_report` of `ngs_mapping` becomes an `ngs_data_qc` task with `tool: alfred` and `depends_on.kits`; `ngs_mapping` no longer takes `depends_on.kits`.
     The report is `{library}/out/{library}.target_coverage.json.gz` instead of `{library}/report/alfred_qc/{library}.alfred.json.gz`.
-    `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only with it.
+    `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only with it; pedigree members from background data sets have no target coverage there, since `ngs_data_qc` checks no background libraries (the mapping task did).
 
 ## Example: a neoepitope config from main and its translation
 

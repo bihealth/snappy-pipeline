@@ -35,7 +35,9 @@ class VarfishExportDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedAlfredQc),
     ] = ""
     """Optional ``ngs_data_qc`` task with ``tool: alfred``: the coverage of the targets of the
-    libraries with a kit; the BAM QC export (``mehari_bam_qc``) needs it"""
+    libraries with a kit; the BAM QC export (``mehari_bam_qc``) needs it. ``ngs_data_qc`` checks
+    no libraries of background data sets, so pedigree members from them have no target coverage
+    in the export."""
 
     variants: Annotated[
         str,
