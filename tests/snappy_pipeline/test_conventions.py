@@ -399,18 +399,21 @@ def test_result_files_are_targets():
 
 #: Diagnostic outputs that are not in the report, by wrapper (or rule, for rules without a wrapper),
 #: with the reason
-OUTPUTS_NOT_IN_REPORT: dict[str, str] = {}
+OUTPUTS_NOT_IN_REPORT: dict[str, str] = {
+    "bbduk/run": "statistics tables only, no plots (a table view, e.g. with datavzrd, is for later)",
+}
 
 #: Plots and HTML pages, by extension
 _PLOT = re.compile(r"\.(pdf|png|svg|html?)$")
 
 
 def _diagnostic(path: str) -> bool:
-    """A plot, or an output below a ``report/`` directory (but no ``.done`` marker or ``.md5``)."""
+    """A plot, a ``report/`` directory or an output below one (but no ``.done`` marker or
+    ``.md5``)."""
     name = path.rsplit("/", 1)[-1]
     if name == ".done" or name.endswith(".md5"):
         return False
-    return bool(_PLOT.search(path)) or "/report/" in path
+    return bool(_PLOT.search(path)) or "/report/" in path or path.endswith("/report")
 
 
 def test_plots_and_diagnostic_outputs_are_in_the_report():

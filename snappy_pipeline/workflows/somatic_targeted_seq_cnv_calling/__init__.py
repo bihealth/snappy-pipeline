@@ -166,6 +166,13 @@ class SequenzaStepPart(SomaticTargetedSeqCnvCallingStepPart):
         "run": ("seg", "seg_md5", "report"),
     }
 
+    #: The plots of ``sequenza.results`` in the report directory
+    report_outputs = {
+        "run": {
+            "report": ReportOutput("sequenza", caption="sequenza.rst", patterns=("{plot}.pdf",))
+        }
+    }
+
     @dictify
     def _get_input_files_coverage(self, wildcards):
         tumor_library = self._resolve_library_name(wildcards.tumor_library)

@@ -128,10 +128,10 @@ The DAG snapshots are built with `delete_intermediates: [intermediates]`.
 `test_intermediates_are_temp` and `test_temp_files_are_intermediates` check them.
 
 Outputs for the Snakemake report are declared per action in a step part's `report_outputs`.
-It maps the output key to a `ReportOutput` (subcategory, caption, `htmlindex` for a directory).
-`BaseStep.get_output_files` flags them with `report()`, in the task's category and labelled by the wildcards of the path.
+It maps the output key to a `ReportOutput` (subcategory, caption, and for a directory `htmlindex` or `patterns` of the files to show).
+`BaseStep.get_output_files` flags them with `report()`, in the task's category and labelled by the wildcards of the path and the patterns.
 Captions are RST files in `report/` next to the step module.
-Every plot (PDF, PNG, SVG, HTML) and every output below a `report/` directory is a report output; `test_plots_and_diagnostic_outputs_are_in_the_report` checks the DAG snapshots, which list them as `report`.
+Every plot (PDF, PNG, SVG, HTML) and every `report/` directory and output below one is a report output, unless `OUTPUTS_NOT_IN_REPORT` names the reason; `test_plots_and_diagnostic_outputs_are_in_the_report` checks the DAG snapshots, which list them as `report`.
 
 ### Defining input files and params
 

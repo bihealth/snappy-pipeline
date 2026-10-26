@@ -423,6 +423,9 @@
     "library_name": "case001subregion-T1-DNA1-WES1"
    }
   },
+  "report": [
+   "tasks/somatic_targeted_seq_cnv_calling_sequenza/work/case001subregion-T1-DNA1-WES1/report"
+  ],
   "resources": {
    "mem": "64 GB",
    "mem_mb": 64000,

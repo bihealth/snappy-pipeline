@@ -83,6 +83,9 @@
     ]
    }
   },
+  "report": [
+   "tasks/adapter_trimming_fastp/work/case001subregion-T1-DNA1-WES1/report"
+  ],
   "resources": {
    "mem": "24 GB",
    "mem_mb": 24000,

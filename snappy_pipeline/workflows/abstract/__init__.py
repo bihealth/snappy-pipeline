@@ -119,6 +119,9 @@ class ReportOutput:
     caption: str | None = None
     #: For a directory output: the HTML file to open (Snakemake's ``htmlindex``)
     htmlindex: str | None = None
+    #: For a directory output: the files to show, as patterns relative to it (Snakemake's
+    #: ``patterns``); their wildcards label the files
+    patterns: tuple[str, ...] = ()
 
 
 class BaseStepPart:
@@ -1435,7 +1438,8 @@ class BaseStep:
             caption = os.path.join(
                 os.path.dirname(inspect.getfile(type(part))), "report", spec.caption
             )
-        labels = {name: "{%s}" % name for name in re.findall(r"\{(\w+)\}", str(path))}
+        wildcards = re.findall(r"\{(\w+)\}", " ".join((str(path), *spec.patterns)))
+        labels = {name: "{%s}" % name for name in wildcards}
         return report(
             path,
             caption=caption,
@@ -1443,6 +1447,7 @@ class BaseStep:
             subcategory=spec.subcategory,
             labels=labels or None,
             htmlindex=spec.htmlindex,
+            patterns=list(spec.patterns),
         )
 
     def get_benchmark_file(self, sub_step: str, action: str) -> str:

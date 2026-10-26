@@ -27,6 +27,7 @@ from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
@@ -115,6 +116,13 @@ class BbdukStepPart(AdapterTrimmingStepPart):
 class FastpStepPart(AdapterTrimmingStepPart):
     name = "fastp"
     file_keys = ("filter_by_index1", "filter_by_index2")
+
+    #: The HTML report of each FASTQ file or pair, below the path of the file
+    report_outputs = {
+        "run": {
+            "report": ReportOutput("fastp", caption="fastp.rst", patterns=("{reads}/report.html",))
+        }
+    }
 
     @property
     def default_resource_usage(self) -> ResourceUsage:
