@@ -8,6 +8,7 @@ The ``tool`` field selects the tool:
 - ``picard``: runs the Picard programs listed in ``picard.programs`` on the BAM files of DNA libraries. It reads ``depends_on.alignments``, for example an :ref:`step_ngs_mapping` task.
 
 The result is one set of files per library.
+The task processes all libraries, normals and tumors alike, unless ``library_selection`` narrows them.
 
 Outputs
 -------
@@ -198,6 +199,9 @@ class NgsDataQcWorkflow(BaseStep):
     name = "ngs_data_qc"
     config_model_class = NgsDataQcConfigModel
     produces = [DataSignature(DataType.QC)]
+
+    #: Every library, not only the tumors of cancer sheets
+    library_default = ""
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:

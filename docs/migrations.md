@@ -67,7 +67,7 @@ Columns that are **optionally available** (via the `relationships` config, which
 A task's libraries come from three layers:
 
 - What its step can process at all, which always applies: for example RNA libraries for expression quantification and fusion calling, tumor DNA libraries for mutect2, normal DNA libraries for a panel of normals, and only libraries of cancer sample sheets for the somatic steps.
-- Without `library_selection`, the step's default: `role == 'tumor' and extraction_type == 'dna'` on cancer sample sheets and `extraction_type == 'dna'` on germline sample sheets, unless the step declares its own (mapping takes all libraries, the RNA steps all RNA libraries, a panel of normals all normal DNA libraries).
+- Without `library_selection`, the step's default: `role == 'tumor' and extraction_type == 'dna'` on cancer sample sheets and `extraction_type == 'dna'` on germline sample sheets, unless the step declares its own (mapping and `ngs_data_qc` take all libraries, the RNA steps all RNA libraries, a panel of normals all normal DNA libraries).
 - `library_selection` replaces that default, for example to select a batch (`data_set == 'batch2'`) or to drop samples, but never goes beyond what the step can process.
 
 Several data sets may have libraries of the same name; a task that would take two of them fails and suggests a `library_selection` such as `data_set == 'batch1'`.
