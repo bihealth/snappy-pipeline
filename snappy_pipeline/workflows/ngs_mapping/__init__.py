@@ -26,7 +26,7 @@ Each file has an ``.md5`` file.
 - ``{library_name}/out/{library_name}.bam`` and ``{library_name}/out/{library_name}.bam.bai``
 - ``{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt``, ``.bam.flagstats.txt`` and ``.bam.idxstats.txt``
 - ``{library_name}/report/alfred_qc/{library_name}.alfred.json.gz``, if ``target_coverage_report`` is enabled and the library has a kit
-- ``{library_name}/report/cov/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
+- ``{library_name}/out/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
 - with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab`` and ``{library_name}/strandedness/{library_name}.decision.json``
 
 Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, ``idxstats`` and ``alfred_qc``, and for RNA libraries ``gene_counts`` and ``strandedness``.
@@ -584,7 +584,7 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_run(self):
-        prefix = "work/{library_name}/report/cov/{library_name}"
+        prefix = "work/{library_name}/out/{library_name}"
         yield "vcf", prefix + ".cov.vcf.gz"
         yield "vcf_md5", prefix + ".cov.vcf.gz.md5"
         yield "vcf_tbi", prefix + ".cov.vcf.gz.tbi"

@@ -227,6 +227,7 @@ The old patterns embedded the tool name and step substage (e.g. `bwa.filtered.vc
 Since those values are already defined by the task config, repeating them in paths was redundant.
 Paths now contain only the truly variable parts, typically just the library name (or cohort name).
 In multi-tool workflows or substeps that require disambiguation, additional wildcards are still used, but the default case is a single wildcard.
+`report/` holds what the Snakemake report shows; data for other tools is in `out/`, such as the coverage VCF and bigWig files of `bam_collect_doc` (main: `report/cov/`).
 
 Profiles are now passed via `--workflow-profile`, which is the recommended approach in Snakemake 9.
 Multiple `--workflow-profile` arguments are layered (later profiles override earlier ones), so the default profile is applied first and the SLURM profile overrides only what it needs to.

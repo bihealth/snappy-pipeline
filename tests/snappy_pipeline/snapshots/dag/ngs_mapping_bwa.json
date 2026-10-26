@@ -26,6 +26,22 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz.md5",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.tbi",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.tbi.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.mq.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.mq.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.tbi",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.tbi.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.mq.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.mq.bw.md5",
    "tasks/ngs_mapping_bwa/output/.manifest.tsv"
   ],
   "log": [],
@@ -37,6 +53,92 @@
   "threads": 1,
   "wildcards": {},
   "wrapper": null
+ },
+ {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.bam_collect_doc.tsv",
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.bam_collect_doc.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.tbi",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.tbi.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.mq.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.mq.bw.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "window_length": 1000
+   }
+  },
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bam_collect_doc_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/maelstrom/bam_collect_doc"
+ },
+ {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.bam_collect_doc.tsv",
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.bam_collect_doc.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.tbi",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.tbi.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.mq.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.mq.bw.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "window_length": 1000
+   }
+  },
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bam_collect_doc_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/maelstrom/bam_collect_doc"
  },
  {
   "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
@@ -278,7 +380,23 @@
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/alfred_qc/case001subregion-N1-DNA1-WES1.alfred.json.gz.md5",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz",
-   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz.md5"
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/report/alfred_qc/case001subregion-T1-DNA1-WES1.alfred.json.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.tbi",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.vcf.gz.tbi.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.cov.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.mq.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.mq.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.tbi",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.vcf.gz.tbi.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.cov.bw.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.mq.bw",
+   "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.mq.bw.md5"
   ],
   "local": true,
   "log": [],
