@@ -4,7 +4,7 @@ from pydantic import model_validator
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
-    COHORT_LEVEL,
+    PEDIGREE_LEVEL,
     DataSignature,
     DataType,
     ExpectedPathSchema,
@@ -30,14 +30,14 @@ class IgvSessionGenerationDependsOn(SnappyModel):
     annotated_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", "annotated"})),
-        COHORT_LEVEL,
+        PEDIGREE_LEVEL,
         ExpectedPathSchema(ExpectedAnnotatedVariants),
     ] = ""
     """Annotated variants; set exactly one of the three variant fields"""
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
-        COHORT_LEVEL,
+        PEDIGREE_LEVEL,
         ExpectedPathSchema(ExpectedGermlineVariants),
     ] = ""
     """Variant calls; set exactly one of the three variant fields"""

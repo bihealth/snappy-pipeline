@@ -170,7 +170,7 @@ It declares a local checkpoint instead, whose input is the upstream checkpoint o
 ### Libraries, donors and pedigrees
 
 Step parts read the sample sheets only through the library DataFrame of the workflow object, never through the biomedsheets objects.
-`build_library_dataframe()` has one row per library, with its role, donor, cohort, parents, sex and the extra sample sheet columns; `include_background=True` adds the libraries of background data sets.
+`build_library_dataframe()` has one row per library, with its role, donor, pedigree, parents, sex and the extra sample sheet columns; `include_background=True` adds the libraries of background data sets.
 The table without relationships is built once per run and shared by all tasks (`Project.library_tables`); each task adds its `relationships`.
 Germline and generic sheets list all their libraries, with the pedigree columns of the biomedsheets germline view (joined by the data set's `pedigree_field`).
 `library_row(name)` returns the row of one library, which `library_selection` picks if several data sets have a library of that name; read per-library facts (data set, folder, kit) through it, not by indexing the dataframe by name.
@@ -181,7 +181,7 @@ Background libraries are in the default table only of steps that set `background
 `library_selection` is the user's choice within it, such as a batch or dropped samples, and `library_default` replaces it when the task sets none.
 A step whose requirement or default depends on the task's config (its tool) overrides `task_library_requirement(config)` or `task_library_default(config)`.
 `task_libraries(task_name)` gives the libraries of another task from its config, so a step can match the files of an upstream task also under `--frozen`.
-`output_entities` gives the entities a task writes, from `libraries` and `effective_group_by` (the task's `group_by`, else the step's `default_group_by(config)`, else what upstream tasks declare, else `library`); `cohort_members` gives the members of each cohort, which only an explicit `library_selection` restricts.
+`output_entities` gives the entities a task writes, from `libraries` and `effective_group_by` (the task's `group_by`, else the step's `default_group_by(config)`, else what upstream tasks declare, else `library`); `pedigree_libraries` gives the libraries of each pedigree, which only an explicit `library_selection` restricts.
 `primary_dna_libraries()`, `pedigrees()`, `pedigree_members()`, `pedigree_index()` and `children_with_both_parents()` give the germline view: one DNA library per donor, grouped by pedigree.
 
 (dev_contracts)=
@@ -202,7 +202,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 - A file that a step reads is a `depends_on` key if it must match the reference or other data of the project, even if only one tool reads it.
   Examples are regions, variants, a genome, a gene annotation and a mapper index (type `index`, tagged with the tool and the molecule).
   Such a field has a `DataSignature` and an `ExpectedPathSchema`, and the step reads it with `get_upstream_paths()`.
-  A field whose step reads one result per pedigree under the index library adds `COHORT_LEVEL` (`Granularity`) to its metadata; `load_project()` checks the upstream task's resolved `group_by`.
+  A field whose step reads one result per pedigree under the index library adds `PEDIGREE_LEVEL` (`Granularity`) to its metadata; `load_project()` checks the upstream task's resolved `group_by`.
   A field typed `list[str]` takes several tasks of the same kind, each checked like a single one; the step lists them with `upstream_task_names(field)` and reads each with `get_upstream_paths(field, upstream_task=...)`.
   A file that belongs to the setup of one tool and does not depend on the reference, such as a jar or a script, is a path in the tool's section, which the step passes to the rule as an input.
 - A field that names a file or directory has the type `ConfigPath` (also in `list[...]` or `dict[str, ...]`).
@@ -254,7 +254,7 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
 
 ## Paths
 
-- Only truly variable values are wildcards: libraries, samples, tumor and normal, cohorts.
+- Only truly variable values are wildcards: libraries, samples, tumor and normal, pedigrees.
 - The tool is part of the task configuration and never appears in a path, neither as a directory prefix (`work/cnvkit.{library_name}/`) nor in a file name.
 - Files are named `{entity}.{suffix}`, with a dot after the wildcard, for example `{tumor_library}.gene_log2.txt`.
   Underscores stay inside multi-word suffixes.

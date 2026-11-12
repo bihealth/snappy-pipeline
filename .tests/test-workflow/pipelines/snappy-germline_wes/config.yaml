@@ -67,7 +67,7 @@ tasks:
         alignments: mapping
         reference: genome
         dbsnp: dbsnp
-      group_by: cohort
+      group_by: pedigree
       tool: gatk4_hc_gvcf
       gatk4_hc_gvcf: {}
 

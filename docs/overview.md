@@ -327,10 +327,11 @@ The somatic steps take only libraries of cancer sample sheets.
 Without `library_selection`, a task takes the step's default: the tumor DNA libraries of cancer sample sheets and the DNA libraries of germline sample sheets, unless the step's page names another one.
 For example, mapping takes all libraries, the RNA steps all RNA libraries, and a panel of normals all normal DNA libraries.
 `library_selection` replaces that default with a pandas `DataFrame.query()` expression, for example `data_set == 'batch2'` or `donor_name != 'P003'`, but a task never takes libraries that its step cannot process.
-`group_by` sets the granularity: `library` writes one output per library, `cohort` one per cohort (pedigree), where the step supports it.
+`group_by` sets the granularity: `library` writes one output per library, `pedigree` one per pedigree, where the step supports it.
+A donor without relatives, such as every donor of a cancer sample sheet, is a pedigree of its own.
 Without it, a task takes its step's default, else the granularity of its upstream tasks, else `library`.
-Germline variant calling defaults to `cohort` and calls each pedigree jointly, so the tasks after it also write per cohort.
-Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task writes per cohort.
+Germline variant calling defaults to `pedigree` and calls each pedigree jointly, so the tasks after it also write per pedigree.
+Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task writes per pedigree.
 
 A data set with `is_background: true` holds libraries that are no task's results, such as a reference cohort.
 Mapping and panels of normals process them, and the SV and gCNV callers add them as cohort members or model samples; `background_selection` narrows them per task, for example to `data_set == 'cohort_1000g'`.

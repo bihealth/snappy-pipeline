@@ -50,7 +50,7 @@ The columns that are **always available**:
 | `sex`             | "male", "female", or "unknown"                                                 |
 | `donor_name`      | Patient or family identifier                                                   |
 | `sample_name`     | Bio-sample name                                                                |
-| `cohort_name`     | Donor name for cancer, pedigree name for germline                              |
+| `pedigree_name`   | Germline: the pedigree's index library; cancer: the donor name                 |
 | `tissue_type`     | "tumor", "normal", or "unknown"                                                |
 | `disease_state`   | Integer disease state (0 = unaffected, 1 = affected)                           |
 | `father_name`     | Parent library name (or "0")                                                   |
@@ -82,15 +82,15 @@ We plan to move away from biomedsheets as a dependency in a future release, but 
 
 Some steps (variant calling, annotation, filtration) can produce output at different levels of aggregation:
 
-- `group_by: cohort`: one output per pedigree / family; for a germline trio, one joint VCF for the whole family, named after the index library.
-  For a cancer project, one joint VCF per donor (tumor and normal together).
+- `group_by: pedigree`: one output per pedigree; for a germline trio, one joint VCF for the whole family, named after the index library.
+  A donor without relatives is a pedigree of its own, so for a cancer project, one joint VCF per donor (tumor and normal together).
 - `group_by: library`: one output per library.
 - Unset: the step's default, else the setting that upstream tasks declare, else `library`.
-  Germline variant calling defaults to `cohort` and calls each pedigree jointly.
+  Germline variant calling defaults to `pedigree` and calls each pedigree jointly.
 
-The setting propagates **downstream**: a filtration step after cohort-wise variant calling writes per cohort too, unless it sets `group_by` itself.
+The setting propagates **downstream**: a filtration step after pedigree-wise variant calling writes per pedigree too, unless it sets `group_by` itself.
 This keeps the aggregation level consistent through a chain of dependent tasks.
-Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task writes per cohort.
+Steps that read one VCF per pedigree (VarFish export, peddy, IGV sessions, pedigree phasing) check when the project loads that their upstream task writes per pedigree.
 
 ## Dependencies and task-local files
 
@@ -225,7 +225,7 @@ The Snakemake process runs in a terminal multiplexer on the login node or in an 
 Result file paths are now much shorter.
 The old patterns embedded the tool name and step substage (e.g. `bwa.filtered.vcf`, `bwa.raw.vcf`) into every path, even when there was only one tool and one substage involved.
 Since those values are already defined by the task config, repeating them in paths was redundant.
-Paths now contain only the truly variable parts, typically just the library name (or cohort name).
+Paths now contain only the truly variable parts, typically just the library name (for a pedigree, its index library).
 In multi-tool workflows or substeps that require disambiguation, additional wildcards are still used, but the default case is a single wildcard.
 `report/` holds what the Snakemake report shows; data for other tools is in `out/`, such as the coverage VCF and bigWig files of `bam_collect_doc` (main: `report/cov/`).
 Files that main's wrappers wrote without declaring them are declared outputs now: PureCN's plots (`{library}.pdf`, `.local_optima.pdf`, `.segmentation.pdf` and `.chromosomes.pdf` instead of `_local_optima.pdf` and so on), STAR's `{library}.Log.final.out`, and Salmon's `{library}.lib_format_counts.json` and auxiliary directory `{library}.aux` (main: `out/aux/`); Salmon's own log is part of the job log.

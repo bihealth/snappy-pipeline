@@ -3,7 +3,7 @@ from typing import Annotated
 
 from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
-    COHORT_LEVEL,
+    PEDIGREE_LEVEL,
     DataSignature,
     DataType,
     ExpectedPathSchema,
@@ -19,7 +19,7 @@ class VariantCheckingDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
-        COHORT_LEVEL,
+        PEDIGREE_LEVEL,
         ExpectedPathSchema(ExpectedGermlineVariants),
     ]
 

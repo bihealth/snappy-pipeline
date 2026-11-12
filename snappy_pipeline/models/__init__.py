@@ -159,9 +159,9 @@ class RelationshipDefinition(SnappyModel):
           target: "role == 'normal' and extraction_type == 'dna'"
           column: matched_normal_lib
 
-        # Find the index/proband library for any library in the same cohort
+        # Find the index/proband library for any library in the same pedigree
         index_lib:
-          via: cohort_name
+          via: pedigree_name
           target: "role == 'index'"
           column: index_lib
 
@@ -245,9 +245,10 @@ class SnappyStepModel(SnappyModel, object):
     independent ones into one job. Their requests add up, so the members should share a
     partition."""
 
-    group_by: Literal["library", "cohort"] | None = None
-    """``library``: one output per library; ``cohort``: one output per cohort (pedigree, donor).
-    Unset: the step's default (cohort for joint germline calling), else the granularity that
+    group_by: Literal["library", "pedigree"] | None = None
+    """``library``: one output per library; ``pedigree``: one output per pedigree (a donor
+    without relatives, such as every donor of a cancer sample sheet, is a pedigree of its own).
+    Unset: the step's default (pedigree for joint germline calling), else the granularity that
     upstream tasks declare, else ``library``."""
 
     relationships: dict[str, RelationshipDefinition] | None = None

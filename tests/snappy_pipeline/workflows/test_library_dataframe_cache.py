@@ -24,7 +24,7 @@ def _library_dataframe():
             "kind": ["germline", "germline", "germline"],
             "role": ["index", "father", "index"],
             "is_primary": [True, False, True],
-            "cohort_name": ["family1", "family1", "family2"],
+            "pedigree_name": ["family1", "family1", "family2"],
         }
     )
 
@@ -36,7 +36,7 @@ def _make_step():
     step.data_set_infos = []
     step.sheets = []
     step.project = SimpleNamespace(library_tables={})
-    step.config = SimpleNamespace(library_selection=None, group_by="cohort", relationships=None)
+    step.config = SimpleNamespace(library_selection=None, group_by="pedigree", relationships=None)
     step.task_name = "dummy"
     step._library_dataframes = {}
     step._primary_dna_libraries = {}
@@ -52,12 +52,12 @@ def test_library_dataframe_is_built_once(mocker):
     for _ in range(3):
         step.build_library_dataframe()
         assert step.output_entities == ["index-DNA1", "single-DNA1"]
-        assert step.cohort_members == {
+        assert step.pedigree_libraries == {
             "family1": ["index-DNA1", "father-DNA1"],
             "family2": ["single-DNA1"],
         }
-        assert step.get_cohort_libraries("father-DNA1") == ["index-DNA1", "father-DNA1"]
-        assert step.get_cohort_libraries("unknown-DNA1") == ["unknown-DNA1"]
+        assert step.get_pedigree_libraries("father-DNA1") == ["index-DNA1", "father-DNA1"]
+        assert step.get_pedigree_libraries("unknown-DNA1") == ["unknown-DNA1"]
 
     assert build.call_count == 1
 
@@ -71,7 +71,7 @@ def test_tasks_share_the_library_table_of_the_run(mocker):
     second.config = SimpleNamespace(
         library_selection=None,
         group_by=None,
-        relationships={"index_lib": {"via": "cohort_name", "target": "role == 'index'"}},
+        relationships={"index_lib": {"via": "pedigree_name", "target": "role == 'index'"}},
     )
 
     assert "index_lib" not in first.build_library_dataframe().columns
@@ -90,7 +90,7 @@ def test_library_selection_narrows_the_pedigrees(mocker):
             "extraction_type": ["dna", "dna"],
             "kind": ["germline", "germline"],
             "role": ["index", "father"],
-            "cohort_name": ["index-DNA1", "index-DNA1"],
+            "pedigree_name": ["index-DNA1", "index-DNA1"],
             "donor_name": ["index", "father"],
         }
     )
@@ -128,8 +128,8 @@ def test_group_by_comes_from_the_task_then_its_step_then_upstream():
         return step.effective_group_by
 
     assert effective("mapping") == "library"  # nothing declared
-    assert effective("calling") == "cohort"  # the step's default: joint calling
-    assert effective("annotation") == "cohort"  # inherited from the calling task
+    assert effective("calling") == "pedigree"  # the step's default: joint calling
+    assert effective("annotation") == "pedigree"  # inherited from the calling task
     assert effective("single") == "library"  # the task's own choice wins
 
 

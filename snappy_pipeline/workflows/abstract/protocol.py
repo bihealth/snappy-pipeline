@@ -98,8 +98,8 @@ class Granularity:
     level: str
 
 
-#: One result per cohort (pedigree), see :class:`Granularity`
-COHORT_LEVEL = Granularity("cohort")
+#: One result per pedigree, see :class:`Granularity`
+PEDIGREE_LEVEL = Granularity("pedigree")
 
 
 @dataclass(frozen=True)

@@ -952,7 +952,7 @@ class BaseStep:
     @classmethod
     def default_group_by(cls, config: SnappyStepModel) -> str | None:
         """Return the granularity of a task of this step that sets no ``group_by``, such as
-        ``"cohort"`` for joint calling; ``None`` takes the one that upstream tasks declare."""
+        ``"pedigree"`` for joint calling; ``None`` takes the one that upstream tasks declare."""
         return None
 
     @classmethod
@@ -963,9 +963,9 @@ class BaseStep:
 
     @cached_property
     def effective_group_by(self) -> str:
-        """Return ``"library"`` or ``"cohort"``: the task's ``group_by``, else its step's
+        """Return ``"library"`` or ``"pedigree"``: the task's ``group_by``, else its step's
         :meth:`default_group_by`, else the one its upstream tasks declare (so a filtration
-        after cohort-wise calling writes per cohort), else ``"library"``."""
+        after pedigree-wise calling writes per pedigree), else ``"library"``."""
         own = getattr(self.config, "group_by", None)
         if own is not None:
             return own
@@ -988,38 +988,38 @@ class BaseStep:
 
     @cached_property
     def output_entities(self) -> list[str]:
-        """Output entity names for this workflow: one library per cohort with
-        ``group_by == "cohort"``, otherwise each of the task's libraries."""
+        """Output entity names for this workflow: one library per pedigree with
+        ``group_by == "pedigree"``, otherwise each of the task's libraries."""
         return library_entities(self.libraries, self.effective_group_by)
 
     @cached_property
-    def cohort_members(self) -> dict[str, list[str]]:
-        """Cohort name -> the names of its libraries. Members are inputs of the task's entities,
+    def pedigree_libraries(self) -> dict[str, list[str]]:
+        """Pedigree name -> the names of its libraries. Members are inputs of the task's entities,
         not entities themselves, so only an explicit ``library_selection`` restricts them, not
         the default."""
         df = self.build_library_dataframe(include_background=self.background_results)
         if selection := getattr(self.config, "library_selection", None):
             df = _query_libraries(df, selection)
-        return cohort_libraries(df)
+        return libraries_by_pedigree(df)
 
     @cached_property
-    def _cohort_members_by_library(self) -> dict[str, list[str]]:
-        """Library name -> member library names of its (first) cohort."""
+    def _pedigree_libraries_by_library(self) -> dict[str, list[str]]:
+        """Library name -> member library names of its (first) pedigree."""
         result: dict[str, list[str]] = {}
-        for members in self.cohort_members.values():
+        for members in self.pedigree_libraries.values():
             for library_name in members:
                 result.setdefault(library_name, members)
         return result
 
-    def get_cohort_libraries(self, library_name: str) -> list[str]:
-        """Return all library names in the same cohort as *library_name*.
+    def get_pedigree_libraries(self, library_name: str) -> list[str]:
+        """Return all library names in the same pedigree as *library_name*.
 
-        Returns ``[library_name]`` when the cohort cannot be found or when
-        ``effective_group_by != "cohort"``.
+        Returns ``[library_name]`` when the pedigree cannot be found or when
+        ``effective_group_by != "pedigree"``.
         """
-        if self.effective_group_by != "cohort":
+        if self.effective_group_by != "pedigree":
             return [library_name]
-        return self._cohort_members_by_library.get(library_name, [library_name])
+        return self._pedigree_libraries_by_library.get(library_name, [library_name])
 
     def primary_dna_libraries(self, include_background: bool = False):
         """Return the library dataframe rows of the primary DNA library of each donor.
@@ -1035,8 +1035,8 @@ class BaseStep:
             if selection := getattr(self.config, "library_selection", None):
                 df = _query_libraries(df, selection)
             dna = df[(df["extraction_type"] == "dna") & (df["role"] != "tumor")]
-            dna = dna.drop_duplicates(["cohort_name", "donor_name"])
-            pedigree = dna["cohort_name"].where(dna["kind"] == "germline", dna["library_name"])
+            dna = dna.drop_duplicates(["pedigree_name", "donor_name"])
+            pedigree = dna["pedigree_name"].where(dna["kind"] == "germline", dna["library_name"])
             dna = dna.assign(pedigree=pedigree)
             dna = dna[dna["pedigree"].isin(set(dna["library_name"]))]
             self._primary_dna_libraries[include_background] = dna
@@ -1643,7 +1643,7 @@ _LIBRARY_COLUMNS = [
     "sex",
     "donor_name",
     "sample_name",
-    "cohort_name",
+    "pedigree_name",
     "father_name",
     "mother_name",
     "disease_state",
@@ -1826,7 +1826,7 @@ def build_library_dataframe(
                                     "sex": "unknown",
                                     "donor_name": donor_name,
                                     "sample_name": sample_name,
-                                    "cohort_name": donor_name,
+                                    "pedigree_name": donor_name,
                                     "father_name": "0",
                                     "mother_name": "0",
                                     "disease_state": 0,
@@ -1846,7 +1846,7 @@ def build_library_dataframe(
             father_lib_names: set[str] = set()
             mother_lib_names: set[str] = set()
             lib_sex: dict[str, str] = {}
-            lib_cohort: dict[str, str] = {}
+            lib_pedigree: dict[str, str] = {}
             lib_father: dict[str, str] = {}
             lib_mother: dict[str, str] = {}
             lib_disease: dict[str, int] = {}
@@ -1892,7 +1892,7 @@ def build_library_dataframe(
                             else "unknown"
                         )
                         lib_sex[lib.name] = sex_raw if sex_raw in ("male", "female") else "unknown"
-                        lib_cohort[lib.name] = (
+                        lib_pedigree[lib.name] = (
                             ped.index.dna_ngs_library.name
                             if ped.index and ped.index.dna_ngs_library
                             else "unknown"
@@ -1972,7 +1972,7 @@ def build_library_dataframe(
                         "sex": sex,
                         "donor_name": donor_name,
                         "sample_name": sample_name,
-                        "cohort_name": lib_cohort.get(lib_name, donor_name),
+                        "pedigree_name": lib_pedigree.get(lib_name, donor_name),
                         "father_name": lib_father.get(lib_name, "0"),
                         "mother_name": lib_mother.get(lib_name, "0"),
                         "disease_state": lib_disease.get(lib_name, 0),
@@ -2129,22 +2129,22 @@ def colliding_libraries_message(colliding: dict[str, list[str]], task_name: str 
 
 
 def library_entities(df, group_by: str | None) -> list[str]:
-    """Return the output entities of the libraries ``df``: with ``group_by == "cohort"`` the
-    primary library of each cohort (else its first one), otherwise every library."""
+    """Return the output entities of the libraries ``df``: with ``group_by == "pedigree"`` the
+    primary library of each pedigree (else its first one), otherwise every library."""
     if df.empty:
         return []
-    if group_by == "cohort":
+    if group_by == "pedigree":
         entities = []
-        for _, group in df.groupby("cohort_name"):
+        for _, group in df.groupby("pedigree_name"):
             primary = group[group["is_primary"]]
             entities.append((primary if not primary.empty else group).iloc[0]["library_name"])
         return entities
     return df["library_name"].unique().tolist()
 
 
-def cohort_libraries(df) -> dict[str, list[str]]:
-    """Return cohort name -> the names of its libraries in ``df``."""
-    return {name: group["library_name"].tolist() for name, group in df.groupby("cohort_name")}
+def libraries_by_pedigree(df) -> dict[str, list[str]]:
+    """Return pedigree name -> the names of its libraries in ``df``."""
+    return {name: group["library_name"].tolist() for name, group in df.groupby("pedigree_name")}
 
 
 def output_entity_names(
@@ -2156,7 +2156,9 @@ def output_entity_names(
     return library_entities(select_libraries(df, selection), group_by)
 
 
-def cohort_members(data_set_infos, sheets, selection, relationships=None) -> dict[str, list[str]]:
-    """Return cohort name -> its libraries, restricted only by an explicit ``selection``."""
+def pedigree_libraries(
+    data_set_infos, sheets, selection, relationships=None
+) -> dict[str, list[str]]:
+    """Return pedigree name -> its libraries, restricted only by an explicit ``selection``."""
     df = build_library_dataframe(data_set_infos, sheets, relationships=relationships)
-    return cohort_libraries(df if selection is None else _query_libraries(df, selection))
+    return libraries_by_pedigree(df if selection is None else _query_libraries(df, selection))

@@ -3,7 +3,7 @@
 
 Checks the germline variants of ``depends_on.variants`` against the pedigree.
 The ``tool`` field is ``peddy``, which compares the sex, the relatedness and the heterozygosity of the samples with the pedigree.
-The task produces one set of files per cohort, named after the index library.
+The task produces one set of files per pedigree, named after the index library.
 
 Outputs
 -------

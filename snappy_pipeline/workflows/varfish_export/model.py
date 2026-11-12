@@ -2,7 +2,7 @@ from typing import Annotated
 
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
-    COHORT_LEVEL,
+    PEDIGREE_LEVEL,
     DataSignature,
     DataType,
     Exons,
@@ -42,7 +42,7 @@ class VarfishExportDependsOn(SnappyModel):
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline"})),
-        COHORT_LEVEL,
+        PEDIGREE_LEVEL,
         ExpectedPathSchema(ExpectedGermlineVariants),
     ]
     """Used output of variant_calling is variant calls"""

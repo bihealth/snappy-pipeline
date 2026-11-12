@@ -58,7 +58,7 @@ __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 EXTS = (".tsv.gz", ".tsv.gz.md5")
 
 
-#: ``cohort_name`` of libraries in a pedigree whose index has no DNA library
+#: ``pedigree_name`` of libraries in a pedigree whose index has no DNA library
 _NO_INDEX = "unknown"
 
 
@@ -121,7 +121,7 @@ class MehariStepPart(BaseStepPart):
     def _warn_pedigrees_without_index(self):
         """Issue a warning for the members of pedigrees whose index has no DNA library."""
         df = self.parent.build_library_dataframe(include_background=False)
-        unindexed = (df["kind"] == "germline") & (df["cohort_name"] == _NO_INDEX)
+        unindexed = (df["kind"] == "germline") & (df["pedigree_name"] == _NO_INDEX)
         names = sorted(df.loc[unindexed, "donor_name"])
         if names:
             msg = f"INFO: pedigree index without DNA NGS library (names: {names})"

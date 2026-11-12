@@ -11,7 +11,7 @@ Chain several tasks for a sequence of filters.
 ``vembrane``
     Expression-based filtering with ``vembrane``: Python expressions on the fields of a record, with ``ANN`` parsed by default.
     It is the recommended filter for genotype-based criteria, such as inheritance patterns in a family.
-    With ``group_by: cohort`` upstream, one VCF holds the whole pedigree, and an expression addresses samples by name, for example ``is_het("child-N1-DNA1-WGS1") and is_hom_ref("father-N1-DNA1-WGS1") and is_hom_ref("mother-N1-DNA1-WGS1")`` for de novo variants.
+    With ``group_by: pedigree`` upstream, one VCF holds the whole pedigree, and an expression addresses samples by name, for example ``is_het("child-N1-DNA1-WGS1") and is_hom_ref("father-N1-DNA1-WGS1") and is_hom_ref("mother-N1-DNA1-WGS1")`` for de novo variants.
     Helpers that several expressions share go into ``context_files``.
 
 ``regions``

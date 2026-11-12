@@ -710,7 +710,7 @@ def test_pedigree_consumers_need_one_vcf_per_pedigree():
     germline[2]["group_by"] = "library"
     with pytest.raises(
         ValueError,
-        match="depends_on.variants needs one result per cohort \\(group_by: cohort\\), "
+        match="depends_on.variants needs one result per pedigree \\(group_by: pedigree\\), "
         "but task 'calling' writes one per library",
     ):
         load_project(_config(_mapping(), germline, _peddy()), WORK_DIR)
