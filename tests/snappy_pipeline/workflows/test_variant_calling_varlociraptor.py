@@ -96,7 +96,10 @@ def test_the_germline_preset_without_a_child_has_only_present_and_unknown_sex_is
     scenario = germline_scenario(pair, SPECIES)
 
     assert scenario["samples"] == {"a-DNA1": {"ploidy": 2}, "b-DNA1": {"sex": "female"}}
-    assert scenario["events"] == {"present": "a-DNA1:]0.0,1.0] | b-DNA1:]0.0,1.0]"}
+    assert scenario["events"] == {
+        "denovo": False,
+        "present": "a-DNA1:]0.0,1.0] | b-DNA1:]0.0,1.0]",
+    }
 
 
 def test_the_germline_preset_models_several_generations():

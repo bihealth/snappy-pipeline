@@ -38,7 +38,7 @@ The ``tool`` field selects the caller.
 
     ``germline``
         The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the task inherits from them, in any constellation (trios, siblings, several generations, uncles and cousins with their parents).
-        The events are ``present`` (a member carries the variant) and, when a member has both parents, ``denovo`` (a child carries a variant that its parents do not), which ``present`` then excludes.
+        The events are ``present`` (a member carries the variant) and ``denovo`` (a child carries a variant that its parents do not), which ``present`` excludes; without a member with both parents in the task, ``denovo`` is the impossible event, so one FDR control over ``present`` and ``denovo`` fits every pedigree.
         A member with a parent outside the task (only one parent sequenced, or a parent that ``library_selection`` drops) is an error, since varlociraptor models inheritance from both parents only: take both parents into the task or give a ``template``.
         Libraries without a pedigree (``group_by: library``) are called alone.
 

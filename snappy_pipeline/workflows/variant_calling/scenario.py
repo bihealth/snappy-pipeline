@@ -32,8 +32,9 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
 
     Every member is a sample with its ``sex``, or diploid everywhere when the sex is unknown; a
     member whose parents are both members inherits from them (mendelian). The events are
-    ``present`` (a member carries the variant) and, when a member has both parents, ``denovo``
-    (a child carries a variant that its parents do not), with ``present`` then excluding it.
+    ``present`` (a member carries the variant) and ``denovo`` (a child carries a variant that
+    its parents do not), with ``present`` excluding it. Without a member with both parents,
+    ``denovo`` is the impossible event ``false``, so one FDR control fits every pedigree.
 
     Varlociraptor models inheritance from both parents only, so a member with a parent outside
     the samples (one parent sequenced, or a parent that the task does not take) raises
@@ -84,6 +85,8 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
         )
         scenario["events"]["present"] = "!($denovo | $absent)"
     else:
+        # The literal false may not be negated, so present names the members
+        scenario["events"]["denovo"] = False
         scenario["events"]["present"] = " | ".join(f"{name}:]0.0,1.0]" for name in names)
     return scenario
 
