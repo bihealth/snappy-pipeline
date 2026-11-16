@@ -21,6 +21,7 @@ from snappy_pipeline.workflows.abstract.protocol import (
     CommonVariants,
     Dbsnp,
     ExpectedPathSchema,
+    ExpectedVcf,
     GermlineResource,
     Kits,
     Reference,
@@ -39,13 +40,6 @@ class ExpectedGermlineVariants(BaseModel):
 
 class ExpectedSomaticVariants(BaseModel):
     """Consumer-driven contract: expected output keys from a variant_calling upstream task."""
-
-    vcf: str
-    vcf_tbi: str
-
-
-class ExpectedPanelOfNormals(BaseModel):
-    """Consumer-driven contract: the panel of normals VCF of a mutect2 panel_of_normals task."""
 
     vcf: str
     vcf_tbi: str
@@ -213,11 +207,13 @@ class VariantCallingDependsOn(SnappyModel):
     panel_of_normals: Annotated[
         str,
         DataSignature(DataType.MODELS, frozenset({"pon", "mutect2"})),
-        ExpectedPathSchema(ExpectedPanelOfNormals),
+        ExpectedPathSchema(ExpectedVcf),
     ] = ""
     """
-    Optional for ``tool: mutect2``: a ``panel_of_normals`` task with ``tool: mutect2``,
-    whose panel VCF Mutect2 uses to filter recurrent artefacts.
+    Optional for ``tool: mutect2``: the panel VCF that Mutect2 uses to filter recurrent
+    artefacts, from a ``panel_of_normals`` task with ``tool: mutect2`` or an ``external_data``
+    task with ``{type: models, tags: [pon, mutect2]}`` and the key ``vcf`` (GATK resource bundle:
+    ``1000g_pon.hg38.vcf.gz``)
     """
 
     germline_resource: GermlineResource = ""

@@ -111,6 +111,7 @@ It is a path in the tool section, which the step passes to the rule as an input.
 BED files of regions have their own data type `regions` with the key `bed`.
 The regions filter accepts any of them in `depends_on.regions`, and steps that need a certain kind of regions require a tag (`exons`, `kits`, `mappable`, `microsatellites`, ...).
 Population variants are `variants` with a tag, like dbSNP: `depends_on.germline_resource` (tag `population`) and `depends_on.common_variants` (tag `common`).
+Mutect2's resources on main (`mutect2.panel_of_normals`, `germline_resource` and `contamination.common_variants`) are `depends_on` fields of `variant_calling` with the same names; the panel of normals comes from a `panel_of_normals` task or an `external_data` task with `{type: models, tags: [pon, mutect2]}` and the key `vcf`.
 Every tool that reads a GTF reads `depends_on.features`; RNA-SeQC needs a GTF prepared for it, so it requires the tag `rnaseqc` as well.
 A tool's own database comes from `depends_on.database`, a task of type `database` tagged with the tool, such as the VEP cache or the mehari databases.
 The field's requirement names the task's tool, which the loader fills in, so a VEP cache wired to a mehari task fails when the project loads.

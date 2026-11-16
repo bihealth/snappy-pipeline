@@ -30,7 +30,7 @@ By default (``group_by: related``), the germline callers call each pedigree join
 With ``group_by: library``, they call each library on its own and produce one result per library.
 ``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
-With ``mutect2``, ``depends_on.panel_of_normals`` optionally names a ``panel_of_normals`` task with ``tool: mutect2``, whose panel VCF Mutect2 uses to filter recurrent artefacts.
+With ``mutect2``, ``depends_on.panel_of_normals`` optionally names the panel VCF that Mutect2 uses to filter recurrent artefacts: a ``panel_of_normals`` task with ``tool: mutect2``, or an ``external_data`` task with ``{type: models, tags: [pon, mutect2]}`` and the key ``vcf``, for example ``1000g_pon.hg38.vcf.gz`` of the GATK resource bundle.
 ``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
 With ``mutect2.contamination.enabled``, ``depends_on.common_variants`` is required: an ``external_data`` task with ``{type: variants, tags: [common]}`` and the key ``vcf``, for example ``small_exac_common_3.vcf`` of the GATK resource bundle.
 Windows over the genome (GATK 4 ``PreprocessIntervals``) are processed in parallel; each caller's section has ``window_length`` and ``padding``, the bases added on both sides of a window.
@@ -65,6 +65,58 @@ The enabled statistics are result files below ``{library_name}/report/``, with `
 
 ``baf_file_generation``
     B-allele fraction per donor as a BigWig file, to confirm structural variants or runs of homozygosity visually.
+
+Examples
+--------
+
+Mutect2 with the resources of the GATK resource bundle, one ``external_data`` task per file:
+
+.. code-block:: yaml
+
+    tasks:
+      - name: genome
+        step: external_data
+        config:
+          produces: {type: raw, tags: [reference, dna]}
+          files: {fasta: /refs/GRCh38/Homo_sapiens_assembly38.fasta}
+      - name: bwa_index
+        step: external_data
+        config:
+          produces: {type: index, tags: [bwa, dna]}
+          files: {index: /refs/GRCh38/bwa/Homo_sapiens_assembly38}
+      - name: mapping
+        step: ngs_mapping
+        config:
+          depends_on: {reads: data_sets, reference: genome, index: bwa_index}
+          tool: bwa
+          bwa: {}
+      - name: gatk_pon
+        step: external_data
+        config:
+          produces: {type: models, tags: [pon, mutect2]}
+          files: {vcf: /refs/GRCh38/gatk/1000g_pon.hg38.vcf.gz}
+      - name: gnomad
+        step: external_data
+        config:
+          produces: {type: variants, tags: [population]}
+          files: {vcf: /refs/GRCh38/gatk/af-only-gnomad.hg38.vcf.gz}
+      - name: exac_common
+        step: external_data
+        config:
+          produces: {type: variants, tags: [common]}
+          files: {vcf: /refs/GRCh38/gatk/small_exac_common_3.hg38.vcf.gz}
+      - name: calling
+        step: variant_calling
+        config:
+          depends_on:
+            alignments: mapping
+            reference: genome
+            panel_of_normals: gatk_pon
+            germline_resource: gnomad
+            common_variants: exac_common
+          tool: mutect2
+          mutect2:
+            contamination: {enabled: true}
 """
 
 from typing import Any
@@ -736,9 +788,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
         if self.config.depends_on.germline_resource:
             input_files.update(self.parent.vcf_inputs("germline_resource"))
         if self.config.depends_on.panel_of_normals:
-            pon = self.parent.get_upstream_paths("panel_of_normals")
-            input_files["panel_of_normals"] = pon.vcf
-            input_files["panel_of_normals_tbi"] = pon.vcf_tbi
+            input_files.update(self.parent.vcf_inputs("panel_of_normals"))
 
         return input_files
 

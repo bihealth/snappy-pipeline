@@ -362,6 +362,18 @@ def test_external_alignments_feed_variant_calling():
     assert project.signatures["bams"] == (DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),)
 
 
+def test_external_panel_of_normals_feeds_mutect2():
+    # A VCF of the GATK resource bundle, its index next to it like the other Mutect2 resources
+    pon = _external("pon", "models", ["pon", "mutect2"], files={"vcf": "/refs/pon.vcf.gz"})
+    load_project(_config(_mapping(), pon, _calling(panel_of_normals="pon")), WORK_DIR)
+
+    cnvkit_pon = _external("pon", "models", ["pon", "cnvkit"], files={"vcf": "/refs/pon.vcf.gz"})
+    with pytest.raises(
+        ValueError, match=r"depends_on.panel_of_normals requires models \[mutect2, pon\]"
+    ):
+        load_project(_config(_mapping(), cnvkit_pon, _calling(panel_of_normals="pon")), WORK_DIR)
+
+
 def test_external_data_is_checked_against_requirements_and_schemas():
     vcfs = _external("vcfs", "variants", ["germline"], files={"vcf": "/data/x.vcf.gz"})
     with pytest.raises(ValueError, match=r"depends_on.variants requires variants \[somatic\]"):
