@@ -32,7 +32,7 @@ rule varfish_export_write_pedigree_run:
         wf.substep_dispatch("write_pedigree", "run", wildcards, output)
 
 
-# Run varfish-annotator-cli annotate-seqvars -----------------------------------
+# Annotate the small variants and write their table ---------------------------
 
 
 rule varfish_export_mehari_annotate_seqvars:
@@ -50,11 +50,13 @@ rule varfish_export_mehari_annotate_seqvars:
         mem=wf.get_resource("mehari", "annotate_seqvars", "mem"),
         partition=wf.get_resource("mehari", "annotate_seqvars", "partition"),
         tmpdir=wf.get_resource("mehari", "annotate_seqvars", "tmpdir"),
+    params:
+        args=wf.get_params("mehari", "annotate_seqvars"),
     wrapper:
         wf.wrapper_path("mehari/annotate_seqvars")
 
 
-# Run varfish-annotator-cli annotate-strucvars ---------------------------------
+# Write the table of the structural variants ----------------------------------
 
 
 rule varfish_export_mehari_annotate_strucvars:
@@ -72,6 +74,8 @@ rule varfish_export_mehari_annotate_strucvars:
         mem=wf.get_resource("mehari", "annotate_strucvars", "mem"),
         partition=wf.get_resource("mehari", "annotate_strucvars", "partition"),
         tmpdir=wf.get_resource("mehari", "annotate_strucvars", "tmpdir"),
+    params:
+        args=wf.get_params("mehari", "annotate_strucvars"),
     wrapper:
         wf.wrapper_path("mehari/annotate_strucvars")
 
@@ -94,7 +98,5 @@ rule varfish_export_mehari_bam_qc:
         mem=wf.get_resource("mehari", "bam_qc", "mem"),
         partition=wf.get_resource("mehari", "bam_qc", "partition"),
         tmpdir=wf.get_resource("mehari", "bam_qc", "tmpdir"),
-    params:
-        args=wf.get_params("mehari", "bam_qc"),
     wrapper:
         wf.wrapper_path("mehari/bam_qc")

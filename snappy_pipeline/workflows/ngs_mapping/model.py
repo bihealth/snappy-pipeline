@@ -32,10 +32,10 @@ class ExpectedAlignments(BaseModel):
 
 
 class ExpectedAlignmentQc(BaseModel):
-    """Consumer-driven contract: the BAM QC reports of an ngs_mapping task."""
+    """Consumer-driven contract: the BAM QC reports of an ngs_mapping task that the VarFish
+    export reads."""
 
     bamstats: str
-    flagstats: str
     idxstats: str
 
 

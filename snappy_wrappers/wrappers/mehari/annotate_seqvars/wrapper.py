@@ -1,77 +1,71 @@
+# -*- coding: utf-8 -*-
+"""The VarFish table of the small variants of a pedigree.
+
+The calls are normalised (and cut to the exons, if given), annotated with ``mehari annotate
+seqvars`` into a VCF in the job's temporary directory, and ``mehari postprocess varfish-seqvars``
+writes the table from it with the pedigree and the HGNC table. The callers' INFO fields are
+dropped first: the table takes none of them, and the strict VCF reader of the postprocessing
+rejects header definitions of reserved keys that differ from the VCF specification, such as
+varlociraptor's ``SVLEN`` and ``EVENT``. The pedigree file is a result, too, as ``varfish-cli``
+imports it with the table.
+"""
+
+from typing import TYPE_CHECKING
+
+from snappy_wrappers import utils
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
-__author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
+if TYPE_CHECKING:
+    from snakemake.iocontainers import snakemake
 
-path_exon_bed = snakemake.input.get("exon_bed", "")
-reference = snakemake.input.reference
-transcript_db = snakemake.input.transcript_db
-clinvar_db = snakemake.input.clinvar_db
-frequency_db = snakemake.input.frequency_db
-hgnc_tsv = snakemake.input.hgnc_tsv
+args = snakemake.params.args
+config = args["config"]
+assembly = config["assembly"]
+mehari_options = " \\\n        ".join(utils.mehari_options(config))
 
-transcript_db_param = f"--transcripts {transcript_db}"
-clinvar_db_param = f"--clinvar {clinvar_db}"
-frequency_db_param = f"--frequencies {frequency_db}"
+transcript_dbs = snakemake.input.transcript_db
+if isinstance(transcript_dbs, str):
+    transcript_dbs = [transcript_dbs]
+transcripts = " ".join("--transcripts {}".format(path) for path in transcript_dbs)
+
+exon_bed = snakemake.input.get("exon_bed", "")
+# Without exons, the whole VCF; bcftools takes "" as no region file only through a variable
+regions = "--regions-file {}".format(exon_bed) if exon_bed else ""
 
 ShellWrapper(snakemake).run(
     r"""
-set -x
-
-# Extract around BED file, if given.  Otherwise, "just" normalize.
-if [[ -n "{path_exon_bed}" ]]; then
-    set -e
-    bcftools view \
-        -R {path_exon_bed} \
-        {snakemake.input.vcf} \
-        | bcftools norm \
-            -m -any \
-            --force \
-            --fasta-ref {reference} \
-        | bcftools sort -T $TMPDIR \
-        | bgzip -c \
-            > $TMPDIR/tmp.vcf.gz
-    tabix -f $TMPDIR/tmp.vcf.gz
-else
-    set -e
-    bcftools norm \
-        -m -any \
+bcftools view \
+    {regions} \
+    {snakemake.input.vcf} \
+    | bcftools norm \
+        --multiallelics -any \
         --force \
-        --fasta-ref {reference} \
-        {snakemake.input.vcf} \
-        | bcftools sort -T $TMPDIR \
-        | bgzip -c \
-            > $TMPDIR/tmp.vcf.gz
-    tabix -f $TMPDIR/tmp.vcf.gz
-fi
+        --fasta-ref {snakemake.input.reference} \
+    | bcftools annotate \
+        --remove INFO \
+    | bcftools sort \
+        --temp-dir $TMPDIR \
+        --output-type z \
+        --output $TMPDIR/normalized.vcf.gz
+tabix -f $TMPDIR/normalized.vcf.gz
 
-# Perform Mehari sequence variant annotation.
-# Note: The TSV export does NOT select MANE transcripts on its own,
-# therefore --pick-transcript and --pick-transcript-mode are needed.
-# This will NOT work properly when a tx-db with more than one source is used
-mehari \
-    annotate \
-    seqvars \
-    --reference {reference} \
-    {transcript_db_param} {clinvar_db_param} {frequency_db_param} \
-    --pick-transcript mane-select \
-    --pick-transcript mane-plus-clinical \
-    --pick-transcript length \
-    --pick-transcript-mode first \
-    --keep-intergenic \
-    --path-input-ped {snakemake.input.ped} \
-    --path-input-vcf $TMPDIR/tmp.vcf.gz \
-    --hgnc {hgnc_tsv} \
-    --path-output-tsv {snakemake.output.gts}
+mehari annotate seqvars \
+    {mehari_options} \
+    {transcripts} \
+    --frequencies {snakemake.input.frequency_db} \
+    --clinvar {snakemake.input.clinvar_db} \
+    {extra_arguments} \
+    --reference {snakemake.input.reference} \
+    --input $TMPDIR/normalized.vcf.gz \
+    --output $TMPDIR/annotated.vcf.gz
 
-# FIXME this should really not be hardcoded.
-cat << EOF | gzip -c > {snakemake.output.db_infos}
-genomebuild	db_name	release
-GRCh37	clinvar	20210728
-GRCh37	gnomad_exomes	r2.1.1
-GRCh37	gnomad_genomes	r2.1.1
-EOF
+mehari postprocess varfish-seqvars \
+    --assembly {assembly} \
+    --pedigree {snakemake.input.ped} \
+    --hgnc {snakemake.input.hgnc_tsv} \
+    --input $TMPDIR/annotated.vcf.gz \
+    --output {snakemake.output.gts}
 
-# Copy out PED file to output
 cp -H {snakemake.input.ped} {snakemake.output.ped}
 """
 )

@@ -6,44 +6,16 @@ the transcript lists comma-separated, booleans as flags, unset fields left out.
 """
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
+from snappy_wrappers import utils
 
 __author__ = "Till Hartmann"
 __email__ = "till.hartmann@bih-charite.de"
 
 args = getattr(snakemake.params, "args", {})
-mehari_config = args.get("config", {})
-
-cli_args = []
 
 num_threads = snakemake.threads
 
-#: Options that take their values comma-separated, in one occurrence
-COMMA_SEPARATED = ("pick_order", "restrict_transcripts")
-
-for key, value in mehari_config.items():
-    # skip None and empty strings or lists
-    if value is None or value == "" or value == []:
-        continue
-
-    # convert snake_case to kebab-case
-    kebab_key = key.replace("_", "-")
-
-    # handle boolean flags vs key-value pairs
-    if isinstance(value, bool):
-        if value:  # Only append the flag if it's True
-            cli_args.append(f"--{kebab_key}")
-    elif key in COMMA_SEPARATED:
-        cli_args.append(f"--{kebab_key} {','.join(value)}")
-    elif key == "plugins":
-        for item in value:
-            cli_args.append(f"--plugin {item}")
-    elif isinstance(value, list):
-        for item in value:
-            cli_args.append(f"--{kebab_key} {item}")
-    else:
-        cli_args.append(f"--{kebab_key} {value}")
-
-mehari_options = " \\\n        ".join(cli_args)
+mehari_options = " \\\n        ".join(utils.mehari_options(args.get("config", {})))
 
 # handle input database files
 tx_dbs = snakemake.input.get("transcripts", [])

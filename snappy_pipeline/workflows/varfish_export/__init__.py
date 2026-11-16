@@ -1,33 +1,31 @@
 """Export of germline variants for VarFish
 
-The step annotates the variants of each pedigree with Mehari and writes files that ``varfish-cli`` imports into VarFish.
+The step writes the tables that ``varfish-cli`` imports into VarFish, one set per pedigree, named after the DNA library of the index:
+the pedigree file, the small variants annotated with Mehari (``mehari annotate seqvars``, then ``mehari postprocess varfish-seqvars`` for the table), with ``depends_on.structural_variants`` the structural variants (``mehari annotate strucvars``), and with ``depends_on.qc`` the BAM quality control table from the ``samtools`` reports of ``ngs_mapping`` and the target coverage of alfred.
 The task has no ``tool`` field.
-It reads the quality control data of ``ngs_mapping`` (``depends_on.alignments``) and the calls of ``variant_calling`` (``depends_on.variants``).
-The Mehari databases come from ``depends_on.database``, an ``external_data`` task of type ``database`` tagged ``mehari``.
-Its ``files`` give the single paths ``hgnc_tsv``, ``transcript_db``, ``clinvar_db`` and ``frequency_db``.
+It reads the calls of ``variant_calling`` (``depends_on.variants``, one VCF per pedigree) and the reports of ``ngs_mapping`` (``depends_on.alignments``).
+The Mehari databases come from ``depends_on.database``, an ``external_data`` task of type ``database`` tagged ``mehari``, built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); the same task can serve a ``variant_annotation`` task with ``tool: mehari``.
+Its ``files`` give the paths ``hgnc_tsv`` (the HGNC table), ``transcript_db`` (one or a list), ``clinvar_db`` and ``frequency_db``.
 With ``depends_on.structural_variants``, set to an :ref:`step_sv_calling_targeted` or :ref:`step_sv_calling_wgs` task, it also exports structural variants.
 
-The step writes one result set per pedigree, named after the DNA library of the index.
-Pedigrees without an index or without a DNA library of the index are skipped with a warning.
+The ``mehari`` section configures the annotation of the small variants as for ``variant_annotation``, with the defaults of the VarFish table: one row per variant and gene with its MANE transcript (``pick: gene``, ``pick_order``), intergenic variants kept.
+``mehari.assembly`` names the genome build that ``varfish-cli`` imports into.
+``strucvars.rng_seed`` fixes the UUIDs of the structural variants, so that a rerun writes the same table.
 
+Pedigrees without an index or without a DNA library of the index are skipped with a warning.
 With ``depends_on.exons``, a BED file of exons, the export keeps only the small variants near the exons.
 
 Outputs
 -------
 
-The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file.
-The paths are the same as below ``work/``.
+The task links these result files below ``tasks/<task>/output/``, each with a ``.md5`` file; ``{library_name}`` is the DNA library of the pedigree index:
 
-- ``varfish_export.{library_name}/out/mehari_annotate_seqvars.{library_name}.ped``
-- ``varfish_export.{library_name}/out/mehari_annotate_seqvars.{library_name}.gts.tsv.gz``
-- ``varfish_export.{library_name}/out/mehari_annotate_seqvars.{library_name}.db-infos.tsv.gz``
-- ``varfish_export.{library_name}/out/mehari_annotate_strucvars.{library_name}.gts.tsv.gz``
-- ``varfish_export.{library_name}/out/mehari_annotate_strucvars.{library_name}.feature-effects.tsv.gz``
-- ``varfish_export.{library_name}/out/mehari_annotate_strucvars.{library_name}.db-infos.tsv.gz``
-- ``varfish_export.{library_name}/out/mehari_bam_qc.{library_name}.bam-qc.tsv.gz``, only with ``depends_on.qc``, an ``ngs_data_qc`` task with ``tool: alfred``
+- ``{library_name}/out/{library_name}.ped``
+- ``{library_name}/out/{library_name}.seqvars.gts.tsv.gz``
+- ``{library_name}/out/{library_name}.strucvars.gts.tsv.gz``, only with ``depends_on.structural_variants``
+- ``{library_name}/out/{library_name}.bam_qc.tsv.gz``, only with ``depends_on.qc``, an ``ngs_data_qc`` task with ``tool: alfred``
 
-Here ``{library_name}`` is the DNA library of the pedigree index.
-The keys ``gts`` and ``db_infos`` (small variants) are the ones downstream tasks read through ``depends_on``.
+``varfish-cli importer caseimportinfo-create`` takes these files; it ignores a database info table and the feature effects of structural variants, which the task therefore no longer writes.
 """
 
 import typing
@@ -35,7 +33,6 @@ import warnings
 from functools import cached_property
 
 from snakemake.io import expand
-from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import SkipLibraryWarning
 from snappy_pipeline.utils import dictify
@@ -54,25 +51,35 @@ from .model import VarfishExport as VarfishExportConfigModel
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
-#: Extension of files
-EXTS = (".tsv.gz", ".tsv.gz.md5")
-
-
 #: ``related_group`` of libraries in a pedigree whose index has no DNA library
 _NO_INDEX = "unknown"
 
+#: The result files of each action, with their suffixes below ``work/{library_name}/out/``
+_OUTPUTS = {
+    "annotate_seqvars": {"ped": ".ped", "gts": ".seqvars.gts.tsv.gz"},
+    "annotate_strucvars": {"gts": ".strucvars.gts.tsv.gz"},
+    "bam_qc": {"bam_qc": ".bam_qc.tsv.gz"},
+}
+
 
 class MehariStepPart(BaseStepPart):
-    """This step part is responsible for annotating the variants with Mehari"""
+    """Annotates the variants of each pedigree with Mehari and writes the VarFish tables"""
 
     name = "mehari"
     actions = ("annotate_seqvars", "annotate_strucvars", "bam_qc")
+
+    #: The ``strucvars`` section passes its own extra arguments
+    extra_arguments_action = "annotate_seqvars"
+
     default_resource_usage = ResourceUsage(threads=2, runtime="1d", mem="14GB")
 
+    result_keys = {
+        action: tuple(f"{key}{md5}" for key in outputs for md5 in ("", "_md5"))
+        for action, outputs in _OUTPUTS.items()
+    }
+
     def _get_log_file(self, action: str) -> SnakemakeDict:
-        return {
-            "log": f"work/varfish_export.{{index_ngs_library}}/log/mehari_{action}.{{index_ngs_library}}.log"
-        }
+        return {"log": f"work/{{library_name}}/log/{{library_name}}.{action}.log"}
 
     def _sv_calling_is_targeted(self) -> bool:
         """Whether ``depends_on.structural_variants`` names an ``sv_calling_targeted`` task."""
@@ -90,15 +97,14 @@ class MehariStepPart(BaseStepPart):
     def get_result_files(self):
         result = []
         for action in filter(self._has_result_files, self.actions):
-            index_ngs_libraries = self._get_index_ngs_libraries(
+            index_libraries = self._get_index_ngs_libraries(
                 require_consistent_pedigree_kits=(
                     action == "annotate_strucvars" and self._sv_calling_is_targeted()
                 )
             )
             for path in self.get_output_files(action).values():
                 result += expand(
-                    path.replace("work/", "output/", 1),
-                    index_ngs_library=list(index_ngs_libraries),
+                    path.replace("work/", "output/", 1), library_name=list(index_libraries)
                 )
         return result
 
@@ -127,21 +133,25 @@ class MehariStepPart(BaseStepPart):
             msg = f"INFO: pedigree index without DNA NGS library (names: {names})"
             warnings.warn(InconsistentPedigreeWarning(msg))
 
+    def _get_output_files(self, action: str) -> dict[str, str]:
+        prefix = "work/{library_name}/out/{library_name}"
+        files = {}
+        for key, suffix in _OUTPUTS[action].items():
+            files[key] = f"{prefix}{suffix}"
+            files[f"{key}_md5"] = f"{prefix}{suffix}.md5"
+        return files
+
+    @staticmethod
+    def _ped(wildcards) -> str:
+        return "work/write_pedigree.{library_name}/out/{library_name}.ped".format(**wildcards)
+
     @dictify
     def _get_input_files_annotate_seqvars(self, wildcards):
-        yield (
-            "ped",
-            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped".format(
-                **wildcards
-            ),
-        )
+        yield "ped", self._ped(wildcards)
         yield from self.parent.reference_inputs().items()
 
-        calling = self.parent.get_upstream_paths(
-            "variants",
-            library_name=wildcards.index_ngs_library,
-        )
-        yield "vcf", [calling.vcf]
+        calling = self.parent.get_upstream_paths("variants", library_name=wildcards.library_name)
+        yield "vcf", calling.vcf
 
         database = self.parent.get_upstream_paths("database")
         yield "hgnc_tsv", database.hgnc_tsv
@@ -151,31 +161,16 @@ class MehariStepPart(BaseStepPart):
         if self.config.depends_on.exons:
             yield "exon_bed", self.parent.get_upstream_paths("exons").bed
 
-    @dictify
+    def _get_params_annotate_seqvars(self, wildcards):
+        """The options of ``mehari annotate seqvars``; ``assembly`` also for the table"""
+        return {"config": self.config.mehari.model_dump(by_alias=True, exclude={"extra_arguments"})}
+
     def _get_output_files_annotate_seqvars(self):
-        # Generate paths in "work/" directory
-        prefix = (
-            "work/varfish_export.{index_ngs_library}/out/"
-            "mehari_annotate_seqvars.{index_ngs_library}"
-        )
-        work_paths = {  # annotate_seqvars will write out PED file
-            "ped": f"{prefix}.ped",
-            "ped_md5": f"{prefix}.ped.md5",
-            "gts": f"{prefix}.gts.tsv.gz",
-            "gts_md5": f"{prefix}.gts.tsv.gz.md5",
-            "db_infos": f"{prefix}.db-infos.tsv.gz",
-            "db_infos_md5": f"{prefix}.db-infos.tsv.gz.md5",
-        }
-        yield from work_paths.items()
+        return self._get_output_files("annotate_seqvars")
 
     @dictify
     def _get_input_files_annotate_strucvars(self, wildcards):
-        yield (
-            "ped",
-            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped".format(
-                **wildcards
-            ),
-        )
+        yield "ped", self._ped(wildcards)
         yield from self.parent.reference_inputs().items()
 
         if not self.parent.config.depends_on.structural_variants:
@@ -187,7 +182,7 @@ class MehariStepPart(BaseStepPart):
         }
 
         library_names = self.parent.pedigree_members(
-            wildcards.index_ngs_library, include_background=True
+            wildcards.library_name, include_background=True
         )["library_name"].tolist()
 
         vcfs = []
@@ -205,7 +200,7 @@ class MehariStepPart(BaseStepPart):
                     names_kits = list(zip(library_names, library_kits))
                     msg = (
                         "Found inconsistent library kits (more than one kit!) for pedigree with "
-                        f"index {wildcards.index_ngs_library}.  The library name/kit pairs are "
+                        f"index {wildcards.library_name}.  The library name/kit pairs are "
                         f"{names_kits}.  This pedigree will be SKIPPED for gcnv export (as it was "
                         "skipped for gcnv calls)."
                     )
@@ -214,72 +209,37 @@ class MehariStepPart(BaseStepPart):
 
             vcfs.append(
                 self.parent.get_upstream_paths(
-                    "structural_variants", library_name=wildcards.index_ngs_library
+                    "structural_variants", library_name=wildcards.library_name
                 )["vcf"]
             )
         yield "vcf", vcfs
 
-    @dictify
-    def _get_output_files_annotate_strucvars(self):
-        prefix = (
-            "work/varfish_export.{index_ngs_library}/out/"
-            "mehari_annotate_strucvars.{index_ngs_library}"
-        )
-        work_paths = {
-            "gts": f"{prefix}.gts.tsv.gz",
-            "gts_md5": f"{prefix}.gts.tsv.gz.md5",
-            "feature_effects": f"{prefix}.feature-effects.tsv.gz",
-            "feature_effects_md5": f"{prefix}.feature-effects.tsv.gz.md5",
-            "db_infos": f"{prefix}.db-infos.tsv.gz",
-            "db_infos_md5": f"{prefix}.db-infos.tsv.gz.md5",
+    def _get_params_annotate_strucvars(self, wildcards):
+        return {
+            "assembly": self.config.mehari.assembly,
+            "rng_seed": self.config.strucvars.rng_seed,
+            "extra_arguments": self.config.strucvars.extra_arguments,
         }
-        yield from work_paths.items()
+
+    def _get_output_files_annotate_strucvars(self):
+        return self._get_output_files("annotate_strucvars")
 
     @dictify
     def _get_input_files_bam_qc(self, wildcards):
-        # Get names of primary libraries of the selected pedigree.  The pedigree is selected
-        # by the primary DNA NGS library of the index.
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
-        result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
+        # The samtools reports of every pedigree member, and the target coverage of those with a kit
+        members = self.parent.pedigree_members(wildcards.library_name, include_background=True)
+        result = {"bamstats": [], "idxstats": [], "alfred_qc": []}
         for library_name in members["library_name"]:
             qc = self.parent.get_upstream_paths("alignments", library_name=library_name)
-            for key in ("bamstats", "flagstats", "idxstats"):
-                result[key].append(getattr(qc, key))
+            result["bamstats"].append(qc.bamstats)
+            result["idxstats"].append(qc.idxstats)
             if library_name in self.parent.coverage_qc_libraries:
                 coverage = self.parent.get_upstream_paths("qc", library_name=library_name)
                 result["alfred_qc"].append(coverage.alfred_qc)
         return result
 
-    @dictify
     def _get_output_files_bam_qc(self) -> SnakemakeDictItemsGenerator:
-        prefix = "work/varfish_export.{index_ngs_library}/out/mehari_bam_qc.{index_ngs_library}"
-        work_paths = {
-            "bam_qc": f"{prefix}.bam-qc.tsv.gz",
-            "bam_qc_md5": f"{prefix}.bam-qc.tsv.gz.md5",
-        }
-        yield from work_paths.items()
-
-    def _get_params_bam_qc(self, wildcards: Wildcards) -> typing.Dict[str, str]:
-        """Get parameters for wrapper ``variant_annotator/bam_qc``
-
-        Creates dictionary that links library name to identifier that should be used in output file.
-        The wrapper will derive the library name from the input file name, for analysis using
-        externally generated data, the values will be the sample name as provided by the external
-        source (sample name). For snappy-based analysis it is redundant, both keys and values will
-        be the library name.
-
-        Dictionary expected structure:
-        {
-            "P001-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
-            "P002-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
-            "P003-N1-DNA1-WGS1": "P001-N1-DNA1-WGS1",
-        }
-
-        :return: Dictionary linking library name to identifier that should be used in output file.
-        Key: library name; Value: identifier to be used in file.
-        """
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
-        return {library_name: library_name for library_name in members["library_name"]}
+        return self._get_output_files("bam_qc")
 
 
 class VarfishExportWorkflow(BaseStep):
@@ -299,13 +259,10 @@ class VarfishExportWorkflow(BaseStep):
 
     @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
-        """Return local VarFish export output paths for downstream consumers."""
+        """The pedigree file and the table of the small variants of a pedigree."""
         lib = kwargs.get("library_name", "{library_name}")
-        prefix = f"work/varfish_export.{lib}/out/mehari_annotate_seqvars.{lib}"
-        return {
-            "gts": f"{prefix}.gts.tsv.gz",
-            "db_infos": f"{prefix}.db-infos.tsv.gz",
-        }
+        prefix = f"work/{lib}/out/{lib}"
+        return {"ped": f"{prefix}.ped", "gts": f"{prefix}.seqvars.gts.tsv.gz"}
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)

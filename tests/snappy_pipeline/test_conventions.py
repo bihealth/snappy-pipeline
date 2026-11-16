@@ -412,7 +412,6 @@ def test_wrappers_get_the_params_they_read():
 WRAPPERS_READING_PARAMS_DYNAMICALLY = {
     "cbioportal/case_lists": "iterates over its params (cbioportal is postponed)",
     "cbioportal/meta_files": "iterates over its params (cbioportal is postponed)",
-    "mehari/bam_qc": "its keys are library names (varfish export, left for later)",
     "varfish_annotator/annotate_svs": "varfish export, left for later",
 }
 
@@ -609,6 +608,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "cbioportal/case_lists",
             "cbioportal/clinical_data",
             "cbioportal/meta_files",
+            "mehari/bam_qc",
             "pvactools/features",
             "pvactools/hla_types",
             "reference_download/ensembl",
@@ -691,12 +691,9 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "pvactools/netchop",
             "pvactools/netstab",
         ),
-        "varfish export, left for later": (
+        "the external export steps, left for later": (
             "bcftools/gvcf_to_vcf",
             "bcftools/merge_vcf",
-            "mehari/annotate_seqvars",
-            "mehari/annotate_strucvars",
-            "mehari/bam_qc",
             "varfish_annotator/annotate",
             "varfish_annotator/annotate_svs",
         ),

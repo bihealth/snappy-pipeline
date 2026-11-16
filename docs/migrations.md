@@ -115,7 +115,7 @@ Mutect2's resources on main (`mutect2.panel_of_normals`, `germline_resource` and
 Every tool that reads a GTF reads `depends_on.features`; RNA-SeQC needs a GTF prepared for it, so it requires the tag `rnaseqc` as well.
 A tool's own database comes from `depends_on.database`, a task of type `database` tagged with the tool, such as the VEP cache or the mehari databases.
 The field's requirement names the task's tool, which the loader fills in, so a VEP cache wired to a mehari task fails when the project loads.
-Variant annotation runs mehari 0.51, which reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); the VarFish export still runs mehari 0.37, so it needs a database task of its own, built for that version.
+Variant annotation and the VarFish export run mehari 0.51, which reads only transcript databases built by mehari 0.47 or newer (mehari-data-tx 0.14 or newer); one mehari database task serves both.
 Every job that reads the genome also has its `.fai` and `.dict` as inputs, so a missing sidecar fails when Snakemake builds the DAG.
 Likewise, a job that reads dbSNP or population variants has the VCF's index as an input: `.tbi` for a `.vcf.gz`, `.idx` for a plain `.vcf`.
 

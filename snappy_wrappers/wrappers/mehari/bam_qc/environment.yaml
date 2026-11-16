@@ -1,1 +1,6 @@
-../environment.yaml
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python ==3.12.11
