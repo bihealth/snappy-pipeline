@@ -98,8 +98,8 @@ class Granularity:
     level: str
 
 
-#: One result per pedigree, see :class:`Granularity`
-PEDIGREE_LEVEL = Granularity("pedigree")
+#: One result per group of related libraries (``group_by: related``), see :class:`Granularity`
+RELATED_LEVEL = Granularity("related")
 
 
 @dataclass(frozen=True)

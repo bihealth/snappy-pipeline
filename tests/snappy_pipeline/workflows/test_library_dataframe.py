@@ -17,7 +17,7 @@ from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract import (
     select_libraries,
     build_library_dataframe,
-    pedigree_libraries,
+    related_libraries,
     output_entity_names,
     resolve_relationships,
 )
@@ -80,7 +80,7 @@ class TestBuildLibraryDataframe:
             "sex",
             "donor_name",
             "sample_name",
-            "pedigree_name",
+            "related_group",
             "father_name",
             "mother_name",
             "disease_state",
@@ -183,7 +183,7 @@ class TestBuildLibraryDataframe:
         df = build_library_dataframe([info], [gsheet.sheet])
 
         # Two pedigrees (trios), each with 3 members
-        pedigrees = df.groupby("pedigree_name")
+        pedigrees = df.groupby("related_group")
         assert len(pedigrees) == 2
         for name, group in pedigrees:
             assert len(group) == 3
@@ -340,7 +340,7 @@ class TestSelectLibraries:
                 "sex",
                 "donor_name",
                 "sample_name",
-                "pedigree_name",
+                "related_group",
                 "father_name",
                 "mother_name",
                 "disease_state",
@@ -415,7 +415,7 @@ class TestResolveRelationships:
                 "sex": "unknown",
                 "donor_name": "P1",
                 "sample_name": "T1",
-                "pedigree_name": "P1",
+                "related_group": "P1",
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -522,7 +522,7 @@ class TestResolveRelationships:
                 "sex": "unknown",
                 "donor_name": "P1",
                 "sample_name": "T1",
-                "pedigree_name": "P1",
+                "related_group": "P1",
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -537,7 +537,7 @@ class TestResolveRelationships:
                 "sex": "unknown",
                 "donor_name": "P1",
                 "sample_name": "N1",
-                "pedigree_name": "P1",
+                "related_group": "P1",
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -552,7 +552,7 @@ class TestResolveRelationships:
                 "sex": "unknown",
                 "donor_name": "P1",
                 "sample_name": "N2",
-                "pedigree_name": "P1",
+                "related_group": "P1",
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -582,7 +582,7 @@ class TestResolveRelationships:
                 "sex": "unknown",
                 "donor_name": "P1",
                 "sample_name": "T1",
-                "pedigree_name": "P1",
+                "related_group": "P1",
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -597,7 +597,7 @@ class TestResolveRelationships:
                 "sex": "unknown",
                 "donor_name": "P1",
                 "sample_name": "N1",
-                "pedigree_name": "P1",
+                "related_group": "P1",
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -612,7 +612,7 @@ class TestResolveRelationships:
                 "sex": "unknown",
                 "donor_name": "P1",
                 "sample_name": "N2",
-                "pedigree_name": "P1",
+                "related_group": "P1",
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -643,7 +643,7 @@ class TestResolveRelationships:
                 "sex",
                 "donor_name",
                 "sample_name",
-                "pedigree_name",
+                "related_group",
                 "father_name",
                 "mother_name",
                 "disease_state",
@@ -661,7 +661,7 @@ class TestResolveRelationships:
 
 
 # ---------------------------------------------------------------------------
-# D. output_entity_names / pedigree_libraries
+# D. output_entity_names / related_libraries
 # ---------------------------------------------------------------------------
 
 
@@ -669,7 +669,7 @@ class TestOutputEntityNames:
     def test_germline_trio_pedigree_grouping(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="pedigree")
+        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
         # Two trios → two entities
         assert len(entities) == 2
 
@@ -694,19 +694,19 @@ class TestOutputEntityNames:
         entities = output_entity_names([], [], selection=None)
         assert entities == []
 
-    def test_pedigree_libraries_dict(self, germline_sheet_tsv):
+    def test_related_libraries_dict(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        members = pedigree_libraries([info], [gsheet.sheet], selection=None)
+        members = related_libraries([info], [gsheet.sheet], selection=None)
         assert isinstance(members, dict)
         assert len(members) == 2  # Two trios
         for pedigree, libs in members.items():
             assert len(libs) == 3  # Each trio has 3 members
 
-    def test_pedigree_libraries_with_selection(self, germline_sheet_tsv):
+    def test_related_libraries_with_selection(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        members = pedigree_libraries([info], [gsheet.sheet], selection="extraction_type == 'dna'")
+        members = related_libraries([info], [gsheet.sheet], selection="extraction_type == 'dna'")
         for pedigree, libs in members.items():
             assert len(libs) == 3
 
@@ -822,8 +822,8 @@ class TestIntegrationRoundtrip:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
 
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="pedigree")
-        members = pedigree_libraries([info], [gsheet.sheet], selection=None)
+        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
+        members = related_libraries([info], [gsheet.sheet], selection=None)
 
         for entity in entities:
             found = False
@@ -856,7 +856,7 @@ def _cancer_df_from_libs(libs):
                 "sex": "unknown",
                 "donor_name": donor,
                 "sample_name": name,
-                "pedigree_name": donor,
+                "related_group": donor,
                 "father_name": "0",
                 "mother_name": "0",
                 "disease_state": 0,
@@ -962,8 +962,8 @@ class TestScenarioGermlineTrio:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
 
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="pedigree")
-        members = pedigree_libraries([info], [gsheet.sheet], selection=None)
+        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
+        members = related_libraries([info], [gsheet.sheet], selection=None)
 
         assert len(entities) == 2
         for pedigree, libs in members.items():
@@ -973,8 +973,8 @@ class TestScenarioGermlineTrio:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
 
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="pedigree")
-        members = pedigree_libraries([info], [gsheet.sheet], selection=None)
+        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
+        members = related_libraries([info], [gsheet.sheet], selection=None)
 
         all_member_libs = set()
         for libs in members.values():
@@ -1007,7 +1007,7 @@ class TestScenarioGermlineDuo:
         df = build_library_dataframe([info], [sheet])
         assert len(df) == 2
 
-        members = pedigree_libraries([info], [sheet], selection=None)
+        members = related_libraries([info], [sheet], selection=None)
         assert len(members) == 1
         for pedigree, libs in members.items():
             assert len(libs) == 2
@@ -1123,7 +1123,7 @@ def test_germline_sheets_list_all_libraries_with_their_pedigree():
         "index-N1-RNA1-mRNA_seq1": "index",
         "father-N1-DNA1-WGS1": "father",
     }
-    pedigrees = dict(zip(names, df["pedigree_name"]))
+    pedigrees = dict(zip(names, df["related_group"]))
     assert pedigrees["father-N1-DNA1-WGS1"] == pedigrees["index-N1-DNA1-WGS1"]
     # The germline default takes the DNA libraries only
     assert set(select_libraries(df, None)["extraction_type"]) == {"dna"}

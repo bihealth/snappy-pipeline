@@ -43,8 +43,8 @@ Unknown keys are an error.
     Without it, the task takes all background libraries; other steps reject it.
 
 `group_by`
-: `library` writes one output per library, `pedigree` one per pedigree, where the step supports it; a donor without relatives, such as every donor of a cancer sample sheet, is a pedigree of its own.
-    Without it, the task takes its step's default (`pedigree` for germline variant calling), else the granularity of its upstream tasks, else `library`.
+: `library` writes one output per library, `related` one per group of related libraries, where the step supports it: the members of a pedigree on germline sample sheets, the libraries of one donor on cancer sample sheets.
+    Without it, the task takes its step's default (`related` for germline variant calling), else the granularity of its upstream tasks, else `library`.
 
 `delete_intermediates`
 : What the task deletes once its readers are done, see {ref}`usage`: `intermediates`, the per-sample intermediate files that only later rules of the task read, and `bam`, the BAM of an `ngs_mapping` task that a later task processes further, which then is no result file.

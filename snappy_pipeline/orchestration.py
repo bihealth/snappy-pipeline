@@ -229,8 +229,8 @@ def _check_granularity(project: Project) -> None:
                 level = _declared_group_by(project, upstream, frozenset()) or "library"
                 if level != required.level:
                     raise ValueError(
-                        f"Task {name!r}: depends_on.{field} needs one result per {required.level} "
-                        f"(group_by: {required.level}), but task {upstream!r} writes one per {level}"
+                        f"Task {name!r}: depends_on.{field} needs results with group_by: "
+                        f"{required.level}, but task {upstream!r} writes them with group_by: {level}"
                     )
 
 

@@ -26,7 +26,7 @@ The ``tool`` field selects the caller.
 ``mutect2``
     Somatic calling with GATK 4 Mutect2 (tumor-normal pair or tumor only, see ``tumor_normal_mode``), with optional contamination estimation and filtration.
 
-The germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
+By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
 With ``group_by: library``, they call each library on its own and produce one result per library.
 ``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
@@ -155,10 +155,10 @@ class VariantCallingStepPart(BaseStepPart):
         group_by = self.parent.effective_group_by
 
         # Determine the target libraries based on the wildcard
-        if group_by == "pedigree":
-            # wildcards.library_name is the index library name; find its pedigree
+        if group_by == "related":
+            # wildcards.library_name is the index library name; find its related libraries
             df_target = df[
-                df["library_name"].isin(self.parent.get_pedigree_libraries(wildcards.library_name))
+                df["library_name"].isin(self.parent.get_related_libraries(wildcards.library_name))
             ]
         elif group_by == "library":
             # Per-library logic
@@ -169,14 +169,14 @@ class VariantCallingStepPart(BaseStepPart):
         if df_target["kind"].eq("cancer").all():
             yield "ped", []
         else:
-            if group_by == "pedigree":
+            if group_by == "related":
                 yield (
                     "ped",
                     f"work/write_pedigree.{wildcards.library_name}/out/{wildcards.library_name}.ped",
                 )
             else:
-                pedigree_name = df_target.iloc[0]["pedigree_name"]
-                yield "ped", f"work/write_pedigree.{pedigree_name}/out/{pedigree_name}.ped"
+                related_group = df_target.iloc[0]["related_group"]
+                yield "ped", f"work/write_pedigree.{related_group}/out/{related_group}.ped"
 
         bams = []
         for _, row in df_target.iterrows():
@@ -361,10 +361,10 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         group_by = self.parent.effective_group_by
 
         # Determine the target libraries based on the wildcard
-        if group_by == "pedigree":
-            # wildcards.library_name is the index library name; find its pedigree
+        if group_by == "related":
+            # wildcards.library_name is the index library name; find its related libraries
             df_target = df[
-                df["library_name"].isin(self.parent.get_pedigree_libraries(wildcards.library_name))
+                df["library_name"].isin(self.parent.get_related_libraries(wildcards.library_name))
             ]
         elif group_by == "library":
             # Per-library logic
@@ -375,14 +375,14 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
         if df_target["kind"].eq("cancer").all():
             yield "ped", []
         else:
-            if group_by == "pedigree":
+            if group_by == "related":
                 yield (
                     "ped",
                     f"work/write_pedigree.{wildcards.library_name}/out/{wildcards.library_name}.ped",
                 )
             else:
-                pedigree_name = df_target.iloc[0]["pedigree_name"]
-                yield "ped", f"work/write_pedigree.{pedigree_name}/out/{pedigree_name}.ped"
+                related_group = df_target.iloc[0]["related_group"]
+                yield "ped", f"work/write_pedigree.{related_group}/out/{related_group}.ped"
 
         gvcfs = []
         for _, row in df_target.iterrows():
@@ -464,8 +464,8 @@ class ReportStepPart(BaseStepPart):
 
     def _result_wildcards(self, entity: str) -> dict[str, list[str]]:
         result = super()._result_wildcards(entity)
-        if self.report_per_donor and self.parent.effective_group_by == "pedigree":
-            for members in self.parent.pedigree_libraries.values():
+        if self.report_per_donor and self.parent.effective_group_by == "related":
+            for members in self.parent.related_libraries.values():
                 if entity in members:
                     result["donor_library_name"] = members
                     break
@@ -532,7 +532,7 @@ class BcftoolsRohStepPart(ReportStepPart):
         """Return the libraries in the VCF of the index library."""
         if self.parent.effective_group_by == "library":
             return [index_library_name]
-        return self.parent.get_pedigree_libraries(index_library_name)
+        return self.parent.get_related_libraries(index_library_name)
 
     def _get_params_run(self, wildcards):
         return {
@@ -892,8 +892,8 @@ class VariantCallingWorkflow(BaseStep):
 
     @classmethod
     def default_group_by(cls, config):
-        """The germline callers call each pedigree jointly, mutect2 each tumor."""
-        return None if config.tool == Tool.mutect2 else "pedigree"
+        """The germline callers call related libraries (each pedigree) jointly, mutect2 each tumor."""
+        return None if config.tool == Tool.mutect2 else "related"
 
     @classmethod
     def filter_ids(cls, config):
