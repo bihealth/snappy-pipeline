@@ -20,7 +20,7 @@ from typing import Any, Literal, get_args, get_origin
 import pydantic
 import ruamel.yaml as ruamel_yaml
 
-from snappy_pipeline.models import field_readers
+from snappy_pipeline.models import DependsOnError
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
 yaml = ruamel_yaml.YAML()
@@ -68,8 +68,6 @@ VARIANT_FIELDS: dict[str, str] = {"gcnv_model": "intervals"}
 #: Exceptions to ``DEPENDENCY_TASKS``: (step, field) -> upstream task, or ``None`` to leave the
 #: field unset. ``strandedness`` and ``panel_of_normals`` are wired per tool in build_all_tasks.
 STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | list[str] | None] = {
-    # Expression export is off in the generated config, so it needs no RNA mapping task.
-    ("cbioportal_export", "alignments"): None,
     ("cbioportal_export", "variants"): "variant_annotation_pvactools",
     ("create_proteome", "variants"): "variant_annotation_vep",
     ("gene_expression_quantification", "alignments"): "ngs_mapping_star",
@@ -243,6 +241,12 @@ def validate_and_autofill_step_config(
         except pydantic.ValidationError as e:
             changed = False
             for err in e.errors():
+                # Fields that no reader of the task reads (other tools, settings that are off)
+                if isinstance(error := err.get("ctx", {}).get("error"), DependsOnError):
+                    for name in error.unread:
+                        candidate["depends_on"].pop(name)
+                    changed = bool(error.unread)
+                    continue
                 err_type = err.get("type")
                 loc = tuple(err.get("loc", ()))
                 if not loc:
@@ -706,22 +710,12 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
         depends_on["gcnv_model"] = "gcnv_model_targeted"
     if step_name == "sv_calling_wgs" and tool == "gcnv":
         depends_on["gcnv_model"] = "gcnv_model_wgs"
-    # Whole genome models bin the genome and have no kits.
-    if step_name == "gcnv_model" and tool == "wgs":
-        depends_on.pop("kits", None)
 
     # cnvkit and purecn read the panel of normals built with the same tool.
     if step_name == "somatic_targeted_seq_cnv_calling" and tool in ("cnvkit", "purecn"):
         depends_on["panel_of_normals"] = f"panel_of_normals_{tool}"
     if step_name == "somatic_wgs_cnv_calling" and tool == "cnvkit":
         depends_on["panel_of_normals"] = "panel_of_normals_cnvkit"
-
-    # Fields that only other tools of the step read
-    dep_field = WORKFLOW_REGISTRY[step_name].config_model_class.model_fields.get("depends_on")
-    for field, info in dep_field.annotation.model_fields.items() if dep_field else ():
-        readers, _ = field_readers(info)
-        if readers and tool not in readers:
-            depends_on.pop(field, None)
     return depends_on
 
 
@@ -750,8 +744,9 @@ def build_all_tasks(base_config: dict[str, Any], base_config_path: Path) -> list
             config, notes = validate_and_autofill_step_config(step_name, cls, config)
             generation_notes.extend(notes)
             if depends_on:
-                # Validation dumps every depends_on field; keep only the wired ones.
-                config["depends_on"] = depends_on
+                # Validation dumps every depends_on field; keep the wired ones that are read.
+                read = config.get("depends_on", {})
+                config["depends_on"] = {k: v for k, v in depends_on.items() if read.get(k)}
             name = f"{step_name}_{tool}" if tool else step_name
             tasks.append({"step": step_name, "name": name, "config": config})
 

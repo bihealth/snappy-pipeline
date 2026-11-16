@@ -2,7 +2,7 @@ import enum
 import logging
 from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from snappy_pipeline.models import (
     ConfigPath,
@@ -221,11 +221,13 @@ class VariantCallingDependsOn(SnappyModel):
     germline_resource: Annotated[GermlineResource, ReadBy(Tool.mutect2)] = ""
     """Population allele frequencies (af-only gnomAD VCF)"""
 
-    common_variants: Annotated[CommonVariants, ReadBy(Tool.mutect2)] = ""
-    """Common germline variants; required with ``mutect2.contamination.enabled``"""
+    common_variants: Annotated[
+        CommonVariants, RequiredBy(Tool.mutect2, when="mutect2.contamination")
+    ] = ""
+    """Common germline variants, for the contamination estimate"""
 
-    kits: Kits = ""
-    """Optional: restricts ``bcftools_roh`` to the targets of the (targeted) libraries' kit"""
+    kits: Annotated[Kits, ReadBy(when="bcftools_roh")] = ""
+    """Restricts ``bcftools_roh`` to the targets of the (targeted) libraries' kit"""
 
 
 class VariantCalling(SnappyStepModel):
@@ -251,12 +253,3 @@ class VariantCalling(SnappyStepModel):
 
     mutect2: Mutect2 | None = None
     """Configuration for MuTect 2"""
-
-    @model_validator(mode="after")
-    def ensure_common_variant_when_enabled(self):
-        if self.mutect2 and self.mutect2.contamination.enabled:
-            if not self.depends_on.common_variants:
-                raise ValueError(
-                    "depends_on.common_variants is required when contamination is enabled"
-                )
-        return self

@@ -6,7 +6,13 @@ from typing import Annotated
 import pydantic
 import pytest
 
-from snappy_pipeline.models import ReadBy, RequiredBy, SnappyModel, SnappyStepModel
+from snappy_pipeline.models import (
+    ReadBy,
+    RequiredBy,
+    SnappyModel,
+    SnappyStepModel,
+    ToggleModel,
+)
 from snappy_pipeline.workflow_model import ConfigModel, DataSet
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
@@ -52,27 +58,82 @@ class _QcDependsOn(SnappyModel):
     reference: str
     reads: Annotated[str, RequiredBy("fastqc")] = ""
     dbsnp: Annotated[str, ReadBy("picard")] = ""
-    kits: Annotated[str, RequiredBy("alfred"), ReadBy("picard")] = ""
+    kits: Annotated[
+        str, RequiredBy("alfred"), RequiredBy("picard", when="picard.programs", contains="hs")
+    ] = ""
+
+
+class _Pileup(ToggleModel):
+    min_depth: int = 1
+
+
+class _Picard(SnappyModel):
+    programs: list[str] = []
+    pileup: _Pileup = _Pileup()
 
 
 class _Qc(SnappyStepModel):
     depends_on: _QcDependsOn
     tool: str
+    picard: _Picard | None = None
 
 
 def test_tool_readers_require_and_reject_depends_on_fields():
     _Qc(tool="alfred", depends_on={"reference": "genome", "kits": "kits"})
-    # picard reads kits and dbsnp if they are set
-    _Qc(tool="picard", depends_on={"reference": "genome"})
-    _Qc(tool="picard", depends_on={"reference": "genome", "dbsnp": "dbsnp", "kits": "kits"})
+    # picard reads dbsnp if it is set, and needs kits only for one program
+    _Qc(tool="picard", depends_on={"reference": "genome"}, picard={})
+    _Qc(tool="picard", depends_on={"reference": "genome", "dbsnp": "dbsnp"}, picard={})
+    _Qc(tool="picard", depends_on={"reference": "genome", "kits": "k"}, picard={"programs": ["hs"]})
 
     with pytest.raises(pydantic.ValidationError) as error:
         _Qc(tool="fastqc", depends_on={"reference": "genome", "dbsnp": "dbsnp", "kits": "kits"})
     # All problems of the task in one message
     assert (
-        "tool=fastqc needs depends_on.reads; tool=fastqc does not read depends_on.dbsnp (read "
-        "only by picard) and depends_on.kits (read only by alfred, picard)"
+        "tool=fastqc needs depends_on.reads; depends_on.dbsnp is read only by tool: picard; "
+        "depends_on.kits is read only by tool: alfred or tool: picard with hs in picard.programs"
     ) in str(error.value)
+
+    with pytest.raises(pydantic.ValidationError, match="tool=picard with hs in picard.programs"):
+        _Qc(tool="picard", depends_on={"reference": "genome"}, picard={"programs": ["hs"]})
+    with pytest.raises(pydantic.ValidationError, match="depends_on.kits is read only by"):
+        _Qc(tool="picard", depends_on={"reference": "genome", "kits": "kits"}, picard={})
+
+
+class _SettingsDependsOn(SnappyModel):
+    pileup_sites: Annotated[str, RequiredBy(when="picard.pileup")] = ""
+    targets: Annotated[str, RequiredBy(when="intervals", value="targeted")] = ""
+    any_flag: Annotated[str, ReadBy(when="flag"), ReadBy(when="picard.pileup")] = ""
+
+
+class _Settings(SnappyStepModel):
+    depends_on: _SettingsDependsOn
+    intervals: str = "wgs"
+    flag: bool = False
+    picard: _Picard | None = None
+
+
+@pytest.mark.parametrize(
+    "settings, depends_on, error",
+    [
+        ({}, {}, None),
+        # A missing section and a disabled toggle along the path are off
+        ({}, {"pileup_sites": "x"}, "depends_on.pileup_sites is read only by picard.pileup"),
+        ({"picard": {"pileup": {"enabled": False}}}, {"pileup_sites": "x"}, "read only by"),
+        ({"picard": {"pileup": {"enabled": True}}}, {}, "picard.pileup needs depends_on.pileup"),
+        ({"picard": {"pileup": {"enabled": True}}}, {"pileup_sites": "x", "any_flag": "y"}, None),
+        # A value; a bool
+        ({"intervals": "targeted"}, {}, "intervals: targeted needs depends_on.targets"),
+        ({}, {"targets": "x"}, "depends_on.targets is read only by intervals: targeted"),
+        ({"flag": True}, {"any_flag": "y"}, None),
+        ({}, {"any_flag": "y"}, "read only by flag or picard.pileup"),
+    ],
+)
+def test_tool_readers_with_settings(settings, depends_on, error):
+    if error is None:
+        _Settings(depends_on=depends_on, **settings)
+    else:
+        with pytest.raises(pydantic.ValidationError, match=error):
+            _Settings(depends_on=depends_on, **settings)
 
 
 def test_default_config_comments_sections_named_like_depends_on_keys():

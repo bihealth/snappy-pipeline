@@ -114,7 +114,7 @@ import importlib
 import re
 import textwrap
 
-from snappy_pipeline.models import field_readers
+from snappy_pipeline.models import RequiredBy, reader_markers
 from snappy_pipeline.orchestration import ON_HOLD_STEPS
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract.protocol import DataSignature
@@ -124,7 +124,7 @@ STEP_DIR = "step"
 INPUTS_INTRO = """\
 Each key of ``depends_on`` names an upstream task.
 That task must produce the listed data type with all listed tags (``a|b``: one of them, ``-a``: not ``a``).
-A key that only some tools read is an error for the other tools."""
+A key is an error for a task that none of the readers in "Read by" applies to."""
 
 
 def _inputs_section(model_cls) -> str:
@@ -134,12 +134,13 @@ def _inputs_section(model_cls) -> str:
     rows = []
     for key, info in field.annotation.model_fields.items():
         signature = next(m for m in info.metadata if isinstance(m, DataSignature))
-        readers, required_by = field_readers(info)
-        read_by = ", ".join(f"``{tool}``" for tool in sorted(readers)) or "all"
+        markers = reader_markers(info)
+        read_by = "; ".join(str(marker) for marker in markers) or "all"
+        required_by = [str(marker) for marker in markers if isinstance(marker, RequiredBy)]
         if info.is_required():
             required = "yes"
         elif required_by:
-            required = "for " + ", ".join(f"``{tool}``" for tool in sorted(required_by))
+            required = "for " + "; ".join(required_by)
         else:
             required = "no"
         description = " ".join((info.description or "").split())
@@ -158,18 +159,21 @@ def _step_page(name: str, workflow_cls) -> str:
     first_section = re.search(r"^[^\n]+\n-{3,}$", body, re.MULTILINE)
     split = first_section.start() if first_section else len(body)
     config = textwrap.indent(workflow_cls.default_config_yaml().strip(), "   ")
-    return "\n\n".join(
-        part
-        for part in (
-            f".. _step_{name}:",
-            f"{title}\n{'=' * len(title)}",
-            body[:split].strip(),
-            _inputs_section(workflow_cls.config_model_class).strip(),
-            body[split:].strip(),
-            f"Default configuration\n---------------------\n\n.. code-block:: yaml\n\n{config}",
+    return (
+        "\n\n".join(
+            part
+            for part in (
+                f".. _step_{name}:",
+                f"{title}\n{'=' * len(title)}",
+                body[:split].strip(),
+                _inputs_section(workflow_cls.config_model_class).strip(),
+                body[split:].strip(),
+                f"Default configuration\n---------------------\n\n.. code-block:: yaml\n\n{config}",
+            )
+            if part
         )
-        if part
-    ) + "\n"
+        + "\n"
+    )
 
 
 # Write changed pages only, so that Sphinx rereads only those, and remove pages of old steps

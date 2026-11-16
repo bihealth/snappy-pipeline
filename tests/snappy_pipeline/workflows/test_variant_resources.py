@@ -11,11 +11,26 @@ DEPENDS_ON = {"alignments": "mapping", "reference": "genome"}
 
 
 def test_contamination_requires_common_variants():
-    with pytest.raises(pydantic.ValidationError, match="depends_on.common_variants is required"):
+    with pytest.raises(
+        pydantic.ValidationError,
+        match="tool=mutect2 with mutect2.contamination needs depends_on.common_variants",
+    ):
         VariantCalling(
             tool="mutect2",
             mutect2={"contamination": {"enabled": True}},
             depends_on=DEPENDS_ON,
+        )
+
+
+def test_common_variants_without_contamination_are_rejected():
+    with pytest.raises(
+        pydantic.ValidationError,
+        match="depends_on.common_variants is read only by tool: mutect2 with mutect2.contamination",
+    ):
+        VariantCalling(
+            tool="mutect2",
+            mutect2={"contamination": {"enabled": False}},
+            depends_on=DEPENDS_ON | {"common_variants": "common"},
         )
 
 

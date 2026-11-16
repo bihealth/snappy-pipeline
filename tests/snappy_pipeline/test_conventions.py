@@ -14,7 +14,9 @@ import typing
 from collections.abc import Iterator
 from pathlib import Path
 
-from snappy_pipeline.models import ReadBy, field_readers
+from pydantic import BaseModel
+
+from snappy_pipeline.models import RequiredBy, reader_markers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
 REPO = Path(__file__).resolve().parents[2]
@@ -251,9 +253,25 @@ def _tool_values(model) -> frozenset[str]:
     return frozenset()
 
 
-def test_tool_readers_name_tools_of_the_step():
-    """``ReadBy`` and ``RequiredBy`` name tools of the step; a field that every tool needs is a
-    required field instead; a field with readers defaults to ``""``."""
+def _setting_exists(model: type[BaseModel], path: str) -> bool:
+    """Whether the dotted ``path`` names a setting of the step config ``model``."""
+    *sections, last = path.split(".")
+    for name in sections:
+        field = model.model_fields.get(name)
+        if field is None:
+            return False
+        annotation = field.annotation
+        args = [a for a in typing.get_args(annotation) if a is not type(None)]
+        model = args[0] if args else annotation
+        if not (isinstance(model, type) and issubclass(model, BaseModel)):
+            return False
+    return last in model.model_fields
+
+
+def test_tool_readers_name_tools_and_settings_of_the_step():
+    """``ReadBy`` and ``RequiredBy`` name tools of the step and settings that exist; a marker has
+    tools or a condition; a field that every tool needs without condition is a required field;
+    a field with markers defaults to ``""``."""
     found = []
     for step, workflow_cls in WORKFLOW_REGISTRY.items():
         model = workflow_cls.config_model_class
@@ -262,18 +280,23 @@ def test_tool_readers_name_tools_of_the_step():
             continue
         tools = _tool_values(model)
         for name, field in depends_on.annotation.model_fields.items():
-            readers, required = field_readers(field)
-            if not readers:
-                continue
-            optional = frozenset().union(*(m.tools for m in field.metadata if type(m) is ReadBy))
-            if not readers <= tools:
-                found.append(f"{step}.{name}: {sorted(readers - tools)} are no tools of the step")
-            if required == tools:
+            markers = reader_markers(field)
+            for marker in markers:
+                if not marker.tools <= tools:
+                    found.append(f"{step}.{name}: {sorted(marker.tools - tools)} are no tools")
+                if not marker.tools and marker.when is None:
+                    found.append(f"{step}.{name}: {marker!r} names no tool and no setting")
+                if marker.when is not None and not _setting_exists(model, marker.when):
+                    found.append(f"{step}.{name}: no setting {marker.when}")
+            plain = [m for m in markers if m.when is None]
+            required = frozenset().union(*(m.tools for m in plain if isinstance(m, RequiredBy)))
+            optional = frozenset().union(*(m.tools for m in plain if type(m) is not RequiredBy))
+            if tools and required == tools:
                 found.append(f"{step}.{name}: every tool needs it, so it is a required field")
             if optional & required:
                 found.append(f"{step}.{name}: {sorted(optional & required)} read and require it")
-            if field.is_required():
-                found.append(f"{step}.{name}: a field with readers defaults to ''")
+            if markers and field.is_required():
+                found.append(f"{step}.{name}: a field with markers defaults to ''")
     assert not found, f"ReadBy and RequiredBy markers: {found}"
 
 

@@ -228,10 +228,11 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
   Steps that need a kit for each library they process require one; steps whose per-library output is optional (the coverage report, a targeted gCNV model) skip libraries without a kit (`require=False`).
   `common_kit()` returns the one kit of a group of libraries, for jobs over several libraries such as a panel of normals.
 - A key that every tool of a step reads is required and has no default.
-  A key that only some tools read defaults to `""` and names them in its `Annotated` metadata: `RequiredBy(...)` for the tools that need it, `ReadBy(...)` for those that read it if it is set (`snappy_pipeline/models`).
-  A key may carry both, such as `kits` of `ngs_data_qc`: `RequiredBy(Tool.alfred), ReadBy(Tool.picard)`.
-  A validator of `SnappyStepModel` requires the key for the tools of `RequiredBy` and rejects it for tools that are no readers, with all problems of a task in one message.
-  Requirements on other settings, such as `contamination.enabled` of Mutect2, stay model validators of the step.
+  A key that only some tools or settings read defaults to `""` and names its readers in its `Annotated` metadata: `RequiredBy(...)` for those that need it, `ReadBy(...)` for those that read it if it is set (`snappy_pipeline/models`).
+  A reader is a set of tools (none: any tool) and an optional condition on a setting: `when` is a dotted path into the step's config, on if every toggle along it is enabled, every section on it is present and a bool at its end is true; `value` compares the setting instead, `contains` tests membership in a list.
+  Examples: `RequiredBy(Tool.gatk4_hc_gvcf, ...)` for `dbsnp`, `RequiredBy(Tool.mutect2, when="mutect2.contamination")` for `common_variants`, `RequiredBy(when="intervals", value=Intervals.targeted)` for the kits of `gcnv_model`.
+  Several markers combine with "or", such as `kits` of `ngs_data_qc`: `RequiredBy(Tool.alfred)` and `RequiredBy(Tool.picard, when="picard.programs", contains=PicardProgram.CollectHsMetrics)`.
+  A validator of `SnappyStepModel` requires the key while a `RequiredBy` reader is active and rejects it while no reader is, with all problems of a task in one `DependsOnError`; steps write no validators of their own for this.
   Other optional keys default to `""`, meaning "not used".
   No key defaults to a task name.
 - `reads` names an `external_data` task, a task that writes FASTQs (such as `adapter_trimming`), or the reserved value `data_sets`, which searches each library's FASTQs below the search paths of its data set.

@@ -29,6 +29,7 @@ Unknown keys are an error.
     The keys are named after the data (`reads`, `alignments`, `variants`, `reference`, `index`, ...).
     Each step page lists its keys and the data type and tags the upstream task must produce.
     A key that only some tools read, such as `panel_of_normals` of `variant_calling` (only `mutect2`), is an error for the other tools.
+    Likewise, a key that a setting reads is an error while the setting is off, such as `common_variants` without `mutect2.contamination`.
 
 `tool`
 : Selects the program the task runs.

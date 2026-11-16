@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import SnappyModel, SnappyStepModel
+from snappy_pipeline.models import RequiredBy, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -39,13 +39,14 @@ class VariantExportExternalDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedExternalBam),
+        RequiredBy(when="bam_available_flag"),
     ] = ""
-    """``external_data`` task with the BAM file of each library; needed for bam_available_flag."""
+    """``external_data`` task with the BAM file of each library"""
 
     reference: Reference
 
-    kits: Kits = ""
-    """Task with the ``targets`` of each kit; needed for bam_available_flag."""
+    kits: Annotated[Kits, RequiredBy(when="bam_available_flag")] = ""
+    """Task with the ``targets`` of each kit"""
 
     exons: Exons = ""
     """Optional task with a BED file of exons; the export keeps only the small variants near them"""
@@ -80,15 +81,3 @@ class VariantExportExternal(SnappyStepModel):
 
     path_db: ConfigPath
     """path to annotator DB file to use."""
-
-    @model_validator(mode="after")
-    def bam_qc_needs_alignments(self):
-        if self.bam_available_flag and not self.depends_on.alignments:
-            raise ValueError("bam_available_flag needs depends_on.alignments")
-        return self
-
-    @model_validator(mode="after")
-    def bam_qc_needs_kits(self):
-        if self.bam_available_flag and not self.depends_on.kits:
-            raise ValueError("bam_available_flag needs depends_on.kits")
-        return self

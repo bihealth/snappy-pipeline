@@ -1,7 +1,7 @@
 import enum
 from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from snappy_pipeline.models import (
     EnumField,
@@ -113,8 +113,12 @@ class NgsDataQcDependsOn(SnappyModel):
 
     dbsnp: Annotated[Dbsnp, ReadBy(Tool.picard)] = ""
 
-    kits: Annotated[Kits, RequiredBy(Tool.alfred), ReadBy(Tool.picard)] = ""
-    """Baits and targets of the library kits; ``picard`` needs them for ``CollectHsMetrics``"""
+    kits: Annotated[
+        Kits,
+        RequiredBy(Tool.alfred),
+        RequiredBy(Tool.picard, when="picard.programs", contains=PicardProgram.CollectHsMetrics),
+    ] = ""
+    """Baits and targets of the library kits"""
 
 
 class NgsDataQc(SnappyStepModel):
@@ -131,13 +135,3 @@ class NgsDataQc(SnappyStepModel):
     ngs_chew: NgsChew | None = None
 
     alfred: Alfred | None = None
-
-    @model_validator(mode="after")
-    def ensure_kits_for_hs_metrics(self):
-        if (
-            self.picard
-            and PicardProgram.CollectHsMetrics in self.picard.programs
-            and not self.depends_on.kits
-        ):
-            raise ValueError("CollectHsMetrics needs depends_on.kits")
-        return self

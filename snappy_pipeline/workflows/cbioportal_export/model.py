@@ -3,10 +3,10 @@ from __future__ import annotations
 import enum
 from typing import Annotated, Any, TypedDict
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict
 
 from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToggleModel, ToolModel
+from snappy_pipeline.models import RequiredBy, SnappyModel, SnappyStepModel, ToggleModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -75,6 +75,7 @@ class CbioportalExportDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedGeneCounts),
+        RequiredBy(when="expression"),
     ] = ""
     """RNA mapping task whose gene counts the expression export reads"""
 
@@ -82,6 +83,7 @@ class CbioportalExportDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "cnv"})),
         ExpectedPathSchema(ExpectedCopyNumberCalls),
+        RequiredBy(when="copy_number_alteration"),
     ] = ""
     """Somatic CNV calling task whose segments the copy number export reads"""
 
@@ -93,7 +95,9 @@ class CbioportalExportDependsOn(SnappyModel):
     """Somatic variants annotated by VEP, filtered or not; the conversion to MAF cannot read
     mehari's annotations yet"""
 
-    features: Features = ""
+    features: Annotated[
+        Features, RequiredBy(when="copy_number_alteration"), RequiredBy(when="expression")
+    ] = ""
 
 
 class CbioportalExport(SnappyStepModel):
@@ -118,18 +122,6 @@ class CbioportalExport(SnappyStepModel):
 
     copy_number_alteration: CNA = CNA()
     """Include copy number alteration results"""
-
-    @model_validator(mode="after")
-    def validate_optional_dependencies(self):
-        if self.copy_number_alteration.enabled and not self.depends_on.copy_number:
-            raise ValueError("copy_number_alteration needs depends_on.copy_number")
-        if self.expression.enabled and not self.depends_on.alignments:
-            raise ValueError("expression needs depends_on.alignments")
-        if (self.copy_number_alteration.enabled or self.expression.enabled) and not (
-            self.depends_on.features
-        ):
-            raise ValueError("copy_number_alteration and expression need depends_on.features")
-        return self
 
     study: Study
 

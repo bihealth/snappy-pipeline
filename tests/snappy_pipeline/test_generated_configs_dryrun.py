@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 import yaml
 
-from snappy_pipeline.models import field_readers
+from snappy_pipeline.models import reader_markers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from tests.scripts.generate_task_configs import build_all_tasks, load_yaml
 
@@ -312,9 +312,8 @@ READ_OUTSIDE_THE_DAG = {
 
 
 def _unread_dependencies(task_name: str, project_dir: Path, jobs: list[dict]) -> list[str]:
-    """Return the required or tool-specific (``ReadBy``, ``RequiredBy``) ``depends_on`` fields of
-    ``task_name`` that no job of the task reads; optional fields that a setting reads are
-    skipped."""
+    """Return the required or marked (``ReadBy``, ``RequiredBy``) ``depends_on`` fields of
+    ``task_name`` that no job of the task reads; unmarked optional fields are skipped."""
     config = yaml.safe_load((project_dir / "config.yaml").read_text(encoding="utf-8"))
     tasks = {task["name"]: task for task in config["tasks"]}
     # The rules of the task, not those of another task whose name starts like this one
@@ -328,7 +327,7 @@ def _unread_dependencies(task_name: str, project_dir: Path, jobs: list[dict]) ->
     fields = model.model_fields["depends_on"].annotation.model_fields
     unread = []
     for field, value in tasks[task_name]["config"].get("depends_on", {}).items():
-        checked = fields[field].is_required() or field_readers(fields[field])[0]
+        checked = fields[field].is_required() or reader_markers(fields[field])
         if not checked or (task_name, field) in READ_OUTSIDE_THE_DAG:
             continue
         for upstream in value if isinstance(value, list) else [value]:

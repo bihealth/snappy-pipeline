@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
+from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -60,8 +60,8 @@ class GcnvModelDependsOn(SnappyModel):
 
     reference: Reference
 
-    kits: Kits = ""
-    """Target regions of the library kits, required for ``intervals: targeted``."""
+    kits: Annotated[Kits, RequiredBy(when="intervals", value=Intervals.targeted)] = ""
+    """Target regions of the library kits"""
 
     mappable_regions: Annotated[
         str,
@@ -141,11 +141,3 @@ class GcnvModel(SnappyStepModel, ToolModel, GcnvPostprocess):
         0,
     ]
     """Prior probabilities of ploidy 0 to 3 for the contig Y"""
-
-    @model_validator(mode="after")
-    def check_kits(self):
-        if self.intervals == Intervals.targeted and not self.depends_on.kits:
-            raise ValueError("intervals=targeted needs depends_on.kits")
-        if self.intervals == Intervals.wgs and self.depends_on.kits:
-            raise ValueError("intervals=wgs has no depends_on.kits")
-        return self

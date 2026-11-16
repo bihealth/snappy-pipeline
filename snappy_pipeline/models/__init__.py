@@ -205,31 +205,84 @@ class Intermediate(enum.StrEnum):
 
 
 class ReadBy:
-    """``depends_on`` field metadata: the tools of the step that read the field if it is set.
+    """``depends_on`` field metadata: who reads the field if it is set.
 
-    A task whose tool is not among the readers of a field (``ReadBy`` and :class:`RequiredBy`
-    together) must not set it. A field without these markers is read by every tool.
+    A reader is a set of tools of the step (none: any tool) and an optional condition on a
+    setting: ``when`` is a dotted path into the step's config, which is on if every toggle along
+    it is enabled, every section on it is present and a bool at its end is true; ``value``
+    compares the setting instead, ``contains`` tests membership in a list. A task must not set a
+    field that none of its readers reads. A field without markers is read by every tool.
     """
 
-    def __init__(self, *tools: str):
+    def __init__(self, *tools: str, when: str | None = None, value=None, contains=None):
         #: The tool values, such as ``"mutect2"``
         self.tools = frozenset(str(getattr(tool, "value", tool)) for tool in tools)
+        self.when = when
+        self.value = value
+        self.contains = contains
+
+    def condition(self) -> str:
+        """Return the condition as text: ``mutect2.contamination``, ``intervals: targeted``."""
+        if self.when is None:
+            return ""
+        if self.value is not None:
+            return f"{self.when}: {getattr(self.value, 'value', self.value)}"
+        if self.contains is not None:
+            return f"{getattr(self.contains, 'value', self.contains)} in {self.when}"
+        return self.when
+
+    def __str__(self) -> str:
+        tools = f"tool: {', '.join(sorted(self.tools))}" if self.tools else ""
+        return " with ".join(part for part in (tools, self.condition()) if part)
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({', '.join(sorted(self.tools))})"
+        return f"{type(self).__name__}({self})"
+
+    def applies(self, model: BaseModel) -> bool:
+        """Whether this reader reads the field in the task config ``model``."""
+        tool = getattr(model, "tool", None)
+        if self.tools and str(getattr(tool, "value", tool)) not in self.tools:
+            return False
+        if self.when is None:
+            return True
+        setting = model
+        for name in self.when.split("."):
+            setting = getattr(setting, name)
+            if setting is None or (isinstance(setting, ToggleModel) and not setting.enabled):
+                return False
+        if self.value is not None:
+            return setting == self.value
+        if self.contains is not None:
+            return self.contains in setting
+        return bool(setting)
 
 
 class RequiredBy(ReadBy):
-    """``depends_on`` field metadata: the tools of the step that need the field."""
+    """``depends_on`` field metadata: a reader that needs the field (see :class:`ReadBy`)."""
 
 
-def field_readers(field) -> tuple[frozenset[str], frozenset[str]]:
-    """Return the tools that read a ``depends_on`` field and those that need it, from its
-    :class:`ReadBy` and :class:`RequiredBy` metadata; empty for a field that every tool reads."""
-    markers = [m for m in field.metadata if isinstance(m, ReadBy)]
-    readers = frozenset().union(*(m.tools for m in markers))
-    required = frozenset().union(*(m.tools for m in markers if isinstance(m, RequiredBy)))
-    return readers, required
+def reader_markers(field) -> list[ReadBy]:
+    """Return the :class:`ReadBy` and :class:`RequiredBy` markers of a ``depends_on`` field;
+    empty for a field that every tool reads."""
+    return [marker for marker in field.metadata if isinstance(marker, ReadBy)]
+
+
+class DependsOnError(ValueError):
+    """Raised for ``depends_on`` fields that no reader of the task reads (``unread``) or that a
+    reader needs (``missing``, by reader)."""
+
+    def __init__(self, missing: dict[str, list[str]], unread: dict[str, list[ReadBy]]):
+        self.missing = missing
+        self.unread = unread
+        problems = [
+            f"{reader} needs {' and '.join(f'depends_on.{name}' for name in names)}"
+            for reader, names in missing.items()
+        ]
+        problems += [
+            f"depends_on.{name} is read only by {' or '.join(map(str, markers))}"
+            for name, markers in unread.items()
+        ]
+        super().__init__("; ".join(problems))
 
 
 # This exists to distinguish the task config models of workflow steps from other snappy
@@ -300,30 +353,28 @@ class SnappyStepModel(SnappyModel, object):
 
     @model_validator(mode="after")
     def validate_tool_readers(self):
-        """Reject ``depends_on`` fields that the task's tool does not read, and require those that
-        it needs (:class:`ReadBy`, :class:`RequiredBy`)."""
-        tool = getattr(self, "tool", None)
+        """Reject ``depends_on`` fields that none of their readers reads, and require those that
+        an active reader needs (:class:`ReadBy`, :class:`RequiredBy`)."""
         depends_on = getattr(self, "depends_on", None)
-        if tool is None or depends_on is None:
+        if depends_on is None:
             return self
-        tool = str(getattr(tool, "value", tool))
-        missing, unread = [], []
+        tool = getattr(self, "tool", None)
+        missing, unread = {}, {}
         for name, field in type(depends_on).model_fields.items():
-            readers, required = field_readers(field)
-            if not readers:
+            markers = reader_markers(field)
+            if not markers:
                 continue
+            active = [marker for marker in markers if marker.applies(self)]
             if getattr(depends_on, name):
-                if tool not in readers:
-                    unread.append(f"depends_on.{name} (read only by {', '.join(sorted(readers))})")
-            elif tool in required:
-                missing.append(f"depends_on.{name}")
-        problems = []
-        if missing:
-            problems.append(f"tool={tool} needs {' and '.join(missing)}")
-        if unread:
-            problems.append(f"tool={tool} does not read {' and '.join(unread)}")
-        if problems:
-            raise ValueError("; ".join(problems))
+                if not active:
+                    unread[name] = markers
+            elif needs := [marker for marker in active if isinstance(marker, RequiredBy)]:
+                marker = needs[0]
+                reader = f"tool={getattr(tool, 'value', tool)}" if marker.tools else ""
+                reader = " with ".join(part for part in (reader, marker.condition()) if part)
+                missing.setdefault(reader, []).append(name)
+        if missing or unread:
+            raise DependsOnError(missing, unread)
         return self
 
     @model_validator(mode="after")
@@ -398,11 +449,11 @@ def _annotate_model(
             tags = []
         else:
             tags = ["REQUIRED"]
-        readers, required = field_readers(field)
-        if required:
-            tags.append(f"REQUIRED for tool: {', '.join(sorted(required))}")
-        if readers - required:
-            tags.append(f"optional for tool: {', '.join(sorted(readers - required))}")
+        markers = reader_markers(field)
+        if required := [str(m) for m in markers if isinstance(m, RequiredBy)]:
+            tags.append(f"REQUIRED for {'; '.join(required)}")
+        if optional := [str(m) for m in markers if not isinstance(m, RequiredBy)]:
+            tags.append(f"optional for {'; '.join(optional)}")
 
         comment = tags
 

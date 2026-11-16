@@ -114,9 +114,9 @@
       "intermediates"
      ],
      "depends_on": {
-      "alignments": "ngs_mapping_bwa",
+      "alignments": "",
       "exons": "exons",
-      "kits": "kits",
+      "kits": "",
       "reference": "genome",
       "variants": "external_vcf"
      },
