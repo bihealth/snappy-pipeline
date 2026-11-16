@@ -143,6 +143,56 @@ Mutect2 with the resources of the GATK resource bundle, one ``external_data`` ta
           tool: mutect2
           mutect2:
             contamination: {enabled: true}
+
+Varlociraptor on tumor/normal pairs of an exome cohort: candidates from freebayes in the kit's
+targets, calls against the somatic scenario, then FDR control on the somatic events, whose result
+the annotation and the other consumers read:
+
+.. code-block:: yaml
+
+    tasks:
+      - name: genome
+        step: external_data
+        config:
+          produces: {type: raw, tags: [reference, dna]}
+          files: {fasta: /refs/GRCh38/Homo_sapiens_assembly38.fasta}
+      - name: bwa_index
+        step: external_data
+        config:
+          produces: {type: index, tags: [bwa, dna]}
+          files: {index: /refs/GRCh38/bwa/Homo_sapiens_assembly38}
+      - name: kits
+        step: external_data
+        config:
+          produces: {type: regions, tags: [kits]}
+          kits:
+            Agilent_SureSelect_V6: {targets: /refs/kits/V6_targets.bed, baits: /refs/kits/V6_baits.bed}
+      - name: mapping
+        step: ngs_mapping
+        config:
+          depends_on: {reads: data_sets, reference: genome, index: bwa_index}
+          tool: bwa
+          bwa: {}
+      - name: candidates
+        step: variant_calling
+        config:
+          depends_on: {alignments: mapping, reference: genome, kits: kits}
+          tool: freebayes
+          freebayes: {}
+      - name: calling
+        step: variant_calling
+        config:
+          depends_on: {alignments: mapping, reference: genome, candidates: candidates}
+          tool: varlociraptor
+          varlociraptor: {scenario: somatic}
+      - name: fdr_control
+        step: variant_filtration
+        config:
+          depends_on: {variants: calling}
+          tool: varlociraptor
+          varlociraptor: {events: [somatic_tumor_high, somatic_tumor_medium]}
+
+For a germline cohort, ``candidates`` gets ``group_by: related``, ``calling`` gets ``scenario: germline`` and ``fdr_control`` the events ``present`` and ``denovo``.
 """
 
 import math

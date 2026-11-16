@@ -113,12 +113,42 @@ class Ebfilter(ToolModel):
     mode: Literal["tag", "filter"] = "tag"
 
 
+class VarlociraptorFdr(ToolModel):
+    """FDR control of varlociraptor calls (``varlociraptor filter-calls control-fdr``); the
+    ``extra_arguments`` go to that command (``--smart-retain-artifacts``, ``--minlen``, ...)"""
+
+    events: Annotated[list[str], Field(min_length=1)]
+    """The events of the scenario to control the FDR for, jointly, such as ``somatic_tumor_high``
+    and ``somatic_tumor_medium`` of the somatic preset or ``present`` of the germline one"""
+
+    fdr: Annotated[float, Field(gt=0, le=1)] = 0.05
+    """The false discovery rate (``--fdr``)"""
+
+    mode: Literal["local-smart", "local-strict", "global-smart", "global-strict"] = "local-smart"
+    """``local`` controls the FDR per record, ``global`` over the whole call set; ``smart``
+    controls the probability of presence and keeps records whose events reach half of it,
+    ``strict`` the summed probability of the events (``--mode``)"""
+
+    variant_types: list[Literal["SNV", "MNV", "INS", "DEL", "BND", "INV", "DUP", "REP"]] = [
+        "SNV",
+        "MNV",
+        "INS",
+        "DEL",
+        "BND",
+        "INV",
+        "DUP",
+        "REP",
+    ]
+    """The variant types kept, each controlled on its own (``--var``)"""
+
+
 ToolLiteral = Literal[
     "bcftools",
     "vembrane",
     "regions",
     "dkfz",
     "ebfilter",
+    "varlociraptor",
 ]
 
 
@@ -153,6 +183,7 @@ class VariantFiltration(SnappyStepModel):
     regions: RegionsFilter | None = None
     dkfz: Dkfz = Field(default_factory=Dkfz)
     ebfilter: Ebfilter | None = None
+    varlociraptor: VarlociraptorFdr | None = None
 
     @model_validator(mode="after")
     def validate_config(self) -> Self:

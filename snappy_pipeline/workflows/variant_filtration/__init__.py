@@ -27,7 +27,12 @@ Chain several tasks for a sequence of filters.
     Variants with one of the ``skip_filters`` (by default the ``germline``, ``weak_evidence`` and ``OffExome`` filters of Mutect2, if the header declares them) skip EBFilter, and with an annotated input also those whose annotation contains ``skip_annotation`` (by default ``stream_gene_variant``, i.e. those in or near genes).
     Needs ``depends_on.alignments`` and ``depends_on.reference``.
 
-Every filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
+``varlociraptor``
+    FDR control of the calls of a ``variant_calling`` task with ``tool: varlociraptor``: ``varlociraptor filter-calls control-fdr`` keeps the records whose posterior probabilities for the ``events`` meet the ``fdr`` in the ``mode`` chosen, once per variant type, so the task after it reads a call set.
+    Chain it right after the calling task, before annotation; the events are those of the calling task's scenario, such as ``somatic_tumor_high`` and ``somatic_tumor_medium``, or ``present`` and ``denovo``.
+    It always removes records.
+
+Every other filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
 ``bcftools``, ``regions`` and ``ebfilter`` use the task name as ``FILTER`` ID, so each task of a chain has its own; ``vembrane`` uses the names of its ``expressions``, ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
 No other task of the project may be named like one of these or like ``PASS``, and no task may write an ID that a task upstream of it writes (such as an expression named after a filter of mutect2).
 The task produces one VCF per VCF of its upstream task (per tumor library, or per pedigree for germline calls).
@@ -349,12 +354,24 @@ class EbfilterStepPart(_BamAwareStepPart):
 # Map tool name → step part class
 # ---------------------------------------------------------------------------
 
+
+class VarlociraptorStepPart(VariantFiltrationStepPart):
+    """FDR control of varlociraptor calls."""
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        # control-fdr removes records and writes no FILTER ID
+        params = super()._get_params_run(wildcards)
+        params.pop("filter_name")
+        return params
+
+
 _TOOL_STEP_PART: dict[str, type[VariantFiltrationStepPart]] = {
     "bcftools": BcftoolsStepPart,
     "vembrane": VembraneStepPart,
     "regions": RegionsStepPart,
     "dkfz": DkfzStepPart,
     "ebfilter": EbfilterStepPart,
+    "varlociraptor": VarlociraptorStepPart,
 }
 
 
@@ -376,8 +393,16 @@ class VariantFiltrationWorkflow(BaseStep):
 
     @classmethod
     def task_produces(cls, config, upstream):
-        """The variants this task reads, tagged ``filtered``."""
-        return (upstream["variants"].with_tags("filtered"),)
+        """The variants this task reads, tagged ``filtered``; the FDR control of varlociraptor
+        needs varlociraptor calls (tag ``varlociraptor``, which annotation keeps)."""
+        variants = upstream["variants"]
+        if config.tool == "varlociraptor" and "varlociraptor" not in variants.tags:
+            raise ValueError(
+                "tool: varlociraptor controls the FDR of the calls of a variant_calling task with "
+                "tool: varlociraptor, but depends_on.variants produces variants tagged "
+                + ", ".join(sorted(variants.tags))
+            )
+        return (variants.with_tags("filtered"),)
 
     @classmethod
     def filter_ids(cls, config):

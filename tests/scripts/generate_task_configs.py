@@ -466,6 +466,9 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
     ("variant_filtration", "bcftools"): {"bcftools": {"exclude": "FILTER ~ 'low_depth'"}},
     ("variant_filtration", "regions"): {"regions": {"action": "exclude"}},
     ("variant_filtration", "vembrane"): {"vembrane": {"expressions": {"some_filter": "True"}}},
+    ("variant_filtration", "varlociraptor"): {
+        "varlociraptor": {"events": ["somatic_tumor_high", "somatic_tumor_medium"]}
+    },
     ("wgs_cnv_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("wgs_sv_export_external", None): VARIANT_EXPORT_EXTERNAL,
 }
@@ -718,6 +721,10 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
     # Only the regions filter reads regions.
     if step_name == "variant_filtration" and tool == "regions":
         depends_on["regions"] = "regions"
+
+    # FDR control reads varlociraptor calls.
+    if step_name == "variant_filtration" and tool == "varlociraptor":
+        depends_on["variants"] = "variant_calling_varlociraptor"
 
     # A tool reads its own database.
     database = DATABASE_TASKS.get((step_name, tool))
