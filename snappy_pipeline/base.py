@@ -18,7 +18,14 @@ class SkipLibraryWarning(UserWarning):
     """Raised when libraries are skipped."""
 
 
-class InvalidConfiguration(Exception):
+class ConfigError(ValueError):
+    """A problem of the project configuration or the sample sheets that the user has to fix.
+
+    The main Snakefile and ``snappy check-files`` print the message and exit, without a traceback.
+    """
+
+
+class InvalidConfiguration(ConfigError):
     """Raised on invalid configuration"""
 
 

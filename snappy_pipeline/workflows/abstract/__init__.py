@@ -22,6 +22,7 @@ from typing import Any, Callable
 import pydantic
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
+from biomedsheets.io_tsv.base import SheetIOException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from snakemake.api import Workflow
@@ -29,6 +30,7 @@ from snakemake.io import expand, report, temp
 from snakemake.iocontainers import InputFiles, OutputFiles, Wildcards
 
 from snappy_pipeline.base import (
+    ConfigError,
     UnsupportedActionException,
 )
 from snappy_pipeline.models import (
@@ -583,25 +585,20 @@ class DataSetInfo:
         # ``load_project()`` resolved the path against the project directory
         fname = self.sheet_path
         if not os.path.exists(fname):
-            raise ValueError(f"Could not find sample sheet file {fname}")
+            raise ConfigError(f"Could not find sample sheet file {fname}")
         if self.sheet_path.endswith(".tsv"):
-            if self.sheet_type == "matched_cancer":
-                return self._set_is_background(
-                    _cached_read_cancer_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
-                    self.is_background,
-                )
-            elif self.sheet_type == "germline_variants":
-                return self._set_is_background(
-                    _cached_read_germline_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
-                    self.is_background,
-                )
-            elif self.sheet_type == "generic":
-                return self._set_is_background(
-                    _cached_read_generic_tsv_sheet(fname, self.sheet_path, self.naming_scheme),
-                    self.is_background,
-                )
-            else:
-                raise ValueError("Invalid sheet type {}".format(self.sheet_type))
+            readers = {
+                "matched_cancer": _cached_read_cancer_tsv_sheet,
+                "germline_variants": _cached_read_germline_tsv_sheet,
+                "generic": _cached_read_generic_tsv_sheet,
+            }
+            if self.sheet_type not in readers:
+                raise ConfigError("Invalid sheet type {}".format(self.sheet_type))
+            try:
+                sheet = readers[self.sheet_type](fname, self.sheet_path, self.naming_scheme)
+            except SheetIOException as e:
+                raise ConfigError(f"Sample sheet {fname}: {e}") from None
+            return self._set_is_background(sheet, self.is_background)
         elif self.sheet_path.endswith(".json"):
             with open(fname, "rt") as f:
                 sheet_json = json_loads_ordered(f.read())

@@ -23,6 +23,7 @@ from snakemake.cli import main as snakemake_main
 from snakemake.common.configfile import load_configfile
 
 from .. import __version__
+from ..base import ConfigError
 from ..log_archive import build_archive, latest_snakemake_log
 from ..orchestration import load_project, missing_files
 from ..workflow_registry import WORKFLOW_REGISTRY
@@ -659,7 +660,11 @@ def check_files(directory):
     """
     directory_path = directory() if callable(directory) else directory
     config_path = os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME))
-    project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+    try:
+        project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+    except ConfigError as e:
+        log(str(e), level=LVL_ERROR)
+        sys.exit(1)
     missing = missing_files(project)
     for name, paths in missing.items():
         for path in paths:

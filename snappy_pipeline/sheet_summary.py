@@ -13,6 +13,7 @@ import pandas as pd
 from jsonschema import Draft202012Validator
 from ruamel.yaml import YAML
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows.abstract import TARGETED_LIBRARY_TYPES, BaseStep
 
 #: JSON schema of the sample sheet values of one library
@@ -30,7 +31,7 @@ def _has_value(value: Any) -> bool:
 
 
 def check_libraries(df: pd.DataFrame) -> None:
-    """Raise ``ValueError`` naming every library whose values break the schema.
+    """Raise :class:`ConfigError` naming every library whose values break the schema.
 
     Not ``snakemake.utils.validate``: it needs jsonschema 4.18 or newer.
     """
@@ -42,7 +43,7 @@ def check_libraries(df: pd.DataFrame) -> None:
         name = f"{record.get('library_name')!r} of data set {record.get('data_set')!r}"
         errors += [f"{name}: {error.message}" for error in validator.iter_errors(record)]
     if errors:
-        raise ValueError("Sample sheet values out of range:\n" + "\n".join(errors))
+        raise ConfigError("Sample sheet values out of range:\n" + "\n".join(errors))
 
 
 def library_summary(df: pd.DataFrame) -> str:

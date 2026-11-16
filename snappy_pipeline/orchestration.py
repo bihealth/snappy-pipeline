@@ -12,8 +12,10 @@ from dataclasses import field as dataclass_field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from pydantic import ValidationError
 from snakemake.pathvars import Pathvars
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.log_archive import archive_after_run
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import ReadDiscovery
@@ -84,11 +86,11 @@ class Project:
 def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     """Validate ``config`` and resolve its task graph.
 
-    Raises ``ValueError`` (or a pydantic ``ValidationError``) for unknown steps, duplicate task
-    names, ``depends_on`` values that name no task, dependency cycles, upstream tasks that
-    do not produce what a ``depends_on`` field requires, ``FILTER`` IDs that could mean two
-    things (see :func:`_check_filter_ids`), and indexes built from another genome than the
-    reader's ``depends_on.reference``.
+    Raises :class:`ConfigError` for invalid values (the pydantic errors, with the task and step
+    names), unknown steps, duplicate task names, ``depends_on`` values that name no task,
+    dependency cycles, upstream tasks that do not produce what a ``depends_on`` field requires,
+    ``FILTER`` IDs that could mean two things (see :func:`_check_filter_ids`), and indexes built
+    from another genome than the reader's ``depends_on.reference``.
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
@@ -104,31 +106,40 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
         file_paths[name] = paths  # filled while validating
         return {"project_dir": project_dir, "pathvars": pathvars, "paths": paths}
 
-    model = ConfigModel.model_validate(config, context=context(DATA_SETS))
+    try:
+        model = ConfigModel.model_validate(config, context=context(DATA_SETS))
+    except ValidationError as e:
+        raise ConfigError(f"{CONFIG_FILE} is invalid:\n{_format_validation_error(e)}") from None
 
     names = [task.name for task in model.tasks]
     duplicates = sorted({name for name in names if names.count(name) > 1})
     if duplicates:
-        raise ValueError(f"Task names must be unique; duplicates: {', '.join(duplicates)}")
+        raise ConfigError(f"Task names must be unique; duplicates: {', '.join(duplicates)}")
     if DATA_SETS in names:
-        raise ValueError(f"Task name {DATA_SETS!r} is reserved for depends_on.reads")
+        raise ConfigError(f"Task name {DATA_SETS!r} is reserved for depends_on.reads")
 
     task_configs: dict[str, SnappyStepModel] = {}
     dependencies: dict[str, dict[str, str]] = {}
     for task in model.tasks:
         workflow_cls = WORKFLOW_REGISTRY.get(task.step)
         if workflow_cls is None:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {task.name!r} uses unknown step {task.step!r}; "
                 f"known steps: {', '.join(sorted(WORKFLOW_REGISTRY))}"
             )
-        task_config = workflow_cls.config_model_class.model_validate(
-            task.config, context=context(task.name)
-        )
+        try:
+            task_config = workflow_cls.config_model_class.model_validate(
+                task.config, context=context(task.name)
+            )
+        except ValidationError as e:
+            raise ConfigError(
+                f"Task {task.name!r} (step {task.step}) has an invalid configuration:\n"
+                + _format_validation_error(e)
+            ) from None
         if getattr(task_config, "background_selection", None) and not (
             workflow_cls.uses_background or workflow_cls.background_results
         ):
-            raise ValueError(
+            raise ConfigError(
                 f"Task {task.name!r}: step {task.step!r} uses no background libraries, so "
                 "background_selection has no effect; remove it"
             )
@@ -153,6 +164,20 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     return project
 
 
+def _format_validation_error(error: ValidationError) -> str:
+    """Return one line per error: the field path, the message and the offending value."""
+    lines = []
+    for item in error.errors(include_url=False):
+        path = ".".join(str(part) for part in item["loc"])
+        message = item["msg"].removeprefix("Value error, ")
+        if item["type"] not in ("missing", "extra_forbidden") and not isinstance(
+            item["input"], (dict, list)
+        ):
+            message += f" (got {item['input']!r})"
+        lines.append(f"  {path}: {message}" if path else f"  {message}")
+    return "\n".join(lines)
+
+
 def _check_index_references(project: Project) -> None:
     """Raise if a task reads its ``depends_on.index`` from a ``reference_index`` task that builds
     it from another genome than the task's ``depends_on.reference``.
@@ -172,7 +197,7 @@ def _check_index_references(project: Project) -> None:
             continue
         built_from = project.dependencies[index]["reference"]
         if genome(built_from) != genome(reference):
-            raise ValueError(
+            raise ConfigError(
                 f"Task {name!r}: the index of task {index!r} is built from the genome of task "
                 f"{built_from!r}, but depends_on.reference names task {reference!r}; "
                 "name the same genome in both"
@@ -187,7 +212,7 @@ def _check_filter_ids(project: Project) -> None:
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     if "PASS" in project.task_configs:
-        raise ValueError("Task name 'PASS' is reserved for the FILTER value of passing variants")
+        raise ConfigError("Task name 'PASS' is reserved for the FILTER value of passing variants")
     ids = {
         name: WORKFLOW_REGISTRY[project.task(name).step].filter_ids(config)
         for name, config in project.task_configs.items()
@@ -195,7 +220,7 @@ def _check_filter_ids(project: Project) -> None:
     for owner, owned in ids.items():
         clashes = sorted(owned & (set(ids) - {owner}))
         if clashes:
-            raise ValueError(
+            raise ConfigError(
                 f"Task name {clashes[0]!r} is also a FILTER ID of task {owner!r}; rename one of them"
             )
     # A VCF has the FILTER IDs of all tasks upstream of it: ID -> the task that writes it
@@ -206,7 +231,7 @@ def _check_filter_ids(project: Project) -> None:
             inherited |= writers.get(upstream, {})
         shared = sorted(ids[task.name] & set(inherited))
         if shared:
-            raise ValueError(
+            raise ConfigError(
                 f"Tasks {inherited[shared[0]]!r} and {task.name!r} both write the FILTER ID "
                 f"{shared[0]!r} along one chain; rename one of them"
             )
@@ -228,7 +253,7 @@ def _check_granularity(project: Project) -> None:
             for upstream in value if isinstance(value, tuple) else (value,):
                 level = _declared_group_by(project, upstream, frozenset()) or "library"
                 if level != required.level:
-                    raise ValueError(
+                    raise ConfigError(
                         f"Task {name!r}: depends_on.{field} needs results with group_by: "
                         f"{required.level}, but task {upstream!r} writes them with group_by: {level}"
                     )
@@ -309,12 +334,12 @@ def register_hooks(workflow: Workflow) -> None:
 def select_target_tasks(project: Project, target_task: str | None = None) -> list[str]:
     """Return the names of the tasks that ``snappy run`` builds and links the result files of, in config order.
 
-    Every task, or only ``target_task`` if given. Raises ``ValueError`` if no task has that name.
+    Every task, or only ``target_task`` if given. Raises :class:`ConfigError` if no task has that name.
     """
     names = [task.name for task in project.model.tasks]
     if target_task is not None:
         if target_task not in names:
-            raise ValueError(f"Unknown task {target_task!r}; configured tasks: {', '.join(names)}")
+            raise ConfigError(f"Unknown task {target_task!r}; configured tasks: {', '.join(names)}")
         return [target_task]
     return names
 
@@ -362,15 +387,15 @@ def _resolve_dependencies(
         upstreams = value if isinstance(value, list) else [value]
         for upstream in upstreams:
             if upstream == task_name:
-                raise ValueError(f"Task {task_name!r}: depends_on.{field} names the task itself")
+                raise ConfigError(f"Task {task_name!r}: depends_on.{field} names the task itself")
             if upstream not in names:
                 verb = "contains" if isinstance(value, list) else "is"
-                raise ValueError(
+                raise ConfigError(
                     f"Task {task_name!r}: depends_on.{field} {verb} {upstream!r}, which is not a "
                     f"task; configured tasks: {', '.join(names)}"
                 )
         if len(set(upstreams)) != len(upstreams):
-            raise ValueError(f"Task {task_name!r}: depends_on.{field} names a task twice")
+            raise ConfigError(f"Task {task_name!r}: depends_on.{field} names a task twice")
         result[field] = tuple(upstreams) if isinstance(value, list) else value
     return result
 
@@ -407,7 +432,7 @@ def _task_signatures(
                 produced = signatures[upstream]
                 selected = select_signature(produced, required)
                 if selected is None:
-                    raise ValueError(
+                    raise ConfigError(
                         f"Task {task.name!r}: depends_on.{field} requires {required}, but task "
                         f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
                     )
@@ -443,7 +468,7 @@ def _check_output_keys(
         name for name, f in schema.model_fields.items() if f.is_required() and name not in keys
     ]
     if missing:
-        raise ValueError(
+        raise ConfigError(
             f"Task {task_name!r}: depends_on.{field} needs {', '.join(missing)}, which task "
             f"{upstream!r} does not provide; it provides {', '.join(sorted(keys))}"
         )
@@ -462,7 +487,7 @@ def _topological_order(
             return
         if state.get(name) == "visiting":
             cycle = chain[chain.index(name) :] + [name]
-            raise ValueError(f"Dependency cycle between tasks: {' -> '.join(cycle)}")
+            raise ConfigError(f"Dependency cycle between tasks: {' -> '.join(cycle)}")
         state[name] = "visiting"
         for upstream in upstream_tasks(dependencies[name]):
             visit(upstream, chain + [name])

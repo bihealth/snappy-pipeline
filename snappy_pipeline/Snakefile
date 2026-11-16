@@ -1,4 +1,6 @@
 import os
+import sys
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.orchestration import (
     ON_HOLD_STEPS,
     create_task_instances,
@@ -11,31 +13,36 @@ from snappy_pipeline.sheet_summary import print_library_summary
 
 configfile: "config.yaml"
 
-# Relative paths in the configuration are relative to the directory of the config file, even
-# when Snakemake runs in another directory (`snappy run` passes the file as --configfile)
-project = load_project(config, os.path.dirname(os.path.abspath(workflow.configfiles[0])))
-
 # Targeting mode:
 #   default          - every task builds and links its result files into output/
 #   config["task"]   - only the named task; upstream tasks run as far as it needs them
 #   config["frozen"] - with "task": load only that task's rules; upstream outputs are inputs
 target_task = config.get("task")
 frozen = bool(config.get("frozen", False))
-target_task_names = select_target_tasks(project, target_task)
-module_task_names = target_task_names if frozen else [task.name for task in project.tasks]
-task_instances = create_task_instances(workflow, project, module_task_names)
-register_hooks(workflow)
 
 if target_task:
     _mode_desc = f"single task '{target_task}'" + (" (frozen upstream)" if frozen else "")
 else:
     _mode_desc = "all tasks"
 
-print(f"[snappy] Targeting {_mode_desc}", flush=True)
+try:
+    # Relative paths in the configuration are relative to the directory of the config file, even
+    # when Snakemake runs in another directory (`snappy run` passes the file as --configfile)
+    project = load_project(config, os.path.dirname(os.path.abspath(workflow.configfiles[0])))
+    target_task_names = select_target_tasks(project, target_task)
+    module_task_names = target_task_names if frozen else [task.name for task in project.tasks]
+    task_instances = create_task_instances(workflow, project, module_task_names)
+    print(f"[snappy] Targeting {_mode_desc}", flush=True)
+    # Once per run, not again in each cluster job
+    if workflow.is_main_process:
+        print_library_summary(task_instances)
+except ConfigError as e:
+    # The user has to fix the configuration or the sample sheets; Snakemake would frame the
+    # message with the location in this file and traceback lines
+    print(f"[snappy] Error: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
-# Once per run, not again in each cluster job
-if workflow.is_main_process:
-    print_library_summary(task_instances)
+register_hooks(workflow)
 
 for task in project.model.tasks:
     if task.name not in module_task_names:

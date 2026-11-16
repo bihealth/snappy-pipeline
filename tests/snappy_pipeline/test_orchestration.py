@@ -4,10 +4,10 @@
 import logging
 from typing import Annotated
 
-import pydantic
 import pytest
 
 from snappy_pipeline import orchestration
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.orchestration import Project, load_project, select_target_tasks
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.workflow_model import ConfigModel
@@ -251,10 +251,34 @@ def test_load_project_uses_defaults_for_keys_without_value(caplog):
 
 
 def test_load_project_validates_step_configs():
-    with pytest.raises(pydantic.ValidationError, match="contamination"):
+    with pytest.raises(ConfigError, match="mutect2.contamination: Field required"):
         load_project(
             _config(("variant_calling", "calling", {"tool": "mutect2", "mutect2": {}})), WORK_DIR
         )
+
+
+def test_validation_errors_name_the_task_the_field_and_the_value():
+    with pytest.raises(ConfigError) as error:
+        load_project(_config(_mapping(tool="bwa2", bwa={"num_threads_align": "many"})), WORK_DIR)
+    lines = str(error.value).splitlines()
+    assert lines[0] == "Task 'mapping' (step ngs_mapping) has an invalid configuration:"
+    assert lines[1].startswith("  tool: Input should be 'bwa', 'bwa_mem2'")
+    assert lines[1].endswith("(got 'bwa2')")
+    assert lines[2].startswith("  bwa.num_threads_align: Input should be a valid integer")
+    assert lines[2].endswith("(got 'many')")
+    assert "pydantic" not in str(error.value)
+    # The message of a validator, without pydantic's "Value error, " prefix
+    with pytest.raises(ConfigError, match="configuration:\n  tool=star needs depends_on.exons$"):
+        load_project(
+            _config(GENES, _mapping(tool="star", depends_on={"features": "genes"})), WORK_DIR
+        )
+
+
+def test_errors_of_the_top_level_configuration_name_the_file():
+    with pytest.raises(
+        ConfigError, match="config.yaml is invalid:\n  tasks.0.step: Field required"
+    ):
+        load_project({"tasks": [{"name": "mapping", "config": {}}], "data_sets": {}}, WORK_DIR)
 
 
 def test_load_project_passes_variant_tags_through_annotation_and_filtration():
@@ -317,17 +341,17 @@ def test_load_project_rejects_dna_alignments_for_expression_quantification():
 def test_load_project_requires_depends_on_keys():
     # No default task name such as "ngs_mapping" fills in a missing key.
     calling = ("variant_calling", "calling", {"tool": "mutect2", "mutect2": {"contamination": {}}})
-    with pytest.raises(pydantic.ValidationError, match="depends_on\n  Field required"):
+    with pytest.raises(ConfigError, match="  depends_on: Field required"):
         load_project(_config(_mapping(), calling), WORK_DIR)
     mapping = _mapping()
     del mapping[2]["depends_on"]["reads"]
-    with pytest.raises(pydantic.ValidationError, match="depends_on.reads\n  Field required"):
+    with pytest.raises(ConfigError, match="  depends_on.reads: Field required"):
         load_project(_config(mapping), WORK_DIR)
 
 
 def test_load_project_requires_tool():
     calling = ("variant_calling", "calling", {"depends_on": {"alignments": "mapping"}})
-    with pytest.raises(pydantic.ValidationError, match="tool\n  Field required"):
+    with pytest.raises(ConfigError, match="  tool: Field required"):
         load_project(_config(_mapping(), calling), WORK_DIR)
 
 
@@ -398,7 +422,7 @@ def test_regions_filter_reads_any_bed_file_of_regions():
         "regions": {"action": "exclude"},
     }
     filtration = ("variant_filtration", "filtration", config)
-    with pytest.raises(pydantic.ValidationError, match="tool=regions needs depends_on.regions"):
+    with pytest.raises(ConfigError, match="tool=regions needs depends_on.regions"):
         load_project(_config(vcfs, EXONS, KITS, filtration), WORK_DIR)
 
     config["depends_on"]["regions"] = "exons"
@@ -431,7 +455,7 @@ def test_regions_filter_reads_any_bed_file_of_regions():
     ],
 )
 def test_external_data_config_errors(config, error):
-    with pytest.raises(pydantic.ValidationError, match=error):
+    with pytest.raises(ConfigError, match=error):
         load_project(_config(_external("reads", "raw", [], **config)), WORK_DIR)
 
 
@@ -589,7 +613,7 @@ def test_config_paths_are_resolved_against_the_project_directory_with_pathvars()
 
 def test_undefined_pathvar_fails_when_the_project_loads():
     named = _external("named", "regions", [], files={"bed": "<refs>/b.bed"})
-    with pytest.raises(pydantic.ValidationError, match="Undefined pathvar 'refs'"):
+    with pytest.raises(ConfigError, match="Undefined pathvar 'refs'"):
         load_project(_config(named), WORK_DIR)
 
 

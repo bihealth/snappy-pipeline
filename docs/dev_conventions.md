@@ -208,6 +208,8 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
   A file that belongs to the setup of one tool and does not depend on the reference, such as a jar or a script, is a path in the tool's section, which the step passes to the rule as an input.
 - A field that names a file or directory has the type `ConfigPath` (also in `list[...]` or `dict[str, ...]`).
   `load_project()` expands its `pathvars` and resolves it against the project directory, and `snappy check-files` checks that it exists.
+- A problem that the user has to fix in `config.yaml` or the sample sheets raises `ConfigError` (`snappy_pipeline.base`, a `ValueError`) whose message names the task: `load_project()` reports the pydantic errors of a task config as `Task 'mapping' (step ngs_mapping) has an invalid configuration:` with one line per field, the sheet loader the sheet file.
+  The main Snakefile and `snappy check-files` print the message and exit instead of letting Snakemake frame it with its location and traceback lines.
 - A rule that reads the genome adds `self.parent.reference_inputs()` to its inputs: the FASTA (`reference`) with its `.fai` (`reference_fai`) and `.dict` (`reference_dict`), named by the convention in `ExpectedReference`.
   A rule that reads a VCF resource (`dbsnp`, `germline_resource`, `common_variants`) adds `self.parent.vcf_inputs(field)`: the VCF (`<field>`) and its index (`<field>_index`), named by the convention in `ExpectedVcf`.
   A BED file that GATK queries by interval (the mappable regions of gCNV) uses the schema `ExpectedIndexedRegions`, and the rule reads its `index` as well.
