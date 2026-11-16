@@ -28,11 +28,11 @@ Chain several tasks for a sequence of filters.
     Needs ``depends_on.alignments`` and ``depends_on.reference``.
 
 ``varlociraptor``
-    FDR control of the calls of a ``variant_calling`` task with ``tool: varlociraptor``: ``varlociraptor filter-calls control-fdr`` keeps the records whose posterior probabilities for the ``events`` meet the ``fdr`` in the ``mode`` chosen, once per variant type, so the task after it reads a call set.
+    FDR control of the calls of a ``variant_calling`` task with ``tool: varlociraptor``: ``varlociraptor filter-calls control-fdr`` selects the records whose posterior probabilities for the ``events`` meet the ``fdr`` in the ``fdr_mode`` chosen, once per variant type.
     Chain it right after the calling task, before annotation; the events are those of the calling task's scenario, such as ``somatic_tumor_high`` and ``somatic_tumor_medium``, or ``present`` and ``denovo``.
-    It always removes records.
+    Its ``mode`` defaults to ``filter``, so the task after it reads a call set.
 
-Every other filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
+Every filter has a ``mode``: ``tag`` marks variants in ``FILTER``, ``filter`` removes them.
 ``bcftools``, ``regions`` and ``ebfilter`` use the task name as ``FILTER`` ID, so each task of a chain has its own; ``vembrane`` uses the names of its ``expressions``, ``dkfz`` the IDs of the DKFZ bias filter (``bPcr``, ``bSeq``).
 No other task of the project may be named like one of these or like ``PASS``, and no task may write an ID that a task upstream of it writes (such as an expression named after a filter of mutect2).
 The task produces one VCF per VCF of its upstream task (per tumor library, or per pedigree for germline calls).
@@ -359,9 +359,10 @@ class VarlociraptorStepPart(VariantFiltrationStepPart):
     """FDR control of varlociraptor calls."""
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
-        # control-fdr removes records and writes no FILTER ID
+        # Only tag mode writes a FILTER ID, the task name
         params = super()._get_params_run(wildcards)
-        params.pop("filter_name")
+        if params["mode"] == "filter":
+            params.pop("filter_name")
         return params
 
 

@@ -25,9 +25,22 @@ def test_the_fdr_params_are_the_settings_without_a_filter_name():
         "extra_arguments": [],
         "events": ["present"],
         "fdr": 0.1,
-        "mode": "local-smart",
+        "fdr_mode": "local-smart",
+        "mode": "filter",
         "variant_types": ["SNV", "MNV", "INS", "DEL", "BND", "INV", "DUP", "REP"],
     }
+
+
+def test_the_tag_mode_passes_the_task_name_as_filter_id():
+    part = object.__new__(VarlociraptorStepPart)
+    part.config = SimpleNamespace(
+        tool="varlociraptor", varlociraptor=VarlociraptorFdr(events=["present"], mode="tag")
+    )
+    part.parent = SimpleNamespace(task_name="fdr")
+
+    params = part._get_params_run(SimpleNamespace())
+
+    assert (params["mode"], params["filter_name"]) == ("tag", "fdr")
 
 
 def test_the_fdr_control_needs_varlociraptor_calls():

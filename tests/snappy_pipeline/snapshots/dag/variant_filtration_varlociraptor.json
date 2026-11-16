@@ -810,7 +810,8 @@
     ],
     "extra_arguments": [],
     "fdr": 0.05,
-    "mode": "local-smart",
+    "fdr_mode": "local-smart",
+    "mode": "filter",
     "variant_types": [
      "SNV",
      "MNV",

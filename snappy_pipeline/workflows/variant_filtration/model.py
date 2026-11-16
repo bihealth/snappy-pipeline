@@ -124,10 +124,16 @@ class VarlociraptorFdr(ToolModel):
     fdr: Annotated[float, Field(gt=0, le=1)] = 0.05
     """The false discovery rate (``--fdr``)"""
 
-    mode: Literal["local-smart", "local-strict", "global-smart", "global-strict"] = "local-smart"
+    fdr_mode: Literal["local-smart", "local-strict", "global-smart", "global-strict"] = (
+        "local-smart"
+    )
     """``local`` controls the FDR per record, ``global`` over the whole call set; ``smart``
     controls the probability of presence and keeps records whose events reach half of it,
     ``strict`` the summed probability of the events (``--mode``)"""
+
+    mode: Literal["tag", "filter"] = "filter"
+    """``filter`` keeps only the records that pass the FDR control, ``tag`` keeps all records
+    and marks the others with the task name in ``FILTER``"""
 
     variant_types: list[Literal["SNV", "MNV", "INS", "DEL", "BND", "INV", "DUP", "REP"]] = [
         "SNV",
