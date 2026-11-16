@@ -151,3 +151,62 @@ def test_check_files_prints_configuration_errors_without_traceback(tmp_path):
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 1
     assert result.exception is None or isinstance(result.exception, SystemExit)
+
+
+def test_task_add_keeps_the_style_of_the_config_and_comments_the_new_task(tmp_path):
+    (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG.replace("tool: bwa", 'tool: "bwa"'))
+    result = CliRunner().invoke(
+        snappy_cli.main, ["task", "add", "--directory", str(tmp_path), "qc=ngs_data_qc"]
+    )
+    assert result.exit_code == 0, result.output
+    text = (tmp_path / "config.yaml").read_text()
+    # The user's quotes and sequence style stay, the backup holds the previous file
+    assert 'tool: "bwa"' in text
+    assert (tmp_path / "config.yaml.bak").read_text() == CHECK_FILES_CONFIG.replace(
+        "tool: bwa", 'tool: "bwa"'
+    )
+    lines = text.splitlines()
+    assert "  - name: qc" in lines and "    step: ngs_data_qc" in lines
+    # The comments of the task block sit at the indentation of their keys
+    assert "      #library_selection:" in lines
+    assert "      #depends_on:" in lines
+    assert "        # Alignments of DNA libraries" in lines
+    assert any(line.startswith("        #alignments: ''") for line in lines)
+    assert "      tool:" in {line.split("#")[0].rstrip() for line in lines}
+    # The file still loads, with both tasks
+    assert [
+        task["name"] for task in snappy_cli.load_configfile(str(tmp_path / "config.yaml"))["tasks"]
+    ] == [
+        "genome",
+        "bwa_index",
+        "mapping",
+        "qc",
+    ]
+
+
+def test_task_add_minimal_writes_the_required_fields_only(tmp_path):
+    (tmp_path / "config.yaml").write_text("tasks: []\n")
+    result = CliRunner().invoke(
+        snappy_cli.main,
+        [
+            "task",
+            "add",
+            "--directory",
+            str(tmp_path),
+            "--config-mode",
+            "minimal",
+            "mapping=ngs_mapping",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    text = (tmp_path / "config.yaml").read_text()
+    assert "bwa:" not in text and "library_selection" not in text
+    assert "      tool:" in {line.split("#")[0].rstrip() for line in text.splitlines()}
+    config = snappy_cli.load_configfile(str(tmp_path / "config.yaml"))
+    assert config["tasks"][0]["config"]["depends_on"] == {
+        "reads": None,
+        "index": None,
+        "reference": None,
+        "features": "",
+        "exons": "",
+    }

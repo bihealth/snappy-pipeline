@@ -231,6 +231,32 @@ def test_depends_on_keys_use_the_vocabulary():
     assert not found, f"depends_on keys outside the vocabulary in docs/dev_conventions.md: {found}"
 
 
+def _field_descriptions(model: type[BaseModel], path: str = "", seen=None):
+    """Yield ``(path, description)`` of every field of ``model`` and its nested models."""
+    seen = set() if seen is None else seen
+    if model in seen:
+        return
+    seen.add(model)
+    for name, field in model.model_fields.items():
+        if field.description:
+            yield f"{path}{name}", field.description
+        for annotation in (field.annotation, *typing.get_args(field.annotation)):
+            if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                yield from _field_descriptions(annotation, f"{path}{name}.", seen)
+
+
+def test_field_descriptions_are_plain_text():
+    """A field's description becomes a YAML comment in ``snappy task add`` and a cell of the
+    inputs table of the step's docs page, so it is plain text with literals in double backticks:
+    no Sphinx roles, directives or references to the code."""
+    problems = []
+    for step, workflow_cls in WORKFLOW_REGISTRY.items():
+        for path, description in _field_descriptions(workflow_cls.config_model_class):
+            if re.search(r":\w+:`|^\s*\.\. |``_[a-z]", description, re.MULTILINE):
+                problems.append(f"{step}: {path}")
+    assert not problems, "\n".join(sorted(set(problems)))
+
+
 def test_tool_is_required():
     found = [
         step

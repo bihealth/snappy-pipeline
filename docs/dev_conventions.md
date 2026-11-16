@@ -17,6 +17,8 @@ Validation fails with a clear message instead of choosing for the user.
 - `tool` has no default.
   Every task names its tool (`test_tool_is_required`).
 - `depends_on` keys have no task-name defaults (see {ref}`Contracts <dev_contracts>`).
+- A field's description (its attribute docstring) is plain text with literals in double backticks, no Sphinx roles, directives or references to names in the code.
+  It becomes a YAML comment in the configuration that `snappy task add` writes (`default_config_yaml_string`, which wraps it and turns the backticks into single ones) and a cell of the inputs table of the step's docs page (`test_field_descriptions_are_plain_text`).
 
 ## Step part API
 

@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
 """Tests for the project configuration model ``ConfigModel`` and shared model validators."""
 
+import re
 from typing import Annotated
 
 import pydantic
 import pytest
 
+from ruamel.yaml import YAML
+
 from snappy_pipeline.models import (
+    LINE_WIDTH,
+    ConfigMode,
     ReadBy,
     RequiredBy,
     SnappyModel,
     SnappyStepModel,
     ToggleModel,
+    default_config_yaml_string,
 )
 from snappy_pipeline.workflow_model import ConfigModel, DataSet
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
 )
@@ -142,6 +149,64 @@ def test_default_config_comments_sections_named_like_depends_on_keys():
     lines = GeneExpressionQuantification.default_config_yaml_string().splitlines()
     assert "#strandedness:" in lines
     assert "strandedness:" not in lines
+
+
+def _uncommented(text: str) -> str:
+    """The commented default configuration with the ``#`` before the keys removed; the tags
+    behind the keys lose their alignment, so they are set off by one space."""
+    lines = []
+    for line in text.splitlines():
+        content = line.lstrip()
+        if content.startswith("#") and not content.startswith("# ") and content != "#":
+            line = line[: len(line) - len(content)] + content[1:]
+        lines.append(re.sub(r"\S\s+# ", lambda m: m.group()[0] + " # ", line))
+    return "\n".join(lines) + "\n"
+
+
+def _keys(data, path=()):
+    if isinstance(data, dict):
+        for key, value in data.items():
+            yield from _keys(value, path + (key,))
+    elif path:
+        yield path
+
+
+@pytest.mark.parametrize("step", sorted(WORKFLOW_REGISTRY))
+def test_default_config_is_formatted_consistently(step):
+    model = WORKFLOW_REGISTRY[step].config_model_class
+    commented = default_config_yaml_string(model, ConfigMode.COMMENTED)
+    full = default_config_yaml_string(model, ConfigMode.FULL)
+    minimal = default_config_yaml_string(model, ConfigMode.MINIMAL)
+    # The modes agree: uncommenting every key gives the full configuration, which is valid YAML
+    # with every key of the minimal one
+    assert _uncommented(commented) == _uncommented(full)
+    yaml = YAML(typ="safe")
+    full_keys = set(_keys(yaml.load(full)))
+    assert set(_keys(yaml.load(minimal))) <= full_keys
+    for line in commented.splitlines():
+        content = line.lstrip()
+        # Comments are the description of the key below (``# text``) or a commented-out key (``#key``)
+        assert not content.startswith("##"), line
+        assert not content.startswith("# ") or "#" not in line.split("# ", 1)[1][:1], line
+        # Descriptions are wrapped to the width; tags (options, readers) and values (image
+        # digests) may be longer
+        assert len(line) <= LINE_WIDTH or not content.startswith("# "), line
+    # A described key is set off by a blank line, a blank line never ends up as a bare comment
+    assert "\n#\n" not in commented and "\n\n\n" not in commented
+    # Literals are quoted with single backticks, no Sphinx roles or double backticks remain
+    assert "``" not in commented and ":func:" not in commented and ":class:" not in commented
+
+
+def test_default_config_marks_required_fields_and_readers():
+    lines = default_config_yaml_string(WORKFLOW_REGISTRY["ngs_mapping"].config_model_class)
+    assert "\ndepends_on:" in lines
+    assert "  #features: ''" in lines and "# REQUIRED for tool: star" in lines
+    assert "\ntool:" in lines and "# REQUIRED; Options: 'bwa', 'bwa_mem2'" in lines
+    # The minimal configuration keeps the fields that a tool requires, not the optional ones
+    minimal = default_config_yaml_string(
+        WORKFLOW_REGISTRY["ngs_mapping"].config_model_class, "minimal"
+    )
+    assert "features: ''" in minimal and "bwa:" not in minimal and "#" in minimal
 
 
 def test_data_set_defaults_to_r1_r2_patterns_but_not_to_search_paths():

@@ -13,18 +13,21 @@ import os
 import shutil
 import subprocess
 import sys
+import textwrap
 
 import rich_click as click
 import ruamel.yaml as ruamel_yaml
 from rich.console import Console
 from rich.table import Table
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.util import load_yaml_guess_indent
 from snakemake.cli import main as snakemake_main
 from snakemake.common.configfile import load_configfile
 
 from .. import __version__
 from ..base import ConfigError
 from ..log_archive import build_archive, latest_snakemake_log
+from ..models import ConfigMode
 from ..orchestration import create_task_instances, load_project, missing_files
 from ..sheet_summary import missing_reads
 from ..workflow_registry import WORKFLOW_REGISTRY
@@ -35,15 +38,6 @@ from .impl.fsmanip import (
     update_file,
 )
 from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
-from .impl.yaml_utils import remove_non_required
-
-
-class ConfigMode(str, enum.Enum):
-    """Configuration generation mode for tasks."""
-
-    COMMENTED = "commented"
-    FULL = "full"
-    MINIMAL = "minimal"
 
 
 class ShellType(str, enum.Enum):
@@ -237,42 +231,51 @@ class AddTaskApp:
         return 0
 
     def _load_config_yaml(self):
+        """Load ``config.yaml``, keeping its comments and remembering its indentation of
+        sequences (``- name`` or ``  - name``), so that the file is written back in its style."""
         config_filename = os.path.join(self.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         if not os.path.exists(config_filename):
             raise AddTaskAppException(f"Configuration file does not exist at {config_filename}")
         with open(config_filename, "rt") as f:
-            yaml = ruamel_yaml.YAML()
-            config_yaml = yaml.load(f.read())
-        return config_yaml
+            text = f.read()
+        _, sequence, offset = load_yaml_guess_indent(text)
+        # A file without sequences (``tasks: []``) gets the style of the docs
+        self.sequence_indent = sequence if sequence is not None else 4
+        self.sequence_offset = offset if offset is not None else 2
+        return self._yaml().load(text)
+
+    def _yaml(self):
+        """A YAML round-tripper that keeps the file's quotes, line breaks and sequence style."""
+        yaml = ruamel_yaml.YAML()
+        yaml.preserve_quotes = True
+        yaml.width = 4096
+        yaml.indent(
+            mapping=self.sequence_indent - self.sequence_offset,
+            sequence=self.sequence_indent,
+            offset=self.sequence_offset,
+        )
+        return yaml
 
     def _setup_configuration(self, config_yaml):
         if "tasks" not in config_yaml:
             config_yaml["tasks"] = []
 
-        yaml = ruamel_yaml.YAML()
+        yaml = self._yaml()
         step_cls = WORKFLOW_REGISTRY[self.step]
-
-        comment_optional = self.config_mode == ConfigMode.COMMENTED
         step_config_yaml_str = step_cls.config_model_class.default_config_yaml_string(
-            comment_optional=comment_optional
+            self.config_mode
         )
-
-        if self.config_mode == ConfigMode.MINIMAL:
-            step_config_block = yaml.load(step_config_yaml_str)
-            if step_config_block:
-                step_config_block = remove_non_required(step_config_block)
-        else:
-            indented_lines = [
-                "    " + line if line.strip() else "" for line in step_config_yaml_str.splitlines()
-            ]
-            step_config_block = yaml.load("\n".join(indented_lines))
+        # ruamel keeps the column of a comment, so the block is loaded at the column where it
+        # ends up: below ``config:`` of a task entry
+        indent = " " * (self.sequence_indent + self.sequence_indent - self.sequence_offset)
+        step_config_block = yaml.load(textwrap.indent(step_config_yaml_str, indent))
 
         if step_config_block is None:
             step_config_block = CommentedMap()
 
         task_block = CommentedMap()
-        task_block["step"] = self.step
         task_block["name"] = self.task_name
+        task_block["step"] = self.step
         task_block["config"] = step_config_block
 
         config_yaml["tasks"].append(task_block)
@@ -280,7 +283,6 @@ class AddTaskApp:
         # Create backup of config.yaml file and overwrite with new string
         config_filename = os.path.join(self.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
         backup_file(config_filename)
-        yaml = ruamel_yaml.YAML()
         buf = io.StringIO()
         yaml.dump(config_yaml, stream=buf)
         buf.seek(0)

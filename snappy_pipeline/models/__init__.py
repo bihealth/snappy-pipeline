@@ -1,7 +1,7 @@
 import enum
-import json
 import os
 import re
+import textwrap
 import types
 import typing
 from enum import Enum
@@ -9,7 +9,6 @@ from inspect import isclass
 from io import StringIO
 from typing import Annotated, ClassVar, Literal
 
-import ruamel
 import typing_extensions
 from annotated_types import Predicate
 from pydantic import (
@@ -194,6 +193,20 @@ class RelationshipDefinition(SnappyModel):
     the column value is a single ``str`` (or ``""`` if no match)."""
 
 
+class ConfigMode(enum.StrEnum):
+    """Which fields the generated default configuration of a task shows
+    (:func:`default_config_yaml_string`)."""
+
+    COMMENTED = "commented"
+    """Every field with its default; the optional ones commented out"""
+
+    FULL = "full"
+    """Every field with its default"""
+
+    MINIMAL = "minimal"
+    """The required fields only, with the ``depends_on`` fields that a tool requires"""
+
+
 class Intermediate(enum.StrEnum):
     """What a task deletes once its readers are done (``delete_intermediates``)"""
 
@@ -296,13 +309,14 @@ class SnappyStepModel(SnappyModel, object):
     """
 
     library_selection: str | None = None
-    """Optional pandas ``DataFrame.query()`` expression to choose which
-    libraries this task processes.
-
-    The expression is evaluated against the tidy library DataFrame produced
-    by :func:`~snappy_pipeline.workflows.abstract.build_library_dataframe`.
-    See the ``_LIBRARY_SELECTION_DEFAULTS`` dict and column reference in
-    ``build_library_dataframe`` for supported columns."""
+    """A pandas ``DataFrame.query()`` expression over the library table that chooses the
+    libraries this task processes, such as ``data_set == 'batch2'`` or ``library_type == 'WES'``;
+    a task never takes libraries that its step cannot process. Unset: the step's default (the
+    tumor DNA libraries of cancer sheets and the DNA libraries of germline sheets, unless the
+    step's docs page names another one). The columns are those of the library table (see the
+    sample sheets section of the docs): ``library_name``, ``data_set``, ``kind``, ``role``,
+    ``extraction_type``, ``library_type``, ``library_kit``, ``donor_name``, ``sex``,
+    ``related_group`` and the custom fields of the sheet."""
 
     background_selection: str | None = None
     """For steps that use the libraries of background data sets (mapping, panels of normals, the
@@ -334,11 +348,10 @@ class SnappyStepModel(SnappyModel, object):
     upstream tasks declare, else ``library``."""
 
     relationships: dict[str, RelationshipDefinition] | None = None
-    """Named relationships that add derived columns to the library DataFrame
-    *before* ``library_selection`` is applied.
-
-    Each key is the column name; the value is a
-    :class:`RelationshipDefinition`."""
+    """Named relationships that add derived columns to the library table before
+    ``library_selection`` is applied. Each key is the column name; the value gives ``via`` (the
+    join columns, such as ``donor_name``), ``target`` (a query over the related rows), and
+    optionally ``column`` and ``many``."""
 
     def tool_tag(self) -> str | None:
         """The tag that the ``TOOL`` placeholder of a ``depends_on`` requirement stands for: the
@@ -397,24 +410,161 @@ class SnappyStepModel(SnappyModel, object):
         return self
 
     @classmethod
-    def default_config_yaml_string(cls, comment_optional: bool = True):
+    def default_config_yaml_string(cls, mode: ConfigMode | str = ConfigMode.COMMENTED) -> str:
         """Return the annotated default ``config`` block of a task of this step."""
-        return default_config_yaml_string(cls, comment_optional)
-
-    def model_dump_yaml(self, **kwargs) -> str:
-        cfg, _ = _model_to_commented_yaml(self, **kwargs)
-        return _dump_yaml(cfg)
+        return default_config_yaml_string(cls, mode)
 
 
-# Classes and functions for generating an annotated default configuration YAML
-# from a snappy pydantic model
-# list all optional fields commented out, list enum options, mark required fields, show descriptions
+# Generation of the annotated default configuration of a step from its pydantic model, for
+# ``snappy task add`` and the step pages of the docs: every field with its default, preceded by
+# its description as a comment and followed by its tags (REQUIRED, the readers of a ``depends_on``
+# field, options and examples) at a fixed column.
 
 INDENTATION = 2  # Indentation used for YAML
 
+#: Width of the generated YAML, comments included
+LINE_WIDTH = 100
 
-def default_config_yaml_string(model: type[SnappyStepModel], comment_optional: bool = False) -> str:
-    return _dump_commented_yaml(model, comment_optional)
+#: Column of the tags behind a key, unless a key line is longer
+TAG_COLUMN = 50
+
+
+def default_config_yaml_string(
+    model: type[BaseModel], mode: ConfigMode | str = ConfigMode.COMMENTED
+) -> str:
+    """Return the annotated default configuration of ``model`` as YAML.
+
+    A field's description precedes it as a comment, its tags follow it at :data:`TAG_COLUMN`.
+    A blank line separates a described field or a section from the field before it. ``commented``
+    comments out the optional fields and sections (a ``#`` right before the key), ``minimal``
+    leaves them out, except for ``depends_on`` fields that a tool requires.
+    """
+    writer = _ConfigWriter(ConfigMode(mode))
+    writer.write_model(model, _placeholder_data(model), indent=0, commented=False)
+    return writer.render()
+
+
+class _ConfigWriter:
+    """Collects the lines of the configuration with their tags, then aligns the tags."""
+
+    def __init__(self, mode: ConfigMode):
+        self.mode = mode
+        #: (line, tags, width of the line without the comment char), so that the tags of the
+        #: commented and the full configuration sit at the same column
+        self.lines: list[tuple[str, str, int]] = []
+
+    def write_model(self, model: type[BaseModel], data: dict, indent: int, commented: bool):
+        prefix = " " * indent
+        first = True
+        for name, field in model.model_fields.items():
+            optional = _is_optional(field)
+            required_by = any(isinstance(m, RequiredBy) for m in reader_markers(field))
+            if self.mode is ConfigMode.MINIMAL and optional and not required_by:
+                continue
+            comment_out = commented or (self.mode is ConfigMode.COMMENTED and optional)
+            description = _description_lines(field, LINE_WIDTH - indent - 2)
+            sub_model = _sub_model(field.annotation)
+            if not first and (description or sub_model is not None):
+                self.lines.append(("", "", 0))
+            first = False
+            self.lines += [(f"{prefix}# {line}".rstrip(), "", 0) for line in description]
+            value = data.get(name)
+            if sub_model is not None:
+                self._add(f"{prefix}{name}:", comment_out, _tags(field))
+                if not isinstance(value, dict):
+                    value = _placeholder_data(sub_model)
+                self.write_model(sub_model, value, indent + INDENTATION, comment_out)
+            else:
+                first_line, *rest = _yaml_lines(name, value)
+                self._add(prefix + first_line, comment_out, _tags(field))
+                for line in rest:
+                    self._add(prefix + line, comment_out, "")
+
+    def _add(self, line: str, commented: bool, tags: str) -> None:
+        self.lines.append((_commented(line, commented), tags, len(line)))
+
+    def render(self) -> str:
+        column = max([TAG_COLUMN] + [width + 2 for _, tags, width in self.lines if tags])
+        return (
+            "\n".join(f"{text:<{column}}# {tags}" if tags else text for text, tags, _ in self.lines)
+            + "\n"
+        )
+
+
+def _commented(line: str, commented: bool) -> str:
+    """``line`` with a ``#`` right before its content, if ``commented``."""
+    if not commented:
+        return line
+    content = line.lstrip()
+    return line[: len(line) - len(content)] + "#" + content
+
+
+def _yaml_lines(key: str, value: typing.Any) -> list[str]:
+    """The YAML of ``key: value``: one line, or the key and the indented lines of a collection."""
+    with StringIO() as out:
+        _yaml_instance().dump({key: value}, out)
+        return out.getvalue().rstrip("\n").splitlines()
+
+
+def _description_lines(field, width: int) -> list[str]:
+    """The field's description as comment text: paragraphs separated by an empty line, each
+    wrapped to ``width``, list items with a hanging indent, literals in single backticks."""
+    text = (field.description or "").strip().replace("``", "`")
+    lines: list[str] = []
+    for paragraph in re.split(r"\n\s*\n", text):
+        if lines:
+            lines.append("")
+        for block in re.split(r"\n(?=- )", paragraph):
+            joined = " ".join(line.strip() for line in block.splitlines())
+            indent = "  " if joined.startswith("- ") else ""
+            lines += textwrap.wrap(joined, width, subsequent_indent=indent)
+    return lines
+
+
+def _tags(field) -> str:
+    """The tags behind a key: whether it is required and by which readers, examples, options."""
+    tags = [] if _is_optional(field) else ["REQUIRED"]
+    markers = reader_markers(field)
+    if required := [str(m) for m in markers if isinstance(m, RequiredBy)]:
+        tags.append(f"REQUIRED for {'; '.join(required)}")
+    if optional := [str(m) for m in markers if not isinstance(m, RequiredBy)]:
+        tags.append(f"optional for {'; '.join(optional)}")
+    if field.examples:
+        tags.append(f"Examples: {', '.join(map(str, field.examples))}")
+    extra = field.json_schema_extra if isinstance(field.json_schema_extra, dict) else {}
+    options = extra.get("options", [])
+    if _check_model_class(field.annotation, enum.Enum):
+        options = enum_options(field.annotation)
+    if options:
+        tags.append("Options: " + ", ".join(_option(name, value) for name, value in options))
+    return "; ".join(tags)
+
+
+def _option(name: str, value: typing.Any) -> str:
+    """``'value'``, with the member name if it differs: ``'local-smart' (LOCAL_SMART)``."""
+    if name.upper() != str(value).upper().replace("-", "_"):
+        return f"{value!r} ({name})"
+    return repr(value)
+
+
+def _is_optional(field) -> bool:
+    """Whether the field has a default or accepts ``None``."""
+    annotation = field.annotation
+    allows_none = types.NoneType in typing_extensions.get_args(annotation)
+    return (_is_union_type(annotation) and allows_none) or not field.is_required()
+
+
+def _sub_model(annotation) -> type[BaseModel] | None:
+    """The model class of a field typed ``Model`` or ``Model | None``, else ``None``."""
+    if _check_model_class(annotation):
+        return annotation
+    if _is_union_type(annotation):
+        args = typing.get_args(annotation)
+        if len(args) == 2 and types.NoneType in args:
+            other = next(arg for arg in args if arg is not types.NoneType)
+            if _check_model_class(other):
+                return other
+    return None
 
 
 def _check_model_class(annotation, clazz: type = BaseModel) -> bool:
@@ -427,106 +577,13 @@ def _check_model_class(annotation, clazz: type = BaseModel) -> bool:
     return is_model_class
 
 
-def _annotate_model(
-    config_model: type[BaseModel],
-    comment_map: ruamel.yaml.CommentedMap,
-    max_column: int = 80,
-    level: int = 0,
-    indent: int = INDENTATION,
-    path: list[str] = [],
-):
-    """
-    Annotates a given pydantic model with comments
-    based on whether a field is required or not, as well as listing options for enum valued fields
-    """
-    for key, field in config_model.model_fields.items():
-        annotation = field.annotation
-        is_union = _is_union_type(annotation)
-        allows_none = types.NoneType in typing_extensions.get_args(annotation)
-        is_optional = (is_union and allows_none) or not field.is_required()
-
-        if is_optional:
-            tags = []
-        else:
-            tags = ["REQUIRED"]
-        markers = reader_markers(field)
-        if required := [str(m) for m in markers if isinstance(m, RequiredBy)]:
-            tags.append(f"REQUIRED for {'; '.join(required)}")
-        if optional := [str(m) for m in markers if not isinstance(m, RequiredBy)]:
-            tags.append(f"optional for {'; '.join(optional)}")
-
-        comment = tags
-
-        if field.examples:
-            comment.append(f"Examples: {', '.join(map(str, field.examples))}")
-
-        options = (getattr(field, "json_schema_extra") or {}).get("options", [])
-        if _check_model_class(annotation, enum.Enum):
-            options = enum_options(annotation)
-
-        if options:
-
-            def option_str(option: tuple[str, typing.Any]) -> str:
-                name, value = option
-                if name.upper() != str(value).upper().replace("-", "_"):
-                    return f"{repr(value)} ({name})"
-                else:
-                    return f"{repr(value)}"
-
-            comment.append(f"Options: {', '.join(map(option_str, options))}")
-
-        comment = "; ".join(comment)
-
-        if comment_map is not None:
-            if comment:
-                comment_map.yaml_add_eol_comment(comment, key, column=max_column)
-
-            if field.description:
-                (
-                    comment_map.yaml_set_comment_before_after_key(
-                        key,
-                        indent=indent * level,
-                        before="\n" + field.description,
-                        after=None,
-                    )
-                )
-
-        if _check_model_class(annotation):
-            _annotate_model(
-                annotation,
-                comment_map[key],
-                level=level + 1,
-                max_column=max_column,
-                path=path + [key],
-            )
-        elif _is_union_type(annotation):
-            if len(args := typing.get_args(annotation)) == 2 and types.NoneType in args:
-                sub_model = next(filter(lambda s: s is not types.NoneType, args))
-                if _check_model_class(sub_model):
-                    # when the default is set to None but the annotation inherits from basemodel,
-                    # make sure to generate those entries as well
-                    if not comment_map[key]:
-                        sub_model_yaml, m = _model_to_commented_yaml(
-                            _placeholder_model_instance(sub_model)
-                        )
-                        max_column = max(m + 2, max_column)
-                        comment_map[key] = sub_model_yaml
-                    _annotate_model(
-                        sub_model,
-                        comment_map[key],
-                        level=level + 1,
-                        max_column=max_column,
-                        path=path + [key],
-                    )
-        elif _check_model_class(annotation, typing.Collection):
-            for s in filter(lambda c: issubclass(c, BaseModel), typing.get_args(annotation)):
-                _annotate_model(
-                    s, comment_map[key], level=level + 1, max_column=max_column, path=path + [key]
-                )
-
-
 def _is_union_type(typ_) -> bool:
     return typing.get_origin(typ_) in (typing.Union, types.UnionType)
+
+
+def _placeholder_data(model: type[BaseModel]) -> dict:
+    """The defaults of ``model`` as plain data, ``None`` for a required field without one."""
+    return _placeholder_model_instance(model).model_dump(mode="json", warnings=False)
 
 
 def _placeholder_model_instance(model: type[BaseModel], placeholder=None):
@@ -568,119 +625,6 @@ def _yaml_instance():
     yaml = YAML(typ="rt")
     yaml.indent(mapping=INDENTATION, sequence=INDENTATION * 2, offset=INDENTATION)
     return yaml
-
-
-def _load_yaml(yaml_str: str) -> ruamel.yaml.CommentedMap:
-    return _yaml_instance().load(yaml_str)
-
-
-def _dump_yaml(comment_map: ruamel.yaml.CommentedMap) -> str:
-    yaml = _yaml_instance()
-
-    with StringIO() as out:
-        yaml.dump(comment_map, stream=out)
-        return out.getvalue()
-
-
-def _dump_commented_yaml(model: type[BaseModel], comment_optional: bool = True) -> str:
-    invalid_model_instance = _placeholder_model_instance(model)
-
-    cfg, max_column = _model_to_commented_yaml(invalid_model_instance)
-    max_column = max(50, max_column)
-    _annotate_model(model, cfg, max_column=max_column)
-    key_paths = _optional_key_paths(model, cfg)
-    cfg_yaml = _dump_yaml(cfg)
-    if comment_optional:
-        return _comment_key_paths_naive(cfg_yaml, key_paths)
-    else:
-        return cfg_yaml
-
-
-def _model_to_commented_yaml(model_instance: BaseModel, **kwargs):
-    yaml = _yaml_instance()
-    with StringIO() as s:
-        yaml.dump(
-            json.loads(model_instance.model_dump_json(warnings=False, **kwargs)),
-            stream=s,
-        )
-        s.flush()
-        yaml_config_string = s.getvalue()
-        max_column = max(map(len, yaml_config_string.splitlines())) + 2
-        cfg = yaml.load(stream=yaml_config_string)
-    return cfg, max_column
-
-
-def _comment_key_paths_naive(
-    yaml_str: str, key_paths: list[list[str]], comment_prefix: str = "#"
-) -> str:
-    comment_lines: set[int] = set()
-
-    for key_path in key_paths:
-        same_block = False
-        key_line_indent = 0
-        key = key_path[0]
-        depth = 0
-        for i, line in enumerate(yaml_str.splitlines()):
-            line_indent = len(line) - len(line.lstrip())
-            # Match keys at their depth only, so that a section such as ``strandedness`` is not
-            # mistaken for ``depends_on.strandedness``
-            key_match = (
-                bool(key_path)
-                and line_indent == depth * INDENTATION
-                and line.lstrip().startswith(key + ":")
-            )
-            if key_match:
-                key_path.pop(0)
-                depth += 1
-                if key_path:
-                    key = key_path[0]
-                    continue
-                else:
-                    key_line_indent = line_indent
-                    same_block = True
-                    comment_lines.add(i)
-                    continue
-            if same_block:
-                if line_indent > key_line_indent or len(line) == 0:
-                    comment_lines.add(i)
-                else:
-                    break
-            else:
-                if not key_path:
-                    break
-
-    res_lines = []
-    for i, line in enumerate(yaml_str.splitlines()):
-        if i in comment_lines:
-            if line.strip():
-                indent = len(line) - len(line.lstrip())
-                res_lines.append(" " * indent + comment_prefix + line[indent:])
-            else:
-                res_lines.append(comment_prefix)
-        else:
-            res_lines.append(line)
-    return "\n".join(res_lines)
-
-
-def _optional_key_paths(
-    config_model: type[BaseModel],
-    comment_map: ruamel.yaml.CommentedMap,
-    path: list[str] = [],
-):
-    optional_keys = []
-    for key, field in config_model.model_fields.items():
-        path_ = path + [key]
-        annotation = field.annotation
-        is_union = _is_union_type(annotation)
-        allows_none = types.NoneType in typing_extensions.get_args(annotation)
-        is_optional = (is_union and allows_none) or not field.is_required()
-        if is_optional:
-            optional_keys.append(path_)
-
-        if _check_model_class(annotation):
-            optional_keys.extend(_optional_key_paths(annotation, comment_map[key], path_))
-
-    return optional_keys
 
 
 class LibraryFolders(SnappyModel):
