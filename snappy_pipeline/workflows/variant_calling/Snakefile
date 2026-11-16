@@ -445,3 +445,70 @@ if tool == "mutect2":
             args=wf.get_params("mutect2", "filter"),
         wrapper:
             wf.wrapper_path("mutect2/filter")
+
+
+# Run freebayes (candidates for varlociraptor) -------------------------------
+
+if tool == "freebayes":
+
+    scattergather:
+        freebayes=wf.config.freebayes.num_jobs,
+
+    rule variant_calling_freebayes_scatter:
+        input:
+            unpack(wf.get_input_files("freebayes", "scatter")),
+        output:
+            **wf.get_output_files("freebayes", "scatter"),
+        log:
+            **wf.get_log_file("freebayes", "scatter"),
+        benchmark:
+            wf.get_benchmark_file("freebayes", "scatter")
+        localrule: True
+        threads: wf.get_resource("freebayes", "scatter", "threads")
+        resources:
+            runtime=wf.get_resource("freebayes", "scatter", "runtime"),
+            mem=wf.get_resource("freebayes", "scatter", "mem"),
+            partition=wf.get_resource("freebayes", "scatter", "partition"),
+            tmpdir=wf.get_resource("freebayes", "scatter", "tmpdir"),
+        params:
+            args=wf.get_params("freebayes", "scatter"),
+        wrapper:
+            wf.wrapper_path("split_regions")
+
+    rule variant_calling_freebayes_run:
+        input:
+            unpack(wf.get_input_files("freebayes", "run")),
+        output:
+            **wf.get_output_files("freebayes", "run"),
+        log:
+            **wf.get_log_file("freebayes", "run"),
+        benchmark:
+            wf.get_benchmark_file("freebayes", "run")
+        threads: wf.get_resource("freebayes", "run", "threads")
+        resources:
+            runtime=wf.get_resource("freebayes", "run", "runtime"),
+            mem=wf.get_resource("freebayes", "run", "mem"),
+            partition=wf.get_resource("freebayes", "run", "partition"),
+            tmpdir=wf.get_resource("freebayes", "run", "tmpdir"),
+        params:
+            args=wf.get_params("freebayes", "run"),
+        wrapper:
+            wf.wrapper_path("freebayes")
+
+    rule variant_calling_freebayes_gather:
+        input:
+            unpack(wf.get_input_files("freebayes", "gather")),
+        output:
+            **wf.get_output_files("freebayes", "gather"),
+        log:
+            **wf.get_log_file("freebayes", "gather"),
+        benchmark:
+            wf.get_benchmark_file("freebayes", "gather")
+        threads: wf.get_resource("freebayes", "gather", "threads")
+        resources:
+            runtime=wf.get_resource("freebayes", "gather", "runtime"),
+            mem=wf.get_resource("freebayes", "gather", "mem"),
+            partition=wf.get_resource("freebayes", "gather", "partition"),
+            tmpdir=wf.get_resource("freebayes", "gather", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("bcftools/concat")

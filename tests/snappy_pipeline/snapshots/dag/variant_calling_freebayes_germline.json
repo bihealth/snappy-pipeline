@@ -1,0 +1,475 @@
+[
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5",
+   "tasks/variant_calling_freebayes_germline/output/.manifest.tsv"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
+  "input": [
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aln_max_read_length": 75,
+    "bases_per_batch": 100000000,
+    "extra_arguments": [],
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "sample_name": "case001subregion-N1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregionFather-N1-DNA1-WES1/case001subregionFather-N1-DNA1-WES1.mapping.tsv",
+  "input": [
+   "<project>/raw/case001subregionFather-N1-DNA1-WES1/case001subregionFather-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregionFather-N1-DNA1-WES1/case001subregionFather-N1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/log/case001subregionFather-N1-DNA1-WES1.mapping.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.idxstats.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aln_max_read_length": 75,
+    "bases_per_batch": 100000000,
+    "extra_arguments": [],
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregionFather-N1-DNA1-WES1"
+    ],
+    "sample_name": "case001subregionFather-N1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/report/bam_qc/case001subregionFather-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregionFather-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregionMother-N1-DNA1-WES1/case001subregionMother-N1-DNA1-WES1.mapping.tsv",
+  "input": [
+   "<project>/raw/case001subregionMother-N1-DNA1-WES1/case001subregionMother-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregionMother-N1-DNA1-WES1/case001subregionMother-N1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/log/case001subregionMother-N1-DNA1-WES1.mapping.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.idxstats.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aln_max_read_length": 75,
+    "bases_per_batch": 100000000,
+    "extra_arguments": [],
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregionMother-N1-DNA1-WES1"
+    ],
+    "sample_name": "case001subregionMother-N1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/report/bam_qc/case001subregionMother-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregionMother-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+  ],
+  "log": [
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log"
+  ],
+  "output": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
+  ],
+  "params": {
+   "args": {
+    "algorithm": "bwtsw",
+    "extra_arguments": []
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "local": true,
+  "log": [
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
+  ],
+  "output": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/variant_calling_freebayes_germline"
+  },
+  "resources": {},
+  "rule": "variant_calling_freebayes_germline_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.gather.tsv",
+  "input": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+  ],
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.gather.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_gather",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.run.1-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai",
+   "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed"
+  ],
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.run.1-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "min_alternate_count": 2,
+    "min_alternate_fraction": 0.05
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
+  "temp": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/1-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "scatteritem": "1-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.run.2-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregionFather-N1-DNA1-WES1/out/case001subregionFather-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregionMother-N1-DNA1-WES1/out/case001subregionMother-N1-DNA1-WES1.bam.bai",
+   "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
+  ],
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.run.2-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "min_alternate_count": 2,
+    "min_alternate_fraction": 0.05
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
+  "temp": [
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1/calls/2-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1",
+   "scatteritem": "2-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/scatter/log.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
+  ],
+  "local": true,
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/scatter/log.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed",
+   "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
+  ],
+  "params": {
+   "args": {
+    "ignore_contigs": [
+     "^HLA-",
+     "^NC_007605$",
+     "^chrEBV$",
+     "^hs37d5$",
+     "_decoy$"
+    ],
+    "padding": 0
+   }
+  },
+  "resources": {
+   "mem": "1 GB",
+   "mem_mb": 1000,
+   "mem_mib": 954,
+   "partition": "medium",
+   "runtime": 2
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_scatter",
+  "temp": [
+   "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed",
+   "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
+  ],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/split_regions"
+ }
+]

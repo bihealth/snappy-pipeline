@@ -456,6 +456,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "rec_rate": 1e-8,
         },
     },
+    ("variant_calling", "freebayes"): {"freebayes": {"num_jobs": 2}},
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("variant_phasing", "gatk_read_backed_phasing"): {
         "gatk_read_backed_phasing": {"num_jobs": Overwrite(2)}
@@ -550,6 +551,17 @@ EXTRA_TASKS: list[dict[str, Any]] = [
     _external_vcfs("external_sv", ["germline", "sv"]),
     # The inputs of neoepitope prediction that other closures do not need
     _external_file("proteome", "raw", ["proteome"], "fasta", PLACEHOLDER),
+    # Candidate calling per pedigree, as the germline varlociraptor closure reads it
+    {
+        "step": "variant_calling",
+        "name": "variant_calling_freebayes_germline",
+        "config": {
+            "depends_on": {"alignments": "ngs_mapping_bwa", "reference": "genome"},
+            "group_by": "related",
+            "tool": "freebayes",
+            "freebayes": {"num_jobs": 2},
+        },
+    },
     {
         "step": "variant_annotation",
         "name": "variant_annotation_pvactools",

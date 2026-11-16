@@ -26,6 +26,11 @@ The ``tool`` field selects the caller.
 ``mutect2``
     Somatic calling with GATK 4 Mutect2 (tumor-normal pair or tumor only, see ``tumor_normal_mode``), with optional contamination estimation and filtration.
 
+``freebayes``
+    Candidate calling for ``varlociraptor``: ``freebayes --pooled-continuous`` jointly over the libraries of each entity (the primary DNA libraries of the pedigree with ``group_by: related``, else the library and its matched normal), in parallel over genome windows (``num_jobs``).
+    With ``depends_on.kits``, the candidates are restricted to the targets of the libraries' kit.
+    The calls are candidates, not genotype calls: they carry the tag ``candidates`` and feed ``depends_on.candidates`` of a ``varlociraptor`` task.
+
 By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
 With ``group_by: library``, they call each library on its own and produce one result per library.
 ``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
@@ -49,6 +54,7 @@ Below ``tasks/<task>/output/``, for each ``{library_name}``:
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 The germline callers produce ``variants`` with tags ``germline``, ``snv``, ``indel``.
 ``mutect2`` produces ``somatic``, ``snv``, ``indel`` for all calls and additionally ``filtered`` for the PASS calls.
+``freebayes`` produces ``candidates``, ``snv``, ``indel``.
 
 Statistics
 ----------
@@ -921,6 +927,111 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                 yield tpl.format(library_name=library_name) + ext
 
 
+class ScatteredCallerStepPart(BaseStepPart):
+    """Base class of the callers that call each genome window of an entity and concatenate the
+    windows: the windows are shared by the task's entities, and the gather is the
+    ``bcftools/concat`` wrapper."""
+
+    #: The windows of the task; ``padding`` 0 keeps them disjoint, so no call is made twice
+    region_tpl = "work/scatter/{scatteritem}.region.bed"
+
+    #: The calls of one window of an entity, a BCF with its ``.csi``
+    chunk_tpl = "work/{library_name}/out/{library_name}/calls/{scatteritem}"
+
+    def _scattergather(self, kind: str):
+        return getattr(self.parent.workflow.globals.get(kind), self.name)
+
+    def members(self, library_name: str) -> list[str]:
+        """Return the libraries called together for the entity ``library_name``, the entity
+        first: with ``group_by: related`` the primary DNA libraries of its related group (one
+        per individual), else the library and its matched normal, if it has one."""
+        if self.parent.effective_group_by == "related":
+            primary = set(self.parent.primary_dna_libraries()["library_name"])
+            others = [
+                name
+                for name in self.parent.get_related_libraries(library_name)
+                if name in primary and name != library_name
+            ]
+            return [library_name, *others]
+        normal = self.parent.library_row(library_name).get("matched_normal_lib") or None
+        return [library_name, normal] if normal else [library_name]
+
+    def _get_input_files_scatter(self, wildcards):
+        return {"fai": self.parent.get_upstream_paths("reference").fai}
+
+    def _get_params_scatter(self, wildcards):
+        return {"ignore_contigs": sorted(set(self.tool_section().ignore_contigs)), "padding": 0}
+
+    def _get_output_files_scatter(self):
+        return {"regions": self._scattergather("scatter")(self.region_tpl)}
+
+    def _get_input_files_gather(self, wildcards):
+        gather = self._scattergather("gather")
+        chunk = self.chunk_tpl.replace("{scatteritem}", "{{scatteritem}}").format(**wildcards)
+        return {"vcf": gather(chunk + ".bcf"), "vcf_csi": gather(chunk + ".bcf.csi")}
+
+    def _get_output_files_gather(self):
+        token = "{library_name}"
+        return {
+            "vcf": f"work/{token}/out/{token}.vcf.gz",
+            "vcf_md5": f"work/{token}/out/{token}.vcf.gz.md5",
+            "vcf_tbi": f"work/{token}/out/{token}.vcf.gz.tbi",
+            "vcf_tbi_md5": f"work/{token}/out/{token}.vcf.gz.tbi.md5",
+        }
+
+    def _get_log_file_scatter(self):
+        return {"log": "work/scatter/log.log"}
+
+    def _get_log_file_gather(self):
+        return {"log": "work/{library_name}/log/{library_name}.gather.log"}
+
+
+class FreebayesStepPart(ScatteredCallerStepPart):
+    """Candidate calling with freebayes, jointly over the libraries of an entity"""
+
+    name = "freebayes"
+
+    actions = ("scatter", "run", "gather")
+
+    extra_arguments_action = "run"
+
+    temp_outputs = {"scatter": ("regions",), "run": ("bcf", "bcf_csi")}
+
+    result_keys = {"gather": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
+
+    resource_usage = {
+        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
+        "run": ResourceUsage(threads=1, runtime="1d", mem="8GB"),
+        "gather": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
+    }
+
+    @dictify
+    def _get_input_files_run(self, wildcards):
+        yield from self.parent.reference_inputs().items()
+        members = self.members(wildcards.library_name)
+        alignments = [
+            self.parent.get_upstream_paths("alignments", library_name=name) for name in members
+        ]
+        yield "bam", [aln.bam for aln in alignments]
+        yield "bai", [aln.bai for aln in alignments]
+        yield "region", self.region_tpl.format(**wildcards)
+        if self.config.depends_on.kits:
+            kit = self.parent.common_kit("kits", members)
+            yield "targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
+
+    def _get_params_run(self, wildcards):
+        return {
+            "min_alternate_fraction": self.config.freebayes.min_alternate_fraction,
+            "min_alternate_count": self.config.freebayes.min_alternate_count,
+        }
+
+    def _get_output_files_run(self):
+        return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
+
+    def _get_log_file_run(self):
+        return {"log": "work/{library_name}/log/{library_name}.run.{scatteritem}.log"}
+
+
 class VariantCallingWorkflow(BaseStep):
     """Workflow implementation for germline variant calling"""
 
@@ -929,28 +1040,34 @@ class VariantCallingWorkflow(BaseStep):
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "filtered"})),
+        DataSignature(DataType.VARIANTS, frozenset({"candidates", "snv", "indel"})),
     ]
     config_model_class = VariantCallingConfigModel
 
     @classmethod
     def task_produces(cls, config, upstream):
-        """Germline small variants, or for mutect2 all somatic calls plus the PASS calls."""
-        if config.tool != Tool.mutect2:
-            return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
-        calls = DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))
-        return (calls, calls.with_tags("filtered"))
+        """Germline small variants; for mutect2 all somatic calls plus the PASS calls; for
+        freebayes candidates."""
+        if config.tool == Tool.mutect2:
+            calls = DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))
+            return (calls, calls.with_tags("filtered"))
+        if config.tool == Tool.freebayes:
+            return (DataSignature(DataType.VARIANTS, frozenset({"candidates", "snv", "indel"})),)
+        return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
 
     @classmethod
     def default_group_by(cls, config):
-        """The germline callers call related libraries (each pedigree) jointly, mutect2 each tumor."""
-        return None if config.tool == Tool.mutect2 else "related"
+        """The germline callers call related libraries (each pedigree) jointly; mutect2 and
+        freebayes call each library (with its matched normal)."""
+        return "related" if config.tool in VARIANT_CALLERS else None
 
     @classmethod
     def filter_ids(cls, config):
-        """The FILTER IDs of mutect2 and of the GATK callers; bcftools call writes none."""
+        """The FILTER IDs of mutect2 and of the GATK callers; bcftools call and freebayes write
+        none."""
         if config.tool == Tool.mutect2:
             return MUTECT2_FILTER_IDS
-        if config.tool == Tool.bcftools_call:
+        if config.tool in (Tool.bcftools_call, Tool.freebayes):
             return frozenset()
         return GATK_GERMLINE_FILTER_IDS
 
@@ -1005,6 +1122,8 @@ class VariantCallingWorkflow(BaseStep):
                 selected_caller = Gatk4HaplotypeCallerGvcfStepPart
             case "mutect2":
                 selected_caller = Mutect2StepPart
+            case "freebayes":
+                selected_caller = FreebayesStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(
@@ -1025,6 +1144,10 @@ class VariantCallingWorkflow(BaseStep):
                 self.common_kit(
                     "kits", self.sub_steps["bcftools_roh"].vcf_libraries(index_library_name)
                 )
+        if self.config.tool == Tool.freebayes and self.config.depends_on.kits:
+            # The candidates of an entity are restricted to the targets of its libraries' kit
+            for library_name in self.output_entities:
+                self.common_kit("kits", self.sub_steps["freebayes"].members(library_name))
 
     def get_result_files(self) -> list[str]:
         """The files of the caller and of the enabled reports"""

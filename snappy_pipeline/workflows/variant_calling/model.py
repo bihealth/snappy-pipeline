@@ -72,6 +72,7 @@ class Tool(enum.StrEnum):
     gatk4_hc_joint = "gatk4_hc_joint"
     gatk4_hc_gvcf = "gatk4_hc_gvcf"
     mutect2 = "mutect2"
+    freebayes = "freebayes"
 
 
 class IgnoreContigs(SnappyModel):
@@ -193,6 +194,21 @@ class Mutect2(Parallel, GATK, IgnoreContigs):
     """Whether to call variants in paired, tumor_only, or automatic mode."""
 
 
+class Freebayes(ToolModel, IgnoreContigs):
+    """Candidate calling with ``freebayes --pooled-continuous``, jointly over the libraries of an
+    entity, in parallel over genome windows"""
+
+    min_alternate_fraction: Annotated[float, Field(gt=0, le=1)] = 0.05
+    """Minimum fraction of the observations of a position that support an alternate allele
+    (``--min-alternate-fraction``)"""
+
+    min_alternate_count: Annotated[int, Field(ge=1)] = 2
+    """Minimum number of observations that support an alternate allele (``--min-alternate-count``)"""
+
+    num_jobs: Annotated[int, Field(ge=1)] = 24
+    """Number of genome windows that are called in parallel"""
+
+
 class VariantCallingDependsOn(SnappyModel):
     alignments: Annotated[
         str,
@@ -226,8 +242,9 @@ class VariantCallingDependsOn(SnappyModel):
     ] = ""
     """Common germline variants, for the contamination estimate"""
 
-    kits: Annotated[Kits, ReadBy(when="bcftools_roh")] = ""
-    """Restricts ``bcftools_roh`` to the targets of the (targeted) libraries' kit"""
+    kits: Annotated[Kits, ReadBy(when="bcftools_roh"), ReadBy(Tool.freebayes)] = ""
+    """Restricts ``bcftools_roh`` and the candidates of ``freebayes`` to the targets of the
+    (targeted) libraries' kit"""
 
 
 class VariantCalling(SnappyStepModel):
@@ -253,3 +270,6 @@ class VariantCalling(SnappyStepModel):
 
     mutect2: Mutect2 | None = None
     """Configuration for MuTect 2"""
+
+    freebayes: Freebayes | None = None
+    """Candidate calling with freebayes, for a ``varlociraptor`` task"""
