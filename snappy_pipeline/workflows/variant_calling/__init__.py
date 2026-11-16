@@ -28,7 +28,7 @@ The ``tool`` field selects the caller.
 
 ``freebayes``
     Candidate calling for ``varlociraptor``: ``freebayes --pooled-continuous`` jointly over the libraries of each entity (the primary DNA libraries of the pedigree with ``group_by: related``, else the library and its matched normal), in parallel over genome windows (``num_jobs``).
-    With ``depends_on.kits``, the candidates are restricted to the targets of the libraries' kit.
+    With ``depends_on.kits``, the candidates are restricted to the targets of the libraries' kit, and the windows hold equal numbers of target bases instead of equal lengths, so the jobs take about equally long.
     The calls are candidates, not genotype calls: they carry the tag ``candidates`` and feed ``depends_on.candidates`` of a ``varlociraptor`` task.
 
 ``varlociraptor``
@@ -1090,6 +1090,23 @@ class FreebayesStepPart(ScatteredCallerStepPart):
         "run": ResourceUsage(threads=1, runtime="1d", mem="8GB"),
         "gather": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
     }
+
+    def _get_input_files_scatter(self, wildcards):
+        """The genome index and, with ``depends_on.kits``, the targets of the kits of the
+        task's libraries: the windows then hold equal target bases instead of equal lengths"""
+        inputs = super()._get_input_files_scatter(wildcards)
+        if self.config.depends_on.kits:
+            kits = {
+                self.parent.library_kits[name]
+                for entity in self.parent.output_entities
+                for name in self.members(entity)
+                if name in self.parent.library_kits
+            }
+            inputs["targets"] = [
+                self.parent.get_upstream_paths("kits", library_kit=kit).targets
+                for kit in sorted(kits)
+            ]
+        return inputs
 
     @dictify
     def _get_input_files_run(self, wildcards):

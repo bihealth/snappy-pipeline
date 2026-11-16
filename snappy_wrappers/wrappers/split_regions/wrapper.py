@@ -68,7 +68,70 @@ def partition_lengths_with_splits(
     return partitions
 
 
-def main(fai_path, ignore_contigs, padding, output_regions):
+def read_targets(paths, contigs: dict[str, int]) -> dict[str, list[tuple[int, int]]]:
+    """Return the merged target intervals of the BED files per contig, clipped to the contigs."""
+    by_contig: dict[str, list[tuple[int, int]]] = {}
+    for path in paths:
+        with open(path, "rt") as f:
+            for line in f:
+                fields = line.rstrip("\n").split("\t")
+                if len(fields) < 3 or fields[0].startswith(("#", "track", "browser")):
+                    continue
+                contig, start, end = fields[0], int(fields[1]), int(fields[2])
+                if contig in contigs:
+                    by_contig.setdefault(contig, []).append(
+                        (max(start, 0), min(end, contigs[contig]))
+                    )
+    merged = {}
+    for contig, intervals in by_contig.items():
+        intervals.sort()
+        result = []
+        for start, end in intervals:
+            if result and start <= result[-1][1]:
+                result[-1] = (result[-1][0], max(result[-1][1], end))
+            elif start < end:
+                result.append((start, end))
+        merged[contig] = result
+    return merged
+
+
+def partition_by_targets(
+    contigs: dict[str, int], targets: dict[str, list[tuple[int, int]]], num_partitions: int
+) -> list[Region]:
+    """Partition the contigs into windows of equal target bases.
+
+    The windows follow the contigs in order and cover them whole, so a window is a stretch of
+    the genome (the end of a contig and the start of the next, if a cut lies between them);
+    cuts fall inside a target where its bases are shared.
+    """
+    total = sum(end - start for intervals in targets.values() for start, end in intervals)
+    if total == 0:
+        return partition_lengths_with_splits(contigs, num_partitions)
+    quota = total / num_partitions
+    partitions: list[Region] = [[] for _ in range(num_partitions)]
+    index = 0  # the window being filled
+    done = 0  # target bases in the windows before the current one and in the current one
+    for contig, length in contigs.items():
+        window_start = 0
+        for start, end in targets.get(contig, []):
+            position = start
+            while position < end and index < num_partitions - 1:
+                needed = quota * (index + 1) - done
+                if end - position < needed:
+                    break
+                cut = position + ceil(needed)
+                partitions[index].append(Interval(contig, window_start, cut))
+                done += cut - position
+                position = cut
+                window_start = cut
+                index += 1
+            done += end - position
+        if window_start < length:
+            partitions[index].append(Interval(contig, window_start, length))
+    return partitions
+
+
+def main(fai_path, ignore_contigs, padding, output_regions, target_paths=()):
     with open(fai_path, "rt") as fai:
         csv_reader = csv.reader(fai, delimiter="\t")
         contigs = {
@@ -77,7 +140,10 @@ def main(fai_path, ignore_contigs, padding, output_regions):
             if not matches_any(contig, ignore_contigs)
         }
     num_regions = len(output_regions)
-    regions = partition_lengths_with_splits(contigs, num_regions)
+    if target_paths:
+        regions = partition_by_targets(contigs, read_targets(target_paths, contigs), num_regions)
+    else:
+        regions = partition_lengths_with_splits(contigs, num_regions)
 
     for i, region in enumerate(regions):
         size = sum(map(lambda r: r.end - r.start, region))
@@ -114,6 +180,7 @@ if __name__ == "__main__":
                 args["ignore_contigs"],
                 args["padding"],
                 snakemake.output.regions,
+                list(snakemake.input.get("targets", [])),
             )
         )
     else:
