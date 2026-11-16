@@ -6,6 +6,7 @@ Replaces the previous multi-script CLI entry points with a single `snappy` comma
 
 import datetime
 import enum
+import importlib
 import io
 import logging
 import os
@@ -58,6 +59,8 @@ class JobStatus(str, enum.Enum):
     RUNNING = "running"
     FAILED = "failed"
 
+
+logger = logging.getLogger(__name__)
 
 # Configure rich-click settings for formatting
 click.rich_click.SHOW_ARGUMENTS = True
@@ -134,10 +137,12 @@ def _complete_task_names(ctx, param, incomplete):
 
 
 def _get_registered_steps_info():
+    """Return (step name, title) of every step; the title is the first line of the step's module
+    docstring, as on its docs page, else of its class docstring."""
     info = []
     for step_name in STEPS:
         cls = WORKFLOW_REGISTRY[step_name]
-        doc = cls.__doc__ or ""
+        doc = importlib.import_module(cls.__module__).__doc__ or cls.__doc__ or ""
         summary = doc.strip().split("\n")[0] if doc else "No description available."
         info.append((step_name, summary))
     return info
@@ -287,15 +292,17 @@ class AddTaskApp:
 
 
 def setup_logging(verbose):
-    """Setup logger."""
-    logging.basicConfig(
-        format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s", datefmt="%m-%d %H:%M"
-    )
-    logger = logging.getLogger("")
-    if verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    """Print the records of the ``snappy_pipeline`` loggers to stderr.
+
+    The root logger stays untouched: a handler on it would print every record of Snakemake a
+    second time and the setup messages of the libraries that its plugins use (alembic).
+    """
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("[snappy] %(levelname)s: %(message)s"))
+    package_logger = logging.getLogger("snappy_pipeline")
+    package_logger.addHandler(handler)
+    package_logger.propagate = False
+    package_logger.setLevel(logging.DEBUG if verbose else logging.INFO)
 
 
 @click.group()
@@ -533,7 +540,9 @@ def task_steps():
         "they are used as input files and never rebuilt."
     ),
 )
-@click.option("--verbose", is_flag=True, help="Increase verbosity level")
+@click.option(
+    "--verbose", is_flag=True, help="Log the Snakemake command line and other debug messages"
+)
 @click.pass_context
 def run(ctx, directory, task_name, frozen, verbose):
     """Run snappy pipeline workflows.
@@ -544,10 +553,6 @@ def run(ctx, directory, task_name, frozen, verbose):
         raise click.UsageError("--frozen requires --task")
     directory_path = directory() if callable(directory) else directory
     setup_logging(verbose)
-    if task_name:
-        logging.info("Targeting single task: %s", task_name)
-    else:
-        logging.info("No specific --task provided. Targeting all tasks (default).")
 
     snakemake_args = list(ctx.args)
 
@@ -562,7 +567,7 @@ def run(ctx, directory, task_name, frozen, verbose):
     # Append all user-provided snakemake arguments directly
     snakemake_argv += snakemake_args
 
-    logging.info("Executing snakemake %s", " ".join(map(repr, snakemake_argv)))
+    logger.debug("Executing snakemake %s", " ".join(map(repr, snakemake_argv)))
     res = snakemake_main(snakemake_argv)
     if res != 0:
         ctx.exit(res)
@@ -716,7 +721,8 @@ def report(ctx, directory, output):
     directory_path = directory() if callable(directory) else directory
     target = os.path.join(os.path.abspath(directory_path), output)
     argv = _snakemake_argv(directory_path) + ["--report", target] + list(ctx.args)
-    logging.info("Executing snakemake %s", " ".join(map(repr, argv)))
+    setup_logging(verbose=False)
+    logger.debug("Executing snakemake %s", " ".join(map(repr, argv)))
     res = snakemake_main(argv)
     if res != 0:
         ctx.exit(res)

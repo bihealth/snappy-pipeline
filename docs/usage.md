@@ -41,7 +41,7 @@ By default, `snappy run` builds every task and links its result files into `outp
     If one is missing, Snakemake stops with a missing-input error that names the file.
 
 `--verbose`
-: Log debug messages, too.
+: Also log debug messages, such as the Snakemake command line.
 
 Everything after `--` goes to Snakemake:
 
