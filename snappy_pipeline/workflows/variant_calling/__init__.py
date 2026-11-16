@@ -31,9 +31,28 @@ The ``tool`` field selects the caller.
     With ``depends_on.kits``, the candidates are restricted to the targets of the libraries' kit.
     The calls are candidates, not genotype calls: they carry the tag ``candidates`` and feed ``depends_on.candidates`` of a ``varlociraptor`` task.
 
+``varlociraptor``
+    Calling with varlociraptor against a *scenario* of the entity's libraries, on the candidates of ``depends_on.candidates`` (a ``freebayes`` task with the same ``group_by`` and ``library_selection``): alignment properties per library, observations per library and genome window (``num_jobs``), calls per window, concatenated.
+    The scenario is a preset (``scenario``), rendered from the sample sheets for each entity, or a YTE template (``template``):
+
+    ``germline``
+        The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the pedigree inherits from them.
+        The events are ``present`` (a member carries the variant) and, when a member has both parents, ``denovo`` (a child carries a variant that its parents do not), which ``present`` then excludes.
+        Libraries without a pedigree (``group_by: library``) are called alone.
+
+    ``somatic``
+        Each tumor with its matched normal (``tumor_normal_mode``, as for ``mutect2``), with the default scenario of dna-seq-varlociraptor: the events ``somatic_tumor_low``, ``somatic_tumor_medium`` and ``somatic_tumor_high`` (tumor allele frequency below 0.1, from 0.1 to 0.3, from 0.3), ``somatic_normal``, ``germline_het`` and ``germline_hom``.
+        The tumor purity is the sample sheet column ``purity`` (a custom field, from 0 to 1), as the contamination of the tumor by the normal; a tumor without one counts as pure, with a warning.
+        A tumor without a matched normal keeps the normal in the scenario as an unobserved sample, so the events stay the same.
+
+    The samples of the scenario are the library names, and so are the samples of the VCF, which carries ``GT`` from ``varlociraptor genotype``.
+    The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set: chain a ``variant_filtration`` task with ``tool: varlociraptor`` (FDR control on the events of interest) before any consumer.
+    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``matched_normal_lib`` and the sheet's other columns), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
+
 By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
 With ``group_by: library``, they call each library on its own and produce one result per library.
 ``mutect2`` produces one result per tumor DNA library; ``library_selection`` can only narrow these.
+``varlociraptor`` groups like the germline callers with ``scenario: germline`` and like ``mutect2`` with ``scenario: somatic``.
 The GATK callers need ``depends_on.dbsnp`` in addition to ``depends_on.reference``.
 With ``mutect2``, ``depends_on.panel_of_normals`` optionally names the panel VCF that Mutect2 uses to filter recurrent artefacts: a ``panel_of_normals`` task with ``tool: mutect2``, or an ``external_data`` task with ``{type: models, tags: [pon, mutect2]}`` and the key ``vcf``, for example ``1000g_pon.hg38.vcf.gz`` of the GATK resource bundle.
 ``depends_on.germline_resource`` optionally names an ``external_data`` task with the population allele frequencies (``{type: variants, tags: [population]}``, key ``vcf``, for example the af-only gnomAD VCF of the GATK resource bundle).
@@ -55,6 +74,7 @@ Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 The germline callers produce ``variants`` with tags ``germline``, ``snv``, ``indel``.
 ``mutect2`` produces ``somatic``, ``snv``, ``indel`` for all calls and additionally ``filtered`` for the PASS calls.
 ``freebayes`` produces ``candidates``, ``snv``, ``indel``.
+``varlociraptor`` produces ``germline`` or ``somatic`` (its ``scenario``), ``snv``, ``indel`` and ``varlociraptor``.
 
 Statistics
 ----------
@@ -125,6 +145,8 @@ Mutect2 with the resources of the GATK resource bundle, one ``external_data`` ta
             contamination: {enabled: true}
 """
 
+import math
+from pathlib import Path
 from typing import Any
 
 from snakemake.iocontainers import Wildcards
@@ -132,11 +154,13 @@ from snakemake.iocontainers import Wildcards
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
+    MATCHED_NORMAL_REQUIREMENT,
     BaseStep,
     BaseStepPart,
     ReportOutput,
     ResourceUsage,
     WritePedigreeStepPart,
+    _declared_group_by,
 )
 from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDict,
@@ -144,7 +168,15 @@ from snappy_pipeline.workflows.abstract.common import (
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
-from snappy_pipeline.workflows.variant_calling.model import Tool, TumorNormalMode
+from snappy_pipeline.workflows.variant_calling.model import ScenarioKind, Tool, TumorNormalMode
+from snappy_pipeline.workflows.variant_calling.scenario import (
+    IDENTIFIER,
+    check_scenario,
+    germline_scenario,
+    render_template,
+    somatic_scenario,
+    to_yaml,
+)
 
 from .model import VariantCalling as VariantCallingConfigModel
 
@@ -1032,6 +1064,178 @@ class FreebayesStepPart(ScatteredCallerStepPart):
         return {"log": "work/{library_name}/log/{library_name}.run.{scatteritem}.log"}
 
 
+def _builtin(value: Any) -> Any:
+    """Return a library table value as a builtin: numpy scalars unwrapped, NaN as ``None``."""
+    if hasattr(value, "item"):
+        value = value.item()
+    if isinstance(value, float) and math.isnan(value):
+        return None
+    return value
+
+
+class VarlociraptorStepPart(ScatteredCallerStepPart):
+    """Calling with varlociraptor on the candidates of ``depends_on.candidates``: alignment
+    properties per library, observations per library and window, and calls per window against
+    the scenario of the entity"""
+
+    name = "varlociraptor"
+
+    actions = ("scatter", "alignment_properties", "preprocess", "call", "gather")
+
+    #: The ``preprocess`` section passes its own extra arguments
+    extra_arguments_action = "call"
+
+    temp_outputs = {"scatter": ("regions",), "preprocess": ("bcf",), "call": ("bcf", "bcf_csi")}
+
+    intermediate_outputs = {"alignment_properties": ("json",)}
+
+    result_keys = {"gather": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
+
+    resource_usage = {
+        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
+        "alignment_properties": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
+        "preprocess": ResourceUsage(threads=1, runtime="1d", mem="4GB"),
+        "call": ResourceUsage(threads=1, runtime="1d", mem="4GB"),
+        "gather": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
+    }
+
+    #: The alignment properties of a library, shared by the entities that observe it
+    properties_tpl = "work/{member}/out/{member}.alignment_properties.json"
+
+    #: The observations of a library in one window of an entity
+    observations_tpl = (
+        "work/{library_name}/out/{library_name}/observations/{member}.{scatteritem}.bcf"
+    )
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        #: The rendered scenario of each entity, built once
+        self._scenarios: dict[str, str] = {}
+
+    def members(self, library_name: str) -> list[str]:
+        """The observed libraries of the entity: the pedigree or the library alone for the
+        germline scenario, the tumor and its matched normal by ``tumor_normal_mode`` for the
+        somatic one."""
+        cfg = self.config.varlociraptor
+        if cfg.scenario == ScenarioKind.germline:
+            if self.parent.effective_group_by == "related":
+                return super().members(library_name)
+            return [library_name]
+        if cfg.tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
+            return [library_name]
+        return super().members(library_name)
+
+    def sample(self, library_name: str) -> dict[str, Any]:
+        """The library table row of a library with builtin values, as a scenario template sees it"""
+        return {
+            key: _builtin(value) for key, value in self.parent.library_row(library_name).items()
+        }
+
+    def purity(self, library_name: str) -> float | None:
+        """The tumor purity of a library from the sample sheet column ``purity``, or ``None``"""
+        value = self.sample(library_name).get("purity")
+        if value is None or value == "":
+            return None
+        try:
+            purity = float(value)
+        except ValueError:
+            purity = math.nan
+        if not 0 <= purity <= 1:
+            raise ValueError(
+                f"Task {self.parent.task_name!r}: the purity of {library_name} is {value!r}, "
+                "but a number from 0 to 1 is needed"
+            )
+        return purity
+
+    def scenario(self, library_name: str) -> str:
+        """The scenario YAML of the entity, rendered once per run"""
+        if library_name not in self._scenarios:
+            self._scenarios[library_name] = to_yaml(self._build_scenario(library_name))
+        return self._scenarios[library_name]
+
+    def _build_scenario(self, library_name: str) -> dict[str, Any]:
+        cfg = self.config.varlociraptor
+        members = self.members(library_name)
+        somatic = cfg.scenario == ScenarioKind.somatic
+        purity = self.purity(library_name) if somatic else None
+        if cfg.template:
+            settings = {"species": cfg.species.model_dump(), "purity": purity}
+            samples = [self.sample(name) for name in members]
+            scenario = render_template(
+                Path(cfg.template).read_text(), samples, library_name, settings
+            )
+        elif somatic:
+            normal = members[1] if len(members) > 1 else None
+            scenario = somatic_scenario(library_name, normal, purity)
+        else:
+            samples = [self.sample(name) for name in members]
+            scenario = germline_scenario(samples, cfg.species.model_dump())
+        check_scenario(scenario, members)
+        return scenario
+
+    def _get_input_files_alignment_properties(self, wildcards):
+        alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
+        return {**self.parent.reference_inputs(), "bam": alignments.bam, "bai": alignments.bai}
+
+    def _get_output_files_alignment_properties(self):
+        return {"json": self.properties_tpl}
+
+    def _get_input_files_preprocess(self, wildcards):
+        alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
+        candidates = self.parent.get_upstream_paths(
+            "candidates", library_name=wildcards.library_name
+        )
+        return {
+            **self.parent.reference_inputs(),
+            "candidates": candidates.vcf,
+            "candidates_tbi": candidates.vcf_tbi,
+            "region": self.region_tpl.format(**wildcards),
+            "alignment_properties": self.properties_tpl.format(**wildcards),
+            "bam": alignments.bam,
+            "bai": alignments.bai,
+        }
+
+    def _get_params_preprocess(self, wildcards):
+        preprocess = self.config.varlociraptor.preprocess
+        return {"max_depth": preprocess.max_depth, "extra_arguments": preprocess.extra_arguments}
+
+    def _get_output_files_preprocess(self):
+        return {"bcf": self.observations_tpl}
+
+    def _get_input_files_call(self, wildcards):
+        return {
+            "observations": [
+                self.observations_tpl.format(
+                    library_name=wildcards.library_name,
+                    member=member,
+                    scatteritem=wildcards.scatteritem,
+                )
+                for member in self.members(wildcards.library_name)
+            ]
+        }
+
+    def _get_params_call(self, wildcards):
+        """The sample names of the observations, in their order, and the scenario"""
+        return {
+            "obs_names": self.members(wildcards.library_name),
+            "scenario": self.scenario(wildcards.library_name),
+        }
+
+    def _get_output_files_call(self):
+        return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
+
+    def _get_log_file_alignment_properties(self):
+        return {"log": "work/{member}/log/{member}.alignment_properties.log"}
+
+    def _get_log_file_preprocess(self):
+        return {
+            "log": "work/{library_name}/log/{library_name}.preprocess.{member}.{scatteritem}.log"
+        }
+
+    def _get_log_file_call(self):
+        return {"log": "work/{library_name}/log/{library_name}.call.{scatteritem}.log"}
+
+
 class VariantCallingWorkflow(BaseStep):
     """Workflow implementation for germline variant calling"""
 
@@ -1041,33 +1245,41 @@ class VariantCallingWorkflow(BaseStep):
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "filtered"})),
         DataSignature(DataType.VARIANTS, frozenset({"candidates", "snv", "indel"})),
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "varlociraptor"})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "varlociraptor"})),
     ]
     config_model_class = VariantCallingConfigModel
 
     @classmethod
     def task_produces(cls, config, upstream):
         """Germline small variants; for mutect2 all somatic calls plus the PASS calls; for
-        freebayes candidates."""
+        freebayes candidates; for varlociraptor the calls of its scenario, tagged with the tool
+        for the FDR control of ``variant_filtration``."""
         if config.tool == Tool.mutect2:
             calls = DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel"}))
             return (calls, calls.with_tags("filtered"))
         if config.tool == Tool.freebayes:
             return (DataSignature(DataType.VARIANTS, frozenset({"candidates", "snv", "indel"})),)
+        if config.tool == Tool.varlociraptor:
+            tags = {str(config.varlociraptor.scenario), "snv", "indel", "varlociraptor"}
+            return (DataSignature(DataType.VARIANTS, frozenset(tags)),)
         return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
 
     @classmethod
     def default_group_by(cls, config):
-        """The germline callers call related libraries (each pedigree) jointly; mutect2 and
-        freebayes call each library (with its matched normal)."""
+        """The germline callers and the germline scenario of varlociraptor call related
+        libraries (each pedigree) jointly; mutect2, freebayes and the somatic scenario call each
+        library (with its matched normal)."""
+        if config.tool == Tool.varlociraptor:
+            return "related" if config.varlociraptor.scenario == ScenarioKind.germline else None
         return "related" if config.tool in VARIANT_CALLERS else None
 
     @classmethod
     def filter_ids(cls, config):
-        """The FILTER IDs of mutect2 and of the GATK callers; bcftools call and freebayes write
-        none."""
+        """The FILTER IDs of mutect2 and of the GATK callers; the other callers write none."""
         if config.tool == Tool.mutect2:
             return MUTECT2_FILTER_IDS
-        if config.tool in (Tool.bcftools_call, Tool.freebayes):
+        if config.tool in (Tool.bcftools_call, Tool.freebayes, Tool.varlociraptor):
             return frozenset()
         return GATK_GERMLINE_FILTER_IDS
 
@@ -1101,9 +1313,19 @@ class VariantCallingWorkflow(BaseStep):
 
     @classmethod
     def task_library_requirement(cls, config):
-        """mutect2 calls tumor DNA libraries, which need a matched normal or none."""
-        if config.tool == "mutect2":
-            return "role == 'tumor' and extraction_type == 'dna'"
+        """mutect2 and the somatic scenario of varlociraptor call tumor DNA libraries, which
+        need a matched normal or none; ``tumor_normal_mode: paired`` leaves out the tumors
+        without one."""
+        tumor = "role == 'tumor' and extraction_type == 'dna'"
+        if config.tool == Tool.mutect2:
+            return tumor
+        if config.tool == Tool.varlociraptor:
+            cfg = config.varlociraptor
+            if cfg.scenario != ScenarioKind.somatic:
+                return None
+            if cfg.tumor_normal_mode == TumorNormalMode.PAIRED:
+                return MATCHED_NORMAL_REQUIREMENT
+            return tumor
         return None
 
     def __init__(self, workflow, project, task_name):
@@ -1124,6 +1346,8 @@ class VariantCallingWorkflow(BaseStep):
                 selected_caller = Mutect2StepPart
             case "freebayes":
                 selected_caller = FreebayesStepPart
+            case "varlociraptor":
+                selected_caller = VarlociraptorStepPart
             case _:
                 raise NotImplementedError(f"Unknown tool: {self.config.tool}")
         self.register_sub_step_classes(
@@ -1148,6 +1372,51 @@ class VariantCallingWorkflow(BaseStep):
             # The candidates of an entity are restricted to the targets of its libraries' kit
             for library_name in self.output_entities:
                 self.common_kit("kits", self.sub_steps["freebayes"].members(library_name))
+        if self.config.tool == Tool.varlociraptor:
+            self._check_varlociraptor_setup()
+
+    def _check_varlociraptor_setup(self) -> None:
+        """The candidates task writes its calls per entity of this task, and the library names
+        are sample names that a scenario accepts."""
+        candidates = self.resolve_dependency("candidates").task_name
+        upstream_group_by = _declared_group_by(self.project, candidates, frozenset()) or "library"
+        if upstream_group_by != self.effective_group_by:
+            raise ValueError(
+                f"Task {self.task_name!r} calls with group_by: {self.effective_group_by}, but "
+                f"its candidates task {candidates!r} writes them with group_by: "
+                f"{upstream_group_by}"
+            )
+        part = self.sub_steps["varlociraptor"]
+        invalid = sorted(
+            name
+            for entity in self.output_entities
+            for name in part.members(entity)
+            if not IDENTIFIER.match(name)
+        )
+        if invalid:
+            raise ValueError(
+                f"Task {self.task_name!r}: varlociraptor needs sample names of letters, digits, "
+                f"'_', '.' and '-', unlike {', '.join(invalid)}"
+            )
+
+    def library_warnings(self) -> list[str]:
+        """The tumors without a matched normal that ``paired`` mode leaves out, and the tumors
+        that the somatic scenario of varlociraptor takes as pure for lack of a purity."""
+        warnings = super().library_warnings()
+        if (
+            self.config.tool == Tool.varlociraptor
+            and self.config.varlociraptor.scenario == ScenarioKind.somatic
+        ):
+            part = self.sub_steps["varlociraptor"]
+            unknown = [name for name in self.output_entities if part.purity(name) is None]
+            if unknown:
+                warnings.append(
+                    f"Task {self.task_name!r} takes the tumors without a purity as pure, with no "
+                    f"contamination by the normal: {', '.join(unknown)}; the sample sheet column "
+                    "purity (a custom field, from 0 to 1) sets it, from the lab, the collaborator "
+                    "or a purity estimate (somatic_purity_ploidy_estimate)"
+                )
+        return warnings
 
     def get_result_files(self) -> list[str]:
         """The files of the caller and of the enabled reports"""

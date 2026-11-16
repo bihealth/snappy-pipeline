@@ -1,8 +1,8 @@
 import enum
 import logging
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import (
     ConfigPath,
@@ -46,6 +46,13 @@ class ExpectedSomaticVariants(BaseModel):
     vcf_tbi: str
 
 
+class ExpectedCandidates(BaseModel):
+    """The candidate variants of a varlociraptor task: a bgzipped VCF with its index."""
+
+    vcf: str
+    vcf_tbi: str
+
+
 class BafFileGeneration(ToggleModel, ToolModel):
     min_dp: Annotated[int, Field(ge=1)] = 10
     """minimal DP of variant, must be >=1"""
@@ -73,6 +80,7 @@ class Tool(enum.StrEnum):
     gatk4_hc_gvcf = "gatk4_hc_gvcf"
     mutect2 = "mutect2"
     freebayes = "freebayes"
+    varlociraptor = "varlociraptor"
 
 
 class IgnoreContigs(SnappyModel):
@@ -209,6 +217,73 @@ class Freebayes(ToolModel, IgnoreContigs):
     """Number of genome windows that are called in parallel"""
 
 
+class ScenarioKind(enum.StrEnum):
+    germline = "germline"
+    somatic = "somatic"
+
+
+class Species(SnappyModel):
+    """The priors of the ``germline`` scenario (its ``species`` section)"""
+
+    heterozygosity: Annotated[float, Field(gt=0, lt=1)] = 0.001
+    """Expected heterozygosity of the population"""
+
+    germline_mutation_rate: Annotated[float, Field(gt=0, lt=1)] = 1e-3
+    """Rate of de novo germline mutations (``germline-mutation-rate``)"""
+
+    ploidy: dict[str, dict[str, int]] = {
+        "male": {"all": 2, "X": 1, "Y": 1},
+        "female": {"all": 2, "X": 2, "Y": 0},
+    }
+    """Ploidy per sex and contig, ``all`` for the other contigs, in the contig names of the
+    reference (``chrX`` and ``chrY`` on hg38); a library of unknown sex is diploid everywhere"""
+
+
+class Preprocess(ToolModel):
+    """``varlociraptor preprocess variants``"""
+
+    max_depth: Annotated[int, Field(ge=1)] = 200
+    """Maximum read depth at a position (``--max-depth``); more reads are downsampled"""
+
+
+class Varlociraptor(ToolModel, IgnoreContigs):
+    """Calling with varlociraptor against a scenario; ``extra_arguments`` go to
+    ``varlociraptor call variants``"""
+
+    scenario: Annotated[ScenarioKind, EnumField(ScenarioKind)]
+    """The scenario preset: ``germline`` calls the pedigree with mendelian priors, ``somatic``
+    each tumor with its matched normal; it sets the tags of the calls, the grouping and the
+    libraries taken"""
+
+    template: ConfigPath = ""
+    """A YTE template that replaces the YAML of the preset, rendered with ``samples`` (the
+    library table rows of the entity's libraries), ``library_name`` (the entity) and
+    ``settings`` (``species``, ``purity``)"""
+
+    tumor_normal_mode: TumorNormalMode = TumorNormalMode.AUTOMATIC
+    """``somatic`` only: ``paired`` leaves out tumors without a matched normal, ``tumor_only``
+    calls every tumor alone, ``automatic`` calls each tumor with its matched normal if it has one"""
+
+    species: Species = Species()
+    """``germline`` only: the priors"""
+
+    preprocess: Preprocess = Preprocess()
+
+    num_jobs: Annotated[int, Field(ge=1)] = 24
+    """Number of genome windows that are called in parallel"""
+
+    @model_validator(mode="after")
+    def check_scenario_settings(self) -> Self:
+        """Reject a changed setting that the chosen scenario does not use (a written-out default
+        passes, as ``snappy task add`` writes every field)."""
+        unused = {"germline": ("tumor_normal_mode",), "somatic": ("species",)}[self.scenario]
+        fields = type(self).model_fields
+        changed = [name for name in unused if getattr(self, name) != fields[name].get_default()]
+        if changed:
+            raise ValueError(f"{', '.join(changed)}: not used by the {self.scenario} scenario")
+        return self
+
+
 class VariantCallingDependsOn(SnappyModel):
     alignments: Annotated[
         str,
@@ -242,6 +317,16 @@ class VariantCallingDependsOn(SnappyModel):
     ] = ""
     """Common germline variants, for the contamination estimate"""
 
+    candidates: Annotated[
+        str,
+        DataSignature(DataType.VARIANTS),
+        ExpectedPathSchema(ExpectedCandidates),
+        RequiredBy(Tool.varlociraptor),
+    ] = ""
+    """The candidate variants that ``varlociraptor`` evaluates: a ``variant_calling`` task with
+    ``tool: freebayes`` and the same ``group_by`` and ``library_selection``, or another task that
+    produces ``variants`` with the keys ``vcf`` and ``vcf_tbi``"""
+
     kits: Annotated[Kits, ReadBy(when="bcftools_roh"), ReadBy(Tool.freebayes)] = ""
     """Restricts ``bcftools_roh`` and the candidates of ``freebayes`` to the targets of the
     (targeted) libraries' kit"""
@@ -273,3 +358,22 @@ class VariantCalling(SnappyStepModel):
 
     freebayes: Freebayes | None = None
     """Candidate calling with freebayes, for a ``varlociraptor`` task"""
+
+    varlociraptor: Varlociraptor | None = None
+    """Calling with varlociraptor on the candidates of ``depends_on.candidates``"""
+
+    @model_validator(mode="after")
+    def check_varlociraptor_settings(self) -> Self:
+        """The varlociraptor VCF has no PL or AD, which the ROH and BAF reports need, and the
+        somatic scenario calls each tumor on its own."""
+        if self.tool != Tool.varlociraptor or self.varlociraptor is None:
+            return self
+        for name in ("bcftools_roh", "baf_file_generation"):
+            section = getattr(self, name)
+            if section is not None and section.enabled:
+                raise ValueError(f"{name}: not available with tool: varlociraptor")
+        if self.varlociraptor.scenario == ScenarioKind.somatic and self.group_by == "related":
+            raise ValueError(
+                "group_by: related: the somatic scenario calls each tumor with its matched normal"
+            )
+        return self

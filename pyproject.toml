@@ -49,6 +49,8 @@ dependencies = [
     "pysam >=0.22.1,<1",
     # Jinja 2 template rendering
     "jinja2 >=3.1.4,<4",
+    # YTE rendering of custom varlociraptor scenarios
+    "yte >=1.5.5,<2",
     # Parsing of ISA-tab.
     "altamisa @ git+https://github.com/bihealth/altamisa.git@7091c49dcea5584192daf0b0d8a4730208b841d8",
     # Validation for models, mainly used for configuration validation

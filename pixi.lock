@@ -3319,6 +3319,7 @@ packages:
   - snakemake-software-deployment-plugin-container @ git+https://github.com/snakemake/snakemake-software-deployment-plugin-container.git@80be55cbaa3168566e3ad5503b8951187633a521
   - termcolor>=1.1.0,<3
   - vcfpy>=0.13.8,<1
+  - yte>=1.5.5,<2
   - coverage>=7.5.3,<8 ; extra == 'all'
   - coveralls>=4.0.1,<5 ; extra == 'all'
   - myst-parser>=5,<6 ; extra == 'all'

@@ -16,6 +16,7 @@ tool = str(wf.config.tool)
 
 wildcard_constraints:
     library_name="[^/.]+",
+    member="[^/.]+",
 
 
 rule variant_calling_all:
@@ -510,5 +511,110 @@ if tool == "freebayes":
             mem=wf.get_resource("freebayes", "gather", "mem"),
             partition=wf.get_resource("freebayes", "gather", "partition"),
             tmpdir=wf.get_resource("freebayes", "gather", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("bcftools/concat")
+
+
+# Run varlociraptor -----------------------------------------------------------
+
+if tool == "varlociraptor":
+
+    scattergather:
+        varlociraptor=wf.config.varlociraptor.num_jobs,
+
+    rule variant_calling_varlociraptor_scatter:
+        input:
+            unpack(wf.get_input_files("varlociraptor", "scatter")),
+        output:
+            **wf.get_output_files("varlociraptor", "scatter"),
+        log:
+            **wf.get_log_file("varlociraptor", "scatter"),
+        benchmark:
+            wf.get_benchmark_file("varlociraptor", "scatter")
+        localrule: True
+        threads: wf.get_resource("varlociraptor", "scatter", "threads")
+        resources:
+            runtime=wf.get_resource("varlociraptor", "scatter", "runtime"),
+            mem=wf.get_resource("varlociraptor", "scatter", "mem"),
+            partition=wf.get_resource("varlociraptor", "scatter", "partition"),
+            tmpdir=wf.get_resource("varlociraptor", "scatter", "tmpdir"),
+        params:
+            args=wf.get_params("varlociraptor", "scatter"),
+        wrapper:
+            wf.wrapper_path("split_regions")
+
+    rule variant_calling_varlociraptor_alignment_properties:
+        input:
+            unpack(wf.get_input_files("varlociraptor", "alignment_properties")),
+        output:
+            **wf.get_output_files("varlociraptor", "alignment_properties"),
+        log:
+            **wf.get_log_file("varlociraptor", "alignment_properties"),
+        benchmark:
+            wf.get_benchmark_file("varlociraptor", "alignment_properties")
+        threads: wf.get_resource("varlociraptor", "alignment_properties", "threads")
+        resources:
+            runtime=wf.get_resource("varlociraptor", "alignment_properties", "runtime"),
+            mem=wf.get_resource("varlociraptor", "alignment_properties", "mem"),
+            partition=wf.get_resource("varlociraptor", "alignment_properties", "partition"),
+            tmpdir=wf.get_resource("varlociraptor", "alignment_properties", "tmpdir"),
+        wrapper:
+            wf.wrapper_path("varlociraptor/alignment_properties")
+
+    rule variant_calling_varlociraptor_preprocess:
+        input:
+            unpack(wf.get_input_files("varlociraptor", "preprocess")),
+        output:
+            **wf.get_output_files("varlociraptor", "preprocess"),
+        log:
+            **wf.get_log_file("varlociraptor", "preprocess"),
+        benchmark:
+            wf.get_benchmark_file("varlociraptor", "preprocess")
+        threads: wf.get_resource("varlociraptor", "preprocess", "threads")
+        resources:
+            runtime=wf.get_resource("varlociraptor", "preprocess", "runtime"),
+            mem=wf.get_resource("varlociraptor", "preprocess", "mem"),
+            partition=wf.get_resource("varlociraptor", "preprocess", "partition"),
+            tmpdir=wf.get_resource("varlociraptor", "preprocess", "tmpdir"),
+        params:
+            args=wf.get_params("varlociraptor", "preprocess"),
+        wrapper:
+            wf.wrapper_path("varlociraptor/preprocess")
+
+    rule variant_calling_varlociraptor_call:
+        input:
+            unpack(wf.get_input_files("varlociraptor", "call")),
+        output:
+            **wf.get_output_files("varlociraptor", "call"),
+        log:
+            **wf.get_log_file("varlociraptor", "call"),
+        benchmark:
+            wf.get_benchmark_file("varlociraptor", "call")
+        threads: wf.get_resource("varlociraptor", "call", "threads")
+        resources:
+            runtime=wf.get_resource("varlociraptor", "call", "runtime"),
+            mem=wf.get_resource("varlociraptor", "call", "mem"),
+            partition=wf.get_resource("varlociraptor", "call", "partition"),
+            tmpdir=wf.get_resource("varlociraptor", "call", "tmpdir"),
+        params:
+            args=wf.get_params("varlociraptor", "call"),
+        wrapper:
+            wf.wrapper_path("varlociraptor/call")
+
+    rule variant_calling_varlociraptor_gather:
+        input:
+            unpack(wf.get_input_files("varlociraptor", "gather")),
+        output:
+            **wf.get_output_files("varlociraptor", "gather"),
+        log:
+            **wf.get_log_file("varlociraptor", "gather"),
+        benchmark:
+            wf.get_benchmark_file("varlociraptor", "gather")
+        threads: wf.get_resource("varlociraptor", "gather", "threads")
+        resources:
+            runtime=wf.get_resource("varlociraptor", "gather", "runtime"),
+            mem=wf.get_resource("varlociraptor", "gather", "mem"),
+            partition=wf.get_resource("varlociraptor", "gather", "partition"),
+            tmpdir=wf.get_resource("varlociraptor", "gather", "tmpdir"),
         wrapper:
             wf.wrapper_path("bcftools/concat")

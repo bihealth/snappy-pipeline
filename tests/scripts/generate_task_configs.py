@@ -34,6 +34,7 @@ DEPENDENCY_TASKS: dict[str, str] = {
     "alignments": "ngs_mapping_bwa",
     "qc": "ngs_data_qc_alfred",
     "annotated_variants": "variant_annotation_vep",
+    "candidates": "variant_calling_freebayes",
     "combined_variants": "combine_variants",
     "copy_number": "somatic_wgs_cnv_calling_cnvkit",
     "common_variants": "population_variants",
@@ -457,6 +458,7 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
         },
     },
     ("variant_calling", "freebayes"): {"freebayes": {"num_jobs": 2}},
+    ("variant_calling", "varlociraptor"): {"varlociraptor": {"scenario": "somatic", "num_jobs": 2}},
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,
     ("variant_phasing", "gatk_read_backed_phasing"): {
         "gatk_read_backed_phasing": {"num_jobs": Overwrite(2)}
@@ -560,6 +562,19 @@ EXTRA_TASKS: list[dict[str, Any]] = [
             "group_by": "related",
             "tool": "freebayes",
             "freebayes": {"num_jobs": 2},
+        },
+    },
+    {
+        "step": "variant_calling",
+        "name": "variant_calling_varlociraptor_germline",
+        "config": {
+            "depends_on": {
+                "alignments": "ngs_mapping_bwa",
+                "reference": "genome",
+                "candidates": "variant_calling_freebayes_germline",
+            },
+            "tool": "varlociraptor",
+            "varlociraptor": {"scenario": "germline", "num_jobs": 2},
         },
     },
     {

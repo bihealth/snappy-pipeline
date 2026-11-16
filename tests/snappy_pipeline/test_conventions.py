@@ -201,6 +201,7 @@ DEPENDS_ON_KEYS = {
     "combined_variants",
     "annotated_variants",
     "phased_variants",
+    "candidates",
     "copy_number",
     "structural_variants",
     "fusions",
@@ -684,6 +685,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "purecn/prepare",
             "pvactools/junction",
             "scramble/cluster",
+            "varlociraptor/alignment_properties",
         ),
         "the tool section depends on the prediction wildcard": (
             "pvactools/netchop",
