@@ -99,7 +99,7 @@ def main(fai_path, ignore_contigs, padding, output_regions):
                 contig_length = contigs[contig]
                 # BED format is 0 based, end exclusive
                 padded_start = max(start - padding, 0)
-                padded_end = min(end + padding + 1, contig_length)
+                padded_end = min(end + padding, contig_length)
                 print(f"{contig}\t{padded_start}\t{padded_end}", file=f)
 
 
