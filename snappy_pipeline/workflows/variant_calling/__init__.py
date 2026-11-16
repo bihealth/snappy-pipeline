@@ -39,7 +39,8 @@ The ``tool`` field selects the caller.
     ``germline``
         The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the task inherits from them, in any constellation (trios, siblings, several generations, uncles and cousins with their parents).
         The events are ``present`` (a member carries the variant) and ``denovo`` (a child carries a variant that its parents do not), which ``present`` excludes; without a member with both parents in the task, ``denovo`` is the impossible event, so one FDR control over ``present`` and ``denovo`` fits every pedigree.
-        A member with a parent outside the task (only one parent sequenced, or a parent that ``library_selection`` drops) is an error, since varlociraptor models inheritance from both parents only: take both parents into the task or give a ``template``.
+        An unsequenced relative that connects members (a parent of two sequenced siblings, the grandparents of cousins, the other parent of a child with one sequenced parent) joins the scenario as a sample without observations, named after the donor, so inheritance flows through it and the posteriors integrate over its genotype; the VCF holds the observed libraries only.
+        A member with a sequenced parent outside the task (one that ``library_selection`` drops) is an error, since varlociraptor models inheritance from both parents only: take both parents into the task or give a ``template``.
         Libraries without a pedigree (``group_by: library``) are called alone.
 
     ``somatic``
@@ -51,7 +52,7 @@ The ``tool`` field selects the caller.
     An FFPE library (sample sheet custom field ``isFfpe``, ``Y`` or ``N``) gets varlociraptor's model of the artifacts of an FFPE fragment (``fragment_end_bias``) in both presets.
     The samples of the scenario are the library names, and so are the samples of the VCF, which carries ``GT`` from ``varlociraptor genotype``.
     The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set: chain a ``variant_filtration`` task with ``tool: varlociraptor`` (FDR control on the events of interest) before any consumer.
-    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``matched_normal_lib`` and the sheet's other columns), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
+    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``matched_normal_lib`` and the sheet's other columns; for the germline scenario also the unsequenced connecting relatives, with ``observed: false``), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
 
 By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
 With ``group_by: library``, they call each library on its own and produce one result per library.
@@ -1133,6 +1134,56 @@ class FreebayesStepPart(ScatteredCallerStepPart):
         return {"log": "work/{library_name}/log/{library_name}.run.{scatteritem}.log"}
 
 
+def _connecting_donors(rows: dict[str, dict[str, Any]], observed: set[str]) -> set[str]:
+    """Return the unsequenced donors of a pedigree that connect observed donors: a donor with an
+    observed descendant that has an observed or connecting ancestor, that shares a child with
+    an observed or connecting co-parent, or whose children lead to observed donors on two lines.
+    The result grows until it is stable."""
+    children: dict[str, list[str]] = {}
+    for name, row in rows.items():
+        for parent in (row["father_name"], row["mother_name"]):
+            if parent in rows:
+                children.setdefault(parent, []).append(name)
+
+    def leads_to_observed(name: str) -> bool:
+        return name in observed or any(leads_to_observed(child) for child in children.get(name, []))
+
+    def ancestors(name: str):
+        for parent in (rows[name]["father_name"], rows[name]["mother_name"]):
+            if parent in rows:
+                yield parent
+                yield from ancestors(parent)
+
+    included: set[str] = set()
+    candidates = [
+        name
+        for name, row in rows.items()
+        if not row["library_name"] and name not in observed and leads_to_observed(name)
+    ]
+    while True:
+        connected = observed | included
+        added = False
+        for name in candidates:
+            if name in included:
+                continue
+            co_parents = {
+                parent
+                for child in children.get(name, [])
+                for parent in (rows[child]["father_name"], rows[child]["mother_name"])
+                if parent != name and parent in rows
+            }
+            lines = sum(leads_to_observed(child) for child in children.get(name, []))
+            if (
+                any(ancestor in connected for ancestor in ancestors(name))
+                or co_parents & connected
+                or lines >= 2
+            ):
+                included.add(name)
+                added = True
+        if not added:
+            return included
+
+
 def _builtin(value: Any) -> Any:
     """Return a library table value as a builtin: numpy scalars unwrapped, NaN as ``None``."""
     if hasattr(value, "item"):
@@ -1221,6 +1272,51 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
             key: _builtin(value) for key, value in self.parent.library_row(library_name).items()
         }
 
+    def pedigree_samples(self, library_name: str) -> list[dict[str, Any]]:
+        """The samples of the germline scenario of a pedigree: its observed members, and the
+        unsequenced donors that connect members (a parent of two sequenced children, the
+        grandparents of cousins, the other parent of a child with one sequenced parent) as
+        samples without observations, named after the donor. Parents are the sample names, or
+        ``"0"``; a sequenced parent outside the task keeps its library name, so that the preset
+        rejects it."""
+        members = self.members(library_name)
+        samples = [self.sample(name) for name in members]
+        if self.parent.effective_group_by != "related":
+            return samples
+        donors = self.parent.pedigree_donors(library_name)
+        if donors.empty:
+            return samples
+        rows = {row["donor_name"]: row for row in donors.to_dict("records")}
+        by_library = {
+            row["library_name"]: name for name, row in rows.items() if row["library_name"]
+        }
+        observed = {by_library[name] for name in members if name in by_library}
+        included = _connecting_donors(rows, observed)
+
+        def parent_name(donor: str) -> str:
+            if donor in observed or donor not in rows:
+                return rows[donor]["library_name"] if donor in rows else "0"
+            if donor in included:
+                return donor
+            return rows[donor]["library_name"] or "0"
+
+        for sample in samples:
+            donor = by_library.get(sample["library_name"])
+            if donor is not None:
+                sample["father_name"] = parent_name(rows[donor]["father_name"])
+                sample["mother_name"] = parent_name(rows[donor]["mother_name"])
+        for donor in sorted(included):
+            samples.append(
+                {
+                    "library_name": donor,
+                    "sex": rows[donor]["sex"],
+                    "father_name": parent_name(rows[donor]["father_name"]),
+                    "mother_name": parent_name(rows[donor]["mother_name"]),
+                    "observed": False,
+                }
+            )
+        return samples
+
     def purity(self, library_name: str) -> float | None:
         """The tumor purity of a library from the sample sheet column ``purity``, or ``None``"""
         value = self.sample(library_name).get("purity")
@@ -1250,7 +1346,11 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         purity = self.purity(library_name) if somatic else None
         if cfg.template:
             settings = {"species": cfg.species.model_dump(), "purity": purity}
-            samples = [self.sample(name) for name in members]
+            samples = (
+                self.pedigree_samples(library_name)
+                if not somatic
+                else [self.sample(name) for name in members]
+            )
             scenario = render_template(
                 Path(cfg.template).read_text(), samples, library_name, settings
             )
@@ -1267,8 +1367,9 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
             ffpe = frozenset(name for name in members if is_ffpe(self.sample(name).get("is_ffpe")))
             scenario = somatic_scenario(library_name, normal, purity, ffpe)
         else:
-            samples = [self.sample(name) for name in members]
-            scenario = germline_scenario(samples, cfg.species.model_dump())
+            scenario = germline_scenario(
+                self.pedigree_samples(library_name), cfg.species.model_dump()
+            )
         check_scenario(scenario, members)
         return scenario
 

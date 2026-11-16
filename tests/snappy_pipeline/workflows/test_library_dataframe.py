@@ -1147,3 +1147,46 @@ class TestLibraryRequirement:
         df = self._cancer_df(cancer_sheet_tsv)
         result = select_libraries(df, None, "", "extraction_type == 'rna'")
         assert len(result) == (df["extraction_type"] == "rna").sum() > 0
+
+
+# ---------------------------------------------------------------------------
+# Donor table
+# ---------------------------------------------------------------------------
+
+
+def test_the_donor_table_lists_unsequenced_donors_with_their_parents():
+    from snappy_pipeline.workflows.abstract import build_donor_dataframe
+
+    # P002, the father, has no library
+    tsv = textwrap.dedent(
+        """
+        [Custom Fields]
+        key\tannotatedEntity\tdocs\ttype\tminimum\tmaximum\tunit\tchoices\tpattern
+        libraryKit\tngsLibrary\tEnrichment kit\tstring\t.\t.\t.\t.\t.
+
+        [Data]
+        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tlibraryKit\tfolderName\thpoTerms
+        P001\tP002\tP003\tF\tY\tWGS\tKit\tP001\t.
+        P002\t.\t.\tM\tN\t.\t.\t.\t.
+        P003\t.\t.\tF\tN\tWGS\tKit\tP003\t.
+        """
+    ).lstrip()
+    from biomedsheets.naming import NAMING_ONLY_SECONDARY_ID
+
+    sheet = read_germline_tsv_sheet(io.StringIO(tsv), naming_scheme=NAMING_ONLY_SECONDARY_ID)
+
+    donors = build_donor_dataframe([_make_data_set_info()], [sheet])
+
+    rows = donors.set_index("donor_name").to_dict("index")
+    assert rows["P001"]["library_name"] == "P001-N1-DNA1-WGS1"
+    assert (rows["P001"]["father_name"], rows["P001"]["mother_name"]) == ("P002", "P003")
+    assert rows["P002"] == {
+        "father_name": "0",
+        "mother_name": "0",
+        "sex": "male",
+        "library_name": "",
+        "pedigree": "P001-N1-DNA1-WGS1",
+        "data_set": "first",
+        "is_background": False,
+    }
+    assert rows["P003"]["pedigree"] == "P001-N1-DNA1-WGS1"

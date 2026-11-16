@@ -789,6 +789,7 @@ class BaseStep:
         self.sub_steps: dict[str, BaseStepPart] = {}
         self._library_dataframes = {}
         self._primary_dna_libraries = {}
+        self._donor_tables = {}
         self.data_set_infos = list(self._load_data_set_infos())
         self.sheets = [info.sheet for info in self.data_set_infos]
 
@@ -1068,6 +1069,17 @@ class BaseStep:
         if pedigree.empty:
             raise KeyError(library_name)
         return pedigree.iloc[0]
+
+    def pedigree_donors(self, index_library: str, include_background: bool = True):
+        """Return the donor table rows of the pedigree of ``index_library``: every donor of the
+        pedigree, sequenced or not, with its parents as donor names, its sex and its DNA
+        library (``""`` without one); see :func:`build_donor_dataframe`."""
+        if include_background not in self._donor_tables:
+            self._donor_tables[include_background] = build_donor_dataframe(
+                self.data_set_infos, self.sheets, include_background=include_background
+            )
+        donors = self._donor_tables[include_background]
+        return donors[donors["pedigree"] == index_library]
 
     def children_with_both_parents(self) -> list[str]:
         """Return the primary DNA libraries whose father and mother both have one."""
@@ -1990,6 +2002,70 @@ def build_library_dataframe(
     if relationships:
         df = resolve_relationships(df, relationships)
     return df
+
+
+#: The columns of the donor table of :func:`build_donor_dataframe`
+_DONOR_COLUMNS = [
+    "donor_name",
+    "father_name",
+    "mother_name",
+    "sex",
+    "library_name",
+    "pedigree",
+    "data_set",
+    "is_background",
+]
+
+
+def _donor_name(donor) -> str:
+    """The name of a donor as the library table names it: that of its bio entity."""
+    return getattr(getattr(donor, "bio_entity", None), "name", None) or donor.name
+
+
+def build_donor_dataframe(data_set_infos, sheets, include_background=False):
+    """Build a DataFrame with one row per donor of the germline sample sheets, sequenced or
+    not: the parents as donor names (``"0"`` for none), ``sex``, the donor's primary DNA
+    library (``""`` without one) and ``pedigree``, the index library of its pedigree. Cancer
+    sheets have no rows: their donors are all sequenced."""
+    import pandas as pd
+    from biomedsheets.shortcuts import GermlineCaseSheet
+
+    rows: list[dict] = []
+    for info, raw_sheet in zip(data_set_infos, sheets):
+        if info.is_background and not include_background:
+            continue
+        sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
+        if sheet_type == "matched_cancer" or raw_sheet is None:
+            continue
+        germline_sheet = GermlineCaseSheet(raw_sheet, **(info.pedigree_field_kwargs or {}))
+        for pedigree in germline_sheet.cohort.pedigrees:
+            index = pedigree.index
+            index_library = (
+                index.dna_ngs_library.name if index and index.dna_ngs_library else "unknown"
+            )
+            for donor in pedigree.donors:
+                parents = []
+                for pk in (donor.father_pk, donor.mother_pk):
+                    parent = pedigree.pk_to_donor.get(str(pk)) if pk is not None else None
+                    parents.append(_donor_name(parent) if parent else "0")
+                sex = (
+                    donor.extra_infos.get("sex", "unknown")
+                    if hasattr(donor, "extra_infos")
+                    else "unknown"
+                )
+                rows.append(
+                    {
+                        "donor_name": _donor_name(donor),
+                        "father_name": parents[0],
+                        "mother_name": parents[1],
+                        "sex": sex if sex in ("male", "female") else "unknown",
+                        "library_name": donor.dna_ngs_library.name if donor.dna_ngs_library else "",
+                        "pedigree": index_library,
+                        "data_set": info.name,
+                        "is_background": info.is_background,
+                    }
+                )
+    return pd.DataFrame(rows, columns=_DONOR_COLUMNS)
 
 
 def resolve_relationships(df, relationships: dict):

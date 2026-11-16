@@ -75,7 +75,9 @@ def test_the_germline_preset_of_a_trio_has_mendelian_inheritance_and_a_denovo_ev
     assert scenario["samples"]["mother-DNA1"] == {"sex": "female"}
     assert scenario["events"] == {
         "denovo": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0",
-        "present": "!($denovo | $absent)",
+        "present": (
+            "(child-DNA1:]0.0,1.0] | father-DNA1:]0.0,1.0] | mother-DNA1:]0.0,1.0]) & !$denovo"
+        ),
     }
 
 
@@ -229,6 +231,7 @@ def _part(group_by="library", libraries=TUMORS, **settings):
         library_row=lambda name: ROWS[name],
         get_upstream_paths=_upstream,
         reference_inputs=lambda: {"reference": "ref.fa"},
+        pedigree_donors=lambda index: pd.DataFrame(),
     )
     part._scenarios = {}
     return part
@@ -515,3 +518,143 @@ def test_sv_candidates_give_sv_calls():
     assert produced == (
         DataSignature(DataType.VARIANTS, frozenset({"germline", "sv", "varlociraptor"})),
     )
+
+
+# --- unsequenced relatives -----------------------------------------------------------------
+
+
+def _donors(*rows):
+    """A donor table: (donor, father, mother, sex, library)"""
+    return pd.DataFrame(
+        [
+            {
+                "donor_name": donor,
+                "father_name": father,
+                "mother_name": mother,
+                "sex": sex,
+                "library_name": library,
+                "pedigree": "index",
+            }
+            for donor, father, mother, sex, library in rows
+        ]
+    )
+
+
+def _pedigree_part(donors, members):
+    part = _part("related", scenario="germline")
+    part.parent.pedigree_donors = lambda index: donors
+    rows = {
+        row["library_name"]: _row(row["library_name"], row["sex"])
+        for row in donors.to_dict("records")
+        if row["library_name"]
+    }
+    part.parent.library_row = lambda name: rows[name]
+    part.members = lambda library_name: members
+    return part
+
+
+def test_a_sequenced_trio_adds_no_unobserved_sample():
+    donors = _donors(
+        ("child", "father", "mother", "male", "child-DNA1"),
+        ("father", "0", "0", "male", "father-DNA1"),
+        ("mother", "0", "0", "female", "mother-DNA1"),
+    )
+    part = _pedigree_part(donors, ["child-DNA1", "father-DNA1", "mother-DNA1"])
+
+    samples = part.pedigree_samples("child-DNA1")
+
+    assert [s["library_name"] for s in samples] == ["child-DNA1", "father-DNA1", "mother-DNA1"]
+    assert (samples[0]["father_name"], samples[0]["mother_name"]) == ("father-DNA1", "mother-DNA1")
+    assert all(s.get("observed", True) for s in samples)
+
+
+def test_the_unsequenced_parent_of_a_duo_joins_as_an_unobserved_sample():
+    donors = _donors(
+        ("child", "father", "mother", "male", "child-DNA1"),
+        ("father", "0", "0", "male", ""),
+        ("mother", "0", "0", "female", "mother-DNA1"),
+    )
+    part = _pedigree_part(donors, ["child-DNA1", "mother-DNA1"])
+
+    samples = part.pedigree_samples("child-DNA1")
+    scenario = germline_scenario(samples, SPECIES)
+
+    assert samples[-1] == {
+        "library_name": "father",
+        "sex": "male",
+        "father_name": "0",
+        "mother_name": "0",
+        "observed": False,
+    }
+    assert scenario["samples"]["child-DNA1"]["inheritance"] == {
+        "mendelian": {"from": ["mother-DNA1", "father"]}
+    }
+    assert scenario["samples"]["father"] == {"sex": "male"}
+    assert scenario["events"] == {
+        "denovo": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father:0.0",
+        "present": "(child-DNA1:]0.0,1.0] | mother-DNA1:]0.0,1.0]) & !$denovo",
+    }
+
+
+def test_cousins_are_linked_through_their_unsequenced_parents_and_grandparents():
+    donors = _donors(
+        ("gf", "0", "0", "male", ""),
+        ("gm", "0", "0", "female", ""),
+        ("a", "gf", "gm", "male", ""),
+        ("a_wife", "0", "0", "female", ""),
+        ("b", "gf", "gm", "female", ""),
+        ("b_husband", "0", "0", "male", ""),
+        ("c1", "a", "a_wife", "male", "c1-DNA1"),
+        ("c2", "b_husband", "b", "female", "c2-DNA1"),
+        ("stranger", "0", "0", "male", ""),
+    )
+    part = _pedigree_part(donors, ["c1-DNA1", "c2-DNA1"])
+
+    samples = part.pedigree_samples("c1-DNA1")
+
+    unobserved = sorted(s["library_name"] for s in samples if not s.get("observed", True))
+    assert unobserved == ["a", "a_wife", "b", "b_husband", "gf", "gm"]
+    by_name = {s["library_name"]: s for s in samples}
+    assert (by_name["c1-DNA1"]["father_name"], by_name["c1-DNA1"]["mother_name"]) == ("a", "a_wife")
+    assert (by_name["a"]["father_name"], by_name["a"]["mother_name"]) == ("gf", "gm")
+
+
+def test_unsequenced_parents_of_a_singleton_are_left_out():
+    donors = _donors(
+        ("child", "father", "mother", "male", "child-DNA1"),
+        ("father", "0", "0", "male", ""),
+        ("mother", "0", "0", "female", ""),
+    )
+    part = _pedigree_part(donors, ["child-DNA1"])
+
+    samples = part.pedigree_samples("child-DNA1")
+
+    assert [s["library_name"] for s in samples] == ["child-DNA1"]
+    assert (samples[0]["father_name"], samples[0]["mother_name"]) == ("0", "0")
+
+
+def test_siblings_share_their_unsequenced_parents():
+    donors = _donors(
+        ("s1", "father", "mother", "male", "s1-DNA1"),
+        ("s2", "father", "mother", "female", "s2-DNA1"),
+        ("father", "0", "0", "male", ""),
+        ("mother", "0", "0", "female", ""),
+    )
+    part = _pedigree_part(donors, ["s1-DNA1", "s2-DNA1"])
+
+    scenario = germline_scenario(part.pedigree_samples("s1-DNA1"), SPECIES)
+
+    assert set(scenario["samples"]) == {"s1-DNA1", "s2-DNA1", "father", "mother"}
+    assert scenario["events"]["denovo"].count(" | ") == 1
+
+
+def test_a_sequenced_parent_outside_the_task_is_still_rejected():
+    donors = _donors(
+        ("child", "father", "mother", "male", "child-DNA1"),
+        ("father", "0", "0", "male", "father-DNA1"),
+        ("mother", "0", "0", "female", "mother-DNA1"),
+    )
+    part = _pedigree_part(donors, ["child-DNA1", "mother-DNA1"])
+
+    with pytest.raises(ValueError, match="parents father-DNA1 and mother-DNA1"):
+        germline_scenario(part.pedigree_samples("child-DNA1"), SPECIES)

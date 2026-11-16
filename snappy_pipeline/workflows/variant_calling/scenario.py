@@ -30,17 +30,21 @@ def is_ffpe(value: Any) -> bool:
 def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) -> dict[str, Any]:
     """Return the ``germline`` preset for the library rows ``samples`` of a pedigree.
 
-    Every member is a sample with its ``sex``, or diploid everywhere when the sex is unknown; a
-    member whose parents are both members inherits from them (mendelian). The events are
-    ``present`` (a member carries the variant) and ``denovo`` (a child carries a variant that
-    its parents do not), with ``present`` excluding it. Without a member with both parents,
-    ``denovo`` is the impossible event ``false``, so one FDR control fits every pedigree.
+    Every sample has its ``sex``, or is diploid everywhere when the sex is unknown; a sample
+    whose parents are both samples inherits from them (mendelian). A sample with
+    ``observed: False`` is an unsequenced relative that connects members (its ``library_name``
+    is its donor name): it has no observations, so the posteriors integrate over its genotype,
+    and inheritance flows through it. The events are ``present`` (an observed member carries the
+    variant) and ``denovo`` (an observed child carries a variant that its parents do not), with
+    ``present`` excluding it. Without an observed member with both parents, ``denovo`` is the
+    impossible event ``false``, so one FDR control fits every pedigree.
 
     Varlociraptor models inheritance from both parents only, so a member with a parent outside
     the samples (one parent sequenced, or a parent that the task does not take) raises
     ``ValueError``: the preset would otherwise treat related libraries as unrelated.
     """
     names = [sample["library_name"] for sample in samples]
+    observed = [sample["library_name"] for sample in samples if sample.get("observed", True)]
     scenario: dict[str, Any] = {
         "species": {
             "heterozygosity": species["heterozygosity"],
@@ -65,7 +69,8 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
         present = [parent for parent in known if parent in names]
         if len(present) == 2:
             entry["inheritance"] = {"mendelian": {"from": [mother, father]}}
-            children.append((name, mother, father))
+            if name in observed:
+                children.append((name, mother, father))
         elif known:
             raise ValueError(
                 f"{name} has the parents {' and '.join(known)} in the sample sheet, but the "
@@ -74,6 +79,7 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
                 "task or give a scenario template"
             )
         scenario["samples"][name] = entry
+    carried = " | ".join(f"{name}:]0.0,1.0]" for name in observed)
     if children:
         # A formula is a conjunction, a disjunction or an atom; only the terms of a disjunction
         # may be parenthesised conjunctions
@@ -83,11 +89,11 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
         scenario["events"]["denovo"] = (
             terms[0] if len(terms) == 1 else " | ".join(f"({term})" for term in terms)
         )
-        scenario["events"]["present"] = "!($denovo | $absent)"
+        scenario["events"]["present"] = f"({carried}) & !$denovo"
     else:
-        # The literal false may not be negated, so present names the members
+        # The literal false may not be negated, so present stands alone
         scenario["events"]["denovo"] = False
-        scenario["events"]["present"] = " | ".join(f"{name}:]0.0,1.0]" for name in names)
+        scenario["events"]["present"] = carried
     return scenario
 
 
@@ -137,12 +143,19 @@ def render_template(
 
 
 def check_scenario(scenario: dict[str, Any], members: list[str]) -> None:
-    """Raise ``ValueError`` unless every observed library is a sample of the scenario."""
+    """Raise ``ValueError`` unless every observed library is a sample of the scenario and every
+    sample name is an identifier that varlociraptor accepts."""
     missing = sorted(set(members) - set(scenario["samples"]))
     if missing:
         raise ValueError(
             f"The scenario lacks the samples {', '.join(missing)}; its samples: "
             + ", ".join(scenario["samples"])
+        )
+    invalid = sorted(name for name in scenario["samples"] if not IDENTIFIER.match(name))
+    if invalid:
+        raise ValueError(
+            "varlociraptor needs sample names of letters, digits, '_', '.' and '-', unlike "
+            + ", ".join(invalid)
         )
 
 
