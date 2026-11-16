@@ -119,6 +119,40 @@ tasks:
         expression: '"modifier" not in FILTER'
 
 
+  # Varlociraptor on the tumor and its normal: candidates in the kit's targets, calls against
+  # the somatic scenario (the purity of T1 is a sheet column), FDR control on the somatic events
+  - name: candidates
+    step: variant_calling
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        kits: kits
+      tool: freebayes
+      freebayes:
+        num_jobs: 2
+
+  - name: calling_varlociraptor
+    step: variant_calling
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        candidates: candidates
+      tool: varlociraptor
+      varlociraptor:
+        scenario: somatic
+        num_jobs: 2
+
+  - name: fdr_varlociraptor
+    step: variant_filtration
+    config:
+      depends_on:
+        variants: calling_varlociraptor
+      tool: varlociraptor
+      varlociraptor:
+        events: [somatic_tumor_high, somatic_tumor_medium]
+
 data_sets:
   trbc:
     file: samplesheet.tsv

@@ -93,6 +93,52 @@ tasks:
         expression: 'QUAL > 10'
         extra_arguments: ["--backend pysam"]
 
+  # Varlociraptor on the trio: candidates per pedigree in the kit's targets, calls against the
+  # germline scenario, FDR control on present and de novo variants, then the annotation
+  - name: candidates
+    step: variant_calling
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        kits: kits
+      group_by: related
+      tool: freebayes
+      freebayes:
+        num_jobs: 2
+
+  - name: calling_varlociraptor
+    step: variant_calling
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        candidates: candidates
+      tool: varlociraptor
+      varlociraptor:
+        scenario: germline
+        num_jobs: 2
+
+  - name: fdr_varlociraptor
+    step: variant_filtration
+    config:
+      depends_on:
+        variants: calling_varlociraptor
+      tool: varlociraptor
+      varlociraptor:
+        events: [present, denovo]
+
+  - name: annotation_varlociraptor
+    step: variant_annotation
+    config:
+      depends_on:
+        variants: fdr_varlociraptor
+        reference: genome
+        database: mehari_db
+      tool: "mehari"
+      mehari:
+        assembly: GRCh37
+
 data_sets:
   trbc:
     file: samplesheet.tsv
