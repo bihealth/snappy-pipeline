@@ -61,65 +61,93 @@ class Vep(ToolModel):
         return self
 
 
+#: The tags of a transcript that mehari picks or restricts to
+MehariTranscriptTag = Literal[
+    "mane-select",
+    "mane-select-backport",
+    "mane-plus-clinical",
+    "mane-plus-clinical-backport",
+    "refseq-select",
+    "refseq-select-backport",
+    "ensembl-canonical",
+    "ensembl-canonical-backport",
+    "gencode-primary",
+    "gencode-primary-backport",
+    "basic",
+    "basic-backport",
+]
+
+#: A criterion of mehari's transcript ranking: a tag, or a property of the transcript
+MehariPickCriterion = Literal[
+    "mane-select",
+    "mane-select-backport",
+    "mane-plus-clinical",
+    "mane-plus-clinical-backport",
+    "refseq-select",
+    "refseq-select-backport",
+    "ensembl-canonical",
+    "ensembl-canonical-backport",
+    "gencode-primary",
+    "gencode-primary-backport",
+    "basic",
+    "basic-backport",
+    "coding",
+    "unflagged",
+    "severity",
+    "length",
+]
+
+
 class Mehari(ToolModel):
+    """``mehari annotate seqvars`` (mehari 0.51); every field is a command line option, unset
+    fields leave mehari's default"""
+
     threads: int = 1
-    """
-    Number of threads to use for annotation.
-    A sweet spot regarding trade-off between I/O and CPU-bound tasks is around 5.
-    """
+    """Number of threads to use for annotation; mehari calls 16 a good value"""
 
     assembly: str = "GRCh38"
     """Assembly to use"""
 
-    report_most_severe_consequence_by: Literal["gene", "transcript", "allele"] | None = None
+    pick: Literal["gene", "transcript", "allele"] | None = None
+    """Report only one annotation per gene, transcript or allele, chosen by ``pick_order``
+    (``--pick``); default: report every transcript"""
 
-    pick_transcript: (
-        Literal[
-            "mane-select",
-            "mane-select-backport",
-            "mane-plus-clinical",
-            "mane-plus-clinical-backport",
-            "length",
-            "ensembl-canonical",
-            "ensembl-canonical-backport",
-            "ref-seq-select",
-            "ref-seq-select-backport",
-            "gencode-primary",
-            "gencode-primary-backport",
-            "basic",
-            "basic-backport",
-        ]
-        | None
-    ) = None
-    """
-    Which kind of transcript to pick / restrict to. Default is not to pick at all.
-    Depending on `--pick-transcript-mode`, if multiple transcripts match the selection, either the first one is kept or all are kept.
-    """
+    pick_order: list[MehariPickCriterion] = []
+    """How to rank transcripts for ``pick``, ``restrict_fallback`` and the row of a gene that a
+    change contains whole (``--pick-order``); each criterion only breaks the ties left by the ones
+    before it. Empty for mehari's default: mane-select, mane-plus-clinical, refseq-select,
+    ensembl-canonical, gencode-primary, basic, coding, unflagged, severity, length"""
 
-    pick_transcript_mode: Literal["first", "all"] | None = None
-    """
-    Determines how to handle multiple transcripts. Default is to keep all.
-    When transcript picking is enabled via `--pick-transcript`, either keep the first one found or keep all that match.
-    """
+    restrict_transcripts: list[MehariTranscriptTag] = []
+    """Report only transcripts that have one of these tags (``--restrict-transcripts``); a gene
+    without such a transcript gets no annotation, unless ``restrict_fallback`` is set"""
+
+    restrict_fallback: bool | None = None
+    """Report the top-ranked transcript of a gene that has none of the ``restrict_transcripts``
+    tags, marked with the message ``INFO_RESTRICT_FALLBACK``"""
+
+    flag_pick: bool | None = None
+    """Report all annotations and mark the picked ones in the ``pick`` column, instead of
+    dropping the others"""
 
     keep_intergenic: bool | None = None
-    """
-    Whether to keep intergenic variants
-    """
+    """Whether to keep intergenic variants"""
 
     discard_utr_splice_variants: bool | None = None
-    """
-    Whether to report splice variants in UTRs
-    """
+    """Drop the splice terms of variants in UTRs"""
+
+    hgvs_parentheses: Literal["predicted", "never"] | None = None
+    """Parentheses around predicted changes, e.g. ``p.(Gly2Arg)``, as HGVS recommends:
+    ``predicted`` (every ``p.`` except ``p.?`` and ``p.Met1?``, mehari's default) or ``never``"""
 
     in_memory_reference: bool | None = None
     """Read the reference genome into memory"""
 
-    report_cdna_sequence: Literal["none", "reference", "alternative", "both"] | None = None
-    """Whether to report cDNA sequence"""
-
-    report_protein_sequence: Literal["none", "reference", "alternative", "both"] | None = None
-    """Whether to report protein sequence"""
+    plugins: list[
+        Literal["tx-sequence-ref", "tx-sequence-alt", "aa-sequence-ref", "aa-sequence-alt", "nmd"]
+    ] = []
+    """Plugins that add ``ANN`` columns (``--plugin``): the reference or alternative transcript
+    and amino acid sequences, and nonsense-mediated decay"""
 
     enable_compound_variants: bool | None = None
     """
@@ -136,3 +164,16 @@ class Mehari(ToolModel):
     - relaxed: Respects explicit phasing, but treats homozygous variants as universally phased Unphased heterozygous variants remain independent
     - ignore:  Completely ignores phasing metadata and _assumes_ all variants on the transcript are on the same haplotype
     """
+
+    compound_window_size: int | None = None
+    """Experimental: Maximum distance in bp between neighbouring variants of a compound group;
+    unlimited if not set, a good value for peptide analyses is 33"""
+
+    @model_validator(mode="after")
+    def check_option_dependencies(self):
+        """The dependencies that mehari's command line enforces, checked when the project loads."""
+        if self.restrict_fallback and not self.restrict_transcripts:
+            raise ValueError("restrict_fallback needs restrict_transcripts")
+        if self.flag_pick and not self.pick:
+            raise ValueError("flag_pick needs pick")
+        return self

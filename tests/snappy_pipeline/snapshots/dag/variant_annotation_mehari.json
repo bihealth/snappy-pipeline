@@ -261,16 +261,19 @@
    "args": {
     "config": {
      "assembly": "GRCh38",
+     "compound_window_size": null,
      "discard_utr_splice_variants": null,
      "enable_compound_variants": null,
+     "flag_pick": null,
+     "hgvs_parentheses": null,
      "in_memory_reference": null,
      "keep_intergenic": null,
      "phasing_strategy": null,
-     "pick_transcript": null,
-     "pick_transcript_mode": null,
-     "report_cdna_sequence": null,
-     "report_most_severe_consequence_by": null,
-     "report_protein_sequence": null,
+     "pick": null,
+     "pick_order": [],
+     "plugins": [],
+     "restrict_fallback": null,
+     "restrict_transcripts": [],
      "threads": 1
     },
     "extra_arguments": []

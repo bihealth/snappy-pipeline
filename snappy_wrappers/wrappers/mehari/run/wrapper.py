@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Wrapper for running Mehari variant annotation (v0.42.0+)"""
+"""Wrapper for running Mehari variant annotation (mehari 0.51)
+
+The config section's fields become command line options: ``plugins`` one ``--plugin`` per entry,
+the transcript lists comma-separated, booleans as flags, unset fields left out.
+"""
 
 from snappy_wrappers.snappy_wrapper import ShellWrapper
 
@@ -13,11 +17,12 @@ cli_args = []
 
 num_threads = snakemake.threads
 
+#: Options that take their values comma-separated, in one occurrence
+COMMA_SEPARATED = ("pick_order", "restrict_transcripts")
+
 for key, value in mehari_config.items():
-    # skip None, empty strings, and 'none' for sequence reporting
-    if value is None or value == "":
-        continue
-    if key in ("report_cdna_sequence", "report_protein_sequence") and value == "none":
+    # skip None and empty strings or lists
+    if value is None or value == "" or value == []:
         continue
 
     # convert snake_case to kebab-case
@@ -27,6 +32,11 @@ for key, value in mehari_config.items():
     if isinstance(value, bool):
         if value:  # Only append the flag if it's True
             cli_args.append(f"--{kebab_key}")
+    elif key in COMMA_SEPARATED:
+        cli_args.append(f"--{kebab_key} {','.join(value)}")
+    elif key == "plugins":
+        for item in value:
+            cli_args.append(f"--plugin {item}")
     elif isinstance(value, list):
         for item in value:
             cli_args.append(f"--{kebab_key} {item}")
