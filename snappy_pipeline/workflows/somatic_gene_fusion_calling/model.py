@@ -1,9 +1,15 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
+from snappy_pipeline.models import (
+    EnumField,
+    ReadBy,
+    RequiredBy,
+    SnappyModel,
+    SnappyStepModel,
+    ToolModel,
+)
 from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
     DataSignature,
@@ -80,16 +86,17 @@ class SomaticGeneFusionCallingDependsOn(SnappyModel):
     or ``data_sets`` to search the data sets' search paths.
     """
 
-    reference: Reference = ""
+    reference: Annotated[Reference, RequiredBy(Tool.arriba)] = ""
 
-    features: Features = ""
+    features: Annotated[Features, RequiredBy(Tool.arriba)] = ""
 
     index: Annotated[
         str,
         DataSignature(DataType.INDEX, frozenset({"star", "rna"})),
         ExpectedPathSchema(ExpectedIndex),
+        RequiredBy(Tool.arriba),
     ] = ""
-    """Needed for ``tool: arriba``: the STAR index (preferably 2.7.10 or later)"""
+    """The STAR index (preferably 2.7.10 or later)"""
 
     database: Annotated[
         str,
@@ -97,15 +104,10 @@ class SomaticGeneFusionCallingDependsOn(SnappyModel):
         ExpectedPathSchema.by_tool(
             arriba=ExpectedArribaDatabase, star_fusion=ExpectedStarFusionDatabase
         ),
+        RequiredBy(Tool.star_fusion),
+        ReadBy(Tool.arriba),
     ] = ""
-    """The database of the task's tool: optional for ``tool: arriba``, needed for
-    ``tool: star_fusion``"""
-
-
-TOOL_DEPENDENCIES = {
-    Tool.arriba: ("reference", "features", "index"),
-    Tool.star_fusion: ("database",),
-}
+    """The database of the task's tool"""
 
 
 class SomaticGeneFusionCalling(SnappyStepModel):
@@ -116,8 +118,3 @@ class SomaticGeneFusionCalling(SnappyStepModel):
     arriba: Arriba | None = None
 
     star_fusion: StarFusion | None = None
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

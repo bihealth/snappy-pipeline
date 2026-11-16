@@ -1,10 +1,10 @@
 import enum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
-from snappy_pipeline.models import ConfigPath, ContainerImage
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
+from snappy_pipeline.models import ConfigPath, ContainerImage, ReadBy, RequiredBy
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.models.cnvkit import PanelOfNormals as CnvKit
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
@@ -121,56 +121,48 @@ class PanelOfNormalsDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
+        RequiredBy(Tool.mutect2, Tool.cnvkit, Tool.purecn),
     ] = ""
 
     panel_of_normals: Annotated[
         str,
         DataSignature(DataType.MODELS, frozenset({"pon", "mutect2"})),
         ExpectedPathSchema(ExpectedGenomicsDb),
+        RequiredBy(Tool.purecn),
     ] = ""
     """
-    Required when ``tool: purecn``.
-    Must name the upstream ``panel_of_normals`` task that was run with ``tool: mutect2``
-    to produce the Mutect2 genomicsDB used by PureCN's NormalDB.R step.
+    A ``panel_of_normals`` task with ``tool: mutect2``, whose genomicsDB PureCN's NormalDB.R
+    reads
     """
 
     access: Annotated[
         str,
         DataSignature(DataType.RAW, frozenset({"access"})),
         ExpectedPathSchema(ExpectedAccess),
+        ReadBy(Tool.cnvkit),
     ] = ""
     """
-    Optional for ``tool: cnvkit``: the accessible regions.
-    Names a ``panel_of_normals`` task with ``tool: access``, or an ``external_data`` task
-    that produces ``{type: raw, tags: [access]}`` with the key ``access``.
+    The accessible regions: a ``panel_of_normals`` task with ``tool: access``, or an
+    ``external_data`` task that produces ``{type: raw, tags: [access]}`` with the key ``access``
     """
 
-    reference: Reference = ""
+    reference: Reference
 
-    germline_resource: GermlineResource = ""
-    """Required for ``tool: mutect2``: population allele frequencies (af-only gnomAD VCF)"""
+    germline_resource: Annotated[GermlineResource, RequiredBy(Tool.mutect2)] = ""
+    """Population allele frequencies (af-only gnomAD VCF)"""
 
-    kits: Kits = ""
+    kits: Annotated[Kits, RequiredBy(Tool.purecn), ReadBy(Tool.cnvkit)] = ""
     """
-    Required for ``tool: purecn``: the baits of the kit of the normals are the bait regions
-    (MergedProbes for Agilent SureSelect, recommended by the PureCN author).
-    Optional for ``tool: cnvkit``: the baits are the targets of the exome panel;
-    without it, the panel is built for whole genome data.
+    For ``purecn``, the baits of the kit of the normals are the bait regions (MergedProbes for
+    Agilent SureSelect, recommended by the PureCN author).
+    For ``cnvkit``, the baits are the targets of the exome panel; without kits, the panel is
+    built for whole genome data.
     All normals must be targeted libraries (WES or Panel_seq) of one kit.
     """
 
 
-#: The ``depends_on`` fields each tool reads; see also ``validate_purecn_dependencies``.
-TOOL_DEPENDENCIES = {
-    Tool.access: ("reference",),
-    Tool.mutect2: ("alignments", "reference", "germline_resource"),
-    Tool.cnvkit: ("alignments", "reference"),
-    Tool.purecn: ("alignments", "reference", "kits"),
-}
-
-
 class PanelOfNormals(SnappyStepModel):
-    depends_on: PanelOfNormalsDependsOn = Field(default_factory=PanelOfNormalsDependsOn)
+    depends_on: PanelOfNormalsDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]
 
@@ -205,26 +197,3 @@ class PanelOfNormals(SnappyStepModel):
     access: Access = Access()
 
     purecn: PureCn | None = None
-
-    @model_validator(mode="after")
-    def validate_purecn_dependencies(self) -> "PanelOfNormals":
-        """Enforce the explicit dependency: purecn requires a prior mutect2 panel-of-normals task.
-
-        The purecn PON build needs the Mutect2 genomicsDB produced by a preceding
-        ``panel_of_normals`` task with ``tool: mutect2``.  This dependency must be
-        expressed via ``depends_on.panel_of_normals`` so that Snakemake can track the
-        genomicsDB tar.gz as a proper input file rather than a bare config path.
-        """
-        if self.tool == Tool.purecn:
-            if not self.depends_on.panel_of_normals:
-                raise ValueError(
-                    "depends_on.panel_of_normals must be set when tool='purecn'; "
-                    "name the upstream panel_of_normals task that ran with tool='mutect2' "
-                    "to produce the Mutect2 genomicsDB required by PureCN"
-                )
-        return self
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

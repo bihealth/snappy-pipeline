@@ -7,6 +7,7 @@ from types import MethodType, SimpleNamespace
 import pydantic
 import pytest
 
+from snappy_pipeline.models import field_readers
 from snappy_pipeline.workflows.gene_expression_quantification import (
     RNASEQC_FEATURES_SIGNATURE,
     FeatureCountsStepPart,
@@ -17,7 +18,6 @@ from snappy_pipeline.workflows.gene_expression_quantification import (
 )
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     ExpectedStrandedness,
-    TOOL_DEPENDENCIES,
     Featurecounts,
     GeneExpressionQuantification,
 )
@@ -82,7 +82,8 @@ def test_qc_tools_without_strand_option_read_no_strandedness(cls):
 
     assert "decision" not in part._get_input_files_run(WILDCARDS)
     assert part._get_params_run(WILDCARDS) == {}
-    assert "strandedness" not in TOOL_DEPENDENCIES[cls.name]
+    strandedness = GeneExpressionQuantification.model_fields["depends_on"].annotation
+    assert cls.name not in field_readers(strandedness.model_fields["strandedness"])[0]
 
 
 def _tool_section(tool):

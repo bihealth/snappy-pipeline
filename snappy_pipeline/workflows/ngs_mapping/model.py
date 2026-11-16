@@ -2,15 +2,15 @@ import enum
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from snappy_pipeline.models import (
+    RequiredBy,
     SizeString,
     SnappyModel,
     SnappyStepModel,
     ToggleModel,
     ToolModel,
-    validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -53,32 +53,6 @@ class ExpectedGeneCounts(BaseModel):
     gene_counts: str
 
 
-class NgsMappingDependsOn(SnappyModel):
-    reads: Annotated[
-        str,
-        DataSignature(DataType.RAW),
-    ]
-    """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
-
-    index: Annotated[
-        str,
-        DataSignature(
-            DataType.INDEX,
-            frozenset({TOOL, ("dna", "rna")}),
-        ),
-        ExpectedPathSchema(ExpectedIndex),
-    ]
-    """Task with the index of the mapper, tagged with its tool."""
-
-    reference: Reference
-
-    features: Features = ""
-
-    exons: Exons = ""
-    """Task with a BED file of ubiquitously expressed genes with a well-defined strand; needed
-    for star, which infers the strandedness from it."""
-
-
 class Tool(StrEnum):
     bwa = "bwa"
     bwa_mem2 = "bwa_mem2"
@@ -104,6 +78,32 @@ class Tool(StrEnum):
         if self.supports_long_reads():
             tags |= {"long_read"}
         return tags
+
+
+class NgsMappingDependsOn(SnappyModel):
+    reads: Annotated[
+        str,
+        DataSignature(DataType.RAW),
+    ]
+    """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
+
+    index: Annotated[
+        str,
+        DataSignature(
+            DataType.INDEX,
+            frozenset({TOOL, ("dna", "rna")}),
+        ),
+        ExpectedPathSchema(ExpectedIndex),
+    ]
+    """Task with the index of the mapper, tagged with its tool."""
+
+    reference: Reference
+
+    features: Annotated[Features, RequiredBy(Tool.star)] = ""
+
+    exons: Annotated[Exons, RequiredBy(Tool.star)] = ""
+    """Task with a BED file of ubiquitously expressed genes with a well-defined strand, from which
+    STAR infers the strandedness"""
 
 
 class BamCollectDoc(ToggleModel, ToolModel):
@@ -220,9 +220,6 @@ class Minimap2(ToolModel):
     """Memory per thread of ``samtools sort`` (``-m``)"""
 
 
-TOOL_DEPENDENCIES = {Tool.star: ("features", "exons")}
-
-
 class NgsMapping(SnappyStepModel):
     bam_intermediate = True
 
@@ -249,8 +246,3 @@ class NgsMapping(SnappyStepModel):
     strandedness: Strandedness = Strandedness()
 
     minimap2: Minimap2 | None = None
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

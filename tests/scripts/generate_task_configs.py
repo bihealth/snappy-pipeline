@@ -20,6 +20,7 @@ from typing import Any, Literal, get_args, get_origin
 import pydantic
 import ruamel.yaml as ruamel_yaml
 
+from snappy_pipeline.models import field_readers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
 yaml = ruamel_yaml.YAML()
@@ -662,14 +663,8 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
         if upstream:
             depends_on[field] = upstream
 
-    # Expression quantifiers read the strandedness decision of the strandedness task.
-    if step_name == "gene_expression_quantification" and tool in (
-        "featurecounts",
-        "dupradar",
-        "duplication",
-        "rnaseqc",
-        "stats",
-    ):
+    # featurecounts and dupradar read the strandedness decision of the strandedness task.
+    if step_name == "gene_expression_quantification" and tool in ("featurecounts", "dupradar"):
         depends_on["strandedness"] = "gene_expression_quantification_strandedness"
 
     # arcasHLA types RNA, which only the STAR mapping provides.
@@ -681,8 +676,8 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
         depends_on["index"] = f"reference_index_{tool}"
 
     # The purecn panel of normals builds on the mutect2 one, the cnvkit one uses the access regions.
-    # Only purecn reads kits; the cnvkit panel stays whole genome.
-    if step_name == "panel_of_normals" and tool != "purecn":
+    # The cnvkit panel stays whole genome, as somatic_wgs_cnv_calling needs it.
+    if step_name == "panel_of_normals" and tool == "cnvkit":
         depends_on.pop("kits", None)
     if step_name == "panel_of_normals" and tool == "purecn":
         depends_on["panel_of_normals"] = f"{step_name}_mutect2"
@@ -698,12 +693,9 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
     if database and "database" in dependency_fields(WORKFLOW_REGISTRY[step_name]):
         depends_on["database"] = database
 
-    # Read-backed phasing refines the result of phasing by transmission. The pedigree tools read
-    # germline variants, the tumor tool the combined variants of the tumor libraries.
+    # Read-backed phasing refines the result of phasing by transmission.
     if step_name == "variant_phasing" and tool == "gatk_read_backed_phasing":
         depends_on["variants"] = "variant_phasing_gatk_phase_by_transmission"
-    if step_name == "variant_phasing":
-        depends_on.pop("variants" if tool.endswith("_tumor") else "combined_variants")
 
     # Mutect2 calling filters with the mutect2 panel of normals.
     if step_name == "variant_calling" and tool == "mutect2":
@@ -723,6 +715,13 @@ def wire_dependencies(step_name: str, tool: str | None) -> dict[str, str | list[
         depends_on["panel_of_normals"] = f"panel_of_normals_{tool}"
     if step_name == "somatic_wgs_cnv_calling" and tool == "cnvkit":
         depends_on["panel_of_normals"] = "panel_of_normals_cnvkit"
+
+    # Fields that only other tools of the step read
+    dep_field = WORKFLOW_REGISTRY[step_name].config_model_class.model_fields.get("depends_on")
+    for field, info in dep_field.annotation.model_fields.items() if dep_field else ():
+        readers, _ = field_readers(info)
+        if readers and tool not in readers:
+            depends_on.pop(field, None)
     return depends_on
 
 

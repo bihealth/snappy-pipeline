@@ -114,6 +114,7 @@ import importlib
 import re
 import textwrap
 
+from snappy_pipeline.models import field_readers
 from snappy_pipeline.orchestration import ON_HOLD_STEPS
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract.protocol import DataSignature
@@ -122,7 +123,8 @@ STEP_DIR = "step"
 
 INPUTS_INTRO = """\
 Each key of ``depends_on`` names an upstream task.
-That task must produce the listed data type with all listed tags (``a|b``: one of them, ``-a``: not ``a``)."""
+That task must produce the listed data type with all listed tags (``a|b``: one of them, ``-a``: not ``a``).
+A key that only some tools read is an error for the other tools."""
 
 
 def _inputs_section(model_cls) -> str:
@@ -132,11 +134,18 @@ def _inputs_section(model_cls) -> str:
     rows = []
     for key, info in field.annotation.model_fields.items():
         signature = next(m for m in info.metadata if isinstance(m, DataSignature))
-        required = "yes" if info.is_required() else "no"
+        readers, required_by = field_readers(info)
+        read_by = ", ".join(f"``{tool}``" for tool in sorted(readers)) or "all"
+        if info.is_required():
+            required = "yes"
+        elif required_by:
+            required = "for " + ", ".join(f"``{tool}``" for tool in sorted(required_by))
+        else:
+            required = "no"
         description = " ".join((info.description or "").split())
-        row = f"   * - ``{key}``\n     - ``{signature}``\n     - {required}\n     - {description}"
-        rows.append(row.rstrip())
-    header = "   * - Key\n     - Requires\n     - Required\n     - Description"
+        row = f"   * - ``{key}``\n     - ``{signature}``\n     - {read_by}\n     - {required}"
+        rows.append(f"{row}\n     - {description}".rstrip())
+    header = "   * - Key\n     - Requires\n     - Read by\n     - Required\n     - Description"
     table = "\n".join([".. list-table::", "   :header-rows: 1", "", header, *rows])
     return f"Inputs\n------\n\n{INPUTS_INTRO}\n\n{table}\n"
 

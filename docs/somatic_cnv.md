@@ -162,7 +162,6 @@ tasks:
     config:
       depends_on:
         alignments: mapping
-        reference: genome
         variants: calling_for_purecn
         panel_of_normals: pon_purecn
       tool: purecn

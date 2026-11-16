@@ -1,14 +1,14 @@
 import enum
 from typing import Annotated, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from snappy_pipeline.models import (
     EnumField,
+    RequiredBy,
     SnappyModel,
     SnappyStepModel,
     ToolModel,
-    validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
     RELATED_LEVEL,
@@ -29,14 +29,6 @@ class Tool(enum.StrEnum):
 
 
 #: The ``depends_on`` fields each tool reads
-TOOL_DEPENDENCIES = {
-    Tool.gatk_phase_by_transmission: ("variants",),
-    Tool.gatk_read_backed_phasing: ("variants",),
-    Tool.gatk_read_backed_phasing_tumor: ("combined_variants",),
-    Tool.whatshap_tumor: ("combined_variants",),
-}
-
-
 class GatkReadBackedPhasing(ToolModel):
     phase_quality_threshold: float = 20.0
     """quality threshold for phasing"""
@@ -81,23 +73,27 @@ class VariantPhasingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS),
         ExpectedPathSchema(ExpectedAlignments),
-    ]
+        RequiredBy(
+            Tool.gatk_read_backed_phasing, Tool.gatk_read_backed_phasing_tumor, Tool.whatshap_tumor
+        ),
+    ] = ""
     variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"germline", ("annotated", "phased")})),
         RELATED_LEVEL,
         ExpectedPathSchema(ExpectedAnnotatedVariants),
+        RequiredBy(Tool.gatk_phase_by_transmission, Tool.gatk_read_backed_phasing),
     ] = ""
-    """Annotated germline variants, or the phased variants of a ``gatk_phase_by_transmission`` task
-    (pedigree tools)"""
+    """Annotated germline variants, or the phased variants of a ``gatk_phase_by_transmission``
+    task"""
 
     combined_variants: Annotated[
         str,
         DataSignature(DataType.VARIANTS, frozenset({"combined"})),
         ExpectedPathSchema(ExpectedCombinedVariants),
+        RequiredBy(Tool.gatk_read_backed_phasing_tumor, Tool.whatshap_tumor),
     ] = ""
-    """The combined somatic and germline variants of the tumor libraries
-    (``gatk_read_backed_phasing_tumor``, ``whatshap_tumor``)"""
+    """The combined somatic and germline variants of the tumor libraries"""
 
     reference: Reference
 
@@ -117,8 +113,3 @@ class VariantPhasing(SnappyStepModel):
     gatk_read_backed_phasing_tumor: ToolModel = ToolModel()
 
     whatshap_tumor: ToolModel = ToolModel()
-
-    @model_validator(mode="after")
-    def ensure_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

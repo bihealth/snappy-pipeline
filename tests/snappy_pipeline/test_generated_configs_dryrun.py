@@ -14,6 +14,8 @@ from typing import Any
 import pytest
 import yaml
 
+from snappy_pipeline.models import field_readers
+from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from tests.scripts.generate_task_configs import build_all_tasks, load_yaml
 
 
@@ -284,6 +286,58 @@ def _write_closure_project(
     assert isinstance(reloaded, dict), f"Generated closure config is not a mapping for {task_name}"
 
 
+def _upstream_roots(upstream: str, tasks: dict[str, Any], project_dir: Path) -> list[str]:
+    """Return the path prefixes of the files that a task reads from ``upstream``."""
+    if upstream == "data_sets":
+        return [str(project_dir / "raw")]
+    if tasks[upstream]["step"] != "external_data":
+        return [f"tasks/{upstream}/"]
+    config = tasks[upstream]["config"]
+    paths = list(config.get("search_paths", []))
+    for value in config.get("files", {}).values():
+        paths += value if isinstance(value, list) else [value]
+    for kit in config.get("kits", {}).values():
+        paths += kit.values()
+    return [os.path.normpath(os.path.join(project_dir, path)) for path in paths]
+
+
+#: Required ``depends_on`` fields that a task reads where the DAG of ``snappy run --task`` does not
+#: show it, by task and field, with the reason
+READ_OUTSIDE_THE_DAG = {
+    ("ngs_mapping_bwa_mem2", "reference"): "load_project() checks that the index is of this genome",
+    ("ngs_mapping_bwa_mem3", "reference"): "load_project() checks that the index is of this genome",
+    ("sv_calling_targeted_gcnv", "alignments"): "read after the checkpoint of the gCNV shards",
+    ("sv_calling_wgs_gcnv", "alignments"): "read after the checkpoint of the gCNV shards",
+}
+
+
+def _unread_dependencies(task_name: str, project_dir: Path, jobs: list[dict]) -> list[str]:
+    """Return the required or tool-specific (``ReadBy``, ``RequiredBy``) ``depends_on`` fields of
+    ``task_name`` that no job of the task reads; optional fields that a setting reads are
+    skipped."""
+    config = yaml.safe_load((project_dir / "config.yaml").read_text(encoding="utf-8"))
+    tasks = {task["name"]: task for task in config["tasks"]}
+    # The rules of the task, not those of another task whose name starts like this one
+    others = [f"{name}_" for name in tasks if name.startswith(f"{task_name}_")]
+    own = [job for job in jobs if job["rule"].startswith(f"{task_name}_")]
+    own = [job for job in own if not any(job["rule"].startswith(other) for other in others)]
+    inputs = [path for job in own for path in job["input"]]
+    model = WORKFLOW_REGISTRY[tasks[task_name]["step"]].config_model_class
+    if "depends_on" not in model.model_fields:
+        return []
+    fields = model.model_fields["depends_on"].annotation.model_fields
+    unread = []
+    for field, value in tasks[task_name]["config"].get("depends_on", {}).items():
+        checked = fields[field].is_required() or field_readers(fields[field])[0]
+        if not checked or (task_name, field) in READ_OUTSIDE_THE_DAG:
+            continue
+        for upstream in value if isinstance(value, list) else [value]:
+            roots = _upstream_roots(upstream, tasks, project_dir)
+            if not any(path.startswith(root) for path in inputs for root in roots):
+                unread.append(f"{field}: {upstream}")
+    return unread
+
+
 @pytest.mark.integration
 @pytest.mark.slow
 @pytest.mark.parametrize(
@@ -323,6 +377,12 @@ def test_generated_config_task_closure_passes(
         f"building the DAG failed for {task_name}\nstdout/stderr excerpt:\n{dump_output}"
     )
     actual = dump_path.read_text(encoding="utf-8")
+    unread = (
+        []
+        if task_name in EXPECTED_EMPTY
+        else _unread_dependencies(task_name, tmp_path, json.loads(actual))
+    )
+    assert not unread, f"{task_name} sets depends_on fields that none of its jobs reads: {unread}"
     targets = next(job["input"] for job in json.loads(actual) if job["rule"] == "all")
     if task_name in EXPECTED_EMPTY:
         assert not targets, f"{task_name} now targets files; remove it from EXPECTED_EMPTY"

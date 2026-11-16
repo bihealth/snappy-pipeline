@@ -14,6 +14,7 @@ from tests.snappy_pipeline.test_orchestration import (
     _annotation,
     _calling,
     _config,
+    _dkfz,
     _filtration,
     _mapping,
 )
@@ -130,7 +131,9 @@ def test_get_upstream_paths_namespaces_and_wraps_in_schema():
 
 
 def test_get_upstream_paths_keeps_wildcards_without_identifiers():
-    paths = _filtration_step(alignments="mapping").get_upstream_paths("alignments")
+    tasks = (_mapping(), _calling(), _annotation(), _dkfz("filtration"))
+    step = _step(load_project(_config(*tasks), WORK_DIR), "filtration")
+    paths = step.get_upstream_paths("alignments")
 
     assert paths == ExpectedAlignments(
         bam="tasks/mapping/work/{library_name}/out/{library_name}.bam",

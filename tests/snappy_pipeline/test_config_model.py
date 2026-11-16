@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Tests for the project configuration model ``ConfigModel`` and shared model validators."""
 
-from types import SimpleNamespace
+from typing import Annotated
 
 import pydantic
 import pytest
 
-from snappy_pipeline.models import validators
+from snappy_pipeline.models import ReadBy, RequiredBy, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflow_model import ConfigModel, DataSet
 from snappy_pipeline.workflows.gene_expression_quantification.model import (
     GeneExpressionQuantification,
@@ -48,18 +48,31 @@ def test_depends_on_belongs_into_the_task_config():
         ConfigModel(**_minimal_config(tasks=[task]))
 
 
-def test_require_tool_dependencies_names_missing_fields():
-    required = {"picard": ("alignments", "reads")}
-    model = SimpleNamespace(tool="picard", depends_on=SimpleNamespace(alignments="", reads=""))
-    with pytest.raises(
-        ValueError, match="tool=picard needs depends_on.alignments and depends_on.reads"
-    ):
-        validators.require_tool_dependencies(model, required)
+class _QcDependsOn(SnappyModel):
+    reference: str
+    reads: Annotated[str, RequiredBy("fastqc")] = ""
+    dbsnp: Annotated[str, ReadBy("picard")] = ""
+    kits: Annotated[str, RequiredBy("alfred"), ReadBy("picard")] = ""
 
-    model.depends_on.alignments = model.depends_on.reads = "mapping"
-    validators.require_tool_dependencies(model, required)
-    # Tools without an entry need nothing.
-    validators.require_tool_dependencies(SimpleNamespace(tool="fastqc"), required)
+
+class _Qc(SnappyStepModel):
+    depends_on: _QcDependsOn
+    tool: str
+
+
+def test_tool_readers_require_and_reject_depends_on_fields():
+    _Qc(tool="alfred", depends_on={"reference": "genome", "kits": "kits"})
+    # picard reads kits and dbsnp if they are set
+    _Qc(tool="picard", depends_on={"reference": "genome"})
+    _Qc(tool="picard", depends_on={"reference": "genome", "dbsnp": "dbsnp", "kits": "kits"})
+
+    with pytest.raises(pydantic.ValidationError) as error:
+        _Qc(tool="fastqc", depends_on={"reference": "genome", "dbsnp": "dbsnp", "kits": "kits"})
+    # All problems of the task in one message
+    assert (
+        "tool=fastqc needs depends_on.reads; tool=fastqc does not read depends_on.dbsnp (read "
+        "only by picard) and depends_on.kits (read only by alfred, picard)"
+    ) in str(error.value)
 
 
 def test_default_config_comments_sections_named_like_depends_on_keys():

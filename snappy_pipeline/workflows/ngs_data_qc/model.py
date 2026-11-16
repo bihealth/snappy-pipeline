@@ -5,10 +5,11 @@ from pydantic import BaseModel, Field, model_validator
 
 from snappy_pipeline.models import (
     EnumField,
+    ReadBy,
+    RequiredBy,
     SnappyModel,
     SnappyStepModel,
     ToolModel,
-    validators,
 )
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -101,31 +102,19 @@ class NgsDataQcDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
+        RequiredBy(Tool.picard, Tool.ngs_chew, Tool.alfred),
     ] = ""
-    """Alignments of DNA libraries, read by ``picard``, ``ngs_chew`` and ``alfred``"""
+    """Alignments of DNA libraries"""
 
-    reads: Annotated[
-        str,
-        DataSignature(DataType.RAW),
-    ] = ""
+    reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.fastqc)] = ""
     """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
 
-    reference: Reference = ""
+    reference: Annotated[Reference, RequiredBy(Tool.picard, Tool.ngs_chew, Tool.alfred)] = ""
 
-    dbsnp: Dbsnp = ""
+    dbsnp: Annotated[Dbsnp, ReadBy(Tool.picard)] = ""
 
-    kits: Kits = ""
-    """Baits and targets of the library kits, read by ``picard`` for ``CollectHsMetrics`` and by
-    ``alfred``"""
-
-
-#: The ``depends_on`` fields each tool reads.
-TOOL_DEPENDENCIES = {
-    Tool.fastqc: ("reads",),
-    Tool.picard: ("alignments", "reference"),
-    Tool.ngs_chew: ("alignments", "reference"),
-    Tool.alfred: ("alignments", "reference", "kits"),
-}
+    kits: Annotated[Kits, RequiredBy(Tool.alfred), ReadBy(Tool.picard)] = ""
+    """Baits and targets of the library kits; ``picard`` needs them for ``CollectHsMetrics``"""
 
 
 class NgsDataQc(SnappyStepModel):
@@ -142,11 +131,6 @@ class NgsDataQc(SnappyStepModel):
     ngs_chew: NgsChew | None = None
 
     alfred: Alfred | None = None
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self
 
     @model_validator(mode="after")
     def ensure_kits_for_hs_metrics(self):

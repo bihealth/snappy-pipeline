@@ -16,7 +16,7 @@ SV_DEPENDS_ON = {"alignments": "mapping", "reference": "genome"}
 
 def test_ascat_requires_snp_loci():
     depends_on = {"alignments": "mapping", "reference": "genome"}
-    with pytest.raises(pydantic.ValidationError, match="tool=ascat needs depends_on.snp_loci"):
+    with pytest.raises(pydantic.ValidationError, match=r"depends_on.snp_loci\n  Field required"):
         SomaticPurityPloidyEstimate(tool="ascat", depends_on=depends_on)
     SomaticPurityPloidyEstimate(tool="ascat", depends_on=depends_on | {"snp_loci": "loci"})
 

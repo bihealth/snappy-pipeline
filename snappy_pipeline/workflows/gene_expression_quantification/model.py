@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel, validators
+from snappy_pipeline.models import RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -85,19 +85,6 @@ class Tool(enum.StrEnum):
     stats = "stats"
 
 
-#: The ``depends_on`` fields each tool reads. ``strandedness`` is the decision of a
-#: ``tool: strandedness`` task.
-TOOL_DEPENDENCIES = {
-    Tool.strandedness: ("alignments", "exons"),
-    Tool.featurecounts: ("alignments", "strandedness", "features"),
-    Tool.dupradar: ("alignments", "strandedness", "features"),
-    Tool.duplication: ("alignments",),
-    Tool.rnaseqc: ("alignments", "reference", "features"),
-    Tool.stats: ("alignments",),
-    Tool.salmon: ("reads", "features", "index"),
-}
-
-
 class ExpectedStrandedness(SnappyModel):
     """Consumer-driven contract: the strandedness decision (JSON) of an RNA library."""
 
@@ -109,40 +96,48 @@ class GeneExpressionQuantificationDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"rna"})),
         ExpectedPathSchema(ExpectedAlignments),
+        RequiredBy(
+            Tool.strandedness,
+            Tool.featurecounts,
+            Tool.dupradar,
+            Tool.duplication,
+            Tool.rnaseqc,
+            Tool.stats,
+        ),
     ] = ""
     """Alignments of RNA libraries, from an ``ngs_mapping`` task"""
 
-    reads: Annotated[
-        str,
-        DataSignature(DataType.RAW),
-    ] = ""
+    reads: Annotated[str, DataSignature(DataType.RAW), RequiredBy(Tool.salmon)] = ""
     """FASTQ source: ``data_sets``, an ``external_data`` task or an ``adapter_trimming`` task"""
 
     strandedness: Annotated[
         str,
         DataSignature(DataType.QC, frozenset({"strandedness"})),
         ExpectedPathSchema(ExpectedStrandedness),
+        RequiredBy(Tool.featurecounts, Tool.dupradar),
     ] = ""
     """Task of this step with ``tool: strandedness``"""
 
-    reference: Reference = ""
+    reference: Annotated[Reference, RequiredBy(Tool.rnaseqc)] = ""
 
-    features: Features = ""
+    features: Annotated[
+        Features, RequiredBy(Tool.featurecounts, Tool.dupradar, Tool.rnaseqc, Tool.salmon)
+    ] = ""
     """The gene annotation; for ``tool: rnaseqc``, a GTF that is also tagged ``rnaseqc``: RNA-SeQC
     1.1.8 needs a ``transcript_id`` in every record (no ``gene`` records) and finds rRNA by the
     GENCODE attribute ``transcript_type``"""
 
-    exons: Exons = ""
-    """Task with a BED file of transcripts with their strand in column 6; needed for
-    ``tool: strandedness``"""
+    exons: Annotated[Exons, RequiredBy(Tool.strandedness)] = ""
+    """Task with a BED file of transcripts with their strand in column 6"""
 
     index: Annotated[
         str,
         DataSignature(DataType.INDEX, frozenset({"salmon", "rna"})),
         ExpectedPathSchema(ExpectedSalmonIndex),
+        RequiredBy(Tool.salmon),
     ] = ""
-    """Needed for ``tool: salmon``: an ``external_data`` task with the prebuilt index and the
-    table that maps transcripts to genes"""
+    """An ``external_data`` task with the prebuilt index and the table that maps transcripts to
+    genes"""
 
 
 class GeneExpressionQuantification(SnappyStepModel):
@@ -168,8 +163,3 @@ class GeneExpressionQuantification(SnappyStepModel):
     stats: Stats | None = None
 
     salmon: Salmon | None = None
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

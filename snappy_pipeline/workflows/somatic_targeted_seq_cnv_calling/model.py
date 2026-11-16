@@ -1,9 +1,9 @@
 import enum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
+from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.models.cnvkit import Cnvkit
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
@@ -184,9 +184,10 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.VARIANTS, frozenset({"somatic", ("snv", "indel")})),
         ExpectedPathSchema(ExpectedSomaticVariants),
+        RequiredBy(Tool.purecn),
     ] = ""
-    """Required for ``tool: purecn``: Mutect2 calls that include the germline variants
-    (``--genotype-germline-sites true --genotype-pon-sites true``)"""
+    """Mutect2 calls that include the germline variants (``--genotype-germline-sites true
+    --genotype-pon-sites true``)"""
     alignments: Annotated[
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
@@ -196,24 +197,14 @@ class SomaticTargetedSeqCnvCallingDependsOn(SnappyModel):
         str,
         DataSignature(DataType.MODELS, frozenset({"pon", ("cnvkit", "purecn")})),
         ExpectedPathSchema(ExpectedPonPaths),
+        RequiredBy(Tool.cnvkit, Tool.purecn),
     ] = ""
     """
-    Required when ``tool: cnvkit`` or ``tool: purecn``.
-    Must name the upstream ``panel_of_normals`` task with the same ``tool``
-    (e.g. ``panel_of_normals_cnvkit`` or ``panel_of_normals_purecn``).
+    A ``panel_of_normals`` task with the same ``tool``.
     The CNVkit target and antitarget regions and the PureCN image come from this task, too.
     """
 
-    reference: Reference = ""
-
-
-#: The ``depends_on`` fields each tool reads besides ``alignments``; see also
-#: ``validate_panel_of_normals_dependency``.
-TOOL_DEPENDENCIES = {
-    Tool.cnvkit: ("reference",),
-    Tool.sequenza: ("reference",),
-    Tool.purecn: ("variants",),
-}
+    reference: Annotated[Reference, RequiredBy(Tool.cnvkit, Tool.sequenza)] = ""
 
 
 class SomaticTargetedSeqCnvCalling(SnappyStepModel):
@@ -224,25 +215,3 @@ class SomaticTargetedSeqCnvCalling(SnappyStepModel):
     cnvkit: Cnvkit | None = None
     sequenza: Sequenza | None = None
     purecn: PureCn | None = None
-
-    @model_validator(mode="after")
-    def validate_panel_of_normals_dependency(self) -> "SomaticTargetedSeqCnvCalling":
-        """Enforce explicit panel-of-normals dependency for cnvkit and purecn.
-
-        Both tools require a pre-built panel of normals.  The dependency must be
-        expressed via ``depends_on.panel_of_normals`` so that Snakemake can track
-        the PON outputs as proper input files rather than bare config paths.
-        """
-        if self.tool in (Tool.cnvkit, Tool.purecn):
-            if not self.depends_on.panel_of_normals:
-                raise ValueError(
-                    f"depends_on.panel_of_normals must be set when tool='{self.tool}'; "
-                    "name the upstream panel_of_normals task that produced the matching PON "
-                    f"(e.g. 'panel_of_normals_{self.tool}')"
-                )
-        return self
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

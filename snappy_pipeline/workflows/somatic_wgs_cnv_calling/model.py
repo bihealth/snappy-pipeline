@@ -1,9 +1,8 @@
 import enum
 from typing import Annotated, Literal
 
-from pydantic import model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
+from snappy_pipeline.models import EnumField, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.models.cnvkit import Cnvkit, Diagram, Fix
 from snappy_pipeline.workflows.abstract.protocol import (
     TOOL,
@@ -134,31 +133,24 @@ class SomaticWgsCnvCallingDependsOn(SnappyModel):
         ExpectedPathSchema(ExpectedAlignments),
     ]
 
-    reference: Reference = ""
+    reference: Annotated[Reference, RequiredBy(Tool.cnvetti, Tool.cnvkit)] = ""
 
     panel_of_normals: Annotated[
         str,
         DataSignature(DataType.MODELS, frozenset({"pon", "cnvkit"})),
         ExpectedPathSchema(ExpectedCnvkitPanelOfNormals),
+        RequiredBy(Tool.cnvkit),
     ] = ""
-    """Needed for ``tool: cnvkit``: a ``panel_of_normals`` task with ``tool: cnvkit`` in whole
-    genome mode (without ``depends_on.kits``), which also gives the target and antitarget
+    """A ``panel_of_normals`` task with ``tool: cnvkit`` in whole genome mode (without ``depends_on.kits``), which also gives the target and antitarget
     regions"""
 
     database: Annotated[
         str,
         DataSignature(DataType.DATABASE, frozenset({TOOL})),
         ExpectedPathSchema(ExpectedControlFreecDatabase),
+        RequiredBy(Tool.control_freec),
     ] = ""
-    """Needed for ``tool: control_freec``: the chromosome lengths and, optionally, the
-    mappability"""
-
-
-TOOL_DEPENDENCIES = {
-    Tool.cnvetti: ("reference",),
-    Tool.cnvkit: ("panel_of_normals", "reference"),
-    Tool.control_freec: ("database",),
-}
+    """The chromosome lengths and, optionally, the mappability"""
 
 
 class SomaticWgsCnvCalling(SnappyStepModel):
@@ -171,8 +163,3 @@ class SomaticWgsCnvCalling(SnappyStepModel):
     control_freec: ControlFreec | None = None
 
     cnvkit: CnvkitWgs | None = None
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

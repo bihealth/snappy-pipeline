@@ -98,6 +98,7 @@ It checks the task configurations, the `depends_on` links, dependency cycles and
 A task names the tasks it reads from in `config.depends_on`.
 The keys are named after the data: `reads`, `alignments`, `variants`, `reference`, `index`, `features`, `dbsnp`, `panel_of_normals` and so on.
 Each step documents the keys it accepts, see {ref}`pipeline_steps_introduction`.
+A key that the task's tool does not read is an error, so a config never names a task that it does not use.
 There are no defaults for task names.
 
 A task declares what it `produces`: a data type with tags, such as alignments of DNA.

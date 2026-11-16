@@ -3,8 +3,8 @@ from typing import Annotated
 
 from pydantic import Field, model_validator
 
-from snappy_pipeline.models import ConfigPath
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel, validators
+from snappy_pipeline.models import ConfigPath, ReadBy, RequiredBy
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -138,17 +138,15 @@ class SvCallingWgsDependsOn(SnappyModel):
         str,
         DataSignature(DataType.MODELS, frozenset({"gcnv", "wgs"})),
         ExpectedPathSchema(ExpectedGcnvModel),
+        RequiredBy(Tool.gcnv),
     ] = ""
-    """Required for ``tool: gcnv``: a ``gcnv_model`` task with ``intervals: wgs``."""
+    """A ``gcnv_model`` task with ``intervals: wgs``."""
 
-    excluded_regions: Regions = ""
+    excluded_regions: Annotated[Regions, ReadBy(Tool.delly2)] = ""
     """Task with a BED file of regions that ``delly2`` excludes"""
 
-    gene_regions: GeneRegions = ""
-    """Required for ``tool: melt``: task with the BED file of genes, such as ``add_bed_files/1KGP_Hg19/hg19.genes.bed`` of MELT"""
-
-
-TOOL_DEPENDENCIES = {Tool.gcnv: ("gcnv_model",), Tool.melt: ("gene_regions",)}
+    gene_regions: Annotated[GeneRegions, RequiredBy(Tool.melt)] = ""
+    """Task with the BED file of genes, such as ``add_bed_files/1KGP_Hg19/hg19.genes.bed`` of MELT"""
 
 
 class SvCallingWgs(SnappyStepModel):
@@ -180,9 +178,4 @@ class SvCallingWgs(SnappyStepModel):
     def ensure_tools_are_configured(self):
         if not getattr(self, self.tool):
             raise ValueError(f"Tool {self.tool} not configured")
-        return self
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
         return self

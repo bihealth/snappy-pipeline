@@ -36,11 +36,13 @@ def test_star_fusion_requires_database():
     with pytest.raises(
         pydantic.ValidationError, match="tool=star_fusion needs depends_on.database"
     ):
-        SomaticGeneFusionCalling(tool="star_fusion", star_fusion={}, depends_on=FUSION_DEPENDS_ON)
+        SomaticGeneFusionCalling(
+            tool="star_fusion", star_fusion={}, depends_on={"reads": "data_sets"}
+        )
     SomaticGeneFusionCalling(
         tool="star_fusion",
         star_fusion={},
-        depends_on=FUSION_DEPENDS_ON | {"database": "star_fusion_database"},
+        depends_on={"reads": "data_sets", "database": "star_fusion_database"},
     )
 
 

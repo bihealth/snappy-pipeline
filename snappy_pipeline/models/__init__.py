@@ -204,6 +204,34 @@ class Intermediate(enum.StrEnum):
     """The BAM file of the task and its index, which another task processes further"""
 
 
+class ReadBy:
+    """``depends_on`` field metadata: the tools of the step that read the field if it is set.
+
+    A task whose tool is not among the readers of a field (``ReadBy`` and :class:`RequiredBy`
+    together) must not set it. A field without these markers is read by every tool.
+    """
+
+    def __init__(self, *tools: str):
+        #: The tool values, such as ``"mutect2"``
+        self.tools = frozenset(str(getattr(tool, "value", tool)) for tool in tools)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({', '.join(sorted(self.tools))})"
+
+
+class RequiredBy(ReadBy):
+    """``depends_on`` field metadata: the tools of the step that need the field."""
+
+
+def field_readers(field) -> tuple[frozenset[str], frozenset[str]]:
+    """Return the tools that read a ``depends_on`` field and those that need it, from its
+    :class:`ReadBy` and :class:`RequiredBy` metadata; empty for a field that every tool reads."""
+    markers = [m for m in field.metadata if isinstance(m, ReadBy)]
+    readers = frozenset().union(*(m.tools for m in markers))
+    required = frozenset().union(*(m.tools for m in markers if isinstance(m, RequiredBy)))
+    return readers, required
+
+
 # This exists to distinguish the task config models of workflow steps from other snappy
 # specific models.
 class SnappyStepModel(SnappyModel, object):
@@ -268,6 +296,34 @@ class SnappyStepModel(SnappyModel, object):
     def validate_bam_intermediate(self):
         if Intermediate.bam in self.delete_intermediates and not self.bam_intermediate:
             raise ValueError("delete_intermediates: the step writes no BAM file to delete")
+        return self
+
+    @model_validator(mode="after")
+    def validate_tool_readers(self):
+        """Reject ``depends_on`` fields that the task's tool does not read, and require those that
+        it needs (:class:`ReadBy`, :class:`RequiredBy`)."""
+        tool = getattr(self, "tool", None)
+        depends_on = getattr(self, "depends_on", None)
+        if tool is None or depends_on is None:
+            return self
+        tool = str(getattr(tool, "value", tool))
+        missing, unread = [], []
+        for name, field in type(depends_on).model_fields.items():
+            readers, required = field_readers(field)
+            if not readers:
+                continue
+            if getattr(depends_on, name):
+                if tool not in readers:
+                    unread.append(f"depends_on.{name} (read only by {', '.join(sorted(readers))})")
+            elif tool in required:
+                missing.append(f"depends_on.{name}")
+        problems = []
+        if missing:
+            problems.append(f"tool={tool} needs {' and '.join(missing)}")
+        if unread:
+            problems.append(f"tool={tool} does not read {' and '.join(unread)}")
+        if problems:
+            raise ValueError("; ".join(problems))
         return self
 
     @model_validator(mode="after")
@@ -342,6 +398,11 @@ def _annotate_model(
             tags = []
         else:
             tags = ["REQUIRED"]
+        readers, required = field_readers(field)
+        if required:
+            tags.append(f"REQUIRED for tool: {', '.join(sorted(required))}")
+        if readers - required:
+            tags.append(f"optional for tool: {', '.join(sorted(readers - required))}")
 
         comment = tags
 

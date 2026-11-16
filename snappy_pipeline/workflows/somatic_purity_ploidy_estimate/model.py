@@ -1,9 +1,8 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator
 
-from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel, validators
+from snappy_pipeline.models import EnumField, SnappyModel, SnappyStepModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -31,19 +30,11 @@ class SomaticPurityPloidyEstimateDependsOn(SnappyModel):
         str,
         DataSignature(DataType.REGIONS, frozenset({"snp_loci"})),
         ExpectedPathSchema(ExpectedRegions),
-    ] = ""
-    """Task with the BED file of the loci for B allele frequency, required for ``tool: ascat``."""
-
-
-TOOL_DEPENDENCIES = {Tool.ascat: ("snp_loci",)}
+    ]
+    """Task with the BED file of the loci for B allele frequency"""
 
 
 class SomaticPurityPloidyEstimate(SnappyStepModel):
     depends_on: SomaticPurityPloidyEstimateDependsOn
 
     tool: Annotated[Tool, EnumField(Tool)]
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

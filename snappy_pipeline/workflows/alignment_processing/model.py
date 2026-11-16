@@ -1,9 +1,8 @@
 import enum
 from typing import Annotated
 
-from pydantic import model_validator
 
-from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel, validators
+from snappy_pipeline.models import SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     CommonVariants,
     DataSignature,
@@ -28,16 +27,13 @@ class AlignmentProcessingDependsOn(SnappyModel):
 
     reference: Reference
 
-    common_variants: CommonVariants = ""
+    common_variants: CommonVariants
     """Known variant sites, which BQSR does not count as sequencing errors (``gatk4_bqsr``)"""
 
 
 class Gatk4Bqsr(ToolModel):
     """Base quality score recalibration with GATK ``BaseRecalibrator`` and ``ApplyBQSR``;
     ``extra_arguments`` go to ``BaseRecalibrator``"""
-
-
-TOOL_DEPENDENCIES = {Tool.gatk4_bqsr: ("common_variants",)}
 
 
 class AlignmentProcessing(SnappyStepModel):
@@ -48,8 +44,3 @@ class AlignmentProcessing(SnappyStepModel):
     tool: Tool
 
     gatk4_bqsr: Gatk4Bqsr | None = None
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self

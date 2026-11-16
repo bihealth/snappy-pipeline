@@ -7,11 +7,12 @@ from pydantic import BaseModel, Field, model_validator
 from snappy_pipeline.models import (
     ConfigPath,
     EnumField,
+    ReadBy,
+    RequiredBy,
     SnappyModel,
     SnappyStepModel,
     ToggleModel,
     ToolModel,
-    validators,
 )
 from snappy_pipeline.models.gatk import GATK
 from snappy_pipeline.models.parallel import Parallel
@@ -201,35 +202,30 @@ class VariantCallingDependsOn(SnappyModel):
 
     reference: Reference
 
-    dbsnp: Dbsnp = ""
-    """Needed by the GATK callers"""
+    dbsnp: Annotated[
+        Dbsnp, RequiredBy(Tool.gatk3_hc, Tool.gatk3_ug, Tool.gatk4_hc_joint, Tool.gatk4_hc_gvcf)
+    ] = ""
 
     panel_of_normals: Annotated[
         str,
         DataSignature(DataType.MODELS, frozenset({"pon", "mutect2"})),
         ExpectedPathSchema(ExpectedVcf),
+        ReadBy(Tool.mutect2),
     ] = ""
     """
-    Optional for ``tool: mutect2``: the panel VCF that Mutect2 uses to filter recurrent
-    artefacts, from a ``panel_of_normals`` task with ``tool: mutect2`` or an ``external_data``
-    task with ``{type: models, tags: [pon, mutect2]}`` and the key ``vcf`` (GATK resource bundle:
-    ``1000g_pon.hg38.vcf.gz``)
+    The panel VCF that Mutect2 uses to filter recurrent artefacts: a ``panel_of_normals`` task
+    with ``tool: mutect2``, or an ``external_data`` task with ``{type: models, tags: [pon,
+    mutect2]}`` and the key ``vcf`` (GATK resource bundle: ``1000g_pon.hg38.vcf.gz``)
     """
 
-    germline_resource: GermlineResource = ""
-    """Optional for ``tool: mutect2``: population allele frequencies (af-only gnomAD VCF)"""
+    germline_resource: Annotated[GermlineResource, ReadBy(Tool.mutect2)] = ""
+    """Population allele frequencies (af-only gnomAD VCF)"""
 
-    common_variants: CommonVariants = ""
-    """Required for ``tool: mutect2`` with ``contamination.enabled``: common germline variants"""
+    common_variants: Annotated[CommonVariants, ReadBy(Tool.mutect2)] = ""
+    """Common germline variants; required with ``mutect2.contamination.enabled``"""
 
     kits: Kits = ""
     """Optional: restricts ``bcftools_roh`` to the targets of the (targeted) libraries' kit"""
-
-
-TOOL_DEPENDENCIES = {
-    tool: ("dbsnp",)
-    for tool in (Tool.gatk3_hc, Tool.gatk3_ug, Tool.gatk4_hc_joint, Tool.gatk4_hc_gvcf)
-}
 
 
 class VariantCalling(SnappyStepModel):
@@ -255,11 +251,6 @@ class VariantCalling(SnappyStepModel):
 
     mutect2: Mutect2 | None = None
     """Configuration for MuTect 2"""
-
-    @model_validator(mode="after")
-    def validate_tool_dependencies(self):
-        validators.require_tool_dependencies(self, TOOL_DEPENDENCIES)
-        return self
 
     @model_validator(mode="after")
     def ensure_common_variant_when_enabled(self):

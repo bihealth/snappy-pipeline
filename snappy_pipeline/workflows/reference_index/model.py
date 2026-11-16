@@ -7,6 +7,7 @@ from pydantic import (
 )
 
 from snappy_pipeline.models import (
+    ReadBy,
     SnappyModel,
     SnappyStepModel,
     ToolModel,
@@ -68,7 +69,7 @@ class ReferenceIndexDependsOn(SnappyModel):
     ]
     """Reference FASTA: a ``reference_download`` task, or an ``external_data`` task with the key ``fasta``."""
 
-    features: Features = ""
+    features: Annotated[Features, ReadBy(Tool.star)] = ""
     """Gene annotation for the STAR index."""
 
 

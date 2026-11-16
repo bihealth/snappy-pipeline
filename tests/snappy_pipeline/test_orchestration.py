@@ -398,7 +398,7 @@ def test_regions_filter_reads_any_bed_file_of_regions():
         "regions": {"action": "exclude"},
     }
     filtration = ("variant_filtration", "filtration", config)
-    with pytest.raises(pydantic.ValidationError, match="depends_on.regions is required"):
+    with pytest.raises(pydantic.ValidationError, match="tool=regions needs depends_on.regions"):
         load_project(_config(vcfs, EXONS, KITS, filtration), WORK_DIR)
 
     config["depends_on"]["regions"] = "exons"

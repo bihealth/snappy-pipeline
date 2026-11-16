@@ -228,7 +228,10 @@ A task's outputs are described by `DataSignature` objects: a data type plus tags
   Steps that need a kit for each library they process require one; steps whose per-library output is optional (the coverage report, a targeted gCNV model) skip libraries without a kit (`require=False`).
   `common_kit()` returns the one kit of a group of libraries, for jobs over several libraries such as a panel of normals.
 - A key that every tool of a step reads is required and has no default.
-  A key that only some tools read defaults to `""` and is listed per tool in the step's `TOOL_DEPENDENCIES`, which `validators.require_tool_dependencies` checks.
+  A key that only some tools read defaults to `""` and names them in its `Annotated` metadata: `RequiredBy(...)` for the tools that need it, `ReadBy(...)` for those that read it if it is set (`snappy_pipeline/models`).
+  A key may carry both, such as `kits` of `ngs_data_qc`: `RequiredBy(Tool.alfred), ReadBy(Tool.picard)`.
+  A validator of `SnappyStepModel` requires the key for the tools of `RequiredBy` and rejects it for tools that are no readers, with all problems of a task in one message.
+  Requirements on other settings, such as `contamination.enabled` of Mutect2, stay model validators of the step.
   Other optional keys default to `""`, meaning "not used".
   No key defaults to a task name.
 - `reads` names an `external_data` task, a task that writes FASTQs (such as `adapter_trimming`), or the reserved value `data_sets`, which searches each library's FASTQs below the search paths of its data set.

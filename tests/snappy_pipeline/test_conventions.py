@@ -10,9 +10,11 @@ import importlib
 import json
 import os
 import re
+import typing
 from collections.abc import Iterator
 from pathlib import Path
 
+from snappy_pipeline.models import ReadBy, field_readers
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
 REPO = Path(__file__).resolve().parents[2]
@@ -234,6 +236,45 @@ def test_tool_is_required():
         and not tool.is_required()
     ]
     assert not found, f"tool must be set explicitly, without a default: {found}"
+
+
+def _tool_values(model) -> frozenset[str]:
+    """Return the values of a step model's ``tool`` field (an enum or a ``Literal``)."""
+    tool = model.model_fields.get("tool")
+    if tool is None:
+        return frozenset()
+    if typing.get_origin(tool.annotation) is typing.Literal:
+        return frozenset(typing.get_args(tool.annotation))
+    for arg in (tool.annotation, *typing.get_args(tool.annotation)):
+        if isinstance(arg, type) and issubclass(arg, enum.Enum):
+            return frozenset(str(member.value) for member in arg)
+    return frozenset()
+
+
+def test_tool_readers_name_tools_of_the_step():
+    """``ReadBy`` and ``RequiredBy`` name tools of the step; a field that every tool needs is a
+    required field instead; a field with readers defaults to ``""``."""
+    found = []
+    for step, workflow_cls in WORKFLOW_REGISTRY.items():
+        model = workflow_cls.config_model_class
+        depends_on = model.model_fields.get("depends_on")
+        if depends_on is None:
+            continue
+        tools = _tool_values(model)
+        for name, field in depends_on.annotation.model_fields.items():
+            readers, required = field_readers(field)
+            if not readers:
+                continue
+            optional = frozenset().union(*(m.tools for m in field.metadata if type(m) is ReadBy))
+            if not readers <= tools:
+                found.append(f"{step}.{name}: {sorted(readers - tools)} are no tools of the step")
+            if required == tools:
+                found.append(f"{step}.{name}: every tool needs it, so it is a required field")
+            if optional & required:
+                found.append(f"{step}.{name}: {sorted(optional & required)} read and require it")
+            if field.is_required():
+                found.append(f"{step}.{name}: a field with readers defaults to ''")
+    assert not found, f"ReadBy and RequiredBy markers: {found}"
 
 
 def test_upstream_paths_come_from_contracts():

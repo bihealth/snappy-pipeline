@@ -4,7 +4,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from snappy_pipeline.models import ConfigPath, SnappyModel, SnappyStepModel, ToolModel
+from snappy_pipeline.models import ConfigPath, RequiredBy, SnappyModel, SnappyStepModel, ToolModel
 from snappy_pipeline.workflows.abstract.protocol import (
     DataSignature,
     DataType,
@@ -121,8 +121,6 @@ ToolLiteral = Literal[
     "ebfilter",
 ]
 
-_BAM_TOOLS: frozenset[str] = frozenset({"dkfz", "ebfilter"})
-
 
 class VariantFiltrationDependsOn(SnappyModel):
     variants: Annotated[
@@ -135,13 +133,12 @@ class VariantFiltrationDependsOn(SnappyModel):
         str,
         DataSignature(DataType.ALIGNMENTS, frozenset({"dna"})),
         ExpectedPathSchema(ExpectedAlignments),
+        RequiredBy("dkfz", "ebfilter"),
     ] = ""
-    """Needed by ``dkfz`` and ``ebfilter`` only"""
 
-    reference: Reference = ""
-    """Needed by ``dkfz`` and ``ebfilter`` only"""
+    reference: Annotated[Reference, RequiredBy("dkfz", "ebfilter")] = ""
 
-    regions: Regions = ""
+    regions: Annotated[Regions, RequiredBy("regions")] = ""
     """Task with the BED file of the ``regions`` filter"""
 
 
@@ -168,12 +165,5 @@ class VariantFiltration(SnappyStepModel):
                 raise ValueError(
                     f"Configuration block '{self.tool}:' must be provided when tool is '{self.tool}'"
                 )
-
-        if self.tool in _BAM_TOOLS and not self.depends_on.alignments:
-            raise ValueError(f"depends_on.alignments is required when tool is '{self.tool}'")
-        if self.tool in _BAM_TOOLS and not self.depends_on.reference:
-            raise ValueError(f"depends_on.reference is required when tool is '{self.tool}'")
-        if self.tool == "regions" and not self.depends_on.regions:
-            raise ValueError("depends_on.regions is required when tool is 'regions'")
 
         return self
