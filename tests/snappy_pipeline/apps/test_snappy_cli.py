@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy`` CLI subcommands, completion, and task listing."""
 
+import textwrap
+
 from click.testing import CliRunner
 
 from snappy_pipeline.apps import snappy_cli
@@ -80,3 +82,72 @@ def test_complete_task_names(germline_sheet_fake_project_ngs_mapping_fs, mocker)
     completions = snappy_cli._complete_task_names(ctx, None, "")
     names = [c.value for c in completions]
     assert "ngs_mapping" in names
+
+
+#: A mapping task reading the FASTQ files of one germline library
+CHECK_FILES_CONFIG = """
+tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: refs/genome.fa}
+  - name: bwa_index
+    step: external_data
+    config:
+      produces: {type: index, tags: [bwa, dna]}
+      files: {index: refs/genome}
+  - name: mapping
+    step: ngs_mapping
+    config:
+      depends_on: {reads: data_sets, reference: genome, index: bwa_index}
+      tool: bwa
+      bwa: {}
+data_sets:
+  first:
+    file: sheet.tsv
+    search_paths: [raw]
+    search_patterns:
+      - {left: '(?P<readgroup>.+)_R1.fastq.gz', right: '(?P<readgroup>.+)_R2.fastq.gz'}
+    type: germline_variants
+    naming_scheme: only_secondary_id
+"""
+
+CHECK_FILES_SHEET = """
+[Data]
+patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName\thpoTerms
+P001\t.\t.\tF\tY\tWGS\tP001\t.
+"""
+
+
+def test_check_files_lists_missing_files_and_libraries_without_reads(tmp_path):
+    (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG)
+    (tmp_path / "sheet.tsv").write_text(textwrap.dedent(CHECK_FILES_SHEET).lstrip())
+    (tmp_path / "raw").mkdir()
+    for name in ("genome.fa", "genome.fa.fai", "genome.dict"):
+        (tmp_path / "refs").mkdir(exist_ok=True)
+        (tmp_path / "refs" / name).touch()
+
+    result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
+    assert result.exit_code == 1
+    assert result.output.splitlines() == [
+        f"mapping\tP001-N1-DNA1-WGS1\tFound no reads of 'P001' below {tmp_path}/raw",
+    ]
+
+    (tmp_path / "raw" / "P001").mkdir()
+    for mate in ("R1", "R2"):
+        (tmp_path / "raw" / "P001" / f"P001_{mate}.fastq.gz").touch()
+    result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+
+    (tmp_path / "refs" / "genome.dict").unlink()
+    result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
+    assert result.exit_code == 1
+    assert result.output.splitlines() == [f"genome\t{tmp_path}/refs/genome.dict"]
+
+
+def test_check_files_prints_configuration_errors_without_traceback(tmp_path):
+    (tmp_path / "config.yaml").write_text(CHECK_FILES_CONFIG.replace("tool: bwa", "tool: bwa2"))
+    result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
+    assert result.exit_code == 1
+    assert result.exception is None or isinstance(result.exception, SystemExit)

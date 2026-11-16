@@ -146,7 +146,7 @@ my_project/
 
 ## Run
 
-`snappy check-files` lists the files that `config.yaml` names but that do not exist.
+`snappy check-files` lists the files that `config.yaml` names but that do not exist, and the libraries whose reads are not found below the search paths.
 Then start with a dry-run.
 It validates `config.yaml` and lists the jobs without running them.
 Everything after `--` goes to Snakemake.

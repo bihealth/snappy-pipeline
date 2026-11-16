@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 """Tests for the check, summary and warnings of the libraries in the sample sheets."""
 
+from types import SimpleNamespace
+
 import pandas as pd
 import pytest
-from snappy_pipeline.sheet_summary import check_libraries, library_summary, library_warnings
+from snappy_pipeline.sheet_summary import (
+    check_libraries,
+    library_summary,
+    library_warnings,
+    missing_reads,
+)
 
 
 def _libraries(*rows):
@@ -69,3 +76,37 @@ def test_schema_accepts_long_read_chemistry_as_library_kit():
 def test_schema_rejects_unknown_extraction_type_and_bad_kit_names(row):
     with pytest.raises(ValueError, match="'a' of data set 'first'"):
         check_libraries(_libraries(row))
+
+
+def _reads_task(source, libraries, read_groups):
+    project = SimpleNamespace(
+        task=lambda name: SimpleNamespace(step="external_data" if name == "raw" else "trimming")
+    )
+    return SimpleNamespace(
+        depends_on=SimpleNamespace(reads=source),
+        project=project,
+        libraries=pd.DataFrame({"library_name": libraries}),
+        read_groups=read_groups,
+    )
+
+
+def test_missing_reads_checks_each_library_of_a_source_once_and_skips_trimmed_reads():
+    def read_groups(library):
+        if library == "b":
+            raise ValueError("Found no reads of 'b' below /raw")
+        return ["group"]
+
+    def fail(library):
+        raise AssertionError("the trimming task finds the reads, not its reader")
+
+    tasks = {
+        "mapping": _reads_task("data_sets", ["a", "b"], read_groups),
+        "qc": _reads_task("data_sets", ["b"], read_groups),
+        "external": _reads_task("raw", ["b"], read_groups),
+        "trimmed": _reads_task("trimming", ["b"], fail),
+        "genome": SimpleNamespace(depends_on=None),
+    }
+    assert missing_reads(tasks) == [
+        ("mapping", "b", "Found no reads of 'b' below /raw"),
+        ("external", "b", "Found no reads of 'b' below /raw"),
+    ]

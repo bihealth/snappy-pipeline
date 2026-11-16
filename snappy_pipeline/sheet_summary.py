@@ -2,7 +2,9 @@
 """Check of the libraries in the sample sheets, with a summary and warnings.
 
 The main Snakefile runs :func:`print_library_summary` once per run, in the main Snakemake
-process, so cluster jobs do not repeat it.
+process, so cluster jobs do not repeat it. It ends with :func:`missing_reads`, which
+``snappy check-files`` runs as well: every library of a task that reads FASTQ files must have
+reads, or the DAG build would fail later with the first of them.
 """
 
 import os
@@ -15,6 +17,7 @@ from ruamel.yaml import YAML
 
 from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows.abstract import TARGETED_LIBRARY_TYPES, BaseStep
+from snappy_pipeline.workflows.abstract.protocol import DATA_SETS
 
 #: JSON schema of the sample sheet values of one library
 LIBRARY_SCHEMA = os.path.join(os.path.dirname(__file__), "schemas", "library.schema.yaml")
@@ -83,9 +86,36 @@ def library_warnings(df: pd.DataFrame) -> list[str]:
     return warnings
 
 
+def missing_reads(instances: Mapping[str, BaseStep]) -> list[tuple[str, str, str]]:
+    """Return ``(task, library, problem)`` for every library of the tasks that read FASTQ files
+    from the data sets or an ``external_data`` task whose reads are not found below the search
+    paths (or are found twice, or mix single-end and paired-end read groups).
+
+    A task that reads the FASTQs of another task (trimmed reads) is covered by that task. Each
+    library is checked once per source, with the first task that reads it.
+    """
+    problems = []
+    checked: set[tuple[str, str]] = set()
+    for name, task in instances.items():
+        source = getattr(task.depends_on, "reads", "")
+        if not source or (
+            source != DATA_SETS and task.project.task(source).step != "external_data"
+        ):
+            continue
+        for library in task.libraries["library_name"]:
+            if (source, library) in checked:
+                continue
+            checked.add((source, library))
+            try:
+                task.read_groups(library)
+            except ValueError as e:
+                problems.append((name, library, str(e)))
+    return problems
+
+
 def print_library_summary(instances: Mapping[str, BaseStep]) -> None:
-    """Check the libraries of the sample sheets, then print their summary and the warnings of
-    the sample sheets and of the tasks."""
+    """Check the libraries of the sample sheets, print their summary and the warnings of the
+    sample sheets and of the tasks, then raise :class:`ConfigError` if a library has no reads."""
     if not instances:
         return
     df = next(iter(instances.values())).build_library_dataframe(include_background=True)
@@ -95,3 +125,6 @@ def print_library_summary(instances: Mapping[str, BaseStep]) -> None:
     warnings += [warning for task in instances.values() for warning in task.library_warnings()]
     for warning in warnings:
         print(f"[snappy] Warning: {warning}", flush=True)
+    if problems := missing_reads(instances):
+        lines = [f"{task}: {library}: {problem}" for task, library, problem in problems]
+        raise ConfigError("Libraries without reads:\n  " + "\n  ".join(lines))

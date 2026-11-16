@@ -25,7 +25,8 @@ from snakemake.common.configfile import load_configfile
 from .. import __version__
 from ..base import ConfigError
 from ..log_archive import build_archive, latest_snakemake_log
-from ..orchestration import load_project, missing_files
+from ..orchestration import create_task_instances, load_project, missing_files
+from ..sheet_summary import missing_reads
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
     backup_file,
@@ -651,25 +652,32 @@ def logs(directory, snakemake_log):
     help="Project directory, defaults to current working directory",
 )
 def check_files(directory):
-    """List the files that config.yaml names but that do not exist.
+    """List the files that config.yaml names but that do not exist, and the libraries whose
+    reads are not found.
 
-    These are the files in tool sections, the external_data paths, the sample sheets and search
+    The files are those in tool sections, the external_data paths, the sample sheets and search
     paths, the .fai and .dict of a genome and the index of a VCF or of the mappability BED file.
-    Snakemake checks the inputs of the jobs it runs anyway; this command checks all of them, for
-    example after moving a project to another machine. It exits with 1 if a file is missing.
+    The reads are checked for every library of the tasks that read FASTQ files, below the search
+    paths of its data set or external_data task. Snakemake checks the inputs of the jobs it runs
+    anyway; this command checks all of them, for example after moving a project to another
+    machine. It exits with 1 if a file is missing.
     """
     directory_path = directory() if callable(directory) else directory
     config_path = os.path.abspath(os.path.join(directory_path, CONFIG_SUBDIR, CONFIG_FILENAME))
     try:
         project = load_project(load_configfile(config_path), os.path.dirname(config_path))
+        missing = missing_files(project)
+        for name, paths in missing.items():
+            for path in paths:
+                click.echo(f"{name}\t{path}")
+        # The task objects load the sample sheets and find the reads as the Snakefile does
+        problems = missing_reads(create_task_instances(None, project))
     except ConfigError as e:
         log(str(e), level=LVL_ERROR)
         sys.exit(1)
-    missing = missing_files(project)
-    for name, paths in missing.items():
-        for path in paths:
-            click.echo(f"{name}\t{path}")
-    if missing:
+    for problem in problems:
+        click.echo("\t".join(problem))
+    if missing or problems:
         sys.exit(1)
     log("All files of {path} exist", {"path": config_path}, level=LVL_SUCCESS)
 
