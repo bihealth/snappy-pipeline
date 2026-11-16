@@ -342,7 +342,7 @@ def test_a_template_must_name_every_observed_library(tmp_path):
         part.scenario("P1-T1-DNA1")
 
 
-def test_preprocess_reads_the_candidates_of_the_window_and_the_alignment_properties():
+def test_preprocess_reads_a_chunk_of_the_candidates_and_the_alignment_properties():
     part = _part(scenario="somatic")
     wildcards = Wildcards(
         fromdict={"library_name": "P1-T1-DNA1", "member": "P1-N1-DNA1", "scatteritem": "2-of-2"}
@@ -350,8 +350,7 @@ def test_preprocess_reads_the_candidates_of_the_window_and_the_alignment_propert
 
     inputs = part._get_input_files_preprocess(wildcards)
 
-    assert inputs["candidates"] == "candidates/P1-T1-DNA1.vcf.gz"
-    assert inputs["region"] == "work/scatter/2-of-2.region.bed"
+    assert inputs["candidates"] == "work/P1-T1-DNA1/out/P1-T1-DNA1/candidates/2-of-2.bcf"
     assert (
         inputs["alignment_properties"] == "work/P1-N1-DNA1/out/P1-N1-DNA1.alignment_properties.json"
     )
@@ -395,8 +394,11 @@ def _config(**settings):
 
 
 def test_varlociraptor_produces_the_calls_of_its_scenario_tagged_with_the_tool():
-    germline = VariantCallingWorkflow.task_produces(_config(scenario="germline"), {})
-    somatic = VariantCallingWorkflow.task_produces(_config(scenario="somatic"), {})
+    candidates = {
+        "candidates": DataSignature(DataType.VARIANTS, frozenset({"candidates", "snv", "indel"}))
+    }
+    germline = VariantCallingWorkflow.task_produces(_config(scenario="germline"), candidates)
+    somatic = VariantCallingWorkflow.task_produces(_config(scenario="somatic"), candidates)
 
     assert germline == (
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "varlociraptor"})),
@@ -420,4 +422,93 @@ def test_the_scenario_sets_the_grouping_and_the_libraries_taken():
             _config(scenario="somatic", tumor_normal_mode="paired")
         )
         == MATCHED_NORMAL_REQUIREMENT
+    )
+
+
+# --- the candidate chunks ------------------------------------------------------------------
+
+
+def _chunker():
+    import importlib.util
+    from pathlib import Path
+
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "snappy_wrappers/wrappers/varlociraptor/split_candidates/wrapper.py"
+    )
+    spec = importlib.util.spec_from_file_location("split_candidates_wrapper", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_chunks_hold_equal_depth_and_keep_breakend_events_together():
+    chunker = _chunker()
+    weights = [10, 10, 10, 10, 10, 10]
+    groups = [None, ("event", "e1"), None, None, ("event", "e1"), None]
+
+    assert chunker.plan(weights, groups, 3) == [0, 0, 1, 1, 0, 2]
+
+
+def test_a_candidate_without_depth_weighs_one_read():
+    chunker = _chunker()
+
+    assert chunker.plan([1, 1, 1, 1], [None] * 4, 2) == [0, 0, 1, 1]
+    assert chunker.plan([], [], 2) == []
+
+
+def test_the_chunks_are_written_in_input_order(tmp_path):
+    pysam = pytest.importorskip("pysam")
+    chunker = _chunker()
+    vcf = tmp_path / "candidates.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.2\n"
+        '##INFO=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
+        '##INFO=<ID=MATEID,Number=.,Type=String,Description="Mate">\n'
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type">\n'
+        "##contig=<ID=1,length=1000>\n##contig=<ID=2,length=1000>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\tbnd_a\tN\tN[2:500[\t.\t.\tDP=30;SVTYPE=BND;MATEID=bnd_b\n"
+        "1\t20\t.\tA\tC\t.\t.\tDP=30\n"
+        "1\t30\t.\tA\tG\t.\t.\tDP=30\n"
+        "2\t500\tbnd_b\tN\t]1:10]N\t.\t.\tDP=30;SVTYPE=BND;MATEID=bnd_a\n"
+    )
+    outputs = [str(tmp_path / f"chunk{i}.bcf") for i in range(2)]
+
+    chunker.main(str(vcf), outputs)
+
+    chunks = [[(r.chrom, r.pos) for r in pysam.VariantFile(path)] for path in outputs]
+    assert chunks == [[("1", 10), ("1", 20), ("2", 500)], [("1", 30)]]
+
+
+def test_the_scatter_splits_the_candidates_of_the_entity_and_preprocess_reads_a_chunk():
+    part = _part(scenario="somatic")
+    part._scattergather = lambda kind: (
+        lambda template: [template.format(scatteritem=f"{i}-of-2") for i in (1, 2)]
+    )
+
+    assert part._get_input_files_scatter(Wildcards(fromdict={"library_name": "P1-T1-DNA1"})) == {
+        "candidates": "candidates/P1-T1-DNA1.vcf.gz"
+    }
+    assert part._get_output_files_scatter()["candidates"] == [
+        "work/{library_name}/out/{library_name}/candidates/1-of-2.bcf",
+        "work/{library_name}/out/{library_name}/candidates/2-of-2.bcf",
+    ]
+    wildcards = Wildcards(
+        fromdict={"library_name": "P1-T1-DNA1", "member": "P1-N1-DNA1", "scatteritem": "2-of-2"}
+    )
+    inputs = part._get_input_files_preprocess(wildcards)
+    assert inputs["candidates"] == "work/P1-T1-DNA1/out/P1-T1-DNA1/candidates/2-of-2.bcf"
+    assert "region" not in inputs
+
+
+def test_sv_candidates_give_sv_calls():
+    candidates = DataSignature(DataType.VARIANTS, frozenset({"germline", "sv"}))
+
+    produced = VariantCallingWorkflow.task_produces(
+        _config(scenario="germline"), {"candidates": candidates}
+    )
+
+    assert produced == (
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "sv", "varlociraptor"})),
     )

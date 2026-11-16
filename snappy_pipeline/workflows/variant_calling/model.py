@@ -47,10 +47,9 @@ class ExpectedSomaticVariants(BaseModel):
 
 
 class ExpectedCandidates(BaseModel):
-    """The candidate variants of a varlociraptor task: a bgzipped VCF with its index."""
+    """The candidate variants of a varlociraptor task: a VCF or BCF, read once in order."""
 
     vcf: str
-    vcf_tbi: str
 
 
 class BafFileGeneration(ToggleModel, ToolModel):
@@ -246,7 +245,7 @@ class Preprocess(ToolModel):
     """Maximum read depth at a position (``--max-depth``); more reads are downsampled"""
 
 
-class Varlociraptor(ToolModel, IgnoreContigs):
+class Varlociraptor(ToolModel):
     """Calling with varlociraptor against a scenario; ``extra_arguments`` go to
     ``varlociraptor call variants``"""
 
@@ -270,7 +269,7 @@ class Varlociraptor(ToolModel, IgnoreContigs):
     preprocess: Preprocess = Preprocess()
 
     num_jobs: Annotated[int, Field(ge=1)] = 24
-    """Number of genome windows that are called in parallel"""
+    """Number of chunks of the candidates that are called in parallel"""
 
     @model_validator(mode="after")
     def check_scenario_settings(self) -> Self:
@@ -324,8 +323,9 @@ class VariantCallingDependsOn(SnappyModel):
         RequiredBy(Tool.varlociraptor),
     ] = ""
     """The candidate variants that ``varlociraptor`` evaluates: a ``variant_calling`` task with
-    ``tool: freebayes`` and the same ``group_by`` and ``library_selection``, or another task that
-    produces ``variants`` with the keys ``vcf`` and ``vcf_tbi``"""
+    ``tool: freebayes``, an SV calling task (the calls are then tagged ``sv``), or another task
+    that produces ``variants`` with the key ``vcf``; with the same ``group_by`` and
+    ``library_selection``"""
 
     kits: Annotated[Kits, ReadBy(when="bcftools_roh"), ReadBy(Tool.freebayes)] = ""
     """Restricts ``bcftools_roh`` and the candidates of ``freebayes`` to the targets of the

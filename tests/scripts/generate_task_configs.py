@@ -580,6 +580,20 @@ EXTRA_TASKS: list[dict[str, Any]] = [
             "varlociraptor": {"scenario": "germline", "num_jobs": 2},
         },
     },
+    # Structural variants of the pedigree as candidates
+    {
+        "step": "variant_calling",
+        "name": "variant_calling_varlociraptor_sv",
+        "config": {
+            "depends_on": {
+                "alignments": "ngs_mapping_bwa",
+                "reference": "genome",
+                "candidates": "sv_calling_targeted_delly2",
+            },
+            "tool": "varlociraptor",
+            "varlociraptor": {"scenario": "germline", "num_jobs": 2},
+        },
+    },
     {
         "step": "variant_annotation",
         "name": "variant_annotation_pvactools",

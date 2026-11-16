@@ -190,6 +190,11 @@ class SvCallingWgsWorkflow(BaseStep):
     config_model_class = SvCallingWgsConfigModel
 
     @classmethod
+    def default_group_by(cls, config):
+        """The callers write one result per pedigree, named after its index library."""
+        return "related"
+
+    @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local WGS SV output paths for downstream consumers."""
         library_name = kwargs.get("library_name", "{library_name}")

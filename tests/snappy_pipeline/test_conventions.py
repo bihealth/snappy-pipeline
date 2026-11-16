@@ -612,6 +612,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "pvactools/features",
             "pvactools/hla_types",
             "reference_download/ensembl",
+            "varlociraptor/split_candidates",
         ),
         "an R script without command line arguments": (
             "ascat/run_ascat",

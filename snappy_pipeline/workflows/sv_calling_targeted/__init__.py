@@ -70,6 +70,11 @@ class SvCallingTargetedWorkflow(BaseStep):
         self.register_sub_step_classes((WritePedigreeStepPart, selected_sub_step))
 
     @classmethod
+    def default_group_by(cls, config):
+        """The callers write one result per pedigree, named after its index library."""
+        return "related"
+
+    @classmethod
     def get_output_paths(cls, config, signature=None, **kwargs) -> dict[str, str]:
         """Return local targeted SV output paths for downstream consumers."""
         library_name = kwargs.get("library_name", "{library_name}")

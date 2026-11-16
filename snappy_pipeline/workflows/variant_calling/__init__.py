@@ -32,7 +32,8 @@ The ``tool`` field selects the caller.
     The calls are candidates, not genotype calls: they carry the tag ``candidates`` and feed ``depends_on.candidates`` of a ``varlociraptor`` task.
 
 ``varlociraptor``
-    Calling with varlociraptor against a *scenario* of the entity's libraries, on the candidates of ``depends_on.candidates`` (a ``freebayes`` task with the same ``group_by`` and ``library_selection``): alignment properties per library, observations per library and genome window (``num_jobs``), calls per window, concatenated.
+    Calling with varlociraptor against a *scenario* of the entity's libraries, on the candidates of ``depends_on.candidates``: a ``freebayes`` task for small variants, or an ``sv_calling_targeted`` or ``sv_calling_wgs`` task for structural variants (the calls are then tagged ``sv``), with the same ``group_by`` and ``library_selection``.
+    The candidates of an entity are split into ``num_jobs`` chunks of equal summed depth (``INFO/DP``, so the observation jobs take about equally long), with the records of a breakend event in one chunk; alignment properties per library, observations per library and chunk, calls per chunk, concatenated.
     The scenario is a preset (``scenario``), rendered from the sample sheets for each entity, or a YTE template (``template``):
 
     ``germline``
@@ -1014,14 +1015,10 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
 
 
 class ScatteredCallerStepPart(BaseStepPart):
-    """Base class of the callers that call each genome window of an entity and concatenate the
-    windows: the windows are shared by the task's entities, and the gather is the
-    ``bcftools/concat`` wrapper."""
+    """Base class of the callers that call an entity in scattered parts and concatenate them
+    with the ``bcftools/concat`` wrapper."""
 
-    #: The windows of the task; ``padding`` 0 keeps them disjoint, so no call is made twice
-    region_tpl = "work/scatter/{scatteritem}.region.bed"
-
-    #: The calls of one window of an entity, a BCF with its ``.csi``
+    #: The calls of one part of an entity, a BCF with its ``.csi``
     chunk_tpl = "work/{library_name}/out/{library_name}/calls/{scatteritem}"
 
     def _scattergather(self, kind: str):
@@ -1042,15 +1039,6 @@ class ScatteredCallerStepPart(BaseStepPart):
         normal = self.parent.library_row(library_name).get("matched_normal_lib") or None
         return [library_name, normal] if normal else [library_name]
 
-    def _get_input_files_scatter(self, wildcards):
-        return {"fai": self.parent.get_upstream_paths("reference").fai}
-
-    def _get_params_scatter(self, wildcards):
-        return {"ignore_contigs": sorted(set(self.tool_section().ignore_contigs)), "padding": 0}
-
-    def _get_output_files_scatter(self):
-        return {"regions": self._scattergather("scatter")(self.region_tpl)}
-
     def _get_input_files_gather(self, wildcards):
         gather = self._scattergather("gather")
         chunk = self.chunk_tpl.replace("{scatteritem}", "{{scatteritem}}").format(**wildcards)
@@ -1065,17 +1053,18 @@ class ScatteredCallerStepPart(BaseStepPart):
             "vcf_tbi_md5": f"work/{token}/out/{token}.vcf.gz.tbi.md5",
         }
 
-    def _get_log_file_scatter(self):
-        return {"log": "work/scatter/log.log"}
-
     def _get_log_file_gather(self):
         return {"log": "work/{library_name}/log/{library_name}.gather.log"}
 
 
 class FreebayesStepPart(ScatteredCallerStepPart):
-    """Candidate calling with freebayes, jointly over the libraries of an entity"""
+    """Candidate calling with freebayes, jointly over the libraries of an entity, per genome
+    window; the windows are shared by the task's entities"""
 
     name = "freebayes"
+
+    #: The windows of the task; ``padding`` 0 keeps them disjoint, so no call is made twice
+    region_tpl = "work/scatter/{scatteritem}.region.bed"
 
     actions = ("scatter", "run", "gather")
 
@@ -1094,7 +1083,7 @@ class FreebayesStepPart(ScatteredCallerStepPart):
     def _get_input_files_scatter(self, wildcards):
         """The genome index and, with ``depends_on.kits``, the targets of the kits of the
         task's libraries: the windows then hold equal target bases instead of equal lengths"""
-        inputs = super()._get_input_files_scatter(wildcards)
+        inputs = {"fai": self.parent.get_upstream_paths("reference").fai}
         if self.config.depends_on.kits:
             kits = {
                 self.parent.library_kits[name]
@@ -1122,14 +1111,23 @@ class FreebayesStepPart(ScatteredCallerStepPart):
             kit = self.parent.common_kit("kits", members)
             yield "targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
 
+    def _get_params_scatter(self, wildcards):
+        return {"ignore_contigs": sorted(set(self.config.freebayes.ignore_contigs)), "padding": 0}
+
     def _get_params_run(self, wildcards):
         return {
             "min_alternate_fraction": self.config.freebayes.min_alternate_fraction,
             "min_alternate_count": self.config.freebayes.min_alternate_count,
         }
 
+    def _get_output_files_scatter(self):
+        return {"regions": self._scattergather("scatter")(self.region_tpl)}
+
     def _get_output_files_run(self):
         return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
+
+    def _get_log_file_scatter(self):
+        return {"log": "work/scatter/log.log"}
 
     def _get_log_file_run(self):
         return {"log": "work/{library_name}/log/{library_name}.run.{scatteritem}.log"}
@@ -1145,9 +1143,9 @@ def _builtin(value: Any) -> Any:
 
 
 class VarlociraptorStepPart(ScatteredCallerStepPart):
-    """Calling with varlociraptor on the candidates of ``depends_on.candidates``: alignment
-    properties per library, observations per library and window, and calls per window against
-    the scenario of the entity"""
+    """Calling with varlociraptor on the candidates of ``depends_on.candidates``: the candidates
+    of an entity split into chunks of equal depth, alignment properties per library,
+    observations per library and chunk, and calls per chunk against the scenario of the entity"""
 
     name = "varlociraptor"
 
@@ -1156,14 +1154,18 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     #: The ``preprocess`` section passes its own extra arguments
     extra_arguments_action = "call"
 
-    temp_outputs = {"scatter": ("regions",), "preprocess": ("bcf",), "call": ("bcf", "bcf_csi")}
+    temp_outputs = {
+        "scatter": ("candidates",),
+        "preprocess": ("bcf",),
+        "call": ("bcf", "bcf_csi"),
+    }
 
     intermediate_outputs = {"alignment_properties": ("json",)}
 
     result_keys = {"gather": ("vcf", "vcf_md5", "vcf_tbi", "vcf_tbi_md5")}
 
     resource_usage = {
-        "scatter": ResourceUsage(threads=1, runtime="2m", mem="1000MB"),
+        "scatter": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
         "alignment_properties": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
         "preprocess": ResourceUsage(threads=1, runtime="1d", mem="4GB"),
         "call": ResourceUsage(threads=1, runtime="1d", mem="4GB"),
@@ -1173,7 +1175,10 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     #: The alignment properties of a library, shared by the entities that observe it
     properties_tpl = "work/{member}/out/{member}.alignment_properties.json"
 
-    #: The observations of a library in one window of an entity
+    #: One chunk of the candidates of an entity
+    candidates_tpl = "work/{library_name}/out/{library_name}/candidates/{scatteritem}.bcf"
+
+    #: The observations of a library at one chunk of the candidates of an entity
     observations_tpl = (
         "work/{library_name}/out/{library_name}/observations/{member}.{scatteritem}.bcf"
     )
@@ -1267,6 +1272,16 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         check_scenario(scenario, members)
         return scenario
 
+    def _get_input_files_scatter(self, wildcards):
+        candidates = self.parent.get_upstream_paths(
+            "candidates", library_name=wildcards.library_name
+        )
+        return {"candidates": candidates.vcf}
+
+    def _get_output_files_scatter(self):
+        template = self.candidates_tpl.replace("{library_name}", "{{library_name}}")
+        return {"candidates": self._scattergather("scatter")(template)}
+
     def _get_input_files_alignment_properties(self, wildcards):
         alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
         return {**self.parent.reference_inputs(), "bam": alignments.bam, "bai": alignments.bai}
@@ -1276,14 +1291,9 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
 
     def _get_input_files_preprocess(self, wildcards):
         alignments = self.parent.get_upstream_paths("alignments", library_name=wildcards.member)
-        candidates = self.parent.get_upstream_paths(
-            "candidates", library_name=wildcards.library_name
-        )
         return {
             **self.parent.reference_inputs(),
-            "candidates": candidates.vcf,
-            "candidates_tbi": candidates.vcf_tbi,
-            "region": self.region_tpl.format(**wildcards),
+            "candidates": self.candidates_tpl.format(**wildcards),
             "alignment_properties": self.properties_tpl.format(**wildcards),
             "bam": alignments.bam,
             "bai": alignments.bai,
@@ -1318,6 +1328,9 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     def _get_output_files_call(self):
         return {"bcf": self.chunk_tpl + ".bcf", "bcf_csi": self.chunk_tpl + ".bcf.csi"}
 
+    def _get_log_file_scatter(self):
+        return {"log": "work/{library_name}/log/{library_name}.scatter.log"}
+
     def _get_log_file_alignment_properties(self):
         return {"log": "work/{member}/log/{member}.alignment_properties.log"}
 
@@ -1341,6 +1354,8 @@ class VariantCallingWorkflow(BaseStep):
         DataSignature(DataType.VARIANTS, frozenset({"candidates", "snv", "indel"})),
         DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel", "varlociraptor"})),
         DataSignature(DataType.VARIANTS, frozenset({"somatic", "snv", "indel", "varlociraptor"})),
+        DataSignature(DataType.VARIANTS, frozenset({"germline", "sv", "varlociraptor"})),
+        DataSignature(DataType.VARIANTS, frozenset({"somatic", "sv", "varlociraptor"})),
     ]
     config_model_class = VariantCallingConfigModel
 
@@ -1355,7 +1370,9 @@ class VariantCallingWorkflow(BaseStep):
         if config.tool == Tool.freebayes:
             return (DataSignature(DataType.VARIANTS, frozenset({"candidates", "snv", "indel"})),)
         if config.tool == Tool.varlociraptor:
-            tags = {str(config.varlociraptor.scenario), "snv", "indel", "varlociraptor"}
+            # The calls are of the kinds of the candidates: structural variants, or small ones
+            kinds = {"sv"} if "sv" in upstream["candidates"].tags else {"snv", "indel"}
+            tags = {str(config.varlociraptor.scenario), "varlociraptor", *kinds}
             return (DataSignature(DataType.VARIANTS, frozenset(tags)),)
         return (DataSignature(DataType.VARIANTS, frozenset({"germline", "snv", "indel"})),)
 

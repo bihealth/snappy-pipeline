@@ -139,6 +139,37 @@ tasks:
       mehari:
         assembly: GRCh37
 
+  # Structural variants of the trio from delly2 as candidates for varlociraptor
+  - name: sv_calling
+    step: sv_calling_targeted
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+      tool: delly2
+      delly2: {}
+
+  - name: calling_varlociraptor_sv
+    step: variant_calling
+    config:
+      depends_on:
+        alignments: mapping
+        reference: genome
+        candidates: sv_calling
+      tool: varlociraptor
+      varlociraptor:
+        scenario: germline
+        num_jobs: 2
+
+  - name: fdr_varlociraptor_sv
+    step: variant_filtration
+    config:
+      depends_on:
+        variants: calling_varlociraptor_sv
+      tool: varlociraptor
+      varlociraptor:
+        events: [present, denovo]
+
 data_sets:
   trbc:
     file: samplesheet.tsv

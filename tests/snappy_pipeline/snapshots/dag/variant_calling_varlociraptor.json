@@ -594,9 +594,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_varlociraptor/work/scatter/1-of-2.region.bed",
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
@@ -638,9 +636,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_varlociraptor/work/scatter/2-of-2.region.bed",
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/2-of-2.bcf",
    "tasks/variant_calling_varlociraptor/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
@@ -682,9 +678,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_varlociraptor/work/scatter/1-of-2.region.bed",
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/1-of-2.bcf",
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
@@ -726,9 +720,7 @@
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
    "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
    "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz",
-   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz.tbi",
-   "tasks/variant_calling_varlociraptor/work/scatter/2-of-2.region.bed",
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/2-of-2.bcf",
    "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.alignment_properties.json",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam",
    "tasks/ngs_mapping_bwa/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.bam.bai"
@@ -765,44 +757,34 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
  },
  {
-  "benchmark": "tasks/variant_calling_varlociraptor/benchmarks/scatter/log.tsv",
+  "benchmark": "tasks/variant_calling_varlociraptor/benchmarks/case001subregion-T1-DNA1-WES1/case001subregion-T1-DNA1-WES1.scatter.tsv",
   "input": [
-   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
+   "tasks/variant_calling_freebayes/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.vcf.gz"
   ],
-  "local": true,
   "log": [
-   "tasks/variant_calling_varlociraptor/work/scatter/log.log"
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/log/case001subregion-T1-DNA1-WES1.scatter.log"
   ],
   "output": [
-   "tasks/variant_calling_varlociraptor/work/scatter/1-of-2.region.bed",
-   "tasks/variant_calling_varlociraptor/work/scatter/2-of-2.region.bed"
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/2-of-2.bcf"
   ],
-  "params": {
-   "args": {
-    "ignore_contigs": [
-     "^HLA-",
-     "^NC_007605$",
-     "^chrEBV$",
-     "^hs37d5$",
-     "_decoy$"
-    ],
-    "padding": 0
-   }
-  },
+  "params": {},
   "resources": {
-   "mem": "1 GB",
-   "mem_mb": 1000,
-   "mem_mib": 954,
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
    "partition": "medium",
-   "runtime": 2
+   "runtime": 120
   },
   "rule": "variant_calling_varlociraptor_variant_calling_varlociraptor_scatter",
   "temp": [
-   "tasks/variant_calling_varlociraptor/work/scatter/1-of-2.region.bed",
-   "tasks/variant_calling_varlociraptor/work/scatter/2-of-2.region.bed"
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1/candidates/2-of-2.bcf"
   ],
   "threads": 1,
-  "wildcards": {},
-  "wrapper": "file://<repo>/snappy_wrappers/wrappers/split_regions"
+  "wildcards": {
+   "library_name": "case001subregion-T1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/split_candidates"
  }
 ]
