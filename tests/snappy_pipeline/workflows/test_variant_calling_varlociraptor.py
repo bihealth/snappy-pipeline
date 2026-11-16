@@ -33,21 +33,32 @@ def _row(name, sex="unknown", father="0", mother="0", **extra):
         "father_name": father,
         "mother_name": mother,
         "matched_normal_lib": "",
+        "related_group": name.split("-")[0],
         **extra,
     }
 
 
-#: A trio, the child's RNA library, a tumor with its normal (purity 0.8) and one without
+#: A trio, the child's RNA library, a tumor with its normal (purity 0.8) and a relapse, and a
+#: tumor without a normal
 ROWS = {
     "child-DNA1": _row("child-DNA1", "male", "father-DNA1", "mother-DNA1"),
     "father-DNA1": _row("father-DNA1", "male"),
     "mother-DNA1": _row("mother-DNA1", "female"),
     "child-RNA1": _row("child-RNA1", "male", "father-DNA1", "mother-DNA1"),
     "P1-T1-DNA1": _row("P1-T1-DNA1", matched_normal_lib="P1-N1-DNA1", purity=0.8),
+    "P1-T2-DNA1": _row("P1-T2-DNA1", matched_normal_lib="P1-N1-DNA1", purity=0.5),
     "P1-N1-DNA1": _row("P1-N1-DNA1"),
     "P2-T1-DNA1": _row("P2-T1-DNA1", purity=""),
 }
 TRIO = [ROWS["child-DNA1"], ROWS["father-DNA1"], ROWS["mother-DNA1"]]
+#: The tumor libraries a somatic task takes: one per donor, or with the relapse of P1
+TUMORS = pd.DataFrame({"library_name": ["P1-T1-DNA1", "P2-T1-DNA1"], "related_group": ["P1", "P2"]})
+WITH_RELAPSE = pd.DataFrame(
+    {
+        "library_name": ["P1-T1-DNA1", "P1-T2-DNA1", "P2-T1-DNA1"],
+        "related_group": ["P1", "P1", "P2"],
+    }
+)
 
 
 # --- the presets -------------------------------------------------------------------------
@@ -63,7 +74,7 @@ def test_the_germline_preset_of_a_trio_has_mendelian_inheritance_and_a_denovo_ev
     }
     assert scenario["samples"]["mother-DNA1"] == {"sex": "female"}
     assert scenario["events"] == {
-        "denovo": "(child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0)",
+        "denovo": "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & father-DNA1:0.0",
         "present": "!($denovo | $absent)",
     }
 
@@ -80,12 +91,45 @@ def test_the_germline_preset_of_a_quad_ors_the_denovo_events_of_both_children():
 
 
 def test_the_germline_preset_without_a_child_has_only_present_and_unknown_sex_is_diploid():
-    duo = [_row("a-DNA1", "unknown"), _row("b-DNA1", "female", "x-DNA1", "y-DNA1")]
+    pair = [_row("a-DNA1", "unknown"), _row("b-DNA1", "female")]
 
-    scenario = germline_scenario(duo, SPECIES)
+    scenario = germline_scenario(pair, SPECIES)
 
     assert scenario["samples"] == {"a-DNA1": {"ploidy": 2}, "b-DNA1": {"sex": "female"}}
     assert scenario["events"] == {"present": "a-DNA1:]0.0,1.0] | b-DNA1:]0.0,1.0]"}
+
+
+def test_the_germline_preset_models_several_generations():
+    grandparents = [_row("gf-DNA1", "male"), _row("gm-DNA1", "female")]
+    mother = _row("mother-DNA1", "female", "gf-DNA1", "gm-DNA1")
+
+    members = [ROWS["child-DNA1"], ROWS["father-DNA1"], mother, *grandparents]
+
+    scenario = germline_scenario(members, SPECIES)
+
+    assert scenario["samples"]["mother-DNA1"]["inheritance"] == {
+        "mendelian": {"from": ["gm-DNA1", "gf-DNA1"]}
+    }
+    assert scenario["samples"]["child-DNA1"]["inheritance"]["mendelian"]["from"] == [
+        "mother-DNA1",
+        "father-DNA1",
+    ]
+    assert scenario["events"]["denovo"].count(" | ") == 1
+
+
+@pytest.mark.parametrize(
+    "member, message",
+    [
+        (_row("duo-DNA1", "male", "0", "mother-DNA1"), "parents mother-DNA1 in the sample sheet"),
+        (
+            _row("child-DNA1", "male", "father-DNA1", "mother-DNA1"),
+            "parents father-DNA1 and mother-DNA1 in the sample sheet",
+        ),
+    ],
+)
+def test_a_member_with_a_parent_outside_the_task_is_rejected(member, message):
+    with pytest.raises(ValueError, match=message):
+        germline_scenario([member, ROWS["mother-DNA1"]], SPECIES)
 
 
 def test_the_somatic_preset_models_the_purity_as_contamination_by_the_normal():
@@ -97,6 +141,26 @@ def test_the_somatic_preset_models_the_purity_as_contamination_by_the_normal():
     }
     assert scenario["events"]["somatic_tumor_high"] == "P1-T1-DNA1:[0.3,1.0] & P1-N1-DNA1:0.0"
     assert scenario["events"]["germline_het"] == "P1-N1-DNA1:0.5"
+
+
+def test_ffpe_libraries_get_the_fragment_end_bias_model():
+    scenario = somatic_scenario("T", "N", None, frozenset({"T"}))
+    assert scenario["samples"]["T"]["fragment_end_bias"] is True
+    assert "fragment_end_bias" not in scenario["samples"]["N"]
+
+    ffpe_child = {**ROWS["child-DNA1"], "is_ffpe": "Y"}
+    scenario = germline_scenario([ffpe_child, ROWS["father-DNA1"], ROWS["mother-DNA1"]], SPECIES)
+    assert scenario["samples"]["child-DNA1"]["fragment_end_bias"] is True
+    assert "fragment_end_bias" not in scenario["samples"]["father-DNA1"]
+
+
+def test_the_step_part_reads_the_ffpe_status_of_the_sheet():
+    ROWS["P2-T1-DNA1"]["is_ffpe"] = "Y"
+    part = _part(scenario="somatic")
+
+    scenario = yaml.safe_load(part.scenario("P2-T1-DNA1"))
+
+    assert scenario["samples"]["P2-T1-DNA1"]["fragment_end_bias"] is True
 
 
 def test_the_somatic_preset_of_a_tumor_alone_keeps_an_unobserved_normal_and_no_contamination():
@@ -148,12 +212,13 @@ def _upstream(field, **kwargs):
     return SimpleNamespace(bam=f"{name}.bam", bai=f"{name}.bam.bai")
 
 
-def _part(group_by="library", **settings):
+def _part(group_by="library", libraries=TUMORS, **settings):
     part = object.__new__(VarlociraptorStepPart)
     part.config = SimpleNamespace(varlociraptor=Varlociraptor(**settings))
     part.parent = SimpleNamespace(
         task_name="calling",
         effective_group_by=group_by,
+        libraries=libraries,
         primary_dna_libraries=lambda: pd.DataFrame(
             {"library_name": ["child-DNA1", "father-DNA1", "mother-DNA1"]}
         ),
@@ -188,6 +253,31 @@ def test_the_somatic_scenario_observes_the_normal_by_the_tumor_normal_mode(mode,
 
     assert part.members("P1-T1-DNA1") == expected
     assert part.members("P2-T1-DNA1") == ["P2-T1-DNA1"]
+
+
+def test_the_somatic_preset_rejects_a_donor_with_several_tumors_in_the_task():
+    part = _part(scenario="somatic", libraries=WITH_RELAPSE)
+
+    with pytest.raises(ValueError, match="tumors P1-T1-DNA1, P1-T2-DNA1 in the task"):
+        part.scenario("P1-T1-DNA1")
+    assert "P2-T1-DNA1" in part.scenario("P2-T1-DNA1")
+
+
+def test_a_somatic_template_with_related_grouping_observes_all_tumors_of_the_donor(tmp_path):
+    template = tmp_path / "relapse.yaml"
+    template.write_text(
+        "samples:\n"
+        "  ?for sample in samples:\n"
+        "    ?sample['library_name']:\n"
+        "      universe: '[0.0,1.0]'\n"
+        "events:\n"
+        "  present: ?' | '.join(f\"{s['library_name']}:]0.0,1.0]\" for s in samples)\n"
+    )
+    part = _part("related", WITH_RELAPSE, scenario="somatic", template=str(template))
+
+    assert part.members("P1-T1-DNA1") == ["P1-T1-DNA1", "P1-T2-DNA1", "P1-N1-DNA1"]
+    scenario = yaml.safe_load(part.scenario("P1-T1-DNA1"))
+    assert list(scenario["samples"]) == ["P1-T1-DNA1", "P1-T2-DNA1", "P1-N1-DNA1"]
 
 
 def test_the_purity_comes_from_the_sheet_column_and_is_checked():
@@ -270,6 +360,22 @@ def test_preprocess_reads_the_candidates_of_the_window_and_the_alignment_propert
 
 
 # --- the model and the contract ------------------------------------------------------------
+
+
+def test_related_grouping_of_the_somatic_scenario_needs_a_template():
+    with pytest.raises(ValidationError, match="group_by: related with the somatic scenario"):
+        VariantCalling(
+            depends_on={"alignments": "m", "reference": "g", "candidates": "c"},
+            tool="varlociraptor",
+            varlociraptor={"scenario": "somatic"},
+            group_by="related",
+        )
+    VariantCalling(
+        depends_on={"alignments": "m", "reference": "g", "candidates": "c"},
+        tool="varlociraptor",
+        varlociraptor={"scenario": "somatic", "template": "relapse.yaml"},
+        group_by="related",
+    )
 
 
 def test_changed_settings_of_the_other_scenario_are_rejected_and_defaults_pass():

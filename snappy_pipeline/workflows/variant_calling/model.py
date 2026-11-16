@@ -372,8 +372,13 @@ class VariantCalling(SnappyStepModel):
             section = getattr(self, name)
             if section is not None and section.enabled:
                 raise ValueError(f"{name}: not available with tool: varlociraptor")
-        if self.varlociraptor.scenario == ScenarioKind.somatic and self.group_by == "related":
+        if (
+            self.varlociraptor.scenario == ScenarioKind.somatic
+            and self.group_by == "related"
+            and not self.varlociraptor.template
+        ):
             raise ValueError(
-                "group_by: related: the somatic scenario calls each tumor with its matched normal"
+                "group_by: related with the somatic scenario needs a template, the joint "
+                "scenario of a donor's tumors; the preset calls each tumor with its matched normal"
             )
         return self

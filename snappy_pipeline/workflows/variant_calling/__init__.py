@@ -36,15 +36,18 @@ The ``tool`` field selects the caller.
     The scenario is a preset (``scenario``), rendered from the sample sheets for each entity, or a YTE template (``template``):
 
     ``germline``
-        The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the pedigree inherits from them.
+        The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the task inherits from them, in any constellation (trios, siblings, several generations, uncles and cousins with their parents).
         The events are ``present`` (a member carries the variant) and, when a member has both parents, ``denovo`` (a child carries a variant that its parents do not), which ``present`` then excludes.
+        A member with a parent outside the task (only one parent sequenced, or a parent that ``library_selection`` drops) is an error, since varlociraptor models inheritance from both parents only: take both parents into the task or give a ``template``.
         Libraries without a pedigree (``group_by: library``) are called alone.
 
     ``somatic``
         Each tumor with its matched normal (``tumor_normal_mode``, as for ``mutect2``), with the default scenario of dna-seq-varlociraptor: the events ``somatic_tumor_low``, ``somatic_tumor_medium`` and ``somatic_tumor_high`` (tumor allele frequency below 0.1, from 0.1 to 0.3, from 0.3), ``somatic_normal``, ``germline_het`` and ``germline_hom``.
         The tumor purity is the sample sheet column ``purity`` (a custom field, from 0 to 1), as the contamination of the tumor by the normal; a tumor without one counts as pure, with a warning.
-        A tumor without a matched normal keeps the normal in the scenario as an unobserved sample, so the events stay the same.
+        A tumor without a matched normal keeps the normal in the scenario as an unobserved sample named ``normal``, so the events stay the same; the VCF then has a sample ``normal`` without observations.
+        A donor with several tumors in the task (a primary and a relapse) is an error, since the preset calls one tumor with its normal: call each time point in a task of its own (``library_selection``), or give a ``template`` with ``group_by: related``, which then receives the donor's tumors (the entity is the primary tumor) and the normal for a joint scenario such as the tumor/normal/relapse one of the varlociraptor scenario catalog.
 
+    An FFPE library (sample sheet custom field ``isFfpe``, ``Y`` or ``N``) gets varlociraptor's model of the artifacts of an FFPE fragment (``fragment_end_bias``) in both presets.
     The samples of the scenario are the library names, and so are the samples of the VCF, which carries ``GT`` from ``varlociraptor genotype``.
     The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set: chain a ``variant_filtration`` task with ``tool: varlociraptor`` (FDR control on the events of interest) before any consumer.
     A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``matched_normal_lib`` and the sheet's other columns), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
@@ -223,6 +226,7 @@ from snappy_pipeline.workflows.variant_calling.scenario import (
     IDENTIFIER,
     check_scenario,
     germline_scenario,
+    is_ffpe,
     render_template,
     somatic_scenario,
     to_yaml,
@@ -1164,16 +1168,30 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
 
     def members(self, library_name: str) -> list[str]:
         """The observed libraries of the entity: the pedigree or the library alone for the
-        germline scenario, the tumor and its matched normal by ``tumor_normal_mode`` for the
-        somatic one."""
+        germline scenario; for the somatic one the tumor, with ``group_by: related`` the other
+        tumors of its donor that the task takes, and its matched normal by
+        ``tumor_normal_mode``."""
         cfg = self.config.varlociraptor
         if cfg.scenario == ScenarioKind.germline:
             if self.parent.effective_group_by == "related":
                 return super().members(library_name)
             return [library_name]
-        if cfg.tumor_normal_mode == TumorNormalMode.TUMOR_ONLY:
-            return [library_name]
-        return super().members(library_name)
+        members = [library_name]
+        if self.parent.effective_group_by == "related":
+            members += self.other_tumors(library_name)
+        if cfg.tumor_normal_mode != TumorNormalMode.TUMOR_ONLY:
+            normal = self.parent.library_row(library_name).get("matched_normal_lib") or None
+            if normal:
+                members.append(normal)
+        return members
+
+    def other_tumors(self, library_name: str) -> list[str]:
+        """The other tumor libraries of the donor of ``library_name`` that the task takes"""
+        libraries = self.parent.libraries
+        donor = self.parent.library_row(library_name)["related_group"]
+        same_donor = libraries["related_group"] == donor
+        other = libraries["library_name"] != library_name
+        return libraries[same_donor & other]["library_name"].tolist()
 
     def sample(self, library_name: str) -> dict[str, Any]:
         """The library table row of a library with builtin values, as a scenario template sees it"""
@@ -1215,8 +1233,17 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
                 Path(cfg.template).read_text(), samples, library_name, settings
             )
         elif somatic:
+            if others := self.other_tumors(library_name):
+                raise ValueError(
+                    f"Task {self.parent.task_name!r}: the somatic scenario calls one tumor with "
+                    f"its matched normal, but the donor of {library_name} has the tumors "
+                    f"{', '.join([library_name, *others])} in the task; call each time point in "
+                    "a task of its own (library_selection), or give a scenario template with "
+                    "group_by: related for a joint scenario of the donor's tumors"
+                )
             normal = members[1] if len(members) > 1 else None
-            scenario = somatic_scenario(library_name, normal, purity)
+            ffpe = frozenset(name for name in members if is_ffpe(self.sample(name).get("is_ffpe")))
+            scenario = somatic_scenario(library_name, normal, purity, ffpe)
         else:
             samples = [self.sample(name) for name in members]
             scenario = germline_scenario(samples, cfg.species.model_dump())
@@ -1448,6 +1475,10 @@ class VariantCallingWorkflow(BaseStep):
                 f"Task {self.task_name!r}: varlociraptor needs sample names of letters, digits, "
                 f"'_', '.' and '-', unlike {', '.join(invalid)}"
             )
+        # Render every scenario now, so that a constellation the preset or the template does
+        # not model fails before Snakemake builds the jobs
+        for entity in self.output_entities:
+            part.scenario(entity)
 
     def library_warnings(self) -> list[str]:
         """The tumors without a matched normal that ``paired`` mode leaves out, and the tumors
