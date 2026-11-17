@@ -52,7 +52,20 @@ def test_samtools_summary_has_one_row_per_library_with_the_fractions():
     assert frame["properly_paired_fraction"][0] == pytest.approx(57956 / 58722)
     assert frame["singletons"].to_list() == [274, 274]
     views = _views(summary)
-    assert set(views) == {"insert_size", "coverage", "base_quality", "idxstats"}
+    assert set(views) == {
+        "libraries",
+        "insert_size",
+        "coverage",
+        "base_quality",
+        "contigs",
+        "idxstats",
+    }
+    strips = views["libraries"]
+    assert strips.mark == "strips" and strips.facet == "metric"
+    assert strips.frame.filter(pl.col("metric") == "mapped")["value"].to_list() == pytest.approx(
+        [58448 / 58722, 0.9]
+    )
+    assert views["contigs"].mark == "dots" and views["contigs"].y == "contig"
     assert views["base_quality"].frame["read"].unique().sort().to_list() == ["first", "last"]
     assert views["base_quality"].frame.height == 2 * 2 * 6
     assert views["insert_size"].frame.columns == ["library", "insert_size", "pairs"]
@@ -76,14 +89,21 @@ def test_alfred_summary_lists_the_fraction_of_targets_above_the_coverage_levels(
     assert summary.table.columns["AlignedBases"].detail
     views = _views(summary)
     assert set(views) == {
+        "libraries",
         "target_coverage",
         "on_target",
         "coverage",
         "insert_size",
         "base_quality",
         "gc_content",
+        "contigs",
         "chromosomes",
     }
+    assert "targets above 20x" in views["libraries"].frame["metric"].to_list()
+    contigs = views["contigs"].frame
+    assert contigs["mapped_per_mb"][0] == pytest.approx(
+        contigs["mapped"][0] / (contigs["Size"][0] - contigs["N"][0]) * 1e6
+    )
     assert views["base_quality"].frame["read"].unique().sort().to_list() == ["Read1", "Read2"]
     assert views["gc_content"].frame["library"].unique().sort().to_list() == [
         "lib1",
@@ -116,15 +136,18 @@ def test_picard_summary_joins_the_programs_into_one_row_per_library():
     assert frame["AlignmentSummaryMetrics.CATEGORY"].to_list() == ["PAIR", "PAIR"]
     assert frame["AlignmentSummaryMetrics.TOTAL_READS"].to_list() == [100000, 200000]
     assert frame["InsertSizeMetrics.MEDIAN_INSERT_SIZE"].to_list() == [210, 230]
-    assert summary.table.columns["HsMetrics.PCT_TARGET_BASES_20X"].plot["heatmap"]
+    assert summary.table.columns["HsMetrics.PCT_TARGET_BASES_20X"].plot["ticks"]
     views = _views(summary)
     assert set(views) == {
+        "libraries",
         "HsMetrics",
         "AlignmentSummaryMetrics",
         "InsertSizeMetrics",
         "target_coverage",
         "insert_size",
     }
+    metrics = views["libraries"].frame["metric"].unique().to_list()
+    assert "pct target bases 20x" in metrics and "mean target coverage" in metrics
     assert views["AlignmentSummaryMetrics"].frame.height == 6  # three categories per library
     insert_size = views["insert_size"].frame
     assert insert_size.columns == ["library", "insert_size", "read pairs"]
@@ -149,9 +172,11 @@ def test_bcftools_stats_summary_has_one_row_per_sample_and_variant_set():
     assert novel["het_hom_ratio"][0] == pytest.approx(125 / 260)
     assert novel["sites"][0] == 433
     views = _views(summary)
-    assert set(views) == {"substitutions", "indel_length", "depth", "quality"}
+    assert set(views) == {"libraries", "substitutions", "indel_length", "depth", "quality"}
     assert views["substitutions"].mark == "bar" and views["substitutions"].x_type == "nominal"
-    assert all(view.facet == "set" for view in views.values())
+    assert all(view.facet == "set" for name, view in views.items() if name != "libraries")
+    # one tick per sample and variant set
+    assert views["libraries"].frame["library"][0].endswith(" (known)")
     assert views["depth"].frame["bin"].dtype == pl.Float64
     _validate(summary)
 
@@ -169,7 +194,7 @@ def test_bcftools_stats_without_split_by_id_has_one_set(tmp_path):
     summary = summarize("bcftools_stats", {"txt": [str(path)]}, ["lib1"])
 
     assert summary.table.frame["set"].unique().to_list() == ["all"]
-    assert all(view.facet is None for view in summary.views)
+    assert all(view.facet is None for view in summary.views if view.name != "libraries")
 
 
 def test_thin_bins_long_distributions_per_library():
@@ -204,10 +229,15 @@ def test_config_pins_the_first_columns_and_plots_the_charts():
         "summary",
         "T",
         pl.DataFrame({"library": ["a"], "v": [0.5]}),
-        columns={"v": qc_summary.fraction()},
+        columns={"v": qc_summary.ticks()},
     )
     chart = Chart(
-        "c", "C", pl.DataFrame({"library": ["a"], "x": [1], "y": [2]}), x="x", y="y", facet="read"
+        "c",
+        "C",
+        pl.DataFrame({"library": ["a", "a"], "read": ["first", "last"], "x": [1, 1], "y": [2, 3]}),
+        x="x",
+        y="y",
+        facet="read",
     )
 
     cfg = config([table, chart], "task: T", "/data")
@@ -216,11 +246,41 @@ def test_config_pins_the_first_columns_and_plots_the_charts():
     assert cfg["datasets"]["c"] == {"path": "/data/c.tsv", "separator": "\t"}
     columns = cfg["views"]["summary"]["render-table"]["columns"]
     assert columns["library"] == {"display-mode": "pinned"}
-    assert columns["v"]["plot"]["heatmap"]["domain"] == ["0", "1.0"]
+    assert columns["v"]["plot"]["ticks"]["scale"] == "linear"
     spec = json.loads(cfg["views"]["c"]["render-plot"]["spec"])
     assert spec["encoding"]["column"]["field"] == "read"
+    assert spec["encoding"]["column"]["sort"] == ["first", "last"]
     assert spec["encoding"]["color"]["field"] == "library"
+    assert spec["encoding"]["color"]["legend"] is None  # one series: the title names it
+    assert spec["config"]["axis"]["grid"] is False and spec["config"]["view"]["stroke"] is None
     _validate_config(cfg)
+
+
+def test_many_libraries_share_one_ink_and_few_get_colors():
+    few = pl.DataFrame({"library": ["a", "b"], "x": [1, 2], "y": [3, 4]})
+    many = pl.DataFrame({"library": [f"l{i}" for i in range(7)], "x": range(7), "y": range(7)})
+
+    colored = Chart("c", "C", few, x="x", y="y").spec()
+    plain = Chart("c", "C", many, x="x", y="y").spec()
+
+    assert colored["encoding"]["color"]["field"] == "library"
+    assert colored["encoding"]["color"]["scale"]["range"][:2] == list(qc_summary.COLORS[:2])
+    assert plain["encoding"]["color"] == {"value": qc_summary.INK}
+    assert plain["encoding"]["detail"]["field"] == "library"
+    assert plain["mark"]["opacity"] < 1 and plain["mark"]["strokeWidth"] <= 2
+
+
+def test_metric_strips_put_each_metric_on_its_own_scale():
+    frame = pl.DataFrame({"library": ["a", "b"], "f": [0.5, 0.6], "n": [10, 20], "t": ["x", "y"]})
+
+    chart = qc_summary.metric_strips(frame, {"f": "fraction", "n": "count", "t": "text"}, "m", "M")
+    spec = chart.spec()
+
+    assert chart.frame["metric"].to_list() == ["fraction", "fraction", "count", "count"]
+    assert spec["mark"]["type"] == "tick"
+    assert spec["encoding"]["row"]["field"] == "metric"
+    assert spec["resolve"] == {"scale": {"x": "independent"}}
+    assert spec["encoding"]["x"]["title"] is None
 
 
 @pytest.mark.skipif(shutil.which("datavzrd") is None, reason="datavzrd is not installed")

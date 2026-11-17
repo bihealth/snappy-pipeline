@@ -23,10 +23,11 @@ from snappy_wrappers.tools.qc_summary import (
     Table,
     bars,
     concat,
-    fraction,
     from_rows,
+    metric_strips,
     ratio,
     thin,
+    ticks,
 )
 
 #: Coverage levels whose fraction of covered targets the summary table lists
@@ -34,16 +35,28 @@ COVERAGE_LEVELS = (10, 20, 30, 50, 100)
 
 #: The columns shown in the summary table, in order; the other statistics follow in the details
 SUMMARY_COLUMNS = {
-    "MappedFraction": fraction(),
-    "MappedProperFraction": fraction(),
-    "DuplicateFraction": fraction(),
-    "OnTargetFraction": fraction(),
-    **{f"TargetsAbove{level}x": fraction() for level in COVERAGE_LEVELS},
-    "MedianCoverage": bars(precision=1),
-    "ErrorRate": Column(precision=4),
+    "MappedFraction": ticks(),
+    "MappedProperFraction": ticks(),
+    "DuplicateFraction": ticks(),
+    "OnTargetFraction": ticks(),
+    **{f"TargetsAbove{level}x": ticks() for level in COVERAGE_LEVELS},
+    "MedianCoverage": ticks(precision=1),
+    "ErrorRate": ticks(precision=4),
     "MedianReadLength": Column(),
-    "MedianInsertSize": Column(),
-    "MedianMAPQ": Column(),
+    "MedianInsertSize": ticks(precision=0),
+    "MedianMAPQ": ticks(precision=0),
+}
+
+#: The metrics of the strip chart, with their labels
+METRICS = {
+    "MappedFraction": "mapped",
+    "MappedProperFraction": "properly paired",
+    "DuplicateFraction": "duplicated",
+    "OnTargetFraction": "on target",
+    "TargetsAbove20x": "targets above 20x",
+    "MedianCoverage": "median coverage",
+    "ErrorRate": "error rate",
+    "MedianInsertSize": "median insert size",
 }
 
 #: Charts of alfred's metrics: metric id -> (name, title, x column, y column, log y)
@@ -175,7 +188,16 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
     columns = SUMMARY_COLUMNS | {column: Column(detail=True) for column in rest}
     columns["read_group"] = Column(detail=True)
 
-    views: list[Table | Chart] = []
+    views: list[Table | Chart] = [
+        metric_strips(
+            summary_frame,
+            METRICS,
+            "libraries",
+            "Libraries by metric",
+            desc="One tick per library on each metric's range: a tick apart from the others is "
+            "a library to look at; the tooltip names it.",
+        )
+    ]
     for metric_id, (name, title, x, y, log_y) in CHARTS.items():
         frame_columns = (
             ["library", "read", x, y] if metric_id == "baseQuality" else ["library", x, y]
@@ -194,13 +216,31 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
                 log_y=log_y,
             )
         )
+    contigs = concat(chromosomes, ["library", "Chr", "Size", "N", "GC", "GC-fraction", "mapped"])
+    contigs = contigs.with_columns(
+        (pl.col("mapped") / (pl.col("Size") - pl.col("N")) * 1e6).alias("mapped_per_mb")
+    )
+    views.append(
+        Chart(
+            "contigs",
+            "Mapped reads per Mb by chromosome",
+            contigs,
+            x="mapped_per_mb",
+            y="Chr",
+            mark="dots",
+            x_title="mapped reads per Mb of non-N sequence",
+            y_title="chromosome",
+            desc="One dot per library and chromosome; a dot far from the others marks a "
+            "different coverage in that library, for example a sex chromosome.",
+        )
+    )
     views.append(
         Table(
             "chromosomes",
             "Reads per chromosome",
-            concat(chromosomes, ["library", "Chr", "Size", "N", "GC", "GC-fraction", "mapped"]),
+            contigs,
             desc="Mapped reads per chromosome, with its size, N and GC content.",
-            columns={"mapped": bars()},
+            columns={"mapped": bars(), "mapped_per_mb": ticks(label="mapped per Mb", precision=0)},
             pinned=("library", "Chr"),
         )
     )

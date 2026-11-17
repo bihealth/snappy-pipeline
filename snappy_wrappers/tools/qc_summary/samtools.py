@@ -21,11 +21,12 @@ from snappy_wrappers.tools.qc_summary import (
     Table,
     bars,
     concat,
-    fraction,
     from_rows,
+    metric_strips,
     number,
     ratio,
     thin,
+    ticks,
 )
 
 #: ``SN`` keys of the summary table and their column names
@@ -56,15 +57,27 @@ FLAGSTAT_COLUMNS = {
 #: The columns shown in the summary table, in order; the counts follow in the row details
 SUMMARY_COLUMNS = {
     "reads": bars(),
-    "mapped_fraction": fraction(),
-    "properly_paired_fraction": fraction(),
-    "duplicated_fraction": fraction(),
-    "mapq0_fraction": fraction(),
-    "error_rate": Column(precision=4),
+    "mapped_fraction": ticks(),
+    "properly_paired_fraction": ticks(),
+    "duplicated_fraction": ticks(),
+    "mapq0_fraction": ticks(),
+    "error_rate": ticks(precision=4),
     "average_length": Column(precision=0),
-    "average_quality": Column(precision=1),
-    "insert_size_average": Column(precision=0),
-    "insert_size_sd": Column(precision=0),
+    "average_quality": ticks(precision=1),
+    "insert_size_average": ticks(precision=0),
+    "insert_size_sd": ticks(precision=0),
+}
+
+#: The metrics of the strip chart, with their labels
+METRICS = {
+    "mapped_fraction": "mapped",
+    "properly_paired_fraction": "properly paired",
+    "duplicated_fraction": "duplicated",
+    "mapq0_fraction": "MAPQ 0",
+    "error_rate": "error rate",
+    "average_quality": "base quality",
+    "insert_size_average": "insert size",
+    "insert_size_sd": "insert size SD",
 }
 
 COLUMNS = SUMMARY_COLUMNS | {
@@ -175,7 +188,6 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
     contigs = contigs.with_columns(
         (pl.col("mapped") / pl.col("length") * 1e6).alias("mapped_per_mb")
     )
-    mapped_per_mb = contigs["mapped_per_mb"].max() if contigs.height else None
     return Summary(
         table=Table(
             "summary",
@@ -187,6 +199,14 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
             columns=COLUMNS,
         ),
         views=[
+            metric_strips(
+                summary,
+                METRICS,
+                "libraries",
+                "Libraries by metric",
+                desc="One tick per library on each metric's range: a tick apart from the others "
+                "is a library to look at; the tooltip names it.",
+            ),
             Chart(
                 "insert_size",
                 "Insert size distribution",
@@ -218,6 +238,18 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
                 y_title="mean base quality",
                 facet="read",
             ),
+            Chart(
+                "contigs",
+                "Mapped reads per Mb by contig",
+                contigs,
+                x="mapped_per_mb",
+                y="contig",
+                mark="dots",
+                x_title="mapped reads per Mb of contig",
+                desc="One dot per library and contig (`samtools idxstats`); a contig with a dot "
+                "far from the others has a different coverage in that library, for example a "
+                "sex chromosome.",
+            ),
             Table(
                 "idxstats",
                 "Reads per contig",
@@ -225,9 +257,7 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
                 desc="`samtools idxstats`: the mapped and unmapped reads placed on each contig.",
                 columns={
                     "mapped": bars(),
-                    "mapped_per_mb": fraction(
-                        label="mapped per Mb", high=float(mapped_per_mb or 1.0)
-                    ),
+                    "mapped_per_mb": ticks(label="mapped per Mb", precision=0),
                 },
                 pinned=("library", "contig"),
             ),

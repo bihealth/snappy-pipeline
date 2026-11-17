@@ -138,7 +138,11 @@ Every plot (PDF, PNG, SVG, HTML) and every `report/` directory and output below 
 
 The Snakemake report embeds only images, PDF and HTML, so a step whose tool writes tables of statistics adds a QC summary: a subclass of `QcSummaryStepPart` (`snappy_pipeline/workflows/common/qc_summary.py`) next to the tool part, which names the `source` part and action, the output keys to read by kind (`source_keys`) and the `format`, a parser module of `snappy_wrappers.tools.qc_summary` (polars).
 One job per task reads the files of all entities (`entities()`, the task's output entities by default; `label_wildcard` labels several files of one entity, such as the samples of a VCF), writes the summary table `qc_summary/out/qc_summary.tsv` (one row per library, a result file) and renders a datavzrd site below `qc_summary/report/html/` (a report output with `htmlindex`) through the `qc_summary` wrapper.
-A format module turns the files into a `Summary`: the summary `Table` and the views of the site, `Table` and `Chart` (vega-lite line or bar charts of long frames, thinned to `MAX_POINTS` per library).
+A format module turns the files into a `Summary`: the summary `Table` and the views of the site, `Table` and `Chart` (vega-lite charts of long frames, thinned to `MAX_POINTS` per library).
+The charts follow Tufte: the data carries the ink, with no gridlines, hairline axes, thin lines and no frame (`CHART_CONFIG`).
+A table cell shows its value as a tick on the range of its column (`ticks()`) or as a bar (`bars()`); every summary gets a strip chart of its key metrics (`metric_strips()`: one tick per library per metric, each metric on its own scale, so an outlier stands out and the tooltip names it); per-contig counts are dot charts (`mark="dots"`), with the table as their twin.
+Up to `MAX_COLORED` libraries get a color each, in a fixed, colorblind-safe order, with a legend; more share one muted ink and the tooltip tells them apart.
+A table whose values can be drawn as a chart gets one; the table stays as the exact view.
 `tests/snappy_wrappers/tools/test_qc_summary.py` checks each format against fixtures and the generated configuration against datavzrd's schema; `test_qc_summary.py` of the workflows checks the step part.
 
 ### Defining input files and params

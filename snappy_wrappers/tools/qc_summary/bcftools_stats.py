@@ -22,9 +22,11 @@ from snappy_wrappers.tools.qc_summary import (
     bars,
     concat,
     from_rows,
+    metric_strips,
     numeric,
     ratio,
     thin,
+    ticks,
 )
 
 #: ``PSC`` columns of the summary table and their names
@@ -53,12 +55,12 @@ SN_COLUMNS = {
 SUMMARY_COLUMNS = {
     "het": bars(),
     "hom_alt": bars(),
-    "het_hom_ratio": Column(precision=2),
-    "ts_tv": Column(precision=2),
+    "het_hom_ratio": ticks(precision=2),
+    "ts_tv": ticks(precision=2),
     "indels": bars(),
     "singletons": bars(),
     "missing": bars(),
-    "average_depth": bars(precision=1),
+    "average_depth": ticks(precision=1),
     "sites": Column(detail=True),
     "snv_sites": Column(detail=True),
     "mnv_sites": Column(detail=True),
@@ -68,6 +70,18 @@ SUMMARY_COLUMNS = {
     "hom_ref": Column(detail=True),
     "transitions": Column(detail=True),
     "transversions": Column(detail=True),
+}
+
+#: The metrics of the strip chart, with their labels
+METRICS = {
+    "het": "heterozygous",
+    "hom_alt": "homozygous alt",
+    "het_hom_ratio": "het/hom",
+    "ts_tv": "Ts/Tv",
+    "indels": "indels",
+    "singletons": "singletons",
+    "missing": "missing",
+    "average_depth": "depth",
 }
 
 #: Charts of the distribution sections: section -> (name, title, x column, x title, y column)
@@ -153,7 +167,21 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
 
     summary = from_rows(rows, ["library", "set", *SUMMARY_COLUMNS])
     facet = "set" if summary.height and summary["set"].n_unique() > 1 else None
-    views: list[Table | Chart] = []
+    labelled = summary
+    if facet:  # one tick per sample and variant set
+        labelled = summary.with_columns(
+            (pl.col("library") + " (" + pl.col("set") + ")").alias("library")
+        )
+    views: list[Table | Chart] = [
+        metric_strips(
+            labelled,
+            METRICS,
+            "libraries",
+            "Samples by metric",
+            desc="One tick per sample (and variant set) on each metric's range: a tick apart "
+            "from the others is a sample to look at; the tooltip names it.",
+        )
+    ]
     for section, (name, title, x, x_title, y) in CHARTS.items():
         frame = concat(charts[section], ["library", "set", x, y])
         if section == "DP":  # the last bin is ``>500``, which has no place on the axis

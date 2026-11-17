@@ -115,3 +115,6 @@ work/
 !.tests/test-workflow/resources/refs/subregion.fa.fai
 !.tests/test-workflow/resources/refs/subregion.dict
 
+
+# Scratch artifacts of a session (rendered test images, smoke sites, report zips)
+/tmp/

@@ -19,10 +19,10 @@ from snappy_wrappers.tools.qc_summary import (
     Column,
     Summary,
     Table,
-    bars,
-    fraction,
+    metric_strips,
     numeric,
     thin,
+    ticks,
 )
 
 #: Charts of the histogram sections, by their first column: (name, title, y column or ``None``
@@ -110,6 +110,7 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
                 )
 
     views: list[Table | Chart] = []
+    strips: list[Table | Chart] = []
     summary_parts = []
     for name, frames in tables.items():
         frame = pl.concat(frames, how="diagonal")
@@ -158,6 +159,22 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
     else:
         summary = pl.DataFrame({"library": labels})
     columns = {c: _column(c.rsplit(".", 1)[-1]) for c in summary.columns if c != "library"}
+    metrics = {
+        c: c.rsplit(".", 1)[-1].replace("_", " ").lower()
+        for c in summary.columns
+        if c != "library" and _column(c.rsplit(".", 1)[-1]).plot is not None
+    }
+    if metrics:
+        strips.append(
+            metric_strips(
+                summary,
+                metrics,
+                "libraries",
+                "Libraries by metric",
+                desc="One tick per library on the range of each fraction, mean and median: a "
+                "tick apart from the others is a library to look at; the tooltip names it.",
+            )
+        )
     return Summary(
         table=Table(
             "summary",
@@ -167,7 +184,7 @@ def summarize(files: dict[str, list[str]], labels: list[str]) -> Summary:
             "the metrics class.",
             columns=columns,
         ),
-        views=views,
+        views=[*strips, *views],
     )
 
 
@@ -182,9 +199,9 @@ def _one_row_per_library(frame: pl.DataFrame) -> pl.DataFrame:
 
 def _column(name: str) -> Column:
     if name.startswith("PCT_") or name.endswith(("_FRACTION", "_RATE", "_PCT")):
-        return fraction()
+        return ticks()
     if name.startswith(("MEAN_", "MEDIAN_")):
-        return bars(precision=1)
+        return ticks(precision=1)
     if name in LABEL_COLUMNS:
         return Column()
     return Column(detail=True)
