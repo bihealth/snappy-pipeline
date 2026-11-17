@@ -82,8 +82,12 @@ class Column:
     precision: int | None = None
     #: A datavzrd cell plot, for example ``{"ticks": {...}}`` or ``{"bars": {...}}``
     plot: dict | None = None
+    #: A vega-lite plot per cell: ``{"data": <JS function of value and row>, "spec": {...}}``
+    custom_plot: dict | None = None
     #: Shown in the details of a row only
     detail: bool = False
+    #: Not shown at all (kept for links, tooltips and the TSV)
+    hidden: bool = False
 
     def spec(self) -> dict:
         spec: dict = {}
@@ -93,8 +97,15 @@ class Column:
             spec["precision"] = self.precision
         if self.plot:
             spec["plot"] = self.plot
+        if self.custom_plot:  # datavzrd takes the vega-lite spec of a cell plot as text
+            plot = dict(self.custom_plot)
+            if isinstance(plot.get("spec"), dict):
+                plot["spec"] = json.dumps(plot["spec"])
+            spec["custom-plot"] = plot
         if self.detail:
             spec["display-mode"] = "detail"
+        if self.hidden:
+            spec["display-mode"] = "hidden"
         return spec
 
 

@@ -29,6 +29,7 @@ Chain several tasks for a sequence of filters.
 
 ``varlociraptor``
     FDR control of the calls of a ``variant_calling`` task with ``tool: varlociraptor``: ``varlociraptor filter-calls control-fdr`` selects the records whose posterior probabilities for the ``events`` meet the ``fdr`` in the ``fdr_mode`` chosen, once per variant type.
+    The task also renders the calls of each VCF as a table for the report (the calls report of the outputs).
     Chain it right after the calling task, before annotation; the events are those of the calling task's scenario, such as ``somatic_tumor_high`` and ``somatic_tumor_medium``, or ``present`` and ``denovo``.
     Its ``mode`` defaults to ``filter``, so the task after it reads a call set.
 
@@ -72,6 +73,8 @@ Outputs
 Below ``tasks/<task>/output/``:
 
 - ``{library_name}/out/{library_name}.vcf.gz`` with ``.tbi``, ``.md5`` and ``.tbi.md5`` files.
+- with ``varlociraptor``: ``{library_name}/report/calls/{library_name}.calls.tsv``, the calls report: one row per call with the posterior probability of every event of the scenario and, per sample, the allele frequency, the depth, the genotype, the observations and the biases varlociraptor found.
+  The same table is a datavzrd site below ``work/{library_name}/report/calls/html/``, which ``snappy report`` shows: the probabilities as heatmaps, the observations drawn per cell (reads for the alternative allele to the right, for the reference to the left, one bar per strength of evidence) and the posterior density of the allele frequency as a small area.
 
 Downstream tasks read ``vcf`` and ``vcf_tbi`` through ``depends_on``.
 """
@@ -80,6 +83,7 @@ import random
 from functools import cached_property
 from typing import Any
 
+from snakemake.io import directory
 from snakemake.iocontainers import Wildcards
 
 from snappy_pipeline.base import ConfigError
@@ -88,6 +92,7 @@ from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
     BaseStepPart,
+    ReportOutput,
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType, select_signature
@@ -367,6 +372,47 @@ class VarlociraptorStepPart(VariantFiltrationStepPart):
         return params
 
 
+class VarlociraptorCallsReportStepPart(BaseStepPart):
+    """The calls of each VCF as a table for the report: event probabilities, and per sample the
+    allele frequency, depth, genotype and observations (``varlociraptor/report`` wrapper)."""
+
+    name = "calls_report"
+    actions = ("run",)
+    entity_wildcard = "tumor_library"
+    result_keys = ("tsv", "tsv_md5")
+    resource_usage = {"run": ResourceUsage(threads=1, runtime="2h", mem="4GB")}
+
+    #: The site, and the table itself for download
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "varlociraptor calls", caption="varlociraptor_calls.rst", htmlindex="index.html"
+            ),
+            "tsv": ReportOutput("varlociraptor calls", caption="varlociraptor_calls.rst"),
+        }
+    }
+
+    def _get_input_files_run(self, wildcards: Wildcards):
+        lib = wildcards.tumor_library
+        return {
+            "vcf": f"work/{lib}/out/{lib}.vcf.gz",
+            "vcf_tbi": f"work/{lib}/out/{lib}.vcf.gz.tbi",
+        }
+
+    @dictify
+    def _get_output_files_run(self):
+        tsv = "work/{tumor_library}/report/calls/{tumor_library}.calls.tsv"
+        yield "tsv", tsv
+        yield "tsv_md5", tsv + ".md5"
+        yield "html", directory("work/{tumor_library}/report/calls/html")
+
+    def _get_log_file_run(self):
+        return {"log": "work/{tumor_library}/log/{tumor_library}.calls_report.log"}
+
+    def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
+        return {"title": f"{self.parent.task_name}: calls of {wildcards.tumor_library}"}
+
+
 _TOOL_STEP_PART: dict[str, type[VariantFiltrationStepPart]] = {
     "bcftools": BcftoolsStepPart,
     "vembrane": VembraneStepPart,
@@ -437,6 +483,8 @@ class VariantFiltrationWorkflow(BaseStep):
         super().__init__(workflow, project, task_name)
         tool_cls = _TOOL_STEP_PART[self.config.tool]
         self.register_sub_step_classes((tool_cls,))
+        if self.config.tool == "varlociraptor":
+            self.register_sub_step_classes((VarlociraptorCallsReportStepPart,))
 
     @cached_property
     def variants_are_annotated(self) -> bool:

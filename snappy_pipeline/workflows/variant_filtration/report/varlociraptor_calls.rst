@@ -1,0 +1,1 @@
+The FDR-controlled varlociraptor calls as a table: the posterior probability of every event, and per sample the allele frequency with its posterior density, the depth, the genotype, the observations (reads for the alternative allele to the right, for the reference to the left, one bar per strength of evidence) and the biases found.

@@ -638,6 +638,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "pvactools/features",
             "pvactools/hla_types",
             "reference_download/ensembl",
+            "varlociraptor/report",
             "varlociraptor/split_candidates",
         ),
         "an R script without command line arguments": (

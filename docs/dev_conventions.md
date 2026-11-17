@@ -144,6 +144,7 @@ A table cell shows its value as a tick on the range of its column (`ticks()`) or
 Up to `MAX_COLORED` libraries get a color each, in a fixed, colorblind-safe order, with a legend that toggles them; a distribution or dot chart of more libraries becomes a heatmap (one row per library, the bins as columns, the value as a sequential color, `Chart.many`), which shows hundreds of libraries at once.
 Continuous axes zoom and pan; hovering a mark highlights its library, across the panels of a strip chart; a mark links to the row of its library in the summary table (`Chart.link`, a datavzrd `table-row` link named `LINK` with an `href` encoding).
 `thin()` bins distributions at round widths (`nice_width()`).
+A `Column` can carry a vega-lite plot per cell (`custom_plot`: a JS `data` function of the cell value and a `spec`), which the varlociraptor calls report uses for the observations and the allele frequency density of each sample (`snappy_wrappers/tools/qc_summary/varlociraptor_calls.py`, rendered per VCF by the `varlociraptor/report` wrapper, a step part of `variant_filtration`); the cell holds the plot's records as JSON, parsed in the browser.
 A table whose values can be drawn as a chart gets one; the table stays as the exact view.
 `tests/snappy_wrappers/tools/test_qc_summary.py` checks each format against fixtures and the generated configuration against datavzrd's schema; `test_qc_summary.py` of the workflows checks the step part.
 
