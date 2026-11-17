@@ -17,8 +17,7 @@ def input_txt_fake_fs(fake_fs):
 
 
 def test_bed_filter_jaccard_subtract(capsys, input_txt_fake_fs, mocker):
-    mocker.patch("argparse.open", input_txt_fake_fs.open, create=True)
-    mocker.patch("argparse._os", input_txt_fake_fs.os)
+    mocker.patch("snappy_wrappers.tools.open", input_txt_fake_fs.open, create=True)
 
     bed_filter_jaccard.main(["--input-file", "/work/input.txt", "--operation", "subtract"])
 
@@ -30,8 +29,7 @@ def test_bed_filter_jaccard_subtract(capsys, input_txt_fake_fs, mocker):
 
 
 def test_bed_filter_jaccard_intersect(capsys, input_txt_fake_fs, mocker):
-    mocker.patch("argparse.open", input_txt_fake_fs.open, create=True)
-    mocker.patch("argparse._os", input_txt_fake_fs.os)
+    mocker.patch("snappy_wrappers.tools.open", input_txt_fake_fs.open, create=True)
 
     bed_filter_jaccard.main(["--input-file", "/work/input.txt", "--operation", "intersect"])
 

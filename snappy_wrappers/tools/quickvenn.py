@@ -24,6 +24,8 @@ import itertools
 import math
 import sys
 
+from snappy_wrappers.tools import open_file
+
 import matplotlib  # isort:skip
 
 # Force using Agg backend, has to go before import of pyplot
@@ -373,7 +375,6 @@ def main(argv=None):
 
     parser.add_argument(
         "--input-shared-counts",
-        type=argparse.FileType("rt"),
         required=True,
         help="Set description file",
     )
@@ -389,7 +390,8 @@ def main(argv=None):
     parser.add_argument("--output-image", type=str, required=True, help="Path to output image file")
 
     args = parser.parse_args(argv)
-    return run(args)
+    with open_file(args.input_shared_counts, "rt") as args.input_shared_counts:
+        return run(args)
 
 
 if __name__ == "__main__":

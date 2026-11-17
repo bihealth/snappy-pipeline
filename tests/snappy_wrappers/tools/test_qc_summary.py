@@ -6,7 +6,7 @@ import json
 import shutil
 from pathlib import Path
 
-import jsonschema
+import fastjsonschema
 import polars as pl
 import pytest
 
@@ -16,8 +16,10 @@ from snappy_wrappers.tools.qc_summary import Chart, Table, config, numeric, summ
 FIXTURES = Path(__file__).parent / "fixtures" / "qc_summary"
 
 
-def _schema():
-    return json.loads((FIXTURES / "datavzrd-2.78.1.schema.json").read_text(encoding="utf-8"))
+def _validate_config(cfg):
+    """``cfg`` is valid against datavzrd's configuration schema."""
+    schema = json.loads((FIXTURES / "datavzrd-2.78.1.schema.json").read_text(encoding="utf-8"))
+    fastjsonschema.validate(schema, cfg)
 
 
 def _views(summary):
@@ -27,7 +29,7 @@ def _views(summary):
 def _validate(summary, title="QC"):
     """The datavzrd configuration of ``summary`` is valid against the schema."""
     cfg = config([summary.table, *summary.views], title, "/tmp")
-    jsonschema.validate(cfg, _schema())
+    _validate_config(cfg)
     return cfg
 
 
@@ -218,7 +220,7 @@ def test_config_pins_the_first_columns_and_plots_the_charts():
     spec = json.loads(cfg["views"]["c"]["render-plot"]["spec"])
     assert spec["encoding"]["column"]["field"] == "read"
     assert spec["encoding"]["color"]["field"] == "library"
-    jsonschema.validate(cfg, _schema())
+    _validate_config(cfg)
 
 
 @pytest.mark.skipif(shutil.which("datavzrd") is None, reason="datavzrd is not installed")

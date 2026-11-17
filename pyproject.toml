@@ -18,7 +18,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
 ]
 dynamic = ["version"]
 dependencies = [
@@ -35,8 +35,8 @@ dependencies = [
     # in scripts with Python < 3.11), snakemake-interface-common#101 (no enum.StrEnum on
     # Python < 3.11, as in the gCNV environment), and the container plugin's #31 (apptainer
     # runs the pulled image)
-    "snakemake @ git+https://github.com/snakemake/snakemake.git@7ad2c0e90ca727f7629618535f315e3eb8178a0b",
-    "snakemake-interface-common @ git+https://github.com/snakemake/snakemake-interface-common.git@edaadd2e765f020a625612aef6f2c98e230e8784",
+    "snakemake @ git+https://github.com/snakemake/snakemake.git@619fa242b231f31a17989f513db2f355ea9d8ab7",
+    "snakemake-interface-common @ git+https://github.com/snakemake/snakemake-interface-common.git@8afe08d830a6647b5192e1cdda74f0eca50cf5a2",
     "snakemake-software-deployment-plugin-conda >=0.8.4,<0.9",
     "snakemake-software-deployment-plugin-container @ git+https://github.com/snakemake/snakemake-software-deployment-plugin-container.git@80be55cbaa3168566e3ad5503b8951187633a521",
     "snakemake-executor-plugin-slurm >=2,<3",
@@ -241,7 +241,7 @@ channels = ["conda-forge", "bioconda", "nodefaults"]
 platforms = ["linux-64"]
 
 [tool.pixi.dependencies]
-python = "3.12.*"
+python = "3.14.*"
 git-lfs = "~=3.5.1"
 gcc_linux-64 = "~=13.2.0"
 gcc_impl_linux-64 = "~=13.2.0"
@@ -257,13 +257,13 @@ zlib = "~=1.3.0"
 htslib = "1.20.*"
 bcftools = "1.20.*"
 samtools = "1.20.*"
-conda = ">=25,<26"
 
 # PREVENT CONFLICTS: Force Conda to pick older versions of these
 # dependencies so that it doesn't block the PyPI/Git package installations.
-jsonschema = "<4.5"
+# biomedsheets needs jsonschema 4.4
+jsonschema = ">=4.4,<4.5"
 tabulate = "<0.10"
-docutils = "<0.21"
+docutils = ">=0.20,<0.22"
 click = ">=8.4.0,<9"
 # Snakemake's development version needs packaging 26.1 or newer
 packaging = ">=26.1,<27"
@@ -273,6 +273,8 @@ default = { solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 docs = { features = ["docs"], solve-group = "default" }
 dev = { features = ["test", "docs", "dev"], solve-group = "default" }
+# Pins the wrapper environments: snakedeploy (which needs conda) allows Python 3.12 at most
+pins = { features = ["pins"], no-default-feature = true }
 
 [tool.pixi.feature.docs.tasks]
 docs = { cmd = "sphinx-build -W --keep-going -b html docs/ docs/_build/html", description = "Build HTML documentation with Sphinx; warnings fail the build" }
@@ -290,8 +292,10 @@ coverage = { cmd = "coverage report && coverage html", description = "Generate c
 
 [tool.pixi.feature.test.dependencies]
 pytest-xdist = ">=3.8.0,<4"
-# The tests of the qc_summary wrapper tools (snappy_wrappers/tools/qc_summary)
+# The tests of the qc_summary wrapper tools (snappy_wrappers/tools/qc_summary); fastjsonschema checks
+# the datavzrd configuration (jsonschema 4.4 cannot resolve $ref on Python 3.14)
 polars = ">=2.1.0,<3"
+python-fastjsonschema = ">=2.20,<3"
 
 [tool.pixi.feature.dev.tasks]
 fmt = { cmd = "ruff format .", description = "Apply Ruff code formatter" }
@@ -305,13 +309,18 @@ lint-snakefmt = { cmd = "snakefmt --check snappy_pipeline/workflows/*/Snakefile"
 lint-shell = { cmd = "python tests/scripts/shell_templates.py", description = "Check the shell scripts and the shell templates of the wrappers with shfmt" }
 lint = { depends-on = ["check", "lint-fmt", "lint-snakefmt", "lint-shell"], description = "Run all linters" }
 
-update-pins = { cmd = "python tests/scripts/update_pins.py", description = "Pin all pinned wrapper environments again, or the given environment files (snakedeploy, needs conda)" }
-
 [tool.pixi.feature.dev.dependencies]
 pixi-pycharm = ">=0.0.11,<0.0.12"
 pandas-stubs = ">=3.0.3.260530,<4"
 go-shfmt = "==3.14.1"
 
-[tool.pixi.feature.dev.pypi-dependencies]
-# From PyPI: the conda package caps packaging below 26, which Snakemake's development version needs
-snakedeploy = ">=0.17.1,<0.18"
+[tool.pixi.feature.pins.tasks]
+update-pins = { cmd = "python tests/scripts/update_pins.py", description = "Pin all pinned wrapper environments again, or the given environment files (snakedeploy, needs conda)" }
+
+[tool.pixi.feature.pins.dependencies]
+python = "3.12.*"
+conda = ">=25,<26"
+
+[tool.pixi.feature.pins.pypi-dependencies]
+# From PyPI: the conda package caps packaging below 26
+snakedeploy = ">=0.18.1,<0.19"

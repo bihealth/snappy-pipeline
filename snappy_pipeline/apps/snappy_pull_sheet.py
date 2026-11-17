@@ -7,6 +7,8 @@ import sys
 
 import requests
 
+from snappy_wrappers.tools import open_file
+
 #: The URL template to use.
 URL_TPL = "https://%(sodar_host)s/samplesheets/api/remote/get/%(project_uuid)s/%(api_key)s"
 
@@ -190,8 +192,7 @@ def main(argv=None):
     parser.add_argument(
         "-o",
         "--output",
-        type=argparse.FileType("wt"),
-        default=sys.stdout,
+        default="-",
         help="Destination file, default is stdout.",
     )
     parser.add_argument("--api-key", required=True, help="API key to use.")
@@ -213,7 +214,8 @@ def main(argv=None):
         args.library_types = args.library_types.split(",")
     else:
         args.library_types = []
-    return run(args)
+    with open_file(args.output, "wt") as args.output:
+        return run(args)
 
 
 if __name__ == "__main__":

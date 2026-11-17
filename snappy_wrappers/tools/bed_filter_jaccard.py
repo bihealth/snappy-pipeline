@@ -15,6 +15,8 @@ import argparse
 import csv
 import sys
 
+from snappy_wrappers.tools import open_file
+
 #: Default value for ``--operation``
 DEFAULT_OPERATION = "subtract"
 #: Default value for ``--threshold``
@@ -75,13 +77,10 @@ def main(argv=None):
     )
     parser.add_argument(
         "--input-file",
-        type=argparse.FileType("rt"),
-        default=sys.stdin,
+        default="-",
         help="bedtools intersect file",
     )
-    parser.add_argument(
-        "--output-file", type=argparse.FileType("wt"), default=sys.stdout, help="Resulting BED file"
-    )
+    parser.add_argument("--output-file", default="-", help="Resulting BED file")
     parser.add_argument(
         "--operation",
         type=str,
@@ -115,7 +114,11 @@ def main(argv=None):
     )
 
     args = parser.parse_args(argv)
-    run(args)
+    with (
+        open_file(args.input_file, "rt") as args.input_file,
+        open_file(args.output_file, "wt") as args.output_file,
+    ):
+        run(args)
 
 
 if __name__ == "__main__":

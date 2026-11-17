@@ -278,7 +278,7 @@ The old `setup.py`, `setup.cfg`, `environment.yml`, and `Makefile` have been rem
 The CI pipeline was updated to use `prefix-dev/setup-pixi` instead of the legacy `conda-cache` GitHub action.
 End-to-end integration tests (`.github/workflows/ci-e2e.yml`) now run test workflow configurations directly with `pixi run snappy run` against dedicated test datasets checked in via Git LFS (`.tests/test-workflow/pipelines/`).
 They dry-run and then run the cancer, germline and reference pipelines on small test data.
-Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull request, a changed environment file must come with its changed pin file (`pixi run -e dev update-pins <file>`).
+Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull request, a changed environment file must come with its changed pin file (`pixi run -e pins update-pins <file>`).
 
 ## What was removed
 

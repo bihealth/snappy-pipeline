@@ -70,8 +70,7 @@ def test_write_header_snippet_complete():
 
 
 def test_main_complete(ped_file_complete, mocker):
-    mocker.patch("argparse.open", ped_file_complete.open, create=True)
-    mocker.patch("argparse._os", ped_file_complete.os)
+    mocker.patch("snappy_wrappers.tools.open", ped_file_complete.open, create=True)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_path = os.path.join(tmpdirname, "header")
@@ -137,8 +136,7 @@ def test_write_header_snippet_parent_missing():
 
 
 def test_main_parent_missing(ped_file_parent_missing, mocker):
-    mocker.patch("argparse.open", ped_file_parent_missing.open, create=True)
-    mocker.patch("argparse._os", ped_file_parent_missing.os)
+    mocker.patch("snappy_wrappers.tools.open", ped_file_parent_missing.open, create=True)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_path = os.path.join(tmpdirname, "header")
@@ -199,8 +197,7 @@ def test_write_header_snippet_singleton():
 
 
 def test_main_singleton(ped_file_singleton, mocker):
-    mocker.patch("argparse.open", ped_file_singleton.open, create=True)
-    mocker.patch("argparse._os", ped_file_singleton.os)
+    mocker.patch("snappy_wrappers.tools.open", ped_file_singleton.open, create=True)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         output_path = os.path.join(tmpdirname, "header")

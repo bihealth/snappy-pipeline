@@ -67,7 +67,7 @@ jobs:
             fi
           done < <(grep -E '^snappy_wrappers/wrappers/.+/environment\.yaml$' <<< "$changed" || true)
           if (( ${#stale[@]} )); then
-            echo "Pin these environments again: pixi run -e dev update-pins ${stale[*]}"
+            echo "Pin these environments again: pixi run -e pins update-pins ${stale[*]}"
             exit 1
           fi
 

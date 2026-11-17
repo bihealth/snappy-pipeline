@@ -25,8 +25,7 @@ def ref_fasta_fake_fs(fake_fs):
 
 
 def test_genome_windows(capsys, ref_fasta_fake_fs, mocker):
-    mocker.patch("argparse.open", ref_fasta_fake_fs.open, create=True)
-    mocker.patch("argparse._os", ref_fasta_fake_fs.os)
+    mocker.patch("snappy_wrappers.tools.open", ref_fasta_fake_fs.open, create=True)
 
     genome_windows.main(
         ["--fai-file", "/work/ref.fasta.fai", "--window-size", str(100 * 1000 * 1000)]

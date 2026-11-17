@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for the log archive of a run in ``snappy_pipeline.log_archive``."""
 
+import contextlib
 import sqlite3
 import tarfile
 from types import SimpleNamespace
@@ -37,8 +38,10 @@ def _project(tmp_path, *files):
     for name in files:
         (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / name).write_text(name)
-    with sqlite3.connect(log_dir / "snkmt.sqlite") as db:
+    # closing() closes the connection; the connection's own context manager only commits
+    with contextlib.closing(sqlite3.connect(log_dir / "snkmt.sqlite")) as db:
         db.execute("create table jobs (id integer)")
+        db.commit()
     return snakemake_log
 
 

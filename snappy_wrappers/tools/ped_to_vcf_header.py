@@ -14,6 +14,8 @@ import re
 import sys
 from collections import OrderedDict, defaultdict, namedtuple
 
+from snappy_wrappers.tools import open_file
+
 __author__ = "Oliver Stolpe <oliver.stolpe@bih-charite.de>"
 
 
@@ -106,7 +108,6 @@ def main(argv=None):
     )
     parser.add_argument(
         "--ped-file",
-        type=argparse.FileType("rt"),
         required=True,
         help="PED file that contains the pedigree information",
     )
@@ -115,7 +116,8 @@ def main(argv=None):
     )
 
     args = parser.parse_args(argv)
-    run(args)
+    with open_file(args.ped_file, "rt") as args.ped_file:
+        run(args)
 
 
 if __name__ == "__main__":

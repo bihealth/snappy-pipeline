@@ -9,9 +9,12 @@ At the moment, these issues are:
 """
 
 import argparse
+import contextlib
 import gzip
 import sys
 from functools import reduce
+
+from snappy_wrappers.tools import open_file
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -130,27 +133,22 @@ def main(argv=None):
     )
 
     group = parser.add_argument_group("General Options")
-    group.add_argument(
-        "--input-vcf", type=argparse.FileType("rt"), required=True, help="input VCF file"
-    )
-    group.add_argument(
-        "--output-vcf", type=argparse.FileType("wt"), help="output VCF file", default=sys.stdout
-    )
-    (
-        group.add_argument(
-            "--faidx", type=argparse.FileType("rt"), help="FAI file for generating ##contig lines"
-        ),
-    )
+    group.add_argument("--input-vcf", required=True, help="input VCF file (may be gzip-compressed)")
+    group.add_argument("--output-vcf", help="output VCF file, default is stdout", default="-")
+    group.add_argument("--faidx", help="FAI file for generating ##contig lines")
     group.add_argument("--sample", nargs="+", default=[], action="append", dest="samples")
 
     args = parser.parse_args(argv)
     args.samples = reduce(lambda x, y: x + y, args.samples)
 
     # also support compressed files (gzip or bgzip)
-    if args.input_vcf.name.endswith(".gz"):
-        args.input_vcf = gzip.open(args.input_vcf.name, "rt")
-
-    run(args, argv or sys.argv)
+    open_vcf = gzip.open if args.input_vcf.endswith(".gz") else open
+    with (
+        open_vcf(args.input_vcf, "rt") as args.input_vcf,
+        open_file(args.output_vcf, "wt") as args.output_vcf,
+        open_file(args.faidx, "rt") if args.faidx else contextlib.nullcontext() as args.faidx,
+    ):
+        run(args, argv or sys.argv)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@ base_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, base_dir)
 
 from snappy_wrappers.genome_regions import GenomeRegion  # noqa: E402
+from snappy_wrappers.tools import open_file  # noqa: E402
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
 
@@ -99,7 +100,6 @@ def create_parser():
     parser = argparse.ArgumentParser(description="Build genome windows from FAI file")
     parser.add_argument(
         "--fai-file",
-        type=argparse.FileType("rt"),
         required=True,
         help="FAI file to generate windows for",
     )
@@ -108,8 +108,7 @@ def create_parser():
     )
     parser.add_argument(
         "--output-file",
-        type=argparse.FileType("wt"),
-        default=sys.stdout,
+        default="-",
         help="Output file for regions",
     )
     parser.add_argument(
@@ -143,7 +142,11 @@ def main(argv=None):
     parser = create_parser()
     args = parser.parse_args(argv)
     args.ignore_contigs = [item for sublist in args.ignore_contigs for item in sublist]
-    run(args)
+    with (
+        open_file(args.fai_file, "rt") as args.fai_file,
+        open_file(args.output_file, "wt") as args.output_file,
+    ):
+        run(args)
 
 
 if __name__ == "__main__":

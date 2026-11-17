@@ -43,9 +43,7 @@ def _get_command_line_parser():
     parser.add_argument("--debug", action="store_true", help="Turn on debugging logs")
 
     parser.add_argument("vcf", help="Input vcf filename", nargs="?", default=None, type=str)
-    parser.add_argument(
-        "maf", help="Output maf file", nargs="?", type=argparse.FileType("w"), default=sys.stdout
-    )
+    parser.add_argument("maf", help="Output maf file, default is stdout", nargs="?", default=None)
 
     return parser
 
@@ -327,6 +325,7 @@ def vcf_record_to_string(record):
 def main():
     parser = _get_command_line_parser()
     args = parser.parse_args()
+    args.maf = open(args.maf, "w") if args.maf else sys.stdout
 
     logging.basicConfig(
         format="%(asctime)s %(levelname)s: %(message)s",
