@@ -303,14 +303,19 @@ def create_task_instances(
     """Create the workflow object of every task once and register it for the step Snakefiles.
 
     ``task_names`` limits this to some tasks (``snappy run --frozen``); upstream tasks still
-    resolve through the project, so their output paths can be computed.
+    resolve through the project, so their output paths can be computed. A :class:`ConfigError`
+    of a constructor names the task.
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     _TASK_INSTANCES.clear()
     for task in project.tasks:
         if task_names is None or task.name in task_names:
-            _TASK_INSTANCES[task.name] = WORKFLOW_REGISTRY[task.step](workflow, project, task.name)
+            try:
+                instance = WORKFLOW_REGISTRY[task.step](workflow, project, task.name)
+            except ConfigError as e:
+                raise _task_error(task, e) from None
+            _TASK_INSTANCES[task.name] = instance
     return dict(_TASK_INSTANCES)
 
 
@@ -443,10 +448,20 @@ def _task_signatures(
             upstream_signatures[field] = (
                 tuple(selected_all) if isinstance(value, tuple) else selected_all[0]
             )
-        signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
-            config, upstream_signatures
-        )
+        try:
+            signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
+                config, upstream_signatures
+            )
+        except ConfigError as e:
+            raise _task_error(task, e) from None
     return signatures
+
+
+def _task_error(task: TaskModel, error: ConfigError) -> ConfigError:
+    """Return ``error`` with the task named, unless its message starts with ``Task`` already."""
+    if str(error).startswith("Task "):
+        return error
+    return ConfigError(f"Task {task.name!r} (step {task.step}): {error}")
 
 
 def _check_output_keys(

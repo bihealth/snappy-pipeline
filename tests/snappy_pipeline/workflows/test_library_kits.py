@@ -5,6 +5,7 @@ files from an ``external_data`` task with ``kits``."""
 import pandas as pd
 import pytest
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import SnappyModel, SnappyStepModel
 from snappy_pipeline.orchestration import load_project
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
@@ -95,5 +96,5 @@ def test_check_without_require_passes_libraries_without_a_kit(step):
 
 def test_common_kit(step):
     assert step.common_kit("kits", ["wes1", "wes2"]) == "V6"
-    with pytest.raises(ValueError, match="one kit, but they have the kits Panel1, V6"):
+    with pytest.raises(ConfigError, match="one kit, but they have the kits Panel1, V6"):
         step.common_kit("kits", ["wes1", "panel1"])

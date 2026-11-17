@@ -21,16 +21,10 @@ class SkipLibraryWarning(UserWarning):
 class ConfigError(ValueError):
     """A problem of the project configuration or the sample sheets that the user has to fix.
 
-    The main Snakefile and ``snappy check-files`` print the message and exit, without a traceback.
+    Raised by ``load_project()``, by the ``task_produces`` classmethods and by the constructors
+    of the workflow classes. The main Snakefile and ``snappy check-files`` print the message and
+    exit, without a traceback. A ``ValueError`` or ``TypeError`` marks a programming error.
     """
-
-
-class InvalidConfiguration(ConfigError):
-    """Raised on invalid configuration"""
-
-
-class MissingConfiguration(InvalidConfiguration):
-    """Raised on missing configuration"""
 
 
 class UnsupportedActionException(Exception):

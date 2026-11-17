@@ -23,7 +23,7 @@ from typing import Any
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import MissingConfiguration
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
@@ -80,7 +80,7 @@ class CombineVariantsStepPart(BaseStepPart):
         tumor_df = df[df["library_name"] == tumor_library]
         normal_lib = None if tumor_df.empty else tumor_df.iloc[0].get("matched_normal_lib")
         if not normal_lib:
-            raise ValueError(
+            raise ConfigError(
                 f"Tumor library {tumor_library!r} has no matched normal library, "
                 "which combine_variants needs for the germline variants"
             )
@@ -96,7 +96,7 @@ class CombineVariantsStepPart(BaseStepPart):
             elif name_origin == RenameCombine.GERMLINE:
                 sample_name = self.get_normal_lib_name(wildcards.tumor_library)
             else:
-                raise MissingConfiguration(f"Unimplemented sample name type {name_origin}")
+                raise NotImplementedError(f"Unimplemented sample name type {name_origin}")
             return {"tumor_library": wildcards.tumor_library, "sample_name": sample_name}
         else:
             return {"tumor_library": wildcards.tumor_library}

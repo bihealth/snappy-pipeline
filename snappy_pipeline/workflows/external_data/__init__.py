@@ -126,6 +126,7 @@ Existing per-library variant calls, found as ``<search path>/<library name>/...`
 
 import os
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows.abstract import BaseStep
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 
@@ -170,7 +171,7 @@ class ExternalDataWorkflow(BaseStep):
             return {key: _abspath(path) for key, path in config.files.items()}
         if config.kits:
             if library_kit not in config.kits:
-                raise ValueError(f"No kit {library_kit!r}; known kits: {sorted(config.kits)}")
+                raise ConfigError(f"No kit {library_kit!r}; known kits: {sorted(config.kits)}")
             return {key: os.path.abspath(path) for key, path in config.kits[library_kit].items()}
         roots = [os.path.abspath(path) for path in config.search_paths]
         return discovery.find_files(roots, library_name, config.search_patterns)

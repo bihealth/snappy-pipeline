@@ -17,7 +17,7 @@ import os
 
 from snakemake.io import expand
 
-from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -109,13 +109,13 @@ class ScrambleStepPart(BaseStepPart):
 
         :return: Returns parameters required to run analysis part of scramble.
 
-        :raises InvalidConfiguration: if information provided in configuration isn't enough to run
+        :raises ConfigError: if information provided in configuration isn't enough to run
         the analysis.
         """
         blast_ref_path = self.config.scramble.blast_ref
         try:
             if not os.path.isfile(blast_ref_path):
-                raise InvalidConfiguration(
+                raise ConfigError(
                     f"Provided path to reference genome ('blast_ref') "
                     f"is not a real file: {blast_ref_path}"
                 )

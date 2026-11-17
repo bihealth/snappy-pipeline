@@ -74,7 +74,7 @@ from typing import Any
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import Intermediate
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -650,7 +650,7 @@ class NgsMappingWorkflow(BaseStep):
                     self.config.tool,
                 )
             else:
-                raise InvalidConfiguration(
+                raise ConfigError(
                     "Sample sheet contains RNA but the configured tool '{}' does not support "
                     "RNA mapping. Use 'star' for RNA mapping.".format(self.config.tool)
                 )

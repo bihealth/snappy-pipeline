@@ -29,7 +29,7 @@ from typing import Any
 
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import InvalidConfiguration
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify
 from snappy_pipeline.workflows.abstract import (
@@ -115,7 +115,7 @@ class HomologousRecombinationDeficiencyWorkflow(BaseStep):
         """
         tool = self.get_task_config("copy_number").tool
         if tool != "sequenza":
-            raise InvalidConfiguration(
+            raise ConfigError(
                 f"Tool '{tool}' of the depends_on.copy_number task "
                 f"'{self.project.dependencies[self.task_name]['copy_number']}' is not supported by "
                 "'homologous_recombination_deficiency'; expected 'sequenza'"

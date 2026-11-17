@@ -41,6 +41,7 @@ For each enabled prediction (``pvacseq``, ``pvacfuse``, ``pvacsplice``), the tas
 - with ``netmhc_stab``: ``<prediction>/{tumor_library}.MHC_I.netstab.tsv``.
 """
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import BaseStep, BaseStepPart, ResourceUsage
@@ -556,7 +557,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         vep = getattr(self.get_task_config("variants"), "vep", None)
         names = {plugin.name for plugin in getattr(vep, "plugins", None) or []}
         if missing := sorted({"Frameshift", "Wildtype"} - names):
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r}: depends_on.variants must come from VEP with the "
                 f"plugins {', '.join(missing)} in vep.plugins"
             )
@@ -577,7 +578,7 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         ]
         has_rna = any(self.matched(tumor, "matched_rna_lib") for tumor in self.output_entities)
         if rna_based and not has_rna:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r}: {', '.join(rna_based)} need a tumor library with a "
                 "matched RNA library (matched_rna_lib), but no tumor library has one"
             )

@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy`` CLI subcommands, completion, and task listing."""
 
+import os
+import subprocess
+import sys
 import textwrap
+from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from snappy_pipeline.apps import snappy_cli
@@ -144,6 +149,79 @@ def test_check_files_lists_missing_files_and_libraries_without_reads(tmp_path):
     result = CliRunner().invoke(snappy_cli.main, ["check-files", "--directory", str(tmp_path)])
     assert result.exit_code == 1
     assert result.output.splitlines() == [f"genome\t{tmp_path}/refs/genome.dict"]
+
+
+#: Two tasks whose contract check fails in ``load_project()`` (``task_produces``)
+FDR_OF_BCFTOOLS_CALLS = """
+  - name: calling
+    step: variant_calling
+    config:
+      depends_on: {alignments: mapping, reference: genome}
+      tool: bcftools_call
+      bcftools_call: {}
+  - name: fdr
+    step: variant_filtration
+    config:
+      depends_on: {variants: calling}
+      tool: varlociraptor
+      varlociraptor: {events: [present]}
+"""
+
+
+def _write_project(directory: Path, config: str) -> None:
+    """Write ``config`` with the sheet, the reads and the reference files it names."""
+    directory.mkdir()
+    (directory / "config.yaml").write_text(config)
+    (directory / "sheet.tsv").write_text(textwrap.dedent(CHECK_FILES_SHEET).lstrip())
+    (directory / "raw" / "P001").mkdir(parents=True)
+    (directory / "refs").mkdir()
+    for name in ("raw/P001/P001_R1.fastq.gz", "raw/P001/P001_R2.fastq.gz"):
+        (directory / name).touch()
+    for name in ("genome.fa", "genome.fa.fai", "genome.dict"):
+        (directory / "refs" / name).touch()
+
+
+def _snappy_run_dry(directory: Path) -> subprocess.CompletedProcess[str]:
+    """Run ``snappy run -n`` in a subprocess, as Snakemake keeps global state."""
+    env = os.environ.copy()
+    root = str(Path(__file__).resolve().parents[3])
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [root, env.get("PYTHONPATH")]))
+    cmd = [sys.executable, "-m", "snappy_pipeline.apps.snappy_cli", "run", "-n"]
+    cmd += ["--directory", str(directory), "--", "--cores", "1", "--quiet"]
+    return subprocess.run(cmd, text=True, capture_output=True, check=False, env=env)
+
+
+@pytest.mark.parametrize(
+    "config, message",
+    [
+        pytest.param(
+            CHECK_FILES_CONFIG.replace(
+                "      tool: bwa\n",
+                "      library_selection: \"library_type = 'WGS'\"\n      tool: bwa\n",
+            ),
+            "[snappy] Error: Task 'mapping' (step ngs_mapping): library_selection expression "
+            "\"library_type = 'WGS'\" is invalid: ",
+            id="constructor",
+        ),
+        pytest.param(
+            CHECK_FILES_CONFIG + FDR_OF_BCFTOOLS_CALLS,
+            "[snappy] Error: Task 'fdr' (step variant_filtration): tool: varlociraptor controls "
+            "the FDR of the calls of a variant_calling task with tool: varlociraptor, but "
+            "depends_on.variants produces variants tagged germline, indel, snv",
+            id="task_produces",
+        ),
+    ],
+)
+def test_run_prints_setup_errors_without_snakemake_framing(tmp_path, config, message):
+    """A ``ConfigError`` of a workflow constructor or of ``task_produces`` is printed by the main
+    Snakefile as one line; Snakemake adds neither its location nor traceback lines."""
+    _write_project(tmp_path / "project", config)
+    result = _snappy_run_dry(tmp_path / "project")
+    output = result.stdout + result.stderr
+    assert result.returncode == 1, output
+    errors = [line for line in output.splitlines() if line.startswith("[snappy] Error:")]
+    assert len(errors) == 1 and errors[0].startswith(message), output
+    assert 'in file "' not in output and '  File "' not in output, output
 
 
 def test_check_files_prints_configuration_errors_without_traceback(tmp_path):

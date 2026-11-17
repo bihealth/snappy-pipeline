@@ -9,6 +9,7 @@ import yaml
 from pydantic import ValidationError
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows.abstract import MATCHED_NORMAL_REQUIREMENT
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
 from snappy_pipeline.workflows.variant_calling import (
@@ -293,7 +294,7 @@ def test_the_purity_comes_from_the_sheet_column_and_is_checked():
     assert part.purity("P2-T1-DNA1") is None
     assert part.purity("P1-N1-DNA1") is None
     ROWS["bad"] = _row("bad", purity="high")
-    with pytest.raises(ValueError, match="purity of bad is 'high'"):
+    with pytest.raises(ConfigError, match="purity of bad is 'high'"):
         part.purity("bad")
 
 

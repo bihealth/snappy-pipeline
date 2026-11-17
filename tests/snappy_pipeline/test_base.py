@@ -3,28 +3,7 @@
 
 import pytest
 
-from snappy_pipeline.base import (
-    InvalidConfiguration,
-    MissingConfiguration,
-    UnknownFiltrationSourceException,
-    UnsupportedActionException,
-)
-
-
-def test_invalid_configuration_exception():
-    """Tests InvalidConfiguration raise."""
-    error_msg = "Raised InvalidConfiguration"
-    with pytest.raises(Exception) as exec_info:
-        raise InvalidConfiguration(error_msg)
-    assert exec_info.value.args[0] == error_msg
-
-
-def test_missing_configuration_exception():
-    """Tests MissingConfiguration raise."""
-    error_msg = "Raised MissingConfiguration"
-    with pytest.raises(Exception) as exec_info:
-        raise MissingConfiguration(error_msg)
-    assert exec_info.value.args[0] == error_msg
+from snappy_pipeline.base import UnknownFiltrationSourceException, UnsupportedActionException
 
 
 def test_unsupported_action_exception():

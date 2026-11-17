@@ -206,6 +206,7 @@ from typing import Any
 
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -873,7 +874,7 @@ class Mutect2StepPart(SomaticVariantCallingStepPart):
                 )
             else:
                 if tumor_normal_mode == TumorNormalMode.PAIRED:
-                    raise ValueError(
+                    raise ConfigError(
                         f"Normal sample for tumor {wildcards.library_name} required but not found."
                     )
 
@@ -1327,7 +1328,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         except ValueError:
             purity = math.nan
         if not 0 <= purity <= 1:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.parent.task_name!r}: the purity of {library_name} is {value!r}, "
                 "but a number from 0 to 1 is needed"
             )
@@ -1356,7 +1357,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
             )
         elif somatic:
             if others := self.other_tumors(library_name):
-                raise ValueError(
+                raise ConfigError(
                     f"Task {self.parent.task_name!r}: the somatic scenario calls one tumor with "
                     f"its matched normal, but the donor of {library_name} has the tumors "
                     f"{', '.join([library_name, *others])} in the task; call each time point in "
@@ -1593,7 +1594,7 @@ class VariantCallingWorkflow(BaseStep):
         candidates = self.resolve_dependency("candidates").task_name
         upstream_group_by = _declared_group_by(self.project, candidates, frozenset()) or "library"
         if upstream_group_by != self.effective_group_by:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r} calls with group_by: {self.effective_group_by}, but "
                 f"its candidates task {candidates!r} writes them with group_by: "
                 f"{upstream_group_by}"
@@ -1606,7 +1607,7 @@ class VariantCallingWorkflow(BaseStep):
             if not IDENTIFIER.match(name)
         )
         if invalid:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r}: varlociraptor needs sample names of letters, digits, "
                 f"'_', '.' and '-', unlike {', '.join(invalid)}"
             )

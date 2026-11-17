@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from snappy_pipeline import orchestration
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.workflows.abstract import BaseStep, select_libraries
 
 FIX = "library_selection: \"data_set == 'batch1'\""
@@ -37,7 +38,7 @@ def _step(task_name, rows, selected):
 def test_a_selection_with_colliding_names_fails_with_the_fix():
     df = pd.DataFrame(_rows("batch1", "batch2"))
     with pytest.raises(
-        ValueError, match="several data sets: P001-N1-DNA1-WES1 \\(batch1, batch2\\)"
+        ConfigError, match="several data sets: P001-N1-DNA1-WES1 \\(batch1, batch2\\)"
     ) as error:
         select_libraries(df, None)
     assert FIX in str(error.value)

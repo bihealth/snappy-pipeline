@@ -859,7 +859,7 @@ class BaseStep:
             folders.search_paths, folder_name, folders.search_patterns, folders.mixed_se_pe
         )
         if not groups:
-            raise ValueError(discovery.missing(folders.search_paths, folder_name))
+            raise ConfigError(discovery.missing(folders.search_paths, folder_name))
         return groups
 
     def _library_folders(self, library_name: str, source: str) -> tuple[LibraryFolders, str]:
@@ -870,7 +870,7 @@ class BaseStep:
             row = self.library_row(library_name)
             folder_name = row.get("folder_name")
             if not isinstance(folder_name, str) or not folder_name:
-                raise ValueError(
+                raise ConfigError(
                     f"Library {library_name!r} of data set {row['data_set']!r} has no folderName in "
                     "the sample sheet"
                 )
@@ -1122,7 +1122,7 @@ class BaseStep:
     def check_library_kits(
         self, field: str, library_names: typing.Iterable[str], require: bool = True
     ) -> None:
-        """Raise ``ValueError`` unless the kits task in ``depends_on.<field>`` has the kit of
+        """Raise ``ConfigError`` unless the kits task in ``depends_on.<field>`` has the kit of
         every library; the message names all such libraries at once. With ``require=False``,
         libraries without a kit pass."""
         task_name = self.resolve_dependency(field).task_name
@@ -1133,19 +1133,19 @@ class BaseStep:
             if self.library_kits.get(name) not in kits and (require or name in self.library_kits)
         ]
         if missing:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r}: depends_on.{field} task {task_name!r} has no kit for "
                 f"these libraries: {', '.join(missing)}; its kits: {', '.join(sorted(kits))}"
             )
 
     def common_kit(self, field: str, library_names: typing.Iterable[str]) -> str:
         """Return the one kit of the libraries, checked with :meth:`check_library_kits`; raise
-        ``ValueError`` when they have several."""
+        ``ConfigError`` when they have several."""
         library_names = list(library_names)
         self.check_library_kits(field, library_names)
         kits = sorted({self.library_kits[name] for name in library_names})
         if len(kits) != 1:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r} needs libraries of one kit, but they have the kits "
                 f"{', '.join(kits) or '(none)'}; use one task per kit"
             )
@@ -1171,17 +1171,17 @@ class BaseStep:
         """Return the row of ``library_name``: its data set, folder, kit and the other sample
         sheet columns. If several data sets have a library of that name, the task's
         ``library_selection`` must keep exactly one of them; otherwise this raises
-        ``ValueError`` with the fix."""
+        ``ConfigError`` with the fix."""
         rows = self._library_rows.get(library_name)
         if not rows:
-            raise ValueError(f"Task {self.task_name!r} has no library {library_name!r}")
+            raise ConfigError(f"Task {self.task_name!r} has no library {library_name!r}")
         if len(rows) > 1:
             kept = [
                 row for row in rows if (row["data_set"], library_name) in self._selected_libraries
             ]
             if len(kept) != 1:
                 colliding = {library_name: [row["data_set"] for row in kept or rows]}
-                raise ValueError(colliding_libraries_message(colliding, self.task_name))
+                raise ConfigError(colliding_libraries_message(colliding, self.task_name))
             rows = kept
         return rows[0]
 
@@ -1206,10 +1206,8 @@ class BaseStep:
         ]
 
     def check_config(self):
-        """Check ``self.w_config``, raise ``ConfigurationMissing`` on problems
-
-        Override in sub classes.
-        """
+        """Check the configuration against the sample sheets at setup; raise ``ConfigError`` on
+        problems. Override in sub classes."""
 
     def register_sub_step_classes(
         self, classes: tuple[type[BaseStepPart] | tuple[type[BaseStepPart], Any], ...]
@@ -1301,7 +1299,7 @@ class BaseStep:
         )
 
     def _check_upstream_library(self, upstream: str, library_name: str) -> None:
-        """Raise ``ValueError`` if the upstream task has the library ``library_name`` from another
+        """Raise ``ConfigError`` if the upstream task has the library ``library_name`` from another
         data set than this task: files are found by library name, so the upstream file would be
         of the other library."""
         from snappy_pipeline.orchestration import _TASK_INSTANCES
@@ -1317,7 +1315,7 @@ class BaseStep:
             instance.library_row(library_name)["data_set"],
         )
         if own != theirs:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r} takes library {library_name!r} from data set {own!r}, but "
                 f"its upstream task {upstream!r} takes the library of that name from {theirs!r}. "
                 "Select the libraries of the same data set in both tasks with library_selection."
@@ -1383,7 +1381,7 @@ class BaseStep:
         produced = self.project.signatures[dependency.task_name]
         selected = select_signature(produced, required)
         if selected is None:
-            raise ValueError(
+            raise ConfigError(
                 f"Task {self.task_name!r}: depends_on.{req_field_name} task "
                 f"{dependency.task_name!r} produces no {required}"
             )
@@ -1692,7 +1690,7 @@ def _library_extra_columns(raw_sheet) -> dict[str, dict[str, Any]]:
     itself, with keys converted to snake_case. Keys that already feed standard columns
     (:data:`_SHEET_KEYS_IN_LIBRARY_COLUMNS`) are skipped.
 
-    Raises ``ValueError`` when a key maps to a standard column, or when two keys map to
+    Raises ``ConfigError`` when a key maps to a standard column, or when two keys map to
     the same column for one library with different values.
     """
     result: dict[str, dict[str, Any]] = {}
@@ -1715,12 +1713,12 @@ def _library_extra_columns(raw_sheet) -> dict[str, dict[str, Any]]:
                             column = _snake_case(key)
                             source = f"{key!r} of {level} {entity.name!r}"
                             if column in _LIBRARY_COLUMNS:
-                                raise ValueError(
+                                raise ConfigError(
                                     f"Sample sheet column {source} maps to {column!r}, "
                                     "which is a standard library column."
                                 )
                             if column in columns and columns[column] != value:
-                                raise ValueError(
+                                raise ConfigError(
                                     f"Sample sheet columns {sources[column]} and {source} both "
                                     f"map to {column!r} for library {library.name!r}, with "
                                     "different values."
@@ -2103,7 +2101,7 @@ def resolve_relationships(df, relationships: dict):
         via_columns = [via] if isinstance(via, str) else list(via)
         for via_column in via_columns:
             if via_column not in result.columns:
-                raise ValueError(
+                raise ConfigError(
                     f"Relationship {rel_name!r}: join column {via_column!r} not found in "
                     f"DataFrame. Available columns: {list(result.columns)}"
                 )
@@ -2118,7 +2116,7 @@ def resolve_relationships(df, relationships: dict):
             try:
                 hits = group.query(target)
             except Exception as exc:
-                raise ValueError(
+                raise ConfigError(
                     f"Relationship {rel_name!r}: target query {target!r} failed: {exc}"
                 ) from exc
             matched[str(via_val)] = hits["library_name"].tolist()
@@ -2130,7 +2128,7 @@ def resolve_relationships(df, relationships: dict):
             def _single_match(via_value):
                 matches = matched.get(str(via_value), [])
                 if len(matches) > 1:
-                    raise ValueError(
+                    raise ConfigError(
                         f"Relationship {rel_name!r}: expected single match for "
                         f"via value {via_value!r}, got {len(matches)}: {matches}. "
                         f"Use 'many: true' if multiple matches are expected."
@@ -2150,7 +2148,7 @@ def select_libraries(
     These are the rows of the step's ``requirement`` (what it can process at all) that are
     also rows of ``selection`` (the task's ``library_selection``), else those of the
     step's ``default``, else those of the default of each row's sheet kind
-    (``_LIBRARY_SELECTION_DEFAULTS``); an empty expression takes all rows. Raises ``ValueError``
+    (``_LIBRARY_SELECTION_DEFAULTS``); an empty expression takes all rows. Raises ``ConfigError``
     for an invalid expression and for libraries of the same name in several data sets.
     """
     import pandas as pd
@@ -2171,7 +2169,7 @@ def select_libraries(
     elif expr:
         df = _query_libraries(df, expr)
     if colliding := _colliding_libraries(df):
-        raise ValueError(colliding_libraries_message(colliding))
+        raise ConfigError(colliding_libraries_message(colliding))
     return df
 
 
@@ -2179,7 +2177,7 @@ def _query_libraries(df, expr: str):
     try:
         return df.query(expr)
     except Exception as exc:
-        raise ValueError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
+        raise ConfigError(f"library_selection expression {expr!r} is invalid: {exc}") from exc
 
 
 def _colliding_libraries(df) -> dict[str, list[str]]:

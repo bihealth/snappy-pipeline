@@ -43,6 +43,7 @@ from typing import Any
 from snakemake.io import directory
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition
 from snappy_pipeline.models.cnvkit import Gender as CnvkitGender
 from snappy_pipeline.utils import dictify
@@ -638,7 +639,7 @@ class SomaticTargetedSeqCnvCallingWorkflow(BaseStep):
         """The somatic CNVs; the panel of normals must have been built with the task's tool."""
         pon = upstream.get("panel_of_normals")
         if config.tool in (Tool.cnvkit, Tool.purecn) and str(config.tool) not in pon.tags:
-            raise ValueError(
+            raise ConfigError(
                 f"tool={config.tool} needs a panel_of_normals task with tool={config.tool}, "
                 f"but depends_on.panel_of_normals is {config.depends_on.panel_of_normals!r}, "
                 f"which produces {pon}"

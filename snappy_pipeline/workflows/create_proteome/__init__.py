@@ -4,7 +4,6 @@ from typing import Any
 from snakemake.io import expand
 from snakemake.iocontainers import Wildcards
 
-from snappy_pipeline.base import MissingConfiguration
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
     BaseStep,
@@ -44,7 +43,7 @@ class CreateProteomeStepPart(BaseStepPart):
             case "run":
                 return {"vcf": _OUT_PREFIX + ".fa.gz"}
             case _:
-                raise MissingConfiguration(f"Unimplemented action {action}")
+                raise NotImplementedError(f"Unimplemented action {action}")
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"add_reference": self.config.add_reference}
@@ -61,7 +60,7 @@ class CreateProteomeStepPart(BaseStepPart):
                     yield k, _LOG_PREFIX + ext
                     yield k + "_md5", _LOG_PREFIX + ext + ".md5"
             case _:
-                raise MissingConfiguration(f"Unimplemented action {action}")
+                raise NotImplementedError(f"Unimplemented action {action}")
 
 
 class CreateProteomeWorkflow(BaseStep):

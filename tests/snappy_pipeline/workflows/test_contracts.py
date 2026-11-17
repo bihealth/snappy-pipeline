@@ -3,6 +3,7 @@
 
 import pytest
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.orchestration import load_project
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract import BaseStep
@@ -219,7 +220,7 @@ def test_mutect2_calling_provides_pass_calls_by_default_and_all_calls_on_request
 
 def test_unfiltered_calls_are_not_available_after_annotation():
     project = load_project(_config(_mapping(), _calling(), _annotation(), _filtration()), WORK_DIR)
-    with pytest.raises(ValueError, match=r"produces no variants \[-filtered\]"):
+    with pytest.raises(ConfigError, match=r"produces no variants \[-filtered\]"):
         _step(project, "filtration").get_upstream_paths(
             "variants", signature=_signature(DataType.VARIANTS, "-filtered"), library_name="T1"
         )

@@ -82,6 +82,7 @@ from typing import Any
 
 from snakemake.iocontainers import Wildcards
 
+from snappy_pipeline.base import ConfigError
 from snappy_pipeline.models import RelationshipDefinition, ToolModel
 from snappy_pipeline.utils import dictify, listify
 from snappy_pipeline.workflows.abstract import (
@@ -398,7 +399,7 @@ class VariantFiltrationWorkflow(BaseStep):
         needs varlociraptor calls (tag ``varlociraptor``, which annotation keeps)."""
         variants = upstream["variants"]
         if config.tool == "varlociraptor" and "varlociraptor" not in variants.tags:
-            raise ValueError(
+            raise ConfigError(
                 "tool: varlociraptor controls the FDR of the calls of a variant_calling task with "
                 "tool: varlociraptor, but depends_on.variants produces variants tagged "
                 + ", ".join(sorted(variants.tags))
