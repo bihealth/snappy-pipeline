@@ -143,8 +143,9 @@ class Chart:
 
     ``line`` draws one thin line per ``series`` value over ``x``; ``bar`` draws bars of a
     nominal ``x`` side by side per series; ``dots`` draws one dot per row at ``x`` on the nominal
-    ``y``; ``strips`` draws one tick per row at ``x``, in a panel per ``facet`` value with its
-    own x scale (the strips of a summary's metrics).
+    ``y``; ``scatter`` draws one dot per row at the quantitative ``x`` and ``y``; ``strips``
+    draws one tick per row at ``x``, in a panel per ``facet`` value with its own x scale (the
+    strips of a summary's metrics).
 
     Few series (:data:`MAX_COLORED`) get a color each and a legend that toggles them; more share
     one ink, and a ``line`` or ``dots`` chart of many series becomes a heatmap (one row per
@@ -176,6 +177,8 @@ class Chart:
     many: str = "heatmap"
     #: The table view whose rows the series link to (``None``: no links)
     link: str | None = "summary"
+    #: Further columns that the tooltip of a mark names
+    tooltip: tuple[str, ...] = ()
 
     @property
     def colored(self) -> bool:
@@ -214,6 +217,8 @@ class Chart:
             fields.append({"field": self.y, "type": "quantitative", "format": ".4~g"})
         elif self.y:
             fields.append({"field": self.y, "type": "nominal"})
+        for extra in self.tooltip:
+            fields.append({"field": extra, "type": "nominal"})
         return fields
 
     def _picked(self, base: float, hover: bool) -> tuple[dict, dict]:
@@ -301,6 +306,20 @@ class Chart:
                 0.8 if self.colored else 0.45, not self.colored
             )
             params += [zoom, param]
+        elif self.mark == "scatter":
+            mark = {"type": "circle", "tooltip": True, "size": 40}
+            x["scale"] = {"padding": 12}  # the dots at the ends stay inside the axes
+            encoding["y"] = {
+                "field": self.y,
+                "type": "quantitative",
+                "title": self.y_title or self.y,
+                "scale": {"padding": 12},
+            }
+            param, encoding["opacity"] = self._picked(
+                0.8 if self.colored else 0.5, not self.colored
+            )
+            params += [zoom, param]
+            width, height = 320, 320
         elif self.mark == "strips":
             mark = {"type": "tick", "tooltip": True, "thickness": 1.5}
             x["axis"] = {"format": ".3~g", "tickCount": 4}

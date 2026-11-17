@@ -1,0 +1,4 @@
+sample_id,ped_sex,hom_ref_count,het_count,hom_alt_count,het_ratio,predicted_sex,error
+P001-N1-DNA1-WES1,male,900,40,350,0.114,male,False
+P002-N1-DNA1-WES1,male,880,38,360,0.106,male,False
+P003-N1-DNA1-WES1,female,700,310,280,1.107,female,False

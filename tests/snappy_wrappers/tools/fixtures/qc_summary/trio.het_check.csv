@@ -1,0 +1,4 @@
+sample_id,sampled_sites,mean_depth,median_depth,depth_outlier,het_count,het_ratio,ratio_outlier,idr_baf,call_rate,p10,p90,PC1,PC2,PC3,PC4,ancestry-prediction,ancestry-prob
+P001-N1-DNA1-WES1,5000,48.2,45,False,2100,0.42,False,0.21,0.998,0.38,0.59,-0.11,0.02,0.01,0.0,EUR,0.98
+P002-N1-DNA1-WES1,5000,51.0,48,False,2050,0.41,False,0.22,0.997,0.37,0.59,-0.12,0.03,0.0,0.01,EUR,0.97
+P003-N1-DNA1-WES1,5000,22.5,21,True,2130,0.426,False,0.26,0.991,0.36,0.62,-0.10,0.02,0.01,0.0,EUR,0.96

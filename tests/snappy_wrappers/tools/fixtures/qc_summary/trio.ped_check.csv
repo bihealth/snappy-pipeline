@@ -1,0 +1,4 @@
+sample_a,sample_b,rel,hets_a,hets_b,shared_hets,ibs0,ibs2,n,pedigree_parents,pedigree_relatedness,predicted_parents,parent_error,sample_duplication_error,rel_difference
+P001-N1-DNA1-WES1,P002-N1-DNA1-WES1,0.49,2100,2050,1120,3,3900,5000,True,0.5,True,False,False,0.01
+P001-N1-DNA1-WES1,P003-N1-DNA1-WES1,0.47,2100,2130,1090,5,3850,5000,True,0.5,True,False,False,0.03
+P002-N1-DNA1-WES1,P003-N1-DNA1-WES1,-0.02,2050,2130,540,260,2600,5000,False,0.0,False,False,False,-0.02

@@ -18,6 +18,8 @@ Below ``tasks/<task>/output/``, each file with a ``.md5`` file:
 - ``{library_name}/out/{library_name}.ped``
 
 Downstream tasks read ``ped_check`` through ``depends_on``.
+
+One job per task summarizes the checks of all pedigrees in ``qc_summary/out/qc_summary.tsv`` (one row per sample: sex check, heterozygosity and depth with their outlier flags, call rate, ancestry) and renders them for the report below ``work/qc_summary/report/html/``: the summary, a strip chart of the metrics, the pairs of every pedigree with their relatedness from the PED file and from the genotypes, as a table and as a scatter chart on which a swapped, unrelated or duplicated sample falls off the diagonal.
 """
 
 from snappy_pipeline.utils import dictify
@@ -29,6 +31,7 @@ from snappy_pipeline.workflows.abstract import (
     WritePedigreeStepPart,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
 from snappy_pipeline.workflows.variant_calling.model import ExpectedGermlineVariants
 
 from .model import VariantChecking as VariantCheckingConfigModel
@@ -97,6 +100,22 @@ class PeddyStepPart(BaseStepPart):
         return {"log": "work/{index_ngs_library}/log/snakemake.filter.log"}
 
 
+class PeddySummaryStepPart(QcSummaryStepPart):
+    """Tables and charts of the peddy checks of all pedigrees"""
+
+    source = ("peddy", "run")
+    source_keys = {"ped_check": "ped_check", "sex_check": "sex_check", "het_check": "het_check"}
+    format = "peddy"
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "Pedigree checks", caption="peddy_summary.rst", htmlindex="index.html"
+            )
+        }
+    }
+
+
 class VariantCheckingWorkflow(BaseStep):
     """Perform germline variant checking"""
 
@@ -114,6 +133,6 @@ class VariantCheckingWorkflow(BaseStep):
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
         # Register sub step classes so the sub steps are available
-        self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart))
+        self.register_sub_step_classes((PeddyStepPart, WritePedigreeStepPart, PeddySummaryStepPart))
 
         # Copy over "tools" setting from ngs_mapping/variant_calling if not set here

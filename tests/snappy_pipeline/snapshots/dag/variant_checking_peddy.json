@@ -14,6 +14,8 @@
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped.md5",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5",
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv",
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv.md5",
    "tasks/variant_checking_peddy/output/.manifest.tsv"
   ],
   "log": [],
@@ -462,7 +464,9 @@
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped.md5",
    "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
-   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5"
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv.md5",
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv",
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv.md5"
   ],
   "local": true,
   "log": [],
@@ -525,6 +529,49 @@
    "index_ngs_library": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/peddy/run"
+ },
+ {
+  "benchmark": "tasks/variant_checking_peddy/benchmarks/qc_summary/qc_summary.tsv",
+  "directory": [
+   "tasks/variant_checking_peddy/work/qc_summary/report/html"
+  ],
+  "input": [
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.ped_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.sex_check.csv",
+   "tasks/variant_checking_peddy/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.het_check.csv"
+  ],
+  "log": [
+   "tasks/variant_checking_peddy/work/qc_summary/log/qc_summary.log"
+  ],
+  "output": [
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv",
+   "tasks/variant_checking_peddy/work/qc_summary/out/qc_summary.tsv.md5",
+   "tasks/variant_checking_peddy/work/qc_summary/report/html"
+  ],
+  "params": {
+   "args": {
+    "format": "peddy",
+    "labels": [
+     "case001subregion-T1-DNA1-WES1"
+    ],
+    "title": "Pedigree checks"
+   }
+  },
+  "report": [
+   "tasks/variant_checking_peddy/work/qc_summary/report/html"
+  ],
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_checking_peddy_variant_checking_qc_summary",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/qc_summary"
  },
  {
   "benchmark": null,
