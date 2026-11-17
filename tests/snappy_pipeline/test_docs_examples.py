@@ -62,6 +62,23 @@ def test_docs_have_task_examples():
     assert sum("tasks:" in block.values[0] for block in BLOCKS) > 3
 
 
+def test_data_sets_precede_the_tasks():
+    """Whole-file examples and the test pipelines follow the order of ``snappy init``: the static
+    sections before ``tasks``, so that an added task ends the file."""
+    texts = [block.values[0] for block in BLOCKS]
+    texts += [
+        path.read_text() for path in ROOT.glob(".tests/test-workflow/pipelines/*/config.yaml")
+    ]
+    checked = 0
+    for text in texts:
+        tasks = re.search(r"^\s*tasks:", text, re.MULTILINE)
+        data_sets = re.search(r"^\s*data_sets:", text, re.MULTILINE)
+        if tasks and data_sets:
+            assert data_sets.start() < tasks.start(), text
+            checked += 1
+    assert checked > 3
+
+
 @pytest.mark.parametrize("block", BLOCKS)
 def test_yaml_example_is_valid(block, tmp_path):
     """Every YAML example parses; one with a ``tasks`` key is a complete config."""

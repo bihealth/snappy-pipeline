@@ -49,8 +49,8 @@ The new tasks appear in `config.yaml` with every option commented out, and the r
 ## Configure the tasks
 
 A project has one `config.yaml` with two sections.
-`tasks` lists the tasks, each with a `step`, a unique `name` and a `config`.
 `data_sets` names the sample sheets and where their FASTQ files are.
+`tasks` lists the tasks, each with a `step`, a unique `name` and a `config`.
 
 A task names the tasks it reads from in `config.depends_on`.
 The keys are named after the data: `reads`, `alignments`, `variants`, `reference`, `index` and so on.
@@ -61,6 +61,16 @@ Reference data comes from `external_data` tasks.
 They have no rules and declare what the files are in `produces`.
 
 ```yaml
+data_sets:
+  my_batch:
+    file: samplesheet.tsv
+    type: matched_cancer
+    search_paths:
+      - raw
+    search_patterns:
+      - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
+        right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
+
 tasks:
   - name: genome
     step: external_data
@@ -93,16 +103,6 @@ tasks:
       tool: mutect2
       mutect2:
         contamination: {enabled: false}
-
-data_sets:
-  my_batch:
-    file: samplesheet.tsv
-    type: matched_cancer
-    search_paths:
-      - raw
-    search_patterns:
-      - left: '(?P<readgroup>.+)\.R1\.fastq\.gz'
-        right: '(?P<readgroup>.+)\.R2\.fastq\.gz'
 ```
 
 Relative paths are relative to the project directory, the directory of `config.yaml`; `pathvars` can name roots for paths, see {ref}`config_paths`.

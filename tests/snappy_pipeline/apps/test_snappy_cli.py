@@ -86,6 +86,14 @@ def test_complete_task_names(germline_sheet_fake_project_ngs_mapping_fs, mocker)
 
 #: A mapping task reading the FASTQ files of one germline library
 CHECK_FILES_CONFIG = """
+data_sets:
+  first:
+    file: sheet.tsv
+    search_paths: [raw]
+    search_patterns:
+      - {left: '(?P<readgroup>.+)_R1.fastq.gz', right: '(?P<readgroup>.+)_R2.fastq.gz'}
+    type: germline_variants
+    naming_scheme: only_secondary_id
 tasks:
   - name: genome
     step: external_data
@@ -103,14 +111,6 @@ tasks:
       depends_on: {reads: data_sets, reference: genome, index: bwa_index}
       tool: bwa
       bwa: {}
-data_sets:
-  first:
-    file: sheet.tsv
-    search_paths: [raw]
-    search_patterns:
-      - {left: '(?P<readgroup>.+)_R1.fastq.gz', right: '(?P<readgroup>.+)_R2.fastq.gz'}
-    type: germline_variants
-    naming_scheme: only_secondary_id
 """
 
 CHECK_FILES_SHEET = """

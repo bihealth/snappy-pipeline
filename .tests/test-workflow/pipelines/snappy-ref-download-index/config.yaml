@@ -1,3 +1,8 @@
+data_sets:
+  reference:
+    file: samplesheet.tsv
+    type: matched_cancer
+
 tasks:
   - step: reference_download
     name: download_chrmt
@@ -21,9 +26,3 @@ tasks:
       tool: minimap2
       minimap2:
         extra_arguments: []
-
-data_sets:
-  reference:
-    file: samplesheet.tsv
-    type: matched_cancer
-

@@ -1,10 +1,3 @@
-tasks:
-  - name: genome
-    step: external_data
-    config:
-      produces: {type: raw, tags: [reference, dna]}
-      files: {fasta: ../../../.tests/test-workflow/resources/refs/subregion.fa}
-
 data_sets:
   trbc:
     file: samplesheet.tsv
@@ -14,3 +7,10 @@ data_sets:
     - raw
     type: matched_cancer
     naming_scheme: only_secondary_id
+
+tasks:
+  - name: genome
+    step: external_data
+    config:
+      produces: {type: raw, tags: [reference, dna]}
+      files: {fasta: ../../../.tests/test-workflow/resources/refs/subregion.fa}

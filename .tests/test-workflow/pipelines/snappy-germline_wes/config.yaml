@@ -1,3 +1,13 @@
+data_sets:
+  trbc:
+    file: samplesheet.tsv
+    search_patterns:
+      - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
+    search_paths:
+      - raw
+    type: germline_variants
+    naming_scheme: only_secondary_id
+
 tasks:
   - name: genome
     step: external_data
@@ -169,13 +179,3 @@ tasks:
       tool: varlociraptor
       varlociraptor:
         events: [present, denovo]
-
-data_sets:
-  trbc:
-    file: samplesheet.tsv
-    search_patterns:
-      - { left: '(?P<readgroup>.+)\.R1\.fastq\.gz', right: '(?P<readgroup>.+)\.R2\.fastq\.gz' }
-    search_paths:
-      - raw
-    type: germline_variants
-    naming_scheme: only_secondary_id

@@ -19,6 +19,7 @@ Validation fails with a clear message instead of choosing for the user.
 - `depends_on` keys have no task-name defaults (see {ref}`Contracts <dev_contracts>`).
 - A field's description (its attribute docstring) is plain text with literals in double backticks, no Sphinx roles, directives or references to names in the code.
   It becomes a YAML comment in the configuration that `snappy task add` writes (`default_config_yaml_string`, which wraps it and turns the backticks into single ones) and a cell of the inputs table of the step's docs page (`test_field_descriptions_are_plain_text`).
+- A whole `config.yaml`, in the docs and in the test pipelines, lists `pathvars`, `data_sets` and `resources` before `tasks`, like `snappy init` writes it, so that an added task ends the file (`test_data_sets_precede_the_tasks`).
 
 ## Step part API
 

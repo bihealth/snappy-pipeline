@@ -23,7 +23,7 @@ The `snappy` command is the interface to the pipeline.
 
 `snappy init` and `snappy task add` take `[task_name=]step_type` arguments, for example `mapping=ngs_mapping`.
 `--config-mode` sets the style of the generated task configuration: `commented` (default; every field with its description, the optional ones commented out), `full` (every field active) or `minimal` (the required fields only, without descriptions).
-`snappy init` writes `data_sets` before `tasks`, so that added tasks end the file; with `minimal`, the header of `config.yaml` points to the docs instead of explaining the sections.
+`config.yaml` lists `pathvars`, `data_sets` and `resources` before `tasks`, so that added tasks end the file; with `minimal`, the header of `config.yaml` points to the docs instead of explaining the sections.
 
 ## snappy run
 

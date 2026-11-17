@@ -254,13 +254,13 @@ The top-level `pathvars` section names roots for paths, used as `<name>` in any 
 ```yaml
 pathvars:
   refs: /path/to/refs/GRCh38
+data_sets: {}
 tasks:
   - name: genome
     step: external_data
     config:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: <refs>/genome.fa}
-data_sets: {}
 ```
 
 It has the defaults and semantics of Snakemake's `pathvars`, so `<resources>` stands for `resources` unless the section sets it.

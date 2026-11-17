@@ -73,9 +73,9 @@ class ConfigModel(SnappyStepModel):
         use_enum_values=True,
     )
 
-    tasks: list[TaskModel]
-    data_sets: dict[str, DataSet]
     pathvars: dict[str, str] = {}
     """Named roots for paths, used as ``<name>`` in any path of the configuration, with the
     defaults and semantics of Snakemake's ``pathvars``"""
+    data_sets: dict[str, DataSet]
     resources: Resources = Resources()
+    tasks: list[TaskModel]

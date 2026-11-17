@@ -8,13 +8,13 @@ from snappy_pipeline.apps.snappy_cli import main
 CONFIG = """\
 pathvars:
   refs: refs
+data_sets: {}
 tasks:
   - name: genome
     step: external_data
     config:
       produces: {type: raw, tags: [reference, dna]}
       files: {fasta: <refs>/genome.fa}
-data_sets: {}
 """
 
 

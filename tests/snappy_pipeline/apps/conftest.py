@@ -20,8 +20,6 @@ def germline_sheet_config_yaml():
     """Return YAML parsing result for (germline) configuration"""
     return textwrap.dedent(
         r"""
-        tasks: []
-
         data_sets:
           first_batch:
             file: sheet.tsv
@@ -30,6 +28,8 @@ def germline_sheet_config_yaml():
             search_paths: ['/path']
             type: germline_variants
             naming_scheme: only_secondary_id
+
+        tasks: []
         """
     ).lstrip()
 
