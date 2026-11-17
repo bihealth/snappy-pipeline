@@ -457,6 +457,8 @@ TASK_CONFIG: dict[tuple[str, str | None], dict[str, Any]] = {
             "rec_rate": 1e-8,
         },
     },
+    # The statistics and their QC summary, once: one job per task, one file per pedigree member
+    ("variant_calling", "gatk4_hc_joint"): {"bcftools_stats": {"enabled": Overwrite(True)}},
     ("variant_calling", "freebayes"): {"freebayes": {"num_jobs": 2}},
     ("variant_calling", "varlociraptor"): {"varlociraptor": {"scenario": "somatic", "num_jobs": 2}},
     ("variant_export_external", None): VARIANT_EXPORT_EXTERNAL,

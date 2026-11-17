@@ -10,6 +10,8 @@
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5",
+   "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv.md5",
    "tasks/ngs_data_qc_picard/output/.manifest.tsv"
   ],
   "log": [],
@@ -160,6 +162,51 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/picard/prepare"
  },
  {
+  "benchmark": "tasks/ngs_data_qc_picard/benchmarks/qc_summary/qc_summary.tsv",
+  "directory": [
+   "tasks/ngs_data_qc_picard/work/qc_summary/report/html"
+  ],
+  "input": [
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectHsMetrics.txt",
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt"
+  ],
+  "log": [
+   "tasks/ngs_data_qc_picard/work/qc_summary/log/qc_summary.log"
+  ],
+  "output": [
+   "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv.md5",
+   "tasks/ngs_data_qc_picard/work/qc_summary/report/html"
+  ],
+  "params": {
+   "args": {
+    "format": "picard",
+    "labels": [
+     "case001subregion-N1-DNA1-WES1",
+     "case001subregion-T1-DNA1-WES1"
+    ],
+    "title": "Picard metrics"
+   }
+  },
+  "report": [
+   "tasks/ngs_data_qc_picard/work/qc_summary/report/html"
+  ],
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "ngs_data_qc_picard_ngs_data_qc_qc_summary",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/qc_summary"
+ },
+ {
   "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_picard/work/case001subregion-N1-DNA1-WES1/report/case001subregion-N1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
@@ -169,7 +216,9 @@
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectMultipleMetrics.alignment_summary_metrics.txt.md5",
    "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt",
-   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5"
+   "tasks/ngs_data_qc_picard/work/case001subregion-T1-DNA1-WES1/report/case001subregion-T1-DNA1-WES1.CollectHsMetrics.txt.md5",
+   "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_picard/work/qc_summary/out/qc_summary.tsv.md5"
   ],
   "local": true,
   "log": [],

@@ -1,0 +1,1 @@
+Tables and charts of the ``samtools stats``, ``flagstat`` and ``idxstats`` of all mapped libraries: read counts and fractions per library, the insert size and coverage distributions, the base quality by cycle and the reads per contig.

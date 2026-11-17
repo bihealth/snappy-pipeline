@@ -1,0 +1,1 @@
+Tables and charts of the ``bcftools stats`` of all samples: genotype counts, het/hom and Ts/Tv ratios per sample and variant set (known, novel), the substitution types and the indel length, depth and quality distributions.

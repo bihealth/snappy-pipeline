@@ -1,0 +1,1 @@
+Tables and charts of the ``alfred qc`` reports of all libraries with a kit: mapping and target coverage statistics per library, the targets above a coverage, the on-target rate, the coverage and insert size distributions, the base quality by position and the GC content.

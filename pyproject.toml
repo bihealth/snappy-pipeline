@@ -290,6 +290,8 @@ coverage = { cmd = "coverage report && coverage html", description = "Generate c
 
 [tool.pixi.feature.test.dependencies]
 pytest-xdist = ">=3.8.0,<4"
+# The tests of the qc_summary wrapper tools (snappy_wrappers/tools/qc_summary)
+polars = ">=2.1.0,<3"
 
 [tool.pixi.feature.dev.tasks]
 fmt = { cmd = "ruff format .", description = "Apply Ruff code formatter" }

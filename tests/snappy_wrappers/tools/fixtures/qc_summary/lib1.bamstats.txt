@@ -1,0 +1,65 @@
+CHK	04196fb5	13a72720	83318440
+SN	raw total sequences:	58722	# excluding supplementary and secondary reads
+SN	filtered sequences:	0
+SN	sequences:	58722
+SN	is sorted:	1
+SN	1st fragments:	29361
+SN	last fragments:	29361
+SN	reads mapped:	58448
+SN	reads mapped and paired:	58174	# paired-end technology bit set + both mates mapped
+SN	reads unmapped:	274
+SN	reads properly paired:	57956	# proper-pair bit set
+SN	reads paired:	58722	# paired-end technology bit set
+SN	reads duplicated:	0	# PCR or optical duplicate bit set
+SN	reads MQ0:	10	# mapped and MQ=0
+SN	reads QC failed:	0
+SN	non-primary alignments:	0
+SN	supplementary alignments:	19
+SN	total length:	5930922	# ignores clipping
+SN	total first fragment length:	2965461	# ignores clipping
+SN	total last fragment length:	2965461	# ignores clipping
+SN	bases mapped:	5903248	# ignores clipping
+SN	bases mapped (cigar):	5878162	# more accurate
+SN	bases trimmed:	0
+SN	bases duplicated:	0
+SN	mismatches:	26256	# from NM fields
+SN	error rate:	4.466702e-03	# mismatches / bases mapped (cigar)
+SN	average length:	101
+SN	average first fragment length:	101
+SN	average last fragment length:	101
+SN	maximum length:	101
+SN	maximum first fragment length:	101
+SN	maximum last fragment length:	101
+SN	average quality:	34.2
+SN	insert size average:	222.0
+SN	insert size standard deviation:	80.4
+SN	inward oriented pairs:	28923
+SN	outward oriented pairs:	161
+SN	pairs with other orientation:	3
+SN	pairs on different chromosomes:	0
+SN	percentage of properly paired reads (%):	98.7
+FFQ	1	0	0	0	0	0	0	0	0	0	0	354	0	0	0	0	0	353	0	0	0	0	0	66	254	0	247	642	921	532	0	2846	11999	0	1527	9620	0	0	0	0	0	0	0	0
+FFQ	2	0	0	0	0	0	0	0	0	0	0	161	0	0	0	0	0	333	0	0	7	0	0	81	194	0	276	497	873	533	0	2511	11383	0	835	11677	0	0	0	0	0	0	0	0
+FFQ	3	0	0	5	0	0	0	0	0	0	0	117	0	0	0	0	0	207	0	0	0	0	0	122	197	0	266	512	1002	518	0	2472	11061	0	788	12094	0	0	0	0	0	0	0	0
+FFQ	4	0	0	0	0	0	0	0	0	0	0	93	0	0	0	0	0	113	0	0	65	0	0	85	0	0	162	258	26	394	5	679	17	894	1348	0	8947	0	16275	0	0	0	0	0
+FFQ	5	0	0	0	0	0	0	0	0	0	0	185	0	0	0	0	0	176	0	0	99	0	0	137	0	0	220	374	18	453	9	767	19	985	1470	0	8867	0	15582	0	0	0	0	0
+FFQ	6	0	0	0	0	0	0	0	0	6	0	100	69	0	0	0	5	10	102	63	67	0	4	9	112	0	252	346	42	238	215	779	47	1080	1387	0	8275	694	15459	0	0	0	0	0
+LFQ	1	0	0	604	0	0	0	0	93	0	0	460	0	26	0	0	15	466	0	31	4	45	0	143	256	36	405	886	929	1159	60	2819	11061	0	1016	8847	0	0	0	0	0	0	0	0
+LFQ	2	0	0	559	0	0	0	0	95	0	0	456	0	25	0	0	71	506	0	31	1	37	0	158	251	39	381	798	1094	1076	61	2483	10444	0	615	10180	0	0	0	0	0	0	0	0
+LFQ	3	0	0	559	0	0	0	0	82	0	0	371	0	21	0	0	35	494	0	17	1	35	0	193	234	36	442	838	1108	1089	58	2441	10261	0	590	10456	0	0	0	0	0	0	0	0
+LFQ	4	0	0	559	0	0	0	0	75	0	0	336	0	29	0	0	0	200	126	20	160	38	0	154	48	44	234	363	228	583	31	837	107	1470	1439	0	8143	0	14137	0	0	0	0	0
+LFQ	5	0	0	586	0	0	0	0	87	0	0	357	0	19	0	0	0	176	130	27	139	29	0	140	31	42	233	371	217	587	20	873	97	1404	1339	0	8389	0	14068	0	0	0	0	0
+LFQ	6	0	0	604	0	0	0	0	23	90	0	211	111	2	15	1	15	30	230	78	131	5	15	77	135	32	239	370	193	343	272	854	192	1472	1253	0	7719	590	14059	0	0	0	0	0
+IS	0	0	0	0	0
+IS	1	0	0	0	0
+IS	2	0	0	0	0
+IS	3	0	0	0	0
+IS	4	0	0	0	0
+IS	5	0	0	0	0
+RL	101	58722
+COV	[1-1]	1	485484
+COV	[2-2]	2	162164
+COV	[3-3]	3	34079
+COV	[4-4]	4	15819
+COV	[5-5]	5	6745
+COV	[6-6]	6	4865

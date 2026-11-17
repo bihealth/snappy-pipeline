@@ -26,6 +26,7 @@ Each file has an ``.md5`` file.
 - ``{library_name}/out/{library_name}.bam`` and ``{library_name}/out/{library_name}.bam.bai``
 - ``{library_name}/report/bam_qc/{library_name}.bam.bamstats.txt``, ``.bam.flagstats.txt`` and ``.bam.idxstats.txt``
 - ``{library_name}/out/{library_name}.cov.vcf.gz`` (with ``.tbi``), ``.cov.bw`` and ``.mq.bw``, if ``bam_collect_doc`` is enabled
+- ``qc_summary/out/qc_summary.tsv``, one row per library with the ``samtools stats`` counts and fractions (the QC summary of the notes)
 - with ``star``, for RNA libraries: ``{library_name}/out/{library_name}.GeneCounts.tab``, ``{library_name}/out/{library_name}.Junctions.tab``, ``{library_name}/out/{library_name}.Log.final.out`` (STAR's mapping summary) and ``{library_name}/strandedness/{library_name}.decision.json``
 
 Downstream tasks read the keys ``bam``, ``bai``, ``bamstats``, ``flagstats``, and ``idxstats``, and for RNA libraries ``gene_counts`` and ``strandedness``.
@@ -45,6 +46,11 @@ Then a library is either single-end or paired-end, and different libraries may d
 
 Notes
 -----
+
+QC summary
+~~~~~~~~~~
+
+One job per task reads the ``samtools`` statistics of all mapped libraries and writes the summary table ``qc_summary/out/qc_summary.tsv`` (one row per library: reads, fractions of mapped, properly paired, duplicated and MAPQ 0 reads, error rate, read length, base quality and insert size) and a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows: the summary, the insert size and coverage distributions, the mean base quality by cycle and the reads per contig.
 
 STAR
 ~~~~
@@ -86,6 +92,7 @@ from snappy_pipeline.workflows.abstract import (
     select_libraries,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataType
+from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 __author__ = "Manuel Holtgrewe <manuel.holtgrewe@bih-charite.de>"
@@ -508,6 +515,36 @@ class BamCollectDocStepPart(ReportGetResultFilesMixin, BaseStepPart):
     default_resource_usage = ResourceUsage(threads=1, runtime="24h", mem="2GB")
 
 
+class BamQcSummaryStepPart(QcSummaryStepPart):
+    """Tables and charts of the ``samtools`` statistics of all mapped libraries"""
+
+    source_keys = {
+        "bamstats": "report_bamstats_txt",
+        "flagstats": "report_flagstats_txt",
+        "idxstats": "report_idxstats_txt",
+    }
+    format = "samtools"
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput("BAM QC", caption="bam_qc_summary.rst", htmlindex="index.html")
+        }
+    }
+
+    @property
+    def source(self) -> tuple[str, str]:
+        return (self.config.tool, "run")
+
+    def entities(self) -> list[str]:
+        """The libraries that the mapper maps (its tool categories)."""
+        mapper = self.parent.sub_steps[self.config.tool]
+        return [
+            name
+            for name in self.parent.libraries["library_name"]
+            if not mapper.skip_result_files_for_library(name)
+        ]
+
+
 class NgsMappingWorkflow(BaseStep):
     """Perform NGS Mapping"""
 
@@ -575,6 +612,7 @@ class NgsMappingWorkflow(BaseStep):
                 selected_mapper,
                 StrandednessStepPart,
                 BamCollectDocStepPart,
+                BamQcSummaryStepPart,
             )
         )
         # Validate project

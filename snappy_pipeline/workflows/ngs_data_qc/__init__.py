@@ -38,12 +38,17 @@ With ``alfred``, with an ``.md5`` file:
 
 - ``{library_name}/out/{library_name}.target_coverage.json.gz``
 
+With ``picard`` and ``alfred``, one job per task summarizes the files of all libraries in ``qc_summary/out/qc_summary.tsv``, one row per library (the QC summary of the notes).
+
 Downstream tasks read the key ``done``, ``npz`` with ``ngs_chew`` or ``alfred_qc`` with ``alfred``.
 
 Notes
 -----
 
 The Picard metrics are registered as Snakemake ``report()`` outputs.
+With ``picard`` and ``alfred``, the QC summary job writes ``qc_summary/out/qc_summary.tsv`` and a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows.
+For ``picard``, the site has one table per metrics class and a chart of each histogram (target coverage, insert size, base quality by cycle and quality distribution); the summary table joins the metrics of each library into one row, the columns prefixed with the metrics class.
+For ``alfred``, the summary table lists the mapping and coverage statistics of each library with the fraction of targets covered at least 10, 20, 30, 50 and 100 times, and the charts show the targets above a coverage, the on-target rate, the coverage and insert size distributions, the base quality by position and the GC content.
 With ``ngs_chew``, the report shows the relatedness of all pairs of libraries and the var(het) of each library.
 Libraries of one donor have a relatedness close to 1 and those of unrelated donors close to 0, so a sample swap shows as a pair that breaks this pattern.
 A library contaminated with DNA of another person has a higher var(het) than the others.
@@ -108,6 +113,7 @@ from snappy_pipeline.workflows.abstract import (
     ResourceUsage,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
 from snappy_pipeline.workflows.common.reads import reads_input_files, reads_params
 
 from .model import NgsDataQc as NgsDataQcConfigModel
@@ -333,6 +339,48 @@ class AlfredStepPart(BaseStepPart):
         return {"log": "work/{library_name}/log/{library_name}.log"}
 
 
+class PicardSummaryStepPart(QcSummaryStepPart):
+    """Tables and charts of the Picard metrics of all DNA libraries"""
+
+    source = ("picard", "metrics")
+    format = "picard"
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "Picard metrics", caption="picard_summary.rst", htmlindex="index.html"
+            )
+        }
+    }
+
+    @property
+    def source_keys(self) -> dict[str, str]:
+        """One kind of file per program, the metrics file that the program writes first"""
+        return {program: program for program in self.config.picard.programs}
+
+    def entities(self) -> list[str]:
+        return self.parent.dna_libraries()
+
+
+class AlfredSummaryStepPart(QcSummaryStepPart):
+    """Tables and charts of the ``alfred qc`` reports of all libraries with a kit"""
+
+    source = ("alfred", "run")
+    source_keys = {"json": "json"}
+    format = "alfred"
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "Target coverage", caption="alfred_summary.rst", htmlindex="index.html"
+            )
+        }
+    }
+
+    def entities(self) -> list[str]:
+        return self.parent.kit_libraries()
+
+
 class NgsDataQcWorkflow(BaseStep):
     """Perform NGS raw data QC"""
 
@@ -361,13 +409,13 @@ class NgsDataQcWorkflow(BaseStep):
 
     def __init__(self, workflow, project, task_name):
         super().__init__(workflow, project, task_name)
-        tool_to_class = {
-            "fastqc": FastQcReportStepPart,
-            "picard": PicardStepPart,
-            "ngs_chew": NgsChewStepPart,
-            "alfred": AlfredStepPart,
+        tool_to_classes = {
+            "fastqc": (FastQcReportStepPart,),
+            "picard": (PicardStepPart, PicardSummaryStepPart),
+            "ngs_chew": (NgsChewStepPart,),
+            "alfred": (AlfredStepPart, AlfredSummaryStepPart),
         }
-        self.register_sub_step_classes((tool_to_class[self.config.tool],))
+        self.register_sub_step_classes(tool_to_classes[self.config.tool])
         if self.config.tool == "picard" and "CollectHsMetrics" in self.config.picard.programs:
             self.check_library_kits("kits", self.dna_libraries())
         if self.config.tool == "alfred":
@@ -427,6 +475,8 @@ class NgsDataQcWorkflow(BaseStep):
             for library_name in self.kit_libraries():
                 json = f"output/{library_name}/out/{library_name}.target_coverage.json.gz"
                 yield from (json, json + ".md5")
+        if "qc_summary" in self.sub_steps:
+            yield from self.sub_steps["qc_summary"].get_result_files()
 
     def _yield_result_files(self, tpl, allowed_extraction_types, **kwargs):
         """Build output paths from path template and extension list"""

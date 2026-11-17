@@ -136,6 +136,11 @@ It maps the output key to a `ReportOutput` (subcategory, caption, and for a dire
 Captions are RST files in `report/` next to the step module.
 Every plot (PDF, PNG, SVG, HTML) and every `report/` directory and output below one is a report output, unless `OUTPUTS_NOT_IN_REPORT` names the reason; `test_plots_and_diagnostic_outputs_are_in_the_report` checks the DAG snapshots, which list them as `report`.
 
+The Snakemake report embeds only images, PDF and HTML, so a step whose tool writes tables of statistics adds a QC summary: a subclass of `QcSummaryStepPart` (`snappy_pipeline/workflows/common/qc_summary.py`) next to the tool part, which names the `source` part and action, the output keys to read by kind (`source_keys`) and the `format`, a parser module of `snappy_wrappers.tools.qc_summary` (polars).
+One job per task reads the files of all entities (`entities()`, the task's output entities by default; `label_wildcard` labels several files of one entity, such as the samples of a VCF), writes the summary table `qc_summary/out/qc_summary.tsv` (one row per library, a result file) and renders a datavzrd site below `qc_summary/report/html/` (a report output with `htmlindex`) through the `qc_summary` wrapper.
+A format module turns the files into a `Summary`: the summary `Table` and the views of the site, `Table` and `Chart` (vega-lite line or bar charts of long frames, thinned to `MAX_POINTS` per library).
+`tests/snappy_wrappers/tools/test_qc_summary.py` checks each format against fixtures and the generated configuration against datavzrd's schema; `test_qc_summary.py` of the workflows checks the step part.
+
 ### Defining input files and params
 
 `BaseStepPart.get_input_files(action)` and `get_params(action)` validate the action against the class's `actions` tuple.

@@ -128,6 +128,10 @@ It uses the same Snakefile, directory and profile as `snappy run`, and arguments
 `--output` sets the file below the project directory.
 A `.zip` report (the default `report.zip`) can hold HTML directories such as the FastQC reports.
 
+The report embeds images, PDF and HTML; tables of statistics are downloads.
+So tasks whose tools write statistics also render a QC summary of all their libraries, tables and charts made with [datavzrd](https://datavzrd.github.io/), as an HTML site in the report: `ngs_mapping` (samtools statistics: read counts and fractions per library, insert size and coverage distributions, base quality by cycle, reads per contig), `ngs_data_qc` with `tool: alfred` (target coverage) and `tool: picard` (one table per metrics class, the histograms as charts), and `variant_calling` with `bcftools_stats` enabled (genotype counts, Ts/Tv, substitution, indel length, depth and quality distributions).
+The summary table of each is also a result file, `qc_summary/out/qc_summary.tsv`, with one row per library.
+
 ## Log archive
 
 When a run ends, successfully or not, `snappy run` writes `logs/<run start>.tar.gz`.

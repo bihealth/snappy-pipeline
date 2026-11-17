@@ -239,6 +239,26 @@ if wf.config.bcftools_stats and wf.config.bcftools_stats.enabled:
         wrapper:
             wf.wrapper_path("bcftools_stats/run")
 
+    rule variant_calling_qc_summary:
+        input:
+            unpack(wf.get_input_files("qc_summary", "run")),
+        output:
+            **wf.get_output_files("qc_summary", "run"),
+        log:
+            **wf.get_log_file("qc_summary", "run"),
+        benchmark:
+            wf.get_benchmark_file("qc_summary", "run")
+        threads: wf.get_resource("qc_summary", "run", "threads")
+        resources:
+            runtime=wf.get_resource("qc_summary", "run", "runtime"),
+            mem=wf.get_resource("qc_summary", "run", "mem"),
+            partition=wf.get_resource("qc_summary", "run", "partition"),
+            tmpdir=wf.get_resource("qc_summary", "run", "tmpdir"),
+        params:
+            args=wf.get_params("qc_summary", "run"),
+        wrapper:
+            wf.wrapper_path("qc_summary")
+
 
 # Generate B allele fraction files --------------------------------------------
 

@@ -88,6 +88,7 @@ The enabled statistics are result files below ``{library_name}/report/``, with `
 
 ``bcftools_stats``
     ``bcftools stats`` per donor of each pedigree: ``bcftools_stats/{library_name}.{donor_library_name}.txt``.
+    One job per task also summarizes the statistics of all samples in the result file ``qc_summary/out/qc_summary.tsv`` (one row per sample and variant set: genotype counts, het/hom and Ts/Tv ratios, depth) and renders tables and charts (substitution types, indel length, depth and quality distributions) for the report below ``work/qc_summary/report/html/``.
 
 ``bcftools_roh``
     Runs of homozygosity with ``bcftools roh``: ``roh/{library_name}.txt``.
@@ -223,6 +224,7 @@ from snappy_pipeline.workflows.abstract.common import (
     SnakemakeDictItemsGenerator,
 )
 from snappy_pipeline.workflows.abstract.protocol import DataSignature, DataType
+from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_calling.model import ScenarioKind, Tool, TumorNormalMode
 from snappy_pipeline.workflows.variant_calling.scenario import (
@@ -654,6 +656,24 @@ class BcftoolsStatsStepPart(ReportStepPart):
 
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {"donor_library_name": wildcards.donor_library_name}
+
+
+class BcftoolsStatsSummaryStepPart(QcSummaryStepPart):
+    """Tables and charts of the ``bcftools stats`` of all samples"""
+
+    source = ("bcftools_stats", "run")
+    source_keys = {"txt": "txt"}
+    format = "bcftools_stats"
+    #: One file per sample of the entity's VCF
+    label_wildcard = "donor_library_name"
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "bcftools stats", caption="bcftools_stats_summary.rst", htmlindex="index.html"
+            )
+        }
+    }
 
 
 class BcftoolsRohStepPart(ReportStepPart):
@@ -1571,6 +1591,8 @@ class VariantCallingWorkflow(BaseStep):
                 BafFileGenerationStepPart,
             )
         )
+        if self.config.bcftools_stats and self.config.bcftools_stats.enabled:
+            self.register_sub_step_classes((BcftoolsStatsSummaryStepPart,))
         if (
             self.config.depends_on.kits
             and self.config.bcftools_roh
@@ -1640,4 +1662,6 @@ class VariantCallingWorkflow(BaseStep):
             name_config = self.config.get(name)
             if name_config and name_config.enabled:
                 names.append(name)
+        if "qc_summary" in self.sub_steps:  # the summary of the bcftools stats
+            names.append("qc_summary")
         return [path for name in names for path in self.sub_steps[name].get_result_files()]

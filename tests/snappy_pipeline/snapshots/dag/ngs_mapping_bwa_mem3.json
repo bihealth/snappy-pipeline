@@ -22,6 +22,8 @@
    "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
    "tasks/ngs_mapping_bwa_mem3/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
    "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/out/qc_summary.tsv.md5",
    "tasks/ngs_mapping_bwa_mem3/output/.manifest.tsv"
   ],
   "log": [],
@@ -163,6 +165,53 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa_mem3"
  },
  {
+  "benchmark": "tasks/ngs_mapping_bwa_mem3/benchmarks/qc_summary/qc_summary.tsv",
+  "directory": [
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/report/html"
+  ],
+  "input": [
+   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/log/qc_summary.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/out/qc_summary.tsv.md5",
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/report/html"
+  ],
+  "params": {
+   "args": {
+    "format": "samtools",
+    "labels": [
+     "case001subregion-N1-DNA1-WES1",
+     "case001subregion-T1-DNA1-WES1"
+    ],
+    "title": "BAM QC"
+   }
+  },
+  "report": [
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/report/html"
+  ],
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "ngs_mapping_bwa_mem3_ngs_mapping_qc_summary",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/qc_summary"
+ },
+ {
   "benchmark": null,
   "input": [
    "tasks/ngs_mapping_bwa_mem3/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
@@ -184,7 +233,9 @@
    "tasks/ngs_mapping_bwa_mem3/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
    "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.flagstats.txt.md5",
    "tasks/ngs_mapping_bwa_mem3/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5",
-   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5"
+   "tasks/ngs_mapping_bwa_mem3/work/case001subregion-T1-DNA1-WES1/report/bam_qc/case001subregion-T1-DNA1-WES1.bam.idxstats.txt.md5",
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_mapping_bwa_mem3/work/qc_summary/out/qc_summary.tsv.md5"
   ],
   "local": true,
   "log": [],

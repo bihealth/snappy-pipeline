@@ -6,6 +6,8 @@
    "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.target_coverage.json.gz.md5",
    "tasks/ngs_data_qc_alfred/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.target_coverage.json.gz",
    "tasks/ngs_data_qc_alfred/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.target_coverage.json.gz.md5",
+   "tasks/ngs_data_qc_alfred/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_alfred/work/qc_summary/out/qc_summary.tsv.md5",
    "tasks/ngs_data_qc_alfred/output/.manifest.tsv"
   ],
   "log": [],
@@ -95,12 +97,57 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/alfred/qc"
  },
  {
+  "benchmark": "tasks/ngs_data_qc_alfred/benchmarks/qc_summary/qc_summary.tsv",
+  "directory": [
+   "tasks/ngs_data_qc_alfred/work/qc_summary/report/html"
+  ],
+  "input": [
+   "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.target_coverage.json.gz",
+   "tasks/ngs_data_qc_alfred/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.target_coverage.json.gz"
+  ],
+  "log": [
+   "tasks/ngs_data_qc_alfred/work/qc_summary/log/qc_summary.log"
+  ],
+  "output": [
+   "tasks/ngs_data_qc_alfred/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_alfred/work/qc_summary/out/qc_summary.tsv.md5",
+   "tasks/ngs_data_qc_alfred/work/qc_summary/report/html"
+  ],
+  "params": {
+   "args": {
+    "format": "alfred",
+    "labels": [
+     "case001subregion-N1-DNA1-WES1",
+     "case001subregion-T1-DNA1-WES1"
+    ],
+    "title": "Target coverage"
+   }
+  },
+  "report": [
+   "tasks/ngs_data_qc_alfred/work/qc_summary/report/html"
+  ],
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "ngs_data_qc_alfred_ngs_data_qc_qc_summary",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/qc_summary"
+ },
+ {
   "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.target_coverage.json.gz",
    "tasks/ngs_data_qc_alfred/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.target_coverage.json.gz.md5",
    "tasks/ngs_data_qc_alfred/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.target_coverage.json.gz",
-   "tasks/ngs_data_qc_alfred/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.target_coverage.json.gz.md5"
+   "tasks/ngs_data_qc_alfred/work/case001subregion-T1-DNA1-WES1/out/case001subregion-T1-DNA1-WES1.target_coverage.json.gz.md5",
+   "tasks/ngs_data_qc_alfred/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_alfred/work/qc_summary/out/qc_summary.tsv.md5"
   ],
   "local": true,
   "log": [],

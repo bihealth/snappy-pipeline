@@ -665,6 +665,7 @@ WRAPPERS_WITHOUT_EXTRA_ARGUMENTS = {
             "mutect2/gather",
             "picard/prepare",
             "popdel/concat_calls",
+            "qc_summary",
             "popdel/reorder_vcf",
             "pvactools/normalize",
             "reference_download/sidecars",
