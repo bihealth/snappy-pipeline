@@ -243,7 +243,8 @@ def test_config_pins_the_first_columns_and_plots_the_charts():
     cfg = config([table, chart], "task: T", "/data")
 
     assert cfg["default-view"] == "summary"
-    assert cfg["datasets"]["c"] == {"path": "/data/c.tsv", "separator": "\t"}
+    assert cfg["datasets"]["c"]["path"] == "/data/c.tsv"
+    assert cfg["datasets"]["c"]["separator"] == "\t"
     columns = cfg["views"]["summary"]["render-table"]["columns"]
     assert columns["library"] == {"display-mode": "pinned"}
     assert columns["v"]["plot"]["ticks"]["scale"] == "linear"
@@ -256,18 +257,68 @@ def test_config_pins_the_first_columns_and_plots_the_charts():
     _validate_config(cfg)
 
 
-def test_many_libraries_share_one_ink_and_few_get_colors():
+def test_many_libraries_become_a_heatmap_or_share_one_ink_and_few_get_colors():
     few = pl.DataFrame({"library": ["a", "b"], "x": [1, 2], "y": [3, 4]})
     many = pl.DataFrame({"library": [f"l{i}" for i in range(7)], "x": range(7), "y": range(7)})
 
     colored = Chart("c", "C", few, x="x", y="y").spec()
-    plain = Chart("c", "C", many, x="x", y="y").spec()
+    heatmap = Chart("c", "C", many, x="x", y="y", log_y=True).spec()
+    ink = Chart("c", "C", many, x="x", y="y", many="ink").spec()
 
     assert colored["encoding"]["color"]["field"] == "library"
     assert colored["encoding"]["color"]["scale"]["range"][:2] == list(qc_summary.COLORS[:2])
-    assert plain["encoding"]["color"] == {"value": qc_summary.INK}
-    assert plain["encoding"]["detail"]["field"] == "library"
-    assert plain["mark"]["opacity"] < 1 and plain["mark"]["strokeWidth"] <= 2
+    assert [p["name"] for p in colored["params"]] == ["zoom", "pick"]
+    assert colored["params"][1]["bind"] == "legend"  # the legend toggles the series
+    assert colored["encoding"]["opacity"]["condition"]["param"] == "pick"
+    assert heatmap["mark"]["type"] == "rect"
+    assert heatmap["encoding"]["y"]["field"] == "library"
+    assert heatmap["encoding"]["x"]["type"] == "ordinal"
+    assert heatmap["encoding"]["color"]["field"] == "y"
+    assert heatmap["encoding"]["color"]["scale"] == {
+        "scheme": "blues",
+        "domainMin": 0,
+        "type": "symlog",
+    }
+    assert heatmap["height"] == 84  # 12 px per library
+    assert ink["encoding"]["color"] == {"value": qc_summary.INK}
+    assert ink["encoding"]["detail"]["field"] == "library"
+    assert ink["mark"]["strokeWidth"] <= 2
+    assert ink["params"][1]["select"]["on"] == "pointerover"  # hovering a line picks it
+
+
+def test_dots_of_many_libraries_become_a_heatmap_of_the_categories():
+    many = pl.DataFrame(
+        {"library": [f"l{i}" for i in range(7)], "contig": ["1"] * 7, "v": range(7)}
+    )
+
+    spec = Chart("c", "C", many, x="v", y="contig", mark="dots", x_title="per Mb").spec()
+
+    assert spec["mark"]["type"] == "rect"
+    assert spec["encoding"]["x"] == {
+        "field": "contig",
+        "type": "nominal",
+        "title": "contig",
+        "sort": None,
+        "axis": {"labelOverlap": "parity", "labelAngle": 0, "labelSeparation": 6},
+    }
+    assert spec["encoding"]["color"]["field"] == "v"
+    assert spec["encoding"]["color"]["legend"]["title"] == "per Mb"
+
+
+def test_marks_link_to_the_row_of_their_library_in_the_summary_table():
+    table = Table("summary", "T", pl.DataFrame({"library": ["a"], "v": [0.5]}))
+    chart = Chart("c", "C", pl.DataFrame({"library": ["a"], "x": [1], "y": [2]}), x="x", y="y")
+    unlinked = Chart("u", "U", chart.frame, x="x", y="y", link=None)
+
+    cfg = config([table, chart, unlinked], "T", "/data")
+
+    assert cfg["datasets"]["c"]["links"] == {
+        "row": {"column": "library", "table-row": "summary/library", "optional": True}
+    }
+    assert "links" not in cfg["datasets"]["u"]
+    assert chart.spec()["encoding"]["href"] == {"field": "row"}
+    assert "href" not in unlinked.spec()["encoding"]
+    _validate_config(cfg)
 
 
 def test_metric_strips_put_each_metric_on_its_own_scale():

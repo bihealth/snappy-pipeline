@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import math
 import os
 import subprocess
 import tempfile
@@ -42,6 +43,9 @@ COLORS = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300")
 
 #: The one ink of many libraries, and the inks of text and axes
 INK = "#2a78d6"
+
+#: Name of the datavzrd link from a mark of a chart to the row of its series in a table
+LINK = "row"
 TEXT = "#52514e"
 AXIS = "#c3c2b7"
 
@@ -129,8 +133,14 @@ class Chart:
     ``line`` draws one thin line per ``series`` value over ``x``; ``bar`` draws bars of a
     nominal ``x`` side by side per series; ``dots`` draws one dot per row at ``x`` on the nominal
     ``y``; ``strips`` draws one tick per row at ``x``, in a panel per ``facet`` value with its
-    own x scale (the strips of a summary's metrics). The series get colors when they are few
-    (:data:`MAX_COLORED`), else one ink.
+    own x scale (the strips of a summary's metrics).
+
+    Few series (:data:`MAX_COLORED`) get a color each and a legend that toggles them; more share
+    one ink, and a ``line`` or ``dots`` chart of many series becomes a heatmap (one row per
+    series, the bins as columns, the value as color), which shows hundreds of libraries at once;
+    ``many="ink"`` keeps the lines. Continuous axes zoom and pan; hovering a mark highlights its
+    series, also across the panels of a strip chart; a mark links to the row of its series in
+    the table view ``link``.
     """
 
     name: str
@@ -151,6 +161,10 @@ class Chart:
     log_y: bool = False
     x_title: str | None = None
     y_title: str | None = None
+    #: How many series are drawn: ``heatmap`` or ``ink`` (thin lines or dots in one ink)
+    many: str = "heatmap"
+    #: The table view whose rows the series link to (``None``: no links)
+    link: str | None = "summary"
 
     @property
     def colored(self) -> bool:
@@ -158,6 +172,11 @@ class Chart:
         if self.series not in self.frame.columns:
             return False
         return self.frame[self.series].n_unique() <= MAX_COLORED
+
+    @property
+    def heatmap(self) -> bool:
+        """Whether the chart is drawn as a heatmap: many series of a line or dots chart."""
+        return self.mark in ("line", "dots") and not self.colored and self.many == "heatmap"
 
     def _color(self) -> dict:
         if self.colored:
@@ -186,31 +205,80 @@ class Chart:
             fields.append({"field": self.y, "type": "nominal"})
         return fields
 
+    def _picked(self, base: float, hover: bool) -> tuple[dict, dict]:
+        """The selection of a series (by the legend, or by hovering a mark) and the opacity that
+        dims the other series while one is picked."""
+        select: dict = {"type": "point", "fields": [self.series]}
+        if hover:
+            select |= {"on": "pointerover", "clear": "pointerout"}
+        param = {"name": "pick", "select": select}
+        if not hover:
+            param["bind"] = "legend"
+        opacity = {"condition": {"param": "pick", "value": base}, "value": round(base * 0.25, 2)}
+        return param, opacity
+
+    def _heatmap(self, encoding: dict, params: list) -> tuple[dict, int, int]:
+        """The rect mark and axes of the heatmap: the series as rows, the x (or the category of a
+        dots chart) as columns, the value as a sequential color."""
+        if self.mark == "dots":
+            column, column_title, value, value_title = self.y, self.y_title, self.x, self.x_title
+            column_type = "nominal"
+        else:
+            column, column_title, value, value_title = self.x, self.x_title, self.y, self.y_title
+            column_type = "ordinal" if self.x_type == "quantitative" else "nominal"
+        axis = {"labelOverlap": "parity", "labelAngle": 0, "labelSeparation": 6}
+        if column_type == "ordinal":
+            axis["format"] = ".3~g"
+        encoding["x"] = {
+            "field": column,
+            "type": column_type,
+            "title": column if column_title is None else (column_title or None),
+            "sort": None,
+            "axis": axis,
+        }
+        encoding["y"] = {"field": self.series, "type": "nominal", "sort": None, "title": None}
+        scale: dict = {"scheme": "blues", "domainMin": 0}  # a count or rate starts at zero
+        if self.log_y:
+            scale["type"] = "symlog"
+        encoding["color"] = {
+            "field": value,
+            "type": "quantitative",
+            "scale": scale,
+            "legend": {"title": value_title or value, "gradientLength": 120},
+        }
+        encoding["tooltip"] = [
+            {"field": self.series, "type": "nominal"},
+            {"field": column, "type": column_type}
+            | ({"format": ".4~g"} if column_type == "ordinal" else {}),
+            {"field": value, "type": "quantitative", "format": ".4~g"},
+        ]
+        rows = int(self.frame[self.series].n_unique())
+        return {"type": "rect", "tooltip": True}, 560, max(60, 12 * rows)
+
     def spec(self) -> dict:
         """The vega-lite specification of the chart."""
         x_title = self.x if self.x_title is None else (self.x_title or None)
         x: dict = {"field": self.x, "type": self.x_type, "title": x_title}
         encoding: dict = {"x": x, "color": self._color(), "tooltip": self._tooltip()}
+        params: list[dict] = []
         mark: dict = {"type": self.mark, "tooltip": True}
         width, height = 560, 240
-        if self.mark == "line":
-            mark |= {
-                "strokeWidth": 1.25 if self.colored else 1,
-                "opacity": 1 if self.colored else 0.45,
-            }
+        zoom = {"name": "zoom", "select": "interval", "bind": "scales"}
+        if self.heatmap:
+            mark, width, height = self._heatmap(encoding, params)
+        elif self.mark == "line":
+            mark |= {"strokeWidth": 1.25 if self.colored else 1}
             encoding["detail"] = {"field": self.series, "type": "nominal"}
-        if self.mark == "bar":
-            mark |= {"cornerRadiusEnd": 2, "opacity": 0.9, "width": {"band": 0.6}}
+            param, encoding["opacity"] = self._picked(1 if self.colored else 0.45, not self.colored)
+            params += [zoom, param]
+        elif self.mark == "bar":
+            mark |= {"cornerRadiusEnd": 2, "width": {"band": 0.6}}
             if self.x_type == "nominal":
                 encoding["xOffset"] = {"field": self.series, "type": "nominal"}
-        if self.mark in ("line", "bar"):
-            y: dict = {"field": self.y, "type": "quantitative", "title": self.y_title or self.y}
-            if self.log_y:
-                y["scale"] = {"type": "log"}
-            encoding["y"] = y
-        if self.mark == "dots":
+            param, encoding["opacity"] = self._picked(0.9, not self.colored)
+            params.append(param)
+        elif self.mark == "dots":
             mark = {"type": "circle", "tooltip": True, "size": 36}
-            mark["opacity"] = 0.8 if self.colored else 0.45
             encoding["y"] = {
                 "field": self.y,
                 "type": "nominal",
@@ -218,12 +286,24 @@ class Chart:
                 "title": self.y_title or self.y,
             }
             height = max(120, 14 * int(self.frame[self.y].n_unique()))
-        if self.mark == "strips":
+            param, encoding["opacity"] = self._picked(
+                0.8 if self.colored else 0.45, not self.colored
+            )
+            params += [zoom, param]
+        elif self.mark == "strips":
             mark = {"type": "tick", "tooltip": True, "thickness": 1.5}
-            mark["opacity"] = 0.8 if self.colored else 0.6
             x["axis"] = {"format": ".3~g", "tickCount": 4}
             x["scale"] = {"zero": False, "nice": False, "padding": 8}
             width, height = 400, 28
+            param, encoding["opacity"] = self._picked(0.8 if self.colored else 0.6, True)
+            params.append(param)
+        if self.mark in ("line", "bar") and not self.heatmap:
+            y: dict = {"field": self.y, "type": "quantitative", "title": self.y_title or self.y}
+            if self.log_y:
+                y["scale"] = {"type": "log"}
+            encoding["y"] = y
+        if self.link and self.series in self.frame.columns:
+            encoding["href"] = {"field": LINK}
         spec: dict = {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
             "title": self.title,
@@ -233,6 +313,8 @@ class Chart:
             "height": height,
             "config": CHART_CONFIG,
         }
+        if params:
+            spec["params"] = params
         if self.facet:
             order = self.facet_order or self.frame[self.facet].unique(maintain_order=True).to_list()
             panel = {"field": self.facet, "type": "nominal", "sort": order, "title": None}
@@ -283,6 +365,18 @@ def config(views: list[Table | Chart], title: str, data_dir: str) -> dict:
         view.name: {"path": os.path.join(data_dir, f"{view.name}.tsv"), "separator": "\t"}
         for view in views
     }
+    tables = {view.name: view for view in views if isinstance(view, Table)}
+    for view in views:
+        if not isinstance(view, Chart) or not view.link or view.link not in tables:
+            continue
+        if view.series in view.frame.columns and view.series in tables[view.link].frame.columns:
+            datasets[view.name]["links"] = {
+                LINK: {
+                    "column": view.series,
+                    "table-row": f"{view.link}/{view.series}",
+                    "optional": True,
+                }
+            }
     return {
         "name": title,
         "default-view": views[0].name,
@@ -343,12 +437,24 @@ def thin(frame: pl.DataFrame, x: str, y: str, by: tuple[str, ...] = ("library",)
     if int(points) <= MAX_POINTS:  # type: ignore[arg-type]
         return frame
     low, high = float(frame[x].min()), float(frame[x].max())  # type: ignore[arg-type]
-    width = (high - low) / MAX_POINTS
+    width = nice_width((high - low) / MAX_POINTS)
     return (
-        frame.with_columns((((pl.col(x) - low) // width) * width + low).alias(x))
+        frame.with_columns(((pl.col(x) / width).floor() * width).alias(x))
         .group_by([*groups, x], maintain_order=True)
         .agg(pl.col(y).sum())
     )
+
+
+def nice_width(width: float) -> float:
+    """The smallest of 1, 2 or 5 times a power of ten that is at least ``width``, so that bins
+    start at round numbers."""
+    if width <= 0:
+        return 1.0
+    magnitude = 10 ** math.floor(math.log10(width))
+    for factor in (1, 2, 5, 10):
+        if factor * magnitude >= width:
+            return float(factor * magnitude)
+    return float(10 * magnitude)
 
 
 def concat(frames: list[pl.DataFrame], columns: list[str]) -> pl.DataFrame:

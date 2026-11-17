@@ -141,7 +141,9 @@ One job per task reads the files of all entities (`entities()`, the task's outpu
 A format module turns the files into a `Summary`: the summary `Table` and the views of the site, `Table` and `Chart` (vega-lite charts of long frames, thinned to `MAX_POINTS` per library).
 The charts follow Tufte: the data carries the ink, with no gridlines, hairline axes, thin lines and no frame (`CHART_CONFIG`).
 A table cell shows its value as a tick on the range of its column (`ticks()`) or as a bar (`bars()`); every summary gets a strip chart of its key metrics (`metric_strips()`: one tick per library per metric, each metric on its own scale, so an outlier stands out and the tooltip names it); per-contig counts are dot charts (`mark="dots"`), with the table as their twin.
-Up to `MAX_COLORED` libraries get a color each, in a fixed, colorblind-safe order, with a legend; more share one muted ink and the tooltip tells them apart.
+Up to `MAX_COLORED` libraries get a color each, in a fixed, colorblind-safe order, with a legend that toggles them; a distribution or dot chart of more libraries becomes a heatmap (one row per library, the bins as columns, the value as a sequential color, `Chart.many`), which shows hundreds of libraries at once.
+Continuous axes zoom and pan; hovering a mark highlights its library, across the panels of a strip chart; a mark links to the row of its library in the summary table (`Chart.link`, a datavzrd `table-row` link named `LINK` with an `href` encoding).
+`thin()` bins distributions at round widths (`nice_width()`).
 A table whose values can be drawn as a chart gets one; the table stays as the exact view.
 `tests/snappy_wrappers/tools/test_qc_summary.py` checks each format against fixtures and the generated configuration against datavzrd's schema; `test_qc_summary.py` of the workflows checks the step part.
 
