@@ -112,6 +112,21 @@ def test_summary_table_has_the_probabilities_and_the_per_sample_columns_with_cel
     observation_plot = table.columns[f"{sample}: observations"].custom_plot
     assert observation_plot["spec"]["mark"]["type"] == "bar"
     assert "JSON.parse" in observation_plot["data"]
+    # Every strength has its row and the cells of the column share the x scale
+    encoding = observation_plot["spec"]["encoding"]
+    assert encoding["y"]["scale"]["domain"] == [
+        "very strong",
+        "strong",
+        "positive",
+        "barely",
+        "equal",
+    ]
+    most = max(
+        record["count"]
+        for value in table.frame[f"{sample}: observations"].to_list()
+        for record in json.loads(value)
+    )
+    assert encoding["x"]["scale"]["domain"] == [-most, most]
     assert (
         table.columns[f"{sample}: allele frequency density"].custom_plot["spec"]["mark"]["type"]
         == "bar"

@@ -48,48 +48,64 @@ BIASES = {
 #: Events whose probability counts against the call, drawn in red
 AGAINST = ("ARTIFACT", "ABSENT")
 
-#: The in-cell plot of the observations: bars of the counts per strength, alt to the right
-OBSERVATIONS_PLOT = {
-    "data": "function(value, row) { return value ? JSON.parse(value) : []; }",
-    "spec": {
-        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-        "width": 110,
-        "height": 48,
-        "mark": {"type": "bar", "tooltip": True},
-        "encoding": {
-            "y": {
-                "field": "strength",
-                "type": "ordinal",
-                "sort": list(reversed(STRENGTHS.values())),  # strongest evidence on top
-                "axis": {"title": None, "labelFontSize": 8, "ticks": False, "domain": False},
+
+def observations_plot(max_reads: int) -> dict:
+    """The in-cell plot of the observations: bars of the counts per strength, alt to the right.
+
+    Every strength has its row, filled or not, and the x axis spans ``max_reads`` both ways (the
+    most reads of one strength in the column), so the cells of a column share their scales and
+    the rows compare.
+    """
+    limit = max(1, max_reads)
+    return {
+        "data": "function(value, row) { return value ? JSON.parse(value) : []; }",
+        "spec": {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "width": 110,
+            "height": 60,
+            "mark": {"type": "bar", "tooltip": True},
+            "encoding": {
+                "y": {
+                    "field": "strength",
+                    "type": "ordinal",
+                    # Every strength, the strongest evidence on top
+                    "scale": {"domain": list(reversed(STRENGTHS.values()))},
+                    "axis": {"title": None, "labelFontSize": 8, "ticks": False, "domain": False},
+                },
+                "x": {
+                    "field": "reads",
+                    "type": "quantitative",
+                    "scale": {"domain": [-limit, limit]},
+                    "axis": {
+                        "title": None,
+                        "labelFontSize": 8,
+                        "values": [-limit, 0, limit],
+                        "format": "~s",
+                    },
+                },
+                "color": {
+                    "field": "allele",
+                    "type": "nominal",
+                    "scale": {"domain": ["alt", "ref"], "range": [INK, "#c3c2b7"]},
+                    "legend": None,
+                },
+                "opacity": {
+                    "field": "mapping",
+                    "type": "nominal",
+                    "scale": {"domain": ["certain", "uncertain"], "range": [1, 0.4]},
+                    "legend": None,
+                },
+                "tooltip": [
+                    {"field": "allele", "type": "nominal"},
+                    {"field": "strength", "type": "nominal"},
+                    {"field": "count", "type": "quantitative"},
+                    {"field": "mapping", "type": "nominal"},
+                ],
             },
-            "x": {
-                "field": "reads",
-                "type": "quantitative",
-                "axis": {"title": None, "labelFontSize": 8, "tickCount": 3, "format": "~s"},
-            },
-            "color": {
-                "field": "allele",
-                "type": "nominal",
-                "scale": {"domain": ["alt", "ref"], "range": [INK, "#c3c2b7"]},
-                "legend": None,
-            },
-            "opacity": {
-                "field": "mapping",
-                "type": "nominal",
-                "scale": {"domain": ["certain", "uncertain"], "range": [1, 0.4]},
-                "legend": None,
-            },
-            "tooltip": [
-                {"field": "allele", "type": "nominal"},
-                {"field": "strength", "type": "nominal"},
-                {"field": "count", "type": "quantitative"},
-                {"field": "mapping", "type": "nominal"},
-            ],
+            "config": {"view": {"stroke": None}, "axis": {"grid": False, "labelColor": TEXT}},
         },
-        "config": {"view": {"stroke": None}, "axis": {"grid": False, "labelColor": TEXT}},
-    },
-}
+    }
+
 
 #: The in-cell plot of the allele frequency density: an area over the allele frequency
 AFD_PLOT = {
@@ -265,7 +281,15 @@ def summarize(path: str) -> Summary:
         columns[f"{sample}: allele frequency"] = ticks(precision=3)
         columns[f"{sample}: depth"] = bars()
         columns[f"{sample}: genotype"] = Column()
-        columns[f"{sample}: observations"] = Column(custom_plot=OBSERVATIONS_PLOT)
+        most = max(
+            (
+                record["count"]
+                for row in calls.rows
+                for record in json.loads(row[f"{sample}: observations"])
+            ),
+            default=0,
+        )
+        columns[f"{sample}: observations"] = Column(custom_plot=observations_plot(most))
         columns[f"{sample}: allele frequency density"] = Column(custom_plot=AFD_PLOT)
         columns[f"{sample}: biases"] = Column()
         columns[f"{sample}: raw observations"] = Column(detail=True)
