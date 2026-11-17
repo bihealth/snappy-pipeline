@@ -1,0 +1,10 @@
+# Snappy Pipeline Project "%(project_name)s" Configuration
+#
+# created: %(created_at)s
+#
+# The fields of a step with their descriptions: its page in the documentation,
+# https://snappy-pipeline.readthedocs.io/en/latest/, or `snappy task add --config-mode commented`.
+
+data_sets: {}
+
+tasks: []

@@ -346,7 +346,7 @@ def main():
     "--config-mode",
     type=click.Choice(["commented", "full", "minimal"]),
     default="commented",
-    help="Style for task config: 'commented' (defaults commented out), 'full' (all defaults active), 'minimal' (strip default options).",
+    help="Style of the task configuration: 'commented' (every field with its description, the optional ones commented out), 'full' (every field active), 'minimal' (the required fields only, without descriptions).",
 )
 def init(directory, project_name, tasks, manage_config, config_mode):
     """Initialize a new snappy project directory."""
@@ -372,10 +372,14 @@ def init(directory, project_name, tasks, manage_config, config_mode):
     for path in paths:
         create_directory(path, exist_ok=True)
 
-    # Create config file in subdirectory based on template
+    # Create config file in subdirectory based on template; the minimal one has a short header
+    # that points to the docs instead of explaining the sections
     config_dest_path = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
+    template = "project_config.yaml"
+    if ConfigMode(config_mode) is ConfigMode.MINIMAL:
+        template = "project_config_minimal.yaml"
     create_from_tpl(
-        src_path=os.path.join(os.path.dirname(__file__), "tpls", "project_config.yaml"),
+        src_path=os.path.join(os.path.dirname(__file__), "tpls", template),
         dest_path=config_dest_path,
         format_args={
             "created_at": datetime.datetime.now().isoformat(),
@@ -440,7 +444,7 @@ def task():
     "--config-mode",
     type=click.Choice(["commented", "full", "minimal"]),
     default="commented",
-    help="Style for task config: 'commented' (defaults commented out), 'full' (all defaults active), 'minimal' (strip default options).",
+    help="Style of the task configuration: 'commented' (every field with its description, the optional ones commented out), 'full' (every field active), 'minimal' (the required fields only, without descriptions).",
 )
 def task_add(
     tasks,

@@ -204,7 +204,8 @@ class ConfigMode(enum.StrEnum):
     """Every field with its default"""
 
     MINIMAL = "minimal"
-    """The required fields only, with the ``depends_on`` fields that a tool requires"""
+    """The required fields only, with the ``depends_on`` fields that a tool requires; no
+    descriptions, examples or options, only the ``REQUIRED`` tags"""
 
 
 class Intermediate(enum.StrEnum):
@@ -436,8 +437,9 @@ def default_config_yaml_string(
 
     A field's description precedes it as a comment, its tags follow it at :data:`TAG_COLUMN`.
     A blank line separates a described field or a section from the field before it. ``commented``
-    comments out the optional fields and sections (a ``#`` right before the key), ``minimal``
-    leaves them out, except for ``depends_on`` fields that a tool requires.
+    comments out the optional fields and sections (a ``#`` right before the key). ``minimal``
+    leaves them out, except for ``depends_on`` fields that a tool requires, and writes neither
+    descriptions nor blank lines; of the tags, only the ``REQUIRED`` ones remain.
     """
     writer = _ConfigWriter(ConfigMode(mode))
     writer.write_model(model, _placeholder_data(model), indent=0, commented=False)
@@ -455,28 +457,30 @@ class _ConfigWriter:
 
     def write_model(self, model: type[BaseModel], data: dict, indent: int, commented: bool):
         prefix = " " * indent
+        documented = self.mode is not ConfigMode.MINIMAL
         first = True
         for name, field in model.model_fields.items():
             optional = _is_optional(field)
             required_by = any(isinstance(m, RequiredBy) for m in reader_markers(field))
-            if self.mode is ConfigMode.MINIMAL and optional and not required_by:
+            if not documented and optional and not required_by:
                 continue
             comment_out = commented or (self.mode is ConfigMode.COMMENTED and optional)
-            description = _description_lines(field, LINE_WIDTH - indent - 2)
+            description = _description_lines(field, LINE_WIDTH - indent - 2) if documented else []
             sub_model = _sub_model(field.annotation)
-            if not first and (description or sub_model is not None):
+            if documented and not first and (description or sub_model is not None):
                 self.lines.append(("", "", 0))
             first = False
             self.lines += [(f"{prefix}# {line}".rstrip(), "", 0) for line in description]
+            tags = _tags(field, documented)
             value = data.get(name)
             if sub_model is not None:
-                self._add(f"{prefix}{name}:", comment_out, _tags(field))
+                self._add(f"{prefix}{name}:", comment_out, tags)
                 if not isinstance(value, dict):
                     value = _placeholder_data(sub_model)
                 self.write_model(sub_model, value, indent + INDENTATION, comment_out)
             else:
                 first_line, *rest = _yaml_lines(name, value)
-                self._add(prefix + first_line, comment_out, _tags(field))
+                self._add(prefix + first_line, comment_out, tags)
                 for line in rest:
                     self._add(prefix + line, comment_out, "")
 
@@ -484,6 +488,8 @@ class _ConfigWriter:
         self.lines.append((_commented(line, commented), tags, len(line)))
 
     def render(self) -> str:
+        if not self.lines:  # a minimal configuration of a step without required fields
+            return ""
         column = max([TAG_COLUMN] + [width + 2 for _, tags, width in self.lines if tags])
         return (
             "\n".join(f"{text:<{column}}# {tags}" if tags else text for text, tags, _ in self.lines)
@@ -521,12 +527,15 @@ def _description_lines(field, width: int) -> list[str]:
     return lines
 
 
-def _tags(field) -> str:
-    """The tags behind a key: whether it is required and by which readers, examples, options."""
+def _tags(field, documented: bool = True) -> str:
+    """The tags behind a key: whether it is required and by which readers; if ``documented``,
+    also its optional readers, examples and options."""
     tags = [] if _is_optional(field) else ["REQUIRED"]
     markers = reader_markers(field)
     if required := [str(m) for m in markers if isinstance(m, RequiredBy)]:
         tags.append(f"REQUIRED for {'; '.join(required)}")
+    if not documented:
+        return "; ".join(tags)
     if optional := [str(m) for m in markers if not isinstance(m, RequiredBy)]:
         tags.append(f"optional for {'; '.join(optional)}")
     if field.examples:

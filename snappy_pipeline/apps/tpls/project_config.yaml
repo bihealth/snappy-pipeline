@@ -11,6 +11,33 @@
 # pathvars:
 #   refs: /path/to/refs/GRCh38
 
+# Data Sets ========================================================================
+#
+# Define data sets with sample sheets and search paths/patterns for raw FASTQ files.
+# Search patterns are regular expressions for the path below each library's folder; their
+# (?P<readgroup>...) group pairs the left and right file of each lane.
+#
+# Example
+# -------
+#
+# data_sets:
+#   first_batch:
+#     file: samplesheet.tsv
+#     search_patterns:
+#     - {left: '(?P<readgroup>.+)_R1_001\.fastq\.gz', right: '(?P<readgroup>.+)_R2_001\.fastq\.gz'}
+#     search_paths:
+#     - /path/to/raw/data
+#     type: germline_variants
+#
+data_sets: {}
+
+# Resources =======================================================================
+#
+# Memory and runtime of a job grow with each retry by retry_factor.
+#
+# resources:
+#   retry_factor: 1.5
+
 # Task Configuration ================================================================
 #
 # Define pipeline tasks.  Each task references a step type, a unique name,
@@ -53,30 +80,3 @@
 #       files: {cache: /path/to/vep/cache}
 #
 tasks: []
-
-# Data Sets ========================================================================
-#
-# Define data sets with sample sheets and search paths/patterns for raw FASTQ files.
-# Search patterns are regular expressions for the path below each library's folder; their
-# (?P<readgroup>...) group pairs the left and right file of each lane.
-#
-# Example
-# -------
-#
-# data_sets:
-#   first_batch:
-#     file: samplesheet.tsv
-#     search_patterns:
-#     - {left: '(?P<readgroup>.+)_R1_001\.fastq\.gz', right: '(?P<readgroup>.+)_R2_001\.fastq\.gz'}
-#     search_paths:
-#     - /path/to/raw/data
-#     type: germline_variants
-#
-data_sets: {}
-
-# Resources =======================================================================
-#
-# Memory and runtime of a job grow with each retry by retry_factor.
-#
-# resources:
-#   retry_factor: 1.5

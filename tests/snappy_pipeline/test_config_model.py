@@ -195,6 +195,10 @@ def test_default_config_is_formatted_consistently(step):
     assert "\n#\n" not in commented and "\n\n\n" not in commented
     # Literals are quoted with single backticks, no Sphinx roles or double backticks remain
     assert "``" not in commented and ":func:" not in commented and ":class:" not in commented
+    # The minimal configuration has neither descriptions nor blank lines, and only REQUIRED tags
+    for line in minimal.splitlines():
+        assert line and not line.lstrip().startswith("#"), line
+        assert "#" not in line or line.split("#", 1)[1].startswith(" REQUIRED"), line
 
 
 def test_default_config_marks_required_fields_and_readers():
@@ -206,7 +210,8 @@ def test_default_config_marks_required_fields_and_readers():
     minimal = default_config_yaml_string(
         WORKFLOW_REGISTRY["ngs_mapping"].config_model_class, "minimal"
     )
-    assert "features: ''" in minimal and "bwa:" not in minimal and "#" in minimal
+    assert "features: ''" in minimal and "bwa:" not in minimal
+    assert "# REQUIRED for tool: star" in minimal and "Options:" not in minimal
 
 
 def test_data_set_defaults_to_r1_r2_patterns_but_not_to_search_paths():

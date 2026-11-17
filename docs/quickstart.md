@@ -43,7 +43,7 @@ snappy task add mapping=ngs_mapping calling=variant_calling
 ```
 
 The new tasks appear in `config.yaml` with every option commented out, and the required ones marked `REQUIRED`.
-`--config-mode full` writes all defaults, `--config-mode minimal` strips them.
+`--config-mode full` writes all defaults active, `--config-mode minimal` writes the required fields only, without descriptions.
 `snappy task add` and `snappy init --task` keep the previous `config.yaml` as `config.yaml.bak`.
 
 ## Configure the tasks
