@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import ValidationError
 from snakemake.pathvars import Pathvars
 
-from snappy_pipeline.base import ConfigError
+from snappy_pipeline.base import ConfigError, in_task
 from snappy_pipeline.log_archive import archive_after_run
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import ReadDiscovery
@@ -121,30 +121,29 @@ def load_project(config: Mapping[str, Any], project_dir: str) -> Project:
     task_configs: dict[str, SnappyStepModel] = {}
     dependencies: dict[str, dict[str, str]] = {}
     for task in model.tasks:
-        workflow_cls = WORKFLOW_REGISTRY.get(task.step)
-        if workflow_cls is None:
-            raise ConfigError(
-                f"Task {task.name!r} uses unknown step {task.step!r}; "
-                f"known steps: {', '.join(sorted(WORKFLOW_REGISTRY))}"
-            )
-        try:
-            task_config = workflow_cls.config_model_class.model_validate(
-                task.config, context=context(task.name)
-            )
-        except ValidationError as e:
-            raise ConfigError(
-                f"Task {task.name!r} (step {task.step}) has an invalid configuration:\n"
-                + _format_validation_error(e)
-            ) from None
-        if getattr(task_config, "background_selection", None) and not (
-            workflow_cls.uses_background or workflow_cls.background_results
-        ):
-            raise ConfigError(
-                f"Task {task.name!r}: step {task.step!r} uses no background libraries, so "
-                "background_selection has no effect; remove it"
-            )
-        task_configs[task.name] = task_config
-        dependencies[task.name] = _resolve_dependencies(task.name, task_config, names)
+        with in_task(task):
+            workflow_cls = WORKFLOW_REGISTRY.get(task.step)
+            if workflow_cls is None:
+                raise ConfigError(
+                    f"unknown step; known steps: {', '.join(sorted(WORKFLOW_REGISTRY))}"
+                )
+            try:
+                task_config = workflow_cls.config_model_class.model_validate(
+                    task.config, context=context(task.name)
+                )
+            except ValidationError as e:
+                raise ConfigError(
+                    "invalid configuration:\n" + _format_validation_error(e)
+                ) from None
+            if getattr(task_config, "background_selection", None) and not (
+                workflow_cls.uses_background or workflow_cls.background_results
+            ):
+                raise ConfigError(
+                    "the step uses no background libraries, so background_selection has no "
+                    "effect; remove it"
+                )
+            task_configs[task.name] = task_config
+            dependencies[task.name] = _resolve_dependencies(task.name, task_config, names)
 
     tasks = tuple(_topological_order(model.tasks, dependencies))
     project = Project(
@@ -191,17 +190,19 @@ def _check_index_references(project: Project) -> None:
         files = getattr(project.task_configs[task_name], "files", None) or {}
         return files.get("fasta") or task_name
 
-    for name, dependencies in project.dependencies.items():
-        index, reference = dependencies.get("index"), dependencies.get("reference")
-        if not reference or not index or project.task(index).step != "reference_index":
-            continue
-        built_from = project.dependencies[index]["reference"]
-        if genome(built_from) != genome(reference):
-            raise ConfigError(
-                f"Task {name!r}: the index of task {index!r} is built from the genome of task "
-                f"{built_from!r}, but depends_on.reference names task {reference!r}; "
-                "name the same genome in both"
-            )
+    for task in project.tasks:
+        with in_task(task):
+            dependencies = project.dependencies[task.name]
+            index, reference = dependencies.get("index"), dependencies.get("reference")
+            if not reference or not index or project.task(index).step != "reference_index":
+                continue
+            built_from = project.dependencies[index]["reference"]
+            if genome(built_from) != genome(reference):
+                raise ConfigError(
+                    f"the index of task {index!r} is built from the genome of task "
+                    f"{built_from!r}, but depends_on.reference names task {reference!r}; "
+                    "name the same genome in both"
+                )
 
 
 def _check_filter_ids(project: Project) -> None:
@@ -243,20 +244,21 @@ def _check_granularity(project: Project) -> None:
     pedigree) names a task that writes its results at another one."""
     from snappy_pipeline.workflows.abstract import _declared_group_by
 
-    for name, config in project.task_configs.items():
-        depends_on = getattr(config, "depends_on", None)
-        for field, value in project.dependencies[name].items():
-            metadata = type(depends_on).model_fields[field].metadata
-            required = next((m for m in metadata if isinstance(m, Granularity)), None)
-            if required is None:
-                continue
-            for upstream in value if isinstance(value, tuple) else (value,):
-                level = _declared_group_by(project, upstream, frozenset()) or "library"
-                if level != required.level:
-                    raise ConfigError(
-                        f"Task {name!r}: depends_on.{field} needs results with group_by: "
-                        f"{required.level}, but task {upstream!r} writes them with group_by: {level}"
-                    )
+    for task in project.tasks:
+        with in_task(task):
+            depends_on = getattr(project.task_configs[task.name], "depends_on", None)
+            for field, value in project.dependencies[task.name].items():
+                metadata = type(depends_on).model_fields[field].metadata
+                required = next((m for m in metadata if isinstance(m, Granularity)), None)
+                if required is None:
+                    continue
+                for upstream in value if isinstance(value, tuple) else (value,):
+                    level = _declared_group_by(project, upstream, frozenset()) or "library"
+                    if level != required.level:
+                        raise ConfigError(
+                            f"depends_on.{field} needs results with group_by: {required.level}, "
+                            f"but task {upstream!r} writes them with group_by: {level}"
+                        )
 
 
 def _exists(path: str) -> bool:
@@ -304,18 +306,17 @@ def create_task_instances(
 
     ``task_names`` limits this to some tasks (``snappy run --frozen``); upstream tasks still
     resolve through the project, so their output paths can be computed. A :class:`ConfigError`
-    of a constructor names the task.
+    of a constructor gets its task (:func:`in_task`).
     """
     from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 
     _TASK_INSTANCES.clear()
     for task in project.tasks:
         if task_names is None or task.name in task_names:
-            try:
-                instance = WORKFLOW_REGISTRY[task.step](workflow, project, task.name)
-            except ConfigError as e:
-                raise _task_error(task, e) from None
-            _TASK_INSTANCES[task.name] = instance
+            with in_task(task):
+                _TASK_INSTANCES[task.name] = WORKFLOW_REGISTRY[task.step](
+                    workflow, project, task.name
+                )
     return dict(_TASK_INSTANCES)
 
 
@@ -392,15 +393,15 @@ def _resolve_dependencies(
         upstreams = value if isinstance(value, list) else [value]
         for upstream in upstreams:
             if upstream == task_name:
-                raise ConfigError(f"Task {task_name!r}: depends_on.{field} names the task itself")
+                raise ConfigError(f"depends_on.{field} names the task itself")
             if upstream not in names:
                 verb = "contains" if isinstance(value, list) else "is"
                 raise ConfigError(
-                    f"Task {task_name!r}: depends_on.{field} {verb} {upstream!r}, which is not a "
-                    f"task; configured tasks: {', '.join(names)}"
+                    f"depends_on.{field} {verb} {upstream!r}, which is not a task; "
+                    f"configured tasks: {', '.join(names)}"
                 )
         if len(set(upstreams)) != len(upstreams):
-            raise ConfigError(f"Task {task_name!r}: depends_on.{field} names a task twice")
+            raise ConfigError(f"depends_on.{field} names a task twice")
         result[field] = tuple(upstreams) if isinstance(value, list) else value
     return result
 
@@ -418,50 +419,50 @@ def _task_signatures(
     ``tasks`` must be in topological order, so the upstream signatures exist when a task needs
     them.
     """
-    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
-
     signatures: dict[str, tuple[DataSignature, ...]] = {}
     steps = {task.name: task.step for task in tasks}
     for task in tasks:
-        config = task_configs[task.name]
-        fields = type(config.depends_on).model_fields if dependencies[task.name] else {}
-        upstream_signatures = {}
-        for field, value in dependencies[task.name].items():
-            required = next(
-                (m for m in fields[field].metadata if isinstance(m, DataSignature)), None
+        with in_task(task):
+            signatures[task.name] = _task_signature(
+                task, task_configs, dependencies, signatures, steps
             )
-            if required is not None:
-                required = required.for_tool(config.tool_tag())
-            selected_all = []
-            for upstream in value if isinstance(value, tuple) else (value,):
-                produced = signatures[upstream]
-                selected = select_signature(produced, required)
-                if selected is None:
-                    raise ConfigError(
-                        f"Task {task.name!r}: depends_on.{field} requires {required}, but task "
-                        f"{upstream!r} produces {', '.join(map(str, produced)) or 'nothing'}"
-                    )
-                selected_all.append(selected)
-                _check_output_keys(
-                    task.name, field, fields[field], upstream, selected, steps, task_configs
-                )
-            upstream_signatures[field] = (
-                tuple(selected_all) if isinstance(value, tuple) else selected_all[0]
-            )
-        try:
-            signatures[task.name] = WORKFLOW_REGISTRY[task.step].task_produces(
-                config, upstream_signatures
-            )
-        except ConfigError as e:
-            raise _task_error(task, e) from None
     return signatures
 
 
-def _task_error(task: TaskModel, error: ConfigError) -> ConfigError:
-    """Return ``error`` with the task named, unless its message starts with ``Task`` already."""
-    if str(error).startswith("Task "):
-        return error
-    return ConfigError(f"Task {task.name!r} (step {task.step}): {error}")
+def _task_signature(
+    task: TaskModel,
+    task_configs: Mapping[str, SnappyStepModel],
+    dependencies: Mapping[str, Mapping[str, str | tuple[str, ...]]],
+    signatures: Mapping[str, tuple[DataSignature, ...]],
+    steps: Mapping[str, str],
+) -> tuple[DataSignature, ...]:
+    """Return the signatures that ``task`` produces, given those of its upstream tasks."""
+    from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
+
+    config = task_configs[task.name]
+    fields = type(config.depends_on).model_fields if dependencies[task.name] else {}
+    upstream_signatures = {}
+    for field, value in dependencies[task.name].items():
+        required = next((m for m in fields[field].metadata if isinstance(m, DataSignature)), None)
+        if required is not None:
+            required = required.for_tool(config.tool_tag())
+        selected_all = []
+        for upstream in value if isinstance(value, tuple) else (value,):
+            produced = signatures[upstream]
+            selected = select_signature(produced, required)
+            if selected is None:
+                raise ConfigError(
+                    f"depends_on.{field} requires {required}, but task {upstream!r} produces "
+                    f"{', '.join(map(str, produced)) or 'nothing'}"
+                )
+            selected_all.append(selected)
+            _check_output_keys(
+                task.name, field, fields[field], upstream, selected, steps, task_configs
+            )
+        upstream_signatures[field] = (
+            tuple(selected_all) if isinstance(value, tuple) else selected_all[0]
+        )
+    return WORKFLOW_REGISTRY[task.step].task_produces(config, upstream_signatures)
 
 
 def _check_output_keys(
@@ -484,8 +485,8 @@ def _check_output_keys(
     ]
     if missing:
         raise ConfigError(
-            f"Task {task_name!r}: depends_on.{field} needs {', '.join(missing)}, which task "
-            f"{upstream!r} does not provide; it provides {', '.join(sorted(keys))}"
+            f"depends_on.{field} needs {', '.join(missing)}, which task {upstream!r} does not "
+            f"provide; it provides {', '.join(sorted(keys))}"
         )
 
 

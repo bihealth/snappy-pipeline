@@ -558,8 +558,8 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         names = {plugin.name for plugin in getattr(vep, "plugins", None) or []}
         if missing := sorted({"Frameshift", "Wildtype"} - names):
             raise ConfigError(
-                f"Task {self.task_name!r}: depends_on.variants must come from VEP with the "
-                f"plugins {', '.join(missing)} in vep.plugins"
+                f"depends_on.variants must come from VEP with the plugins {', '.join(missing)} "
+                "in vep.plugins"
             )
 
     def check_rna(self):
@@ -579,8 +579,8 @@ class SomaticNeoepitopePredictionWorkflow(BaseStep):
         has_rna = any(self.matched(tumor, "matched_rna_lib") for tumor in self.output_entities)
         if rna_based and not has_rna:
             raise ConfigError(
-                f"Task {self.task_name!r}: {', '.join(rna_based)} need a tumor library with a "
-                "matched RNA library (matched_rna_lib), but no tumor library has one"
+                f"{', '.join(rna_based)} need a tumor library with a matched RNA library "
+                "(matched_rna_lib), but no tumor library has one"
             )
 
     @property

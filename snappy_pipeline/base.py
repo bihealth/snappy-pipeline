@@ -4,7 +4,8 @@
 import os
 import sys
 from collections import OrderedDict
-from collections.abc import MutableMapping
+from collections.abc import Iterator, MutableMapping
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, AnyStr, Dict
 
 import ruamel.yaml as ruamel_yaml
@@ -21,10 +22,34 @@ class SkipLibraryWarning(UserWarning):
 class ConfigError(ValueError):
     """A problem of the project configuration or the sample sheets that the user has to fix.
 
-    Raised by ``load_project()``, by the ``task_produces`` classmethods and by the constructors
-    of the workflow classes. The main Snakefile and ``snappy check-files`` print the message and
-    exit, without a traceback. A ``ValueError`` or ``TypeError`` marks a programming error.
+    The message states the problem. The orchestrator attaches the task it belongs to with
+    :func:`in_task` around its checks of one task, ``task_produces`` and the constructors of the
+    workflow classes; ``str()`` then reads ``Task 'name' (step step): message``. The main
+    Snakefile and ``snappy check-files`` print it and exit, without a traceback; in an input
+    function, Snakemake names the rule and the wildcards. A ``ValueError`` or ``TypeError``
+    marks a programming error.
     """
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+        self.task: TaskModel | None = None
+
+    def __str__(self) -> str:
+        if self.task is None:
+            return self.message
+        return f"Task {self.task.name!r} (step {self.task.step}): {self.message}"
+
+
+@contextmanager
+def in_task(task: "TaskModel") -> Iterator[None]:
+    """Attach ``task`` to a :class:`ConfigError` raised in the block, unless it has its task."""
+    try:
+        yield
+    except ConfigError as e:
+        if e.task is None:
+            e.task = task
+        raise
 
 
 class UnsupportedActionException(Exception):
@@ -51,6 +76,7 @@ def print_config(config: dict[str, Any], file=sys.stderr):
 
 
 if TYPE_CHECKING:
+    from snappy_pipeline.workflow_model import TaskModel
     from snappy_pipeline.workflows.abstract import BaseStep
 
 

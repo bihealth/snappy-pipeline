@@ -1134,8 +1134,8 @@ class BaseStep:
         ]
         if missing:
             raise ConfigError(
-                f"Task {self.task_name!r}: depends_on.{field} task {task_name!r} has no kit for "
-                f"these libraries: {', '.join(missing)}; its kits: {', '.join(sorted(kits))}"
+                f"depends_on.{field} task {task_name!r} has no kit for these libraries: "
+                f"{', '.join(missing)}; its kits: {', '.join(sorted(kits))}"
             )
 
     def common_kit(self, field: str, library_names: typing.Iterable[str]) -> str:
@@ -1146,7 +1146,7 @@ class BaseStep:
         kits = sorted({self.library_kits[name] for name in library_names})
         if len(kits) != 1:
             raise ConfigError(
-                f"Task {self.task_name!r} needs libraries of one kit, but they have the kits "
+                f"the libraries must have one kit, but they have the kits "
                 f"{', '.join(kits) or '(none)'}; use one task per kit"
             )
         return kits[0]
@@ -1174,14 +1174,14 @@ class BaseStep:
         ``ConfigError`` with the fix."""
         rows = self._library_rows.get(library_name)
         if not rows:
-            raise ConfigError(f"Task {self.task_name!r} has no library {library_name!r}")
+            raise ConfigError(f"library {library_name!r} is not among the task's libraries")
         if len(rows) > 1:
             kept = [
                 row for row in rows if (row["data_set"], library_name) in self._selected_libraries
             ]
             if len(kept) != 1:
                 colliding = {library_name: [row["data_set"] for row in kept or rows]}
-                raise ConfigError(colliding_libraries_message(colliding, self.task_name))
+                raise ConfigError(colliding_libraries_message(colliding))
             rows = kept
         return rows[0]
 
@@ -1316,9 +1316,9 @@ class BaseStep:
         )
         if own != theirs:
             raise ConfigError(
-                f"Task {self.task_name!r} takes library {library_name!r} from data set {own!r}, but "
-                f"its upstream task {upstream!r} takes the library of that name from {theirs!r}. "
-                "Select the libraries of the same data set in both tasks with library_selection."
+                f"library {library_name!r} comes from data set {own!r}, but the upstream task "
+                f"{upstream!r} takes the library of that name from {theirs!r}. Select the "
+                "libraries of the same data set in both tasks with library_selection."
             )
 
     def get_upstream_paths(
@@ -1382,8 +1382,7 @@ class BaseStep:
         selected = select_signature(produced, required)
         if selected is None:
             raise ConfigError(
-                f"Task {self.task_name!r}: depends_on.{req_field_name} task "
-                f"{dependency.task_name!r} produces no {required}"
+                f"depends_on.{req_field_name} task {dependency.task_name!r} produces no {required}"
             )
         if dependency.workflow_cls.needs_discovery:
             kwargs["discovery"] = self.project.read_discovery
@@ -2186,15 +2185,14 @@ def _colliding_libraries(df) -> dict[str, list[str]]:
     return {name: list(group["data_set"]) for name, group in duplicated.groupby("library_name")}
 
 
-def colliding_libraries_message(colliding: dict[str, list[str]], task_name: str = "") -> str:
+def colliding_libraries_message(colliding: dict[str, list[str]]) -> str:
     """Return the error for libraries of the same name from several data sets, with the fix."""
     names = ", ".join(f"{name} ({', '.join(data_sets)})" for name, data_sets in colliding.items())
     first_data_set = next(iter(colliding.values()))[0]
-    prefix = f"Task {task_name!r} has" if task_name else "The selected libraries have"
     return (
-        f"{prefix} libraries of the same name in several data sets: {names}. A task names its "
-        "files by library, so it can only take one library of a name. Select the libraries of "
-        f'one data set with library_selection, for example library_selection: "data_set == '
+        f"libraries of the same name in several data sets: {names}. A task names its files by "
+        "library, so it can only take one library of a name. Select the libraries of one data "
+        f'set with library_selection, for example library_selection: "data_set == '
         f"'{first_data_set}'\", or use one task per data set."
     )
 

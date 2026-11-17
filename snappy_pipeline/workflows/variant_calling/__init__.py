@@ -1329,8 +1329,7 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
             purity = math.nan
         if not 0 <= purity <= 1:
             raise ConfigError(
-                f"Task {self.parent.task_name!r}: the purity of {library_name} is {value!r}, "
-                "but a number from 0 to 1 is needed"
+                f"the purity of {library_name} is {value!r}, but a number from 0 to 1 is needed"
             )
         return purity
 
@@ -1358,11 +1357,11 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         elif somatic:
             if others := self.other_tumors(library_name):
                 raise ConfigError(
-                    f"Task {self.parent.task_name!r}: the somatic scenario calls one tumor with "
-                    f"its matched normal, but the donor of {library_name} has the tumors "
-                    f"{', '.join([library_name, *others])} in the task; call each time point in "
-                    "a task of its own (library_selection), or give a scenario template with "
-                    "group_by: related for a joint scenario of the donor's tumors"
+                    "the somatic scenario calls one tumor with its matched normal, but the donor "
+                    f"of {library_name} has the tumors {', '.join([library_name, *others])} in "
+                    "the task; call each time point in a task of its own (library_selection), or "
+                    "give a scenario template with group_by: related for a joint scenario of the "
+                    "donor's tumors"
                 )
             normal = members[1] if len(members) > 1 else None
             ffpe = frozenset(name for name in members if is_ffpe(self.sample(name).get("is_ffpe")))
@@ -1595,9 +1594,8 @@ class VariantCallingWorkflow(BaseStep):
         upstream_group_by = _declared_group_by(self.project, candidates, frozenset()) or "library"
         if upstream_group_by != self.effective_group_by:
             raise ConfigError(
-                f"Task {self.task_name!r} calls with group_by: {self.effective_group_by}, but "
-                f"its candidates task {candidates!r} writes them with group_by: "
-                f"{upstream_group_by}"
+                f"the task calls with group_by: {self.effective_group_by}, but its candidates "
+                f"task {candidates!r} writes them with group_by: {upstream_group_by}"
             )
         part = self.sub_steps["varlociraptor"]
         invalid = sorted(
@@ -1608,8 +1606,8 @@ class VariantCallingWorkflow(BaseStep):
         )
         if invalid:
             raise ConfigError(
-                f"Task {self.task_name!r}: varlociraptor needs sample names of letters, digits, "
-                f"'_', '.' and '-', unlike {', '.join(invalid)}"
+                "varlociraptor needs sample names of letters, digits, '_', '.' and '-', unlike "
+                + ", ".join(invalid)
             )
         # Render every scenario now, so that a constellation the preset or the template does
         # not model fails before Snakemake builds the jobs

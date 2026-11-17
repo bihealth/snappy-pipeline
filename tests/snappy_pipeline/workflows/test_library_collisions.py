@@ -53,7 +53,9 @@ def test_library_selection_decides_between_libraries_of_one_name():
     assert step.library_row("P002-N1-DNA1-WES1")["data_set"] == "batch1"
 
     step = _step("mapping", rows, selected=rows)
-    with pytest.raises(ValueError, match="Task 'mapping' has libraries of the same name") as error:
+    with pytest.raises(
+        ConfigError, match="^libraries of the same name in several data sets"
+    ) as error:
         step.library_row("P001-N1-DNA1-WES1")
     assert FIX in str(error.value)
 
@@ -63,7 +65,9 @@ def test_upstream_task_must_have_the_library_of_the_same_data_set(monkeypatch):
     mapping = _step("mapping", rows, selected=rows[:1])
     calling = _step("calling", rows, selected=rows[1:])
     monkeypatch.setattr(orchestration, "_TASK_INSTANCES", {"mapping": mapping, "calling": calling})
-    with pytest.raises(ValueError, match="from data set 'batch2', but its upstream task 'mapping'"):
+    with pytest.raises(
+        ConfigError, match="from data set 'batch2', but the upstream task 'mapping'"
+    ):
         calling._check_upstream_library("mapping", "P001-N1-DNA1-WES1")
 
     calling.__dict__["_selected_libraries"] = mapping._selected_libraries

@@ -132,7 +132,7 @@ def test_load_project_resolves_dependencies_and_orders_tasks():
 
 
 def test_load_project_rejects_unknown_step():
-    with pytest.raises(ValueError, match="unknown step 'variant_caling'"):
+    with pytest.raises(ConfigError, match=r"Task 'calling' \(step variant_caling\): unknown step"):
         load_project(_config(("variant_caling", "calling", {})), WORK_DIR)
 
 
@@ -260,8 +260,9 @@ def test_load_project_validates_step_configs():
 def test_validation_errors_name_the_task_the_field_and_the_value():
     with pytest.raises(ConfigError) as error:
         load_project(_config(_mapping(tool="bwa2", bwa={"num_threads_align": "many"})), WORK_DIR)
+    assert error.value.task.name == "mapping"
     lines = str(error.value).splitlines()
-    assert lines[0] == "Task 'mapping' (step ngs_mapping) has an invalid configuration:"
+    assert lines[0] == "Task 'mapping' (step ngs_mapping): invalid configuration:"
     assert lines[1].startswith("  tool: Input should be 'bwa', 'bwa_mem2'")
     assert lines[1].endswith("(got 'bwa2')")
     assert lines[2].startswith("  bwa.num_threads_align: Input should be a valid integer")
@@ -299,7 +300,7 @@ def test_load_project_rejects_germline_variants_for_tmb():
     tasks = (KITS, DBSNP, _mapping(), calling, _annotation(), _filtration(), _tmb())
     with pytest.raises(
         ValueError,
-        match=r"Task 'tmb': depends_on.variants requires variants \[somatic\], "
+        match=r"Task 'tmb' \(step tumor_mutational_burden\): depends_on.variants requires variants \[somatic\], "
         r"but task 'filtration' produces variants \[annotated, filtered, germline, indel, snv, vep\]",
     ):
         load_project(_config(*tasks), WORK_DIR)
@@ -320,7 +321,7 @@ def test_load_project_rejects_rna_alignments_for_variant_calling():
     star = _mapping("star", depends_on=depends_on, tool="star", star={})
     with pytest.raises(
         ValueError,
-        match=r"Task 'calling': depends_on.alignments requires alignments \[dna\], "
+        match=r"Task 'calling' \(step variant_calling\): depends_on.alignments requires alignments \[dna\], "
         r"but task 'star' produces alignments \[rna\]",
     ):
         load_project(_config(GENES, STAR_INDEX, EXONS, star, _calling(mapping="star")), WORK_DIR)
@@ -332,7 +333,7 @@ def test_load_project_rejects_dna_alignments_for_expression_quantification():
     expression[2]["depends_on"] = {"alignments": "mapping", "exons": "exons"}
     with pytest.raises(
         ValueError,
-        match=r"Task 'expression': depends_on.alignments requires alignments \[rna\], "
+        match=r"Task 'expression' \(step gene_expression_quantification\): depends_on.alignments requires alignments \[rna\], "
         r"but task 'mapping' produces alignments \[dna\]",
     ):
         load_project(_config(EXONS, _mapping(), expression), WORK_DIR)
@@ -527,7 +528,7 @@ def test_load_project_rejects_upstream_without_the_output_keys_a_consumer_needs(
     check[2]["depends_on"] = {"alignments": "mapping", "copy_number": "cnv", "reference": "genome"}
     with pytest.raises(
         ValueError,
-        match=r"Task 'cnv_check': depends_on.copy_number needs dnacopy_seg, which task 'cnv' "
+        match=r"Task 'cnv_check' \(step somatic_cnv_checking\): depends_on.copy_number needs dnacopy_seg, which task 'cnv' "
         r"does not provide; it provides bcf, bcf_csi",
     ):
         load_project(_config(_mapping(), cnv, check), WORK_DIR)
@@ -756,5 +757,8 @@ def test_background_selection_only_for_steps_that_use_background():
     load_project(_config(_mapping(background_selection="data_set == 'cohort'")), WORK_DIR)
     calling = _calling(tool="bcftools_call")
     calling[2]["background_selection"] = "data_set == 'cohort'"
-    with pytest.raises(ValueError, match="step 'variant_calling' uses no background libraries"):
+    with pytest.raises(
+        ConfigError,
+        match=r"Task 'calling' \(step variant_calling\): the step uses no background libraries",
+    ):
         load_project(_config(_mapping(), calling), WORK_DIR)
