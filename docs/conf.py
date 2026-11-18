@@ -57,7 +57,9 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "sphinx.ext.graphviz",
 ]
+graphviz_output_format = "svg"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -100,6 +102,7 @@ texinfo_documents = [
 pygments_style = "sphinx"
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+html_css_files = ["graphviz.css"]
 # Output file base name for HTML help builder.
 htmlhelp_basename = "snappy_pipelinedoc"
 html_last_updated_fmt = "%b %d, %Y"
@@ -114,6 +117,7 @@ import importlib
 import re
 import textwrap
 
+from snappy_pipeline import step_overview
 from snappy_pipeline.models import RequiredBy, reader_markers
 from snappy_pipeline.orchestration import ON_HOLD_STEPS
 from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
@@ -176,6 +180,29 @@ def _step_page(name: str, workflow_cls) -> str:
     )
 
 
+# -- Step overview -------------------------------------------------------------
+# The data contracts of all steps as a graph and a table (step_overview.rst, ignored by git)
+
+OVERVIEW_PAGE = "step_overview.rst"
+
+OVERVIEW_INTRO = """\
+Every step declares what it produces and what it requires from the tasks named in its ``depends_on`` (:ref:`dev_contracts`).
+The graph shows the data types that flow between steps.
+Inputs from resources (reference data, regions, databases, indexes and existing files, from ``external_data``, ``reference_download`` and ``reference_index`` tasks) are listed in each box, optional ones in parentheses.
+The table lists every ``depends_on`` key with the data type and tags it requires; the page of a step has the details."""
+
+
+def _overview_page() -> str:
+    contracts = step_overview.step_contracts()
+    graph = textwrap.indent(step_overview.dot(contracts), "   ")
+    return (
+        ".. _step_overview:\n\nStep overview\n=============\n\n"
+        f"{OVERVIEW_INTRO}\n\n"
+        ".. graphviz::\n   :alt: The steps and the data types they read and write\n\n"
+        f"{graph}\n{step_overview.rst_table(contracts)}\n"
+    )
+
+
 # Write changed pages only, so that Sphinx rereads only those, and remove pages of old steps
 pages = {
     os.path.join(STEP_DIR, f"{name}.rst"): _step_page(name, workflow_cls)
@@ -186,6 +213,7 @@ os.makedirs(STEP_DIR, exist_ok=True)
 for entry in os.scandir(STEP_DIR):
     if entry.path not in pages:
         os.remove(entry.path)
+pages[OVERVIEW_PAGE] = _overview_page()
 for path, page in pages.items():
     if not os.path.exists(path) or open(path).read() != page:
         with open(path, "wt") as f:

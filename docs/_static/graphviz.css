@@ -1,0 +1,5 @@
+/* The step overview graph (sphinx.ext.graphviz, SVG) scales to the content width */
+.rst-content object.graphviz {
+    max-width: 100%;
+    height: auto;
+}

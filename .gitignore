@@ -84,6 +84,7 @@ docs/_build/
 
 # Auto-generated default value files
 docs/step/
+docs/step_overview.rst
 
 # Test directory
 work/

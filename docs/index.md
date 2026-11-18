@@ -61,6 +61,7 @@ cbioportal_export
 
 step_intro
 step_generic
+step_overview
 step/*
 ```
 

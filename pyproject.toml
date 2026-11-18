@@ -237,6 +237,11 @@ pins = { features = ["pins"], no-default-feature = true }
 
 [tool.pixi.feature.docs.tasks]
 docs = { cmd = "sphinx-build -W --keep-going -b html docs/ docs/_build/html", description = "Build HTML documentation with Sphinx; warnings fail the build" }
+step-overview = { cmd = "mkdir -p docs/_build && python -m snappy_pipeline.step_overview | dot -Tsvg -o docs/_build/step_overview.svg", description = "Render the step overview graph as an SVG slide (docs/_build/step_overview.svg)" }
+
+[tool.pixi.feature.docs.dependencies]
+# Renders the step overview graph (sphinx.ext.graphviz and the step-overview task)
+graphviz = ">=14.1.2,<15"
 
 [tool.pixi.pypi-dependencies]
 snappy-pipeline = { path = ".", editable = true }
