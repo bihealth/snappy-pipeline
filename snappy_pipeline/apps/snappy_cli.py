@@ -851,12 +851,17 @@ def pull_sheet(
 @main.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]), required=False)
 def completion(shell):
-    """Generate shell autocompletion script.
+    """Print the shell completion script.
 
-    Usage:
-        eval "$(snappy completion zsh)"   # for zsh
-        eval "$(snappy completion bash)"  # for bash
-        eval "$(snappy completion fish)"  # for fish
+    Load it in every shell:
+        eval "$(snappy completion zsh)"   # zsh
+        eval "$(snappy completion bash)"  # bash
+        eval "$(snappy completion fish)"  # fish
+
+    Or write it once to a path the shell loads on demand, without the eval at every start:
+        snappy completion zsh > ~/.zfunc/_snappy   # fpath+=(~/.zfunc) before compinit
+        snappy completion bash > ~/.local/share/bash-completion/completions/snappy
+        snappy completion fish > ~/.config/fish/completions/snappy.fish
     """
     if not shell:
         shell_path = os.environ.get("SHELL", "")
