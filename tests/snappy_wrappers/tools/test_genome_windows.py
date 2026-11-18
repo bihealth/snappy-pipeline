@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for ``snappy_wrappers.tools.vcf_first_header``"""
+"""Tests for ``snappy_wrappers.tools.genome_windows``"""
 
 import io
 import textwrap
