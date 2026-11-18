@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from snakemake.pathvars import Pathvars
 
 from snappy_pipeline.base import ConfigError, in_task
-from snappy_pipeline.log_archive import archive_after_run
+from snappy_pipeline.log_archive import archive_after_run, record_git_state
 from snappy_pipeline.models import SnappyStepModel
 from snappy_pipeline.reads import ReadDiscovery
 from snappy_pipeline.workflow_model import ConfigModel, TaskModel
@@ -326,13 +326,15 @@ def task_instance(task_name: str) -> BaseStep:
 
 
 def register_hooks(workflow: Workflow) -> None:
-    """Archive the logs of the run and print a banner when the workflow fails or succeeds."""
+    """Record the git state of the configuration when the run starts, archive the logs of the run
+    and print a banner when the workflow fails or succeeds."""
 
     def finish(snakemake_logs: list[str], message: str) -> None:
         archive_after_run(Path.cwd(), snakemake_logs)
         line = "*" * len(message)
         print(f"\n{line}\n{message}\n{line}\n", file=sys.stderr)
 
+    workflow.onstart(lambda logs: record_git_state(Path.cwd(), logs))
     workflow.onerror(lambda logs: finish(logs, "Oh no! Something went wrong."))
     workflow.onsuccess(lambda logs: finish(logs, "All done; have a nice day!"))
 

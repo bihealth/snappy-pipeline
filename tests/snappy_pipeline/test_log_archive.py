@@ -2,15 +2,24 @@
 """Tests for the log archive of a run in ``snappy_pipeline.log_archive``."""
 
 import contextlib
+import shutil
 import sqlite3
 import tarfile
 from types import SimpleNamespace
 
+import pytest
 from click.testing import CliRunner
 
 from snappy_pipeline.apps.snappy_cli import main
-from snappy_pipeline.log_archive import archive_after_run, build_archive, run_log_files
+from snappy_pipeline.log_archive import (
+    archive_after_run,
+    build_archive,
+    git_state,
+    run_log_files,
+)
 from snappy_pipeline.orchestration import register_hooks
+
+needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 
 SNAKEMAKE_LOG = """\
 Building DAG of jobs...
@@ -84,12 +93,69 @@ def test_snappy_logs_archives_the_newest_run(tmp_path):
         assert "tasks/calling/work/log/scatter.log" in tar.getnames()
 
 
+def _hooks(workflow_hooks: dict) -> SimpleNamespace:
+    return SimpleNamespace(
+        onstart=lambda func: workflow_hooks.setdefault("start", func),
+        onsuccess=lambda func: workflow_hooks.setdefault("success", func),
+        onerror=lambda func: workflow_hooks.setdefault("error", func),
+    )
+
+
+def _repository(tmp_path, git) -> str:
+    """A repository with config.yaml committed; returns the commit."""
+    git(tmp_path, "init", "-q")
+    (tmp_path / "config.yaml").write_text("tasks: []\n")
+    git(tmp_path, "add", "config.yaml")
+    git(tmp_path, "commit", "-q", "-m", "Initialize the snappy project")
+    return git(tmp_path, "rev-parse", "HEAD").strip()
+
+
+@needs_git
+def test_git_state_records_the_commit_and_the_uncommitted_changes(tmp_path, git):
+    commit = _repository(tmp_path, git)
+    state = git_state(tmp_path)
+    assert (state.commit, state.status, state.diff) == (commit, "", "")
+    assert state.text == f"commit {commit}\n"
+
+    (tmp_path / "config.yaml").write_text("tasks: [a]\n")
+    state = git_state(tmp_path)
+    assert state.changed_files == ["config.yaml"]
+    assert state.text.startswith(f"commit {commit}\nuncommitted changes:\n M config.yaml\n")
+    assert "+tasks: [a]" in state.diff
+
+
+def test_git_state_is_none_outside_a_repository(tmp_path):
+    assert git_state(tmp_path) is None
+
+
+def test_build_archive_holds_the_git_record(tmp_path):
+    snakemake_log = _project(tmp_path)
+    (tmp_path / ".snakemake" / "log" / f"{STAMP}.git.txt").write_text("commit abc\n")
+    with tarfile.open(build_archive(tmp_path, snakemake_log)) as tar:
+        assert f".snakemake/log/{STAMP}.git.txt" in tar.getnames()
+
+
+@needs_git
+def test_register_hooks_records_the_git_state_when_the_run_starts(
+    tmp_path, git, monkeypatch, capsys
+):
+    hooks = {}
+    register_hooks(_hooks(hooks))
+    commit = _repository(tmp_path, git)
+    (tmp_path / "config.yaml").write_text("tasks: [a]\n")
+    snakemake_log = _project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    hooks["start"]([str(snakemake_log)])
+
+    record = (tmp_path / ".snakemake" / "log" / f"{STAMP}.git.txt").read_text()
+    assert record.startswith(f"commit {commit}\nuncommitted changes:\n")
+    assert "[snappy] Warning: uncommitted changes in config.yaml" in capsys.readouterr().err
+
+
 def test_register_hooks_archives_the_logs_when_the_run_ends(tmp_path, monkeypatch, capsys):
     hooks = {}
-    workflow = SimpleNamespace(
-        onsuccess=lambda func: hooks.setdefault("success", func),
-        onerror=lambda func: hooks.setdefault("error", func),
-    )
+    workflow = _hooks(hooks)
     register_hooks(workflow)
     snakemake_log = _project(tmp_path)
     monkeypatch.chdir(tmp_path)

@@ -5,14 +5,21 @@ The Snakemake log of a run lists every job it started together with the job's lo
 the slurm executor logs the slurm log file of every job it submits. The archive holds these
 files plus a copy of the snkmt database, so building it reads one log instead of walking the
 task directories.
+
+In a git repository, the start hook of a run writes the commit of the configuration and its
+uncommitted changes next to the Snakemake log (``<run start>.git.txt``), and the archive holds
+that record too.
 """
 
 import contextlib
 import re
+import shutil
 import sqlite3
+import subprocess
 import sys
 import tarfile
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 #: ``log:`` line of a job in the Snakemake log, with comma-separated paths
@@ -33,6 +40,69 @@ def run_log_files(snakemake_log: Path) -> list[str]:
     return list(dict.fromkeys(path for path in files if path))
 
 
+@dataclass(frozen=True)
+class GitState:
+    """The commit of the project directory and what differs from it in the tracked files."""
+
+    commit: str
+    #: ``git status --porcelain`` lines of the tracked files, empty when clean
+    status: str
+    diff: str
+
+    @property
+    def changed_files(self) -> list[str]:
+        return [line[3:] for line in self.status.splitlines()]
+
+    @property
+    def text(self) -> str:
+        record = f"commit {self.commit}\n"
+        if self.status:
+            record += f"uncommitted changes:\n{self.status}\n{self.diff}"
+        return record
+
+
+def git_state(directory: Path) -> GitState | None:
+    """Return the git state of ``directory``, or ``None`` without git, outside a repository or
+    before its first commit."""
+    git = shutil.which("git")
+    if git is None:
+        return None
+
+    def run(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run([git, "-C", str(directory), *args], capture_output=True, text=True)
+
+    head = run("rev-parse", "HEAD")
+    if head.returncode != 0:
+        return None
+    status = run("status", "--porcelain", "--untracked-files=no").stdout
+    diff = run("diff", "HEAD").stdout if status else ""
+    return GitState(head.stdout.strip(), status, diff)
+
+
+def git_record_path(snakemake_log: Path) -> Path:
+    """Return ``<run start>.git.txt`` next to the Snakemake log."""
+    snakemake_log = Path(snakemake_log)
+    return snakemake_log.with_name(snakemake_log.name.removesuffix(".snakemake.log") + ".git.txt")
+
+
+def record_git_state(directory: Path, snakemake_logs: list[str]) -> None:
+    """Write the git record of the run next to its Snakemake log and warn about uncommitted
+    changes; the start hook of the workflow."""
+    state = git_state(Path(directory))
+    if state is None:
+        return
+    for snakemake_log in snakemake_logs:
+        git_record_path(snakemake_log).write_text(state.text)
+    if state.status:
+        print(
+            "[snappy] Warning: uncommitted changes in "
+            + ", ".join(state.changed_files)
+            + f"; the run records commit {state.commit[:12]} and the diff in .snakemake/log/",
+            file=sys.stderr,
+            flush=True,
+        )
+
+
 def archive_path(directory: Path, snakemake_log: Path) -> Path:
     """Return ``logs/<run start>.tar.gz`` below ``directory`` for the given Snakemake log."""
     stamp = Path(snakemake_log).name.removesuffix(".snakemake.log")
@@ -51,6 +121,9 @@ def build_archive(directory: Path, snakemake_log: Path) -> Path:
 
     with tarfile.open(target, "w:gz") as tar:
         tar.add(snakemake_log, arcname=arcname(snakemake_log))
+        git_record = git_record_path(snakemake_log)
+        if git_record.is_file():
+            tar.add(git_record, arcname=arcname(git_record))
         for name in run_log_files(snakemake_log):
             path = directory / name
             if path.is_file():

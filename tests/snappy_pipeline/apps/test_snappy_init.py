@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for ``snappy init`` subcommand."""
 
-import os
 import shutil
-import subprocess
 
 import pytest
 from click.testing import CliRunner
@@ -38,32 +36,11 @@ def test_init_default_cwd(germline_sheet_fake_noproject_fs, mocker):
     assert germline_sheet_fake_noproject_fs.os.path.exists("/projects/config.yaml")
 
 
-GIT_ENV = {
-    "GIT_CONFIG_GLOBAL": os.devnull,
-    "GIT_CONFIG_NOSYSTEM": "1",
-    "GIT_AUTHOR_NAME": "snappy",
-    "GIT_AUTHOR_EMAIL": "snappy@example.org",
-    "GIT_COMMITTER_NAME": "snappy",
-    "GIT_COMMITTER_EMAIL": "snappy@example.org",
-}
-
 needs_git = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 
 
-@pytest.fixture
-def git_env(monkeypatch):
-    for key, value in GIT_ENV.items():
-        monkeypatch.setenv(key, value)
-
-
-def git(directory, *args) -> str:
-    return subprocess.run(
-        ["git", "-C", str(directory), *args], capture_output=True, text=True, check=True
-    ).stdout
-
-
 @needs_git
-def test_init_tracks_only_the_configuration_in_git(tmp_path, git_env):
+def test_init_tracks_only_the_configuration_in_git(tmp_path, git):
     project = tmp_path / "project"
     result = CliRunner().invoke(
         snappy_cli.main, ["init", str(project), "--task", "mapping=ngs_mapping"]
@@ -84,7 +61,7 @@ def test_init_tracks_only_the_configuration_in_git(tmp_path, git_env):
 
 
 @needs_git
-def test_init_adds_the_remote_without_pushing(tmp_path, git_env):
+def test_init_adds_the_remote_without_pushing(tmp_path, git):
     project = tmp_path / "project"
     url = "git@example.org:lab/project.git"
     result = CliRunner().invoke(snappy_cli.main, ["init", str(project), "--remote", url])
@@ -93,7 +70,7 @@ def test_init_adds_the_remote_without_pushing(tmp_path, git_env):
 
 
 @needs_git
-def test_init_inside_a_repository_stages_there(tmp_path, git_env):
+def test_init_inside_a_repository_stages_there(tmp_path, git):
     git(tmp_path, "init", "-q")
     project = tmp_path / "project"
     result = CliRunner().invoke(snappy_cli.main, ["init", str(project)])

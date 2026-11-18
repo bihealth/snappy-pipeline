@@ -140,6 +140,7 @@ The site of a task opens with the summary table, whose cells show each value as 
 
 When a run ends, successfully or not, `snappy run` writes `logs/<run start>.tar.gz`.
 It holds the Snakemake log of the run, the logs of the jobs that ran with their SLURM logs, and a copy of the `snkmt` database.
+In a git repository, the start of a run also records the commit of the configuration and the uncommitted changes of the tracked files with their diff in `.snakemake/log/<run start>.git.txt`, which the archive holds too; uncommitted changes are warned about.
 The Snakemake log names these files, so the task directories are not searched.
 Dry-runs write no archive.
 
