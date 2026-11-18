@@ -34,6 +34,10 @@ snappy init my_project
 cd my_project
 ```
 
+The project is a git repository whose first commit holds `.gitignore`, `config.yaml` and `README.md`.
+Everything else is ignored: results, logs, caches, data and the sample sheets, which may hold personal data.
+`--remote <url>` adds the remote `origin` without pushing, `--no-git` skips the repository, and inside an existing repository the files are staged there instead.
+
 Add one task per step with `snappy task add`.
 Each argument is `[task_name=]step_type`.
 `snappy task list --available` lists the step types.

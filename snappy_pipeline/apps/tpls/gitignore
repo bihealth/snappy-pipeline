@@ -1,0 +1,7 @@
+# A snappy project tracks only its configuration. Everything else stays out: results, work,
+# logs, caches, data, and the sample sheets, which may hold personal data.
+# Add a line like "!/notes/" to track more.
+/*
+!/.gitignore
+!/config.yaml
+!/README.md

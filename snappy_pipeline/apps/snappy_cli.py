@@ -36,7 +36,7 @@ from .impl.fsmanip import (
     create_from_tpl,
     update_file,
 )
-from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_SUCCESS, log
+from .impl.logging import LVL_ERROR, LVL_IMPORTANT, LVL_INFO, LVL_SUCCESS, log
 
 
 class ShellType(str, enum.Enum):
@@ -158,6 +158,7 @@ def _print_steps_table():
 
 #: README file name
 README_FILENAME = "README.md"
+GITIGNORE_FILENAME = ".gitignore"
 
 #: Configuration sub directory
 CONFIG_SUBDIR = ""
@@ -345,7 +346,18 @@ def main():
     default="commented",
     help="Style of the task configuration: 'commented' (every field with its description, the optional ones commented out), 'full' (every field active), 'minimal' (the required fields only, without descriptions).",
 )
-def init(directory, project_name, tasks, manage_config, config_mode):
+@click.option(
+    "--git/--no-git",
+    default=True,
+    help="Track the configuration in a git repository: .gitignore, config.yaml and README.md, nothing else (sample sheets may hold personal data).",
+)
+@click.option(
+    "--remote",
+    type=str,
+    metavar="URL",
+    help="Add URL as the remote 'origin' of the new repository; nothing is pushed.",
+)
+def init(directory, project_name, tasks, manage_config, config_mode, git, remote):
     """Initialize a new snappy project directory."""
     project_directory = directory() if callable(directory) else directory
     log("SNAPPY Pipeline -- init")
@@ -409,11 +421,69 @@ def init(directory, project_name, tasks, manage_config, config_mode):
         )
         app.run()
 
+    if git:
+        init_git(project_directory, remote)
+
     log(
         "\nDo not forget to review config.yaml and to fill out README.md!\n",
         level=LVL_IMPORTANT,
     )
     log("All done, have a nice day!", level=LVL_SUCCESS)
+
+
+def init_git(project_directory: str, remote: str | None) -> None:
+    """Put the configuration under version control: the first commit of a new repository with
+    .gitignore, config.yaml and README.md, or these files staged in the repository that already
+    contains the directory (no nested repository, no remote). A remote is added without pushing.
+    Without git or without a commit identity the files stay staged and the gap is reported;
+    init does not fail."""
+    create_from_tpl(
+        src_path=os.path.join(os.path.dirname(__file__), "tpls", "gitignore"),
+        dest_path=os.path.join(project_directory, GITIGNORE_FILENAME),
+        format_args={},
+        message="Creating {path}",
+        message_args={"path": os.path.join(project_directory, GITIGNORE_FILENAME)},
+    )
+    git = shutil.which("git")
+    if git is None:
+        log("git is not installed: the project is not under version control", level=LVL_IMPORTANT)
+        return
+
+    def run(*args, check=True):
+        return subprocess.run(
+            [git, "-C", project_directory, *args], capture_output=True, text=True, check=check
+        )
+
+    try:
+        inside = run("rev-parse", "--is-inside-work-tree", check=False).returncode == 0
+        if inside:
+            log(
+                "{path} is inside a git repository: staging the configuration there",
+                {"path": project_directory},
+                level=LVL_INFO,
+            )
+        else:
+            run("init", "-q")
+        run("add", "--", GITIGNORE_FILENAME, CONFIG_FILENAME, README_FILENAME)
+        if inside:
+            if remote:
+                log("The remote is not added to an existing repository", level=LVL_IMPORTANT)
+            return
+        commit = run("commit", "-q", "-m", "Initialize the snappy project", check=False)
+        if commit.returncode != 0:
+            log(
+                "The configuration is staged, the commit failed: {error}",
+                {"error": commit.stderr.strip()},
+                level=LVL_IMPORTANT,
+            )
+        if remote:
+            run("remote", "add", "origin", remote)
+    except subprocess.CalledProcessError as e:
+        log(
+            "git failed ({command}): {error}",
+            {"command": " ".join(e.cmd[3:]), "error": e.stderr.strip()},
+            level=LVL_ERROR,
+        )
 
 
 @main.group()
