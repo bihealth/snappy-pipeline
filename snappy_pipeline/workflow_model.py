@@ -70,8 +70,8 @@ class ProjectInfo(SnappyModel):
     """The name of the project, and its identifier in an external data management system, such
     as the SODAR project UUID, which tracks where the raw data lives."""
 
-    name: str = ""
-    id: str = ""
+    name: str
+    external_id: str = ""
     description: str = ""
 
 
@@ -82,7 +82,7 @@ class ConfigModel(SnappyStepModel):
         use_enum_values=True,
     )
 
-    project: ProjectInfo = ProjectInfo()
+    project: ProjectInfo
     pathvars: dict[str, str] = {}
     """Named roots for paths, used as ``<name>`` in any path of the configuration, with the
     defaults and semantics of Snakemake's ``pathvars``"""

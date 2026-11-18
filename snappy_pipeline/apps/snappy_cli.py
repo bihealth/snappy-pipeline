@@ -333,7 +333,7 @@ def main():
     help="The name of the project, in README.md, config.yaml and the sample sheet; default: the directory name",
 )
 @click.option(
-    "--project-id",
+    "--external-id",
     type=str,
     default="",
     help="The identifier of the project in an external data management system, such as the SODAR project UUID, which tracks where the raw data lives",
@@ -396,7 +396,7 @@ def init(
     ctx,
     directory,
     project_name,
-    project_id,
+    external_id,
     description,
     tasks,
     sheet_type,
@@ -423,9 +423,11 @@ def init(
 
         if asked("project_name"):
             project_name = click.prompt("Project name", default=project_name or default_name)
-        if asked("project_id"):
-            project_id = click.prompt(
-                "Project id, such as the SODAR project UUID", default="", show_default=False
+        if asked("external_id"):
+            external_id = click.prompt(
+                "External id of the project, such as the SODAR project UUID",
+                default="",
+                show_default=False,
             )
         if asked("description"):
             description = click.prompt("Description", default="", show_default=False)
@@ -479,11 +481,11 @@ def init(
     format_args = {
         "created_at": datetime.datetime.now().isoformat(),
         "project_name": project_name,
-        "project_id": project_id,
+        "external_id": external_id,
         "description": description,
         # YAML double-quoted scalars
         "project_name_yaml": json.dumps(project_name, ensure_ascii=False),
-        "project_id_yaml": json.dumps(project_id, ensure_ascii=False),
+        "external_id_yaml": json.dumps(external_id, ensure_ascii=False),
         "description_yaml": json.dumps(description, ensure_ascii=False),
         "sheet_file": SHEET_FILENAME,
         "sheet_type": SHEET_TYPES[sheet_type],

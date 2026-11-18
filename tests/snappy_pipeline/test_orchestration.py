@@ -67,6 +67,7 @@ def _config(*tasks):
             {"step": step, "name": name, "config": config}
             for step, name, config in (GENOME, BWA_INDEX, *tasks, VEP_CACHE)
         ],
+        "project": {"name": "test"},
         "data_sets": {},
     }
 
@@ -279,7 +280,14 @@ def test_errors_of_the_top_level_configuration_name_the_file():
     with pytest.raises(
         ConfigError, match="config.yaml is invalid:\n  tasks.0.step: Field required"
     ):
-        load_project({"tasks": [{"name": "mapping", "config": {}}], "data_sets": {}}, WORK_DIR)
+        load_project(
+            {
+                "tasks": [{"name": "mapping", "config": {}}],
+                "project": {"name": "test"},
+                "data_sets": {},
+            },
+            WORK_DIR,
+        )
 
 
 def test_load_project_passes_variant_tags_through_annotation_and_filtration():
@@ -485,7 +493,7 @@ def test_create_task_instances_builds_each_task_once(monkeypatch):
 def _project(**dependencies):
     """Return a project with the given task -> {field: upstream} dependencies."""
     tasks = [{"step": "dummy", "name": name, "config": {}} for name in dependencies]
-    model = ConfigModel(tasks=tasks, data_sets={})
+    model = ConfigModel(project={"name": "test"}, tasks=tasks, data_sets={})
     return Project(
         config={},
         model=model,
@@ -635,7 +643,11 @@ def test_missing_files_lists_paths_and_genome_sidecars(tmp_path):
     )
     bwa_index[2]["files"] = {"index": "index"}  # a prefix: index.amb, ...
     tasks = (genome, bwa_index, _mapping())
-    config = {"tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks], "data_sets": {}}
+    config = {
+        "tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks],
+        "project": {"name": "test"},
+        "data_sets": {},
+    }
     project = load_project(config, str(tmp_path))
 
     assert orchestration.missing_files(project) == {"genome": [str(tmp_path / "genome.dict")]}
@@ -651,7 +663,11 @@ def test_missing_files_lists_the_index_of_a_vcf(tmp_path):
         _mapping(),
         _calling(tool="gatk4_hc_gvcf", dbsnp="dbsnp"),
     )
-    config = {"tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks], "data_sets": {}}
+    config = {
+        "tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks],
+        "project": {"name": "test"},
+        "data_sets": {},
+    }
     project = load_project(config, str(tmp_path))
 
     assert orchestration.missing_files(project) == {"dbsnp": [str(tmp_path / "dbsnp.vcf.gz.tbi")]}
@@ -674,7 +690,11 @@ def test_missing_files_lists_the_index_of_a_mappability_track(tmp_path):
             {"depends_on": depends_on | {"mappable_regions": "mappable"}, "intervals": "targeted"},
         ),
     )
-    config = {"tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks], "data_sets": {}}
+    config = {
+        "tasks": [{"step": s, "name": n, "config": c} for s, n, c in tasks],
+        "project": {"name": "test"},
+        "data_sets": {},
+    }
     project = load_project(config, str(tmp_path))
 
     assert orchestration.missing_files(project) == {"mappable": [str(tmp_path / "map.bed.idx")]}

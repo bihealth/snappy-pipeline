@@ -7,7 +7,7 @@
 
 project:
   name: %(project_name_yaml)s
-  id: %(project_id_yaml)s
+  external_id: %(external_id_yaml)s
   description: %(description_yaml)s
 
 data_sets:

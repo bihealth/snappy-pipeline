@@ -6,6 +6,8 @@ from click.testing import CliRunner
 from snappy_pipeline.apps.snappy_cli import main
 
 CONFIG = """\
+project:
+  name: check
 pathvars:
   refs: refs
 data_sets: {}

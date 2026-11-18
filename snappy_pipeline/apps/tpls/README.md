@@ -1,7 +1,7 @@
 # CUBI Pipeline Project "%(project_name)s"
 
 - created at: %(created_at)s
-- project id: %(project_id)s
+- external id: %(external_id)s
 
 This directory contains a Snappy Pipeline project.
 

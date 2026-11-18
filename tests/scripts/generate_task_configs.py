@@ -843,7 +843,11 @@ def normalize_data_set_paths(config: dict[str, Any], base_config_path: Path) -> 
 def build_config(
     base_config: dict[str, Any], tasks: list[dict[str, Any]], base_config_path: Path
 ) -> dict[str, Any]:
-    config = {"data_sets": copy.deepcopy(base_config.get("data_sets", {})), "tasks": tasks}
+    config = {
+        "project": copy.deepcopy(base_config["project"]),
+        "data_sets": copy.deepcopy(base_config.get("data_sets", {})),
+        "tasks": tasks,
+    }
     normalize_data_set_paths(config, base_config_path)
     return config
 

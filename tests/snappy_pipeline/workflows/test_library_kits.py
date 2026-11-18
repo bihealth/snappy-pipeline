@@ -46,6 +46,7 @@ def step(monkeypatch, mocker, tmp_path):
         "Panel1": {"targets": "/kits/p1.bed", "baits": "/kits/p1.bed"},
     }
     config = {
+        "project": {"name": "test"},
         "data_sets": {},
         "tasks": [
             {

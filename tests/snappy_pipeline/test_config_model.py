@@ -28,6 +28,7 @@ from snappy_pipeline.workflows.gene_expression_quantification.model import (
 
 def _minimal_config(**overrides):
     config = {
+        "project": {"name": "minimal"},
         "tasks": [{"step": "ngs_mapping", "name": "mapping", "config": {"tool": "bwa"}}],
         "data_sets": {},
     }
@@ -42,7 +43,7 @@ def test_config_model_accepts_minimal_config():
     assert config.tasks[0].config == {"tool": "bwa"}
 
 
-@pytest.mark.parametrize("missing", ["tasks", "data_sets"])
+@pytest.mark.parametrize("missing", ["project", "tasks", "data_sets"])
 def test_config_model_requires_top_level_sections(missing):
     config = _minimal_config()
     del config[missing]

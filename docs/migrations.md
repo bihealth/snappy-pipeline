@@ -363,6 +363,7 @@ To migrate an existing project:
 22. `target_coverage_report` of `ngs_mapping` becomes an `ngs_data_qc` task with `tool: alfred` and `depends_on.kits`; `ngs_mapping` no longer takes `depends_on.kits`.
     The report is `{library}/out/{library}.target_coverage.json.gz` instead of `{library}/report/alfred_qc/{library}.alfred.json.gz`.
     `varfish_export` reads it through `depends_on.qc` and writes its BAM QC only with it; pedigree members from background data sets have no target coverage there, since `ngs_data_qc` checks no background libraries (the mapping task did).
+23. `config.yaml` has a required `project` section: its `name`, and optionally the `external_id` of the project in a data management system (such as the SODAR project UUID, which tracks where the raw data lives) and a `description`; `snappy init` writes it.
 
 ## Example: a neoepitope config from main and its translation
 
@@ -493,6 +494,9 @@ data_sets:
 The same in snake9 (loads with `load_project()`; the dry-run builds 84 jobs on a test sheet with a tumor RNA library, with either phasing tool):
 
 ```yaml
+project:
+  name: neoepitope
+
 data_sets:
   cancer:
     file: sheet.tsv

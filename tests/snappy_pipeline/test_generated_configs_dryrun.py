@@ -244,6 +244,7 @@ def _write_closure_project(
 
     # Construct closure config
     closure_config = {
+        "project": config["project"],
         "tasks": tasks_subset,
         "data_sets": config.get("data_sets", {}),
     }

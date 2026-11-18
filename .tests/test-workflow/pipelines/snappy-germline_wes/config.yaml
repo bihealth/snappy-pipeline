@@ -1,3 +1,6 @@
+project:
+  name: snappy-germline_wes
+
 data_sets:
   trbc:
     file: samplesheet.tsv

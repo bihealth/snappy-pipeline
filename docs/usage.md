@@ -22,7 +22,7 @@ The `snappy` command is the interface to the pipeline.
 | `snappy completion`  | Print the shell completion script for bash, zsh or fish.                                    |
 
 `snappy init` and `snappy task add` take `[task_name=]step_type` arguments, for example `mapping=ngs_mapping`.
-`snappy init` also writes an empty sample sheet (`--sheet-type generic|germline|cancer`) that `config.yaml` names, records the project name, id and description, and makes the project a git repository that tracks only `.gitignore`, `config.yaml` and `README.md` (`--track-sheet` adds the sheet; `--remote <url>` adds `origin` without pushing; `--no-git` skips it).
+`snappy init` also writes an empty sample sheet (`--sheet-type generic|germline|cancer`) that `config.yaml` names, records the project name, external id and description, and makes the project a git repository that tracks only `.gitignore`, `config.yaml` and `README.md` (`--track-sheet` adds the sheet; `--remote <url>` adds `origin` without pushing; `--no-git` skips it).
 On a terminal it asks for what no option gives; `--no-interactive` takes the defaults.
 `--config-mode` sets the style of the generated task configuration: `commented` (default; every field with its description, the optional ones commented out), `full` (every field active) or `minimal` (the required fields only, without descriptions).
 `config.yaml` lists `pathvars`, `data_sets` and `resources` before `tasks`, so that added tasks end the file; with `minimal`, the header of `config.yaml` points to the docs instead of explaining the sections.

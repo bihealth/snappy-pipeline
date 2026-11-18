@@ -84,7 +84,7 @@ def test_yaml_example_is_valid(block, tmp_path):
     """Every YAML example parses; one with a ``tasks`` key is a complete config."""
     config = YAML(typ="safe").load(block)
     if isinstance(config, dict) and "tasks" in config:
-        load_project({"data_sets": {}, **config}, str(tmp_path))
+        load_project({"project": {"name": "example"}, "data_sets": {}, **config}, str(tmp_path))
 
 
 @pytest.mark.parametrize("step", sorted(set(WORKFLOW_REGISTRY) - ON_HOLD_STEPS))

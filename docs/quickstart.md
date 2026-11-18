@@ -34,7 +34,7 @@ snappy init my_project
 cd my_project
 ```
 
-On a terminal, `snappy init` asks for what no option gives: the project name, its id in an external data management system such as the SODAR project UUID, a description, the sample sheet type (`generic`, `germline` or `cancer`), tasks, and the git settings; `--no-interactive` takes the defaults.
+On a terminal, `snappy init` asks for what no option gives: the project name, its external id in a data management system such as the SODAR project UUID, a description, the sample sheet type (`generic`, `germline` or `cancer`), tasks, and the git settings; `--no-interactive` takes the defaults.
 The project is a git repository whose first commit holds `.gitignore`, `config.yaml` and `README.md`.
 Everything else is ignored: results, logs, caches, data and the sample sheet, which may hold personal data.
 `--track-sheet` adds the sample sheet, only if it holds no personal data or the remote is approved for such data.
@@ -67,6 +67,9 @@ Reference data comes from `external_data` tasks.
 They have no rules and declare what the files are in `produces`.
 
 ```yaml
+project:
+  name: my_project
+
 data_sets:
   my_batch:
     file: samplesheet.tsv

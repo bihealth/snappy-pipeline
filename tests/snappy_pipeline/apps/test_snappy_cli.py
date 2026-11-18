@@ -91,6 +91,8 @@ def test_complete_task_names(germline_sheet_fake_project_ngs_mapping_fs, mocker)
 
 #: A mapping task reading the FASTQ files of one germline library
 CHECK_FILES_CONFIG = """
+project:
+  name: check
 data_sets:
   first:
     file: sheet.tsv

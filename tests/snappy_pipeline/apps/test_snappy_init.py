@@ -102,7 +102,7 @@ def test_init_creates_a_sample_sheet_that_the_config_names(tmp_path, sheet_type)
     project = tmp_path / "project"
     result = CliRunner().invoke(
         snappy_cli.main,
-        ["init", str(project), "--no-git", "--sheet-type", sheet_type, "--project-id", "42"],
+        ["init", str(project), "--no-git", "--sheet-type", sheet_type, "--external-id", "42"],
     )
     assert result.exit_code == 0, result.output
     # An empty sheet of the format, with the project as title
@@ -112,11 +112,11 @@ def test_init_creates_a_sample_sheet_that_the_config_names(tmp_path, sheet_type)
     # The configuration loads and names the sheet with its type
     config = load_configfile(str(project / "config.yaml"))
     loaded = load_project(config, str(project))
-    assert (loaded.model.project.name, loaded.model.project.id) == ("project", "42")
+    assert (loaded.model.project.name, loaded.model.project.external_id) == ("project", "42")
     data_set = loaded.model.data_sets["first_batch"]
     assert data_set.type == snappy_cli.SHEET_TYPES[sheet_type]
     assert data_set.file == str(project / "samplesheet.tsv")
-    assert "- project id: 42" in (project / "README.md").read_text()
+    assert "- external id: 42" in (project / "README.md").read_text()
 
 
 def test_init_keeps_an_existing_sample_sheet(tmp_path):
@@ -147,7 +147,7 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git):
     project = tmp_path / "project"
     answers = [
         "My project",  # name
-        "sodar-uuid",  # id
+        "sodar-uuid",  # external id
         "A trio",  # description
         "germline",  # sheet type
         "y",  # add tasks
@@ -162,7 +162,7 @@ def test_init_asks_for_what_no_option_gives(tmp_path, git):
     )
     assert result.exit_code == 0, result.output
     text = (project / "config.yaml").read_text()
-    assert 'name: "My project"' in text and 'id: "sodar-uuid"' in text
+    assert 'name: "My project"' in text and 'external_id: "sodar-uuid"' in text
     assert 'description: "A trio"' in text and "type: germline_variants" in text
     assert "\n  - name: mapping\n" in text
     # The remote is not approved for the sheet, so it stays untracked
