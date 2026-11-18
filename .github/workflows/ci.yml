@@ -13,7 +13,7 @@ defaults:
     shell: bash
 
 env:
-  PIXI_VERSION: v0.75.0
+  PIXI_VERSION: v0.84.2
 
 jobs:
   linting:
