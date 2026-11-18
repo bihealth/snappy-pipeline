@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [project]
@@ -11,13 +11,15 @@ description = "SNAPPY Nucleic Acid Processing in Python (by CUBI)"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["bioinformatics"]
-license = { text = "MIT license" }
+license = "MIT"
+license-files = ["LICENSE.rst"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
 dynamic = ["version"]
@@ -67,6 +69,28 @@ Issues = "https://github.com/bihealth/snappy-pipeline/issues"
 Changelog = "https://github.com/bihealth/snappy-pipeline/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
+# Read the Docs installs this extra (.readthedocs.yaml)
+docs = [
+    "sphinx >=8,<9",
+    "sphinx_rtd_theme >=3,<4",
+    "myst-parser >=5,<6",
+]
+
+[project.scripts]
+snappy = "snappy_pipeline.apps.snappy_cli:main"
+# additional tools
+snappy-bed_filter_jaccard = "snappy_wrappers.tools.bed_filter_jaccard:main"
+snappy-fix_vcf = "snappy_wrappers.tools.fix_vcf:main"
+snappy-genome_windows = "snappy_wrappers.tools.genome_windows:main"
+snappy-quickvenn = "snappy_wrappers.tools.quickvenn:main"
+snappy-vcf_first_header = "snappy_wrappers.tools.vcf_first_header:main"
+snappy-vcf_filter_denovo = "snappy_wrappers.tools.vcf_filter_denovo:main"
+snappy-vcf_filter_from_info = "snappy_wrappers.tools.vcf_filter_from_info:main"
+snappy-vcf_filter_to_info = "snappy_wrappers.tools.vcf_filter_to_info:main"
+snappy-ped_to_vcf_header = "snappy_wrappers.tools.ped_to_vcf_header:main"
+
+# Development tooling (PEP 735); pixi maps each group to a feature of the same name
+[dependency-groups]
 test = [
     "pytest >=8.2.2,<10",
     "coverage >=7.5.3,<8",
@@ -87,27 +111,6 @@ dev = [
     "snakefmt >=1,<2",
     "pre-commit >=4.0.1,<5"
 ]
-docs = [
-    "sphinx >=8,<9",
-    "sphinx_rtd_theme >=3,<4",
-    "myst-parser >=5,<6",
-]
-all = [
-    "snappy-pipeline[test,docs,dev]"
-]
-
-[project.scripts]
-snappy = "snappy_pipeline.apps.snappy_cli:main"
-# additional tools
-snappy-bed_filter_jaccard = "snappy_wrappers.tools.bed_filter_jaccard:main"
-snappy-fix_vcf = "snappy_wrappers.tools.fix_vcf:main"
-snappy-genome_windows = "snappy_wrappers.tools.genome_windows:main"
-snappy-quickvenn = "snappy_wrappers.tools.quickvenn:main"
-snappy-vcf_first_header = "snappy_wrappers.tools.vcf_first_header:main"
-snappy-vcf_filter_denovo = "snappy_wrappers.tools.vcf_filter_denovo:main"
-snappy-vcf_filter_from_info = "snappy_wrappers.tools.vcf_filter_from_info:main"
-snappy-vcf_filter_to_info = "snappy_wrappers.tools.vcf_filter_to_info:main"
-snappy-ped_to_vcf_header = "snappy_wrappers.tools.ped_to_vcf_header:main"
 
 
 # ==============================================================================
@@ -123,7 +126,9 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["snappy_pipeline", "snappy_wrappers"]
 
-
+[tool.hatch.build.targets.sdist]
+# The default walks the whole tree, including the ignored run outputs below .tests/
+only-include = ["snappy_pipeline", "snappy_wrappers", "tests", "docs", "CHANGELOG.md", "CONTRIBUTING.md"]
 
 
 # ==============================================================================
@@ -131,67 +136,28 @@ packages = ["snappy_pipeline", "snappy_wrappers"]
 # ==============================================================================
 
 [tool.coverage.run]
-omit = ["snappy_pipeline/_version.py", "snappy_pipeline/Snakefile", "snappy_pipeline/workflows/*/Snakefile", "snappy_wrappers/wrappers/*/wrapper.py"]
+omit = ["snappy_pipeline/Snakefile", "snappy_pipeline/workflows/*/Snakefile", "snappy_wrappers/wrappers/*/wrapper.py"]
 relative_files = true
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "def __repr__", "if __name__ == '__main__':"]
 
 [tool.ruff]
-# Exclude a variety of commonly ignored directories.
-exclude = [
-    ".bzr", ".direnv", ".eggs", ".git", ".git-rewrite", ".hg", ".ipynb_checkpoints",
-    ".mypy_cache", ".nox", ".pants.d", ".pyenv", ".pytest_cache", ".pytype", ".ruff_cache",
-    ".svn", ".tox", ".venv", ".vscode", "__pypackages__", "_build", "buck-out", "build",
-    "dist", "node_modules", "site-packages", "venv", "docs", ".*.py",
-    ".snakemake.*.wrapper.py", "splitMNPsAndComplex.py",
+# In addition to Ruff's default excludes
+extend-exclude = [
+    "build", "docs", ".*.py", ".snakemake.*.wrapper.py", "splitMNPsAndComplex.py",
     "snappy_pipeline/__init__.py", ".tests",
 ]
 line-length = 100
-indent-width = 4
-target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B9"]  # enable "B", "C" later
 ignore = ["E203", "E266", "E501", "B904", "B905", "E713", "E721", "E741"]
 
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["E501"]
 # Snakemake provides the global snakemake to wrappers
 "snappy_wrappers/wrappers/**/wrapper.py" = ["F821"]
-"snappy_wrappers/tools/gcnv_merge_vcfs.py" = ["E721"]
 "docs/conf.py" = ["ALL"]
-
-[tool.ruff.lint.flake8-quotes]
-docstring-quotes = "double"
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-# Like Black, respect magic trailing commas.
-skip-magic-trailing-comma = false
-line-ending = "auto"
-
-# Enable auto-formatting of code examples in docstrings. Markdown,
-# reStructuredText code/literal blocks and doctests are all supported.
-#
-# This is currently disabled by default, but it is planned for this
-# to be opt-out in the future.
-docstring-code-format = false
-
-# Set the line length limit used when formatting code snippets in
-# docstrings.
-#
-# This only has an effect when the `docstring-code-format` setting is
-# enabled.
-docstring-code-line-length = "dynamic"
 
 [tool.snakefmt]
 line_length = 100
