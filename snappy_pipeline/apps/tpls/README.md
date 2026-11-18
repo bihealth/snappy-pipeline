@@ -1,12 +1,13 @@
 # CUBI Pipeline Project "%(project_name)s"
 
 - created at: %(created_at)s
+- project id: %(project_id)s
 
 This directory contains a Snappy Pipeline project.
 
 ## Project Description
 
-TODO: describe your project here
+%(description)s
 
 ## Status
 

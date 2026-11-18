@@ -300,12 +300,12 @@ def test_init_writes_the_static_sections_before_the_tasks(tmp_path):
     assert result.exit_code == 0, result.output
     lines = (project / "config.yaml").read_text().splitlines()
     # The tasks end the file, so that an added task never lands before a section comment
-    data_sets, tasks = lines.index("data_sets: {}"), lines.index("tasks:")
+    data_sets, tasks = lines.index("data_sets:"), lines.index("tasks:")
     assert data_sets < tasks < lines.index("  - name: genome") < lines.index("  - name: mapping")
     assert not any(line.startswith("#") for line in lines[tasks:])
     config = snappy_cli.load_configfile(str(project / "config.yaml"))
     assert [task["name"] for task in config["tasks"]] == ["genome", "mapping"]
-    assert config["data_sets"] == {}
+    assert list(config["data_sets"]) == ["first_batch"]
 
 
 def test_init_minimal_points_to_the_docs_instead_of_explaining(tmp_path):
@@ -320,5 +320,5 @@ def test_init_minimal_points_to_the_docs_instead_of_explaining(tmp_path):
     # The comments are the header, which names the docs; the task has only its REQUIRED tags
     comments = [line for line in lines if line.lstrip().startswith("#")]
     assert comments == lines[: len(comments)] and "snappy-pipeline.readthedocs.io" in text
-    assert "data_sets: {}" in lines and "  - name: mapping" in lines
+    assert "data_sets:" in lines and "  - name: mapping" in lines
     assert "# REQUIRED" in text and "Options:" not in text

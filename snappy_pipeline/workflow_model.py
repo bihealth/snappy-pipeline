@@ -66,6 +66,15 @@ class Resources(SnappyModel):
     """Memory and runtime grow by this factor with each retry of a failed job"""
 
 
+class ProjectInfo(SnappyModel):
+    """The name of the project, and its identifier in an external data management system, such
+    as the SODAR project UUID, which tracks where the raw data lives."""
+
+    name: str = ""
+    id: str = ""
+    description: str = ""
+
+
 class ConfigModel(SnappyStepModel):
     model_config = ConfigDict(
         extra="allow",
@@ -73,6 +82,7 @@ class ConfigModel(SnappyStepModel):
         use_enum_values=True,
     )
 
+    project: ProjectInfo = ProjectInfo()
     pathvars: dict[str, str] = {}
     """Named roots for paths, used as ``<name>`` in any path of the configuration, with the
     defaults and semantics of Snakemake's ``pathvars``"""

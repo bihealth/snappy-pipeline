@@ -8,6 +8,7 @@ import datetime
 import enum
 import importlib
 import io
+import json
 import logging
 import os
 import shutil
@@ -16,6 +17,7 @@ import sys
 import textwrap
 
 import rich_click as click
+from click.core import ParameterSource
 import ruamel.yaml as ruamel_yaml
 from rich.console import Console
 from rich.table import Table
@@ -159,6 +161,9 @@ def _print_steps_table():
 #: README file name
 README_FILENAME = "README.md"
 GITIGNORE_FILENAME = ".gitignore"
+SHEET_FILENAME = "samplesheet.tsv"
+#: The sample sheet formats of ``snappy init --sheet-type`` and the data set type of each
+SHEET_TYPES = {"generic": "generic", "germline": "germline_variants", "cancer": "matched_cancer"}
 
 #: Configuration sub directory
 CONFIG_SUBDIR = ""
@@ -325,7 +330,19 @@ def main():
 @click.option(
     "--project-name",
     type=str,
-    help="A string to use for the project name, used in the README file",
+    help="The name of the project, in README.md, config.yaml and the sample sheet; default: the directory name",
+)
+@click.option(
+    "--project-id",
+    type=str,
+    default="",
+    help="The identifier of the project in an external data management system, such as the SODAR project UUID, which tracks where the raw data lives",
+)
+@click.option(
+    "--description",
+    type=str,
+    default="",
+    help="A description of the project, in README.md, config.yaml and the sample sheet",
 )
 @click.option(
     "--task",
@@ -334,6 +351,18 @@ def main():
     multiple=True,
     metavar="[NAME=]STEP_TYPE",
     help="List of tasks to create automatically, formatted as [name=]step_type",
+)
+@click.option(
+    "--sheet-type",
+    type=click.Choice(SHEET_TYPES),
+    default="generic",
+    show_default=True,
+    help="The biomedsheets format of the sample sheet samplesheet.tsv, which is created if it does not exist and named in config.yaml",
+)
+@click.option(
+    "--track-sheet/--no-track-sheet",
+    default=False,
+    help="Track samplesheet.tsv in git. Only if it holds no personal data, or the remote is approved for such data (such as the internal GitLab).",
 )
 @click.option(
     "--manage-config/--no-manage-config",
@@ -349,7 +378,7 @@ def main():
 @click.option(
     "--git/--no-git",
     default=True,
-    help="Track the configuration in a git repository: .gitignore, config.yaml and README.md, nothing else (sample sheets may hold personal data).",
+    help="Track the configuration in a git repository: .gitignore, config.yaml and README.md, nothing else unless --track-sheet.",
 )
 @click.option(
     "--remote",
@@ -357,9 +386,74 @@ def main():
     metavar="URL",
     help="Add URL as the remote 'origin' of the new repository; nothing is pushed.",
 )
-def init(directory, project_name, tasks, manage_config, config_mode, git, remote):
-    """Initialize a new snappy project directory."""
+@click.option(
+    "--interactive/--no-interactive",
+    default=None,
+    help="Ask for what no option gives; the default on a terminal.",
+)
+@click.pass_context
+def init(
+    ctx,
+    directory,
+    project_name,
+    project_id,
+    description,
+    tasks,
+    sheet_type,
+    track_sheet,
+    manage_config,
+    config_mode,
+    git,
+    remote,
+    interactive,
+):
+    """Initialize a new snappy project directory.
+
+    Creates config.yaml, README.md and the sample sheet samplesheet.tsv, and puts the
+    configuration under git. On a terminal, asks for what no option gives.
+    """
     project_directory = directory() if callable(directory) else directory
+    default_name = os.path.basename(os.path.abspath(project_directory))
+    if interactive is None:
+        interactive = sys.stdin.isatty() and sys.stdout.isatty()
+    if interactive:
+
+        def asked(name: str) -> bool:
+            return ctx.get_parameter_source(name) == ParameterSource.DEFAULT
+
+        if asked("project_name"):
+            project_name = click.prompt("Project name", default=project_name or default_name)
+        if asked("project_id"):
+            project_id = click.prompt(
+                "Project id, such as the SODAR project UUID", default="", show_default=False
+            )
+        if asked("description"):
+            description = click.prompt("Description", default="", show_default=False)
+        if asked("sheet_type"):
+            sheet_type = click.prompt(
+                "Sample sheet type", type=click.Choice(SHEET_TYPES), default=sheet_type
+            )
+        if asked("tasks") and click.confirm("Add tasks now?", default=False):
+            tasks = _prompt_tasks()
+        if git:
+            if asked("track_sheet"):
+                track_sheet = click.confirm(
+                    "Track samplesheet.tsv in git? Only if it holds no personal data, or the "
+                    "remote is approved for such data (such as the internal GitLab)",
+                    default=False,
+                )
+            if asked("remote"):
+                remote = click.prompt(
+                    "Git remote URL (origin; nothing is pushed)", default="", show_default=False
+                )
+            if track_sheet and remote:
+                track_sheet = click.confirm(
+                    f"Is {remote} approved for the data in the sample sheet?", default=False
+                )
+                if not track_sheet:
+                    log("samplesheet.tsv stays untracked", level=LVL_IMPORTANT)
+    project_name = project_name or default_name
+
     log("SNAPPY Pipeline -- init")
     log("================================")
     log("")
@@ -381,34 +475,57 @@ def init(directory, project_name, tasks, manage_config, config_mode, git, remote
     for path in paths:
         create_directory(path, exist_ok=True)
 
+    tpls = os.path.join(os.path.dirname(__file__), "tpls")
+    format_args = {
+        "created_at": datetime.datetime.now().isoformat(),
+        "project_name": project_name,
+        "project_id": project_id,
+        "description": description,
+        # YAML double-quoted scalars
+        "project_name_yaml": json.dumps(project_name, ensure_ascii=False),
+        "project_id_yaml": json.dumps(project_id, ensure_ascii=False),
+        "description_yaml": json.dumps(description, ensure_ascii=False),
+        "sheet_file": SHEET_FILENAME,
+        "sheet_type": SHEET_TYPES[sheet_type],
+    }
+
     # Create config file in subdirectory based on template; the minimal one has a short header
     # that points to the docs instead of explaining the sections
-    config_dest_path = os.path.join(project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
     template = "project_config.yaml"
     if ConfigMode(config_mode) is ConfigMode.MINIMAL:
         template = "project_config_minimal.yaml"
     create_from_tpl(
-        src_path=os.path.join(os.path.dirname(__file__), "tpls", template),
+        src_path=os.path.join(tpls, template),
         dest_path=config_dest_path,
-        format_args={
-            "created_at": datetime.datetime.now().isoformat(),
-            "project_name": (project_name or os.path.basename(os.path.abspath(project_directory))),
-        },
+        format_args=format_args,
         message="Creating project-wide configuration in {path}",
         message_args={"path": config_dest_path},
     )
 
     # Create readme file in subdirectory based on template
     create_from_tpl(
-        src_path=os.path.join(os.path.dirname(__file__), "tpls", README_FILENAME),
+        src_path=os.path.join(tpls, README_FILENAME),
         dest_path=os.path.join(project_directory, README_FILENAME),
         format_args={
-            "created_at": datetime.datetime.now().isoformat(),
-            "project_name": (project_name or os.path.basename(os.path.abspath(project_directory))),
+            **format_args,
+            "description": description or "TODO: describe your project here",
         },
-        message="Creating README file in in {path}",
+        message="Creating README file in {path}",
         message_args={"path": os.path.join(project_directory, README_FILENAME)},
     )
+
+    # The sample sheet, unless the project directory has one
+    sheet_path = os.path.join(project_directory, SHEET_FILENAME)
+    if os.path.exists(sheet_path):
+        log("Keeping the existing sample sheet {path}", {"path": sheet_path}, level=LVL_INFO)
+    else:
+        create_from_tpl(
+            src_path=os.path.join(tpls, f"samplesheet_{sheet_type}.tsv"),
+            dest_path=sheet_path,
+            format_args=format_args,
+            message="Creating the {sheet_type} sample sheet {path}",
+            message_args={"sheet_type": sheet_type, "path": sheet_path},
+        )
 
     # Create additional tasks if any was provided
     for task_name, step in tasks:
@@ -422,28 +539,50 @@ def init(directory, project_name, tasks, manage_config, config_mode, git, remote
         app.run()
 
     if git:
-        init_git(project_directory, remote)
+        init_git(project_directory, remote or None, track_sheet)
 
     log(
-        "\nDo not forget to review config.yaml and to fill out README.md!\n",
+        "\nDo not forget to review config.yaml and to fill out README.md and the sample sheet!\n",
         level=LVL_IMPORTANT,
     )
     log("All done, have a nice day!", level=LVL_SUCCESS)
 
 
-def init_git(project_directory: str, remote: str | None) -> None:
+def _prompt_tasks() -> tuple:
+    """Ask for tasks, ``[name=]step_type`` each, until an empty line."""
+    click.echo("Step types: `snappy task list --available`")
+    tasks = []
+    while True:
+        value = click.prompt(
+            "Task ([name=]step_type, empty line to finish)", default="", show_default=False
+        )
+        if not value:
+            return tuple(tasks)
+        try:
+            tasks.append(TaskParamType().convert(value, None, None))
+        except click.BadParameter as e:
+            click.echo(e.format_message())
+
+
+def init_git(project_directory: str, remote: str | None, track_sheet: bool = False) -> None:
     """Put the configuration under version control: the first commit of a new repository with
-    .gitignore, config.yaml and README.md, or these files staged in the repository that already
-    contains the directory (no nested repository, no remote). A remote is added without pushing.
-    Without git or without a commit identity the files stay staged and the gap is reported;
-    init does not fail."""
+    .gitignore, config.yaml and README.md (and the sample sheet with ``track_sheet``), or these
+    files staged in the repository that already contains the directory (no nested repository,
+    no remote). A remote is added without pushing. Without git or without a commit identity
+    the files stay staged and the gap is reported; init does not fail."""
+    gitignore = os.path.join(project_directory, GITIGNORE_FILENAME)
     create_from_tpl(
         src_path=os.path.join(os.path.dirname(__file__), "tpls", "gitignore"),
-        dest_path=os.path.join(project_directory, GITIGNORE_FILENAME),
+        dest_path=gitignore,
         format_args={},
         message="Creating {path}",
-        message_args={"path": os.path.join(project_directory, GITIGNORE_FILENAME)},
+        message_args={"path": gitignore},
     )
+    files = [GITIGNORE_FILENAME, CONFIG_FILENAME, README_FILENAME]
+    if track_sheet:
+        with open(gitignore, "at") as f:
+            f.write(f"!/{SHEET_FILENAME}\n")
+        files.append(SHEET_FILENAME)
     git = shutil.which("git")
     if git is None:
         log("git is not installed: the project is not under version control", level=LVL_IMPORTANT)
@@ -464,7 +603,7 @@ def init_git(project_directory: str, remote: str | None) -> None:
             )
         else:
             run("init", "-q")
-        run("add", "--", GITIGNORE_FILENAME, CONFIG_FILENAME, README_FILENAME)
+        run("add", "--", *files)
         if inside:
             if remote:
                 log("The remote is not added to an existing repository", level=LVL_IMPORTANT)

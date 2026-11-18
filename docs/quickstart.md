@@ -27,15 +27,17 @@ See {ref}`installation` for details.
 
 ## Create the project
 
-`snappy init` creates the project directory with `config.yaml` and `README.md`:
+`snappy init` creates the project directory with `config.yaml`, `README.md` and an empty sample sheet `samplesheet.tsv`, which `config.yaml` names as the data set `first_batch` with the FASTQ files below `raw/`:
 
 ```shell
 snappy init my_project
 cd my_project
 ```
 
+On a terminal, `snappy init` asks for what no option gives: the project name, its id in an external data management system such as the SODAR project UUID, a description, the sample sheet type (`generic`, `germline` or `cancer`), tasks, and the git settings; `--no-interactive` takes the defaults.
 The project is a git repository whose first commit holds `.gitignore`, `config.yaml` and `README.md`.
-Everything else is ignored: results, logs, caches, data and the sample sheets, which may hold personal data.
+Everything else is ignored: results, logs, caches, data and the sample sheet, which may hold personal data.
+`--track-sheet` adds the sample sheet, only if it holds no personal data or the remote is approved for such data.
 `--remote <url>` adds the remote `origin` without pushing, `--no-git` skips the repository, and inside an existing repository the files are staged there instead.
 
 Add one task per step with `snappy task add`.

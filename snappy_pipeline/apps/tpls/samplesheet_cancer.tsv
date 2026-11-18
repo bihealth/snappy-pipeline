@@ -1,0 +1,14 @@
+[Metadata]
+schema	cancer_matched
+schema_version	v1
+title	%(project_name)s
+description	%(description)s
+
+[Custom Fields]
+key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
+extractionType	testSample	extraction type	string	0	0	0	0	0
+libraryKit	ngsLibrary	enrichment kit, or the chemistry of long reads	string	0	0	0	0	0
+purity	bioSample	tumor purity	number	0	1	0	0	0
+
+[Data]
+patientName	sampleName	isTumor	extractionType	libraryType	folderName	libraryKit	purity

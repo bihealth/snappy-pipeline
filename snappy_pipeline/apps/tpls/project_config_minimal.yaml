@@ -5,6 +5,16 @@
 # The fields of a step with their descriptions: its page in the documentation,
 # https://snappy-pipeline.readthedocs.io/en/latest/, or `snappy task add --config-mode commented`.
 
-data_sets: {}
+project:
+  name: %(project_name_yaml)s
+  id: %(project_id_yaml)s
+  description: %(description_yaml)s
+
+data_sets:
+  first_batch:
+    file: %(sheet_file)s
+    type: %(sheet_type)s
+    search_paths:
+      - raw
 
 tasks: []

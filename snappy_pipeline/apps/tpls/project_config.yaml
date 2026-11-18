@@ -2,6 +2,16 @@
 #
 # created: %(created_at)s
 
+# Project ==========================================================================
+#
+# The name of the project, and its identifier in an external data management system, such
+# as the SODAR project UUID, which tracks where the raw data lives.
+
+project:
+  name: %(project_name_yaml)s
+  id: %(project_id_yaml)s
+  description: %(description_yaml)s
+
 # Paths ==============================================================================
 #
 # Relative paths are relative to this directory. pathvars names roots for paths, used as
@@ -13,23 +23,21 @@
 
 # Data Sets ========================================================================
 #
-# Define data sets with sample sheets and search paths/patterns for raw FASTQ files.
-# Search patterns are regular expressions for the path below each library's folder; their
-# (?P<readgroup>...) group pairs the left and right file of each lane.
+# A data set is a sample sheet (biomedsheets TSV) and the search paths of the raw FASTQ files
+# of its libraries, in a folder named like the sheet's folderName of the library. Search
+# patterns are regular expressions for the path below that folder; their (?P<readgroup>...)
+# group pairs the left and right file of each lane. The default patterns find
+# <folder>/*.R1.fastq.gz and *.R2.fastq.gz, another naming needs explicit patterns:
 #
-# Example
-# -------
-#
-# data_sets:
-#   first_batch:
-#     file: samplesheet.tsv
 #     search_patterns:
 #     - {left: '(?P<readgroup>.+)_R1_001\.fastq\.gz', right: '(?P<readgroup>.+)_R2_001\.fastq\.gz'}
-#     search_paths:
-#     - /path/to/raw/data
-#     type: germline_variants
-#
-data_sets: {}
+
+data_sets:
+  first_batch:
+    file: %(sheet_file)s
+    type: %(sheet_type)s
+    search_paths:
+      - raw
 
 # Resources =======================================================================
 #

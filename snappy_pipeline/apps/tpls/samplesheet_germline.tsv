@@ -1,0 +1,13 @@
+[Metadata]
+schema	germline_variants
+schema_version	v1
+title	%(project_name)s
+description	%(description)s
+
+[Custom Fields]
+key	annotatedEntity	docs	type	minimum	maximum	unit	choices	pattern
+extractionType	bioSample	extraction type	string	0	0	0	0	0
+libraryKit	ngsLibrary	enrichment kit, or the chemistry of long reads	string	0	0	0	0	0
+
+[Data]
+patientName	fatherName	motherName	sex	isAffected	extractionType	libraryType	folderName	libraryKit	hpoTerms

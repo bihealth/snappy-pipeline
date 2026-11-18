@@ -84,6 +84,7 @@ The pieces are:
   It provides the `snappy` command and the code of all steps.
 - `config.yaml` in the project directory.
   Its `tasks` list defines the tasks, and `data_sets` points to the sample sheets and the FASTQ files.
+  `project` records the name, a description and the id of the project in an external data management system, such as the SODAR project UUID, which tracks where the raw data lives.
 - The sample sheets, which describe the libraries and the experimental design.
 - The raw data, for example a directory with the FASTQ files of each library.
 - Reference data, such as the genome, the gene annotation and the mapper indices.
