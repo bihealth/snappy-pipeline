@@ -238,11 +238,9 @@ def test_task_add_keeps_the_style_of_the_config_and_comments_the_new_task(tmp_pa
     )
     assert result.exit_code == 0, result.output
     text = (tmp_path / "config.yaml").read_text()
-    # The user's quotes and sequence style stay, the backup holds the previous file
+    # The user's quotes and sequence style stay, and there is no backup copy
     assert 'tool: "bwa"' in text
-    assert (tmp_path / "config.yaml.bak").read_text() == CHECK_FILES_CONFIG.replace(
-        "tool: bwa", 'tool: "bwa"'
-    )
+    assert not (tmp_path / "config.yaml.bak").exists()
     lines = text.splitlines()
     assert "  - name: qc" in lines and "    step: ngs_data_qc" in lines
     # The comments of the task block sit at the indentation of their keys

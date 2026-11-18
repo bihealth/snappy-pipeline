@@ -292,6 +292,7 @@ Wrapper environments are pinned (`environment.linux-64.pin.txt`); in a pull requ
 - **Legacy `snappy-snake` entry point**: removed; use the `snappy` command instead.
 - **The additional command line tools** `snappy-bed_filter_jaccard`, `snappy-fix_vcf`, `snappy-genome_windows`, `snappy-quickvenn`, `snappy-vcf_first_header`, `snappy-vcf_filter_denovo` and `snappy-ped_to_vcf_header`, with `add_ped_header.sh`: nothing in the pipeline ran them.
   `snappy-vcf_filter_to_info` and `snappy-vcf_filter_from_info` stay for the read-backed phasing wrapper.
+- **`config.yaml.bak` copies** of `snappy task add` and `snappy init --task`: the commands print the change as a diff, and git keeps the history.
 - **R package install jobs of sequenza and scarHRD** and their `work/R_packages/` directories: the environments install these packages when they are created.
 - **Container builds of PureCN and pVACtools**: the rules `panel_of_normals_purecn_install` (the `singularity` wrapper, `work/containers/`) and `somatic_neoepitope_prediction_pvactools_install` (`work/container/`), and the key `container` of a PureCN panel's outputs; Snakemake pulls the images.
 - **Jannovar statistics report** (`jannovar_stats` of `variant_calling`).

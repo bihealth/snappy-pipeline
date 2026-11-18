@@ -8,7 +8,6 @@ and creating directories and files while printing log messages.
 import datetime
 import difflib
 import os
-import shutil
 
 from .logging import LVL_ERROR, LVL_INFO, log
 
@@ -74,19 +73,6 @@ def create_from_tpl(src_path, dest_path, format_args, message, message_args, msg
     formatted = contents % format_args
     with open(dest_path, "wt") as f:
         f.write(formatted)
-
-
-def backup_file(path):
-    """Create backup of file at the given path"""
-    dest_path = path + ".bak"
-    if os.path.exists(dest_path):
-        i = 2
-        dest_path = path + ".bak{}".format(i)
-        while os.path.exists(dest_path):
-            i += 1  # count up
-            dest_path = path + ".bak{}".format(i)
-    log("Creating backup {src} => {dest}", {"src": path, "dest": dest_path}, level=LVL_INFO)
-    shutil.copyfile(path, dest_path)
 
 
 def update_file(path, contents, message, message_args, msg_lvl=LVL_INFO, diff_context=3):

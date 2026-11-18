@@ -32,7 +32,6 @@ from ..orchestration import create_task_instances, load_project, missing_files
 from ..sheet_summary import missing_reads
 from ..workflow_registry import WORKFLOW_REGISTRY
 from .impl.fsmanip import (
-    backup_file,
     create_directory,
     create_from_tpl,
     update_file,
@@ -280,9 +279,7 @@ class AddTaskApp:
 
         config_yaml["tasks"].append(task_block)
 
-        # Create backup of config.yaml file and overwrite with new string
         config_filename = os.path.join(self.project_directory, CONFIG_SUBDIR, CONFIG_FILENAME)
-        backup_file(config_filename)
         buf = io.StringIO()
         yaml.dump(config_yaml, stream=buf)
         buf.seek(0)
