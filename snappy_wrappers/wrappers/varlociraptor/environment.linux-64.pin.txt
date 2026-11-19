@@ -37,4 +37,4 @@ https://conda.anaconda.org/bioconda/linux-64/htslib-1.23.1-h633afcb_0.conda#209c
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.11.0-12_h0358290_openblas.conda#074ad2000c240d26e791e6aa9d055e30
 https://conda.anaconda.org/conda-forge/linux-64/gsl-2.7-he838d99_0.tar.bz2#fec079ba39c9cca093bf4c00001825de
 https://conda.anaconda.org/bioconda/linux-64/bcftools-1.23.1-hb2cee57_0.conda#7fa25d1694f3a94ebb2c71dfc265f792
-https://conda.anaconda.org/bioconda/linux-64/varlociraptor-8.12.0-h7a8e230_0.conda#103b28a0b0632f1e70dba561b6584d2b
+https://conda.anaconda.org/bioconda/linux-64/varlociraptor-8.12.1-h7a8e230_0.conda#3c078c8d0d1cbc71b8e5955840f471d8
