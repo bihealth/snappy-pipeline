@@ -39,6 +39,14 @@ def test_sheet_errors_name_the_sheet_file(tmp_path):
     assert [donor.name for donor in _info(sheet).sheet.bio_entities.values()] == ["P001"]
 
 
+@pytest.mark.parametrize("library_type", ["", "."])
+def test_sheet_without_library_types_is_a_config_error(tmp_path, library_type):
+    sheet = tmp_path / "sheet.tsv"
+    sheet.write_text(SHEET.format(library_type=library_type))
+    with pytest.raises(ConfigError, match="^Sample sheet .*sheet.tsv: no row has a libraryType"):
+        _info(sheet)
+
+
 def test_missing_sheet_is_a_config_error(tmp_path):
     with pytest.raises(ConfigError, match="Could not find sample sheet file"):
         _info(tmp_path / "missing.tsv")

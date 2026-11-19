@@ -22,7 +22,7 @@ from typing import Any, Callable
 import pydantic
 from biomedsheets import io_tsv
 from biomedsheets.io import SheetBuilder, json_loads_ordered
-from biomedsheets.io_tsv.base import SheetIOException
+from biomedsheets.io_tsv.base import LIBRARY_TYPES, SheetIOException
 from biomedsheets.naming import NAMING_SCHEMES, name_generator_for_scheme
 from biomedsheets.ref_resolver import RefResolver
 from snakemake.api import Workflow
@@ -598,6 +598,18 @@ class DataSetInfo:
                 sheet = readers[self.sheet_type](fname, self.sheet_path, self.naming_scheme)
             except SheetIOException as e:
                 raise ConfigError(f"Sample sheet {fname}: {e}") from None
+            # biomedsheets skips rows without libraryType silently (germline and generic sheets)
+            if not any(
+                test_sample.ngs_libraries
+                for donor in sheet.bio_entities.values()
+                for sample in donor.bio_samples.values()
+                for test_sample in sample.test_samples.values()
+            ):
+                raise ConfigError(
+                    f"Sample sheet {fname}: no row has a libraryType ({', '.join(LIBRARY_TYPES)}), "
+                    "so there are no libraries. A row without libraryType is a person without "
+                    "sequencing data, such as a parent who was not sequenced."
+                )
             return self._set_is_background(sheet, self.is_background)
         elif self.sheet_path.endswith(".json"):
             with open(fname, "rt") as f:

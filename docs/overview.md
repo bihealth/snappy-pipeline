@@ -324,6 +324,10 @@ P002         N1          N        WES          P002-N1-DNA1-WES1
 P002         T1          Y        WES          P002-T1-DNA1-WES1
 ```
 
+In a `germline_variants` or `generic` sheet, a row may leave `libraryType` empty.
+It then describes a person without sequencing data, such as a parent who completes a pedigree.
+A sheet in which no row has a `libraryType` has no libraries, and snappy stops with an error.
+
 Each step takes only libraries it can process, such as RNA libraries for expression quantification or tumor DNA libraries for somatic calling.
 The somatic steps take only libraries of cancer sample sheets.
 Without `library_selection`, a task takes the step's default: the tumor DNA libraries of cancer sample sheets and the DNA libraries of germline sample sheets, unless the step's page names another one.
