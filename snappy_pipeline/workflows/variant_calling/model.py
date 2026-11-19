@@ -227,8 +227,9 @@ class Species(SnappyModel):
     heterozygosity: Annotated[float, Field(gt=0, lt=1)] = 0.001
     """Expected heterozygosity of the population"""
 
-    germline_mutation_rate: Annotated[float, Field(gt=0, lt=1)] = 1e-3
-    """Rate of de novo germline mutations (``germline-mutation-rate``)"""
+    germline_mutation_rate: Annotated[float, Field(gt=0, lt=1)] = 1.2e-8
+    """Rate of de novo germline mutations per base and generation (``germline-mutation-rate``);
+    with the full prior it weighs ``denovo`` against inheritance from an unobserved parent"""
 
     ploidy: dict[str, dict[str, int]] = {
         "male": {"all": 2, "X": 1, "Y": 1},
@@ -265,6 +266,11 @@ class Varlociraptor(ToolModel):
 
     species: Species = Species()
     """``germline`` only: the priors"""
+
+    full_prior: bool = True
+    """Pass ``--full-prior`` to ``varlociraptor call variants``, so that the prior weighs every
+    event (mendelian inheritance, the mutation rate); without it the prior only tells absent from
+    present, and a child with unobserved parents gets a fixed share of ``denovo``"""
 
     preprocess: Preprocess = Preprocess()
 

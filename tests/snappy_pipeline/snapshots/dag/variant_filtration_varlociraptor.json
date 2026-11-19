@@ -466,6 +466,7 @@
   "params": {
    "args": {
     "extra_arguments": [],
+    "full_prior": true,
     "obs_names": [
      "case001subregion-T1-DNA1-WES1",
      "case001subregion-N1-DNA1-WES1"
@@ -508,6 +509,7 @@
   "params": {
    "args": {
     "extra_arguments": [],
+    "full_prior": true,
     "obs_names": [
      "case001subregion-T1-DNA1-WES1",
      "case001subregion-N1-DNA1-WES1"

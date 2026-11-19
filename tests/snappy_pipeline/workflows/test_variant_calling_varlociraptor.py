@@ -68,7 +68,7 @@ WITH_RELAPSE = pd.DataFrame(
 def test_the_germline_preset_of_a_trio_has_mendelian_inheritance_and_a_denovo_event():
     scenario = germline_scenario(TRIO, SPECIES)
 
-    assert scenario["species"]["germline-mutation-rate"] == 0.001
+    assert scenario["species"]["germline-mutation-rate"] == 1.2e-8
     assert scenario["samples"]["child-DNA1"] == {
         "sex": "male",
         "inheritance": {"mendelian": {"from": ["mother-DNA1", "father-DNA1"]}},
@@ -306,6 +306,7 @@ def test_the_call_params_hold_the_sample_names_and_the_rendered_scenario():
     inputs = part._get_input_files_call(wildcards)
 
     assert params["obs_names"] == ["P1-T1-DNA1", "P1-N1-DNA1"]
+    assert params["full_prior"] is True
     scenario = yaml.safe_load(params["scenario"])
     assert scenario["samples"]["P1-T1-DNA1"]["contamination"]["fraction"] == 0.2
     assert inputs["observations"] == [
