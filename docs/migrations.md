@@ -40,23 +40,23 @@ library_selection: "role == 'tumor' and extraction_type == 'dna'"
 The expression runs against a DataFrame with one row per NGS library.
 The columns that are **always available**:
 
-| Column            | Description                                                                    |
-| ----------------- | ------------------------------------------------------------------------------ |
-| `library_name`    | NGS library identifier                                                         |
-| `extraction_type` | "dna", "rna", ... (always lowercased)                                          |
-| `kind`            | "cancer" or "germline"                                                         |
-| `role`            | "tumor" / "normal" / "index" / "father" / "mother" / "affected" / "unaffected" |
-| `is_primary`      | True for the primary tumor (cancer) or the pedigree index (germline)           |
-| `sex`             | "male", "female", or "unknown"                                                 |
-| `donor_name`      | Patient or family identifier                                                   |
-| `sample_name`     | Bio-sample name                                                                |
-| `related_group`   | Germline: the pedigree's index library; cancer: the donor name                 |
-| `tissue_type`     | "tumor", "normal", or "unknown"                                                |
-| `disease_state`   | The PED phenotype: 2 = affected, 1 = unaffected, 0 = unknown                   |
-| `father_name`     | Parent library name (or "0")                                                   |
-| `mother_name`     | Parent library name (or "0")                                                   |
-| `data_set`        | Name of the library's data set in the config                                   |
-| `is_background`   | True for libraries of background data sets                                     |
+| Column            | Description                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| `library_name`    | NGS library identifier                                                                     |
+| `extraction_type` | "dna", "rna", ... (always lowercased)                                                      |
+| `kind`            | "cancer" or "germline"                                                                     |
+| `role`            | "tumor" / "normal" / "index" / "father" / "mother" / "affected" / "unaffected" / "unknown" |
+| `is_primary`      | True for the primary tumor (cancer) or the pedigree index (germline)                       |
+| `sex`             | "male", "female", or "unknown"                                                             |
+| `donor_name`      | Patient or family identifier                                                               |
+| `sample_name`     | Bio-sample name                                                                            |
+| `related_group`   | Germline: the pedigree's index library; cancer: the donor name                             |
+| `tissue_type`     | "tumor", "normal", or "unknown"                                                            |
+| `disease_state`   | The PED phenotype: 2 = affected, 1 = unaffected, 0 = unknown                               |
+| `father_name`     | Parent library name (or "0")                                                               |
+| `mother_name`     | Parent library name (or "0")                                                               |
+| `data_set`        | Name of the library's data set in the config                                               |
+| `is_background`   | True for libraries of background data sets                                                 |
 
 Further sample sheet columns are added in snake_case, for example `libraryKit` as `library_kit` and `libraryType` as `library_type`.
 

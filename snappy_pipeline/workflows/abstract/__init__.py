@@ -1860,7 +1860,7 @@ def build_library_dataframe(
         else:
             # All libraries, with the pedigrees of the germline view (joined by the data set's
             # ``pedigree_field``, if set)
-            index_lib_names: set[str] = set()
+            index_donor_names: set[str] = set()
             father_lib_names: set[str] = set()
             mother_lib_names: set[str] = set()
             lib_sex: dict[str, str] = {}
@@ -1883,9 +1883,9 @@ def build_library_dataframe(
                             pk_to_lib[getattr(d, "pk", None)] = lib.name
 
                 for ped in pedigrees:
-                    # Index / proband
+                    # Index / proband: all libraries of the donor, so the RNA library too
                     if ped.index and ped.index.dna_ngs_library:
-                        index_lib_names.add(ped.index.dna_ngs_library.name)
+                        index_donor_names.add(_donor_name(ped.index))
 
                     # Build sets of PKs referenced as father / mother by children
                     pk_is_father: set = {
@@ -1959,26 +1959,29 @@ def build_library_dataframe(
                 donor_name = getattr(bio_entity, "name", "")
                 sample_name = getattr(bs, "name", "")
                 is_affected = be_extra.get("isAffected") or ts_extra.get("isAffected", None)
+                # TSV sheets hold the words, JSON sheets booleans
+                status = str(is_affected).lower() if is_affected is not None else "unknown"
                 sex = lib_sex.get(lib_name, "unknown")
 
-                if lib_name in index_lib_names:
+                # Only the pedigree index is primary: the entity of the pedigree and the key of
+                # the donor table
+                is_primary = False
+                if donor_name in index_donor_names:
                     role = "index"
                     is_primary = True
                 elif lib_name in father_lib_names:
                     role = "father"
-                    is_primary = False
                 elif lib_name in mother_lib_names:
                     role = "mother"
-                    is_primary = False
-                elif is_affected is True:
+                elif is_affected is True or status == "affected":
                     role = "affected"
-                    is_primary = False
-                elif is_affected is False:
+                elif is_affected is False or status == "unaffected":
                     role = "unaffected"
-                    is_primary = False
-                else:
-                    role = "index"  # singleton / unknown → treat as index
+                elif not pedigrees:
+                    role = "index"  # no pedigree information: each library stands alone
                     is_primary = True
+                else:
+                    role = "unknown"
 
                 rows.append(
                     {

@@ -1129,6 +1129,39 @@ def test_germline_sheets_list_all_libraries_with_their_pedigree():
     assert set(select_libraries(df, None)["extraction_type"]) == {"dna"}
 
 
+def test_siblings_and_grandparents_are_not_primary_so_the_index_is_the_entity():
+    from snappy_pipeline.workflows.abstract import library_entities
+
+    # Sheet order puts the unaffected sibling and a sibling of unknown status before the index;
+    # the mother names one parent only
+    tsv = textwrap.dedent("""\
+        [Data]
+        patientName\tfatherName\tmotherName\tsex\tisAffected\tlibraryType\tfolderName\thpoTerms
+        gm\t.\t.\tF\tN\tWES\tgm\t.
+        sib\tfa\tmo\tF\tN\tWES\tsib\t.
+        sib2\tfa\tmo\tM\tU\tWES\tsib2\t.
+        idx\tfa\tmo\tF\tY\tWES\tidx\t.
+        fa\t.\t.\tM\tN\tWES\tfa\t.
+        mo\t.\tgm\tF\tN\tWES\tmo\t.
+    """)
+    sheet = read_germline_tsv_sheet(io.StringIO(tsv))
+    df = build_library_dataframe([_make_data_set_info("germline_variants")], [sheet])
+    names = df["library_name"].str.split("-", n=1).str[0]
+    roles = dict(zip(names, df["role"]))
+    assert roles == {
+        "gm": "mother",
+        "sib": "unaffected",
+        "sib2": "unknown",
+        "idx": "index",
+        "fa": "father",
+        "mo": "mother",
+    }
+    assert set(names[df["is_primary"]]) == {"idx"}
+    index = df.loc[names == "idx", "library_name"].iloc[0]
+    assert library_entities(df, "related") == [index]
+    assert set(df["related_group"]) == {index}
+
+
 class TestLibraryRequirement:
     def _cancer_df(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
