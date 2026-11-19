@@ -139,7 +139,7 @@ tasks:
         variants: calling_varlociraptor
       tool: varlociraptor
       varlociraptor:
-        events: [present, denovo]
+        events: [present, denovo, recessive, dominant]
 
   - name: annotation_varlociraptor
     step: variant_annotation
@@ -181,4 +181,4 @@ tasks:
         variants: calling_varlociraptor_sv
       tool: varlociraptor
       varlociraptor:
-        events: [present, denovo]
+        events: [present, denovo, recessive, dominant]

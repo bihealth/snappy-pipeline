@@ -20,6 +20,9 @@ VIRTUAL_NORMAL = "normal"
 #: The library table's values for a parent that is unknown or has no DNA library
 NO_PARENT = ("0", "", None)
 
+#: The library table's ``disease_state`` (the PED phenotype) of affected and unaffected members
+AFFECTED, UNAFFECTED = 2, 1
+
 
 def is_ffpe(value: Any) -> bool:
     """Whether a sample sheet value of ``isFfpe`` (``Y``/``N``, ``true``/``false``) marks an FFPE
@@ -27,17 +30,33 @@ def is_ffpe(value: Any) -> bool:
     return str(value).strip().lower() in ("y", "yes", "true", "1")
 
 
+def _excluding(formula: str, exclusions: list[str]) -> str:
+    """Return ``formula`` with the negated ``exclusions`` (``$`` references) conjoined."""
+    return " & ".join([formula, *(f"!{excluded}" for excluded in exclusions)])
+
+
 def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) -> dict[str, Any]:
     """Return the ``germline`` preset for the library rows ``samples`` of a pedigree.
 
     Every sample has its ``sex``, or is diploid everywhere when the sex is unknown; a sample
     whose parents are both samples inherits from them (mendelian). A sample with
-    ``observed: False`` is an unsequenced relative that connects members (its ``library_name``
-    is its donor name): it has no observations, so the posteriors integrate over its genotype,
-    and inheritance flows through it. The events are ``present`` (an observed member carries the
-    variant) and ``denovo`` (an observed child carries a variant that its parents do not), with
-    ``present`` excluding it. Without an observed member with both parents, ``denovo`` is the
-    impossible event ``false``, so one FDR control fits every pedigree.
+    ``observed: False`` is an unsequenced relative that connects members, or the unknown parent
+    of a member (its ``library_name`` is its donor name): it has no observations, so the
+    posteriors integrate over its genotype, and inheritance flows through it.
+
+    The events partition the configurations in which an observed member carries the variant,
+    by the sample sheet's ``isAffected`` (``disease_state``: 2 affected, 1 unaffected, else
+    unknown, which constrains nothing): ``denovo`` (an observed child carries a variant that
+    its parents do not), ``recessive`` (every affected member is homozygous, no unaffected
+    member is), ``dominant`` (every affected member carries it, no unaffected member does) and
+    ``present`` (the rest). Each event excludes the ones before it, so they are disjoint, and
+    ``dominant`` means inherited dominant: in a trio with unaffected parents it is empty. An
+    event without a pattern (no child with both parents, no affected member) is the impossible
+    event ``false``, so one FDR control over all four events fits every pedigree.
+
+    The patterns of ``recessive`` and ``dominant`` are ``expressions``, so that the events
+    negate ``$`` references without a negation inside: varlociraptor 8.12.0 expands references
+    one level deep and panics on a negated reference to an event that negates another.
 
     Varlociraptor models inheritance from both parents only, so a member with a parent outside
     the samples (one parent sequenced, or a parent that the task does not take) raises
@@ -45,6 +64,8 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
     """
     names = [sample["library_name"] for sample in samples]
     observed = [sample["library_name"] for sample in samples if sample.get("observed", True)]
+    affected = [name for name in observed if _disease_state(samples, name) == AFFECTED]
+    unaffected = [name for name in observed if _disease_state(samples, name) == UNAFFECTED]
     scenario: dict[str, Any] = {
         "species": {
             "heterozygosity": species["heterozygosity"],
@@ -52,7 +73,6 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
             "ploidy": species["ploidy"],
         },
         "samples": {},
-        "events": {},
     }
     children = []
     for sample in samples:
@@ -79,22 +99,48 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
                 "task or give a scenario template"
             )
         scenario["samples"][name] = entry
-    carried = " | ".join(f"{name}:]0.0,1.0]" for name in observed)
+    expressions: dict[str, str] = {}
+    events: dict[str, Any] = {}
+    exclusions: list[str] = []
     if children:
         # A formula is a conjunction, a disjunction or an atom; only the terms of a disjunction
         # may be parenthesised conjunctions
         terms = [
             f"{child}:]0.0,1.0] & {mother}:0.0 & {father}:0.0" for child, mother, father in children
         ]
-        scenario["events"]["denovo"] = (
+        events["denovo"] = (
             terms[0] if len(terms) == 1 else " | ".join(f"({term})" for term in terms)
         )
-        scenario["events"]["present"] = f"({carried}) & !$denovo"
+        exclusions.append("$denovo")
     else:
-        # The literal false may not be negated, so present stands alone
-        scenario["events"]["denovo"] = False
-        scenario["events"]["present"] = carried
+        # The literal false may not be negated, so the other events leave it out
+        events["denovo"] = False
+    if affected:
+        expressions["recessive_pattern"] = " & ".join(
+            [f"{name}:1.0" for name in affected] + [f"{name}:[0.0,1.0[" for name in unaffected]
+        )
+        events["recessive"] = _excluding("$recessive_pattern", exclusions)
+        exclusions.append("$recessive_pattern")
+        expressions["dominant_pattern"] = " & ".join(
+            [f"{name}:]0.0,1.0]" for name in affected] + [f"{name}:0.0" for name in unaffected]
+        )
+        events["dominant"] = _excluding("$dominant_pattern", exclusions)
+        exclusions.append("$dominant_pattern")
+    else:
+        events["recessive"] = events["dominant"] = False
+    carried = " | ".join(f"{name}:]0.0,1.0]" for name in observed)
+    events["present"] = _excluding(f"({carried})", exclusions) if exclusions else carried
+    if expressions:
+        scenario["expressions"] = expressions
+    scenario["events"] = events
     return scenario
+
+
+def _disease_state(samples: list[dict[str, Any]], name: str) -> Any:
+    for sample in samples:
+        if sample["library_name"] == name:
+            return sample.get("disease_state")
+    return None
 
 
 def somatic_scenario(

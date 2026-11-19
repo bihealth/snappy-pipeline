@@ -38,8 +38,10 @@ The ``tool`` field selects the caller.
 
     ``germline``
         The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the task inherits from them, in any constellation (trios, siblings, several generations, uncles and cousins with their parents).
-        The events are ``present`` (a member carries the variant) and ``denovo`` (a child carries a variant that its parents do not), which ``present`` excludes; without a member with both parents in the task, ``denovo`` is the impossible event, so one FDR control over ``present`` and ``denovo`` fits every pedigree.
         An unsequenced relative that connects members (a parent of two sequenced siblings, the grandparents of cousins, the other parent of a child with one sequenced parent) joins the scenario as a sample without observations, named after the donor, so inheritance flows through it and the posteriors integrate over its genotype; the VCF holds the observed libraries only.
+        The events partition the configurations in which a member carries the variant, by the sheet's ``isAffected``: ``denovo`` (a child carries a variant that its parents do not), ``recessive`` (every affected member is homozygous and no unaffected member is), ``dominant`` (every affected member carries it and no unaffected member does) and ``present`` (the rest).
+        Each event excludes the ones before it, so ``dominant`` is inherited dominant and empty in a trio with unaffected parents; members of unknown status constrain nothing.
+        Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, as is ``denovo`` without a child with both parents, so one FDR control over all four events fits every pedigree and keeps every variant, one over ``denovo`` and ``dominant`` the dominant hypothesis.
         The call passes ``--full-prior`` (``full_prior``), so that the mendelian prior and ``germline_mutation_rate`` weigh the events: varlociraptor's default prior only tells absent from present and gives a child with unobserved parents a fixed share of ``denovo``.
         A member with a sequenced parent outside the task (one that ``library_selection`` drops) is an error, since varlociraptor models inheritance from both parents only: take both parents into the task or give a ``template``.
         Libraries without a pedigree (``group_by: library``) are called alone.
@@ -53,7 +55,7 @@ The ``tool`` field selects the caller.
     An FFPE library (sample sheet custom field ``isFfpe``, ``Y`` or ``N``) gets varlociraptor's model of the artifacts of an FFPE fragment (``fragment_end_bias``) in both presets.
     The samples of the scenario are the library names, and so are the samples of the VCF, which carries ``GT`` from ``varlociraptor genotype``.
     The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set: chain a ``variant_filtration`` task with ``tool: varlociraptor`` (FDR control on the events of interest) before any consumer.
-    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``matched_normal_lib`` and the sheet's other columns; for the germline scenario also the unsequenced connecting relatives, with ``observed: false``), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
+    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``disease_state``, ``matched_normal_lib`` and the sheet's other columns; for the germline scenario also the unsequenced connecting relatives, with ``observed: false``), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
 
 By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
 With ``group_by: library``, they call each library on its own and produce one result per library.
@@ -199,7 +201,7 @@ the annotation and the other consumers read:
           tool: varlociraptor
           varlociraptor: {events: [somatic_tumor_high, somatic_tumor_medium]}
 
-For a germline cohort, ``candidates`` gets ``group_by: related``, ``calling`` gets ``scenario: germline`` and ``fdr_control`` the events ``present`` and ``denovo``.
+For a germline cohort, ``candidates`` gets ``group_by: related``, ``calling`` gets ``scenario: germline`` and ``fdr_control`` the events ``present``, ``denovo``, ``recessive`` and ``dominant``.
 """
 
 import math
