@@ -698,6 +698,51 @@ def test_siblings_share_their_unsequenced_parents():
     assert scenario["events"]["denovo"].count(" | ") == 1
 
 
+def test_the_unknown_parent_of_a_child_with_one_parent_joins_as_an_unobserved_sample():
+    donors = _donors(
+        ("child", "0", "mother", "male", "child-DNA1"),
+        ("mother", "0", "0", "female", "mother-DNA1"),
+    )
+    part = _pedigree_part(donors, ["child-DNA1", "mother-DNA1"])
+
+    samples = part.pedigree_samples("child-DNA1")
+    scenario = germline_scenario(samples, SPECIES)
+
+    assert (samples[0]["father_name"], samples[0]["mother_name"]) == ("child.father", "mother-DNA1")
+    assert samples[-1] == {
+        "library_name": "child.father",
+        "sex": "male",
+        "father_name": "0",
+        "mother_name": "0",
+        "observed": False,
+    }
+    assert scenario["samples"]["child.father"] == {"sex": "male"}
+    assert scenario["events"]["denovo"] == (
+        "child-DNA1:]0.0,1.0] & mother-DNA1:0.0 & child.father:0.0"
+    )
+
+
+def test_an_unsequenced_connecting_parent_with_one_known_parent_gets_an_unknown_one():
+    donors = _donors(
+        ("s1", "father", "mother", "male", "s1-DNA1"),
+        ("s2", "father", "mother", "female", "s2-DNA1"),
+        ("father", "0", "0", "male", ""),
+        ("mother", "gf", "0", "female", ""),
+        ("gf", "0", "0", "male", "gf-DNA1"),
+    )
+    part = _pedigree_part(donors, ["s1-DNA1", "s2-DNA1", "gf-DNA1"])
+
+    samples = part.pedigree_samples("s1-DNA1")
+
+    by_name = {s["library_name"]: s for s in samples}
+    assert (by_name["mother"]["father_name"], by_name["mother"]["mother_name"]) == (
+        "gf-DNA1",
+        "mother.mother",
+    )
+    assert by_name["mother.mother"]["observed"] is False
+    assert "inheritance" in germline_scenario(samples, SPECIES)["samples"]["mother"]
+
+
 def test_a_sequenced_parent_outside_the_task_is_still_rejected():
     donors = _donors(
         ("child", "father", "mother", "male", "child-DNA1"),

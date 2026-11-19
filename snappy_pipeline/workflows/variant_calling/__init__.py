@@ -38,12 +38,13 @@ The ``tool`` field selects the caller.
 
     ``germline``
         The pedigree (``group_by: related``, the default) or one library: each member with its sex and the ploidy of ``species`` (diploid when the sex is unknown); a member whose parents are both in the task inherits from them, in any constellation (trios, siblings, several generations, uncles and cousins with their parents).
-        An unsequenced relative that connects members (a parent of two sequenced siblings, the grandparents of cousins, the other parent of a child with one sequenced parent) joins the scenario as a sample without observations, named after the donor, so inheritance flows through it and the posteriors integrate over its genotype; the VCF holds the observed libraries only.
+        An unsequenced relative that connects members (a parent of two sequenced siblings, the grandparents of cousins) joins the scenario as a sample without observations, named after the donor, so inheritance flows through it and the posteriors integrate over its genotype.
+        Varlociraptor models inheritance from both parents only, so a member with one parent in the scenario and an unknown other parent gets an unobserved one as well, named ``<donor>.father`` or ``<donor>.mother``; the VCF holds the observed libraries only.
         The events partition the configurations in which a member carries the variant, by the sheet's ``isAffected``: ``denovo`` (a child carries a variant that its parents do not), ``recessive`` (every affected member is homozygous and no unaffected member is), ``dominant`` (every affected member carries it and no unaffected member does) and ``present`` (the rest).
         Each event excludes the ones before it, so ``dominant`` is inherited dominant and empty in a trio with unaffected parents; members of unknown status constrain nothing.
         Without an affected member, ``recessive`` and ``dominant`` are the impossible event ``false``, as is ``denovo`` without a child with both parents, so one FDR control over all four events fits every pedigree and keeps every variant, one over ``denovo`` and ``dominant`` the dominant hypothesis.
         The call passes ``--full-prior`` (``full_prior``), so that the mendelian prior and ``germline_mutation_rate`` weigh the events: varlociraptor's default prior only tells absent from present and gives a child with unobserved parents a fixed share of ``denovo``.
-        A member with a sequenced parent outside the task (one that ``library_selection`` drops) is an error, since varlociraptor models inheritance from both parents only: take both parents into the task or give a ``template``.
+        A member with a sequenced parent outside the task (one that ``library_selection`` drops) is an error: take both parents into the task or give a ``template``.
         Libraries without a pedigree (``group_by: library``) are called alone.
 
     ``somatic``
@@ -55,7 +56,7 @@ The ``tool`` field selects the caller.
     An FFPE library (sample sheet custom field ``isFfpe``, ``Y`` or ``N``) gets varlociraptor's model of the artifacts of an FFPE fragment (``fragment_end_bias``) in both presets.
     The samples of the scenario are the library names, and so are the samples of the VCF, which carries ``GT`` from ``varlociraptor genotype``.
     The calls are all candidates with the posterior probability of each event (``INFO/PROB_<EVENT>``), not a filtered call set: chain a ``variant_filtration`` task with ``tool: varlociraptor`` (FDR control on the events of interest) before any consumer.
-    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``disease_state``, ``matched_normal_lib`` and the sheet's other columns; for the germline scenario also the unsequenced connecting relatives, with ``observed: false``), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
+    A ``template`` is rendered with ``samples`` (the library table rows of the entity's libraries, as dicts with ``library_name``, ``role``, ``sex``, ``father_name``, ``mother_name``, ``disease_state``, ``matched_normal_lib`` and the sheet's other columns; for the germline scenario also the unsequenced relatives, with ``observed: false``), ``library_name`` (the entity) and ``settings`` (``species`` and ``purity``); its sample keys must be the library names.
 
 By default (``group_by: related``), the germline callers call each pedigree jointly and produce one result per pedigree, named after the index library.
 With ``group_by: library``, they call each library on its own and produce one result per library.
@@ -231,6 +232,7 @@ from snappy_pipeline.workflows.common.qc_summary import QcSummaryStepPart
 from snappy_pipeline.workflows.ngs_mapping.model import ExpectedAlignments
 from snappy_pipeline.workflows.variant_calling.model import ScenarioKind, Tool, TumorNormalMode
 from snappy_pipeline.workflows.variant_calling.scenario import (
+    NO_PARENT,
     IDENTIFIER,
     check_scenario,
     germline_scenario,
@@ -1297,12 +1299,14 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         }
 
     def pedigree_samples(self, library_name: str) -> list[dict[str, Any]]:
-        """The samples of the germline scenario of a pedigree: its observed members, and the
+        """The samples of the germline scenario of a pedigree: its observed members, the
         unsequenced donors that connect members (a parent of two sequenced children, the
-        grandparents of cousins, the other parent of a child with one sequenced parent) as
-        samples without observations, named after the donor. Parents are the sample names, or
-        ``"0"``; a sequenced parent outside the task keeps its library name, so that the preset
-        rejects it."""
+        grandparents of cousins) as samples without observations, named after the donor, and
+        for a sample with one parent in the scenario and an unknown other parent that parent as
+        an unobserved sample named ``<donor>.father`` or ``<donor>.mother``, since varlociraptor
+        inherits from both parents or none. Parents are the sample names, or ``"0"``; a
+        sequenced parent outside the task keeps its library name, so that the preset rejects
+        it."""
         members = self.members(library_name)
         samples = [self.sample(name) for name in members]
         if self.parent.effective_group_by != "related":
@@ -1339,7 +1343,38 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
                     "observed": False,
                 }
             )
-        return samples
+        return samples + self.unknown_parents(samples, by_library)
+
+    @staticmethod
+    def unknown_parents(
+        samples: list[dict[str, Any]], by_library: dict[str, str]
+    ) -> list[dict[str, Any]]:
+        """Return an unobserved parent for every sample with one parent among ``samples`` and
+        an unknown other parent, named ``<donor>.father`` or ``<donor>.mother`` and set as that
+        parent; a parent outside the samples (a sequenced one that the task leaves out) stays
+        for the preset to reject."""
+        names = {sample["library_name"] for sample in samples}
+        parents = []
+        for sample in samples:
+            father, mother = sample["father_name"], sample["mother_name"]
+            if (father in names) == (mother in names) or not {father, mother} & set(NO_PARENT):
+                continue
+            key, sex = ("mother_name", "female") if father in names else ("father_name", "male")
+            donor = by_library.get(sample["library_name"], sample["library_name"])
+            name = f"{donor}.{key.removesuffix('_name')}"
+            if name in names:
+                raise ValueError(f"{name} is a sample and the unknown {key[:-5]} of {donor}")
+            sample[key] = name
+            parents.append(
+                {
+                    "library_name": name,
+                    "sex": sex,
+                    "father_name": "0",
+                    "mother_name": "0",
+                    "observed": False,
+                }
+            )
+        return parents
 
     def purity(self, library_name: str) -> float | None:
         """The tumor purity of a library from the sample sheet column ``purity``, or ``None``"""
