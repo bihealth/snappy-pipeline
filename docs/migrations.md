@@ -52,7 +52,7 @@ The columns that are **always available**:
 | `sample_name`     | Bio-sample name                                                                |
 | `related_group`   | Germline: the pedigree's index library; cancer: the donor name                 |
 | `tissue_type`     | "tumor", "normal", or "unknown"                                                |
-| `disease_state`   | Integer disease state (0 = unaffected, 1 = affected)                           |
+| `disease_state`   | The PED phenotype: 2 = affected, 1 = unaffected, 0 = unknown                   |
 | `father_name`     | Parent library name (or "0")                                                   |
 | `mother_name`     | Parent library name (or "0")                                                   |
 | `data_set`        | Name of the library's data set in the config                                   |
