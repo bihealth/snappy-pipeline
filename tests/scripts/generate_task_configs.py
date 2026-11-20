@@ -70,6 +70,11 @@ VARIANT_FIELDS: dict[str, str] = {"gcnv_model": "intervals"}
 #: field unset. ``strandedness`` and ``panel_of_normals`` are wired per tool in build_all_tasks.
 STEP_DEPENDENCY_TASKS: dict[tuple[str, str], str | list[str] | None] = {
     ("cbioportal_export", "variants"): "variant_annotation_pvactools",
+    # The small variants and the structural variants of each pedigree
+    ("concat_variants", "variants"): [
+        "variant_calling_varlociraptor_germline",
+        "variant_calling_varlociraptor_sv",
+    ],
     ("create_proteome", "variants"): "variant_annotation_vep",
     ("gene_expression_quantification", "alignments"): "ngs_mapping_star",
     ("gene_expression_quantification", "index"): "salmon_index",

@@ -1,0 +1,1056 @@
+[
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5",
+   "tasks/concat_variants_bcftools/output/.manifest.tsv"
+  ],
+  "log": [],
+  "output": [],
+  "params": {},
+  "resources": {},
+  "rule": "all",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": "tasks/concat_variants_bcftools/benchmarks/PAT_case001subregion/PAT_case001subregion.tsv",
+  "input": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi"
+  ],
+  "log": [
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/log/PAT_case001subregion.log"
+  ],
+  "output": [
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": []
+   }
+  },
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "concat_variants_bcftools_concat_variants_bcftools_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat_variants"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/concat_variants_bcftools/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+  ],
+  "local": true,
+  "log": [],
+  "output": [
+   "tasks/concat_variants_bcftools/output/.manifest.tsv"
+  ],
+  "params": {
+   "task_dir": "tasks/concat_variants_bcftools"
+  },
+  "resources": {},
+  "rule": "concat_variants_bcftools_results",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": null
+ },
+ {
+  "benchmark": "tasks/ngs_mapping_bwa/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.mapping.tsv",
+  "input": [
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R1.fastq.gz",
+   "<project>/raw/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.R2.fastq.gz",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
+  ],
+  "log": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.mapping.log"
+  ],
+  "output": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt.md5",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt.md5"
+  ],
+  "params": {
+   "args": {
+    "aln_max_read_length": 75,
+    "bases_per_batch": 100000000,
+    "extra_arguments": [],
+    "mask_duplicates": true,
+    "memory_bam_sort": "4G",
+    "num_threads_align": 16,
+    "num_threads_bam_sort": 4,
+    "num_threads_bam_view": 4,
+    "num_threads_trimming": 8,
+    "platform": "ILLUMINA",
+    "read_groups": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "sample_name": "case001subregion-N1-DNA1-WES1",
+    "split_as_secondary": false,
+    "trim_adapters": false
+   }
+  },
+  "report": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.bamstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.flagstats.txt",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/report/bam_qc/case001subregion-N1-DNA1-WES1.bam.idxstats.txt"
+  ],
+  "resources": {
+   "mem": "73.73 GB",
+   "mem_mb": 73728,
+   "mem_mib": 70313,
+   "partition": "medium",
+   "runtime": 4320
+  },
+  "rule": "ngs_mapping_bwa_ngs_mapping_bwa_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bwa"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+  ],
+  "log": [
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.index.log"
+  ],
+  "output": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.amb",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.ann",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.bwt",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.pac",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.sa"
+  ],
+  "params": {
+   "args": {
+    "algorithm": "bwtsw",
+    "extra_arguments": []
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "reference_index_bwa_reference_index_bwa_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/bwa"
+ },
+ {
+  "benchmark": null,
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "local": true,
+  "log": [
+   "tasks/reference_index_bwa/work/reference_index/log/reference_index.common.log"
+  ],
+  "output": [
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.fai",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.dict",
+   "tasks/reference_index_bwa/work/reference_index/out/reference.fa.genome"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "2 GB",
+   "mem_mb": 2000,
+   "mem_mib": 1908,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "reference_index_bwa_reference_index_common_run",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/reference_index/common"
+ },
+ {
+  "benchmark": "tasks/sv_calling_targeted_delly2/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.call.tsv",
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.call.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "geno_qual": 5,
+     "mad_cutoff": 9,
+     "map_qual": 1,
+     "qual_tra": 20
+    },
+    "extra_arguments": []
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 2880
+  },
+  "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_call",
+  "temp": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/call"
+ },
+ {
+  "benchmark": "tasks/sv_calling_targeted_delly2/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.genotype.tsv",
+  "input": [
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf",
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf.csi"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.genotype.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "config": {
+     "geno_qual": 5,
+     "mad_cutoff": 9,
+     "map_qual": 1,
+     "qual_tra": 20
+    }
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 2880
+  },
+  "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_genotype",
+  "temp": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/genotype"
+ },
+ {
+  "benchmark": "tasks/sv_calling_targeted_delly2/benchmarks/PAT_case001subregion/PAT_case001subregion.merge_calls.tsv",
+  "input": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.call.bcf.csi"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/log/PAT_case001subregion.merge_calls.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf",
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf.csi"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_merge_calls",
+  "temp": [
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf",
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.merge_calls.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/merge_calls"
+ },
+ {
+  "benchmark": "tasks/sv_calling_targeted_delly2/benchmarks/PAT_case001subregion/PAT_case001subregion.merge_genotypes.tsv",
+  "input": [
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf",
+   "tasks/sv_calling_targeted_delly2/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.genotype.bcf.csi"
+  ],
+  "log": [
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/log/PAT_case001subregion.merge_genotypes.log"
+  ],
+  "output": [
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "sv_calling_targeted_delly2_sv_calling_targeted_delly2_merge_genotypes",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/delly2/germline/merge_genotypes"
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.gather.tsv",
+  "input": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/log/PAT_case001subregion.gather.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_gather",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.run.1-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed"
+  ],
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/log/PAT_case001subregion.run.1-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "atomize": true,
+    "extra_arguments": [],
+    "min_alternate_count": 2,
+    "min_alternate_fraction": 0.05
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
+  "temp": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "scatteritem": "1-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.run.2-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai",
+   "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
+  ],
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/log/PAT_case001subregion.run.2-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "atomize": true,
+    "extra_arguments": [],
+    "min_alternate_count": 2,
+    "min_alternate_fraction": 0.05
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_run",
+  "temp": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "scatteritem": "2-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/freebayes"
+ },
+ {
+  "benchmark": "tasks/variant_calling_freebayes_germline/benchmarks/scatter/log.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai"
+  ],
+  "local": true,
+  "log": [
+   "tasks/variant_calling_freebayes_germline/work/scatter/log.log"
+  ],
+  "output": [
+   "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed",
+   "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
+  ],
+  "params": {
+   "args": {
+    "ignore_contigs": [
+     "^HLA-",
+     "^NC_007605$",
+     "^chrEBV$",
+     "^hs37d5$",
+     "_decoy$"
+    ],
+    "padding": 0
+   }
+  },
+  "resources": {
+   "mem": "1 GB",
+   "mem_mb": 1000,
+   "mem_mib": 954,
+   "partition": "medium",
+   "runtime": 2
+  },
+  "rule": "variant_calling_freebayes_germline_variant_calling_freebayes_scatter",
+  "temp": [
+   "tasks/variant_calling_freebayes_germline/work/scatter/1-of-2.region.bed",
+   "tasks/variant_calling_freebayes_germline/work/scatter/2-of-2.region.bed"
+  ],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/split_regions"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.alignment_properties.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.alignment_properties.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_alignment_properties",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "member": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/alignment_properties"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.call.1-of-2.tsv",
+  "input": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/log/PAT_case001subregion.call.1-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "full_prior": true,
+    "obs_names": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_call",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "scatteritem": "1-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/call"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.call.2-of-2.tsv",
+  "input": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/log/PAT_case001subregion.call.2-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "full_prior": true,
+    "obs_names": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_call",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "scatteritem": "2-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/call"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.gather.tsv",
+  "input": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/log/PAT_case001subregion.gather.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_gather",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/log/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "max_depth": 200
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "member": "case001subregion-N1-DNA1-WES1",
+   "scatteritem": "1-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/log/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "max_depth": 200
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_preprocess",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "member": "case001subregion-N1-DNA1-WES1",
+   "scatteritem": "2-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_germline/benchmarks/PAT_case001subregion/PAT_case001subregion.scatter.tsv",
+  "input": [
+   "tasks/variant_calling_freebayes_germline/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/log/PAT_case001subregion.scatter.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_varlociraptor_germline_variant_calling_varlociraptor_scatter",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_germline/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/split_candidates"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_sv/benchmarks/case001subregion-N1-DNA1-WES1/case001subregion-N1-DNA1-WES1.alignment_properties.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_sv/work/case001subregion-N1-DNA1-WES1/log/case001subregion-N1-DNA1-WES1.alignment_properties.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_sv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_varlociraptor_sv_variant_calling_varlociraptor_alignment_properties",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_sv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "member": "case001subregion-N1-DNA1-WES1"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/alignment_properties"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_sv/benchmarks/PAT_case001subregion/PAT_case001subregion.call.1-of-2.tsv",
+  "input": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/log/PAT_case001subregion.call.1-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "full_prior": true,
+    "obs_names": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_sv_variant_calling_varlociraptor_call",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "scatteritem": "1-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/call"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_sv/benchmarks/PAT_case001subregion/PAT_case001subregion.call.2-of-2.tsv",
+  "input": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/log/PAT_case001subregion.call.2-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "full_prior": true,
+    "obs_names": [
+     "case001subregion-N1-DNA1-WES1"
+    ],
+    "scenario": "species:\n  heterozygosity: 0.001\n  germline-mutation-rate: 1.2e-08\n  ploidy:\n    male:\n      all: 2\n      X: 1\n      Y: 1\n    female:\n      all: 2\n      X: 2\n      Y: 0\nsamples:\n  case001subregion-N1-DNA1-WES1:\n    ploidy: 2\nevents:\n  denovo: false\n  recessive: false\n  dominant: false\n  present: case001subregion-N1-DNA1-WES1:]0.0,1.0]\n"
+   }
+  },
+  "resources": {
+   "mem": "16 GB",
+   "mem_mb": 16000,
+   "mem_mib": 15259,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_sv_variant_calling_varlociraptor_call",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "scatteritem": "2-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/call"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_sv/benchmarks/PAT_case001subregion/PAT_case001subregion.gather.tsv",
+  "input": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/1-of-2.bcf.csi",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/calls/2-of-2.bcf.csi"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/log/PAT_case001subregion.gather.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.md5",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz.tbi.md5"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_varlociraptor_sv_variant_calling_varlociraptor_gather",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/concat"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_sv/benchmarks/PAT_case001subregion/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/log/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.1-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "max_depth": 200
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_sv_variant_calling_varlociraptor_preprocess",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.1-of-2.bcf"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "member": "case001subregion-N1-DNA1-WES1",
+   "scatteritem": "1-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_sv/benchmarks/PAT_case001subregion/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.tsv",
+  "input": [
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.fa.fai",
+   "<repo>/.tests/test-workflow/resources/refs/subregion.dict",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.alignment_properties.json",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam",
+   "tasks/ngs_mapping_bwa/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.bam.bai"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/log/PAT_case001subregion.preprocess.case001subregion-N1-DNA1-WES1.2-of-2.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+  ],
+  "params": {
+   "args": {
+    "extra_arguments": [],
+    "max_depth": 200
+   }
+  },
+  "resources": {
+   "mem": "8 GB",
+   "mem_mb": 8000,
+   "mem_mib": 7630,
+   "partition": "medium",
+   "runtime": 1440
+  },
+  "rule": "variant_calling_varlociraptor_sv_variant_calling_varlociraptor_preprocess",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/observations/case001subregion-N1-DNA1-WES1.2-of-2.bcf"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion",
+   "member": "case001subregion-N1-DNA1-WES1",
+   "scatteritem": "2-of-2"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/preprocess"
+ },
+ {
+  "benchmark": "tasks/variant_calling_varlociraptor_sv/benchmarks/PAT_case001subregion/PAT_case001subregion.scatter.tsv",
+  "input": [
+   "tasks/sv_calling_targeted_delly2/work/PAT_case001subregion/out/PAT_case001subregion.vcf.gz"
+  ],
+  "log": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/log/PAT_case001subregion.scatter.log"
+  ],
+  "output": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf"
+  ],
+  "params": {},
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "variant_calling_varlociraptor_sv_variant_calling_varlociraptor_scatter",
+  "temp": [
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/1-of-2.bcf",
+   "tasks/variant_calling_varlociraptor_sv/work/PAT_case001subregion/out/PAT_case001subregion/candidates/2-of-2.bcf"
+  ],
+  "threads": 1,
+  "wildcards": {
+   "library_name": "PAT_case001subregion"
+  },
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/varlociraptor/split_candidates"
+ }
+]

@@ -2,6 +2,7 @@ from snappy_pipeline.workflows.adapter_trimming import AdapterTrimmingWorkflow
 from snappy_pipeline.workflows.alignment_processing import AlignmentProcessingWorkflow
 from snappy_pipeline.workflows.cbioportal_export import cbioportalExportWorkflow
 from snappy_pipeline.workflows.combine_variants import CombineVariantsWorkflow
+from snappy_pipeline.workflows.concat_variants import ConcatVariantsWorkflow
 from snappy_pipeline.workflows.create_proteome import CreateProteomeWorkflow
 from snappy_pipeline.workflows.gcnv_model import GcnvModelWorkflow
 from snappy_pipeline.workflows.gene_expression_quantification import (
@@ -55,6 +56,7 @@ WORKFLOW_REGISTRY = {
     "alignment_processing": AlignmentProcessingWorkflow,
     "cbioportal_export": cbioportalExportWorkflow,
     "combine_variants": CombineVariantsWorkflow,
+    "concat_variants": ConcatVariantsWorkflow,
     "create_proteome": CreateProteomeWorkflow,
     "gcnv_model": GcnvModelWorkflow,
     "gene_expression_quantification": GeneExpressionQuantificationWorkflow,

@@ -182,3 +182,12 @@ tasks:
       tool: varlociraptor
       varlociraptor:
         events: [present, denovo, recessive, dominant]
+
+  # The small variants and the structural variants of the trio in one VCF
+  - name: concat_varlociraptor
+    step: concat_variants
+    config:
+      depends_on:
+        variants: [fdr_varlociraptor, fdr_varlociraptor_sv]
+      tool: bcftools
+      bcftools: {}
