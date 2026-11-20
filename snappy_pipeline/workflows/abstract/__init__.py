@@ -370,30 +370,24 @@ class WritePedigreeStepPart(BaseStepPart):
     #: sample names of the VCFs
     individual_column = "library_name"
 
-    def _pedigrees(self, index_ngs_library: str) -> list:
-        """Return the primary DNA library rows of each pedigree to write: the pedigree of
-        ``index_ngs_library``, or of all germline pedigrees for ``whole_cohort``. Projects with
-        cancer sample sheets only get none."""
+    def _pedigrees(self, related_group: str) -> list:
+        """Return the primary DNA library rows of the pedigree ``related_group`` to write.
+        Projects with cancer sample sheets only get none."""
         df = self.parent.build_library_dataframe()
         if df.empty or df["kind"].eq("cancer").all():
             return []
-        if index_ngs_library != "whole_cohort":
-            return [self.parent.pedigree_members(index_ngs_library)]
-        dna = self.parent.primary_dna_libraries()
-        return [
-            members for _, members in dna[dna["kind"] == "germline"].groupby("pedigree", sort=False)
-        ]
+        return [self.parent.pedigree_members(related_group)]
 
     @listify
     def _get_input_files_run(self, wildcards):
         """Return the BAM files of the pedigree members."""
-        for members in self._pedigrees(wildcards.index_ngs_library):
+        for members in self._pedigrees(wildcards.related_group):
             for library_name in members["library_name"]:
                 yield self.parent.get_upstream_paths("alignments", library_name=library_name).bam
 
     def get_output_files(self, action):
         self._validate_action(action=action)
-        return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        return "work/write_pedigree.{related_group}/out/{related_group}.ped"
 
     def get_result_files(self):
         return []
@@ -410,7 +404,7 @@ class WritePedigreeStepPart(BaseStepPart):
         (2 affected, 1 unaffected, 0 unknown)."""
         sexes = {"male": "1", "female": "2"}
         with open(str(output), "w") as f:
-            for members in self._pedigrees(wildcards.index_ngs_library):
+            for members in self._pedigrees(wildcards.related_group):
                 index = self.parent.library_row(members["pedigree"].iloc[0])
                 family = "FAM_" + index["donor_name"]
                 for _, row in members.iterrows():

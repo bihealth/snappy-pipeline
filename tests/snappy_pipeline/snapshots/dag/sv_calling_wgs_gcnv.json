@@ -496,7 +496,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": null
  }

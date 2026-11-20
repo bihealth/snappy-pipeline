@@ -113,9 +113,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         return [
             path
             for key in keys
-            for path in expand(
-                outputs[key].replace("work/", "output/", 1), index_ngs_library=indexes
-            )
+            for path in expand(outputs[key].replace("work/", "output/", 1), related_group=indexes)
         ]
 
     #: VCF key to file extensions
@@ -152,7 +150,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         if self.config.merge_vcf_flag:
             yield "vcf", sorted(self._collect_vcfs(wildcards))
         else:
-            yield "vcf", [self._vcf(wildcards.index_ngs_library)]
+            yield "vcf", [self._vcf(wildcards.related_group)]
         yield from self.parent.reference_inputs().items()
 
     @dictify
@@ -160,9 +158,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         # Pedigree
         yield (
             "ped",
-            "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped".format(
-                **wildcards
-            ),
+            "work/write_pedigree.{related_group}/out/{related_group}.ped".format(**wildcards),
         )
         # Reference
         yield from self.parent.reference_inputs().items()
@@ -173,8 +169,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
             yield "exon_bed", self.parent.get_upstream_paths("exons").bed
         # VCF
         tpl = (
-            f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
-            f"{self.external_tool_prefix}{{index_ngs_library}}"
+            f"work/{self.external_tool_prefix}{{related_group}}/out/"
+            f"{self.external_tool_prefix}{{related_group}}"
         )
         for key, ext in self.vcf_key_ext_dict.items():
             yield key, tpl.format(**wildcards) + ext
@@ -182,7 +178,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     def _get_input_files_bam_qc(self, wildcards):
         # Get names of primary libraries of the selected pedigree.  The pedigree is selected
         # by the primary DNA NGS library of the index.
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
         result = {"bamstats": [], "flagstats": [], "idxstats": [], "alfred_qc": []}
         for library_name in members["library_name"]:
             tpl = f"work/{library_name}/report/bam_qc/{library_name}.bam.%s.txt"
@@ -196,8 +192,8 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def _get_output_files_gvcf_to_vcf(self):
         tpl = (
-            f"work/{self.external_tool_prefix}{{index_ngs_library}}/out/"
-            f"{self.external_tool_prefix}{{index_ngs_library}}"
+            f"work/{self.external_tool_prefix}{{related_group}}/out/"
+            f"{self.external_tool_prefix}{{related_group}}"
         )
         for key, ext in self.vcf_key_ext_dict.items():
             yield key, tpl + ext
@@ -206,9 +202,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     @dictify
     def _get_output_files_annotate(self):
-        prefix = (
-            "work/varfish_annotated.{index_ngs_library}/out/varfish_annotated.{index_ngs_library}"
-        )
+        prefix = "work/varfish_annotated.{related_group}/out/varfish_annotated.{related_group}"
         paths_work = {}
         for infix in ("gts", "db-infos"):
             key = infix.replace("-", "_")
@@ -220,22 +214,20 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
     @dictify
     def _get_output_files_bam_qc(self):
         key = "bam_qc"
-        prefix = (
-            "work/varfish_annotated.{index_ngs_library}/out/varfish_annotated.{index_ngs_library}"
-        )
+        prefix = "work/varfish_annotated.{related_group}/out/varfish_annotated.{related_group}"
         yield key, prefix + ".bam-qc.tsv.gz"
         yield key + "_md5", prefix + ".bam-qc.tsv.gz.md5"
 
     def _get_log_file(self, action):
         if action in ("gvcf_to_vcf", "merge_vcf"):
             prefix = (
-                f"work/{self.external_tool_prefix}{{index_ngs_library}}/"
-                f"log/{self.external_tool_prefix}{{index_ngs_library}}.{action}"
+                f"work/{self.external_tool_prefix}{{related_group}}/"
+                f"log/{self.external_tool_prefix}{{related_group}}.{action}"
             )
         else:
             prefix = (
-                f"work/varfish_annotated.{{index_ngs_library}}/log/"
-                f"varfish_annotated.{action}.{{index_ngs_library}}"
+                f"work/varfish_annotated.{{related_group}}/log/"
+                f"varfish_annotated.{action}.{{related_group}}"
             )
         return {"log": prefix + ".log"}
 
@@ -284,7 +276,7 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
         :return: Dictionary linking library name to identifier that should be used in output file.
         Key: library name; Value: identifier to be used in file.
         """
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
         return {
             library_name: secondary_id
             for library_name, secondary_id in zip(members["library_name"], members["secondary_id"])
@@ -292,17 +284,17 @@ class VarfishAnnotatorAnnotateStepPart(BaseStepPart):
 
     def _collect_gvcf(self, wildcards):
         """Yield the path of the index's gVCF"""
-        yield self._vcf(wildcards.index_ngs_library)
+        yield self._vcf(wildcards.related_group)
 
     def _collect_vcfs(self, wildcards):
         """Yield the paths of the VCFs of the pedigree's DNA libraries"""
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
         for library_name in members["library_name"]:
             yield self._vcf(library_name)
 
     def _collect_sample_ids(self, wildcards):
         """Yield sample ids in pedigree"""
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
         yield from members["donor_name"]
 
 

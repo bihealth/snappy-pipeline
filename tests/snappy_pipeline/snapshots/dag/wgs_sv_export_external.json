@@ -104,7 +104,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/varfish_annotator/annotate_svs"
  },
@@ -143,7 +143,7 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools/merge_vcf"
  },
@@ -161,7 +161,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": null
  }

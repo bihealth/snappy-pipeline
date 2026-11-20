@@ -57,7 +57,7 @@ _BASE_PATH_OUT = "work/{library_name}/out/{library_name}"
 
 
 class WriteTrioPedigreeStepPart(BaseStepPart):
-    """Write out trio pedigree file for primary DNA sample given the index NGS library name"""
+    """Write the trio PED of a child: the child and its sequenced parents, family ``FAM_`` and the child donor"""
 
     #: Step name
     name = "write_trio_pedigree"
@@ -69,7 +69,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
         return []
 
     def _get_output_files_run(self):
-        return "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        return "work/write_pedigree.{library_name}/out/{library_name}.ped"
 
     def run(self, wildcards, output):
         """Write out the pedigree information"""
@@ -78,7 +78,7 @@ class WriteTrioPedigreeStepPart(BaseStepPart):
         libraries = self.parent.build_library_dataframe(include_background=True).set_index(
             "library_name", drop=False
         )
-        child = libraries.loc[wildcards.index_ngs_library]
+        child = libraries.loc[wildcards.library_name]
         family = "FAM_" + child["donor_name"]
         with open(fname, "wt") as ped_file:
             for name in (child["library_name"], child["father_name"], child["mother_name"]):

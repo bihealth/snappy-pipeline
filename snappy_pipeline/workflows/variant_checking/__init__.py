@@ -68,13 +68,13 @@ class PeddyStepPart(BaseStepPart):
         return self.config
 
     result_keys = tuple(f"{key}{suffix}" for key in _OUTPUTS for suffix in ("", "_md5"))
-    entity_wildcard = "index_ngs_library"
+    entity_wildcard = "related_group"
     default_resource_usage = ResourceUsage(threads=1, runtime="10h", mem=f"{15 * 1024}MB")
 
     @dictify
     def _get_input_files_run(self, wildcards):
         """Return path to pedigree input file"""
-        index = wildcards.index_ngs_library
+        index = wildcards.related_group
         yield "ped", f"work/write_pedigree.{index}/out/{index}.ped"
 
         calling: ExpectedGermlineVariants = self.parent.get_upstream_paths(
@@ -85,7 +85,7 @@ class PeddyStepPart(BaseStepPart):
         yield "vcf_tbi", calling.vcf_tbi
 
     def _get_output_files_run(self):
-        prefix = "work/{index_ngs_library}/out/{index_ngs_library}"
+        prefix = "work/{related_group}/out/{related_group}"
         result = {}
         for key, ext in _OUTPUTS.items():
             result[key] = prefix + ext
@@ -97,7 +97,7 @@ class PeddyStepPart(BaseStepPart):
         return {}
 
     def _get_log_file_run(self):
-        return {"log": "work/{index_ngs_library}/log/snakemake.filter.log"}
+        return {"log": "work/{related_group}/log/snakemake.filter.log"}
 
 
 class PeddySummaryStepPart(QcSummaryStepPart):

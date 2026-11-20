@@ -111,14 +111,14 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     def _get_input_files_group_analysis(self, wildcards):
         yield from self.parent.reference_inputs().items()
         indiv_analysis = []
-        for library_name in self.parent.pedigrees()[wildcards.index_library_name]:
+        for library_name in self.parent.pedigrees()[wildcards.related_group]:
             indiv_analysis.append(f"work/indiv_analysis.{library_name}.{wildcards.me_type}/out")
         yield "indiv_analysis", indiv_analysis
         yield from self._melt_files("jar", "me_refs", "genes").items()
 
     @dictify
     def _get_output_files_group_analysis(self):
-        infix = "group_analysis.{index_library_name}.{me_type}"
+        infix = "group_analysis.{related_group}.{me_type}"
         # Genotype and MakeVCF read the sites to genotype
         yield "pre_geno", f"work/{infix}/out/{{me_type}}.pre_geno.tsv"
         exts = (
@@ -133,12 +133,12 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_log_file_group_analysis(self):
         yield from self._get_log_file_with_prefix(
-            "work/group_analysis.{index_library_name}.{me_type}/log/{index_library_name}.{me_type}"
+            "work/group_analysis.{related_group}.{me_type}/log/{related_group}.{me_type}"
         ).items()
 
     def _pre_geno(self, wildcards) -> str:
         """The sites of GroupAnalysis, which Genotype and MakeVCF find in its directory (``-p``)"""
-        infix = f"group_analysis.{wildcards.index_library_name}.{wildcards.me_type}"
+        infix = f"group_analysis.{wildcards.related_group}.{wildcards.me_type}"
         return f"work/{infix}/out/{wildcards.me_type}.pre_geno.tsv"
 
     @dictify
@@ -154,22 +154,22 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
 
     @dictify
     def _get_output_files_genotype(self):
-        infix = "genotype.{index_library_name}.{me_type}"
+        infix = "genotype.{related_group}.{me_type}"
         yield "tsv", f"work/{infix}/out/{{library_name}}.{{me_type}}.tsv"
 
     @dictify
     def _get_log_file_genotype(self):
         yield from self._get_log_file_with_prefix(
-            "work/genotype.{index_library_name}.{me_type}/log/{library_name}.{me_type}"
+            "work/genotype.{related_group}.{me_type}/log/{library_name}.{me_type}"
         ).items()
 
     @dictify
     def _get_input_files_make_vcf(self, wildcards):
         yield "pre_geno", self._pre_geno(wildcards)
-        infix = f"genotype.{wildcards.index_library_name}.{wildcards.me_type}"
+        infix = f"genotype.{wildcards.related_group}.{wildcards.me_type}"
         paths = [
             f"work/{infix}/out/{library_name}.{wildcards.me_type}.tsv"
-            for library_name in self.parent.pedigrees()[wildcards.index_library_name]
+            for library_name in self.parent.pedigrees()[wildcards.related_group]
         ]
         yield "genotype", paths
         yield from self.parent.reference_inputs().items()
@@ -178,15 +178,15 @@ class MeltStepPart(SvCallingGetResultFilesMixin, BaseStepPart):
     @dictify
     def _get_log_file_make_vcf(self):
         yield from self._get_log_file_with_prefix(
-            "work/make_vcf.{index_library_name}.{me_type}/log/{index_library_name}.{me_type}"
+            "work/make_vcf.{related_group}.{me_type}/log/{related_group}.{me_type}"
         ).items()
 
     @dictify
     def _get_output_files_make_vcf(self):
-        out_dir = "work/make_vcf.{index_library_name}.{me_type}/out"
+        out_dir = "work/make_vcf.{related_group}.{me_type}/out"
         yield "list_txt", f"{out_dir}/list.txt"
-        yield "vcf", f"{out_dir}/{{index_library_name}}.{{me_type}}.final_comp.vcf.gz"
-        yield "vcf_tbi", f"{out_dir}/{{index_library_name}}.{{me_type}}.final_comp.vcf.gz.tbi"
+        yield "vcf", f"{out_dir}/{{related_group}}.{{me_type}}.final_comp.vcf.gz"
+        yield "vcf_tbi", f"{out_dir}/{{related_group}}.{{me_type}}.final_comp.vcf.gz.tbi"
 
     @dictify
     def _get_input_files_merge_vcf(self, wildcards):

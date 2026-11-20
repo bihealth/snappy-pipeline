@@ -329,7 +329,7 @@ elif tool == "melt":
         benchmark:
             wf.get_benchmark_file("melt", "group_analysis")
         wildcard_constraints:
-            index_library_name=RE_NO_DOT,
+            related_group=RE_NO_DOT,
             me_type=RE_NO_DOT,
         threads: wf.get_resource("melt", "group_analysis", "threads")
         resources:
@@ -351,7 +351,7 @@ elif tool == "melt":
         benchmark:
             wf.get_benchmark_file("melt", "genotype")
         wildcard_constraints:
-            index_library_name=RE_NO_DOT,
+            related_group=RE_NO_DOT,
             me_type=RE_NO_DOT,
         threads: wf.get_resource("melt", "genotype", "threads")
         resources:
@@ -373,7 +373,7 @@ elif tool == "melt":
         benchmark:
             wf.get_benchmark_file("melt", "make_vcf")
         wildcard_constraints:
-            index_library_name=RE_NO_DOT,
+            related_group=RE_NO_DOT,
         threads: wf.get_resource("melt", "make_vcf", "threads")
         resources:
             runtime=wf.get_resource("melt", "make_vcf", "runtime"),

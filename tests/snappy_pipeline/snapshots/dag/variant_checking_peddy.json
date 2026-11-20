@@ -526,7 +526,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_ngs_library": "case001subregion-T1-DNA1-WES1"
+   "related_group": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/peddy/run"
  },
@@ -587,7 +587,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_ngs_library": "case001subregion-T1-DNA1-WES1"
+   "related_group": "case001subregion-T1-DNA1-WES1"
   },
   "wrapper": null
  }

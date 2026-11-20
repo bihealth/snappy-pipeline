@@ -603,17 +603,17 @@ class Gatk4HaplotypeCallerGvcfStepPart(GatkCallerStepPartBase):
 
 
 class ReportStepPart(BaseStepPart):
-    """Base class for the reports on the called variants, one per index library (and donor)"""
+    """Base class for the reports on the called variants, one per entity (and donor)"""
 
     actions = ("run",)
 
-    entity_wildcard = "index_library_name"
+    entity_wildcard = "library_name"
 
     #: Whether we generate per-donor files.
     report_per_donor: bool
 
     def _get_log_file(self, action: str) -> SnakemakeDict:
-        token = "{index_library_name}"
+        token = "{library_name}"
         donor = "{donor_library_name}." if self.report_per_donor else ""
         return {"log": f"work/{token}/log/{token}.{donor}{self.name}_{action}.log"}
 
@@ -647,16 +647,13 @@ class BcftoolsStatsStepPart(ReportStepPart):
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
+            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
         )
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        base_path = (
-            "work/{index_library_name}/report/bcftools_stats/"
-            "{index_library_name}.{donor_library_name}"
-        )
+        base_path = "work/{library_name}/report/bcftools_stats/{library_name}.{donor_library_name}"
         work_files = {key: f"{base_path}{ext}" for key, ext in ext_names.items()}
         yield from work_files.items()
 
@@ -694,18 +691,18 @@ class BcftoolsRohStepPart(ReportStepPart):
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
+            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
         )
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
         if self.parent.config.depends_on.kits:
-            kit = self.parent.common_kit("kits", self.vcf_libraries(wildcards.index_library_name))
+            kit = self.parent.common_kit("kits", self.vcf_libraries(wildcards.library_name))
             yield "path_targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
 
-    def vcf_libraries(self, index_library_name: str) -> list[str]:
-        """Return the libraries in the VCF of the index library."""
+    def vcf_libraries(self, library_name: str) -> list[str]:
+        """Return the libraries in the VCF of the entity."""
         if self.parent.effective_group_by == "library":
-            return [index_library_name]
-        return self.parent.get_related_libraries(index_library_name)
+            return [library_name]
+        return self.parent.get_related_libraries(library_name)
 
     def _get_params_run(self, wildcards):
         return {
@@ -720,7 +717,7 @@ class BcftoolsRohStepPart(ReportStepPart):
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
         ext_names = {"txt": ".txt", "txt_md5": ".txt.md5"}
-        base_path = "work/{index_library_name}/report/roh/{index_library_name}"
+        base_path = "work/{library_name}/report/roh/{library_name}"
         for key, ext in ext_names.items():
             yield key, f"{base_path}{ext}"
 
@@ -745,15 +742,13 @@ class BafFileGenerationStepPart(ReportStepPart):
     def _get_input_files_run(self, wildcards) -> SnakemakeDictItemsGenerator:
         yield (
             "vcf",
-            "work/{index_library_name}/out/{index_library_name}.vcf.gz".format(**wildcards),
+            "work/{library_name}/out/{library_name}.vcf.gz".format(**wildcards),
         )
         yield "reference_index", self.parent.get_upstream_paths("reference").fai
 
     @dictify
     def _get_output_files_run(self) -> SnakemakeDictItemsGenerator:
-        base_path = (
-            "{index_library_name}/report/baf/{index_library_name}.{donor_library_name,[^\\.]+}.baf"
-        )
+        base_path = "{library_name}/report/baf/{library_name}.{donor_library_name,[^\\.]+}.baf"
         ext_names = {"bw": ".bw", "bw_md5": ".bw.md5"}
         work_files = {}
         for key, ext in ext_names.items():
@@ -1641,10 +1636,8 @@ class VariantCallingWorkflow(BaseStep):
             and self.config.bcftools_roh
             and self.config.bcftools_roh.enabled
         ):
-            for index_library_name in self.output_entities:
-                self.common_kit(
-                    "kits", self.sub_steps["bcftools_roh"].vcf_libraries(index_library_name)
-                )
+            for library_name in self.output_entities:
+                self.common_kit("kits", self.sub_steps["bcftools_roh"].vcf_libraries(library_name))
         if self.config.tool == Tool.freebayes and self.config.depends_on.kits:
             # The candidates of an entity are restricted to the targets of its libraries' kit
             for library_name in self.output_entities:

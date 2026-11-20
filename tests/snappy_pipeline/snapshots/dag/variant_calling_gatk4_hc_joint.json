@@ -353,7 +353,7 @@
   "threads": 1,
   "wildcards": {
    "donor_library_name": "case001subregion-N1-DNA1-WES1",
-   "index_library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools_stats/run"
  },
@@ -390,7 +390,7 @@
   "threads": 1,
   "wildcards": {
    "donor_library_name": "case001subregionFather-N1-DNA1-WES1",
-   "index_library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools_stats/run"
  },
@@ -427,7 +427,7 @@
   "threads": 1,
   "wildcards": {
    "donor_library_name": "case001subregionMother-N1-DNA1-WES1",
-   "index_library_name": "case001subregion-N1-DNA1-WES1"
+   "library_name": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/bcftools_stats/run"
  },
@@ -551,7 +551,7 @@
   "temp": [],
   "threads": 1,
   "wildcards": {
-   "index_ngs_library": "case001subregion-N1-DNA1-WES1"
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": null
  }

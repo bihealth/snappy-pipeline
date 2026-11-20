@@ -156,8 +156,6 @@ elif tool == "popdel":
             **wf.get_log_file("popdel", "profile"),
         benchmark:
             wf.get_benchmark_file("popdel", "profile")
-        wildcard_constraints:
-            index_ngs_library=RE_BETWEEN_DOTS,
         threads: wf.get_resource("popdel", "profile", "threads")
         resources:
             runtime=wf.get_resource("popdel", "profile", "runtime"),
@@ -220,8 +218,6 @@ elif tool == "popdel":
             **wf.get_log_file("popdel", "reorder_vcf"),
         benchmark:
             wf.get_benchmark_file("popdel", "reorder_vcf")
-        wildcard_constraints:
-            index_ngs_library=RE_BETWEEN_DOTS,
         threads: wf.get_resource("popdel", "reorder_vcf", "threads")
         resources:
             runtime=wf.get_resource("popdel", "reorder_vcf", "runtime"),
@@ -289,7 +285,7 @@ elif tool == "melt":
         benchmark:
             wf.get_benchmark_file("melt", "group_analysis")
         wildcard_constraints:
-            index_library_name=RE_BETWEEN_DOTS,
+            related_group=RE_BETWEEN_DOTS,
             me_type=RE_BETWEEN_DOTS,
         threads: wf.get_resource("melt", "group_analysis", "threads")
         resources:
@@ -311,7 +307,7 @@ elif tool == "melt":
         benchmark:
             wf.get_benchmark_file("melt", "genotype")
         wildcard_constraints:
-            index_library_name=RE_BETWEEN_DOTS,
+            related_group=RE_BETWEEN_DOTS,
             me_type=RE_BETWEEN_DOTS,
         threads: wf.get_resource("melt", "genotype", "threads")
         resources:
@@ -333,7 +329,7 @@ elif tool == "melt":
         benchmark:
             wf.get_benchmark_file("melt", "make_vcf")
         wildcard_constraints:
-            index_library_name=RE_BETWEEN_DOTS,
+            related_group=RE_BETWEEN_DOTS,
         threads: wf.get_resource("melt", "make_vcf", "threads")
         resources:
             runtime=wf.get_resource("melt", "make_vcf", "runtime"),

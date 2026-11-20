@@ -52,7 +52,7 @@ def _write(part_class, step, tmp_path) -> list[str]:
     part.parent = step
     index = step.primary_dna_libraries()["pedigree"].iloc[0]
     output = tmp_path / "pedigree.ped"
-    part.run(SimpleNamespace(index_ngs_library=index), str(output))
+    part.run(SimpleNamespace(related_group=index), str(output))
     return output.read_text().splitlines()
 
 

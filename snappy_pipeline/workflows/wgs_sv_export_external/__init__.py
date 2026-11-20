@@ -63,13 +63,13 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         if self.config.merge_vcf_flag:
             yield "vcf", sorted(self._collect_vcfs(wildcards))
         else:
-            yield "vcf", [self._vcf(wildcards.index_ngs_library)]
+            yield "vcf", [self._vcf(wildcards.related_group)]
 
     @dictify
     def _get_input_files_annotate(self, wildcards):
         """"""
         # Pedigree
-        tpl = "work/write_pedigree.{index_ngs_library}/out/{index_ngs_library}.ped"
+        tpl = "work/write_pedigree.{related_group}/out/{related_group}.ped"
         yield "ped", tpl.format(**wildcards)
         # Reference
         yield from self.parent.reference_inputs().items()
@@ -77,21 +77,19 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         yield "refseq_ser", self.config.path_refseq_ser
         yield "ensembl_ser", self.config.path_ensembl_ser
         # VCF
-        tpl = "work/{index_ngs_library}/out/{index_ngs_library}"
+        tpl = "work/{related_group}/out/{related_group}"
         for key, ext in KEY_EXT.items():
             yield key, tpl.format(**wildcards) + ext
 
     @dictify
     def _get_output_files_merge_vcf(self):
-        tpl = "work/{index_ngs_library}/out/{index_ngs_library}"
+        tpl = "work/{related_group}/out/{related_group}"
         for key, ext in KEY_EXT.items():
             yield key, tpl + ext
 
     @dictify
     def _get_output_files_annotate(self):
-        prefix = (
-            "work/varfish_annotated.{index_ngs_library}/out/varfish_annotated.{index_ngs_library}"
-        )
+        prefix = "work/varfish_annotated.{related_group}/out/varfish_annotated.{related_group}"
         for infix in INFIXES:
             key = infix.replace("-", "_")
             yield key, prefix + f".{infix}.tsv.gz"
@@ -103,22 +101,21 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
         return [
             path
             for tpl in self.get_output_files("annotate").values()
-            for path in expand(tpl.replace("work/", "output/", 1), index_ngs_library=indexes)
+            for path in expand(tpl.replace("work/", "output/", 1), related_group=indexes)
         ]
 
     @dictify
     def _get_log_file_merge_vcf(self):
         yield (
             "log",
-            "work/{index_ngs_library}/log/{index_ngs_library}.merge_vcf.log",
+            "work/{related_group}/log/{related_group}.merge_vcf.log",
         )
 
     @dictify
     def _get_log_file_annotate(self):
         yield (
             "log",
-            "work/varfish_annotated.{index_ngs_library}/log/"
-            "varfish_annotated.{index_ngs_library}.log",
+            "work/varfish_annotated.{related_group}/log/varfish_annotated.{related_group}.log",
         )
 
     resource_usage = {
@@ -148,13 +145,13 @@ class VarfishAnnotatorExternalStepPart(BaseStepPart):
 
     def _collect_vcfs(self, wildcards):
         """Yield the paths of the VCFs of the pedigree's DNA libraries"""
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
         for library_name in members["library_name"]:
             yield self._vcf(library_name)
 
     def _collect_sample_ids(self, wildcards):
         """Yield sample ids in pedigree"""
-        members = self.parent.pedigree_members(wildcards.index_ngs_library, include_background=True)
+        members = self.parent.pedigree_members(wildcards.related_group, include_background=True)
         yield from members["donor_name"]
 
 

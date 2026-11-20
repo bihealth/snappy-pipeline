@@ -211,9 +211,9 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
    "library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "ALU"
+   "me_type": "ALU",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/genotype"
  },
@@ -256,9 +256,9 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
    "library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "LINE1"
+   "me_type": "LINE1",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/genotype"
  },
@@ -301,9 +301,9 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
    "library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "SVA"
+   "me_type": "SVA",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/genotype"
  },
@@ -349,8 +349,8 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "ALU"
+   "me_type": "ALU",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/group_analysis"
  },
@@ -396,8 +396,8 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "LINE1"
+   "me_type": "LINE1",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/group_analysis"
  },
@@ -443,8 +443,8 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "SVA"
+   "me_type": "SVA",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/group_analysis"
  },
@@ -644,8 +644,8 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "ALU"
+   "me_type": "ALU",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/make_vcf"
  },
@@ -689,8 +689,8 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "LINE1"
+   "me_type": "LINE1",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/make_vcf"
  },
@@ -734,8 +734,8 @@
   ],
   "threads": 1,
   "wildcards": {
-   "index_library_name": "case001subregion-N1-DNA1-WES1",
-   "me_type": "SVA"
+   "me_type": "SVA",
+   "related_group": "case001subregion-N1-DNA1-WES1"
   },
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/melt/make_vcf"
  },
