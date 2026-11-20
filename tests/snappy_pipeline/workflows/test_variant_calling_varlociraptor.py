@@ -94,7 +94,7 @@ def test_the_affected_status_adds_disjoint_recessive_and_dominant_events():
     scenario = germline_scenario([child, sibling, father, mother], SPECIES)
 
     assert scenario["expressions"] == {
-        "recessive_pattern": "child-DNA1:1.0 & sibling-DNA1:1.0 & father-DNA1:[0.0,1.0[",
+        "recessive_pattern": "child-DNA1:1.0 & sibling-DNA1:1.0 & !father-DNA1:1.0",
         "dominant_pattern": "child-DNA1:]0.0,1.0] & sibling-DNA1:]0.0,1.0] & father-DNA1:0.0",
     }
     assert scenario["events"]["recessive"] == "$recessive_pattern & !$denovo"

@@ -47,7 +47,7 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
     The events partition the configurations in which an observed member carries the variant, by the sheet's ``isAffected``.
     ``disease_state`` 2 is affected, 1 unaffected, anything else unknown, which constrains nothing.
     ``denovo``: an observed child carries a variant that its parents do not.
-    ``recessive``: every affected member is homozygous, no unaffected member is.
+    ``recessive``: every affected member is homozygous, no unaffected member is (``!member:1.0``).
     ``dominant``: every affected member carries the variant, no unaffected member does.
     ``present``: the rest.
     Each event excludes the ones before it, so they are disjoint.
@@ -116,8 +116,10 @@ def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) ->
         # The literal false may not be negated, so the other events leave it out
         events["denovo"] = False
     if affected:
+        # "not homozygous" as a negated atom: varlociraptor 8.12.1 mishandles an interval that
+        # holds 0.0 and 0.5, such as [0.0,1.0[, and the negation holds on every ploidy
         expressions["recessive_pattern"] = " & ".join(
-            [f"{name}:1.0" for name in affected] + [f"{name}:[0.0,1.0[" for name in unaffected]
+            [f"{name}:1.0" for name in affected] + [f"!{name}:1.0" for name in unaffected]
         )
         events["recessive"] = _excluding("$recessive_pattern", exclusions)
         exclusions.append("$recessive_pattern")
