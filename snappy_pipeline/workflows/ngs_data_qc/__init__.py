@@ -38,7 +38,7 @@ With ``alfred``, with an ``.md5`` file:
 
 - ``{library_name}/out/{library_name}.target_coverage.json.gz``
 
-With ``picard`` and ``alfred``, one job per task summarizes the files of all libraries in ``qc_summary/out/qc_summary.tsv``, one row per library (the QC summary of the notes).
+With ``picard``, ``alfred`` and ``ngs_chew``, one job per task summarizes the files of all libraries in ``qc_summary/out/qc_summary.tsv``, one row per library (the QC summary of the notes).
 
 Downstream tasks read the key ``done``, ``npz`` with ``ngs_chew`` or ``alfred_qc`` with ``alfred``.
 
@@ -46,10 +46,10 @@ Notes
 -----
 
 The Picard metrics are registered as Snakemake ``report()`` outputs.
-With ``picard`` and ``alfred``, the QC summary job writes ``qc_summary/out/qc_summary.tsv`` and a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows.
+With ``picard``, ``alfred`` and ``ngs_chew``, the QC summary job writes ``qc_summary/out/qc_summary.tsv`` and a site of tables and charts below ``work/qc_summary/report/html/``, which ``snappy report`` shows.
 For ``picard``, the site has one table per metrics class and a chart of each histogram (target coverage, insert size, base quality by cycle and quality distribution); the summary table joins the metrics of each library into one row, the columns prefixed with the metrics class.
 For ``alfred``, the summary table lists the mapping and coverage statistics of each library with the fraction of targets covered at least 10, 20, 30, 50 and 100 times, and the charts show the targets above a coverage, the on-target rate, the coverage and insert size distributions, the base quality by position and the GC content.
-With ``ngs_chew``, the report shows the relatedness of all pairs of libraries and the var(het) of each library.
+With ``ngs_chew``, the report shows the relatedness of all pairs of libraries and the var(het) of each library, and the fingerprint checks: one row per library with the sample sheet's sex against the sex predicted from the chrX genotypes (the sheet sex whose cohort median ratio is nearer, so the cohort needs both sexes), the sheet's father and mother against the relatedness and IBS0 rate of the pair, whether every pair of the pedigree has the relatedness the sheet implies (kinship over the pedigree, unsequenced donors included) and the libraries of other pedigrees that are related at all; a scatter chart of the libraries by chrX ratio and chrY reads colored by the sheet's sex, a scatter chart of the pairs (sheet against fingerprints) and the table of the pairs.
 Libraries of one donor have a relatedness close to 1 and those of unrelated donors close to 0, so a sample swap shows as a pair that breaks this pattern.
 A library contaminated with DNA of another person has a higher var(het) than the others.
 Fingerprints assign a sample to a patient more sensitively than HLA typing, which is matched between donor and recipient in stem-cell treatments.
@@ -310,6 +310,56 @@ class NgsChewStepPart(BaseStepPart):
         return {"log": "work/cohort/log/cohort.compare.log"}
 
 
+class NgsChewSummaryStepPart(QcSummaryStepPart):
+    """The fingerprint checks: the sheet's sex and pedigree against the ngs-chew tables"""
+
+    source = ("ngs_chew", "compare")
+    source_keys = {table: table for table in COMPARE_TABLES}
+    format = "ngs_chew"
+
+    report_outputs = {
+        "run": {
+            "html": ReportOutput(
+                "Fingerprint checks", caption="ngs_chew_summary.rst", htmlindex="index.html"
+            )
+        }
+    }
+
+    def entities(self) -> list[str]:
+        """The one comparison of the cohort."""
+        return ["cohort"]
+
+    def summary_options(self) -> dict[str, Any]:
+        """The sheet facts the checks compare with: each DNA library's donor, pedigree and sex,
+        and every donor of the pedigrees with its parents and library (``""`` if unsequenced)."""
+        table = self.parent.build_library_dataframe()
+        libraries = []
+        for library in self.parent.dna_libraries():
+            row = table[table["library_name"] == library].iloc[0]
+            libraries.append(
+                {
+                    "library": library,
+                    "donor": row["donor_name"],
+                    "pedigree": row["related_group"],
+                    "sex": row["sex"],
+                }
+            )
+        donors = []
+        for pedigree in dict.fromkeys(entry["pedigree"] for entry in libraries):
+            for row in self.parent.pedigree_donors(pedigree).itertuples(index=False):
+                donors.append(
+                    {
+                        "donor": row.donor_name,
+                        "pedigree": pedigree,
+                        "father": row.father_name,
+                        "mother": row.mother_name,
+                        "sex": row.sex,
+                        "library": row.library_name,
+                    }
+                )
+        return {"libraries": libraries, "donors": donors}
+
+
 class AlfredStepPart(BaseStepPart):
     """Coverage of the targets of each library's kit with ``alfred qc``"""
 
@@ -412,7 +462,7 @@ class NgsDataQcWorkflow(BaseStep):
         tool_to_classes = {
             "fastqc": (FastQcReportStepPart,),
             "picard": (PicardStepPart, PicardSummaryStepPart),
-            "ngs_chew": (NgsChewStepPart,),
+            "ngs_chew": (NgsChewStepPart, NgsChewSummaryStepPart),
             "alfred": (AlfredStepPart, AlfredSummaryStepPart),
         }
         self.register_sub_step_classes(tool_to_classes[self.config.tool])

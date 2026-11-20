@@ -32,6 +32,7 @@ class QcSummaryStepPart(BaseStepPart):
     ``format`` names the parser. ``report_outputs`` gives the subcategory, which titles the site,
     and the caption. ``entities`` lists the libraries that have the files, and the label of a
     file is the value of ``label_wildcard``, by default the entity.
+    ``summary_options`` adds params that the format module takes as keyword arguments.
     """
 
     name = "qc_summary"
@@ -91,11 +92,17 @@ class QcSummaryStepPart(BaseStepPart):
     def _get_log_file_run(self):
         return {"log": "work/qc_summary/log/qc_summary.log"}
 
+    def summary_options(self) -> dict[str, Any]:
+        """Further params for the format module's ``summarize``, such as the sample sheet facts
+        a check compares the files with; none by default."""
+        return {}
+
     def _get_params_run(self, wildcards: Wildcards) -> dict[str, Any]:
         return {
             "format": self.format,
             "labels": [label for label, _ in self.source_files],
             "title": self.report_outputs["run"]["html"].subcategory,
+            **self.summary_options(),
         }
 
     def get_result_files(self) -> list[str]:

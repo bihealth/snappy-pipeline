@@ -103,3 +103,96 @@ def test_the_steps_name_their_sources():
 
     assert BcftoolsStatsSummaryStepPart.label_wildcard == "donor_library_name"
     assert BcftoolsStatsSummaryStepPart.source == ("bcftools_stats", "run")
+
+
+def test_the_fingerprint_checks_pass_the_sheet_facts_as_options():
+    import pandas as pd
+
+    from snappy_pipeline.workflows.ngs_data_qc import NgsChewSummaryStepPart
+
+    part = object.__new__(NgsChewSummaryStepPart)
+    table = pd.DataFrame(
+        [
+            {
+                "library_name": "idx-N1-DNA1-WES1",
+                "donor_name": "idx",
+                "related_group": "FAM_idx",
+                "sex": "male",
+            },
+            {
+                "library_name": "mo-N1-DNA1-WES1",
+                "donor_name": "mo",
+                "related_group": "FAM_idx",
+                "sex": "female",
+            },
+        ]
+    )
+    donors = pd.DataFrame(
+        [
+            {
+                "donor_name": "fa",
+                "father_name": "0",
+                "mother_name": "0",
+                "sex": "male",
+                "library_name": "",
+            },
+            {
+                "donor_name": "mo",
+                "father_name": "0",
+                "mother_name": "0",
+                "sex": "female",
+                "library_name": "mo-N1-DNA1-WES1",
+            },
+            {
+                "donor_name": "idx",
+                "father_name": "fa",
+                "mother_name": "mo",
+                "sex": "male",
+                "library_name": "idx-N1-DNA1-WES1",
+            },
+        ]
+    )
+    part.parent = SimpleNamespace(
+        build_library_dataframe=lambda: table,
+        dna_libraries=lambda: ["idx-N1-DNA1-WES1", "mo-N1-DNA1-WES1"],
+        pedigree_donors=lambda pedigree: donors,
+        output_entities=["idx-N1-DNA1-WES1", "mo-N1-DNA1-WES1"],
+        sub_steps={},
+    )
+
+    assert NgsChewSummaryStepPart.source == ("ngs_chew", "compare")
+    assert set(NgsChewSummaryStepPart.source_keys) == {"relatedness", "ibs0", "mask", "stats"}
+    assert part.entities() == ["cohort"]
+    options = part.summary_options()
+    assert options["libraries"] == [
+        {"library": "idx-N1-DNA1-WES1", "donor": "idx", "pedigree": "FAM_idx", "sex": "male"},
+        {"library": "mo-N1-DNA1-WES1", "donor": "mo", "pedigree": "FAM_idx", "sex": "female"},
+    ]
+    assert options["donors"][0] == {
+        "donor": "fa",
+        "pedigree": "FAM_idx",
+        "father": "0",
+        "mother": "0",
+        "sex": "male",
+        "library": "",
+    }
+    assert len(options["donors"]) == 3
+
+
+def test_summary_options_reach_the_params():
+    class _WithOptions(_Summary):
+        def summary_options(self):
+            return {"libraries": [{"library": "a"}]}
+
+    part = object.__new__(_WithOptions)
+    part.parent = SimpleNamespace(
+        output_entities=["a"], sub_steps={"stats": _Source({"a": {"donor": ["a"]}})}
+    )
+    part.label_wildcard = None
+
+    assert part._get_params_run(None)["libraries"] == [{"library": "a"}]
+    assert _part(["a"], {"a": {"donor": ["a"]}})._get_params_run(None) == {
+        "format": "stats",
+        "labels": ["a"],
+        "title": "Statistics",
+    }

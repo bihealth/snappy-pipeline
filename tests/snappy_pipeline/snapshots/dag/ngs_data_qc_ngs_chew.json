@@ -14,6 +14,8 @@
    "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.mask.txt.md5",
    "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.stats.txt",
    "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.stats.txt.md5",
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/out/qc_summary.tsv.md5",
    "tasks/ngs_data_qc_ngs_chew/output/.manifest.tsv"
   ],
   "log": [],
@@ -138,6 +140,65 @@
   "wrapper": "file://<repo>/snappy_wrappers/wrappers/ngs_chew/fingerprint"
  },
  {
+  "benchmark": "tasks/ngs_data_qc_ngs_chew/benchmarks/qc_summary/qc_summary.tsv",
+  "directory": [
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/report/html"
+  ],
+  "input": [
+   "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.relatedness.txt",
+   "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.ibs0.txt",
+   "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.mask.txt",
+   "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.stats.txt"
+  ],
+  "log": [
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/log/qc_summary.log"
+  ],
+  "output": [
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/out/qc_summary.tsv.md5",
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/report/html"
+  ],
+  "params": {
+   "args": {
+    "donors": [],
+    "format": "ngs_chew",
+    "labels": [
+     "cohort"
+    ],
+    "libraries": [
+     {
+      "donor": "case001subregion",
+      "library": "case001subregion-N1-DNA1-WES1",
+      "pedigree": "PAT_case001subregion",
+      "sex": "unknown"
+     },
+     {
+      "donor": "case001subregion",
+      "library": "case001subregion-T1-DNA1-WES1",
+      "pedigree": "PAT_case001subregion",
+      "sex": "unknown"
+     }
+    ],
+    "title": "Fingerprint checks"
+   }
+  },
+  "report": [
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/report/html"
+  ],
+  "resources": {
+   "mem": "4 GB",
+   "mem_mb": 4000,
+   "mem_mib": 3815,
+   "partition": "medium",
+   "runtime": 120
+  },
+  "rule": "ngs_data_qc_ngs_chew_ngs_data_qc_qc_summary",
+  "temp": [],
+  "threads": 1,
+  "wildcards": {},
+  "wrapper": "file://<repo>/snappy_wrappers/wrappers/qc_summary"
+ },
+ {
   "benchmark": null,
   "input": [
    "tasks/ngs_data_qc_ngs_chew/work/case001subregion-N1-DNA1-WES1/out/case001subregion-N1-DNA1-WES1.npz",
@@ -151,7 +212,9 @@
    "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.mask.txt",
    "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.mask.txt.md5",
    "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.stats.txt",
-   "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.stats.txt.md5"
+   "tasks/ngs_data_qc_ngs_chew/work/cohort/out/cohort.stats.txt.md5",
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/out/qc_summary.tsv",
+   "tasks/ngs_data_qc_ngs_chew/work/qc_summary/out/qc_summary.tsv.md5"
   ],
   "local": true,
   "log": [],

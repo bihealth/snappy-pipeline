@@ -1,0 +1,1 @@
+The fingerprint checks of all libraries: the sample sheet's sex against the sex predicted from the chrX genotypes, the sheet's parents and the relatedness of every pair of a pedigree against the fingerprints, and the pairs across pedigrees that are related at all.

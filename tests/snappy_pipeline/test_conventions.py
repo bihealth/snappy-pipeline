@@ -436,6 +436,7 @@ def test_wrappers_get_the_params_they_read():
 
 #: Wrappers that read their params in a way ``test_wrappers_read_the_params_they_get`` does not see
 WRAPPERS_READING_PARAMS_DYNAMICALLY = {
+    "qc_summary": "passes the other params to the format module as its options",
     "cbioportal/case_lists": "iterates over its params (cbioportal is postponed)",
     "cbioportal/meta_files": "iterates over its params (cbioportal is postponed)",
     "varfish_annotator/annotate_svs": "varfish export, left for later",
