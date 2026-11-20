@@ -676,12 +676,10 @@ class BcftoolsRohStepPart(ReportStepPart):
         )
         yield "path_af_file", self.config.get(self.name).get("path_af_file")
         if self.parent.config.depends_on.kits:
-            kit = self.parent.common_kit("kits", self.vcf_libraries(wildcards.library_name))
+            kit = self.parent.common_kit(
+                "kits", self.parent.called_libraries(wildcards.library_name)
+            )
             yield "path_targets", self.parent.get_upstream_paths("kits", library_kit=kit).targets
-
-    def vcf_libraries(self, library_name: str) -> list[str]:
-        """Return the libraries in the VCF of the entity."""
-        return self.parent.called_libraries(library_name)
 
     def _get_params_run(self, wildcards):
         return {
@@ -1618,7 +1616,7 @@ class VariantCallingWorkflow(BaseStep):
             and self.config.bcftools_roh.enabled
         ):
             for library_name in self.output_entities:
-                self.common_kit("kits", self.sub_steps["bcftools_roh"].vcf_libraries(library_name))
+                self.common_kit("kits", self.called_libraries(library_name))
         if self.config.tool == Tool.freebayes and self.config.depends_on.kits:
             # The candidates of an entity are restricted to the targets of its libraries' kit
             for library_name in self.output_entities:

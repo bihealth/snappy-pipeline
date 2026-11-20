@@ -20,7 +20,6 @@ ROWS = {
     "P2-T1-DNA1": {"library_name": "P2-T1-DNA1", "matched_normal_lib": ""},
 }
 PRIMARY_DNA = pd.DataFrame({"library_name": ["child-DNA1", "father-DNA1", "mother-DNA1"]})
-RELATED = ["father-DNA1", "child-DNA1", "mother-DNA1", "child-RNA1"]
 
 
 def _alignments(field, **kwargs):
@@ -40,7 +39,6 @@ def _part(group_by="library", kits="", **settings):
     part.parent = SimpleNamespace(
         effective_group_by=group_by,
         primary_dna_libraries=lambda: PRIMARY_DNA,
-        get_related_libraries=lambda name: RELATED,
         member_libraries=lambda name: PRIMARY_DNA["library_name"].tolist(),
         primary_library=lambda name: name,
         library_row=lambda name: ROWS[name],

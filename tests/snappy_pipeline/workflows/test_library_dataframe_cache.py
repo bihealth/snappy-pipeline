@@ -26,6 +26,7 @@ def _library_dataframe():
             "role": ["index", "father", "index"],
             "is_primary": [True, False, True],
             "related_group": ["family1", "family1", "family2"],
+            "donor_name": ["index", "father", "single"],
         }
     )
 
@@ -53,14 +54,14 @@ def test_library_dataframe_is_built_once(mocker):
     for _ in range(3):
         step.build_library_dataframe()
         assert step.output_entities == ["family1", "family2"]
-        assert step.related_libraries == {
+        assert step.pedigrees() == {
             "family1": ["index-DNA1", "father-DNA1"],
             "family2": ["single-DNA1"],
         }
-        assert step.get_related_libraries("family1") == ["index-DNA1", "father-DNA1"]
+        assert step.member_libraries("family1") == ["index-DNA1", "father-DNA1"]
         assert step.primary_library("family1") == "index-DNA1"
         with pytest.raises(ValueError, match="'father-DNA1' is no entity of task 'dummy'"):
-            step.get_related_libraries("father-DNA1")
+            step.member_libraries("father-DNA1")
 
     assert build.call_count == 1
 
@@ -143,7 +144,6 @@ def test_a_joint_call_takes_one_dna_library_per_donor_the_index_first(mocker):
     )
     mocker.patch.object(abstract, "build_library_dataframe", return_value=df)
     step = _make_step()
-    assert step.get_related_libraries("FAM_index") == df["library_name"].tolist()[:4]
     assert step.pedigrees() == {"FAM_index": ["father-DNA1", "index-DNA1"]}
     assert step.member_libraries("FAM_index") == ["index-DNA1", "father-DNA1"]
     # A cancer donor without a normal stands for its primary tumor

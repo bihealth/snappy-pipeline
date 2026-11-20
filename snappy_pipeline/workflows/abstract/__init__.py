@@ -370,20 +370,17 @@ class WritePedigreeStepPart(BaseStepPart):
     #: sample names of the VCFs
     individual_column = "library_name"
 
-    def _pedigrees(self, related_group: str) -> list:
-        """Return the primary DNA library rows of the pedigree ``related_group`` to write.
-        Projects with cancer sample sheets only get none."""
+    def _members(self, related_group: str):
+        """Return the primary DNA library rows of the pedigree ``related_group``; none in projects with cancer sample sheets only."""
+        members = self.parent.pedigree_members(related_group)
         df = self.parent.build_library_dataframe()
-        if df.empty or df["kind"].eq("cancer").all():
-            return []
-        return [self.parent.pedigree_members(related_group)]
+        return members.iloc[0:0] if df.empty or df["kind"].eq("cancer").all() else members
 
     @listify
     def _get_input_files_run(self, wildcards):
         """Return the BAM files of the pedigree members."""
-        for members in self._pedigrees(wildcards.related_group):
-            for library_name in members["library_name"]:
-                yield self.parent.get_upstream_paths("alignments", library_name=library_name).bam
+        for library_name in self._members(wildcards.related_group)["library_name"]:
+            yield self.parent.get_upstream_paths("alignments", library_name=library_name).bam
 
     def get_output_files(self, action):
         self._validate_action(action=action)
@@ -403,17 +400,16 @@ class WritePedigreeStepPart(BaseStepPart):
         The family is the pedigree's name, ``FAM_`` and the index donor on a germline sheet without a family id."""
         sexes = {"male": "1", "female": "2"}
         with open(str(output), "w") as f:
-            for members in self._pedigrees(wildcards.related_group):
-                for _, row in members.iterrows():
-                    fields = (
-                        wildcards.related_group,
-                        self._individual(row["library_name"]),
-                        self._individual(row["father_name"]),
-                        self._individual(row["mother_name"]),
-                        sexes.get(str(row["sex"]).lower(), "0"),
-                        str(row["disease_state"]),
-                    )
-                    print("\t".join(fields), file=f)
+            for _, row in self._members(wildcards.related_group).iterrows():
+                fields = (
+                    wildcards.related_group,
+                    self._individual(row["library_name"]),
+                    self._individual(row["father_name"]),
+                    self._individual(row["mother_name"]),
+                    sexes.get(str(row["sex"]).lower(), "0"),
+                    str(row["disease_state"]),
+                )
+                print("\t".join(fields), file=f)
 
 
 class WritePedigreeSampleNameStepPart(WritePedigreeStepPart):
@@ -1006,29 +1002,6 @@ class BaseStep:
                 f"{self.effective_group_by}: {', '.join(self._entity_libraries)}"
             )
         return self._entity_libraries[entity]
-
-    @cached_property
-    def related_libraries(self) -> dict[str, list[str]]:
-        """``related_group`` -> the names of its libraries. Members are inputs of the task's entities,
-        not entities themselves, so only an explicit ``library_selection`` restricts them, not
-        the default."""
-        df = self.build_library_dataframe(include_background=self.background_results)
-        if selection := getattr(self.config, "library_selection", None):
-            df = _query_libraries(df, selection)
-        _check_groups(df)
-        return libraries_by_related_group(df)
-
-    def get_related_libraries(self, entity: str) -> list[str]:
-        """Return the names of the libraries of an entity of this task: the members of its related group with ``group_by: related``, else the library itself.
-        Raises ``ValueError`` for a name that is no related group, such as a library behind a task that writes one result per related group."""
-        if self.effective_group_by != "related":
-            return [entity]
-        if entity not in self.related_libraries:
-            raise ValueError(
-                f"{entity!r} is no entity of task {self.task_name!r}, which writes one result per "
-                f"related group: {', '.join(self.related_libraries)}"
-            )
-        return self.related_libraries[entity]
 
     def member_libraries(self, entity: str) -> list[str]:
         """Return the libraries that an entity of this task stands for in a joint result: with ``group_by: related`` the pedigree members of its related group (one DNA library per donor, the index first), else the library itself.
@@ -1820,7 +1793,7 @@ def build_library_dataframe(
 
         extra_columns = _library_extra_columns(_raw_sheet) if _raw_sheet is not None else {}
 
-        sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
+        sheet_type = _sheet_type(info)
 
         # ── matched_cancer ───────────────────────────────────────────────────
         if sheet_type == "matched_cancer":
@@ -2061,6 +2034,11 @@ def _donor_name(donor) -> str:
     return getattr(getattr(donor, "bio_entity", None), "name", None) or donor.name
 
 
+# ---------------------------------------------------------------------------
+# Related groups: their names, entities and libraries
+# ---------------------------------------------------------------------------
+
+
 #: The custom field that names a family on germline sheets, such as those of ``snappy pull-sheet``
 FAMILY_FIELD = "familyId"
 
@@ -2115,6 +2093,39 @@ def _family_name(info, pedigree) -> str:
     return values.pop() if values else _group_prefix(info) + index
 
 
+def entity_libraries(df, group_by: str | None) -> dict[str, str]:
+    """Return the output entities of the libraries ``df`` with their primary library.
+    With ``group_by == "related"`` each ``related_group`` is an entity, named like the group, and its primary library is the ``is_primary`` row, else the first one; otherwise every library is an entity of its own."""
+    if df.empty:
+        return {}
+    if group_by == "related":
+        entities = {}
+        for name, group in df.groupby("related_group"):
+            primary = group[group["is_primary"]]
+            entities[name] = (primary if not primary.empty else group).iloc[0]["library_name"]
+        return entities
+    return {name: name for name in df["library_name"].unique()}
+
+
+def _check_groups(df) -> None:
+    """Raise ``ConfigError`` for a related group whose libraries ``df`` span several data sets,
+    since the group's files are named after it."""
+    if df.empty or not {"related_group", "data_set"} <= set(df.columns):
+        return
+    data_sets = df.groupby("related_group")["data_set"].agg(lambda names: sorted(set(names)))
+    if colliding := {name: sets for name, sets in data_sets.items() if len(sets) > 1}:
+        names = ", ".join(f"{name} ({', '.join(sets)})" for name, sets in colliding.items())
+        first_data_set = next(iter(colliding.values()))[0]
+        raise ConfigError(
+            f"related groups of the same name in several data sets: {names}. A task names the "
+            "files of a related group after it, so it can only take one group of a name. A family "
+            "sequenced in batches belongs into one sheet: one data set, whose search_paths list "
+            "the folders of all batches. For unrelated groups, select the libraries of one data "
+            f'set with library_selection, for example library_selection: "data_set == '
+            f"'{first_data_set}'\", or use one task per data set."
+        )
+
+
 def build_donor_dataframe(data_set_infos, sheets, include_background=False):
     """Build a DataFrame with one row per donor of the germline sample sheets, sequenced or
     not: the parents as donor names (``"0"`` for none), ``sex``, the donor's primary DNA
@@ -2126,7 +2137,7 @@ def build_donor_dataframe(data_set_infos, sheets, include_background=False):
     for info, raw_sheet in zip(data_set_infos, sheets):
         if info.is_background and not include_background:
             continue
-        sheet_type = getattr(info, "sheet_type", "") or str(getattr(info, "type", ""))
+        sheet_type = _sheet_type(info)
         if sheet_type == "matched_cancer" or raw_sheet is None:
             continue
         germline_sheet = _germline_case_sheet(info, raw_sheet)
@@ -2281,25 +2292,6 @@ def _colliding_libraries(df) -> dict[str, list[str]]:
     return {name: list(group["data_set"]) for name, group in duplicated.groupby("library_name")}
 
 
-def _check_groups(df) -> None:
-    """Raise ``ConfigError`` for a related group whose libraries ``df`` span several data sets,
-    since the group's files are named after it."""
-    if df.empty or not {"related_group", "data_set"} <= set(df.columns):
-        return
-    data_sets = df.groupby("related_group")["data_set"].agg(lambda names: sorted(set(names)))
-    if colliding := {name: sets for name, sets in data_sets.items() if len(sets) > 1}:
-        names = ", ".join(f"{name} ({', '.join(sets)})" for name, sets in colliding.items())
-        first_data_set = next(iter(colliding.values()))[0]
-        raise ConfigError(
-            f"related groups of the same name in several data sets: {names}. A task names the "
-            "files of a related group after it, so it can only take one group of a name. A family "
-            "sequenced in batches belongs into one sheet: one data set, whose search_paths list "
-            "the folders of all batches. For unrelated groups, select the libraries of one data "
-            f'set with library_selection, for example library_selection: "data_set == '
-            f"'{first_data_set}'\", or use one task per data set."
-        )
-
-
 def colliding_libraries_message(colliding: dict[str, list[str]]) -> str:
     """Return the error for libraries of the same name from several data sets, with the fix."""
     names = ", ".join(f"{name} ({', '.join(data_sets)})" for name, data_sets in colliding.items())
@@ -2310,44 +2302,3 @@ def colliding_libraries_message(colliding: dict[str, list[str]]) -> str:
         f'set with library_selection, for example library_selection: "data_set == '
         f"'{first_data_set}'\", or use one task per data set."
     )
-
-
-def entity_libraries(df, group_by: str | None) -> dict[str, str]:
-    """Return the output entities of the libraries ``df`` with their primary library.
-    With ``group_by == "related"`` each ``related_group`` is an entity, named like the group, and its primary library is the ``is_primary`` row, else the first one; otherwise every library is an entity of its own."""
-    if df.empty:
-        return {}
-    if group_by == "related":
-        entities = {}
-        for name, group in df.groupby("related_group"):
-            primary = group[group["is_primary"]]
-            entities[name] = (primary if not primary.empty else group).iloc[0]["library_name"]
-        return entities
-    return {name: name for name in df["library_name"].unique()}
-
-
-def library_entities(df, group_by: str | None) -> list[str]:
-    """Return the output entities of the libraries ``df``, see :func:`entity_libraries`."""
-    return list(entity_libraries(df, group_by))
-
-
-def libraries_by_related_group(df) -> dict[str, list[str]]:
-    """Return ``related_group`` -> the names of its libraries in ``df``."""
-    return {name: group["library_name"].tolist() for name, group in df.groupby("related_group")}
-
-
-def output_entity_names(
-    data_set_infos, sheets, selection, group_by=None, relationships=None
-) -> list[str]:
-    """Return the output entities of the libraries that ``selection`` takes, see
-    :func:`select_libraries` and :func:`library_entities`."""
-    df = build_library_dataframe(data_set_infos, sheets, relationships=relationships)
-    return library_entities(select_libraries(df, selection), group_by)
-
-
-def related_libraries(
-    data_set_infos, sheets, selection, relationships=None
-) -> dict[str, list[str]]:
-    """Return ``related_group`` -> its libraries, restricted only by an explicit ``selection``."""
-    df = build_library_dataframe(data_set_infos, sheets, relationships=relationships)
-    return libraries_by_related_group(df if selection is None else _query_libraries(df, selection))

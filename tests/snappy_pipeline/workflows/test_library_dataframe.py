@@ -17,8 +17,7 @@ from snappy_pipeline.workflow_registry import WORKFLOW_REGISTRY
 from snappy_pipeline.workflows.abstract import (
     select_libraries,
     build_library_dataframe,
-    related_libraries,
-    output_entity_names,
+    entity_libraries,
     resolve_relationships,
 )
 
@@ -35,6 +34,20 @@ def _make_data_set_info(sheet_type="germline_variants", is_background=False):
         is_background=is_background,
         pedigree_field_kwargs=None,
     )
+
+
+def _entities(infos, sheets, selection=None, group_by=None, relationships=None):
+    """The output entities of the libraries that ``selection`` takes, as ``BaseStep.output_entities``."""
+    df = build_library_dataframe(infos, sheets, relationships=relationships)
+    return list(entity_libraries(select_libraries(df, selection), group_by))
+
+
+def _groups(infos, sheets, selection=None):
+    """``related_group`` -> the names of its libraries, restricted only by ``selection``."""
+    df = build_library_dataframe(infos, sheets)
+    if selection:
+        df = df.query(selection)
+    return {name: group["library_name"].tolist() for name, group in df.groupby("related_group")}
 
 
 def _parse_cancer_sheet(tsv_str):
@@ -661,7 +674,7 @@ class TestResolveRelationships:
 
 
 # ---------------------------------------------------------------------------
-# D. output_entity_names / related_libraries
+# D. Output entities and related groups
 # ---------------------------------------------------------------------------
 
 
@@ -669,21 +682,21 @@ class TestOutputEntityNames:
     def test_germline_trio_pedigree_grouping(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
+        entities = _entities([info], [gsheet.sheet], selection=None, group_by="related")
         # Two trios → two entities
         assert len(entities) == 2
 
     def test_germline_no_grouping(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by=None)
+        entities = _entities([info], [gsheet.sheet], selection=None, group_by=None)
         # 6 donors × 1 library each = 6 entities
         assert len(entities) == 6
 
     def test_cancer_with_library_selection(self, cancer_sheet_tsv):
         csheet = _parse_cancer_sheet(cancer_sheet_tsv)
         info = _make_data_set_info("matched_cancer")
-        entities = output_entity_names(
+        entities = _entities(
             [info],
             [csheet.sheet],
             selection="role == 'tumor' and extraction_type == 'dna'",
@@ -691,22 +704,22 @@ class TestOutputEntityNames:
         assert len(entities) > 0
 
     def test_empty_data(self):
-        entities = output_entity_names([], [], selection=None)
+        entities = _entities([], [], selection=None)
         assert entities == []
 
-    def test_related_libraries_dict(self, germline_sheet_tsv):
+    def test_related_groups_dict(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        members = related_libraries([info], [gsheet.sheet], selection=None)
+        members = _groups([info], [gsheet.sheet], selection=None)
         assert isinstance(members, dict)
         assert len(members) == 2  # Two trios
         for pedigree, libs in members.items():
             assert len(libs) == 3  # Each trio has 3 members
 
-    def test_related_libraries_with_selection(self, germline_sheet_tsv):
+    def test_related_groups_with_selection(self, germline_sheet_tsv):
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
-        members = related_libraries([info], [gsheet.sheet], selection="extraction_type == 'dna'")
+        members = _groups([info], [gsheet.sheet], selection="extraction_type == 'dna'")
         for pedigree, libs in members.items():
             assert len(libs) == 3
 
@@ -719,7 +732,7 @@ class TestOutputEntityNames:
                 target="role == 'normal' and extraction_type == 'dna'",
             )
         }
-        entities = output_entity_names(
+        entities = _entities(
             [info],
             [csheet.sheet],
             selection="role == 'tumor' and extraction_type == 'dna'",
@@ -822,8 +835,8 @@ class TestIntegrationRoundtrip:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
 
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
-        members = related_libraries([info], [gsheet.sheet], selection=None)
+        entities = _entities([info], [gsheet.sheet], selection=None, group_by="related")
+        members = _groups([info], [gsheet.sheet], selection=None)
 
         for entity in entities:
             assert members[entity], f"Entity {entity} has no pedigree members"
@@ -957,8 +970,8 @@ class TestScenarioGermlineTrio:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
 
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
-        members = related_libraries([info], [gsheet.sheet], selection=None)
+        entities = _entities([info], [gsheet.sheet], selection=None, group_by="related")
+        members = _groups([info], [gsheet.sheet], selection=None)
 
         assert len(entities) == 2
         for pedigree, libs in members.items():
@@ -968,8 +981,8 @@ class TestScenarioGermlineTrio:
         gsheet = _parse_germline_sheet(germline_sheet_tsv)
         info = _make_data_set_info("germline_variants")
 
-        entities = output_entity_names([info], [gsheet.sheet], selection=None, group_by="related")
-        members = related_libraries([info], [gsheet.sheet], selection=None)
+        entities = _entities([info], [gsheet.sheet], selection=None, group_by="related")
+        members = _groups([info], [gsheet.sheet], selection=None)
 
         # An entity is a related group with members
         for entity in entities:
@@ -1000,7 +1013,7 @@ class TestScenarioGermlineDuo:
         df = build_library_dataframe([info], [sheet])
         assert len(df) == 2
 
-        members = related_libraries([info], [sheet], selection=None)
+        members = _groups([info], [sheet], selection=None)
         assert len(members) == 1
         for pedigree, libs in members.items():
             assert len(libs) == 2
@@ -1030,7 +1043,7 @@ class TestScenarioGermlineSingleton:
         assert len(df) == 1
         assert df.iloc[0]["role"] == "index"
 
-        entities = output_entity_names([info], [sheet], selection=None, group_by=None)
+        entities = _entities([info], [sheet], selection=None, group_by=None)
         assert len(entities) == 1
 
 
@@ -1052,7 +1065,7 @@ class TestScenarioMixedCancerAndGermline:
         info_c = _make_data_set_info("matched_cancer")
         info_g = _make_data_set_info("germline_variants")
 
-        entities = output_entity_names(
+        entities = _entities(
             [info_c, info_g],
             [csheet.sheet, gsheet.sheet],
             selection=None,
@@ -1123,8 +1136,6 @@ def test_germline_sheets_list_all_libraries_with_their_pedigree():
 
 
 def test_siblings_and_grandparents_are_not_primary_so_the_index_names_the_family():
-    from snappy_pipeline.workflows.abstract import library_entities
-
     # Sheet order puts the unaffected sibling and a sibling of unknown status before the index;
     # the mother names one parent only
     tsv = textwrap.dedent("""\
@@ -1151,7 +1162,7 @@ def test_siblings_and_grandparents_are_not_primary_so_the_index_names_the_family
     }
     assert set(names[df["is_primary"]]) == {"idx"}
     family = "FAM_" + df.loc[names == "idx", "donor_name"].iloc[0]
-    assert library_entities(df, "related") == [family]
+    assert list(entity_libraries(df, "related")) == [family]
     assert set(df["related_group"]) == {family}
 
 
@@ -1210,8 +1221,6 @@ def test_the_prefix_of_a_donor_named_group_follows_the_sheet_type(cancer_sheet_t
 
 
 def test_a_donors_other_libraries_join_the_family_but_only_the_first_dna_library_is_primary():
-    from snappy_pipeline.workflows.abstract import library_entities
-
     # The index has an RNA library and a second DNA library; the mother is sequenced
     tsv = textwrap.dedent("""\
         [Data]
@@ -1229,7 +1238,7 @@ def test_a_donors_other_libraries_join_the_family_but_only_the_first_dna_library
     assert set(df["related_group"]) == {family}
     assert set(types[df["is_primary"]]) == {"WES1"}
     assert set(types[df["role"] == "index"]) == {"WES1", "WGS1", "mRNA_seq1"}
-    assert library_entities(select_libraries(df, None), "related") == [family]
+    assert list(entity_libraries(select_libraries(df, None), "related")) == [family]
 
 
 class TestLibraryRequirement:
