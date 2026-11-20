@@ -1246,8 +1246,8 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     resource_usage = {
         "scatter": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
         "alignment_properties": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
-        # The joint model grows with the samples of the pedigree: a chunk of an eight-member
-        # family with complex candidates took 14 GB
+        # The joint model grows with the samples of the pedigree.
+        # A chunk of an eight-member family with complex candidates took 14 GB.
         "preprocess": ResourceUsage(threads=1, runtime="1d", mem="8GB"),
         "call": ResourceUsage(threads=1, runtime="1d", mem="16GB"),
         "gather": ResourceUsage(threads=1, runtime="2h", mem="4GB"),
@@ -1303,14 +1303,14 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         }
 
     def pedigree_samples(self, library_name: str) -> list[dict[str, Any]]:
-        """The samples of the germline scenario of a pedigree: its observed members, the
-        unsequenced donors that connect members (a parent of two sequenced children, the
-        grandparents of cousins) as samples without observations, named after the donor, and
-        for a sample with one parent in the scenario and an unknown other parent that parent as
-        an unobserved sample named ``<donor>.father`` or ``<donor>.mother``, since varlociraptor
-        inherits from both parents or none. Parents are the sample names, or ``"0"``; a
-        sequenced parent outside the task keeps its library name, so that the preset rejects
-        it."""
+        """The samples of the germline scenario of a pedigree.
+        The observed members come first.
+        Unsequenced donors that connect members join as samples without observations,
+        named after the donor: a parent of two sequenced children, the grandparents of cousins.
+        A sample with one parent in the scenario and an unknown other parent gets an unobserved parent.
+        It is named ``<donor>.father`` or ``<donor>.mother``, since varlociraptor inherits from both parents or none.
+        Parents are the sample names, or ``"0"``.
+        A sequenced parent outside the task keeps its library name, so that the preset rejects it."""
         members = self.members(library_name)
         samples = [self.sample(name) for name in members]
         if self.parent.effective_group_by != "related":
@@ -1353,10 +1353,9 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
     def unknown_parents(
         samples: list[dict[str, Any]], by_library: dict[str, str]
     ) -> list[dict[str, Any]]:
-        """Return an unobserved parent for every sample with one parent among ``samples`` and
-        an unknown other parent, named ``<donor>.father`` or ``<donor>.mother`` and set as that
-        parent; a parent outside the samples (a sequenced one that the task leaves out) stays
-        for the preset to reject."""
+        """Return an unobserved parent for every sample with one parent among ``samples`` and an unknown other parent.
+        It is named ``<donor>.father`` or ``<donor>.mother`` and set as that parent.
+        A parent outside the samples, a sequenced one that the task leaves out, stays for the preset to reject."""
         names = {sample["library_name"] for sample in samples}
         parents = []
         for sample in samples:
@@ -1482,8 +1481,8 @@ class VarlociraptorStepPart(ScatteredCallerStepPart):
         }
 
     def _get_params_call(self, wildcards):
-        """The sample names of the observations, in their order, the scenario and whether
-        varlociraptor uses the full prior"""
+        """The sample names of the observations in their order, the scenario,
+        and whether varlociraptor uses the full prior"""
         return {
             "obs_names": self.members(wildcards.library_name),
             "scenario": self.scenario(wildcards.library_name),

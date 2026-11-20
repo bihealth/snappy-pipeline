@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Call the variants of one chunk of the candidates of an entity against its scenario.
 
-The scenario comes rendered as a param, so a changed scenario reruns the calls; the wrapper
-writes it to the job's temporary directory and to the log. With ``full_prior``, the prior
-weighs every event instead of only absent against present. ``varlociraptor genotype`` adds the
-genotypes that the consumers of germline and somatic calls expect. The VCF keeps the observed
-samples only: an unobserved sample of the scenario (an unsequenced relative, the normal of a
-tumor without one) has no data.
+The scenario comes rendered as a param, so a changed scenario reruns the calls.
+The wrapper writes it to the job's temporary directory and to the log.
+With ``full_prior``, the prior weighs every event instead of only absent against present.
+``varlociraptor genotype`` adds the genotypes that the consumers of germline and somatic calls expect.
+The VCF keeps the observed samples only:
+an unobserved sample of the scenario (an unsequenced relative, the normal of a tumor without one) has no data.
 """
 
 from typing import TYPE_CHECKING

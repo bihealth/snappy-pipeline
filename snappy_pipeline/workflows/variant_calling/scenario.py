@@ -38,29 +38,29 @@ def _excluding(formula: str, exclusions: list[str]) -> str:
 def germline_scenario(samples: list[dict[str, Any]], species: dict[str, Any]) -> dict[str, Any]:
     """Return the ``germline`` preset for the library rows ``samples`` of a pedigree.
 
-    Every sample has its ``sex``, or is diploid everywhere when the sex is unknown; a sample
-    whose parents are both samples inherits from them (mendelian). A sample with
-    ``observed: False`` is an unsequenced relative that connects members, or the unknown parent
-    of a member (its ``library_name`` is its donor name): it has no observations, so the
-    posteriors integrate over its genotype, and inheritance flows through it.
+    Every sample has its ``sex``, or is diploid everywhere when the sex is unknown.
+    A sample whose parents are both samples inherits from them (mendelian).
+    A sample with ``observed: False`` is an unsequenced relative that connects members, or the unknown parent of a member;
+    its ``library_name`` is its donor name.
+    It has no observations, so the posteriors integrate over its genotype, and inheritance flows through it.
 
-    The events partition the configurations in which an observed member carries the variant,
-    by the sample sheet's ``isAffected`` (``disease_state``: 2 affected, 1 unaffected, else
-    unknown, which constrains nothing): ``denovo`` (an observed child carries a variant that
-    its parents do not), ``recessive`` (every affected member is homozygous, no unaffected
-    member is), ``dominant`` (every affected member carries it, no unaffected member does) and
-    ``present`` (the rest). Each event excludes the ones before it, so they are disjoint, and
-    ``dominant`` means inherited dominant: in a trio with unaffected parents it is empty. An
-    event without a pattern (no child with both parents, no affected member) is the impossible
-    event ``false``, so one FDR control over all four events fits every pedigree.
+    The events partition the configurations in which an observed member carries the variant, by the sheet's ``isAffected``.
+    ``disease_state`` 2 is affected, 1 unaffected, anything else unknown, which constrains nothing.
+    ``denovo``: an observed child carries a variant that its parents do not.
+    ``recessive``: every affected member is homozygous, no unaffected member is.
+    ``dominant``: every affected member carries the variant, no unaffected member does.
+    ``present``: the rest.
+    Each event excludes the ones before it, so they are disjoint.
+    ``dominant`` thus means inherited dominant; in a trio with unaffected parents it is empty.
+    An event without a pattern (no child with both parents, no affected member) is the impossible event ``false``,
+    so one FDR control over all four events fits every pedigree.
 
-    The patterns of ``recessive`` and ``dominant`` are ``expressions``, so that the events
-    negate ``$`` references without a negation inside: varlociraptor 8.12.0 expands references
-    one level deep and panics on a negated reference to an event that negates another.
+    The patterns of ``recessive`` and ``dominant`` are ``expressions``, so that the events negate ``$`` references without a negation inside.
+    varlociraptor 8.12.0 expands references one level deep and panics on a negated reference to an event that negates another.
 
-    Varlociraptor models inheritance from both parents only, so a member with a parent outside
-    the samples (one parent sequenced, or a parent that the task does not take) raises
-    ``ValueError``: the preset would otherwise treat related libraries as unrelated.
+    Varlociraptor models inheritance from both parents only.
+    A member with a parent outside the samples (one parent sequenced, or a parent the task does not take) raises ``ValueError``;
+    the preset would otherwise treat related libraries as unrelated.
     """
     names = [sample["library_name"] for sample in samples]
     observed = [sample["library_name"] for sample in samples if sample.get("observed", True)]

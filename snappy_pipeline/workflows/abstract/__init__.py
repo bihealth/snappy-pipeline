@@ -1963,8 +1963,8 @@ def build_library_dataframe(
                 status = str(is_affected).lower() if is_affected is not None else "unknown"
                 sex = lib_sex.get(lib_name, "unknown")
 
-                # Only the pedigree index is primary: the entity of the pedigree and the key of
-                # the donor table
+                # Only the pedigree index is primary.
+                # It is the entity of the pedigree and the key of the donor table.
                 is_primary = False
                 if donor_name in index_donor_names:
                     role = "index"
