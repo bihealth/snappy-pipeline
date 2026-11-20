@@ -64,7 +64,7 @@ test = [
     "pytest-mock >=3.14.0,<4",
     "pytest-subprocess >=1.5.0,<2",
     # Fake file system for testing
-    "pyfakefs >=5.5.0,<6",
+    "pyfakefs >=5.5.0,<7",
     "pytest-sugar >=1.0.0,<2",
     # coveralls.io tooling
     "coveralls >=4.0.1,<5",
